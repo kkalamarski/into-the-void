@@ -1,0 +1,168 @@
+/* Screen layout */
+.screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-primary);
+  padding: 20px;
+}
+
+.screen-card {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: 12px;
+  padding: 32px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.screen-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.screen-subtitle {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+/* Form styles */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Error message */
+.error-message {
+  background-color: rgba(255, 68, 68, 0.1);
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+/* Submit button */
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  background-color: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background-color: var(--color-accent-hover);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Links */
+.screen-link {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.screen-link a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.screen-link a:hover {
+  text-decoration: underline;
+}
+
+/* Welcome screen specific */
+.welcome-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.welcome-btn {
+  padding: 14px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  text-align: center;
+  text-decoration: none;
+}
+
+.welcome-btn-primary {
+  background-color: var(--color-accent);
+  color: white;
+  border: none;
+}
+
+.welcome-btn-primary:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.welcome-btn-secondary {
+  background-color: transparent;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-bg-tertiary);
+}
+
+.welcome-btn-secondary:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+/* Game logo placeholder */
+.game-logo {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--color-accent);
+  text-align: center;
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+}
