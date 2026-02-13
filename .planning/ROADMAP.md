@@ -29,10 +29,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. User lands on welcome page and can navigate between login and register screens
   5. Authenticated user is automatically redirected to character selection screen
   6. Unauthenticated user cannot access character selection or game screens
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD after planning
+- [ ] 01-01-PLAN.md — Auth store, API wrapper, and router setup (foundation)
+- [ ] 01-02-PLAN.md — Welcome, Login, and Register screens
+- [ ] 01-03-PLAN.md — Protected routes, App refactor, and verification
 
 ### Phase 2: Character Selection
 **Goal**: Players can view their characters and select one to enter the game
@@ -55,7 +57,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. User can create a character by providing a name and selecting a faction
   2. User sees validation errors for invalid character names (too short, taken, invalid characters)
-  3. User can choose from 4 factions (dominion, frontier, collective, neutral) during creation
+  3. User can choose from 3 factions (dominion, frontier, collective) during creation
   4. User is redirected to character selection screen after successful creation and sees their new character
 **Plans**: TBD
 
@@ -69,6 +71,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Authentication & Navigation | 0/TBD | Not started | - |
+| 1. Authentication & Navigation | 0/3 | Planned | - |
 | 2. Character Selection | 0/TBD | Not started | - |
 | 3. Character Creation | 0/TBD | Not started | - |
