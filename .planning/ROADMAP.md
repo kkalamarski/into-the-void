@@ -32,9 +32,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Auth store, API wrapper, and router setup (foundation)
-- [ ] 01-02-PLAN.md — Welcome, Login, and Register screens
-- [ ] 01-03-PLAN.md — Protected routes, App refactor, and verification
+- [x] 01-01-PLAN.md — Auth store, API wrapper, and router setup (foundation)
+- [x] 01-02-PLAN.md — Welcome, Login, and Register screens
+- [x] 01-03-PLAN.md — Protected routes, App refactor, and verification
 
 ### Phase 2: Character Selection
 **Goal**: Players can view their characters and select one to enter the game
@@ -45,10 +45,11 @@ Plans:
   2. User can click a character card to enter the game with that character
   3. User sees an empty state with "Create Character" prompt when they have no characters
   4. Character data is fetched from the server and displayed accurately
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD after planning
+- [ ] 02-01-PLAN.md — Character store, date formatting utility, and CSS styles (foundation)
+- [ ] 02-02-PLAN.md — CharacterCard, EmptyCharacterState, CharacterSelectScreen with loader
 
 ### Phase 3: Character Creation
 **Goal**: Players can create new characters with name and faction
@@ -72,5 +73,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Authentication & Navigation | 3/3 | ✓ Complete | 2026-02-13 |
-| 2. Character Selection | 0/TBD | Not started | - |
+| 2. Character Selection | 0/2 | Not started | - |
 | 3. Character Creation | 0/TBD | Not started | - |
