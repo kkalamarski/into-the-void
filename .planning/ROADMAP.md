@@ -12,7 +12,7 @@ This roadmap delivers pre-game authentication and character management screens f
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Authentication & Navigation** - Login, register, token management, and routing foundation
+- [x] **Phase 1: Authentication & Navigation** - Login, register, token management, and routing foundation ✓ (2026-02-13)
 - [ ] **Phase 2: Character Selection** - Character list display and selection interface
 - [ ] **Phase 3: Character Creation** - New character creation with faction selection
 
@@ -71,6 +71,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Authentication & Navigation | 0/3 | Planned | - |
+| 1. Authentication & Navigation | 3/3 | ✓ Complete | 2026-02-13 |
 | 2. Character Selection | 0/TBD | Not started | - |
 | 3. Character Creation | 0/TBD | Not started | - |
