@@ -13,7 +13,7 @@ This roadmap delivers pre-game authentication and character management screens f
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Authentication & Navigation** - Login, register, token management, and routing foundation ✓ (2026-02-13)
-- [ ] **Phase 2: Character Selection** - Character list display and selection interface
+- [x] **Phase 2: Character Selection** - Character list display and selection interface ✓ (2026-02-14)
 - [ ] **Phase 3: Character Creation** - New character creation with faction selection
 
 ## Phase Details
@@ -48,8 +48,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Character store, date formatting utility, and CSS styles (foundation)
-- [ ] 02-02-PLAN.md — CharacterCard, EmptyCharacterState, CharacterSelectScreen with loader
+- [x] 02-01-PLAN.md — Character store, date formatting utility, and CSS styles (foundation)
+- [x] 02-02-PLAN.md — CharacterCard, EmptyCharacterState, CharacterSelectScreen with loader
 
 ### Phase 3: Character Creation
 **Goal**: Players can create new characters with name and faction
@@ -73,5 +73,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Authentication & Navigation | 3/3 | ✓ Complete | 2026-02-13 |
-| 2. Character Selection | 0/2 | Not started | - |
+| 2. Character Selection | 2/2 | ✓ Complete | 2026-02-14 |
 | 3. Character Creation | 0/TBD | Not started | - |
