@@ -2,9 +2,9 @@
  * Faction identifiers
  */
 export type FactionId =
-  | 'dominion'
-  | 'frontier'
-  | 'collective'
+  | 'verdant'
+  | 'helix'
+  | 'nexus'
   | 'neutral';
 
 /**

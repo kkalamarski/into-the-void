@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useLoaderData } from 'react-router';
+import { useNavigate, useLoaderData, Link } from 'react-router';
 import { useAuthStore } from '../store/authStore';
 import { useCharacterStore } from '../store/characterStore';
 import { apiCall } from '../utils/api';
@@ -60,15 +60,22 @@ const CharacterSelectScreen: React.FC = () => {
       {characters.length === 0 ? (
         <EmptyCharacterState />
       ) : (
-        <div className="character-grid">
-          {characters.map((character) => (
-            <CharacterCard
-              key={character.id}
-              character={character}
-              onSelect={handleCharacterSelect}
-            />
-          ))}
-        </div>
+        <>
+          <div className="character-grid">
+            {characters.map((character) => (
+              <CharacterCard
+                key={character.id}
+                character={character}
+                onSelect={handleCharacterSelect}
+              />
+            ))}
+          </div>
+          <div className="character-actions">
+            <Link to="/character-create" className="btn-primary">
+              Create New Character
+            </Link>
+          </div>
+        </>
       )}
     </div>
   );

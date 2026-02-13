@@ -9,7 +9,7 @@ export class CreateCharacterDto {
   })
   name!: string;
 
-  @IsIn(['dominion', 'frontier', 'collective', 'neutral'], {
+  @IsIn(['verdant', 'helix', 'nexus', 'neutral'], {
     message: 'Invalid faction',
   })
   faction!: string;

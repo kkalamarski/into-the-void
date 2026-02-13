@@ -15,19 +15,29 @@ interface CharacterCardProps {
   onSelect: (id: string) => void;
 }
 
-// Faction color mapping for border accents
+// Faction color mapping for border accents (from world-bible.md lore)
 const FACTION_COLORS: Record<string, string> = {
-  dominion: '#7b68ee',
-  frontier: '#44ff44',
-  collective: '#00bfff',
+  verdant: '#44cc44',
+  helix: '#ff6b35',
+  nexus: '#00bfff',
   neutral: '#a0a0a0',
+};
+
+// Faction display names
+const FACTION_NAMES: Record<string, string> = {
+  verdant: 'Verdant Dynamics',
+  helix: 'Helix Extraction',
+  nexus: 'Nexus Frontiers',
+  neutral: 'Unaffiliated',
 };
 
 export const CharacterCard: React.FC<CharacterCardProps> = ({
   character,
   onSelect,
 }) => {
-  const factionColor = FACTION_COLORS[character.faction.toLowerCase()] || FACTION_COLORS.neutral;
+  const factionKey = character.faction.toLowerCase();
+  const factionColor = FACTION_COLORS[factionKey] || FACTION_COLORS.neutral;
+  const factionName = FACTION_NAMES[factionKey] || character.faction;
 
   const handleClick = () => {
     onSelect(character.id);
@@ -56,7 +66,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         <h3 className="character-name">{character.name}</h3>
         <span className="character-level">Lv {character.level}</span>
       </div>
-      <div className="character-faction">{character.faction}</div>
+      <div className="character-faction">{factionName}</div>
       <div className="character-last-played">
         Last played: {formatRelativeTime(character.lastPlayedAt)}
       </div>

@@ -25,55 +25,55 @@ export type Faction = typeof factions.$inferSelect;
 export type NewFaction = typeof factions.$inferInsert;
 
 /**
- * Default factions to seed
+ * Default factions to seed (from world-bible.md lore)
  */
 export const defaultFactions: NewFaction[] = [
   {
-    id: 'dominion',
-    name: 'The Dominion',
+    id: 'verdant',
+    name: 'Verdant Dynamics',
     type: 'corporate',
-    description: 'A powerful corporate faction focused on resource extraction and technological superiority.',
-    bonuses: {
-      combatModifier: 1.1,
-      gatheringModifier: 1.0,
-      craftingModifier: 1.2,
-      specialAbility: 'Advanced Shields',
-    },
-  },
-  {
-    id: 'frontier',
-    name: 'Frontier Coalition',
-    type: 'rebel',
-    description: 'A loose alliance of settlers and explorers who value freedom and self-reliance.',
+    description: 'The green corporation. Bioengineering native species, sustainable harvesting, and environmental PR — hiding aggressive extraction behind eco-friendly branding.',
     bonuses: {
       combatModifier: 1.0,
       gatheringModifier: 1.2,
-      craftingModifier: 1.0,
-      specialAbility: 'Survival Instinct',
+      craftingModifier: 1.1,
+      specialAbility: 'Bioengineering',
     },
   },
   {
-    id: 'collective',
-    name: 'The Collective',
-    type: 'ai',
-    description: 'A network of AI-human hybrids seeking to merge consciousness with technology.',
+    id: 'helix',
+    name: 'Helix Extraction',
+    type: 'corporate',
+    description: 'The pragmatists. Strip-mining, chemical processing, and industrial brutalism — they believe maximum extraction is humanity\'s sacred duty for survival.',
+    bonuses: {
+      combatModifier: 1.2,
+      gatheringModifier: 1.1,
+      craftingModifier: 1.0,
+      specialAbility: 'Heavy Machinery',
+    },
+  },
+  {
+    id: 'nexus',
+    name: 'Nexus Frontiers',
+    type: 'corporate',
+    description: 'The moderates. Trade networks, intelligence gathering, and strategic flexibility — they profit regardless of which faction comes out ahead.',
     bonuses: {
       combatModifier: 1.0,
       gatheringModifier: 1.0,
-      craftingModifier: 1.0,
-      specialAbility: 'Neural Link',
+      craftingModifier: 1.2,
+      specialAbility: 'Trade Networks',
     },
   },
   {
     id: 'neutral',
     name: 'Unaffiliated',
     type: 'independent',
-    description: 'Those who choose to remain neutral in the factional conflicts.',
+    description: 'Independents operating in the margins — freelance explorers, traders, settlers, and outlaws who\'ve broken their contracts.',
     bonuses: {
-      combatModifier: 1.0,
+      combatModifier: 1.1,
       gatheringModifier: 1.1,
-      craftingModifier: 1.1,
-      specialAbility: 'Diplomatic Immunity',
+      craftingModifier: 1.0,
+      specialAbility: 'Self-Reliance',
     },
   },
 ];

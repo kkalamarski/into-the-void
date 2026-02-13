@@ -222,12 +222,14 @@ export class WorldScene extends Phaser.Scene {
 
   private getFactionColor(faction: string): number {
     switch (faction) {
-      case 'dominion':
-        return 0xff4444;
-      case 'frontier':
-        return 0x44ff44;
-      case 'collective':
-        return 0x4444ff;
+      case 'verdant':
+        return 0x44cc44; // Verdant Dynamics - green
+      case 'helix':
+        return 0xff6b35; // Helix Extraction - orange
+      case 'nexus':
+        return 0x00bfff; // Nexus Frontiers - blue
+      case 'neutral':
+        return 0xa0a0a0; // Unaffiliated - gray
       default:
         return 0x7b68ee;
     }

@@ -4,6 +4,7 @@ import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import CharacterSelectScreen, { loader as characterSelectLoader } from '../screens/CharacterSelectScreen';
+import CharacterCreateScreen, { action as characterCreateAction } from '../screens/CharacterCreateScreen';
 import GameContainer from '../components/GameContainer';
 
 // Loader for protected routes - redirects to login if not authenticated
@@ -54,7 +55,9 @@ export const router = createBrowserRouter([
   },
   {
     path: '/character-create',
-    lazy: () => import('../screens/CharacterCreateScreen'),
+    loader: protectedLoader,
+    action: characterCreateAction,
+    element: <CharacterCreateScreen />,
   },
   {
     path: '/game',

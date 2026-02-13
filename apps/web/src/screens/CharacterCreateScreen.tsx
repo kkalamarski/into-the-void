@@ -4,31 +4,31 @@ import { apiCall } from '../utils/api';
 import '../styles/screens.css';
 import '../styles/characters.css';
 
-// Define factions with metadata
+// Define factions with metadata (from world-bible.md lore)
 const FACTIONS = [
   {
-    id: 'dominion',
-    name: 'The Dominion',
-    color: '#7b68ee',
-    description: 'Corporate power',
+    id: 'verdant',
+    name: 'Verdant Dynamics',
+    color: '#44cc44',
+    description: 'Sustainability is Profitability',
   },
   {
-    id: 'frontier',
-    name: 'Frontier Coalition',
-    color: '#44ff44',
-    description: 'Settlers & explorers',
+    id: 'helix',
+    name: 'Helix Extraction',
+    color: '#ff6b35',
+    description: "Humanity's Survival Demands Sacrifice",
   },
   {
-    id: 'collective',
-    name: 'The Collective',
+    id: 'nexus',
+    name: 'Nexus Frontiers',
     color: '#00bfff',
-    description: 'AI-human hybrids',
+    description: 'Connecting Worlds, Creating Opportunities',
   },
   {
     id: 'neutral',
     name: 'Unaffiliated',
     color: '#a0a0a0',
-    description: 'Independent',
+    description: 'Independent operators in the margins',
   },
 ];
 
