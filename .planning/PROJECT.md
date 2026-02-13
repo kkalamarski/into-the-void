@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A multiplayer 2D game with procedural world generation, real-time player interaction, and faction-based gameplay. Players explore zones, interact with entities, and engage in combat. This milestone adds the pre-game experience: registration, login, and character management screens.
+A multiplayer 2D game with procedural world generation, real-time player interaction, and faction-based gameplay. Players explore zones, interact with entities, and engage in combat. **v1.0** added the pre-game experience: registration, login, character selection, and character creation screens.
 
 ## Core Value
 
@@ -14,25 +14,26 @@ Players can create an account, log in, and select/create characters before enter
 
 <!-- Shipped and confirmed valuable. -->
 
-- [x] REST API with JWT authentication — existing
-- [x] Character CRUD API endpoints — existing
-- [x] WebSocket game server with token auth — existing
-- [x] React/Phaser web client — existing
-- [x] Procedural world generation — existing
-- [x] Player movement and zone transitions — existing
-- [x] Entity interactions (minerals, items, creatures) — existing
-- [x] Real-time multiplayer sync — existing
+- ✓ REST API with JWT authentication — existing
+- ✓ Character CRUD API endpoints — existing
+- ✓ WebSocket game server with token auth — existing
+- ✓ React/Phaser web client — existing
+- ✓ Procedural world generation — existing
+- ✓ Player movement and zone transitions — existing
+- ✓ Entity interactions (minerals, items, creatures) — existing
+- ✓ Real-time multiplayer sync — existing
+- ✓ Landing page with Login/Register options — v1.0
+- ✓ Registration screen (email, password, confirm password) — v1.0
+- ✓ Login screen (email, password) — v1.0
+- ✓ Character selection screen with visual cards — v1.0
+- ✓ Character creation screen (name, faction selection) — v1.0
+- ✓ Auth flow integration (token storage, protected routes) — v1.0
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] Landing page with Login/Register options
-- [ ] Registration screen (email, password, confirm password)
-- [ ] Login screen (email, password)
-- [ ] Character selection screen with visual cards
-- [ ] Character creation screen (name, faction, stat allocation)
-- [ ] Auth flow integration (token storage, game server handoff)
+(None — v1.0 milestone complete. Run `/gsd:new-milestone` to define next scope.)
 
 ### Out of Scope
 
@@ -42,42 +43,38 @@ Players can create an account, log in, and select/create characters before enter
 - Character deletion from UI — can be added later
 - "Remember me" / persistent sessions — tokens expire normally
 - Email verification flow — registration works immediately
+- Stat allocation during character creation — deferred to v2
 
 ## Context
 
-**Existing architecture:**
+**Current state (v1.0 shipped):**
+- ~1,479 LOC TypeScript/React added
+- Tech stack: React Router v7, Zustand with persist middleware, vanilla CSS
+- Auth flow: Login/Register → Character Select → Create Character → Game
+- Factions updated to lore-correct: Verdant Dynamics, Helix Extraction, Nexus Frontiers, Unaffiliated
+
+**Architecture:**
 - NX monorepo with 3 apps (api, game-server, web) and 4 packages
-- Backend already handles: `/auth/register`, `/auth/login`, `/auth/me`, `/characters` CRUD
+- Backend handles: `/auth/register`, `/auth/login`, `/auth/me`, `/characters` CRUD
 - WebSocket auth via `authenticate(token, characterId)` method
 - CSS variables system with dark theme (--color-bg-*, --color-accent)
-
-**Current state:**
-- Game boots directly into Phaser world scene
-- No pre-game screens exist
-- Auth tokens and character selection are not integrated in UI
-
-**What needs to change:**
-- Add React screens before Phaser game loads
-- Store JWT in browser (localStorage or state)
-- Fetch characters after login, present selection UI
-- Pass selected characterId to WebSocket auth
-- Only load game scene after successful auth
 
 ## Constraints
 
 - **Tech stack**: React for screens (not Phaser UI) — matches existing patterns
 - **Styling**: Plain CSS with existing variable system — no new CSS framework
 - **Backend**: Use existing API endpoints — no backend changes needed
-- **Factions**: 4 options (dominion, frontier, collective, neutral) — from existing schema
+- **Factions**: 4 options (verdant, helix, nexus, neutral) — from world-bible.md lore
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| React screens (not Phaser menus) | Auth forms are standard web UI, React handles this better | — Pending |
-| Visual character cards | Shows more info at a glance, feels more polished | — Pending |
-| Stat allocation on creation | Gives players agency, uses existing stats schema | — Pending |
-| Clean modern style | User preference, works with existing dark theme | — Pending |
+| React screens (not Phaser menus) | Auth forms are standard web UI, React handles this better | ✓ Good |
+| Visual character cards | Shows more info at a glance, feels more polished | ✓ Good |
+| React Router v7 action pattern | Modern form handling, automatic revalidation | ✓ Good |
+| Lore-correct factions | Verdant/Helix/Nexus match world-bible.md | ✓ Good |
+| Stat allocation deferred to v2 | Keep MVP simple, focus on core auth flow | — Pending |
 
 ---
-*Last updated: 2026-02-13 after initialization*
+*Last updated: 2026-02-14 after v1.0 milestone*
