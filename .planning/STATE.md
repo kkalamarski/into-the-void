@@ -5,32 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-02-13)
 
 **Core value:** Players can create an account, log in, and select/create characters before entering the game world.
-**Current focus:** Phase 1: Authentication & Navigation
+**Current focus:** Phase 2: Character Selection
 
 ## Current Position
 
-Phase: 1 of 3 (Authentication & Navigation)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-02-13 — Completed 01-03 (Protected Routes and Auth Flow)
+Phase: 2 of 3 (Character Selection)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-13 — Completed 02-01 (Character Selection Infrastructure)
 
-Progress: [███░░░░░░░] 33%
+Progress: [████░░░░░░] 44%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 1m 47s
-- Total execution time: 0.09 hours
+- Total plans completed: 4
+- Average duration: 1m 39s
+- Total execution time: 0.11 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-authentication-navigation | 3 | 5m 40s | 1m 53s |
+| 02-character-selection | 1 | 1m 15s | 1m 15s |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2m 4s), 01-02 (2m 30s), 01-03 (1m 6s)
+- Last 5 plans: 01-01 (2m 4s), 01-02 (2m 30s), 01-03 (1m 6s), 02-01 (1m 15s)
 - Trend: Improving velocity
 
 *Updated after each plan completion*
@@ -63,6 +64,11 @@ Recent decisions affecting current work:
 - Protected routes redirect to /login, auth screens redirect to /character-select
 - Extracted game mounting logic into GameContainer component for clean separation
 
+**From 02-01:**
+- Character selection state not persisted (user chooses character each session)
+- Native Intl.RelativeTimeFormat instead of external date library
+- CSS Grid auto-fit pattern for responsive cards without media queries
+
 ### Pending Todos
 
 None yet.
@@ -77,7 +83,7 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-13
-Stopped at: Completed 01-03-PLAN.md (Protected Routes and Auth Flow) — Phase 1 Complete
+Stopped at: Completed 02-01-PLAN.md (Character Selection Infrastructure)
 Resume file: None
 
-**Phase 01 Complete:** Authentication & Navigation fully operational. Ready for Phase 02 (Character Management).
+**Phase 02 Progress:** Character selection infrastructure complete. Ready for Plan 02 (Character Selection UI components).
