@@ -24,10 +24,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Character Creation
 
-- [ ] **CHAR-05**: User can create a character with a name
-- [ ] **CHAR-06**: User can select a faction (dominion, frontier, collective, neutral)
-- [ ] **CHAR-07**: User sees validation errors for invalid character names
-- [ ] **CHAR-08**: User is redirected to character selection after successful creation
+- [x] **CHAR-05**: User can create a character with a name
+- [x] **CHAR-06**: User can select a faction (verdant, helix, nexus, neutral)
+- [x] **CHAR-07**: User sees validation errors for invalid character names
+- [x] **CHAR-08**: User is redirected to character selection after successful creation
 
 ### Navigation
 

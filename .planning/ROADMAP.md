@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Authentication & Navigation** - Login, register, token management, and routing foundation ✓ (2026-02-13)
 - [x] **Phase 2: Character Selection** - Character list display and selection interface ✓ (2026-02-14)
-- [ ] **Phase 3: Character Creation** - New character creation with faction selection
+- [x] **Phase 3: Character Creation** - New character creation with faction selection ✓ (2026-02-14)
 
 ## Phase Details
 
@@ -58,13 +58,13 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. User can create a character by providing a name and selecting a faction
   2. User sees validation errors for invalid character names (too short, taken, invalid characters)
-  3. User can choose from 4 factions (dominion, frontier, collective, neutral) during creation
+  3. User can choose from 4 factions (verdant, helix, nexus, neutral) during creation
   4. User is redirected to character selection screen after successful creation and sees their new character
 **Plans:** 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Faction selection CSS styles and character-create route setup
-- [ ] 03-02-PLAN.md — CharacterCreateScreen with action pattern, form, validation, and verification
+- [x] 03-01-PLAN.md — Faction selection CSS styles and character-create route setup
+- [x] 03-02-PLAN.md — CharacterCreateScreen with action pattern, form, validation, and verification
 
 ## Progress
 
@@ -75,4 +75,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Authentication & Navigation | 3/3 | ✓ Complete | 2026-02-13 |
 | 2. Character Selection | 2/2 | ✓ Complete | 2026-02-14 |
-| 3. Character Creation | 0/2 | Not started | - |
+| 3. Character Creation | 2/2 | ✓ Complete | 2026-02-14 |
