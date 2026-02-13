@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-13)
 ## Current Position
 
 Phase: 1 of 3 (Authentication & Navigation)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-13 — Roadmap created with 3 phases
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-13 — Completed 01-01 (Authentication Infrastructure)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 11%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: N/A
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 2m 4s
+- Total execution time: 0.03 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-authentication-navigation | 1 | 2m 4s | 2m 4s |
 
 **Recent Trend:**
-- Last 5 plans: N/A
-- Trend: N/A
+- Last 5 plans: 01-01 (2m 4s)
+- Trend: Starting execution
 
 *Updated after each plan completion*
 
@@ -45,6 +45,11 @@ Recent decisions affecting current work:
 - Phase 1: React screens (not Phaser menus) — Auth forms are standard web UI, React handles this better
 - Phase 2: Visual character cards — Shows more info at a glance, feels more polished
 - Phase 3: Stat allocation on creation — Gives players agency, uses existing stats schema (deferred to v2)
+
+**From 01-01:**
+- Used persist middleware with partialize to only persist token and user state, not functions
+- Auto-logout on 401 responses with redirect to /login
+- Placeholder route components for all screens (to be replaced in Plan 02)
 
 ### Pending Todos
 
@@ -60,5 +65,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-13
-Stopped at: Roadmap created, ready for Phase 1 planning
+Stopped at: Completed 01-01-PLAN.md (Authentication Infrastructure)
 Resume file: None
