@@ -4,6 +4,7 @@
   "private": true,
   "description": "MMO survival sci-fi game with procedurally generated world",
   "scripts": {
+    "dev": "npx concurrently \"pnpm dev:api\" \"pnpm dev:game-server\" \"pnpm dev:web\"",
     "dev:api": "nx run api:serve",
     "dev:game-server": "nx run game-server:serve",
     "dev:web": "nx run web:dev",
