@@ -33,7 +33,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
     onSelect(character.id);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onSelect(character.id);
@@ -44,7 +44,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
     <div
       className="character-card"
       onClick={handleClick}
-      onKeyPress={handleKeyPress}
+      onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
       style={{

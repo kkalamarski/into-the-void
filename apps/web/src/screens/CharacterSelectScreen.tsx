@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLoaderData } from 'react-router';
 import { useAuthStore } from '../store/authStore';
 import { useCharacterStore } from '../store/characterStore';
 import { apiCall } from '../utils/api';
@@ -29,17 +29,11 @@ export async function loader(): Promise<LoaderData> {
   }
 }
 
-interface CharacterSelectScreenProps {
-  loaderData: LoaderData;
-}
-
-const CharacterSelectScreen: React.FC<CharacterSelectScreenProps> = ({
-  loaderData,
-}) => {
+const CharacterSelectScreen: React.FC = () => {
+  const { characters } = useLoaderData() as LoaderData;
   const { user, logout } = useAuthStore();
   const { selectCharacter } = useCharacterStore();
   const navigate = useNavigate();
-  const { characters } = loaderData;
 
   const handleLogout = () => {
     logout();
