@@ -53,6 +53,10 @@ export const router = createBrowserRouter([
     element: <CharacterSelectScreen />,
   },
   {
+    path: '/character-create',
+    lazy: () => import('../screens/CharacterCreateScreen'),
+  },
+  {
     path: '/game',
     loader: protectedLoader,
     element: <GameContainer />,
