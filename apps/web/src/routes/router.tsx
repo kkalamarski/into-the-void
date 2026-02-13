@@ -1,24 +1,24 @@
 import { createBrowserRouter } from 'react-router';
+import WelcomeScreen from '../screens/WelcomeScreen';
+import LoginScreen from '../screens/LoginScreen';
+import RegisterScreen from '../screens/RegisterScreen';
 
-// Placeholder components - will be replaced in Plan 02
-const WelcomePlaceholder = () => <div>Welcome Screen (placeholder)</div>;
-const LoginPlaceholder = () => <div>Login Screen (placeholder)</div>;
-const RegisterPlaceholder = () => <div>Register Screen (placeholder)</div>;
+// Still placeholders for protected routes - will be added in Plan 03
 const CharacterSelectPlaceholder = () => <div>Character Select (placeholder)</div>;
 const GamePlaceholder = () => <div>Game (placeholder)</div>;
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <WelcomePlaceholder />,
+    element: <WelcomeScreen />,
   },
   {
     path: '/login',
-    element: <LoginPlaceholder />,
+    element: <LoginScreen />,
   },
   {
     path: '/register',
-    element: <RegisterPlaceholder />,
+    element: <RegisterScreen />,
   },
   {
     path: '/character-select',
