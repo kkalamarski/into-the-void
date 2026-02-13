@@ -1,11 +1,28 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, redirect } from 'react-router';
+import { useAuthStore } from '../store/authStore';
 import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import CharacterSelectScreen from '../screens/CharacterSelectScreen';
+import GameContainer from '../components/GameContainer';
 
-// Still placeholders for protected routes - will be added in Plan 03
-const CharacterSelectPlaceholder = () => <div>Character Select (placeholder)</div>;
-const GamePlaceholder = () => <div>Game (placeholder)</div>;
+// Loader for protected routes - redirects to login if not authenticated
+function protectedLoader() {
+  const { token } = useAuthStore.getState();
+  if (!token) {
+    throw redirect('/login');
+  }
+  return null;
+}
+
+// Loader for auth screens - redirects to character-select if already authenticated
+function authScreenLoader() {
+  const { token } = useAuthStore.getState();
+  if (token) {
+    throw redirect('/character-select');
+  }
+  return null;
+}
 
 export const router = createBrowserRouter([
   {
@@ -14,18 +31,22 @@ export const router = createBrowserRouter([
   },
   {
     path: '/login',
+    loader: authScreenLoader,
     element: <LoginScreen />,
   },
   {
     path: '/register',
+    loader: authScreenLoader,
     element: <RegisterScreen />,
   },
   {
     path: '/character-select',
-    element: <CharacterSelectPlaceholder />,
+    loader: protectedLoader,
+    element: <CharacterSelectScreen />,
   },
   {
     path: '/game',
-    element: <GamePlaceholder />,
+    loader: protectedLoader,
+    element: <GameContainer />,
   },
 ]);
