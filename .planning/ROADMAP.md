@@ -52,18 +52,19 @@ Plans:
 - [x] 02-02-PLAN.md — CharacterCard, EmptyCharacterState, CharacterSelectScreen with loader
 
 ### Phase 3: Character Creation
-**Goal**: Players can create new characters with name and faction
+**Goal**: Players can create new characters with name and faction selection
 **Depends on**: Phase 2
 **Requirements**: CHAR-05, CHAR-06, CHAR-07, CHAR-08
 **Success Criteria** (what must be TRUE):
   1. User can create a character by providing a name and selecting a faction
   2. User sees validation errors for invalid character names (too short, taken, invalid characters)
-  3. User can choose from 3 factions (dominion, frontier, collective) during creation
+  3. User can choose from 4 factions (dominion, frontier, collective, neutral) during creation
   4. User is redirected to character selection screen after successful creation and sees their new character
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD after planning
+- [ ] 03-01-PLAN.md — Faction selection CSS styles and character-create route setup
+- [ ] 03-02-PLAN.md — CharacterCreateScreen with action pattern, form, validation, and verification
 
 ## Progress
 
@@ -74,4 +75,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Authentication & Navigation | 3/3 | ✓ Complete | 2026-02-13 |
 | 2. Character Selection | 2/2 | ✓ Complete | 2026-02-14 |
-| 3. Character Creation | 0/TBD | Not started | - |
+| 3. Character Creation | 0/2 | Not started | - |
