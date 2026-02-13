@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-13)
 
 **Core value:** Players can create an account, log in, and select/create characters before entering the game world.
-**Current focus:** Phase 2: Character Selection
+**Current focus:** Phase 3: Character Creation
 
 ## Current Position
 
-Phase: 2 of 3 (Character Selection)
-Plan: 2 of 2 in current phase
-Status: Complete
-Last activity: 2026-02-14 — Completed 02-02 (Character Selection UI)
+Phase: 3 of 3 (Character Creation)
+Plan: 1 of 2 in current phase
+Status: In Progress
+Last activity: 2026-02-14 — Completed 03-01 (Character Creation Foundation)
 
-Progress: [█████░░░░░] 56%
+Progress: [██████░░░░] 67%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 1m 44s
-- Total execution time: 0.14 hours
+- Total plans completed: 6
+- Average duration: 1m 42s
+- Total execution time: 0.17 hours
 
 **By Phase:**
 
@@ -29,9 +29,10 @@ Progress: [█████░░░░░] 56%
 |-------|-------|-------|----------|
 | 01-authentication-navigation | 3 | 5m 40s | 1m 53s |
 | 02-character-selection | 2 | 3m 19s | 1m 40s |
+| 03-character-creation | 1 | 1m 13s | 1m 13s |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (2m 30s), 01-03 (1m 6s), 02-01 (1m 15s), 02-02 (2m 4s)
+- Last 5 plans: 01-03 (1m 6s), 02-01 (1m 15s), 02-02 (2m 4s), 03-01 (1m 13s)
 - Trend: Stable velocity
 
 *Updated after each plan completion*
@@ -75,6 +76,12 @@ Recent decisions affecting current work:
 - Combined loader pattern (auth check + data fetch) in single route loader
 - useLoaderData hook is React Router v7 standard pattern (not loaderData prop)
 
+**From 03-01:**
+- Accessible radio card pattern using position/opacity (not display:none) preserves screen reader access
+- Lazy route loading defers CharacterCreateScreen import until navigation
+- Faction selection grid: 2 columns explicit (not auto-fit) for tighter control, responsive to 1 column at 500px
+- Auth handled in screen action (not route loader) via existing apiCall utility
+
 ### Pending Todos
 
 None yet.
@@ -89,7 +96,7 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 02-02-PLAN.md (Character Selection UI)
+Stopped at: Completed 03-01-PLAN.md (Character Creation Foundation)
 Resume file: None
 
-**Phase 02 Complete:** Character selection fully implemented and verified. Ready for Phase 03 (Character Creation).
+**Phase 03 in Progress:** CSS foundation and routing infrastructure complete. Ready for Plan 03-02 (Character Create Screen).
