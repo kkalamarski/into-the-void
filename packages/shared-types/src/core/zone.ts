@@ -1,0 +1,78 @@
+import { Entity } from './entity';
+import { PlayerPublic } from './player';
+import { BiomeType } from '../game/biome';
+
+/**
+ * Zone size in tiles
+ */
+export const ZONE_SIZE = 64;
+
+/**
+ * Zone data
+ */
+export interface Zone {
+  /** Zone identifier (e.g., "z_1_2") */
+  id: string;
+  /** Zone X coordinate */
+  x: number;
+  /** Zone Y coordinate */
+  y: number;
+  /** Primary biome of this zone */
+  biome: BiomeType;
+  /** Whether zone has been generated */
+  generated: boolean;
+}
+
+/**
+ * Chunk data (generated terrain for a zone)
+ */
+export interface ChunkData {
+  /** Zone ID this chunk belongs to */
+  zoneId: string;
+  /** Tile data (2D array of tile IDs) */
+  tiles: number[][];
+  /** Collision map (true = blocked) */
+  collisions: boolean[][];
+  /** Spawn points for entities */
+  spawnPoints: SpawnPoint[];
+}
+
+/**
+ * Spawn point for entities
+ */
+export interface SpawnPoint {
+  /** X position within zone */
+  x: number;
+  /** Y position within zone */
+  y: number;
+  /** Type of entity to spawn */
+  entityType: 'creature' | 'mineral';
+  /** Specific entity ID to spawn */
+  spawnId: string;
+  /** Respawn time in seconds */
+  respawnTime: number;
+}
+
+/**
+ * Zone state (runtime data)
+ */
+export interface ZoneState {
+  /** Zone ID */
+  zoneId: string;
+  /** Active entities in zone */
+  entities: Entity[];
+  /** Players currently in zone */
+  players: PlayerPublic[];
+  /** Last update timestamp */
+  lastUpdate: number;
+}
+
+/**
+ * Zone subscription info
+ */
+export interface ZoneSubscription {
+  /** Subscribed zone IDs (current + adjacent) */
+  zoneIds: string[];
+  /** Player ID */
+  playerId: string;
+}

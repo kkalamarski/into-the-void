@@ -1,0 +1,119 @@
+import { ChunkData, BiomeType, ZONE_SIZE } from '@into-the-void/shared-types';
+import { BiomeGenerator } from './biome';
+import { generateTerrain } from './terrain';
+import { generateSpawnPoints } from './spawn';
+import { createZoneId } from '@into-the-void/game-logic';
+
+/**
+ * World generator that creates chunks deterministically
+ */
+export class WorldGenerator {
+  private worldSeed: string;
+  private biomeGenerator: BiomeGenerator;
+
+  constructor(worldSeed: string) {
+    this.worldSeed = worldSeed;
+    this.biomeGenerator = new BiomeGenerator(worldSeed);
+  }
+
+  /**
+   * Generate a complete chunk (zone)
+   */
+  generateChunk(chunkX: number, chunkY: number): ChunkData {
+    const zoneId = createZoneId(chunkX, chunkY);
+
+    // Determine biome for this chunk
+    const biome = this.biomeGenerator.getChunkBiome(chunkX, chunkY, ZONE_SIZE);
+
+    // Generate terrain
+    const { tiles, collisions } = generateTerrain(
+      this.worldSeed,
+      chunkX,
+      chunkY,
+      biome
+    );
+
+    // Generate spawn points
+    const spawnPoints = generateSpawnPoints(
+      this.worldSeed,
+      chunkX,
+      chunkY,
+      biome,
+      collisions
+    );
+
+    return {
+      zoneId,
+      tiles,
+      collisions,
+      spawnPoints,
+    };
+  }
+
+  /**
+   * Get biome at chunk coordinates
+   */
+  getChunkBiome(chunkX: number, chunkY: number): BiomeType {
+    return this.biomeGenerator.getChunkBiome(chunkX, chunkY, ZONE_SIZE);
+  }
+
+  /**
+   * Get biome at world coordinates
+   */
+  getBiomeAt(worldX: number, worldY: number): BiomeType {
+    return this.biomeGenerator.getBiome(worldX, worldY);
+  }
+
+  /**
+   * Get terrain values at position
+   */
+  getTerrainValues(worldX: number, worldY: number): {
+    temperature: number;
+    moisture: number;
+    elevation: number;
+  } {
+    return {
+      temperature: this.biomeGenerator.getTemperature(worldX, worldY),
+      moisture: this.biomeGenerator.getMoisture(worldX, worldY),
+      elevation: this.biomeGenerator.getElevation(worldX, worldY),
+    };
+  }
+
+  /**
+   * Get the world seed
+   */
+  getSeed(): string {
+    return this.worldSeed;
+  }
+}
+
+/**
+ * Create a world generator instance
+ */
+export function createWorldGenerator(worldSeed: string): WorldGenerator {
+  return new WorldGenerator(worldSeed);
+}
+
+/**
+ * Generate a single chunk without persisting generator state
+ */
+export function generateChunk(
+  worldSeed: string,
+  chunkX: number,
+  chunkY: number
+): ChunkData {
+  const generator = new WorldGenerator(worldSeed);
+  return generator.generateChunk(chunkX, chunkY);
+}
+
+/**
+ * Get biome at chunk without generating full chunk
+ */
+export function getBiome(
+  worldSeed: string,
+  chunkX: number,
+  chunkY: number
+): BiomeType {
+  const biomeGenerator = new BiomeGenerator(worldSeed);
+  return biomeGenerator.getChunkBiome(chunkX, chunkY, ZONE_SIZE);
+}

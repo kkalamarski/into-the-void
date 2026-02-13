@@ -1,0 +1,32 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@into-the-void/shared-types": ["packages/shared-types/src/index.ts"],
+      "@into-the-void/game-logic": ["packages/game-logic/src/index.ts"],
+      "@into-the-void/database": ["packages/database/src/index.ts"],
+      "@into-the-void/world-gen": ["packages/world-gen/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}

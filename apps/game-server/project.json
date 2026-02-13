@@ -1,0 +1,46 @@
+{
+  "name": "game-server",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/game-server/src",
+  "projectType": "application",
+  "tags": ["scope:game-server"],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/game-server",
+        "main": "apps/game-server/src/main.ts",
+        "tsConfig": "apps/game-server/tsconfig.app.json",
+        "assets": [],
+        "generatePackageJson": true,
+        "format": ["cjs"],
+        "bundle": true,
+        "thirdParty": false,
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": { ".js": ".js" }
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "game-server:build",
+        "watch": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": ["apps/game-server/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}

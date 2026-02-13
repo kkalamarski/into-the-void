@@ -1,0 +1,93 @@
+import { Position } from './position';
+
+/**
+ * Types of entities in the game world
+ */
+export type EntityType =
+  | 'player'
+  | 'creature'
+  | 'mineral'
+  | 'structure'
+  | 'item'
+  | 'npc';
+
+/**
+ * Base entity interface
+ */
+export interface Entity {
+  /** Unique entity identifier */
+  id: string;
+  /** Type of entity */
+  type: EntityType;
+  /** Current position */
+  position: Position;
+  /** Entity name/label */
+  name: string;
+  /** Whether the entity is currently active */
+  active: boolean;
+}
+
+/**
+ * Creature entity (hostile or passive mobs)
+ */
+export interface Creature extends Entity {
+  type: 'creature';
+  /** Species identifier */
+  speciesId: string;
+  /** Current health */
+  health: number;
+  /** Maximum health */
+  maxHealth: number;
+  /** Combat level */
+  level: number;
+  /** Behavior type */
+  behavior: CreatureBehavior;
+}
+
+/**
+ * Creature behavior patterns
+ */
+export type CreatureBehavior = 'passive' | 'neutral' | 'aggressive' | 'defensive';
+
+/**
+ * Mineral/resource node entity
+ */
+export interface Mineral extends Entity {
+  type: 'mineral';
+  /** Resource type identifier */
+  resourceId: string;
+  /** Remaining yield */
+  yield: number;
+  /** Maximum yield */
+  maxYield: number;
+  /** Required tool tier to harvest */
+  requiredTier: number;
+}
+
+/**
+ * Structure entity (player-built or world structures)
+ */
+export interface Structure extends Entity {
+  type: 'structure';
+  /** Structure type identifier */
+  structureId: string;
+  /** Owner character ID (null for world structures) */
+  ownerId: string | null;
+  /** Structure health/durability */
+  durability: number;
+  /** Maximum durability */
+  maxDurability: number;
+}
+
+/**
+ * Ground item entity
+ */
+export interface ItemEntity extends Entity {
+  type: 'item';
+  /** Item type identifier */
+  itemId: string;
+  /** Stack quantity */
+  quantity: number;
+  /** Time when item will despawn */
+  despawnAt: number;
+}

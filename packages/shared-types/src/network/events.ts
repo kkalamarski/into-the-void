@@ -1,0 +1,105 @@
+/**
+ * Game event base interface
+ */
+export interface GameEvent<T = unknown> {
+  /** Event type identifier */
+  type: string;
+  /** Event payload */
+  payload: T;
+  /** Event timestamp */
+  timestamp: number;
+  /** Event sequence number */
+  sequence?: number;
+}
+
+/**
+ * Client-to-server event types
+ */
+export type ClientEventType =
+  | 'player:move'
+  | 'player:interact'
+  | 'player:action'
+  | 'combat:action'
+  | 'chat:send'
+  | 'inventory:use'
+  | 'inventory:drop'
+  | 'inventory:pickup';
+
+/**
+ * Server-to-client event types
+ */
+export type ServerEventType =
+  | 'zone:state'
+  | 'zone:update'
+  | 'entity:spawn'
+  | 'entity:despawn'
+  | 'entity:update'
+  | 'player:joined'
+  | 'player:left'
+  | 'player:moved'
+  | 'combat:start'
+  | 'combat:result'
+  | 'combat:end'
+  | 'chat:message'
+  | 'inventory:update'
+  | 'error';
+
+/**
+ * Socket.io event map for type safety
+ */
+export interface ClientEvents {
+  'player:move': { direction: import('../core/position').Direction };
+  'player:interact': { targetId: string };
+  'player:action': { action: string; data?: unknown };
+  'combat:action': import('../game/combat').CombatActionRequest;
+  'chat:send': ChatMessageRequest;
+  'inventory:use': { instanceId: string };
+  'inventory:drop': { instanceId: string; quantity: number };
+  'inventory:pickup': { entityId: string };
+}
+
+/**
+ * Server events map
+ */
+export interface ServerEvents {
+  'zone:state': import('../core/zone').ZoneState;
+  'zone:update': Partial<import('../core/zone').ZoneState>;
+  'entity:spawn': import('../core/entity').Entity;
+  'entity:despawn': { entityId: string };
+  'entity:update': { entityId: string; changes: Partial<import('../core/entity').Entity> };
+  'player:joined': import('../core/player').PlayerPublic;
+  'player:left': { playerId: string };
+  'player:moved': { playerId: string; position: import('../core/position').Position };
+  'combat:start': import('../game/combat').CombatState;
+  'combat:result': import('../game/combat').CombatResult;
+  'combat:end': { combatId: string; winner: string };
+  'chat:message': ChatMessage;
+  'inventory:update': import('../game/inventory').Inventory;
+  'error': { code: string; message: string };
+}
+
+/**
+ * Chat message request
+ */
+export interface ChatMessageRequest {
+  message: string;
+  channel: ChatChannel;
+  targetId?: string; // For whispers
+}
+
+/**
+ * Chat message
+ */
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  message: string;
+  channel: ChatChannel;
+  timestamp: number;
+}
+
+/**
+ * Chat channels
+ */
+export type ChatChannel = 'zone' | 'faction' | 'whisper' | 'global' | 'system';
