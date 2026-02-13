@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
-import CharacterSelectScreen from '../screens/CharacterSelectScreen';
+import CharacterSelectScreen, { loader as characterSelectLoader } from '../screens/CharacterSelectScreen';
 import GameContainer from '../components/GameContainer';
 
 // Loader for protected routes - redirects to login if not authenticated
@@ -41,7 +41,15 @@ export const router = createBrowserRouter([
   },
   {
     path: '/character-select',
-    loader: protectedLoader,
+    loader: async () => {
+      // First check auth
+      const { token } = useAuthStore.getState();
+      if (!token) {
+        throw redirect('/login');
+      }
+      // Then load characters
+      return characterSelectLoader();
+    },
     element: <CharacterSelectScreen />,
   },
   {
