@@ -3,7 +3,9 @@ import {
   ClientEvents,
   ServerEvents,
   ConnectionState,
+  Player,
 } from '@into-the-void/shared-types';
+import { useGameStore } from '../store/gameStore';
 
 type ServerEventHandlers = {
   [K in keyof ServerEvents]?: (data: ServerEvents[K]) => void;
@@ -14,6 +16,9 @@ class GameSocket {
   private handlers: ServerEventHandlers = {};
   private connectionState: ConnectionState = 'disconnected';
   private onStateChange?: (state: ConnectionState) => void;
+  private authTimeout?: ReturnType<typeof setTimeout>;
+  private pingInterval?: ReturnType<typeof setInterval>;
+  private latency = 0;
 
   connect(url: string): void {
     if (this.socket?.connected) return;
@@ -26,8 +31,16 @@ class GameSocket {
     });
 
     this.socket.on('connect', () => {
-      console.log('Connected to game server');
-      this.setConnectionState('connected');
+      if (this.socket?.recovered) {
+        // Connection recovered - skip auth, restore state
+        console.log('Connection recovered');
+        this.setConnectionState('authenticated');
+        this.startPingMonitoring();
+      } else {
+        // New connection - need to authenticate
+        console.log('Connected - awaiting auth');
+        this.setConnectionState('connected');
+      }
     });
 
     this.socket.on('disconnect', () => {
@@ -80,13 +93,37 @@ class GameSocket {
   }
 
   disconnect(): void {
+    this.stopPingMonitoring();
+    clearTimeout(this.authTimeout);
     this.socket?.disconnect();
     this.socket = null;
     this.setConnectionState('disconnected');
   }
 
-  authenticate(token: string, characterId: string): void {
-    this.emit('auth', { token, characterId });
+  authenticate(token: string, characterId: string): Promise<Player> {
+    return new Promise((resolve, reject) => {
+      // Set 10 second timeout
+      this.authTimeout = setTimeout(() => {
+        reject(new Error('Authentication timeout'));
+        this.setConnectionState('error');
+      }, 10000);
+
+      this.socket?.emit('auth', { token, characterId });
+
+      // One-time listeners for auth response
+      this.socket?.once('auth:success', (data: { player: Player }) => {
+        clearTimeout(this.authTimeout);
+        this.setConnectionState('authenticated');
+        this.startPingMonitoring();
+        resolve(data.player);
+      });
+
+      this.socket?.once('auth:error', (data: { code: string; message: string; action: string }) => {
+        clearTimeout(this.authTimeout);
+        this.setConnectionState('error');
+        reject(new Error(data.message || 'Authentication failed'));
+      });
+    });
   }
 
   emit<K extends keyof ClientEvents>(event: K, data: ClientEvents[K]): void {
@@ -114,6 +151,36 @@ class GameSocket {
 
   getConnectionState(): ConnectionState {
     return this.connectionState;
+  }
+
+  getLatency(): number {
+    return this.latency;
+  }
+
+  private startPingMonitoring(): void {
+    // Clear any existing interval
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+    }
+
+    this.pingInterval = setInterval(() => {
+      if (this.socket?.connected) {
+        const startTime = Date.now();
+        this.socket.emit('ping', startTime, (responseTime: number) => {
+          this.latency = Date.now() - responseTime;
+          // Import and use gameStore
+          const { setLatency } = useGameStore.getState();
+          setLatency(this.latency);
+        });
+      }
+    }, 5000); // Every 5 seconds
+  }
+
+  private stopPingMonitoring(): void {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = undefined;
+    }
   }
 
   private setConnectionState(state: ConnectionState): void {
