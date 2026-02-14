@@ -80,10 +80,16 @@ importers:
       socket.io-client:
         specifier: ^4.7.0
         version: 4.8.3
+      tslib:
+        specifier: ^2.8.1
+        version: 2.8.1
       zustand:
         specifier: ^4.5.0
         version: 4.5.7(@types/react@18.3.28)(react@18.3.1)
     devDependencies:
+      '@anatine/esbuild-decorators':
+        specifier: ^0.2.19
+        version: 0.2.19(esbuild@0.21.5)
       '@nx/esbuild':
         specifier: ^20.0.0
         version: 20.8.4(@babel/traverse@7.29.0)(@swc-node/register@1.11.1(@swc/core@1.15.11(@swc/helpers@0.5.18))(@swc/types@0.1.25)(typescript@5.9.3))(@swc/core@1.15.11(@swc/helpers@0.5.18))(esbuild@0.21.5)(nx@20.8.4(@swc-node/register@1.11.1(@swc/core@1.15.11(@swc/helpers@0.5.18))(@swc/types@0.1.25)(typescript@5.9.3))(@swc/core@1.15.11(@swc/helpers@0.5.18)))
@@ -200,6 +206,11 @@ importers:
         version: link:../shared-types
 
 packages:
+
+  '@anatine/esbuild-decorators@0.2.19':
+    resolution: {integrity: sha512-pyj6ULyMacyzpDqlnbS2OCkOqxcVgk8IqiTMRJ5CrsF8Yl1azvlX/AM6xWR8UzHKUYDlWOw5mOpos3+7KKR0Lw==}
+    peerDependencies:
+      esbuild: ~0.14.29
 
   '@angular-devkit/core@16.0.1':
     resolution: {integrity: sha512-2uz98IqkKJlgnHbWQ7VeL4pb+snGAZXIama2KXi+k9GsRntdcw+udX8rL3G9SdUGUF+m6+147Y1oRBMHsO/v4w==}
@@ -4811,6 +4822,10 @@ packages:
         optional: true
 
 snapshots:
+
+  '@anatine/esbuild-decorators@0.2.19(esbuild@0.21.5)':
+    dependencies:
+      esbuild: 0.21.5
 
   '@angular-devkit/core@16.0.1':
     dependencies:

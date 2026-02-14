@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, lt } from 'drizzle-orm';
 import { DbClient } from '../client';
 import { accounts, Account, NewAccount } from '../schema/accounts';
 import { sessions, Session, NewSession } from '../schema/sessions';
@@ -72,5 +72,5 @@ export async function deleteAccountSessions(db: DbClient, accountId: string): Pr
  */
 export async function deleteExpiredSessions(db: DbClient): Promise<void> {
   const now = new Date();
-  await db.delete(sessions).where(eq(sessions.expiresAt, now));
+  await db.delete(sessions).where(lt(sessions.expiresAt, now));
 }

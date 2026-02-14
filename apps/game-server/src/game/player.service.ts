@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Player, Position, PlayerPublic, FactionId } from '@into-the-void/shared-types';
+import { DatabaseService } from '../database/database.service';
+import { findCharacterById, isCharacterOwnedByAccount, updateLastPlayed } from '@into-the-void/database';
 
 interface ConnectedPlayer extends Player {
   socketId: string;
@@ -20,7 +22,10 @@ export class PlayerService {
 
   private jwtService: JwtService;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly databaseService: DatabaseService
+  ) {
     this.jwtService = new JwtService({
       secret: configService.get<string>('JWT_SECRET', 'dev-secret-change-in-production'),
     });
@@ -34,20 +39,35 @@ export class PlayerService {
     try {
       // Verify JWT token
       const payload = this.jwtService.verify<{ accountId: string }>(token);
+      const db = this.databaseService.getClient();
 
-      // In a real implementation, fetch character from database
-      // For now, create a mock player
+      // Verify character ownership
+      const isOwned = await isCharacterOwnedByAccount(db, characterId, payload.accountId);
+      if (!isOwned) {
+        return { success: false, error: 'Character not found or not owned by account' };
+      }
+
+      // Fetch character from database
+      const character = await findCharacterById(db, characterId);
+      if (!character) {
+        return { success: false, error: 'Character not found' };
+      }
+
+      // Update last played timestamp
+      await updateLastPlayed(db, characterId);
+
+      // Create connected player from character data
       const player: ConnectedPlayer = {
-        id: characterId,
-        accountId: payload.accountId,
-        name: `Player_${characterId.slice(0, 8)}`,
-        faction: 'neutral' as FactionId,
-        position: { x: 32, y: 32, zoneId: 'z_0_0' },
-        health: 100,
-        maxHealth: 100,
-        level: 1,
-        xp: 0,
-        xpToNextLevel: 100,
+        id: character.id,
+        accountId: character.accountId,
+        name: character.name,
+        faction: character.factionId as FactionId,
+        position: character.position,
+        health: character.health,
+        maxHealth: character.maxHealth,
+        level: character.level,
+        xp: character.xp,
+        xpToNextLevel: character.level * 100,
         inCombat: false,
         online: true,
         socketId,

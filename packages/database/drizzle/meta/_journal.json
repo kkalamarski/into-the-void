@@ -1,0 +1,13 @@
+{
+  "version": "6",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1771019605979,
+      "tag": "0000_wakeful_steel_serpent",
+      "breakpoints": true
+    }
+  ]
+}

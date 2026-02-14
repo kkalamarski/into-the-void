@@ -15,8 +15,7 @@
         "assets": [],
         "generatePackageJson": true,
         "format": ["cjs"],
-        "bundle": true,
-        "thirdParty": false,
+        "bundle": false,
         "esbuildOptions": {
           "sourcemap": true,
           "outExtension": { ".js": ".js" }

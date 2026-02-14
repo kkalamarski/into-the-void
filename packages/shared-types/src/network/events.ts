@@ -48,6 +48,7 @@ export type ServerEventType =
  * Socket.io event map for type safety
  */
 export interface ClientEvents {
+  'auth': import('./messages').AuthRequest;
   'player:move': { direction: import('../core/position').Direction };
   'player:interact': { targetId: string };
   'player:action': { action: string; data?: unknown };

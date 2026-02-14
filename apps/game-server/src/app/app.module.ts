@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { DatabaseModule } from '../database/database.module';
 import { GameModule } from '../game/game.module';
 import { ZonesModule } from '../zones/zones.module';
 
@@ -9,6 +10,7 @@ import { ZonesModule } from '../zones/zones.module';
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
     }),
+    DatabaseModule,
     GameModule,
     ZonesModule,
   ],

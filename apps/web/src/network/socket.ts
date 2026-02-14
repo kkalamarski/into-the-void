@@ -3,7 +3,6 @@ import {
   ClientEvents,
   ServerEvents,
   ConnectionState,
-  AuthRequest,
 } from '@into-the-void/shared-types';
 
 type ServerEventHandlers = {
@@ -71,8 +70,11 @@ class GameSocket {
     ];
 
     for (const event of serverEvents) {
-      this.socket.on(event, (data: ServerEvents[typeof event]) => {
-        this.handlers[event]?.(data);
+      this.socket.on(event, (data: unknown) => {
+        const handler = this.handlers[event];
+        if (handler) {
+          (handler as (data: unknown) => void)(data);
+        }
       });
     }
   }

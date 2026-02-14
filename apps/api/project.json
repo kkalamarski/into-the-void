@@ -17,10 +17,7 @@
         "format": ["cjs"],
         "bundle": true,
         "thirdParty": false,
-        "esbuildOptions": {
-          "sourcemap": true,
-          "outExtension": { ".js": ".js" }
-        }
+        "esbuildConfig": "apps/api/esbuild.config.js"
       }
     },
     "serve": {
