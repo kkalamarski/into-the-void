@@ -85,10 +85,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | NET-01 | Phase 4 | Pending |
 | NET-02 | Phase 4 | Pending |
-| NET-03 | Phase 4 | Pending |
-| NET-04 | Phase 4 | Pending |
+| NET-03 | Phase 6 | Pending |
+| NET-04 | Phase 6 | Pending |
 | NET-05 | Phase 4 | Pending |
-| NET-06 | Phase 4 | Pending |
+| NET-06 | Phase 6 | Pending |
 | REND-01 | Phase 5 | Pending |
 | REND-02 | Phase 5 | Pending |
 | REND-03 | Phase 5 | Pending |
@@ -115,4 +115,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-14*
-*Last updated: 2026-02-14 after v1.1 roadmap creation*
+*Last updated: 2026-02-14 after Phase 04 revision (NET-03, NET-04, NET-06 moved to Phase 6)*

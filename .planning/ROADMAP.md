@@ -44,13 +44,13 @@ Plans:
 #### Phase 4: WebSocket Connection & Auth Handshake
 **Goal**: Secure WebSocket connection with authenticated character in game world
 **Depends on**: Phase 3 (auth flow)
-**Requirements**: NET-01, NET-02, NET-03, NET-04, NET-05, NET-06
+**Requirements**: NET-01 (connect), NET-02 (receive initial state), NET-05 (disconnect handling)
+**Scope**: Connection infrastructure, auth handshake, initial state loading only. NET-03 (send actions), NET-04 (real-time updates), NET-06 (position reconciliation) deferred to Phase 6 (Movement System).
 **Success Criteria** (what must be TRUE):
   1. Player connects to WebSocket with JWT token and characterId after character selection
-  2. Player receives initial game state (position, zone data, entities) from server
-  3. Player can send actions to server and receive real-time updates
-  4. Connection shows "reconnecting" UI on disconnect and restores state on reconnect
-  5. Server validates all player actions and corrects position mismatches
+  2. Player receives initial game state (position, zone data, entities) from server via zone:state event
+  3. Connection shows "reconnecting" UI on disconnect and restores state on reconnect
+  4. Server validates auth and returns player data including spawn position (last saved position)
 **Plans**: 5 plans
 
 Plans:
@@ -58,7 +58,7 @@ Plans:
 - [ ] 04-02-PLAN.md — Client socket auth timeout, latency tracking
 - [ ] 04-03-PLAN.md — LoadingScreen and ConnectionIndicator components
 - [ ] 04-04-PLAN.md — ErrorModal and ReconnectOverlay components
-- [ ] 04-05-PLAN.md — GameScreen connection flow integration
+- [ ] 04-05-PLAN.md — GameScreen connection flow integration + zone:state listener
 
 #### Phase 5: Phaser Integration & World Rendering
 **Goal**: Game world renders with color-coded tiles and smooth camera
@@ -79,12 +79,15 @@ Plans:
 #### Phase 6: Movement System
 **Goal**: Player moves responsively with keyboard and click-to-move
 **Depends on**: Phase 5
-**Requirements**: MOV-01, MOV-02, MOV-03, MOV-04
+**Requirements**: MOV-01, MOV-02, MOV-03, MOV-04, NET-03 (send actions), NET-04 (receive updates), NET-06 (position reconciliation)
 **Success Criteria** (what must be TRUE):
   1. Player moves with WASD or arrow keys with immediate visual feedback
   2. Player moves to clicked location using pathfinding
   3. Movement feels instant (client-side prediction works)
   4. Player cannot walk through walls or into invalid tiles (server validation corrects if needed)
+  5. Client sends movement actions to server (NET-03)
+  6. Client receives real-time position updates from server (NET-04)
+  7. Client reconciles position mismatches with server authority (NET-06)
 **Plans**: TBD
 
 Plans:
