@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Game } from '../game/Game';
 import { GameUI } from '../ui/GameUI';
 import { useGameStore } from '../store/gameStore';
@@ -6,59 +6,82 @@ import { ConnectionIndicator } from './ConnectionIndicator';
 import { ReconnectOverlay } from './ReconnectOverlay';
 import { gameSocket } from '../network/socket';
 import { ChunkData, BiomeType } from '@into-the-void/shared-types';
-import { WorldScene } from '../game/scenes/WorldScene';
 
 const GameContainer: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Game | null>(null);
-  const { connectionState, setGame } = useGameStore();
+  const [phaserReady, setPhaserReady] = useState(false);
 
+  // Subscribe to zoneState from store - this contains zone:state event data
+  const { connectionState, setGame, zoneState, player } = useGameStore();
+
+  // Initialize Phaser game
   useEffect(() => {
     if (gameContainerRef.current && !gameRef.current) {
       const game = new Game(gameContainerRef.current);
       gameRef.current = game;
       setGame(game);
+
+      // Wait for Phaser to be ready
+      game.onReady(() => {
+        setPhaserReady(true);
+      });
     }
 
     return () => {
       if (gameRef.current) {
         gameRef.current.destroy();
         gameRef.current = null;
+        setPhaserReady(false);
       }
     };
   }, [setGame]);
 
-  // Set up chunk loading infrastructure
+  // Load zone data into WorldScene when Phaser is ready and zoneState exists
   useEffect(() => {
-    if (!gameRef.current) return;
+    if (!phaserReady || !gameRef.current || !zoneState) return;
 
-    // Get WorldScene reference
-    const worldScene = gameRef.current.getScene('WorldScene') as WorldScene | undefined;
-    if (!worldScene) return;
+    const worldScene = gameRef.current.getWorldScene();
+    if (!worldScene || !gameRef.current.isWorldSceneActive()) return;
 
-    // Set up chunk request handler
-    worldScene.setChunkRequestHandler((zoneId: string) => {
-      // Request chunk from server via socket
-      // TODO: Server needs to implement:
-      // - 'zone:request' handler to receive { zoneId: string }
-      // - 'zone:chunk' emitter to send { chunk: ChunkData, biome: BiomeType }
-      // For now, only initial zone from zone:state is rendered.
-      gameSocket.emit('zone:request', { zoneId });
+    // zoneState contains the zone:state event data with tiles
+    const { chunk, biome } = zoneState;
+
+    // CRITICAL: Pass tile data from zone:state to WorldScene
+    // This is the key link that connects socket data to Phaser rendering
+    if (chunk && chunk.tiles && chunk.tiles.length > 0) {
+      worldScene.loadZoneFromState(chunk, biome);
+    }
+
+    // Update player position in scene
+    if (player?.position) {
+      worldScene.updateLocalPlayer(player.position);
+    }
+
+    // Set up chunk request handler for adjacent chunks
+    worldScene.setChunkRequestHandler((requestZoneId: string) => {
+      gameSocket.emit('zone:request', { zoneId: requestZoneId });
     });
 
-    // Listen for chunk responses
-    const handleChunkResponse = (data: { chunk: ChunkData; biome: BiomeType }) => {
+  }, [phaserReady, zoneState, player]);
+
+  // Listen for additional chunk data from server (for adjacent chunks)
+  useEffect(() => {
+    if (!phaserReady || !gameRef.current) return;
+
+    const handleChunkData = (data: { chunk: ChunkData; biome: BiomeType }) => {
+      const worldScene = gameRef.current?.getWorldScene();
       if (worldScene) {
         worldScene.receiveChunkData(data.chunk, data.biome);
       }
     };
 
-    gameSocket.on('zone:chunk', handleChunkResponse);
+    gameSocket.on('zone:chunk', handleChunkData);
 
     return () => {
       gameSocket.off('zone:chunk');
     };
-  }, []);
+  }, [phaserReady]);
 
   return (
     <div className="app">
