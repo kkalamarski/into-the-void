@@ -6,6 +6,14 @@ interface GameState {
   // Connection
   connectionState: ConnectionState;
   setConnectionState: (state: ConnectionState) => void;
+  latency: number;
+  setLatency: (latency: number) => void;
+
+  // Loading
+  loadingStage: 'idle' | 'connecting' | 'authenticating' | 'loading-world' | 'spawning' | 'ready';
+  loadingProgress: number;
+  setLoadingStage: (stage: GameState['loadingStage']) => void;
+  setLoadingProgress: (progress: number) => void;
 
   // Game instance
   game: Game | null;
@@ -32,6 +40,14 @@ export const useGameStore = create<GameState>((set) => ({
   // Connection
   connectionState: 'disconnected',
   setConnectionState: (state) => set({ connectionState: state }),
+  latency: 0,
+  setLatency: (latency) => set({ latency }),
+
+  // Loading
+  loadingStage: 'idle',
+  loadingProgress: 0,
+  setLoadingStage: (stage) => set({ loadingStage: stage }),
+  setLoadingProgress: (progress) => set({ loadingProgress: progress }),
 
   // Game instance
   game: null,
