@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, Position, Entity, PlayerPublic, ChunkData, BiomeType } from '@into-the-void/shared-types';
+import { ZONE_SIZE, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction } from '@into-the-void/shared-types';
 import { TileId } from '@into-the-void/world-gen';
 import { TileRenderer } from '../rendering/TileRenderer';
 import { ChunkManager } from '../rendering/ChunkManager';
 import { ViewportCuller } from '../rendering/ViewportCuller';
 import { ZoneHUD } from '../ui/ZoneHUD';
+import { MovementController } from '../systems/MovementController';
 
 const TILE_SIZE = 32;
 
@@ -27,6 +28,7 @@ export class WorldScene extends Phaser.Scene {
   private zoneHUD: ZoneHUD | null = null;
   private currentBiome: BiomeType = 'void_plains';
   private lastCullBounds: { minTileX: number; maxTileX: number; minTileY: number; maxTileY: number } | null = null;
+  private movementController: MovementController | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -44,6 +46,12 @@ export class WorldScene extends Phaser.Scene {
 
     // Initialize ZoneHUD
     this.zoneHUD = new ZoneHUD(this);
+
+    // Initialize MovementController
+    this.movementController = new MovementController();
+    this.movementController.setPositionUpdateHandler((position, reconciling) => {
+      this.updateLocalPlayerSprite(position, reconciling);
+    });
 
     // Initialize ChunkManager
     this.chunkManager = new ChunkManager(
@@ -142,24 +150,18 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private handleInput(time: number): void {
-    if (!this.localPlayer || time - this.lastMoveTime < this.moveDelay) return;
+    if (!this.localPlayer || !this.movementController || time - this.lastMoveTime < this.moveDelay) return;
 
-    let dx = 0;
-    let dy = 0;
+    let direction: Direction | null = null;
 
-    if (this.cursors?.up.isDown || this.wasd?.W.isDown) dy = -1;
-    else if (this.cursors?.down.isDown || this.wasd?.S.isDown) dy = 1;
-    else if (this.cursors?.left.isDown || this.wasd?.A.isDown) dx = -1;
-    else if (this.cursors?.right.isDown || this.wasd?.D.isDown) dx = 1;
+    if (this.cursors?.up.isDown || this.wasd?.W.isDown) direction = 'n';
+    else if (this.cursors?.down.isDown || this.wasd?.S.isDown) direction = 's';
+    else if (this.cursors?.left.isDown || this.wasd?.A.isDown) direction = 'w';
+    else if (this.cursors?.right.isDown || this.wasd?.D.isDown) direction = 'e';
 
-    if (dx !== 0 || dy !== 0) {
-      // Move locally for responsiveness
-      this.localPlayer.x += dx * TILE_SIZE;
-      this.localPlayer.y += dy * TILE_SIZE;
+    if (direction) {
       this.lastMoveTime = time;
-
-      // In a real implementation, we'd send this to the server
-      // and validate the movement
+      this.movementController.processInput(direction);
     }
   }
 
@@ -354,11 +356,30 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  updateLocalPlayer(position: Position): void {
-    if (this.localPlayer) {
-      this.localPlayer.x = position.x * TILE_SIZE + TILE_SIZE / 2;
-      this.localPlayer.y = position.y * TILE_SIZE + TILE_SIZE / 2;
+  updateLocalPlayerSprite(position: Position, reconciling = false): void {
+    if (!this.localPlayer) return;
+
+    const targetX = position.x * TILE_SIZE + TILE_SIZE / 2;
+    const targetY = position.y * TILE_SIZE + TILE_SIZE / 2;
+
+    if (reconciling && (this.localPlayer.x !== targetX || this.localPlayer.y !== targetY)) {
+      // Server correction - tween to correct position
+      this.tweens.add({
+        targets: this.localPlayer,
+        x: targetX,
+        y: targetY,
+        duration: 50,
+        ease: 'Cubic.easeOut',
+      });
+    } else {
+      // Prediction - instant update for responsiveness
+      this.localPlayer.x = targetX;
+      this.localPlayer.y = targetY;
     }
+  }
+
+  updateLocalPlayer(position: Position): void {
+    this.updateLocalPlayerSprite(position, false);
   }
 
   private getEntityTexture(type: string): string {
@@ -389,7 +410,21 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  getMovementController(): MovementController | null {
+    return this.movementController;
+  }
+
+  setCollisionMap(collisionMap: boolean[][]): void {
+    if (this.movementController) {
+      this.movementController.setCollisionMap(collisionMap);
+    }
+  }
+
   shutdown(): void {
+    if (this.movementController) {
+      this.movementController.clearPendingInputs();
+      this.movementController = null;
+    }
     if (this.zoneHUD) {
       this.zoneHUD.destroy();
       this.zoneHUD = null;
