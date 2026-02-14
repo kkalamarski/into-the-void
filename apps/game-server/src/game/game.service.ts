@@ -13,6 +13,7 @@ import {
   validateMovement,
   isZoneTransition,
 } from '@into-the-void/game-logic';
+import { getBiome } from '@into-the-void/world-gen';
 
 interface MoveResult {
   success: boolean;
@@ -42,12 +43,19 @@ export class GameService {
   async getZoneState(zoneId: string): Promise<ZoneState> {
     const entities = await this.zonesService.getZoneEntities(zoneId);
     const players = this.playerService.getPlayersInZone(zoneId);
+    const chunk = await this.zonesService.getChunk(zoneId);
+
+    // Parse zone coordinates and get biome
+    const [, x, y] = zoneId.split('_').map(Number);
+    const biome = getBiome(this.zonesService.getWorldSeed(), x, y);
 
     return {
       zoneId,
       entities,
       players,
       lastUpdate: Date.now(),
+      chunk,
+      biome,
     };
   }
 

@@ -65,6 +65,10 @@ export interface ZoneState {
   players: PlayerPublic[];
   /** Last update timestamp */
   lastUpdate: number;
+  /** Chunk terrain data for this zone */
+  chunk: ChunkData;
+  /** Primary biome of this zone */
+  biome: BiomeType;
 }
 
 /**
