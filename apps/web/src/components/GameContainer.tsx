@@ -2,6 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { Game } from '../game/Game';
 import { GameUI } from '../ui/GameUI';
 import { useGameStore } from '../store/gameStore';
+import { ConnectionIndicator } from './ConnectionIndicator';
+import { ReconnectOverlay } from './ReconnectOverlay';
 
 const GameContainer: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -27,12 +29,12 @@ const GameContainer: React.FC = () => {
     <div className="app">
       <div ref={gameContainerRef} className="game-container" />
       <GameUI />
-      {connectionState === 'connecting' && (
-        <div className="loading-overlay">
-          <div className="loading-spinner" />
-          <p>Connecting to server...</p>
-        </div>
-      )}
+
+      {/* Always visible connection indicator */}
+      <ConnectionIndicator />
+
+      {/* Show reconnect overlay when disconnected (but not on error) */}
+      {connectionState === 'disconnected' && <ReconnectOverlay visible={true} />}
     </div>
   );
 };
