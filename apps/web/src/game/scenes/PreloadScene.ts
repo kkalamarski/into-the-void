@@ -49,50 +49,74 @@ export class PreloadScene extends Phaser.Scene {
   private loadAssets(): void {
     this.load.setPath('assets/');
 
-    // Generate placeholder textures for now
-    this.generatePlaceholderTextures();
+    // Generate tile textures for all biomes
+    this.generateTileTextures();
   }
 
-  private generatePlaceholderTextures(): void {
-    // Generate placeholder tile textures
+  private generateTileTextures(): void {
+    const TILE_SIZE = 32;
     const graphics = this.make.graphics({ x: 0, y: 0 });
 
-    // Floor tile
-    graphics.fillStyle(0x3a3a4a);
-    graphics.fillRect(0, 0, 32, 32);
-    graphics.lineStyle(1, 0x2a2a3a);
-    graphics.strokeRect(0, 0, 32, 32);
-    graphics.generateTexture('tile_floor', 32, 32);
-    graphics.clear();
+    // Define all tile textures (16 total - 8 biomes, 2 tiles each)
+    const tileTextures = [
+      // Void Plains
+      { key: 'tile_void_floor', color: 0x4a4a5a, border: 0x3a3a4a },
+      { key: 'tile_void_wall', color: 0x1a1a2a, border: 0x0a0a1a },
+      // Crystal Caves
+      { key: 'tile_crystal_floor', color: 0x5b48ce, border: 0x4b38be },
+      { key: 'tile_crystal_formation', color: 0x7b68ee, border: 0x6b58de },
+      // Toxic Wastes
+      { key: 'tile_toxic_floor', color: 0x7aad12, border: 0x6a9d02 },
+      { key: 'tile_toxic_pool', color: 0x9acd32, border: 0x8abd22 },
+      // Ancient Ruins
+      { key: 'tile_ruins_floor', color: 0x7b6345, border: 0x6b5335 },
+      { key: 'tile_ruins_wall', color: 0x8b7355, border: 0x7b6345 },
+      // Frozen Expanse
+      { key: 'tile_ice_floor', color: 0xa0d0d6, border: 0x90c0c6 },
+      { key: 'tile_ice_wall', color: 0xb0e0e6, border: 0xa0d0d6 },
+      // Volcanic Ridge
+      { key: 'tile_volcanic_floor', color: 0xdf2500, border: 0xcf1500 },
+      { key: 'tile_lava', color: 0xff4500, border: 0xef3500 },
+      // Fungal Forest
+      { key: 'tile_fungal_floor', color: 0x8360cb, border: 0x7350bb },
+      { key: 'tile_fungal_growth', color: 0x9370db, border: 0x8360cb },
+      // Starfall Crater
+      { key: 'tile_crater_floor', color: 0x090960, border: 0x000050 },
+      { key: 'tile_crater_debris', color: 0x191970, border: 0x090960 },
+    ];
 
-    // Wall tile
-    graphics.fillStyle(0x1a1a2a);
-    graphics.fillRect(0, 0, 32, 32);
-    graphics.generateTexture('tile_wall', 32, 32);
-    graphics.clear();
+    // Generate each tile texture
+    for (const tile of tileTextures) {
+      graphics.fillStyle(tile.color);
+      graphics.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      graphics.lineStyle(1, tile.border);
+      graphics.strokeRect(0, 0, TILE_SIZE, TILE_SIZE);
+      graphics.generateTexture(tile.key, TILE_SIZE, TILE_SIZE);
+      graphics.clear();
+    }
 
     // Player
     graphics.fillStyle(0x7b68ee);
     graphics.fillCircle(16, 16, 12);
-    graphics.generateTexture('player', 32, 32);
+    graphics.generateTexture('player', TILE_SIZE, TILE_SIZE);
     graphics.clear();
 
     // Creature
     graphics.fillStyle(0xff4444);
     graphics.fillCircle(16, 16, 10);
-    graphics.generateTexture('creature', 32, 32);
+    graphics.generateTexture('creature', TILE_SIZE, TILE_SIZE);
     graphics.clear();
 
     // Mineral
     graphics.fillStyle(0x44ffff);
     graphics.fillRect(8, 8, 16, 16);
-    graphics.generateTexture('mineral', 32, 32);
+    graphics.generateTexture('mineral', TILE_SIZE, TILE_SIZE);
     graphics.clear();
 
     // Item
     graphics.fillStyle(0xffff44);
     graphics.fillCircle(16, 16, 6);
-    graphics.generateTexture('item', 32, 32);
+    graphics.generateTexture('item', TILE_SIZE, TILE_SIZE);
     graphics.clear();
 
     graphics.destroy();
