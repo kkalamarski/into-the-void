@@ -15,11 +15,9 @@
         "assets": [],
         "generatePackageJson": true,
         "format": ["cjs"],
-        "bundle": false,
-        "esbuildOptions": {
-          "sourcemap": true,
-          "outExtension": { ".js": ".js" }
-        }
+        "bundle": true,
+        "thirdParty": false,
+        "esbuildConfig": "apps/game-server/esbuild.config.js"
       }
     },
     "serve": {
