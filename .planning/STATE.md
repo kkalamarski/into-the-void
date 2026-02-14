@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 4 of 7 (WebSocket Connection & Auth Handshake)
-Plan: 2 of 5 complete
+Plan: 1 of 5 complete
 Status: In progress
-Last activity: 2026-02-14 — Completed 04-02-PLAN.md (Client Socket Enhancements)
+Last activity: 2026-02-14 — Completed 04-01-PLAN.md (Enhanced WebSocket Auth & Error Handling)
 
-Progress: [████░░░░░░] 50% (v1.0: 7/7 plans, v1.1: 2/5 plans)
+Progress: [███░░░░░░░] 47% (v1.0: 7/7 plans, v1.1: 1/5 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9 (v1.0: 7 plans, v1.1: 2 plans)
-- Average duration: 2m 29s
-- Total execution time: 0.37 hours
+- Total plans completed: 8 (v1.0: 7 plans, v1.1: 1 plans)
+- Average duration: 2m 32s
+- Total execution time: 0.34 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [████░░░░░░] 50% (v1.0: 7/7 plans, v1.1: 2/5 plans
 | 01-authentication-navigation | 3 | 5m 40s | 1m 53s |
 | 02-character-selection | 2 | 3m 19s | 1m 40s |
 | 03-character-creation | 2 | 13m 17s | 6m 39s |
-| 04-websocket-connection-auth-handshake | 2 | 4m 32s | 2m 16s |
+| 04-websocket-connection-auth-handshake | 1 | 2m 51s | 2m 51s |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (2m 4s), 03-01 (1m 13s), 03-02 (12m 4s), 04-01 (2m 16s), 04-02 (2m 16s)
-- Trend: Stable around 2m for v1.1 plans
+- Last 5 plans: 02-01 (1m 15s), 02-02 (2m 4s), 03-01 (1m 13s), 03-02 (12m 4s), 04-01 (2m 51s)
+- Trend: Stable around 2m for non-checkpoint plans
 
 ## Accumulated Context
 
@@ -46,9 +46,10 @@ Recent decisions affecting v1.1 work:
 - React screens (not Phaser menus): Auth forms are standard web UI, React handles this better
 - React Router v7 action pattern: Modern form handling, automatic revalidation
 - Lore-correct factions: Verdant/Helix/Nexus match world-bible.md
-- 10-second authentication timeout prevents indefinite waiting (04-02)
-- 5-second ping interval balances latency accuracy with network overhead (04-02)
-- Loading stage enum supports granular progress UI (04-02)
+- E-XXXX error code format for user-facing errors with action hints (04-01)
+- 5-second auth timeout prevents stuck connections (04-01)
+- 2-minute connection state recovery window for brief disconnects (04-01)
+- Ping/pong using simple timestamp echo pattern (04-01)
 
 ### Pending Todos
 
@@ -69,8 +70,8 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 04-02-PLAN.md (Client Socket Enhancements)
+Stopped at: Completed 04-01-PLAN.md (Enhanced WebSocket Auth & Error Handling)
 Resume file: None
 
 ---
-*Next step: Execute next plan in Phase 4 or continue with remaining plans*
+*Next step: Execute 04-02-PLAN.md*
