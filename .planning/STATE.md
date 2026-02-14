@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 6 of 7 (Player Movement & Interaction)
-Plan: 2 of 5 complete
+Plan: 3 of 5 complete
 Status: In progress
-Last activity: 2026-02-14 — Completed 06-01-PLAN.md (Client-Side Prediction)
+Last activity: 2026-02-14 — Completed 06-03-PLAN.md (Click-to-Move Pathfinding)
 
-Progress: [█████████░] 92% (v1.0: 7/7 plans, v1.1: 14/17 plans)
+Progress: [█████████░] 93% (v1.0: 7/7 plans, v1.1: 15/17 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 19 (v1.0: 7 plans, v1.1: 12 plans)
-- Average duration: 2m 38s
-- Total execution time: 0.84 hours
+- Total plans completed: 20 (v1.0: 7 plans, v1.1: 13 plans)
+- Average duration: 2m 35s
+- Total execution time: 0.87 hours
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: [█████████░] 92% (v1.0: 7/7 plans, v1.1: 14/17 pla
 | 03-character-creation | 2 | 13m 17s | 6m 39s |
 | 04-websocket-connection-auth-handshake | 5 | 17m 11s | 3m 26s |
 | 05-phaser-integration-world-rendering | 5 | 17m 20s | 3m 28s |
-| 06-movement-system | 2 | 4m 26s | 2m 13s |
+| 06-movement-system | 3 | 6m 34s | 2m 11s |
 
 **Recent Trend:**
-- Last 5 plans: 05-03 (2m 10s), 05-04 (4m 15s), 05-05 (45s), 06-02 (1m 28s), 06-01 (2m 58s)
-- Trend: Phase 06 progress continues with 2m 13s avg
+- Last 5 plans: 05-04 (4m 15s), 05-05 (45s), 06-02 (1m 28s), 06-01 (2m 58s), 06-03 (2m 8s)
+- Trend: Phase 06 progress continues with 2m 11s avg
 
 ## Accumulated Context
 
@@ -82,6 +82,9 @@ Recent decisions affecting v1.1 work:
 - [Phase 06-02]: 140ms rate limit (10ms tolerance below 150ms client delay) prevents movement spam
 - [Phase 06-02]: Echo sequence in all responses including errors for client reconciliation
 - [Phase 06-02]: Use Map for rate limit tracking rather than Player object for clean separation
+- [Phase 06-03]: PathfindingController uses MovementController.processInput() for prediction consistency
+- [Phase 06-03]: 150ms delay between path steps matches WASD movement timing
+- [Phase 06-03]: WASD input immediately cancels active pathfinding
 
 ### Pending Todos
 
@@ -102,8 +105,8 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 06-01-PLAN.md (Client-Side Prediction)
+Stopped at: Completed 06-03-PLAN.md (Click-to-Move Pathfinding)
 Resume file: None
 
 ---
-*Next step: Continue Phase 06 (Player Movement & Interaction) - 3 plans remaining for v1.1 milestone*
+*Next step: Continue Phase 06 (Player Movement & Interaction) - 2 plans remaining for v1.1 milestone*
