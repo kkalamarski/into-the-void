@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Players can create an account, log in, and select/create characters before entering the game world.
-**Current focus:** Phase 6 - Player Movement & Interaction
+**Current focus:** Phase 7 - Entities & HUD
 
 ## Current Position
 
-Phase: 6 of 7 (Player Movement & Interaction)
-Plan: 4 of 5
-Status: In progress
-Last activity: 2026-02-14 — Completed 06-04-PLAN.md (Server Reconciliation)
+Phase: 7 of 7 (Entities & HUD)
+Plan: 0 of TBD
+Status: Ready to plan
+Last activity: 2026-02-15 — Completed Phase 06 (Movement System)
 
-Progress: [█████████░] 94% (v1.0: 7/7 plans, v1.1: 16/17 plans)
+Progress: [██████████] 100% (v1.0: 7/7 plans, v1.1: 17/17 plans executed, Phase 7 not yet planned)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21 (v1.0: 7 plans, v1.1: 14 plans)
-- Average duration: 2m 36s
-- Total execution time: 0.91 hours
+- Total plans completed: 22 (v1.0: 7 plans, v1.1: 15 plans)
+- Average duration: 2m 34s
+- Total execution time: ~0.94 hours
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: [█████████░] 94% (v1.0: 7/7 plans, v1.1: 16/17 pla
 | 03-character-creation | 2 | 13m 17s | 6m 39s |
 | 04-websocket-connection-auth-handshake | 5 | 17m 11s | 3m 26s |
 | 05-phaser-integration-world-rendering | 5 | 17m 20s | 3m 28s |
-| 06-movement-system | 4 | 9m 11s | 2m 17s |
+| 06-movement-system | 5 | ~12m | 2m 24s |
 
 **Recent Trend:**
-- Last 5 plans: 05-05 (45s), 06-02 (1m 28s), 06-01 (2m 58s), 06-03 (2m 8s), 06-04 (2m 37s)
-- Trend: Phase 06 maintaining steady 2m 17s avg
+- Last 5 plans: 06-01 (2m 58s), 06-02 (1m 28s), 06-03 (2m 8s), 06-04 (2m 37s), 06-05 (verification)
+- Phase 06 completed with 4 bug fixes during human verification
 
 ## Accumulated Context
 
@@ -89,10 +89,15 @@ Recent decisions affecting v1.1 work:
 - [Phase 06-04]: Zone transitions detected by comparing currentZoneId !== zoneId
 - [Phase 06-04]: Pending inputs cleared on zone transition to prevent carryover prediction
 - [Phase 06-04]: player:moved handler checks for sequence number support (backward compatible)
+- [Phase 06-05]: Reconcile only updates sprite on actual position mismatch (fixes jitter)
+- [Phase 06-05]: HUD requires pointer-events: none to allow canvas clicks
+- [Phase 06-05]: Collision map set in GameContainer effect (zone:state arrives before Game created)
+- [Phase 06-05]: Removed placeholder world that conflicted with server collision map
+- [Phase 06 COMPLETE]: Movement with WASD, click-to-move pathfinding, server validation all functional
 
 ### Pending Todos
 
-None yet.
+- Adjacent chunk loading timing out (Phase 5 scope, edge jitter symptom)
 
 ### Blockers/Concerns
 
@@ -104,13 +109,14 @@ None yet.
 - Phase 4: WebSocket auth without handshake validation (guards needed on all handlers)
 - Phase 4: Race condition between socket join and async DB queries (check connected status)
 - Phase 5: Phaser memory leaks on React unmount (proper cleanup sequence needed) — RESOLVED: Game.destroy() cleanup verified in 05-05
+- Phase 5: Adjacent chunk loading timing out (zone:request not implemented on server?)
 - Phase 6: Client prediction without server reconciliation (sequence numbers, rollback) — RESOLVED: Server reconciliation implemented in 06-04
 
 ## Session Continuity
 
-Last session: 2026-02-14
-Stopped at: Completed 06-04-PLAN.md (Server Reconciliation)
+Last session: 2026-02-15
+Stopped at: Completed Phase 06 (Movement System) - All 5 plans verified and approved
 Resume file: None
 
 ---
-*Next step: Continue Phase 06 (Player Movement & Interaction) - 1 plan remaining for v1.1 milestone*
+*Next step: Plan Phase 07 (Entities & HUD) - Final phase for v1.1 milestone*
