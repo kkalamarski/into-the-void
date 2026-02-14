@@ -110,6 +110,10 @@ export class PlayerService {
     return player?.socketId;
   }
 
+  isAuthenticated(socketId: string): boolean {
+    return this.socketToPlayer.has(socketId);
+  }
+
   getPlayersInZone(zoneId: string): PlayerPublic[] {
     const players: PlayerPublic[] = [];
     for (const player of this.players.values()) {
