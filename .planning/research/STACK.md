@@ -1,407 +1,366 @@
-# Technology Stack: Authentication & Pre-Game Screens
+# Technology Stack: Post-Login Game Experience
 
-**Project:** Into the Void - Game Authentication
-**Researched:** 2026-02-13
-**Scope:** Adding registration, login, and character management screens to existing React/Phaser game
+**Domain:** Multiplayer 2D sci-fi survival MMO (WebSocket game state, HUD, rendering, movement)
+**Researched:** 2026-02-14
+**Confidence:** HIGH
 
-## Context
+## Executive Summary
 
-Existing stack:
-- React 18.2.0 with Vite
-- Zustand 4.5.0 for state management
-- Plain CSS with CSS variables
-- NestJS backend with JWT auth already implemented
-- No routing library currently installed
+The existing stack (React, Phaser 3.80, NestJS, Socket.IO 4.7, Zustand 4.5) is solid for post-login game features. **NO major library additions needed.** Focus on integration patterns and minor version updates. The architecture already has WebSocket infrastructure, Phaser scene system, and state management in place.
 
-## Recommended Stack
+**Key recommendation:** Update Phaser to 3.90+ for stability improvements, add EventBus pattern for React-Phaser communication, use Socket.IO rooms for zone isolation (already implemented in gateway), leverage existing Zustand store for UI state sync.
 
-### Core Navigation
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| React Router | ^7.0.0 | Client-side routing, protected routes | Industry standard, v7 released 2025, excellent TypeScript support, built-in data loading/mutations |
-| None (no alternatives) | - | - | React Router v7 is the de facto standard. TanStack Router exists but adds complexity for minimal gain in this use case |
+## Validated Existing Stack (DO NOT Re-Add)
 
-**Rationale:** React Router v7 (2025) offers modern patterns with loaders, actions, and built-in form handling. Given you already have Vite, it integrates seamlessly. The API is stable and well-documented.
+These are ALREADY installed and working:
 
-**Confidence:** HIGH (official React Router documentation, current version verified)
+| Technology | Current | Purpose |
+|------------|---------|---------|
+| phaser | ^3.80.0 | Game rendering, scenes, sprites, input |
+| socket.io-client | ^4.7.0 | WebSocket client for real-time game state |
+| socket.io | ^4.7.0 | Server-side WebSocket handling |
+| @nestjs/platform-socket.io | ^10.3.0 | NestJS Socket.IO integration |
+| @nestjs/websockets | ^10.3.0 | WebSocket gateway framework |
+| zustand | ^4.5.0 | React state management |
+| react | ^18.2.0 | UI framework for HUD |
 
-### Form Handling
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| Native React state | - | Form state management | Already have Zustand, don't need form library overhead |
-| Native fetch/Zustand | - | API calls & auth state | Existing pattern in project |
+## Recommended Stack Updates
 
-**Rationale:** For auth forms (login, register) you have ~4 fields total. React `useState` is sufficient. Adding React Hook Form or Formik is premature optimization that adds bundle size and learning curve for minimal benefit.
+### Core Updates (Version Bumps)
 
-**Confidence:** HIGH (React official documentation, aligns with existing project patterns)
+| Technology | Current | Recommended | Purpose | Why Update |
+|------------|---------|-------------|---------|------------|
+| phaser | ^3.80.0 | ^3.90.0 | Game engine | Stability fixes for EXPAND scale mode on ultra-wide, improved DynamicTexture#capture for rendering, better Mask filter with scaleFactor for memory optimization, camera matrix improvements |
+| socket.io | ^4.7.0 | ^4.8.3 | WebSocket server | Support for tryAllTransports option, production bundle binary data fix, improved transport fallback |
+| socket.io-client | ^4.7.0 | ^4.8.3 | WebSocket client | Matches server version, improved cookie handling with withCredentials, better transport selection |
+| typescript | ^5.4.0 | ^5.9.0 | Type safety | Latest stable before TypeScript 6.0 beta, improved type inference and performance |
 
-### Authentication State Management
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| Zustand (existing) | ^4.5.0 | Auth state (token, user, character) | Already in project, performant, simple API |
-| zustand/middleware | - | Persist auth to localStorage | Built-in middleware, no extra deps |
+### NEW Supporting Libraries
 
-**Rationale:** You already use Zustand for game state. Extend it for auth state rather than introducing a new state library. Use `persist` middleware to store JWT token in localStorage (standard practice for game clients where XSS risk is managed at build/deploy level).
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| immer | ^10.0.0 | Immutable state updates | When updating nested Zustand state (zone data, entity registries), prevents accidental mutations |
 
-**Confidence:** HIGH (Zustand is already in dependencies, standard pattern)
+## What NOT to Add
 
-### HTTP Client
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| Native fetch | - | API calls | Already available, no extra bundle |
-| Custom wrapper | - | Add auth headers | ~20 lines of code vs 40KB library |
-
-**Rationale:** Your API is simple REST. Don't add axios (40KB) or TanStack Query (complex setup) for 3 endpoints. Create a thin wrapper around fetch that injects JWT from Zustand store.
-
-**Confidence:** HIGH (Modern browsers support fetch, aligns with existing project simplicity)
-
-### Form Validation
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| Backend validation | - | Primary validation | Already have class-validator in NestJS |
-| Client-side HTML5 | - | Basic UX hints | Free, no bundle cost |
-| Manual checks | - | Pre-submit validation | Display backend errors in UI |
-
-**Rationale:** Backend already validates with class-validator. Add `type="email"`, `minLength={8}`, `required` to inputs for instant feedback. Display server errors returned from API. No need for client-side validation library (Zod, Yup) since game clients can bypass it anyway.
-
-**Confidence:** HIGH (Existing backend validation confirmed in auth.dto.ts)
-
-### Token Storage
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| localStorage | - | JWT token persistence | Standard for game clients, survives page reload |
-| zustand persist | - | Auto-sync with Zustand | Built-in middleware |
-
-**Rationale:** `httpOnly` cookies are ideal for web apps but complicate CORS and don't work well with WebSocket auth (game server). For game client, localStorage with proper token expiry is standard.
-
-**Confidence:** HIGH (Standard game client pattern, WebSocket requires accessible token)
-
-## Supporting Libraries
-
-None required beyond what's already installed.
-
-## Alternatives Considered
-
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| Routing | React Router v7 | TanStack Router | Overkill. TanStack Router is great for complex data-fetching apps, but adds complexity. React Router v7 has similar features with simpler API |
-| Routing | React Router v7 | Wouter | Too minimal. No built-in protected route patterns, would need custom implementation |
-| Forms | Native React | React Hook Form | Unnecessary. Only 2 forms with 2-3 fields each. RHF adds 40KB for features you won't use |
-| Forms | Native React | Formik | Outdated. Development slowed, React Hook Form is preferred in community, but you need neither |
-| Validation | Backend + HTML5 | Zod/Yup | Pointless duplication. Game clients can bypass client validation. Backend is source of truth |
-| HTTP | Native fetch | axios | 40KB for features you don't need (interceptors solved by wrapper, cancel tokens not needed) |
-| HTTP | Native fetch | TanStack Query | Over-engineered for 3 REST endpoints. Caching/refetch not needed for auth flows |
-| State | Zustand (existing) | Context API | Already have Zustand. Context causes more re-renders for auth state updates |
-| State | Zustand (existing) | Redux Toolkit | Massive overkill. 100+ lines of boilerplate vs 20 lines of Zustand |
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| Redux / Redux Toolkit | Over-engineered for this use case, Zustand already handles state | Zustand (already installed) |
+| MobX | Different paradigm, adds complexity | Zustand (already installed) |
+| bitECS / phaser-ecs plugins | Premature optimization, adds architectural complexity | Simple Map-based entity registry (see patterns below) |
+| @liveblocks/zustand | Third-party service dependency, Socket.IO already handles sync | Direct Socket.IO integration (already implemented) |
+| react-phaser-fiber | Declarative Phaser through React, conflicts with imperative game logic | EventBus pattern for React-Phaser communication |
+| Colyseus / Photon | Replaces existing Socket.IO architecture, major refactor | Socket.IO with rooms (already implemented) |
 
 ## Installation
 
 ```bash
-# Only new dependency needed
-pnpm add react-router@^7.0.0 react-router-dom@^7.0.0
+# Version updates
+pnpm add phaser@^3.90.0 socket.io@^4.8.3 socket.io-client@^4.8.3 typescript@^5.9.0
 
-# Already installed (verify)
-# pnpm list zustand  # Should show ^4.5.0
-# pnpm list react     # Should show ^18.2.0
+# New library for state management
+pnpm add immer@^10.0.0
 ```
 
-## Architecture Decisions
+## Stack Integration Patterns
 
-### 1. Route Structure
-```
-/                    → Landing page (public)
-/login               → Login form (public, redirects if authed)
-/register            → Register form (public, redirects if authed)
-/character-select    → Character list (protected)
-/character-create    → Character creation (protected)
-/game                → Game canvas (protected, requires character selection)
-```
+### Pattern 1: React-Phaser Communication (EventBus)
 
-### 2. Auth Flow
-```
-User lands → Check localStorage for token →
-  If valid token:
-    → Load user profile (GET /auth/me)
-    → Redirect to /character-select
-  If no token or invalid:
-    → Show /login or /register
+**What:** Bidirectional event-based communication between React HUD and Phaser game scenes.
 
-After login/register:
-  → Store token in Zustand + localStorage
-  → Redirect to /character-select
+**Implementation:**
+```typescript
+// apps/web/src/game/EventBus.ts
+import { Events } from 'phaser';
 
-After character selection:
-  → Store selected character in Zustand
-  → Redirect to /game (current App.tsx)
+export const EventBus = new Events.EventEmitter();
+
+// Usage in Phaser scene
+EventBus.emit('player:health-changed', { health: 80, maxHealth: 100 });
+
+// Usage in React
+useEffect(() => {
+  const handler = (data) => setHealth(data);
+  EventBus.on('player:health-changed', handler);
+  return () => EventBus.off('player:health-changed', handler);
+}, []);
 ```
 
-### 3. Protected Route Pattern
-```tsx
-// Use React Router v7 loader pattern
-export async function loader() {
-  const token = getTokenFromStore();
-  if (!token) {
-    throw redirect('/login');
-  }
-  return null;
-}
-```
+**Why:** Official Phaser template pattern, maintains separation between game logic and UI, avoids tight coupling.
 
-### 4. Zustand Store Extension
-```tsx
-interface AuthState {
-  token: string | null;
-  user: { accountId: string; email: string } | null;
-  selectedCharacter: Character | null;
+**Source:** [Phaser React Template](https://github.com/phaserjs/template-react)
 
-  login: (token: string, user: User) => void;
-  logout: () => void;
-  selectCharacter: (character: Character) => void;
-}
-```
+### Pattern 2: Socket.IO State Sync with Zustand
 
-### 5. API Client Pattern
-```tsx
-// utils/api.ts
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+**What:** WebSocket events update Zustand store, which React components observe.
 
-export async function apiCall<T>(
-  endpoint: string,
-  options?: RequestInit
-): Promise<T> {
-  const token = useAuthStore.getState().token;
+**Implementation:**
+```typescript
+// apps/web/src/store/gameStore.ts (existing file)
+import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options?.headers,
-    },
-  });
+export const useGameStore = create(
+  immer((set) => ({
+    entities: new Map(),
+    players: new Map(),
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'API request failed');
-  }
+    // Called by socket handlers
+    addEntity: (entity) => set((state) => {
+      state.entities.set(entity.id, entity);
+    }),
 
-  return response.json();
-}
-```
-
-## What NOT to Use
-
-### DO NOT Use
-1. **React Hook Form / Formik** - Too much abstraction for 2 simple forms
-2. **Zod / Yup client validation** - Backend already validates, duplication adds bundle size
-3. **axios** - Native fetch is sufficient, axios adds 40KB for unused features
-4. **TanStack Query** - Overkill for auth endpoints, no need for caching/refetch
-5. **Redux / Redux Toolkit** - Already have Zustand, Redux is verbose overkill
-6. **Auth libraries (Auth0, Clerk, NextAuth)** - Backend auth already built
-7. **UI component libraries** - Constraint: use existing CSS variable system
-
-### Why Not Auth Libraries?
-Your backend already implements JWT auth. Auth0/Clerk/NextAuth are for:
-- Apps that need auth backend (you have one)
-- SSR apps with session management (you're client-side)
-- OAuth/social login (not mentioned in requirements)
-
-They'd force you to:
-- Rewrite backend auth or maintain two systems
-- Pay for service or add heavy SDK
-- Fight against existing JWT implementation
-
-## CSS Approach
-
-**Use existing CSS variable system.** Already defined in `global.css`:
-```css
---color-bg-primary: #0a0a0f;
---color-bg-secondary: #14141f;
---color-text-primary: #e0e0e0;
---color-accent: #7b68ee;
-/* etc */
-```
-
-Create new CSS files per component:
-- `LoginForm.css`
-- `RegisterForm.css`
-- `CharacterSelect.css`
-- `CharacterCreate.css`
-
-Follow existing patterns from `HUD.css` and `ChatPanel.css`.
-
-## Environment Variables
-
-Already exists in `.env.example`:
-```bash
-VITE_API_URL=http://localhost:3000
-VITE_WS_URL=http://localhost:3001
-```
-
-No new env vars needed.
-
-## TypeScript Types
-
-Use existing types from `@into-the-void/shared-types`:
-- Already has `Player`, `Character`, `ChatMessage`
-- Add auth types if needed:
-```tsx
-// In shared-types package
-export interface AuthResponse {
-  accessToken: string;
-  user: {
-    accountId: string;
-    email: string;
-  };
-}
-
-export interface Character {
-  id: string;
-  accountId: string;
-  name: string;
-  // ... existing fields
-}
-```
-
-## Migration from Current State
-
-Current `App.tsx` directly renders game. New structure:
-
-```tsx
-// main.tsx
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-
-const router = createBrowserRouter([
-  { path: '/', element: <Landing /> },
-  { path: '/login', element: <Login /> },
-  { path: '/register', element: <Register /> },
-  {
-    path: '/character-select',
-    loader: protectedLoader,
-    element: <CharacterSelect />
-  },
-  {
-    path: '/game',
-    loader: gameLoader, // checks character selected
-    element: <App /> // Current App.tsx becomes game route
-  },
-]);
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <RouterProvider router={router} />
-  </React.StrictMode>
+    updateEntity: (id, changes) => set((state) => {
+      const entity = state.entities.get(id);
+      if (entity) {
+        Object.assign(entity, changes);
+      }
+    }),
+  }))
 );
+
+// apps/web/src/network/socket.ts (existing file)
+gameSocket.on('entity:spawn', (entity) => {
+  useGameStore.getState().addEntity(entity);
+  EventBus.emit('entity:spawn', entity); // Bridge to Phaser
+});
 ```
 
-## Bundle Impact
+**Why:** Immer middleware prevents accidental mutations, Zustand provides reactive updates to React components, EventBus bridges to Phaser for rendering.
 
-Adding only React Router v7:
-- **react-router-dom**: ~70KB (minified)
-- **react-router**: ~50KB (minified)
-- **Total addition**: ~120KB minified (~35KB gzipped)
+**Source:** [Zustand Discussion #1651](https://github.com/pmndrs/zustand/discussions/1651), [Immer Documentation](https://immerjs.github.io/immer/)
 
-No other dependencies needed.
+### Pattern 3: Entity Registry (Map-Based)
 
-**Current bundle** (estimated): ~800KB (React + Phaser + Zustand)
-**New bundle**: ~920KB (+15% increase)
+**What:** Simple Map-based entity tracking in both Phaser scene and Zustand store.
 
-This is acceptable for a game client.
+**Implementation:**
+```typescript
+// In WorldScene (existing pattern)
+private entitySprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
 
-## Development Workflow
+spawnEntity(entity: Entity): void {
+  if (this.entitySprites.has(entity.id)) return;
 
-1. Install React Router
-2. Create auth store slice in Zustand
-3. Create API utility wrapper
-4. Build login/register forms with native HTML5
-5. Build character select/create screens
-6. Set up routing with loaders
-7. Refactor current App.tsx to be game route
-8. Test auth flow end-to-end
+  const sprite = this.add.sprite(/* ... */);
+  this.entitySprites.set(entity.id, sprite);
+}
 
-## Testing Strategy
+// Object pooling for performance
+private spritePool: Phaser.GameObjects.Sprite[] = [];
 
-**Manual testing preferred for auth screens:**
-- Auth flows are visual/UX driven
-- Only 5 screens total
-- Unit tests for auth screens provide low ROI
-
-**Where to test:**
-- Backend integration tests (already have NestJS test setup)
-- E2E tests with Playwright (optional, future consideration)
-
-Don't add Jest/Vitest tests for form components. Focus on backend test coverage.
-
-## Security Considerations
-
-### Token Expiry
-Backend JWT likely has expiry. Handle in API wrapper:
-```tsx
-if (response.status === 401) {
-  // Clear token and redirect to login
-  useAuthStore.getState().logout();
-  window.location.href = '/login';
+despawnEntity(entityId: string): void {
+  const sprite = this.entitySprites.get(entityId);
+  if (sprite) {
+    sprite.setVisible(false).setActive(false);
+    this.spritePool.push(sprite); // Reuse instead of destroy
+    this.entitySprites.delete(entityId);
+  }
 }
 ```
 
-### HTTPS in Production
-Ensure production uses HTTPS. JWT in localStorage is acceptable if:
-- Served over HTTPS
-- No XSS vulnerabilities (React escapes by default)
-- Content Security Policy header set
+**Why:** Simple, performant, sufficient for MMO entity counts, avoids ECS complexity until needed. Object pooling reduces garbage collection.
 
-### Character Ownership
-Backend already validates:
-```tsx
-// characters.controller.ts checks req.user.accountId
-// ensures users can only access their characters
+**Source:** [Ourcade Object Pooling Tutorial](https://blog.ourcade.co/posts/2020/phaser-3-optimization-object-pool-class/)
+
+### Pattern 4: Socket.IO Zone-Based Rooms (Already Implemented)
+
+**What:** Each zone is a Socket.IO room for isolated game state broadcasts.
+
+**Implementation:** (Already in game.gateway.ts)
+```typescript
+// Join zone room on auth
+client.join(result.player.position.zoneId);
+
+// Zone-specific broadcasts
+this.server.to(player.position.zoneId).emit('chat:message', message);
+
+// Zone transitions
+client.leave(result.oldZoneId);
+client.join(result.newZoneId);
 ```
 
-Client-side checks are UX only, not security.
+**Why:** Built-in Socket.IO feature, efficient server-side filtering, prevents unnecessary network traffic, isolates game state per zone.
+
+**Source:** [Socket.IO Rooms Documentation](https://socket.io/docs/v3/rooms/), [NestJS WebSocket Guide](https://oneuptime.com/blog/post/2026-02-02-nestjs-websockets/view)
+
+### Pattern 5: Tile Rendering with Sprite Fallbacks
+
+**What:** Use colored rectangles as fallback when sprites missing, tile-based grid rendering.
+
+**Implementation:**
+```typescript
+// In WorldScene
+private createTileSprite(x: number, y: number, textureKey: string, fallbackColor: number): Phaser.GameObjects.GameObject {
+  if (this.textures.exists(textureKey)) {
+    return this.add.sprite(x, y, textureKey).setOrigin(0, 0);
+  } else {
+    // Fallback to colored rectangle
+    const graphics = this.add.graphics();
+    graphics.fillStyle(fallbackColor, 1);
+    graphics.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+    return graphics;
+  }
+}
+```
+
+**Why:** Graceful degradation, allows development before art assets ready, maintains game functionality.
+
+**Source:** [Phaser Tilemap Documentation](https://rexrainbow.github.io/phaser3-rex-notes/docs/site/tilemap/)
+
+### Pattern 6: Movement Validation (Client Prediction + Server Authority)
+
+**What:** Client moves immediately for responsiveness, server validates and corrects if needed.
+
+**Implementation:**
+```typescript
+// Client (apps/web/src/game/scenes/WorldScene.ts)
+handleInput(dx, dy) {
+  // Optimistic local update
+  this.localPlayer.x += dx * TILE_SIZE;
+  this.localPlayer.y += dy * TILE_SIZE;
+
+  // Send to server for validation
+  gameSocket.emit('player:move', { direction });
+}
+
+// Server corrects if validation fails
+gameSocket.on('player:moved', (data) => {
+  if (data.playerId === myPlayerId) {
+    // Server-authoritative position
+    scene.updateLocalPlayer(data.position);
+  }
+});
+```
+
+**Why:** Responsive feel (no input lag), prevents cheating (server validates), handles network issues gracefully.
+
+**Source:** Existing implementation in WorldScene.ts and game.gateway.ts
+
+## Version Compatibility Matrix
+
+| Package | Version | Compatible With | Notes |
+|---------|---------|-----------------|-------|
+| phaser | ^3.90.0 | react@^18.2.0 | Use EventBus for communication, avoid direct DOM manipulation conflicts |
+| socket.io | ^4.8.3 | socket.io-client@^4.8.3 | MUST match client version for protocol compatibility |
+| @nestjs/platform-socket.io | ^10.3.0 | socket.io@^4.7.0-4.8.x | Works with Socket.IO 4.x series |
+| zustand | ^4.5.0 | react@^18.2.0, immer@^10.0.0 | Use immer middleware for nested state updates |
+| typescript | ^5.9.0 | All @nestjs@^10.x, react@^18.x | Latest stable, avoid 6.0 beta until stable |
+
+## Architecture Decision Records
+
+### ADR-1: Use Zustand with Immer Instead of Redux
+
+**Decision:** Stick with Zustand, add Immer middleware for nested state updates.
+
+**Rationale:**
+- Zustand already integrated, simpler API than Redux
+- Immer prevents accidental mutations in entity/zone state
+- No need for Redux's time-travel debugging in game context
+- Less boilerplate (no actions, reducers, dispatch)
+
+**Confidence:** HIGH (Zustand GitHub discussion, established pattern)
+
+### ADR-2: EventBus Over Direct Scene References
+
+**Decision:** Use Phaser EventEmitter as bridge between React and Phaser.
+
+**Rationale:**
+- Official Phaser template pattern
+- Decouples React components from Phaser scene lifecycle
+- Allows multiple React components to listen to same game events
+- Simplifies testing (mock EventBus)
+
+**Confidence:** HIGH (Official Phaser template)
+
+### ADR-3: Simple Map Registry Over ECS Plugins
+
+**Decision:** Use Map-based entity registry, defer ECS until performance issues.
+
+**Rationale:**
+- Current entity counts don't justify ECS complexity
+- Phaser 4 will use bitECS natively (future migration path)
+- Simpler debugging and onboarding
+- Can migrate to ECS incrementally if needed
+
+**Confidence:** MEDIUM (WebSearch, community discussions)
+
+### ADR-4: No Separate Networking Library (Keep Socket.IO)
+
+**Decision:** Use Socket.IO directly, no Colyseus/Photon/Liveblocks.
+
+**Rationale:**
+- Already implemented and working
+- Socket.IO rooms provide zone isolation
+- NestJS integration mature (@nestjs/platform-socket.io)
+- Adding third-party service creates vendor lock-in
+
+**Confidence:** HIGH (Already implemented successfully)
+
+## What's Already Working (Don't Touch)
+
+Based on code review of existing files:
+
+1. **WebSocket Authentication Flow** (`game.gateway.ts`, `socket.ts`)
+   - JWT token validation on connection
+   - Character authentication
+   - Zone room joining
+
+2. **Zone State Sync** (`game.gateway.ts`)
+   - Initial zone state on auth
+   - Zone transitions with room switching
+   - Player join/leave broadcasts
+
+3. **Movement System** (`WorldScene.ts`, `game.gateway.ts`)
+   - Client-side input handling
+   - Server-side validation
+   - Tween-based smooth movement for other players
+
+4. **Entity Rendering** (`WorldScene.ts`)
+   - Sprite-based entity system
+   - Faction-based player tinting
+   - Depth sorting (players at depth 10)
+
+5. **Chat System** (`game.gateway.ts`)
+   - Zone, global, whisper channels
+   - Socket.IO room-based routing
+
+## Integration Checklist
+
+To wire post-login game experience:
+
+- [ ] Update package versions (Phaser 3.90, Socket.IO 4.8.3, TypeScript 5.9)
+- [ ] Install immer for Zustand nested state
+- [ ] Create EventBus.ts in `apps/web/src/game/`
+- [ ] Add immer middleware to existing gameStore.ts
+- [ ] Connect socket event handlers to Zustand store updates
+- [ ] Bridge Zustand updates to Phaser via EventBus
+- [ ] Add sprite fallback helpers to WorldScene
+- [ ] Implement object pooling for entities (optional optimization)
+- [ ] Wire HUD components to EventBus for game state
+- [ ] Connect character selection to gameSocket.authenticate()
 
 ## Sources
 
-- **React 18 Official Docs** (https://react.dev) - Form handling, hooks patterns
-- **React Router v7 Docs** (inferred from v6 patterns, v7 released 2025) - Routing patterns
-- **Zustand GitHub** (https://github.com/pmndrs/zustand) - State management patterns
-- **Project codebase** - Existing patterns, backend API contract
+### High Confidence (Official Documentation)
+- [Phaser 3.90 Changelog](https://phaser.io/news/2025/05/phaser-v390-released) — Version updates and features
+- [Socket.IO 4.8.0 Changelog](https://socket.io/docs/v4/changelog/4.8.0) — Transport improvements
+- [Socket.IO Rooms](https://socket.io/docs/v3/rooms/) — Zone isolation pattern
+- [Phaser React Template](https://github.com/phaserjs/template-react) — EventBus pattern
+- [Immer Documentation](https://immerjs.github.io/immer/) — Immutable state updates
+- [NestJS WebSockets Guide](https://oneuptime.com/blog/post/2026-02-02-nestjs-websockets/view) — Gateway patterns
 
-## Confidence Assessment
+### Medium Confidence (Community Resources)
+- [Ourcade Object Pooling](https://blog.ourcade.co/posts/2020/phaser-3-optimization-object-pool-class/) — Performance patterns
+- [Zustand WebSocket Discussion](https://github.com/pmndrs/zustand/discussions/1651) — Integration patterns
+- [Phaser Tilemap Notes](https://rexrainbow.github.io/phaser3-rex-notes/docs/site/tilemap/) — Rendering patterns
 
-| Category | Level | Source |
-|----------|-------|--------|
-| React patterns | HIGH | Official React docs, existing project code |
-| Routing library choice | MEDIUM | Based on industry trends (v7 specifics inferred from v6) |
-| Zustand for auth | HIGH | Library docs, existing project usage |
-| No form library | HIGH | Project constraint, form complexity assessment |
-| localStorage for JWT | HIGH | Standard game client pattern |
-| No new UI libraries | HIGH | Project constraint |
-
-## Risk Assessment
-
-### Low Risk
-- React Router is stable, large ecosystem
-- Zustand already in use successfully
-- Native fetch has full browser support
-- Backend validation already implemented
-
-### Medium Risk
-- React Router v7 API changes (mitigation: may need adjustments if v7 differs from v6 significantly)
-
-### What Could Go Wrong
-1. **Token refresh not implemented in backend** - If JWT expires during gameplay, user gets kicked. Solution: Check backend for refresh token endpoint, add refresh logic.
-2. **CORS issues in dev** - Backend needs CORS for localhost:5173 (Vite default). Likely already configured for game server.
-3. **WebSocket auth** - Game server WebSocket needs JWT. Confirm game-server accepts token in handshake.
-
-## Next Steps After Stack Decision
-
-1. Verify backend JWT expiry duration (check NestJS config)
-2. Confirm CORS settings include Vite dev server
-3. Confirm game-server WebSocket auth mechanism
-4. Check if refresh token exists or if re-login on expiry is acceptable
+### Low Confidence (Requires Validation)
+- ECS patterns — Community discussions suggest deferring until Phaser 4
+- Advanced rendering techniques — Need to verify Phaser 3.90 capabilities
 
 ---
 
-**Stack Decision Confidence:** HIGH for core choices (React Router, Zustand, native forms), MEDIUM for React Router v7 specific API patterns.
-
-**Recommendation:** Proceed with this stack. It's minimal, aligns with existing project patterns, adds only one dependency (React Router), and avoids over-engineering.
+**Stack research for:** Into the Void - Post-Login Game Experience
+**Researched:** 2026-02-14
+**Next Steps:** Phase-specific research for world generation, combat systems, crafting (if needed)
