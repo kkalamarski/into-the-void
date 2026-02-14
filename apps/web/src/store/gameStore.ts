@@ -95,13 +95,41 @@ export const useGameStore = create<GameState>((set) => ({
 // Listen for initial game state from server
 gameSocket.on('zone:state', (data: ZoneState) => {
   const { zoneId, entities, players, chunk } = data;
+  const currentZoneId = useGameStore.getState().zoneId;
+  const game = useGameStore.getState().game;
+
+  // Detect zone transition
+  const isZoneTransition = currentZoneId !== null && currentZoneId !== zoneId;
 
   // Store zone data and entities
   useGameStore.getState().setZoneState(data);
 
-  // CRITICAL: Update collision map for client-side prediction
+  // Update collision map for client-side prediction
   if (chunk?.collisions) {
     useGameStore.getState().setCollisionMap(chunk.collisions);
+
+    // Also push to WorldScene immediately
+    if (game) {
+      const worldScene = game.getWorldScene();
+      if (worldScene) {
+        worldScene.setCollisionMap(chunk.collisions);
+      }
+    }
+  }
+
+  // On zone transition, reset prediction state
+  if (isZoneTransition && game) {
+    const worldScene = game.getWorldScene();
+    if (worldScene) {
+      const movementController = worldScene.getMovementController();
+      if (movementController) {
+        movementController.clearPendingInputs();
+      }
+      const pathfindingController = worldScene.getPathfindingController();
+      if (pathfindingController) {
+        pathfindingController.cancelPath();
+      }
+    }
   }
 
   // Find current player in the players list and update position if provided
