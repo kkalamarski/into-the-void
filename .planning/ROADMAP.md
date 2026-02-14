@@ -51,11 +51,14 @@ Plans:
   3. Player can send actions to server and receive real-time updates
   4. Connection shows "reconnecting" UI on disconnect and restores state on reconnect
   5. Server validates all player actions and corrects position mismatches
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md — Server-side auth timeout, error codes, ping handler
+- [ ] 04-02-PLAN.md — Client socket auth timeout, latency tracking
+- [ ] 04-03-PLAN.md — LoadingScreen and ConnectionIndicator components
+- [ ] 04-04-PLAN.md — ErrorModal and ReconnectOverlay components
+- [ ] 04-05-PLAN.md — GameScreen connection flow integration
 
 #### Phase 5: Phaser Integration & World Rendering
 **Goal**: Game world renders with color-coded tiles and smooth camera
@@ -114,7 +117,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Authentication & Navigation | v1.0 | 3/3 | Complete | 2026-02-13 |
 | 2. Character Selection | v1.0 | 2/2 | Complete | 2026-02-14 |
 | 3. Character Creation | v1.0 | 2/2 | Complete | 2026-02-14 |
-| 4. WebSocket Connection & Auth Handshake | v1.1 | 0/0 | Not started | - |
+| 4. WebSocket Connection & Auth Handshake | v1.1 | 0/5 | Planned | - |
 | 5. Phaser Integration & World Rendering | v1.1 | 0/0 | Not started | - |
 | 6. Movement System | v1.1 | 0/0 | Not started | - |
 | 7. Entities & HUD | v1.1 | 0/0 | Not started | - |
