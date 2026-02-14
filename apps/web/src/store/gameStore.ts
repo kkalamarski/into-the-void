@@ -26,6 +26,7 @@ interface GameState {
 
   // World state
   zoneId: string | null;
+  zoneState: ZoneState | null;
   entities: Entity[];
   setZoneState: (state: ZoneState) => void;
   setEntities: (entities: Entity[]) => void;
@@ -66,8 +67,9 @@ export const useGameStore = create<GameState>((set) => ({
 
   // World state
   zoneId: null,
+  zoneState: null,
   entities: [],
-  setZoneState: (state) => set({ zoneId: state.zoneId, entities: state.entities }),
+  setZoneState: (state) => set({ zoneId: state.zoneId, zoneState: state, entities: state.entities }),
   setEntities: (entities) => set({ entities }),
 
   // UI State
