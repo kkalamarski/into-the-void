@@ -46,7 +46,9 @@ export class GameService {
     const chunk = await this.zonesService.getChunk(zoneId);
 
     // Parse zone coordinates and get biome
-    const [, x, y] = zoneId.split('_').map(Number);
+    const parts = zoneId.split('_');
+    const x = parseInt(parts[1], 10);
+    const y = parseInt(parts[2], 10);
     const biome = getBiome(this.zonesService.getWorldSeed(), x, y);
 
     return {
