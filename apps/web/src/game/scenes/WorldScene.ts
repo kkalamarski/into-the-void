@@ -88,17 +88,7 @@ export class WorldScene extends Phaser.Scene {
       };
     }
 
-    // Tiles will be loaded via loadZoneFromState() when zone:state event arrives
-    // For now, keep placeholder for standalone testing
-    this.generatePlaceholderWorld();
-
-    // Create local player for testing
-    this.createLocalPlayer({ x: 32, y: 32, zoneId: 'z_0_0' });
-
-    // Center camera on player
-    if (this.localPlayer) {
-      this.cameras.main.startFollow(this.localPlayer, true, 0.1, 0.1);
-    }
+    // Tiles and player will be loaded via loadZoneFromState() when zone:state event arrives
 
     // Setup camera zoom controls
     this.input.on('wheel', (
@@ -408,7 +398,14 @@ export class WorldScene extends Phaser.Scene {
   }
 
   updateLocalPlayer(position: Position): void {
-    this.updateLocalPlayerSprite(position, false);
+    // Create player sprite if it doesn't exist
+    if (!this.localPlayer) {
+      this.createLocalPlayer(position);
+      // Set up camera to follow player
+      this.cameras.main.startFollow(this.localPlayer!, true, 0.1, 0.1);
+    } else {
+      this.updateLocalPlayerSprite(position, false);
+    }
   }
 
   private getEntityTexture(type: string): string {
