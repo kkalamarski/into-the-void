@@ -113,7 +113,7 @@ export class WorldScene extends Phaser.Scene {
     });
 
     // Click-to-move handler
-    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
       // Only handle left click for movement
       if (pointer.rightButtonDown()) return;
 

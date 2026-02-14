@@ -108,7 +108,7 @@ gameSocket.on('zone:state', (data: ZoneState) => {
   if (chunk?.collisions) {
     useGameStore.getState().setCollisionMap(chunk.collisions);
 
-    // Also push to WorldScene immediately
+    // Also push to WorldScene immediately if available
     if (game) {
       const worldScene = game.getWorldScene();
       if (worldScene) {

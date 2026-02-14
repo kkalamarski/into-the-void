@@ -82,10 +82,16 @@ Use these for imports across packages:
 - `@into-the-void/world-gen`
 
 ## IMPORTANT
-* Always check if the implemented feature is compatible with /lore directory. Ihe information there are non-negotiable, and are the source of truth.
+* Always check if the implemented feature is compatible with /lore directory. The information there is non-negotiable, and are the source of truth.
 
 * Whenever it makes sense, use strategy pattern, to easily add variant implementation 
 
 * If any change to lore is needed (expanding, adding more details or changing something) ask. Always ask about lore changes.
 
 * The UI is divided in two parts - game canvas and HUD. This is a top-down (angled) 2D game based on sprites. If there is no sprite, add a fallback color tile.
+
+* if docker is not available, use podman
+
+* do not start dev servers, unless you want to see the output or test it. If you start one, kill it after you used it
+
+* sprite size is 96x96

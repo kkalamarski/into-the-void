@@ -53,6 +53,11 @@ const GameContainer: React.FC = () => {
       worldScene.loadZoneFromState(chunk, biome);
     }
 
+    // CRITICAL: Set collision map for pathfinding and movement validation
+    if (chunk && chunk.collisions) {
+      worldScene.setCollisionMap(chunk.collisions);
+    }
+
     // Update player position in scene
     if (player?.position) {
       worldScene.updateLocalPlayer(player.position);
