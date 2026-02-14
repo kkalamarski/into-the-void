@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-14)
 ## Current Position
 
 Phase: 6 of 7 (Player Movement & Interaction)
-Plan: 3 of 5 complete
+Plan: 4 of 5
 Status: In progress
-Last activity: 2026-02-14 — Completed 06-03-PLAN.md (Click-to-Move Pathfinding)
+Last activity: 2026-02-14 — Completed 06-04-PLAN.md (Server Reconciliation)
 
-Progress: [█████████░] 93% (v1.0: 7/7 plans, v1.1: 15/17 plans)
+Progress: [█████████░] 94% (v1.0: 7/7 plans, v1.1: 16/17 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20 (v1.0: 7 plans, v1.1: 13 plans)
-- Average duration: 2m 35s
-- Total execution time: 0.87 hours
+- Total plans completed: 21 (v1.0: 7 plans, v1.1: 14 plans)
+- Average duration: 2m 36s
+- Total execution time: 0.91 hours
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: [█████████░] 93% (v1.0: 7/7 plans, v1.1: 15/17 pla
 | 03-character-creation | 2 | 13m 17s | 6m 39s |
 | 04-websocket-connection-auth-handshake | 5 | 17m 11s | 3m 26s |
 | 05-phaser-integration-world-rendering | 5 | 17m 20s | 3m 28s |
-| 06-movement-system | 3 | 6m 34s | 2m 11s |
+| 06-movement-system | 4 | 9m 11s | 2m 17s |
 
 **Recent Trend:**
-- Last 5 plans: 05-04 (4m 15s), 05-05 (45s), 06-02 (1m 28s), 06-01 (2m 58s), 06-03 (2m 8s)
-- Trend: Phase 06 progress continues with 2m 11s avg
+- Last 5 plans: 05-05 (45s), 06-02 (1m 28s), 06-01 (2m 58s), 06-03 (2m 8s), 06-04 (2m 37s)
+- Trend: Phase 06 maintaining steady 2m 17s avg
 
 ## Accumulated Context
 
@@ -85,6 +85,10 @@ Recent decisions affecting v1.1 work:
 - [Phase 06-03]: PathfindingController uses MovementController.processInput() for prediction consistency
 - [Phase 06-03]: 150ms delay between path steps matches WASD movement timing
 - [Phase 06-03]: WASD input immediately cancels active pathfinding
+- [Phase 06-04]: Collision map pushed to WorldScene immediately on zone:state for instant availability
+- [Phase 06-04]: Zone transitions detected by comparing currentZoneId !== zoneId
+- [Phase 06-04]: Pending inputs cleared on zone transition to prevent carryover prediction
+- [Phase 06-04]: player:moved handler checks for sequence number support (backward compatible)
 
 ### Pending Todos
 
@@ -100,13 +104,13 @@ None yet.
 - Phase 4: WebSocket auth without handshake validation (guards needed on all handlers)
 - Phase 4: Race condition between socket join and async DB queries (check connected status)
 - Phase 5: Phaser memory leaks on React unmount (proper cleanup sequence needed) — RESOLVED: Game.destroy() cleanup verified in 05-05
-- Phase 6: Client prediction without server reconciliation (sequence numbers, rollback)
+- Phase 6: Client prediction without server reconciliation (sequence numbers, rollback) — RESOLVED: Server reconciliation implemented in 06-04
 
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 06-03-PLAN.md (Click-to-Move Pathfinding)
+Stopped at: Completed 06-04-PLAN.md (Server Reconciliation)
 Resume file: None
 
 ---
-*Next step: Continue Phase 06 (Player Movement & Interaction) - 2 plans remaining for v1.1 milestone*
+*Next step: Continue Phase 06 (Player Movement & Interaction) - 1 plan remaining for v1.1 milestone*
