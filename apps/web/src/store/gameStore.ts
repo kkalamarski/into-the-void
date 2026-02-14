@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Player, ConnectionState, ChatMessage, Entity, ZoneState } from '@into-the-void/shared-types';
+import { Player, ConnectionState, ChatMessage, Entity, ZoneState, Position } from '@into-the-void/shared-types';
 import { Game } from '../game/Game';
 import { gameSocket } from '../network/socket';
 
@@ -28,8 +28,10 @@ interface GameState {
   zoneId: string | null;
   zoneState: ZoneState | null;
   entities: Entity[];
+  collisionMap: boolean[][] | null;
   setZoneState: (state: ZoneState) => void;
   setEntities: (entities: Entity[]) => void;
+  setCollisionMap: (map: boolean[][]) => void;
 
   // UI State
   showInventory: boolean;
@@ -69,8 +71,10 @@ export const useGameStore = create<GameState>((set) => ({
   zoneId: null,
   zoneState: null,
   entities: [],
+  collisionMap: null,
   setZoneState: (state) => set({ zoneId: state.zoneId, zoneState: state, entities: state.entities }),
   setEntities: (entities) => set({ entities }),
+  setCollisionMap: (map) => set({ collisionMap: map }),
 
   // UI State
   showInventory: false,
@@ -90,10 +94,15 @@ export const useGameStore = create<GameState>((set) => ({
 
 // Listen for initial game state from server
 gameSocket.on('zone:state', (data: ZoneState) => {
-  const { zoneId, entities, players } = data;
+  const { zoneId, entities, players, chunk } = data;
 
   // Store zone data and entities
   useGameStore.getState().setZoneState(data);
+
+  // CRITICAL: Update collision map for client-side prediction
+  if (chunk?.collisions) {
+    useGameStore.getState().setCollisionMap(chunk.collisions);
+  }
 
   // Find current player in the players list and update position if provided
   const currentPlayer = useGameStore.getState().player;
@@ -109,4 +118,33 @@ gameSocket.on('zone:state', (data: ZoneState) => {
 
   // Update loading progress (zone data received)
   useGameStore.getState().setLoadingProgress(80);
+});
+
+// Handle movement updates from server
+gameSocket.on('player:moved', (data: { playerId: string; position: Position; lastProcessedInput?: number }) => {
+  const currentPlayer = useGameStore.getState().player;
+  const game = useGameStore.getState().game;
+
+  if (!currentPlayer || !game) return;
+
+  const worldScene = game.getWorldScene();
+  if (!worldScene) return;
+
+  if (data.playerId === currentPlayer.id) {
+    // Local player moved - reconcile with server
+    const movementController = worldScene.getMovementController();
+    if (movementController && data.lastProcessedInput !== undefined) {
+      movementController.reconcile(data.position, data.lastProcessedInput);
+    } else {
+      // No sequence number (legacy) - just update position
+      useGameStore.getState().setPlayer({
+        ...currentPlayer,
+        position: data.position,
+      });
+      worldScene.updateLocalPlayer(data.position);
+    }
+  } else {
+    // Other player moved - tween their sprite
+    worldScene.movePlayer(data.playerId, data.position);
+  }
 });
