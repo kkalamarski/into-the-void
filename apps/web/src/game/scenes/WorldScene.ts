@@ -6,6 +6,7 @@ import { ChunkManager } from '../rendering/ChunkManager';
 import { ViewportCuller } from '../rendering/ViewportCuller';
 import { ZoneHUD } from '../ui/ZoneHUD';
 import { MovementController } from '../systems/MovementController';
+import { PathfindingController } from '../systems/PathfindingController';
 
 const TILE_SIZE = 32;
 
@@ -29,6 +30,8 @@ export class WorldScene extends Phaser.Scene {
   private currentBiome: BiomeType = 'void_plains';
   private lastCullBounds: { minTileX: number; maxTileX: number; minTileY: number; maxTileY: number } | null = null;
   private movementController: MovementController | null = null;
+  private pathfindingController: PathfindingController | null = null;
+  private collisionMap: boolean[][] | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -52,6 +55,9 @@ export class WorldScene extends Phaser.Scene {
     this.movementController.setPositionUpdateHandler((position, reconciling) => {
       this.updateLocalPlayerSprite(position, reconciling);
     });
+
+    // Initialize PathfindingController (after MovementController)
+    this.pathfindingController = new PathfindingController(this.movementController, this.moveDelay);
 
     // Initialize ChunkManager
     this.chunkManager = new ChunkManager(
@@ -104,6 +110,24 @@ export class WorldScene extends Phaser.Scene {
       const zoom = this.cameras.main.zoom;
       const newZoom = Phaser.Math.Clamp(zoom - deltaY * 0.001, 0.5, 2);
       this.cameras.main.setZoom(newZoom);
+    });
+
+    // Click-to-move handler
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      // Only handle left click for movement
+      if (pointer.rightButtonDown()) return;
+
+      // Convert screen position to world position
+      const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+
+      // Convert to tile coordinates
+      const tileX = Math.floor(worldPoint.x / TILE_SIZE);
+      const tileY = Math.floor(worldPoint.y / TILE_SIZE);
+
+      // Start pathfinding if we have collision map
+      if (this.pathfindingController && this.collisionMap) {
+        this.pathfindingController.startPath(tileX, tileY, this.collisionMap);
+      }
     });
   }
 
@@ -160,6 +184,11 @@ export class WorldScene extends Phaser.Scene {
     else if (this.cursors?.right.isDown || this.wasd?.D.isDown) direction = 'e';
 
     if (direction) {
+      // Cancel any active pathfinding when WASD is used
+      if (this.pathfindingController?.isPathActive()) {
+        this.pathfindingController.cancelPath();
+      }
+
       this.lastMoveTime = time;
       this.movementController.processInput(direction);
     }
@@ -414,13 +443,22 @@ export class WorldScene extends Phaser.Scene {
     return this.movementController;
   }
 
+  getPathfindingController(): PathfindingController | null {
+    return this.pathfindingController;
+  }
+
   setCollisionMap(collisionMap: boolean[][]): void {
+    this.collisionMap = collisionMap;
     if (this.movementController) {
       this.movementController.setCollisionMap(collisionMap);
     }
   }
 
   shutdown(): void {
+    if (this.pathfindingController) {
+      this.pathfindingController.cancelPath();
+      this.pathfindingController = null;
+    }
     if (this.movementController) {
       this.movementController.clearPendingInputs();
       this.movementController = null;
