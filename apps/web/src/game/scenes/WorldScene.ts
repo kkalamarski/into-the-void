@@ -23,6 +23,10 @@ export class WorldScene extends Phaser.Scene {
   private chunkContainers: Map<string, Phaser.GameObjects.Container> = new Map();
   private currentZoneId: string = 'z_0_0';
   private onChunkRequest: ((zoneId: string) => void) | null = null;
+  private viewportCuller: ViewportCuller | null = null;
+  private zoneHUD: ZoneHUD | null = null;
+  private currentBiome: BiomeType = 'void_plains';
+  private lastCullBounds: { minTileX: number; maxTileX: number; minTileY: number; maxTileY: number } | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -34,6 +38,12 @@ export class WorldScene extends Phaser.Scene {
 
     // Initialize TileRenderer
     this.tileRenderer = new TileRenderer(this, TILE_SIZE);
+
+    // Initialize ViewportCuller
+    this.viewportCuller = new ViewportCuller(TILE_SIZE, 2);
+
+    // Initialize ZoneHUD
+    this.zoneHUD = new ZoneHUD(this);
 
     // Initialize ChunkManager
     this.chunkManager = new ChunkManager(
@@ -128,6 +138,7 @@ export class WorldScene extends Phaser.Scene {
 
   update(time: number): void {
     this.handleInput(time);
+    this.updateVisibleTiles();
   }
 
   private handleInput(time: number): void {
@@ -149,6 +160,36 @@ export class WorldScene extends Phaser.Scene {
 
       // In a real implementation, we'd send this to the server
       // and validate the movement
+    }
+  }
+
+  private updateVisibleTiles(): void {
+    if (!this.viewportCuller || this.tileSprites.length === 0) return;
+
+    const bounds = this.viewportCuller.getCullBounds(this.cameras.main);
+
+    // Skip if bounds haven't changed (optimization)
+    if (this.lastCullBounds &&
+        this.lastCullBounds.minTileX === bounds.minTileX &&
+        this.lastCullBounds.maxTileX === bounds.maxTileX &&
+        this.lastCullBounds.minTileY === bounds.minTileY &&
+        this.lastCullBounds.maxTileY === bounds.maxTileY) {
+      return;
+    }
+
+    this.lastCullBounds = bounds;
+
+    // Update tile visibility
+    for (let y = 0; y < this.tileSprites.length; y++) {
+      for (let x = 0; x < this.tileSprites[y].length; x++) {
+        const tile = this.tileSprites[y][x];
+        if (tile) {
+          const isVisible = this.viewportCuller.isTileVisible(x, y, bounds);
+          if (tile.visible !== isVisible) {
+            tile.setVisible(isVisible);
+          }
+        }
+      }
     }
   }
 
@@ -214,6 +255,14 @@ export class WorldScene extends Phaser.Scene {
 
     // Store container
     this.chunkContainers.set(zoneId, container);
+
+    // Update biome and HUD for current zone
+    if (zoneId === this.currentZoneId) {
+      this.currentBiome = biome;
+      if (this.zoneHUD) {
+        this.zoneHUD.updateZone(zoneId, biome);
+      }
+    }
   }
 
   private unloadChunkContainer(zoneId: string): void {
@@ -341,11 +390,17 @@ export class WorldScene extends Phaser.Scene {
   }
 
   shutdown(): void {
+    if (this.zoneHUD) {
+      this.zoneHUD.destroy();
+      this.zoneHUD = null;
+    }
     if (this.chunkManager) {
       this.chunkManager.clear();
       this.chunkManager = null;
     }
     this.chunkContainers.forEach(container => container.destroy(true));
     this.chunkContainers.clear();
+    this.tileSprites = [];
+    this.lastCullBounds = null;
   }
 }

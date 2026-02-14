@@ -23,7 +23,8 @@ export type ClientEventType =
   | 'chat:send'
   | 'inventory:use'
   | 'inventory:drop'
-  | 'inventory:pickup';
+  | 'inventory:pickup'
+  | 'zone:request';
 
 /**
  * Server-to-client event types
@@ -31,6 +32,7 @@ export type ClientEventType =
 export type ServerEventType =
   | 'zone:state'
   | 'zone:update'
+  | 'zone:chunk'
   | 'entity:spawn'
   | 'entity:despawn'
   | 'entity:update'
@@ -57,6 +59,7 @@ export interface ClientEvents {
   'inventory:use': { instanceId: string };
   'inventory:drop': { instanceId: string; quantity: number };
   'inventory:pickup': { entityId: string };
+  'zone:request': { zoneId: string };
 }
 
 /**
@@ -65,6 +68,7 @@ export interface ClientEvents {
 export interface ServerEvents {
   'zone:state': import('../core/zone').ZoneState;
   'zone:update': Partial<import('../core/zone').ZoneState>;
+  'zone:chunk': { chunk: import('../core/zone').ChunkData; biome: import('../game/biome').BiomeType };
   'entity:spawn': import('../core/entity').Entity;
   'entity:despawn': { entityId: string };
   'entity:update': { entityId: string; changes: Partial<import('../core/entity').Entity> };
