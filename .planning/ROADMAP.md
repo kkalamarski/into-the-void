@@ -93,11 +93,14 @@ Plans:
   5. Client sends movement actions to server (NET-03)
   6. Client receives real-time position updates from server (NET-04)
   7. Client reconciles position mismatches with server authority (NET-06)
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01-PLAN.md — MovementController with client-side prediction
+- [ ] 06-02-PLAN.md — Server-side sequence tracking and rate limiting
+- [ ] 06-03-PLAN.md — PathfindingController for click-to-move
+- [ ] 06-04-PLAN.md — Server reconciliation and collision map sync
+- [ ] 06-05-PLAN.md — Human verification checkpoint
 
 #### Phase 7: Entities & HUD
 **Goal**: Players see other entities and have HUD with health/energy/zone info
@@ -127,5 +130,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Character Creation | v1.0 | 2/2 | Complete | 2026-02-14 |
 | 4. WebSocket Connection & Auth Handshake | v1.1 | 5/5 | Complete | 2026-02-14 |
 | 5. Phaser Integration & World Rendering | v1.1 | 5/5 | Complete | 2026-02-14 |
-| 6. Movement System | v1.1 | 0/0 | Not started | - |
+| 6. Movement System | v1.1 | 0/5 | Not started | - |
 | 7. Entities & HUD | v1.1 | 0/0 | Not started | - |
