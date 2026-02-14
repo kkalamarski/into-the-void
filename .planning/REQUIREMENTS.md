@@ -83,36 +83,36 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NET-01 | — | Pending |
-| NET-02 | — | Pending |
-| NET-03 | — | Pending |
-| NET-04 | — | Pending |
-| NET-05 | — | Pending |
-| NET-06 | — | Pending |
-| REND-01 | — | Pending |
-| REND-02 | — | Pending |
-| REND-03 | — | Pending |
-| REND-04 | — | Pending |
-| REND-05 | — | Pending |
-| MOV-01 | — | Pending |
-| MOV-02 | — | Pending |
-| MOV-03 | — | Pending |
-| MOV-04 | — | Pending |
-| HUD-01 | — | Pending |
-| HUD-02 | — | Pending |
-| HUD-03 | — | Pending |
-| HUD-04 | — | Pending |
-| ENT-01 | — | Pending |
-| ENT-02 | — | Pending |
-| ENT-03 | — | Pending |
-| ENT-04 | — | Pending |
-| ENT-05 | — | Pending |
+| NET-01 | Phase 4 | Pending |
+| NET-02 | Phase 4 | Pending |
+| NET-03 | Phase 4 | Pending |
+| NET-04 | Phase 4 | Pending |
+| NET-05 | Phase 4 | Pending |
+| NET-06 | Phase 4 | Pending |
+| REND-01 | Phase 5 | Pending |
+| REND-02 | Phase 5 | Pending |
+| REND-03 | Phase 5 | Pending |
+| REND-04 | Phase 5 | Pending |
+| REND-05 | Phase 5 | Pending |
+| MOV-01 | Phase 6 | Pending |
+| MOV-02 | Phase 6 | Pending |
+| MOV-03 | Phase 6 | Pending |
+| MOV-04 | Phase 6 | Pending |
+| HUD-01 | Phase 7 | Pending |
+| HUD-02 | Phase 7 | Pending |
+| HUD-03 | Phase 7 | Pending |
+| HUD-04 | Phase 7 | Pending |
+| ENT-01 | Phase 7 | Pending |
+| ENT-02 | Phase 7 | Pending |
+| ENT-03 | Phase 7 | Pending |
+| ENT-04 | Phase 7 | Pending |
+| ENT-05 | Phase 7 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 24 total
-- Mapped to phases: 0
-- Unmapped: 24 (pending roadmap creation)
+- Mapped to phases: 24
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-14*
-*Last updated: 2026-02-14 after initial definition*
+*Last updated: 2026-02-14 after v1.1 roadmap creation*

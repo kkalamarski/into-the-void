@@ -2,28 +2,119 @@
 
 ## Milestones
 
-- ✅ **v1.0 Auth & Character Screens** — Phases 1-3 (shipped 2026-02-14)
+- ✅ **v1.0 Auth & Character Screens** - Phases 1-3 (shipped 2026-02-14)
+- 🚧 **v1.1 Post-Login Game Experience** - Phases 4-7 (in progress)
 
 ## Phases
 
 <details>
-<summary>✅ v1.0 Auth & Character Screens (Phases 1-3) — SHIPPED 2026-02-14</summary>
+<summary>✅ v1.0 Auth & Character Screens (Phases 1-3) - SHIPPED 2026-02-14</summary>
 
-- [x] Phase 1: Authentication & Navigation (3/3 plans) — completed 2026-02-13
-- [x] Phase 2: Character Selection (2/2 plans) — completed 2026-02-14
-- [x] Phase 3: Character Creation (2/2 plans) — completed 2026-02-14
+### Phase 1: Authentication & Navigation
+**Goal**: Players can register, log in, and authenticate with JWT tokens
+**Plans**: 3 plans
 
-See: `.planning/milestones/v1.0-ROADMAP.md` for full details.
+Plans:
+- [x] 01-01: Authentication infrastructure (Zustand + localStorage)
+- [x] 01-02: Login & Registration screens
+- [x] 01-03: Protected routing with React Router v7
+
+### Phase 2: Character Selection
+**Goal**: Players can view and select existing characters
+**Plans**: 2 plans
+
+Plans:
+- [x] 02-01: Character selection screen with visual cards
+- [x] 02-02: Integration with game transition
+
+### Phase 3: Character Creation
+**Goal**: Players can create new characters with faction selection
+**Plans**: 2 plans
+
+Plans:
+- [x] 03-01: Character creation screen with faction selection
+- [x] 03-02: Full flow testing and lore alignment
 
 </details>
 
+### 🚧 v1.1 Post-Login Game Experience (In Progress)
+
+**Milestone Goal:** After selecting a character, the player appears in the game world and can play.
+
+#### Phase 4: WebSocket Connection & Auth Handshake
+**Goal**: Secure WebSocket connection with authenticated character in game world
+**Depends on**: Phase 3 (auth flow)
+**Requirements**: NET-01, NET-02, NET-03, NET-04, NET-05, NET-06
+**Success Criteria** (what must be TRUE):
+  1. Player connects to WebSocket with JWT token and characterId after character selection
+  2. Player receives initial game state (position, zone data, entities) from server
+  3. Player can send actions to server and receive real-time updates
+  4. Connection shows "reconnecting" UI on disconnect and restores state on reconnect
+  5. Server validates all player actions and corrects position mismatches
+**Plans**: TBD
+
+Plans:
+- [ ] 04-01: TBD
+- [ ] 04-02: TBD
+
+#### Phase 5: Phaser Integration & World Rendering
+**Goal**: Game world renders with color-coded tiles and smooth camera
+**Depends on**: Phase 4
+**Requirements**: REND-01, REND-02, REND-03, REND-04, REND-05
+**Success Criteria** (what must be TRUE):
+  1. World renders as color-coded tiles (walkable, blocking, water, acid, lava biomes)
+  2. Only visible tiles render (viewport culling works, performance smooth)
+  3. Zone name displays with tier indicator and color (Tier I=green, IV=red)
+  4. Chunks load as player approaches zone boundaries and unload when distant
+  5. Camera follows player smoothly without jarring jumps
+**Plans**: TBD
+
+Plans:
+- [ ] 05-01: TBD
+- [ ] 05-02: TBD
+
+#### Phase 6: Movement System
+**Goal**: Player moves responsively with keyboard and click-to-move
+**Depends on**: Phase 5
+**Requirements**: MOV-01, MOV-02, MOV-03, MOV-04
+**Success Criteria** (what must be TRUE):
+  1. Player moves with WASD or arrow keys with immediate visual feedback
+  2. Player moves to clicked location using pathfinding
+  3. Movement feels instant (client-side prediction works)
+  4. Player cannot walk through walls or into invalid tiles (server validation corrects if needed)
+**Plans**: TBD
+
+Plans:
+- [ ] 06-01: TBD
+- [ ] 06-02: TBD
+
+#### Phase 7: Entities & HUD
+**Goal**: Players see other entities and have HUD with health/energy/zone info
+**Depends on**: Phase 6
+**Requirements**: ENT-01, ENT-02, ENT-03, ENT-04, ENT-05, HUD-01, HUD-02, HUD-03, HUD-04
+**Success Criteria** (what must be TRUE):
+  1. Other players appear in world as colored tiles and move smoothly
+  2. Entities (creatures, items, plants) appear as colored tiles by type
+  3. Damaged entities show health bars above them
+  4. Creatures display behavioral icons (Herbivore/Omnivore/Predator/Maniac)
+  5. HUD displays player health bar, energy bar, zone name with tier, and minimap
+**Plans**: TBD
+
+Plans:
+- [ ] 07-01: TBD
+- [ ] 07-02: TBD
+
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. Authentication & Navigation | v1.0 | 3/3 | ✓ Complete | 2026-02-13 |
-| 2. Character Selection | v1.0 | 2/2 | ✓ Complete | 2026-02-14 |
-| 3. Character Creation | v1.0 | 2/2 | ✓ Complete | 2026-02-14 |
-
----
-*Run `/gsd:new-milestone` to plan next milestone.*
+| 1. Authentication & Navigation | v1.0 | 3/3 | Complete | 2026-02-13 |
+| 2. Character Selection | v1.0 | 2/2 | Complete | 2026-02-14 |
+| 3. Character Creation | v1.0 | 2/2 | Complete | 2026-02-14 |
+| 4. WebSocket Connection & Auth Handshake | v1.1 | 0/0 | Not started | - |
+| 5. Phaser Integration & World Rendering | v1.1 | 0/0 | Not started | - |
+| 6. Movement System | v1.1 | 0/0 | Not started | - |
+| 7. Entities & HUD | v1.1 | 0/0 | Not started | - |

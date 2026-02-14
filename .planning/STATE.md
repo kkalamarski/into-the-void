@@ -2,24 +2,24 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-13)
+See: .planning/PROJECT.md (updated 2026-02-14)
 
 **Core value:** Players can create an account, log in, and select/create characters before entering the game world.
-**Current focus:** Milestone v1.1 — Post-Login Game Experience
+**Current focus:** Phase 4 - WebSocket Connection & Auth Handshake
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-14 — Milestone v1.1 started
+Phase: 4 of 7 (WebSocket Connection & Auth Handshake)
+Plan: Ready to plan
+Status: Ready to plan
+Last activity: 2026-02-14 — v1.1 roadmap created, starting Phase 4
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 43% (v1.0 complete: 7/7 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 7 (v1.0 milestone)
 - Average duration: 2m 34s
 - Total execution time: 0.30 hours
 
@@ -35,57 +35,18 @@ Progress: [░░░░░░░░░░] 0%
 - Last 5 plans: 02-01 (1m 15s), 02-02 (2m 4s), 03-01 (1m 13s), 03-02 (12m 4s)
 - Trend: Variable (spike in 03-02 due to checkpoint verification)
 
-*Updated after each plan completion*
+*Will update metrics after first v1.1 plan completion*
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+Recent decisions affecting v1.1 work:
 
-- Phase 1: React screens (not Phaser menus) — Auth forms are standard web UI, React handles this better
-- Phase 2: Visual character cards — Shows more info at a glance, feels more polished
-- Phase 3: Stat allocation on creation — Gives players agency, uses existing stats schema (deferred to v2)
-
-**From 01-01:**
-- Used persist middleware with partialize to only persist token and user state, not functions
-- Auto-logout on 401 responses with redirect to /login
-- Placeholder route components for all screens (to be replaced in Plan 02)
-
-**From 01-02:**
-- Used RouterProvider in main.tsx instead of Phaser Game app to enable authentication flow
-- Forms use native HTML5 validation (required, type=email, minLength) for basic validation
-- Password confirmation validated client-side before API call
-- Generic error message on login for security (Invalid email or password)
-
-**From 01-03:**
-- Used loader functions with throw redirect() pattern for route protection (React Router v7 standard)
-- Accessed Zustand store in loaders via getState() (works outside React components)
-- Protected routes redirect to /login, auth screens redirect to /character-select
-- Extracted game mounting logic into GameContainer component for clean separation
-
-**From 02-01:**
-- Character selection state not persisted (user chooses character each session)
-- Native Intl.RelativeTimeFormat instead of external date library
-- CSS Grid auto-fit pattern for responsive cards without media queries
-
-**From 02-02:**
-- Faction border color as left border (4px) for subtle visual distinction
-- Keyboard navigation support (Enter/Space) for accessibility
-- Combined loader pattern (auth check + data fetch) in single route loader
-- useLoaderData hook is React Router v7 standard pattern (not loaderData prop)
-
-**From 03-01:**
-- Accessible radio card pattern using position/opacity (not display:none) preserves screen reader access
-- Lazy route loading defers CharacterCreateScreen import until navigation
-- Faction selection grid: 2 columns explicit (not auto-fit) for tighter control, responsive to 1 column at 500px
-- Auth handled in screen action (not route loader) via existing apiCall utility
-
-**From 03-02:**
-- Changed router from lazy loading to direct import with element + action (React Router v7 pattern)
-- Updated factions to match world-bible.md lore (verdant, helix, nexus, neutral)
-- Seeded database with lore-correct factions during checkpoint verification
+- React screens (not Phaser menus): Auth forms are standard web UI, React handles this better
+- React Router v7 action pattern: Modern form handling, automatic revalidation
+- Lore-correct factions: Verdant/Helix/Nexus match world-bible.md
 
 ### Pending Todos
 
@@ -93,15 +54,21 @@ None yet.
 
 ### Blockers/Concerns
 
-**From Research:**
-- Token refresh strategy needs backend validation — Check if NestJS auth module has refresh endpoint
+**From v1.0 Research:**
 - WebSocket handshake auth pattern — Verify backend game-server supports handshake.auth.token validation
-- Faction system details — Confirm faction names, colors, and visual identity from backend/design
+- Token refresh strategy needs backend validation — Check if NestJS auth module has refresh endpoint
+
+**From v1.1 Research:**
+- Phase 4: WebSocket auth without handshake validation (guards needed on all handlers)
+- Phase 4: Race condition between socket join and async DB queries (check connected status)
+- Phase 5: Phaser memory leaks on React unmount (proper cleanup sequence needed)
+- Phase 6: Client prediction without server reconciliation (sequence numbers, rollback)
 
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Starting milestone v1.1
+Stopped at: Created v1.1 roadmap (Phases 4-7), ready to plan Phase 4
 Resume file: None
 
-**v1.0 Complete:** Auth & character screens shipped. Starting v1.1 post-login game experience.
+---
+*Next step: `/gsd:plan-phase 4` to create execution plan for WebSocket Connection & Auth Handshake*
