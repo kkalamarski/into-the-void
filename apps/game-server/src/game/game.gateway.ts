@@ -120,9 +120,27 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('player:move')
   async handleMove(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: ClientEvents['player:move']
+    @MessageBody() data: { direction: Direction; sequence?: number }
   ) {
     try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const now = Date.now();
+      const lastMoveTime = this.playerService.getLastMoveTime(player.id);
+
+      // Rate limit: minimum 140ms between moves (150ms client delay - 10ms tolerance)
+      if (now - lastMoveTime < 140) {
+        client.emit('error', {
+          code: 'E-0006',
+          message: 'Movement too fast',
+          lastProcessedInput: data.sequence,
+        });
+        return;
+      }
+
+      this.playerService.setLastMoveTime(player.id, now);
+
       const result = await this.gameService.movePlayer(client.id, data.direction);
 
       if (result.success) {
@@ -148,12 +166,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           this.server.to(result.zoneId!).emit('player:moved', {
             playerId: result.playerId,
             position: result.position,
+            lastProcessedInput: data.sequence,
           });
         }
       } else {
         client.emit('error', {
           code: 'MOVEMENT_BLOCKED',
           message: result.error || 'Movement blocked',
+          lastProcessedInput: data.sequence,
         });
       }
     } catch (error) {
