@@ -4,6 +4,17 @@
 
 A multiplayer 2D game with procedural world generation, real-time player interaction, and faction-based gameplay. Players explore zones, interact with entities, and engage in combat. **v1.0** added the pre-game experience: registration, login, character selection, and character creation screens.
 
+## Current Milestone: v1.1 Post-Login Game Experience
+
+**Goal:** After selecting a character, the player appears in the game world and can play.
+
+**Target features:**
+- WebSocket connection wired to authenticated character
+- World rendering with color-coded tiles
+- HUD with health, energy, zone name
+- Movement (keyboard + click-to-move)
+- Entity registry for game configs
+
 ## Core Value
 
 Players can create an account, log in, and select/create characters before entering the game world.
@@ -33,7 +44,12 @@ Players can create an account, log in, and select/create characters before enter
 
 <!-- Current scope. Building toward these. -->
 
-(None — v1.0 milestone complete. Run `/gsd:new-milestone` to define next scope.)
+- [ ] WebSocket connection wired to auth flow (token + characterId)
+- [ ] Player spawns at correct position (spawn point or last known)
+- [ ] World renders with color-coded tiles (no sprites yet)
+- [ ] HUD displays health, energy, zone name
+- [ ] Movement works (WASD/arrows + click-to-move)
+- [ ] Entity registry in code (tiles, creatures, items configs)
 
 ### Out of Scope
 

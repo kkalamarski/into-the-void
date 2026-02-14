@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-13)
 
 **Core value:** Players can create an account, log in, and select/create characters before entering the game world.
-**Current focus:** Phase 3: Character Creation
+**Current focus:** Milestone v1.1 — Post-Login Game Experience
 
 ## Current Position
 
-Phase: 3 of 3 (Character Creation)
-Plan: 2 of 2 in current phase
-Status: Complete
-Last activity: 2026-02-14 — Completed 03-02 (Character Create Screen)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-14 — Milestone v1.1 started
 
-Progress: [████████░░] 78%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -101,7 +101,7 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed 03-02-PLAN.md (Character Create Screen)
+Stopped at: Starting milestone v1.1
 Resume file: None
 
-**Phase 03 Complete:** Character creation flow fully implemented. Users can create characters with name and faction selection. Ready for next phase.
+**v1.0 Complete:** Auth & character screens shipped. Starting v1.1 post-login game experience.
