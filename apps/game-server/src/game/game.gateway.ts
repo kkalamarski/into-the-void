@@ -14,12 +14,17 @@ import {
   ClientEvents,
   Direction,
   AuthRequest,
+  getErrorInfo,
 } from '@into-the-void/shared-types';
 
 @WebSocketGateway({
   cors: {
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     credentials: true,
+  },
+  connectionStateRecovery: {
+    maxDisconnectionDuration: 2 * 60 * 1000, // 2 minutes
+    skipMiddlewares: true,
   },
 })
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -33,6 +38,20 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
+
+    // Set 5 second auth timeout
+    const authTimeout = setTimeout(() => {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) {
+        console.log(`Auth timeout for client ${client.id}`);
+        const errorInfo = getErrorInfo('AUTH_TIMEOUT');
+        client.emit('auth:error', errorInfo);
+        client.disconnect();
+      }
+    }, 5000);
+
+    // Store timeout reference for cleanup
+    client.data.authTimeout = authTimeout;
   }
 
   async handleDisconnect(client: Socket) {
@@ -45,6 +64,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: AuthRequest
   ) {
+    // Clear auth timeout immediately
+    if (client.data.authTimeout) {
+      clearTimeout(client.data.authTimeout);
+      delete client.data.authTimeout;
+    }
+
     try {
       const result = await this.playerService.authenticate(
         client.id,
@@ -74,10 +99,21 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           inCombat: result.player.inCombat,
         });
       } else {
-        client.emit('auth:error', { error: result.error });
+        // Auth failed - send error info and disconnect
+        const errorCode = result.error?.includes('Character not found')
+          ? 'INVALID_CHARACTER'
+          : result.error?.includes('Invalid token') || result.error?.includes('expired')
+          ? 'AUTH_EXPIRED'
+          : 'AUTH_FAILED';
+        const errorInfo = getErrorInfo(errorCode, result.error);
+        client.emit('auth:error', errorInfo);
+        client.disconnect();
       }
     } catch (error) {
-      client.emit('auth:error', { error: 'Authentication failed' });
+      // Exception during auth - send error and disconnect
+      const errorInfo = getErrorInfo('AUTH_FAILED', 'Authentication failed');
+      client.emit('auth:error', errorInfo);
+      client.disconnect();
     }
   }
 
@@ -195,5 +231,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
         break;
     }
+  }
+
+  @SubscribeMessage('ping')
+  handlePing(@MessageBody() timestamp: number): number {
+    // Return timestamp for round-trip latency measurement
+    return timestamp;
   }
 }
