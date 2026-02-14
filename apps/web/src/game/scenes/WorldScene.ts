@@ -1,10 +1,14 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, Position, Entity, PlayerPublic } from '@into-the-void/shared-types';
+import { ZONE_SIZE, Position, Entity, PlayerPublic, ChunkData } from '@into-the-void/shared-types';
+import { TileId } from '@into-the-void/world-gen';
+import { TileRenderer } from '../rendering/TileRenderer';
 
 const TILE_SIZE = 32;
 
 export class WorldScene extends Phaser.Scene {
   private tileLayer: Phaser.GameObjects.Container | null = null;
+  private tileRenderer: TileRenderer | null = null;
+  private tileSprites: Phaser.GameObjects.Sprite[][] = [];
   private entitySprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
   private playerSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
   private localPlayer: Phaser.GameObjects.Sprite | null = null;
@@ -21,6 +25,9 @@ export class WorldScene extends Phaser.Scene {
     // Create tile container
     this.tileLayer = this.add.container(0, 0);
 
+    // Initialize TileRenderer
+    this.tileRenderer = new TileRenderer(this, TILE_SIZE);
+
     // Setup input
     if (this.input.keyboard) {
       this.cursors = this.input.keyboard.createCursorKeys();
@@ -32,7 +39,8 @@ export class WorldScene extends Phaser.Scene {
       };
     }
 
-    // Generate a placeholder world for testing
+    // Tiles will be loaded via loadZoneFromState() when zone:state event arrives
+    // For now, keep placeholder for standalone testing
     this.generatePlaceholderWorld();
 
     // Create local player for testing
@@ -120,20 +128,42 @@ export class WorldScene extends Phaser.Scene {
   }
 
   // Methods to be called from network layer
-  loadZone(tiles: number[][], collisions: boolean[][]): void {
-    if (!this.tileLayer) return;
+  loadZoneFromState(chunkData: ChunkData): void {
+    if (!this.tileLayer || !this.tileRenderer) return;
 
     // Clear existing tiles
     this.tileLayer.removeAll(true);
+    this.tileSprites = [];
+
+    const { tiles } = chunkData;
+
+    // Create new tiles from zone data
+    for (let y = 0; y < ZONE_SIZE; y++) {
+      this.tileSprites[y] = [];
+      for (let x = 0; x < ZONE_SIZE; x++) {
+        const tileId = tiles[y][x] as TileId;
+        const tile = this.tileRenderer.createTile(x, y, tileId);
+        this.tileLayer.add(tile);
+        this.tileSprites[y][x] = tile;
+      }
+    }
+  }
+
+  loadZone(tiles: number[][], collisions: boolean[][]): void {
+    if (!this.tileLayer || !this.tileRenderer) return;
+
+    // Clear existing tiles
+    this.tileLayer.removeAll(true);
+    this.tileSprites = [];
 
     // Create new tiles
     for (let y = 0; y < tiles.length; y++) {
+      this.tileSprites[y] = [];
       for (let x = 0; x < tiles[y].length; x++) {
-        const isWall = collisions[y]?.[x];
-        const texture = isWall ? 'tile_wall' : 'tile_floor';
-        const tile = this.add.sprite(x * TILE_SIZE, y * TILE_SIZE, texture);
-        tile.setOrigin(0, 0);
+        const tileId = tiles[y][x] as TileId;
+        const tile = this.tileRenderer.createTile(x, y, tileId);
         this.tileLayer.add(tile);
+        this.tileSprites[y][x] = tile;
       }
     }
   }
