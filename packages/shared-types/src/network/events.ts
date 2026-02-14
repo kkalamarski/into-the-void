@@ -51,7 +51,7 @@ export type ServerEventType =
  */
 export interface ClientEvents {
   'auth': import('./messages').AuthRequest;
-  'player:move': { direction: import('../core/position').Direction };
+  'player:move': { direction: import('../core/position').Direction; sequence?: number };
   'player:interact': { targetId: string };
   'player:action': { action: string; data?: unknown };
   'combat:action': import('../game/combat').CombatActionRequest;
@@ -74,7 +74,7 @@ export interface ServerEvents {
   'entity:update': { entityId: string; changes: Partial<import('../core/entity').Entity> };
   'player:joined': import('../core/player').PlayerPublic;
   'player:left': { playerId: string };
-  'player:moved': { playerId: string; position: import('../core/position').Position };
+  'player:moved': { playerId: string; position: import('../core/position').Position; lastProcessedInput?: number };
   'combat:start': import('../game/combat').CombatState;
   'combat:result': import('../game/combat').CombatResult;
   'combat:end': { combatId: string; winner: string };
