@@ -5,8 +5,8 @@ import { useCharacterStore } from '../store/characterStore';
 import { useGameStore } from '../store/gameStore';
 import { gameSocket } from '../network/socket';
 import { ErrorCodeInfo, getErrorInfo } from '@into-the-void/shared-types';
-import LoadingScreen from '../components/LoadingScreen';
-import ErrorModal from '../components/ErrorModal';
+import { LoadingScreen } from '../components/LoadingScreen';
+import { ErrorModal } from '../components/ErrorModal';
 import GameContainer from '../components/GameContainer';
 
 const GameScreen: React.FC = () => {
