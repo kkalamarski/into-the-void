@@ -96,23 +96,29 @@ export class MovementController {
       reconciledPosition = calculateNewPosition(reconciledPosition, input.direction);
     }
 
-    // Update store to reconciled position
+    // Get current client position BEFORE updating store
     const player = useGameStore.getState().player;
-    if (player) {
+    const currentClientPosition = player?.position;
+
+    // Check if reconciled position differs from current client position
+    const positionMismatch = currentClientPosition && (
+      reconciledPosition.x !== currentClientPosition.x ||
+      reconciledPosition.y !== currentClientPosition.y ||
+      reconciledPosition.zoneId !== currentClientPosition.zoneId
+    );
+
+    // Only update store if position changed
+    if (player && positionMismatch) {
       useGameStore.getState().setPlayer({
         ...player,
         position: reconciledPosition,
       });
     }
 
-    // Notify WorldScene (with reconciling flag for potential correction tween)
-    const needsCorrection =
-      reconciledPosition.x !== serverPosition.x ||
-      reconciledPosition.y !== serverPosition.y ||
-      this.pendingInputs.length > 0;
-
-    if (this.onPositionUpdate) {
-      this.onPositionUpdate(reconciledPosition, needsCorrection);
+    // Only notify WorldScene if there's an actual position correction needed
+    // This prevents jitter from redundant updates when prediction was correct
+    if (positionMismatch && this.onPositionUpdate) {
+      this.onPositionUpdate(reconciledPosition, true);
     }
 
     return reconciledPosition;
