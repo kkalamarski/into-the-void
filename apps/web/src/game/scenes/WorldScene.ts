@@ -1,7 +1,10 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, Position, Entity, PlayerPublic, ChunkData } from '@into-the-void/shared-types';
+import { ZONE_SIZE, Position, Entity, PlayerPublic, ChunkData, BiomeType } from '@into-the-void/shared-types';
 import { TileId } from '@into-the-void/world-gen';
 import { TileRenderer } from '../rendering/TileRenderer';
+import { ChunkManager } from '../rendering/ChunkManager';
+import { ViewportCuller } from '../rendering/ViewportCuller';
+import { ZoneHUD } from '../ui/ZoneHUD';
 
 const TILE_SIZE = 32;
 
@@ -16,6 +19,10 @@ export class WorldScene extends Phaser.Scene {
   private wasd: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key } | null = null;
   private moveDelay = 150; // ms between moves
   private lastMoveTime = 0;
+  private chunkManager: ChunkManager | null = null;
+  private chunkContainers: Map<string, Phaser.GameObjects.Container> = new Map();
+  private currentZoneId: string = 'z_0_0';
+  private onChunkRequest: ((zoneId: string) => void) | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -27,6 +34,24 @@ export class WorldScene extends Phaser.Scene {
 
     // Initialize TileRenderer
     this.tileRenderer = new TileRenderer(this, TILE_SIZE);
+
+    // Initialize ChunkManager
+    this.chunkManager = new ChunkManager(
+      // onChunkNeeded
+      (zoneId: string) => {
+        if (this.onChunkRequest) {
+          this.onChunkRequest(zoneId);
+        }
+      },
+      // onChunkLoaded
+      (chunkData: ChunkData, biome: BiomeType) => {
+        this.renderChunk(chunkData, biome);
+      },
+      // onChunkUnloaded
+      (zoneId: string) => {
+        this.unloadChunkContainer(zoneId);
+      }
+    );
 
     // Setup input
     if (this.input.keyboard) {
@@ -128,24 +153,74 @@ export class WorldScene extends Phaser.Scene {
   }
 
   // Methods to be called from network layer
-  loadZoneFromState(chunkData: ChunkData): void {
-    if (!this.tileLayer || !this.tileRenderer) return;
+  setChunkRequestHandler(handler: (zoneId: string) => void): void {
+    this.onChunkRequest = handler;
+  }
 
-    // Clear existing tiles
-    this.tileLayer.removeAll(true);
-    this.tileSprites = [];
+  loadZoneFromState(chunkData: ChunkData, biome: BiomeType): void {
+    this.currentZoneId = chunkData.zoneId;
 
-    const { tiles } = chunkData;
+    // Receive initial chunk
+    if (this.chunkManager) {
+      this.chunkManager.receiveChunk(chunkData, biome);
+      // Load adjacent chunks
+      this.chunkManager.updateChunks(this.currentZoneId);
+    }
+  }
 
-    // Create new tiles from zone data
+  receiveChunkData(chunkData: ChunkData, biome: BiomeType): void {
+    if (this.chunkManager) {
+      this.chunkManager.receiveChunk(chunkData, biome);
+    }
+  }
+
+  onPlayerZoneChanged(newZoneId: string, biome: BiomeType): void {
+    this.currentZoneId = newZoneId;
+
+    if (this.chunkManager) {
+      this.chunkManager.updateChunks(newZoneId);
+    }
+  }
+
+  private parseZoneCoords(zoneId: string): { x: number; y: number } {
+    const parts = zoneId.split('_');
+    return {
+      x: parseInt(parts[1], 10),
+      y: parseInt(parts[2], 10),
+    };
+  }
+
+  private renderChunk(chunkData: ChunkData, biome: BiomeType): void {
+    if (!this.tileRenderer) return;
+
+    const { zoneId, tiles } = chunkData;
+    const { x: chunkX, y: chunkY } = this.parseZoneCoords(zoneId);
+
+    // Calculate world offset for this chunk
+    const offsetX = chunkX * ZONE_SIZE * TILE_SIZE;
+    const offsetY = chunkY * ZONE_SIZE * TILE_SIZE;
+
+    // Create container for this chunk
+    const container = this.add.container(offsetX, offsetY);
+
+    // Create tiles
     for (let y = 0; y < ZONE_SIZE; y++) {
-      this.tileSprites[y] = [];
       for (let x = 0; x < ZONE_SIZE; x++) {
         const tileId = tiles[y][x] as TileId;
         const tile = this.tileRenderer.createTile(x, y, tileId);
-        this.tileLayer.add(tile);
-        this.tileSprites[y][x] = tile;
+        container.add(tile);
       }
+    }
+
+    // Store container
+    this.chunkContainers.set(zoneId, container);
+  }
+
+  private unloadChunkContainer(zoneId: string): void {
+    const container = this.chunkContainers.get(zoneId);
+    if (container) {
+      container.destroy(true);
+      this.chunkContainers.delete(zoneId);
     }
   }
 
@@ -263,5 +338,14 @@ export class WorldScene extends Phaser.Scene {
       default:
         return 0x7b68ee;
     }
+  }
+
+  shutdown(): void {
+    if (this.chunkManager) {
+      this.chunkManager.clear();
+      this.chunkManager = null;
+    }
+    this.chunkContainers.forEach(container => container.destroy(true));
+    this.chunkContainers.clear();
   }
 }
