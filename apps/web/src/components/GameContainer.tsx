@@ -4,6 +4,9 @@ import { GameUI } from '../ui/GameUI';
 import { useGameStore } from '../store/gameStore';
 import { ConnectionIndicator } from './ConnectionIndicator';
 import { ReconnectOverlay } from './ReconnectOverlay';
+import { gameSocket } from '../network/socket';
+import { ChunkData, BiomeType } from '@into-the-void/shared-types';
+import { WorldScene } from '../game/scenes/WorldScene';
 
 const GameContainer: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -24,6 +27,38 @@ const GameContainer: React.FC = () => {
       }
     };
   }, [setGame]);
+
+  // Set up chunk loading infrastructure
+  useEffect(() => {
+    if (!gameRef.current) return;
+
+    // Get WorldScene reference
+    const worldScene = gameRef.current.getScene('WorldScene') as WorldScene | undefined;
+    if (!worldScene) return;
+
+    // Set up chunk request handler
+    worldScene.setChunkRequestHandler((zoneId: string) => {
+      // Request chunk from server via socket
+      // TODO: Server needs to implement:
+      // - 'zone:request' handler to receive { zoneId: string }
+      // - 'zone:chunk' emitter to send { chunk: ChunkData, biome: BiomeType }
+      // For now, only initial zone from zone:state is rendered.
+      gameSocket.emit('zone:request', { zoneId });
+    });
+
+    // Listen for chunk responses
+    const handleChunkResponse = (data: { chunk: ChunkData; biome: BiomeType }) => {
+      if (worldScene) {
+        worldScene.receiveChunkData(data.chunk, data.biome);
+      }
+    };
+
+    gameSocket.on('zone:chunk', handleChunkResponse);
+
+    return () => {
+      gameSocket.off('zone:chunk');
+    };
+  }, []);
 
   return (
     <div className="app">
