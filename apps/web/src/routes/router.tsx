@@ -1,11 +1,12 @@
 import { createBrowserRouter, redirect } from 'react-router';
 import { useAuthStore } from '../store/authStore';
+import { useCharacterStore } from '../store/characterStore';
 import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import CharacterSelectScreen, { loader as characterSelectLoader } from '../screens/CharacterSelectScreen';
 import CharacterCreateScreen, { action as characterCreateAction } from '../screens/CharacterCreateScreen';
-import GameContainer from '../components/GameContainer';
+import GameScreen from '../screens/GameScreen';
 
 // Loader for protected routes - redirects to login if not authenticated
 function protectedLoader() {
@@ -20,6 +21,20 @@ function protectedLoader() {
 function authScreenLoader() {
   const { token } = useAuthStore.getState();
   if (token) {
+    throw redirect('/character-select');
+  }
+  return null;
+}
+
+// Loader for game screen - checks auth and character selection
+function gameScreenLoader() {
+  const { token } = useAuthStore.getState();
+  const { selectedCharacterId } = useCharacterStore.getState();
+
+  if (!token) {
+    throw redirect('/login');
+  }
+  if (!selectedCharacterId) {
     throw redirect('/character-select');
   }
   return null;
@@ -61,7 +76,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/game',
-    loader: protectedLoader,
-    element: <GameContainer />,
+    loader: gameScreenLoader,
+    element: <GameScreen />,
   },
 ]);
