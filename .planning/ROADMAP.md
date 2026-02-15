@@ -2,13 +2,13 @@
 
 ## Milestones
 
-- ✅ **v1.0 Auth & Character Screens** - Phases 1-3 (shipped 2026-02-14)
-- 🚧 **v1.1 Post-Login Game Experience** - Phases 4-7 (in progress)
+- v1.0 Auth & Character Screens - Phases 1-3 (shipped 2026-02-14)
+- v1.1 Post-Login Game Experience - Phases 4-7 (in progress)
 
 ## Phases
 
 <details>
-<summary>✅ v1.0 Auth & Character Screens (Phases 1-3) - SHIPPED 2026-02-14</summary>
+<summary>v1.0 Auth & Character Screens (Phases 1-3) - SHIPPED 2026-02-14</summary>
 
 ### Phase 1: Authentication & Navigation
 **Goal**: Players can register, log in, and authenticate with JWT tokens
@@ -37,11 +37,11 @@ Plans:
 
 </details>
 
-### 🚧 v1.1 Post-Login Game Experience (In Progress)
+### v1.1 Post-Login Game Experience (In Progress)
 
 **Milestone Goal:** After selecting a character, the player appears in the game world and can play.
 
-#### Phase 4: WebSocket Connection & Auth Handshake ✓
+#### Phase 4: WebSocket Connection & Auth Handshake
 **Goal**: Secure WebSocket connection with authenticated character in game world
 **Depends on**: Phase 3 (auth flow)
 **Requirements**: NET-01 (connect), NET-02 (receive initial state), NET-05 (disconnect handling)
@@ -61,7 +61,7 @@ Plans:
 - [x] 04-04-PLAN.md — ErrorModal and ReconnectOverlay components
 - [x] 04-05-PLAN.md — GameScreen connection flow integration + zone:state listener
 
-#### Phase 5: Phaser Integration & World Rendering ✓
+#### Phase 5: Phaser Integration & World Rendering
 **Goal**: Game world renders with color-coded tiles and smooth camera
 **Depends on**: Phase 4
 **Requirements**: REND-01, REND-02, REND-03, REND-04, REND-05
@@ -81,7 +81,7 @@ Plans:
 - [x] 05-04-PLAN.md — React-Phaser integration and zone:state wiring
 - [x] 05-05-PLAN.md — Human verification checkpoint
 
-#### Phase 6: Movement System ✓
+#### Phase 6: Movement System
 **Goal**: Player moves responsively with keyboard and click-to-move
 **Depends on**: Phase 5
 **Requirements**: MOV-01, MOV-02, MOV-03, MOV-04, NET-03 (send actions), NET-04 (receive updates), NET-06 (position reconciliation)
@@ -113,16 +113,19 @@ Plans:
   3. Damaged entities show health bars above them
   4. Creatures display behavioral icons (Herbivore/Omnivore/Predator/Maniac)
   5. HUD displays player health bar, energy bar, zone name with tier, and minimap
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [ ] 07-01-PLAN.md — EntityRenderer with health bars and behavior icons
+- [ ] 07-02-PLAN.md — Entity and player socket event handlers
+- [ ] 07-03-PLAN.md — HUD energy bar and entity registry
+- [ ] 07-04-PLAN.md — Minimap with player position and biome colors
+- [ ] 07-05-PLAN.md — Human verification checkpoint
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -132,4 +135,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 4. WebSocket Connection & Auth Handshake | v1.1 | 5/5 | Complete | 2026-02-14 |
 | 5. Phaser Integration & World Rendering | v1.1 | 5/5 | Complete | 2026-02-14 |
 | 6. Movement System | v1.1 | 5/5 | Complete | 2026-02-15 |
-| 7. Entities & HUD | v1.1 | 0/0 | Not started | - |
+| 7. Entities & HUD | v1.1 | 0/5 | Not started | - |
