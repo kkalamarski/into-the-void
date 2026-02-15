@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Player, ConnectionState, ChatMessage, Entity, ZoneState, Position } from '@into-the-void/shared-types';
+import { Player, ConnectionState, ChatMessage, Entity, ZoneState, Position, PlayerPublic } from '@into-the-void/shared-types';
 import { Game } from '../game/Game';
 import { gameSocket } from '../network/socket';
 
@@ -175,4 +175,42 @@ gameSocket.on('player:moved', (data: { playerId: string; position: Position; las
     // Other player moved - tween their sprite
     worldScene.movePlayer(data.playerId, data.position);
   }
+});
+
+// Handle entity spawn
+gameSocket.on('entity:spawn', (entity: Entity) => {
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+  if (worldScene) {
+    worldScene.spawnEntity(entity);
+  }
+  // Also add to entities array in store
+  const entities = useGameStore.getState().entities;
+  useGameStore.getState().setEntities([...entities, entity]);
+});
+
+// Handle entity despawn
+gameSocket.on('entity:despawn', ({ entityId }: { entityId: string }) => {
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+  if (worldScene) {
+    worldScene.despawnEntity(entityId);
+  }
+  // Remove from entities array
+  const entities = useGameStore.getState().entities;
+  useGameStore.getState().setEntities(entities.filter(e => e.id !== entityId));
+});
+
+// Handle entity update
+gameSocket.on('entity:update', ({ entityId, changes }: { entityId: string; changes: Partial<Entity> }) => {
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+  if (worldScene) {
+    worldScene.updateEntity(entityId, changes);
+  }
+  // Update entity in store
+  const entities = useGameStore.getState().entities;
+  useGameStore.getState().setEntities(
+    entities.map(e => e.id === entityId ? { ...e, ...changes } : e)
+  );
 });
