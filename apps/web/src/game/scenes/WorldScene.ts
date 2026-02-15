@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction } from '@into-the-void/shared-types';
+import { ZONE_SIZE, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature } from '@into-the-void/shared-types';
 import { TileId } from '@into-the-void/world-gen';
 import { TileRenderer } from '../rendering/TileRenderer';
+import { EntityRenderer } from '../rendering/EntityRenderer';
 import { ChunkManager } from '../rendering/ChunkManager';
 import { ViewportCuller } from '../rendering/ViewportCuller';
 import { ZoneHUD } from '../ui/ZoneHUD';
@@ -13,8 +14,9 @@ const TILE_SIZE = 32;
 export class WorldScene extends Phaser.Scene {
   private tileLayer: Phaser.GameObjects.Container | null = null;
   private tileRenderer: TileRenderer | null = null;
+  private entityRenderer: EntityRenderer | null = null;
   private tileSprites: Phaser.GameObjects.Sprite[][] = [];
-  private entitySprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
+  private entitySprites: Map<string, Phaser.GameObjects.Container> = new Map();
   private playerSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
   private localPlayer: Phaser.GameObjects.Sprite | null = null;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
@@ -43,6 +45,9 @@ export class WorldScene extends Phaser.Scene {
 
     // Initialize TileRenderer
     this.tileRenderer = new TileRenderer(this, TILE_SIZE);
+
+    // Initialize EntityRenderer
+    this.entityRenderer = new EntityRenderer(this, TILE_SIZE);
 
     // Initialize ViewportCuller
     this.viewportCuller = new ViewportCuller(TILE_SIZE, 2);
@@ -122,7 +127,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private generatePlaceholderWorld(): void {
-    if (!this.tileLayer) return;
+    if (!this.tileLayer || !this.entityRenderer) return;
 
     // Generate a simple placeholder grid
     for (let y = 0; y < ZONE_SIZE; y++) {
@@ -135,17 +140,21 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    // Add some test entities
+    // Add some test entities using EntityRenderer
     for (let i = 0; i < 10; i++) {
       const x = Phaser.Math.Between(5, ZONE_SIZE - 5);
       const y = Phaser.Math.Between(5, ZONE_SIZE - 5);
       const type = Math.random() > 0.5 ? 'creature' : 'mineral';
-      const sprite = this.add.sprite(
-        x * TILE_SIZE + TILE_SIZE / 2,
-        y * TILE_SIZE + TILE_SIZE / 2,
-        type
-      );
-      this.entitySprites.set(`test_${type}_${i}`, sprite);
+      const testEntity: Entity = {
+        id: `test_${type}_${i}`,
+        type: type as 'creature' | 'mineral',
+        position: { x, y, zoneId: this.currentZoneId },
+        name: `Test ${type}`,
+        active: true
+      };
+      const container = this.entityRenderer.createEntityContainer(testEntity);
+      container.setDepth(5);
+      this.entitySprites.set(testEntity.id, container);
     }
   }
 
@@ -314,30 +323,56 @@ export class WorldScene extends Phaser.Scene {
   }
 
   spawnEntity(entity: Entity): void {
-    if (this.entitySprites.has(entity.id)) return;
+    if (this.entitySprites.has(entity.id) || !this.entityRenderer) return;
 
-    const texture = this.getEntityTexture(entity.type);
-    const sprite = this.add.sprite(
-      entity.position.x * TILE_SIZE + TILE_SIZE / 2,
-      entity.position.y * TILE_SIZE + TILE_SIZE / 2,
-      texture
-    );
-    this.entitySprites.set(entity.id, sprite);
+    const container = this.entityRenderer.createEntityContainer(entity);
+    container.setDepth(5); // Below player at 10
+    this.entitySprites.set(entity.id, container);
   }
 
   despawnEntity(entityId: string): void {
-    const sprite = this.entitySprites.get(entityId);
-    if (sprite) {
-      sprite.destroy();
+    const container = this.entitySprites.get(entityId);
+    if (container) {
+      container.destroy(true); // Destroy children too
       this.entitySprites.delete(entityId);
     }
   }
 
   updateEntity(entityId: string, changes: Partial<Entity>): void {
-    const sprite = this.entitySprites.get(entityId);
-    if (sprite && changes.position) {
-      sprite.x = changes.position.x * TILE_SIZE + TILE_SIZE / 2;
-      sprite.y = changes.position.y * TILE_SIZE + TILE_SIZE / 2;
+    const container = this.entitySprites.get(entityId);
+    if (!container) return;
+
+    // Update position
+    if (changes.position) {
+      container.x = changes.position.x * TILE_SIZE + TILE_SIZE / 2;
+      container.y = changes.position.y * TILE_SIZE + TILE_SIZE / 2;
+    }
+
+    // Update health bar if health changed for creatures
+    if ('health' in changes && this.entityRenderer) {
+      // Find and destroy old health bar (Graphics object at y = -20)
+      const oldHealthBar = container.list.find(
+        (child) => child instanceof Phaser.GameObjects.Graphics && child.y === -20
+      );
+      if (oldHealthBar) {
+        oldHealthBar.destroy();
+      }
+
+      // Create new health bar if damaged (assuming we have access to entity data)
+      // For now, we need the full entity to determine maxHealth
+      // This is a limitation - we'll recreate health bar only if health is explicitly in changes
+      // and we have both health and maxHealth in the changes
+      const creatureChanges = changes as Partial<Creature>;
+      if (creatureChanges.health !== undefined && creatureChanges.maxHealth !== undefined) {
+        if (creatureChanges.health < creatureChanges.maxHealth) {
+          const healthBar = this.entityRenderer.createHealthBar(
+            creatureChanges.health,
+            creatureChanges.maxHealth
+          );
+          healthBar.y = -20;
+          container.add(healthBar);
+        }
+      }
     }
   }
 
@@ -459,6 +494,9 @@ export class WorldScene extends Phaser.Scene {
     if (this.movementController) {
       this.movementController.clearPendingInputs();
       this.movementController = null;
+    }
+    if (this.entityRenderer) {
+      this.entityRenderer = null;
     }
     if (this.zoneHUD) {
       this.zoneHUD.destroy();
