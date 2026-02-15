@@ -214,3 +214,26 @@ gameSocket.on('entity:update', ({ entityId, changes }: { entityId: string; chang
     entities.map(e => e.id === entityId ? { ...e, ...changes } : e)
   );
 });
+
+// Handle player joined
+gameSocket.on('player:joined', (player: PlayerPublic) => {
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+  const currentPlayer = useGameStore.getState().player;
+
+  // Don't add ourselves
+  if (currentPlayer && player.id === currentPlayer.id) return;
+
+  if (worldScene) {
+    worldScene.addPlayer(player);
+  }
+});
+
+// Handle player left
+gameSocket.on('player:left', ({ playerId }: { playerId: string }) => {
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+  if (worldScene) {
+    worldScene.removePlayer(playerId);
+  }
+});
