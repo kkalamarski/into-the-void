@@ -6,6 +6,7 @@ import { EntityRenderer } from '../rendering/EntityRenderer';
 import { ChunkManager } from '../rendering/ChunkManager';
 import { ViewportCuller } from '../rendering/ViewportCuller';
 import { ZoneHUD } from '../ui/ZoneHUD';
+import { MinimapCamera } from '../rendering/MinimapCamera';
 import { MovementController } from '../systems/MovementController';
 import { PathfindingController } from '../systems/PathfindingController';
 
@@ -34,6 +35,7 @@ export class WorldScene extends Phaser.Scene {
   private movementController: MovementController | null = null;
   private pathfindingController: PathfindingController | null = null;
   private collisionMap: boolean[][] | null = null;
+  private minimapCamera: MinimapCamera | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -54,6 +56,10 @@ export class WorldScene extends Phaser.Scene {
 
     // Initialize ZoneHUD
     this.zoneHUD = new ZoneHUD(this);
+
+    // Initialize MinimapCamera
+    this.minimapCamera = new MinimapCamera(this);
+    this.minimapCamera.create();
 
     // Initialize MovementController
     this.movementController = new MovementController();
@@ -438,6 +444,10 @@ export class WorldScene extends Phaser.Scene {
       this.createLocalPlayer(position);
       // Set up camera to follow player
       this.cameras.main.startFollow(this.localPlayer!, true, 0.1, 0.1);
+      // Also set minimap to follow player
+      if (this.minimapCamera) {
+        this.minimapCamera.startFollow(this.localPlayer!);
+      }
     } else {
       this.updateLocalPlayerSprite(position, false);
     }
@@ -501,6 +511,10 @@ export class WorldScene extends Phaser.Scene {
     if (this.zoneHUD) {
       this.zoneHUD.destroy();
       this.zoneHUD = null;
+    }
+    if (this.minimapCamera) {
+      this.minimapCamera.destroy();
+      this.minimapCamera = null;
     }
     if (this.chunkManager) {
       this.chunkManager.clear();
