@@ -144,6 +144,25 @@ gameSocket.on('zone:state', (data: ZoneState) => {
     }
   }
 
+  // Spawn initial entities and other players in world
+  if (game) {
+    const worldScene = game.getWorldScene();
+    if (worldScene) {
+      // Spawn entities
+      for (const entity of entities) {
+        worldScene.spawnEntity(entity);
+      }
+
+      // Spawn other players (not ourselves)
+      const currentPlayerId = currentPlayer?.id;
+      for (const player of players) {
+        if (player.id !== currentPlayerId) {
+          worldScene.addPlayer(player);
+        }
+      }
+    }
+  }
+
   // Update loading progress (zone data received)
   useGameStore.getState().setLoadingProgress(80);
 });
