@@ -119,6 +119,16 @@ export class PreloadScene extends Phaser.Scene {
     graphics.generateTexture('item', TILE_SIZE, TILE_SIZE);
     graphics.clear();
 
+    // Plant
+    graphics.fillStyle(0x44cc44); // green
+    graphics.fillTriangle(
+      16, 4,   // top
+      8, 28,   // bottom left
+      24, 28   // bottom right
+    );
+    graphics.generateTexture('plant', TILE_SIZE, TILE_SIZE);
+    graphics.clear();
+
     graphics.destroy();
   }
 
