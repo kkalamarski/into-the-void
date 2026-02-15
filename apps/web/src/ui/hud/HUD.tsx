@@ -59,14 +59,7 @@ export const HUD: React.FC = () => {
         </div>
       </div>
 
-      <div className="hud-minimap">
-        <div className="minimap-placeholder">
-          <span>Zone: {player.position.zoneId}</span>
-          <span>
-            ({player.position.x}, {player.position.y})
-          </span>
-        </div>
-      </div>
+      <div className="hud-minimap" aria-label="Minimap" />
     </div>
   );
 };
