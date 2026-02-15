@@ -101,6 +101,10 @@ Recent decisions affecting v1.1 work:
 - [Phase 07-03]: EntityRegistry with typed configs for creatures (4), minerals (4), and items (4)
 - [Phase 07-03]: Entity configs include biome associations for future procedural spawning
 - [Phase 07-03]: Helper methods (getCreature, getMineral, getItem) provide clean registry API
+- [Phase 07-01]: Health bars show only when entity is damaged (health < maxHealth)
+- [Phase 07-01]: Lore-accurate behavior icons: passive→H (green), neutral→O (yellow), aggressive→P (orange), defensive→M (red)
+- [Phase 07-01]: Entity containers positioned with health bars at y=-20 and behavior icons at y=-30
+- [Phase 07-01]: Entity depth set to 5 (below player at 10) for proper z-ordering
 
 ### Pending Todos
 
@@ -122,7 +126,7 @@ Recent decisions affecting v1.1 work:
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 07-03 (Energy Bar & Entity Registry)
+Stopped at: Completed 07-01 (Entity Renderer with Health Bars and Behavior Icons)
 Resume file: None
 
 ---
