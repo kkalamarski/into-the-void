@@ -19,6 +19,10 @@ export interface Player {
   health: number;
   /** Maximum health */
   maxHealth: number;
+  /** Current energy */
+  energy: number;
+  /** Maximum energy */
+  maxEnergy: number;
   /** Character level */
   level: number;
   /** Current experience points */
