@@ -8,6 +8,9 @@ export const HUD: React.FC = () => {
   if (!player) return null;
 
   const healthPercent = (player.health / player.maxHealth) * 100;
+  const energy = player.energy ?? 100;
+  const maxEnergy = player.maxEnergy ?? 100;
+  const energyPercent = (energy / maxEnergy) * 100;
   const xpPercent = (player.xp / player.xpToNextLevel) * 100;
 
   return (
@@ -24,6 +27,15 @@ export const HUD: React.FC = () => {
           />
           <span className="health-text">
             {player.health} / {player.maxHealth}
+          </span>
+        </div>
+        <div className="energy-bar">
+          <div
+            className="energy-bar-fill"
+            style={{ width: `${energyPercent}%` }}
+          />
+          <span className="energy-text">
+            {energy} / {maxEnergy}
           </span>
         </div>
         <div className="xp-bar">
