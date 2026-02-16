@@ -440,24 +440,21 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    // Render blocking terrain features (uses same side-face rendering as terrain)
+    // Render blocking terrain features as small cubes on the floor
     for (const structure of structures) {
       if (structure.type === 'wall' || structure.type === 'feature') {
-        for (const wallTile of structure.tiles) {
-          // Create a modified heights array for structure rendering
-          // Structure height already includes base elevation, use as-is
-          // Parse tileId string back to number (TileId enum is numeric)
-          const tileId = parseInt(wallTile.tileId, 10) as TileId;
-          const tile = this.tileRenderer.createTileWithElevation(
-            wallTile.x,
-            wallTile.y,
-            tileId,
-            wallTile.height,
-            heights
+        for (const featureTile of structure.tiles) {
+          const tileId = parseInt(featureTile.tileId, 10) as TileId;
+          const baseElevation = heights[featureTile.y]?.[featureTile.x] ?? 0;
+          const cube = this.createFeatureCube(
+            featureTile.x,
+            featureTile.y,
+            baseElevation,
+            tileId
           );
-          tile.setData('isStructure', true);
-          tile.setData('structureHeight', wallTile.height);
-          container.add(tile);
+          cube.setData('isStructure', true);
+          cube.setData('structureHeight', featureTile.height);
+          container.add(cube);
         }
       }
     }
@@ -484,6 +481,133 @@ export class WorldScene extends Phaser.Scene {
       container.destroy(true);
       this.chunkContainers.delete(zoneId);
     }
+  }
+
+  /**
+   * Create a small isometric cube for blocking terrain features.
+   * Renders as a small cube sitting on the floor at the tile's base elevation.
+   */
+  private createFeatureCube(
+    gridX: number,
+    gridY: number,
+    baseElevation: number,
+    tileId: TileId
+  ): Phaser.GameObjects.Container {
+    const isoTransform = this.tileRenderer!.getTransform();
+    const screenPos = isoTransform.gridToScreen(gridX, gridY);
+
+    // Cube dimensions (small - about 1/3 of a tile)
+    const cubeWidth = 40;
+    const cubeHeight = 20;
+    const cubeDepth = 16; // Visual height of the cube
+
+    // Elevation offset (16px per level from Phase 15)
+    const elevationOffset = baseElevation * 16;
+
+    // Get color for this tile type
+    const baseColor = this.getFeatureColor(tileId);
+    const topColor = baseColor;
+    const southColor = this.darkenColor(baseColor, 0.7);
+    const eastColor = this.darkenColor(baseColor, 0.5);
+
+    const graphics = this.add.graphics();
+
+    // Calculate cube vertices (centered on tile, elevated)
+    const cx = 0; // Center X (relative to container)
+    const cy = -elevationOffset; // Center Y with elevation
+
+    // Top face vertices (diamond)
+    const topPoints = [
+      { x: cx, y: cy - cubeHeight / 2 - cubeDepth },           // North
+      { x: cx + cubeWidth / 2, y: cy - cubeDepth },            // East
+      { x: cx, y: cy + cubeHeight / 2 - cubeDepth },           // South
+      { x: cx - cubeWidth / 2, y: cy - cubeDepth },            // West
+    ];
+
+    // South face vertices (parallelogram)
+    const southPoints = [
+      { x: cx - cubeWidth / 2, y: cy - cubeDepth },            // Top-left
+      { x: cx, y: cy + cubeHeight / 2 - cubeDepth },           // Top-right
+      { x: cx, y: cy + cubeHeight / 2 },                       // Bottom-right
+      { x: cx - cubeWidth / 2, y: cy },                        // Bottom-left
+    ];
+
+    // East face vertices (parallelogram)
+    const eastPoints = [
+      { x: cx, y: cy + cubeHeight / 2 - cubeDepth },           // Top-left
+      { x: cx + cubeWidth / 2, y: cy - cubeDepth },            // Top-right
+      { x: cx + cubeWidth / 2, y: cy },                        // Bottom-right
+      { x: cx, y: cy + cubeHeight / 2 },                       // Bottom-left
+    ];
+
+    // Draw south face first (back)
+    graphics.fillStyle(southColor, 1);
+    graphics.beginPath();
+    graphics.moveTo(southPoints[0].x, southPoints[0].y);
+    for (let i = 1; i < southPoints.length; i++) {
+      graphics.lineTo(southPoints[i].x, southPoints[i].y);
+    }
+    graphics.closePath();
+    graphics.fillPath();
+
+    // Draw east face (side)
+    graphics.fillStyle(eastColor, 1);
+    graphics.beginPath();
+    graphics.moveTo(eastPoints[0].x, eastPoints[0].y);
+    for (let i = 1; i < eastPoints.length; i++) {
+      graphics.lineTo(eastPoints[i].x, eastPoints[i].y);
+    }
+    graphics.closePath();
+    graphics.fillPath();
+
+    // Draw top face last (front)
+    graphics.fillStyle(topColor, 1);
+    graphics.beginPath();
+    graphics.moveTo(topPoints[0].x, topPoints[0].y);
+    for (let i = 1; i < topPoints.length; i++) {
+      graphics.lineTo(topPoints[i].x, topPoints[i].y);
+    }
+    graphics.closePath();
+    graphics.fillPath();
+
+    // Create container at screen position
+    const container = this.add.container(screenPos.x, screenPos.y, [graphics]);
+
+    // Set depth for proper sorting (same formula as tiles)
+    const depth = (gridX + gridY) * 32 + baseElevation * 0.1 + 0.5; // +0.5 to render above terrain
+    container.setDepth(depth);
+    container.setData('gridX', gridX);
+    container.setData('gridY', gridY);
+    container.setData('elevation', baseElevation);
+
+    return container;
+  }
+
+  /**
+   * Get color for a feature tile type
+   */
+  private getFeatureColor(tileId: TileId): number {
+    switch (tileId) {
+      case TileId.VOID_WALL: return 0x4a4a6a;
+      case TileId.CRYSTAL_FORMATION: return 0x7aaacc;
+      case TileId.TOXIC_POOL: return 0x7acc5a;
+      case TileId.RUINS_WALL: return 0x6a6a6a;
+      case TileId.ICE_WALL: return 0x8abace;
+      case TileId.LAVA: return 0xcc6a4a;
+      case TileId.FUNGAL_GROWTH: return 0x9a6a9a;
+      case TileId.CRATER_DEBRIS: return 0x7a7a7a;
+      default: return 0x5a5a6a;
+    }
+  }
+
+  /**
+   * Darken a color by a factor (0-1)
+   */
+  private darkenColor(color: number, factor: number): number {
+    const r = Math.floor(((color >> 16) & 0xff) * factor);
+    const g = Math.floor(((color >> 8) & 0xff) * factor);
+    const b = Math.floor((color & 0xff) * factor);
+    return (r << 16) | (g << 8) | b;
   }
 
   loadZone(tiles: number[][], collisions: boolean[][]): void {
