@@ -26,7 +26,7 @@ export class WorldGenerator {
     const biome = this.biomeGenerator.getChunkBiome(chunkX, chunkY, ZONE_SIZE);
 
     // Generate terrain
-    const { tiles, collisions } = generateTerrain(
+    const { tiles, heights, collisions } = generateTerrain(
       this.worldSeed,
       chunkX,
       chunkY,
@@ -45,6 +45,8 @@ export class WorldGenerator {
     return {
       zoneId,
       tiles,
+      heights,
+      structures: [], // Phase 14+ will populate this
       collisions,
       spawnPoints,
     };
