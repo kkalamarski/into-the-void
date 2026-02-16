@@ -1,552 +1,606 @@
-# Architecture Research: Isometric View Integration
+# Architecture Research: Elevation & Tile Definition Integration
 
-**Domain:** Isometric rendering transformation for 2D multiplayer game client
+**Domain:** Isometric terrain elevation and tile definition systems for existing game
 **Researched:** 2026-02-16
 **Confidence:** HIGH
 
-## Standard Architecture
+## Integration Context
 
-### System Overview
+This is NOT a new project - it's integrating new features (elevation system, tile definition registry, structure walls) into an existing isometric 2D multiplayer game with:
+
+- Established rendering pipeline: TileRenderer → Phaser Graphics → IsometricTransform → DepthSorter
+- Procedural generation: WorldGenerator → BiomeGenerator → terrain.ts (SimplexNoise) → ChunkData
+- Movement system: PathfindingController → A* pathfinding → collision map
+- Network architecture: game-server generates chunks → client ChunkManager → WorldScene renders
+
+**Critical constraint:** Minimize disruption to existing systems while adding elevation and tile definition capabilities.
+
+## Current Architecture (As-Is)
+
+### Data Flow
+
+```
+Server-Side Generation:
+WorldGenerator → generateTerrain()
+    ↓
+SimplexNoise (fbm) → TileId enum (0-15)
+    ↓
+ChunkData { tiles[][], collisions[][], spawnPoints[] }
+    ↓
+WebSocket → Client
+
+Client-Side Rendering:
+ChunkData → ChunkManager
+    ↓
+TileRenderer.createTile(x, y, TileId)
+    ↓
+Graphics diamond (placeholder) OR future sprite
+    ↓
+IsometricTransform.gridToScreen(x, y)
+    ↓
+Phaser Container at calculated position
+    ↓
+DepthSorter (Y-based + X tiebreaker)
+```
+
+### Key Components
+
+| Component | Current Responsibility | Location |
+|-----------|----------------------|----------|
+| TileId enum | 16 hardcoded tile types | packages/world-gen/src/generation/terrain.ts |
+| generateTerrain() | noise → tiles + collisions | packages/world-gen/src/generation/terrain.ts |
+| ChunkData | Serialized zone data | packages/shared-types/src/core/zone.ts |
+| TileRenderer | Graphics diamond rendering | apps/web/src/game/rendering/TileRenderer.ts |
+| IsometricTransform | Grid↔Screen conversion | apps/web/src/game/utils/IsometricTransform.ts |
+| A* pathfinding | Collision-based movement | packages/game-logic/src/movement/pathfinding.ts |
+
+### Current Limitations
+
+1. **No tile metadata:** TileId is just a number, no properties attached
+2. **No elevation:** All tiles rendered at same Z-level
+3. **Binary collision:** true/false, no movement cost variations
+4. **Hardcoded tiles:** Adding new tiles requires modifying enum + multiple functions
+5. **No side walls:** Elevated tiles have no visual height representation
+
+## Target Architecture (To-Be)
+
+### System Overview with Elevation
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Presentation Layer                       │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│  │ WorldScene│  │MinimapCam│  │  ZoneHUD │  │Input Hdlr│    │
-│  └─────┬────┘  └─────┬────┘  └─────┬────┘  └─────┬────┘    │
-│        │             │              │             │          │
-├────────┴─────────────┴──────────────┴─────────────┴──────────┤
-│                   Transform Layer (NEW)                      │
-│  ┌───────────────────────────────────────────────────────┐   │
-│  │  CoordinateTransform: Grid ↔ Screen                   │   │
-│  │  - toScreen(gridX, gridY): {x, y}                     │   │
-│  │  - toGrid(screenX, screenY): {x, y}                   │   │
-│  │  - getDepthValue(gridX, gridY): number                │   │
-│  └───────────────────────────────────────────────────────┘   │
-├───────────────────────────────────────────────────────────────┤
-│                   Rendering Layer (MODIFIED)                 │
-│  ┌────────────┐  ┌────────────┐  ┌──────────┐               │
-│  │TileRenderer│  │EntityRender│  │  Layer   │               │
-│  │ (isometric)│  │ (isometric)│  │ Manager  │               │
-│  └────────────┘  └────────────┘  └──────────┘               │
-├───────────────────────────────────────────────────────────────┤
-│                   Culling Layer (MODIFIED)                   │
-│  ┌────────────┐  ┌────────────┐  ┌──────────┐               │
-│  │  Viewport  │  │   Chunk    │  │ Minimap  │               │
-│  │   Culler   │  │  Manager   │  │ (ortho)  │               │
-│  │ (diamond)  │  │            │  │          │               │
-│  └────────────┘  └────────────┘  └──────────┘               │
-├───────────────────────────────────────────────────────────────┤
-│                     Game Logic Layer (UNCHANGED)             │
-│  ┌───────────┐  ┌───────────┐  ┌─────────┐  ┌─────────┐    │
-│  │ Movement  │  │Pathfinding│  │Collision│  │  Server │    │
-│  │Controller │  │Controller │  │   Map   │  │ Events  │    │
-│  └───────────┘  └───────────┘  └─────────┘  └─────────┘    │
-└───────────────────────────────────────────────────────────────┘
-
-Server: Grid coordinates only (x, y) → Client transforms for display
+│                    SHARED-TYPES LAYER                        │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌──────────────────────────────────┐  │
+│  │ TileDefinition  │  │      ChunkData (MODIFIED)        │  │
+│  │   Registry      │  │  - tiles[][]                     │  │
+│  │                 │  │  - heights[][] (NEW)             │  │
+│  │ - id            │  │  - structures[] (NEW)            │  │
+│  │ - displayName   │  │  - collisions[][]                │  │
+│  │ - isBlocking    │  │  - spawnPoints[]                 │  │
+│  │ - speedModifier │  │                                  │  │
+│  │ - texture       │  └──────────────────────────────────┘  │
+│  │ - elevation     │                                         │
+│  │ - hooks         │                                         │
+│  └─────────────────┘                                         │
+└─────────────────────────────────────────────────────────────┘
+                               ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    WORLD-GEN LAYER                           │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  TerrainGenerator (MODIFIED)                        │    │
+│  │  - Generate tiles[][] using noise                   │    │
+│  │  - Generate heights[][] using elevation noise       │    │
+│  │  - Generate structures using structural noise       │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                               │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  StructureGenerator (NEW)                           │    │
+│  │  - Place walls based on noise patterns              │    │
+│  │  - Set height data for wall tiles                   │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+                               ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    GAME-LOGIC LAYER                          │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  Pathfinding (MODIFIED)                             │    │
+│  │  - A* with elevation cost calculation               │    │
+│  │  - Movement cost = base + elevationDelta * penalty  │    │
+│  │  - Line of sight elevation blocking                 │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+                               ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    CLIENT RENDERING LAYER                    │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  TileRenderer (MODIFIED)                            │    │
+│  │  - Render tile top face at grid position           │    │
+│  │  - Render side faces based on height difference    │    │
+│  │  - Use TileDefinition for texture lookup           │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                               │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  ElevationRenderer (NEW)                            │    │
+│  │  - Draw vertical side walls for elevated tiles     │    │
+│  │  - Calculate screen offset based on height levels  │    │
+│  │  - Adjust depth for proper layering                │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                               │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  IsometricTransform (MODIFIED)                      │    │
+│  │  - Add heightToScreenY(height) method              │    │
+│  │  - Modify calculateDepth() for elevation           │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Component Responsibilities
+## Component Integration Strategy
 
-| Component | Responsibility | Typical Implementation |
-|-----------|----------------|------------------------|
-| **CoordinateTransform** | Bidirectional grid ↔ screen conversion | Singleton utility class with static methods |
-| **TileRenderer** | Render tiles using isometric projection | Modified to use transform layer for positioning |
-| **EntityRenderer** | Render entities with depth sorting | Modified to calculate depth from grid position |
-| **ViewportCuller** | Diamond-shaped viewport culling | Modified bounds calculation for isometric space |
-| **Layer** (NEW) | Phaser Layer for automatic depth sorting | Container for all world objects needing y-sort |
-| **MinimapCamera** | Orthographic minimap view | Uses grid coordinates directly, ignores transform |
-| **WorldScene** | Scene orchestration | Delegates to transform layer, unchanged logic |
+### NEW Components
 
-## Recommended Project Structure
+| Component | Purpose | Location | Creates |
+|-----------|---------|----------|---------|
+| TileRegistry | Static tile definitions | packages/shared-types/src/game/tile-registry.ts | Registry pattern like EntityRegistry |
+| StructureGenerator | Wall/structure placement | packages/world-gen/src/generation/structure.ts | Wall tiles with heights |
+| ElevationRenderer | Side wall rendering | apps/web/src/game/rendering/ElevationRenderer.ts | Graphics for tile sides |
 
-```
-apps/web/src/game/
-├── rendering/
-│   ├── TileRenderer.ts              # Modified: uses CoordinateTransform
-│   ├── EntityRenderer.ts            # Modified: uses CoordinateTransform
-│   ├── ViewportCuller.ts            # Modified: diamond culling bounds
-│   ├── ChunkManager.ts              # Unchanged
-│   ├── MinimapCamera.ts             # Unchanged (uses grid coords)
-│   └── CoordinateTransform.ts       # NEW: Transform layer
-├── systems/
-│   ├── DepthManager.ts              # NEW: Y-sort orchestration
-│   ├── MovementController.ts        # Unchanged (grid logic)
-│   └── PathfindingController.ts     # Unchanged (grid logic)
-├── scenes/
-│   └── WorldScene.ts                # Modified: uses Layer + DepthManager
-└── config/
-    └── isometric.config.ts          # NEW: Transform constants
-```
+### MODIFIED Components
 
-### Structure Rationale
-
-- **rendering/CoordinateTransform.ts:** Centralized transform layer keeps conversion logic in one place, prevents scattered coordinate calculations throughout codebase
-- **systems/DepthManager.ts:** Separates depth sorting concerns from rendering, allows switching between y-sort strategies without touching renderers
-- **config/isometric.config.ts:** Externalizes tile dimensions, projection angles, and depth constants for easy tuning
-- **Layer-based architecture:** Phaser 3 Layer provides built-in depth sorting, more performant than manual Container sorting
+| Component | What Changes | Why | Complexity |
+|-----------|--------------|-----|------------|
+| ChunkData | Add heights[][], structures[] | Serialize elevation data | LOW - extends interface |
+| generateTerrain() | Add elevation noise layer | Generate height variation | MEDIUM - new noise octave |
+| TileRenderer | Lookup TileDefinition, call ElevationRenderer | Use registry for properties | LOW - method delegation |
+| IsometricTransform | Add heightToScreenY() method | Convert elevation to screen offset | LOW - math formula |
+| pathfinding.ts | Add elevation cost in g-score | Prefer flat terrain | MEDIUM - modify A* cost |
+| DepthSorter | Include elevation in depth calc | Elevated tiles render in front | LOW - add height offset |
 
 ## Architectural Patterns
 
-### Pattern 1: Transform Layer Separation
+### Pattern 1: Registry with Static Data
 
-**What:** All coordinate transformations go through a single `CoordinateTransform` utility. Game logic operates exclusively in grid coordinates; only rendering components access screen coordinates.
+**What:** TileRegistry as static object with type-safe lookups, following EntityRegistry pattern
 
-**When to use:** Always. This is the foundational pattern for isometric integration.
+**When to use:** When you have game data that is:
+- Known at compile time
+- Shared between client and server
+- Referenced by ID frequently
 
 **Trade-offs:**
-- **Pro:** Clear separation of concerns, server stays grid-based, easy to debug coordinate issues
-- **Pro:** Can toggle between orthographic and isometric by swapping transform implementation
-- **Con:** Additional function calls for every render (minimal performance impact)
+- Pros: Type-safe, no runtime loading, can't get out of sync
+- Cons: Adding tiles requires code changes (acceptable for game data)
 
 **Example:**
 ```typescript
-// apps/web/src/game/rendering/CoordinateTransform.ts
-export class CoordinateTransform {
-  private static readonly TILE_WIDTH = 96;
-  private static readonly TILE_HEIGHT = 48; // 2:1 ratio
-  private static readonly TILE_WIDTH_HALF = 48;
-  private static readonly TILE_HEIGHT_HALF = 24;
+// packages/shared-types/src/game/tile-registry.ts
+export interface TileDefinition {
+  id: string;
+  displayName: string;
+  isBlocking: boolean;
+  speedModifier: number;  // 1.0 = normal, 0.5 = slow, 1.2 = fast
+  textureKey: string;
+  defaultElevation: number; // 0-5 levels
+  hooks?: {
+    onStep?: (player: Entity) => void;  // For damage tiles, etc.
+  };
+}
 
-  /**
-   * Convert grid coordinates to isometric screen coordinates
-   * Formula: screen.x = (grid.x - grid.y) * TILE_WIDTH_HALF
-   *          screen.y = (grid.x + grid.y) * TILE_HEIGHT_HALF
-   */
-  static toScreen(gridX: number, gridY: number): { x: number; y: number } {
-    return {
-      x: (gridX - gridY) * this.TILE_WIDTH_HALF,
-      y: (gridX + gridY) * this.TILE_HEIGHT_HALF
-    };
-  }
+export const TileRegistry = {
+  definitions: {
+    'void_floor': {
+      id: 'void_floor',
+      displayName: 'Void Floor',
+      isBlocking: false,
+      speedModifier: 1.0,
+      textureKey: 'tile_void_floor',
+      defaultElevation: 0,
+    },
+    'void_wall': {
+      id: 'void_wall',
+      displayName: 'Void Wall',
+      isBlocking: true,
+      speedModifier: 0,
+      textureKey: 'tile_void_wall',
+      defaultElevation: 2, // Walls are elevated
+    },
+    // ... other tiles
+  } as Record<string, TileDefinition>,
 
-  /**
-   * Convert screen coordinates to grid coordinates (for click-to-move)
-   * Formula: grid.x = screen.x / TILE_WIDTH + screen.y / TILE_HEIGHT
-   *          grid.y = screen.y / TILE_HEIGHT - screen.x / TILE_WIDTH
-   */
-  static toGrid(screenX: number, screenY: number): { x: number; y: number } {
-    const x = screenX / this.TILE_WIDTH + screenY / this.TILE_HEIGHT;
-    const y = screenY / this.TILE_HEIGHT - screenX / this.TILE_WIDTH;
-    return {
-      x: Math.floor(x),
-      y: Math.floor(y)
-    };
-  }
+  get(id: string): TileDefinition | undefined {
+    return this.definitions[id];
+  },
 
-  /**
-   * Calculate depth value for y-sort (higher = render on top)
-   * Formula: depth = (gridX + gridY) * 1000 + gridY
-   * The base (gridX + gridY) ensures proper row ordering
-   * The +gridY tiebreaker ensures within-row ordering
-   */
-  static getDepthValue(gridX: number, gridY: number): number {
-    return (gridX + gridY) * 1000 + gridY;
-  }
+  getBlocking(): string[] {
+    return Object.values(this.definitions)
+      .filter(d => d.isBlocking)
+      .map(d => d.id);
+  },
+};
+```
+
+### Pattern 2: Elevation as Separate Data Layer
+
+**What:** Store height as separate 2D array parallel to tiles[][], not embedded in tile definition
+
+**When to use:** When tile type and height are independent variables (same tile can be at different heights)
+
+**Trade-offs:**
+- Pros: Flexible - any tile at any height, smaller data (uint8 vs object)
+- Cons: Two arrays to manage, potential desync bugs
+
+**Example:**
+```typescript
+// packages/shared-types/src/core/zone.ts
+export interface ChunkData {
+  zoneId: string;
+  tiles: string[][];      // Tile IDs (string refs to TileRegistry)
+  heights: number[][];    // 0-5 elevation levels (uint8)
+  structures: Structure[]; // Wall segments (NEW)
+  collisions: boolean[][]; // Derived from tiles + structures
+  spawnPoints: SpawnPoint[];
+}
+
+export interface Structure {
+  type: 'wall' | 'building';
+  tiles: { x: number; y: number; tileId: string; height: number }[];
 }
 ```
 
-### Pattern 2: Layer-Based Y-Sort
+### Pattern 3: Side Wall Rendering with Screen Offset
 
-**What:** Use Phaser 3's `Layer` game object instead of manual Container depth sorting. All world objects (tiles, entities, players) are added to a single Layer that handles automatic depth sorting via `depthSort()`.
+**What:** Render tile faces at different Y positions based on elevation, using depth for layering
 
-**When to use:** Always for isometric games with moving objects. Layer is more performant than Container for depth sorting.
+**When to use:** Isometric games where elevation is visualized as stacked tiles
 
 **Trade-offs:**
-- **Pro:** Built-in Phaser API, optimized for frequent re-sorting
-- **Pro:** Methods like `bringToTop()`, `sendToBack()` work automatically
-- **Con:** Cannot nest Layers (unlike Containers), but this isn't needed for isometric
-- **Con:** Layers have no position/rotation/scale (use Containers if you need that)
+- Pros: Clear visual hierarchy, works with existing depth sorting
+- Cons: More draw calls, requires careful depth calculation
 
 **Example:**
 ```typescript
-// apps/web/src/game/scenes/WorldScene.ts (modified)
-export class WorldScene extends Phaser.Scene {
-  private worldLayer: Phaser.GameObjects.Layer | null = null;
+// apps/web/src/game/rendering/ElevationRenderer.ts
+export class ElevationRenderer {
+  private PIXELS_PER_LEVEL = 16; // Screen pixels per elevation level
 
-  create(): void {
-    // Create single Layer for all world objects
-    this.worldLayer = this.add.layer();
+  renderTileWithElevation(
+    x: number,
+    y: number,
+    tileId: string,
+    height: number
+  ): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(0, 0);
+    const tileDef = TileRegistry.get(tileId);
 
-    // Tiles and entities added to layer instead of scene/container
-    const tileSprite = this.add.sprite(screenX, screenY, 'tile');
-    this.worldLayer.add(tileSprite);
+    // Base screen position
+    const screenPos = this.isoTransform.gridToScreen(x, y);
 
-    // Set depth using grid coordinates
-    tileSprite.setDepth(CoordinateTransform.getDepthValue(gridX, gridY));
-  }
+    // Elevation offset (higher tiles render higher on screen)
+    const elevationOffset = height * this.PIXELS_PER_LEVEL;
 
-  update(): void {
-    // Trigger depth sort after movements (throttled to every 2-3 frames)
-    if (this.worldLayer && this.shouldResort()) {
-      this.worldLayer.depthSort();
+    // Top face at elevated position
+    const topFace = this.createTileFace(tileId);
+    topFace.setPosition(screenPos.x, screenPos.y - elevationOffset);
+    container.add(topFace);
+
+    // Side walls (only if elevated)
+    if (height > 0) {
+      const sideFaces = this.createSideWalls(tileId, height);
+      sideFaces.forEach(face => {
+        face.setPosition(screenPos.x, screenPos.y - elevationOffset);
+        container.add(face);
+      });
     }
+
+    // Depth includes elevation (higher = rendered in front)
+    const depth = this.isoTransform.calculateDepth(x, y) + elevationOffset;
+    container.setDepth(depth);
+
+    return container;
+  }
+
+  private createSideWalls(tileId: string, height: number): Phaser.GameObjects.Graphics[] {
+    // South and east faces visible in isometric view
+    const southWall = this.createWallFace('south', height);
+    const eastWall = this.createWallFace('east', height);
+    return [southWall, eastWall];
   }
 }
 ```
 
-### Pattern 3: Culling Transform
+### Pattern 4: Elevation-Aware Pathfinding Cost
 
-**What:** Viewport culling transforms from rectangular screen bounds to diamond-shaped grid bounds. Calculate which grid tiles are visible using inverse transform, then iterate only those tiles.
+**What:** Modify A* g-score to penalize elevation changes, preferring flat routes
 
-**When to use:** Essential for maintaining performance with isometric rendering.
+**When to use:** When movement over terrain should consider height differences
 
 **Trade-offs:**
-- **Pro:** Only renders visible tiles, same as orthographic culling
-- **Pro:** Diamond bounds are tighter than rectangle (fewer wasted checks)
-- **Con:** More complex bounds calculation than simple divide-by-tile-size
+- Pros: Realistic pathfinding, avoids unnecessary climbing
+- Cons: More complex than pure distance, needs tuning
 
 **Example:**
 ```typescript
-// apps/web/src/game/rendering/ViewportCuller.ts (modified)
-export class ViewportCuller {
-  /**
-   * Calculate diamond-shaped grid bounds from screen viewport
-   * Transforms camera rectangle corners to grid space, finds min/max
-   */
-  getCullBounds(camera: Phaser.Cameras.Scene2D.Camera): {
-    minTileX: number;
-    maxTileX: number;
-    minTileY: number;
-    maxTileY: number;
-  } {
-    const { x: camLeft, y: camTop } = camera.worldView;
-    const { width, height } = camera.worldView;
+// packages/game-logic/src/movement/pathfinding.ts (MODIFIED)
+export function findPath(
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  collisionMap: boolean[][],
+  heightMap: number[][], // NEW parameter
+  maxIterations = 1000
+): Array<{ x: number; y: number }> | null {
+  // ... existing setup ...
 
-    // Transform all four corners of screen rect to grid space
-    const topLeft = CoordinateTransform.toGrid(camLeft, camTop);
-    const topRight = CoordinateTransform.toGrid(camLeft + width, camTop);
-    const bottomLeft = CoordinateTransform.toGrid(camLeft, camTop + height);
-    const bottomRight = CoordinateTransform.toGrid(camLeft + width, camTop + height);
+  // Modified neighbor processing
+  for (const dir of directions) {
+    const nx = current.x + dir.dx;
+    const ny = current.y + dir.dy;
 
-    // Find bounding box in grid space (diamond becomes rectangle here)
-    const minTileX = Math.floor(Math.min(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x)) - this.cullPaddingX;
-    const maxTileX = Math.ceil(Math.max(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x)) + this.cullPaddingX;
-    const minTileY = Math.floor(Math.min(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y)) - this.cullPaddingY;
-    const maxTileY = Math.ceil(Math.max(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y)) + this.cullPaddingY;
+    // ... existing bounds/collision checks ...
 
-    return { minTileX, maxTileX, minTileY, maxTileY };
+    // Calculate movement cost with elevation penalty
+    const currentHeight = heightMap[current.y]?.[current.x] ?? 0;
+    const nextHeight = heightMap[ny]?.[nx] ?? 0;
+    const elevationDelta = Math.abs(nextHeight - currentHeight);
+
+    // Base cost 1.0, +0.5 per elevation level difference
+    const movementCost = 1.0 + (elevationDelta * 0.5);
+    const g = current.g + movementCost;
+
+    // ... rest of A* logic ...
   }
 }
 ```
 
-### Pattern 4: Depth Manager for Dynamic Sorting
+## Data Flow with Elevation
 
-**What:** Separate component that manages when and how depth sorting occurs. Handles frequency throttling, identifies which objects need re-sorting, and orchestrates the sort operation.
-
-**When to use:** When you have many moving entities and want to optimize sorting frequency.
-
-**Trade-offs:**
-- **Pro:** Centralizes sorting logic, easy to add optimizations (dirty flags, spatial partitioning)
-- **Pro:** Can implement smart sorting (only resort affected regions)
-- **Con:** Additional complexity if only a few objects move
-
-**Example:**
-```typescript
-// apps/web/src/game/systems/DepthManager.ts (NEW)
-export class DepthManager {
-  private layer: Phaser.GameObjects.Layer;
-  private lastSortTime = 0;
-  private sortInterval = 50; // ms between sorts
-  private dirtyObjects = new Set<Phaser.GameObjects.GameObject>();
-
-  constructor(layer: Phaser.GameObjects.Layer) {
-    this.layer = layer;
-  }
-
-  /**
-   * Mark an object as needing depth recalculation
-   */
-  markDirty(gameObject: Phaser.GameObjects.GameObject, gridX: number, gridY: number): void {
-    gameObject.setDepth(CoordinateTransform.getDepthValue(gridX, gridY));
-    this.dirtyObjects.add(gameObject);
-  }
-
-  /**
-   * Update depth sorting (throttled)
-   */
-  update(time: number): void {
-    if (this.dirtyObjects.size === 0) return;
-    if (time - this.lastSortTime < this.sortInterval) return;
-
-    this.lastSortTime = time;
-    this.layer.depthSort();
-    this.dirtyObjects.clear();
-  }
-
-  /**
-   * Immediate sort (for critical moments like spawns)
-   */
-  forceSort(): void {
-    this.layer.depthSort();
-    this.dirtyObjects.clear();
-  }
-}
-```
-
-## Data Flow
-
-### Rendering Flow (Modified)
+### Generation Flow (Server-Side)
 
 ```
-Server: Grid Position (x: 10, y: 15)
+WorldGenerator.generateChunk(chunkX, chunkY)
     ↓
-Client: Receives position update
+1. BiomeGenerator determines biome
     ↓
-MovementController: Updates grid state (logic layer)
+2. TerrainGenerator:
+   - Base noise → tile IDs
+   - Elevation noise → heights[][]
+   - Edge connectivity (unchanged)
     ↓
-WorldScene.updateLocalPlayerSprite(position)
+3. StructureGenerator (NEW):
+   - Structural noise → wall placement
+   - Set wall heights based on biome
     ↓
-CoordinateTransform.toScreen(10, 15) → {x: -240, y: 600}
+4. Collision map generation:
+   - Check TileRegistry.isBlocking
+   - Include structure walls
     ↓
-sprite.setPosition(-240, 600)
-sprite.setDepth(CoordinateTransform.getDepthValue(10, 15)) → 25015
-    ↓
-DepthManager.markDirty(sprite, 10, 15)
-    ↓
-Layer.depthSort() (throttled, next frame)
-    ↓
-Render: sprite drawn at screen position with correct depth
+ChunkData { tiles[][], heights[][], structures[], collisions[][], spawnPoints[] }
 ```
 
-### Click-to-Move Flow (Modified)
+### Rendering Flow (Client-Side)
 
 ```
-User: Clicks screen position (x: 400, y: 300)
+ChunkManager.receiveChunk(chunkData, biome)
     ↓
-Phaser: pointer.x = 400, pointer.y = 300
+WorldScene.renderChunk(chunkData, biome)
     ↓
-WorldScene: Get world point from camera
-    ↓
-CoordinateTransform.toGrid(worldX, worldY) → {x: 8, y: 12}
-    ↓
-PathfindingController.startPath(8, 12, collisionMap) (grid coordinates)
-    ↓
-MovementController: Grid-based pathfinding (UNCHANGED)
-    ↓
-Server: Move commands use grid coordinates (UNCHANGED)
+For each tile (x, y):
+  1. TileRenderer.createTileWithElevation(x, y, tileId, height)
+       ↓
+  2. TileRegistry.get(tileId) → TileDefinition
+       ↓
+  3. ElevationRenderer.renderTileWithElevation():
+       - Calculate screenPos from IsometricTransform
+       - Apply elevation offset: screenY -= (height * PIXELS_PER_LEVEL)
+       - Render top face at elevated position
+       - IF height > adjacent tiles: render side walls
+       - Calculate depth including elevation
+       ↓
+  4. Add to chunk container at calculated position
 ```
 
-### Culling Flow (Modified)
+### Pathfinding Flow (Client-Side)
 
 ```
-Camera: viewport bounds in screen space
+PathfindingController.startPath(targetX, targetY, collisionMap)
     ↓
-ViewportCuller.getCullBounds(camera)
+Pass heightMap (extracted from ChunkData.heights)
     ↓
-Transform 4 corners: screen → grid (CoordinateTransform.toGrid)
+findPath() A* algorithm:
+  - Standard distance heuristic (Manhattan)
+  - Modified g-score: base cost + elevation penalty
+  - Prefer routes with minimal elevation change
     ↓
-Calculate min/max grid bounds (diamond → rectangle in grid space)
+Return path array { x, y }[]
     ↓
-Iterate tiles in bounds:
-  for (y = minTileY; y <= maxTileY; y++)
-    for (x = minTileX; x <= maxTileX; x++)
-      if (tileSprites[y][x]) tile.setVisible(true)
-    ↓
-Tiles outside bounds: setVisible(false)
+PathfindingController moves player along path
 ```
 
-### Minimap Flow (UNCHANGED)
+## Integration Points
 
-```
-MinimapCamera: Separate camera, uses grid coordinates
-    ↓
-Follows player sprite in world space
-    ↓
-Renders at zoom 0.15 (orthographic projection, ignores transform)
-    ↓
-Because minimap ignores CoordinateTransform:
-  - Shows traditional top-down view
-  - No need to transform tiles
-  - Player indicator remains centered
-```
+### NEW Interfaces to Existing Systems
 
-### Key Data Flows
+| Interface | Connects | How |
+|-----------|----------|-----|
+| ChunkData.heights | generateTerrain() → TileRenderer | Parallel array to tiles[][] |
+| ChunkData.structures | StructureGenerator → collision generation | Array of wall segments |
+| TileRegistry | TileRenderer + pathfinding | Lookup tile properties by ID |
+| heightMap | pathfinding A* cost | Passed as parameter, optional (defaults to flat) |
+| ElevationRenderer | TileRenderer | Composition - TileRenderer calls ElevationRenderer |
 
-1. **Grid-to-Screen (Rendering):** All sprite positioning goes through `CoordinateTransform.toScreen()`. Grid coordinates from server/logic → screen coordinates for Phaser sprites.
+### Existing Systems NOT Modified
 
-2. **Screen-to-Grid (Input):** All pointer input goes through `CoordinateTransform.toGrid()`. Mouse clicks → grid coordinates → pathfinding/movement logic.
-
-3. **Depth Calculation:** Every sprite's depth value calculated from grid coordinates via `getDepthValue()`. Ensures proper y-sort ordering.
-
-4. **Culling Transform:** Camera viewport (screen space) → grid bounds → visible tiles. Prevents rendering off-screen objects.
-
-## Integration Points with Existing System
-
-### Files to Modify
-
-| File | Changes Required | Integration Strategy |
-|------|------------------|----------------------|
-| **TileRenderer.ts** | Replace `x * TILE_SIZE, y * TILE_SIZE` with `CoordinateTransform.toScreen(x, y)` | Low risk: only positioning logic changes |
-| **EntityRenderer.ts** | Replace positioning calculation, add depth calculation | Low risk: isolated to `createEntityContainer()` method |
-| **ViewportCuller.ts** | Replace `getCullBounds()` implementation with diamond culling | Medium risk: test with different zoom levels |
-| **WorldScene.ts** | Replace Container with Layer, integrate DepthManager | Medium risk: test entity spawning/despawning |
-| **WorldScene.ts (input)** | Replace `Math.floor(worldPoint.x / TILE_SIZE)` with `CoordinateTransform.toGrid()` | Low risk: only click-to-move handler |
-| **MinimapCamera.ts** | No changes needed | Already uses world coordinates directly |
-| **ChunkManager.ts** | No changes needed | Operates on grid coordinates |
-| **MovementController.ts** | No changes needed | Pure grid logic |
-| **PathfindingController.ts** | No changes needed | Pure grid logic |
-
-### Files to Create
-
-| File | Purpose | Dependencies |
-|------|---------|--------------|
-| **CoordinateTransform.ts** | Transform layer singleton | None (pure math) |
-| **DepthManager.ts** | Depth sorting orchestration | Phaser.GameObjects.Layer |
-| **isometric.config.ts** | Transform constants | None |
-
-### Build Order (Dependency-Safe)
-
-1. **Phase 1: Foundation (No Breaking Changes)**
-   - Create `CoordinateTransform.ts` with toScreen/toGrid/getDepthValue methods
-   - Create `isometric.config.ts` with TILE_WIDTH=96, TILE_HEIGHT=48
-   - Add unit tests for transform functions
-   - **Checkpoint:** Transform layer ready, no existing code broken
-
-2. **Phase 2: Rendering Integration**
-   - Modify `TileRenderer.createTile()` to use `CoordinateTransform.toScreen()`
-   - Modify `EntityRenderer.createEntityContainer()` positioning
-   - Set depth on tiles/entities using `CoordinateTransform.getDepthValue()`
-   - **Checkpoint:** Isometric rendering works, may have depth sorting issues
-
-3. **Phase 3: Depth Sorting**
-   - Create `DepthManager.ts`
-   - Modify `WorldScene.create()` to use `Layer` instead of `Container`
-   - Integrate `DepthManager.update()` into `WorldScene.update()`
-   - **Checkpoint:** Depth sorting functional, culling may be inefficient
-
-4. **Phase 4: Culling Optimization**
-   - Modify `ViewportCuller.getCullBounds()` to use diamond culling
-   - Test with different camera zoom levels and positions
-   - **Checkpoint:** Performance optimized
-
-5. **Phase 5: Input Transform**
-   - Modify `WorldScene` click-to-move handler to use `CoordinateTransform.toGrid()`
-   - Test pathfinding with isometric clicks
-   - **Checkpoint:** Full isometric integration complete
-
-### Testing Integration Points
-
-| Integration Point | Test Strategy |
-|-------------------|---------------|
-| **Transform accuracy** | Unit test: toScreen(5, 5) → toGrid() should return (5, 5) |
-| **Depth sorting** | Visual test: Move entity diagonally, verify always renders correctly |
-| **Culling bounds** | Performance test: Measure FPS with 1000 tiles, verify only visible tiles render |
-| **Click-to-move** | Manual test: Click various screen positions, verify correct grid tile selected |
-| **Multi-camera** | Visual test: Verify minimap remains orthographic while main view is isometric |
-| **Chunk loading** | Edge case test: Load adjacent chunks, verify seamless isometric alignment |
-| **Tweens** | Animation test: Verify movement tweens use screen coordinates (not grid) |
+| System | Why Unchanged | Integration Method |
+|--------|---------------|-------------------|
+| BiomeGenerator | Height is orthogonal to biome | Heights generated per-biome rules |
+| EntityRenderer | Entities float above terrain | Already uses elevation offset |
+| ChunkManager | Just passes data | ChunkData extended, manager agnostic |
+| NetworkLayer | Serialization unchanged | ChunkData JSON compatible |
+| ViewportCuller | Culls by grid position | Elevation irrelevant to culling |
 
 ## Scaling Considerations
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 100-200 visible tiles | Base implementation sufficient. Layer.depthSort() every frame is fine. |
-| 200-500 visible tiles | Throttle depth sorting to every 2-3 frames (30fps sorting). Use DepthManager with dirty flags. |
-| 500+ visible tiles | Spatial partitioning: divide world into regions, only sort region containing moving objects. Consider octree/quadtree for very large worlds. |
+| Scale | Performance Impact | Mitigation |
+|-------|-------------------|------------|
+| 64x64 zone | 4096 tiles, ~8k-12k draw calls with elevation | Acceptable - current placeholder uses Graphics per tile anyway |
+| Multiple chunks loaded | 9 chunks = 36k tiles | Already mitigated by ViewportCuller (only renders visible) |
+| Complex structures | Walls add ~5-10% more tiles | StructureGenerator limits wall density |
 
-### Scaling Priorities
+### Performance Strategy
 
-1. **First bottleneck: Depth sorting frequency**
-   - **Symptoms:** FPS drops when many entities move simultaneously
-   - **Fix:** Throttle `Layer.depthSort()` to 20-30 fps instead of 60 fps. Use dirty flags to skip sorting when nothing moved.
+1. **Immediate (MVP):** Graphics-based rendering (current system) extended with side walls
+2. **Phase 2 (if needed):** Sprite-based tilemap using Phaser Tilemap API with elevation layers
+3. **Phase 3 (optimization):** GPU instancing for repeated tile sprites
 
-2. **Second bottleneck: Transform calculations**
-   - **Symptoms:** CPU spike in `toScreen()` calls during chunk loading
-   - **Fix:** Pre-calculate screen positions for static tiles, cache in tile object. Only recalculate for moving entities.
+**Recommendation:** Start with Graphics extension. Current codebase already uses Graphics per tile, adding side walls is incremental. Only migrate to Tilemap if profiling shows bottleneck.
 
-3. **Third bottleneck: Culling complexity**
-   - **Symptoms:** `getCullBounds()` shows up in profiler
-   - **Fix:** Cache camera bounds, only recalculate when camera moves beyond threshold (e.g., 5 tiles).
+## Anti-Patterns to Avoid
 
-## Anti-Patterns
+### Anti-Pattern 1: Embedding Height in Tile Definition
 
-### Anti-Pattern 1: Mixing Coordinate Systems
+**What people do:** Make height part of TileDefinition (e.g., "void_floor_height_2")
 
-**What people do:** Store screen coordinates in game state, or mix grid and screen coordinates in same data structures.
-
-**Why it's wrong:** Server operates in grid coordinates. If client stores screen coords, server reconciliation breaks. Debugging becomes nightmare (is this value grid or screen?).
+**Why it's wrong:**
+- Combinatorial explosion: 16 tiles × 6 heights = 96 definitions
+- Loses semantic meaning (tile type vs terrain topology)
+- Can't dynamically adjust height (structures, terrain deformation)
 
 **Do this instead:**
-- Server and all game logic: grid coordinates only
-- Transform to screen coordinates at render time only
-- Use TypeScript types to enforce: `GridPosition { x: number, y: number }` vs `ScreenPosition { x: number, y: number }`
+- Tile ID references type (floor, wall, etc.)
+- Height stored separately in heights[][]
+- TileDefinition has defaultElevation as hint, not absolute
 
-### Anti-Pattern 2: Per-Frame Depth Sorting
+### Anti-Pattern 2: Calculating Depth Without Elevation
 
-**What people do:** Call `Layer.depthSort()` every frame for all objects, even when nothing moved.
+**What people do:** Keep Y-based depth sorting, ignore height
 
-**Why it's wrong:** Sorting is O(n log n). With 500 objects, that's ~4500 comparisons per frame = 270k/sec at 60fps. Unnecessary CPU waste.
-
-**Do this instead:**
-- Use dirty flags to track which objects moved
-- Throttle sorting to 20-30 fps (human eye can't detect depth sort at 60fps)
-- Only sort when `dirtyObjects.size > 0`
-
-### Anti-Pattern 3: Container Instead of Layer
-
-**What people do:** Use nested Containers for depth sorting because "that's what I used before."
-
-**Why it's wrong:** Containers have cumulative performance cost when nested. Each Container level adds transform calculations. Depth cannot be overridden for Container children.
+**Why it's wrong:**
+- Elevated tiles render behind ground tiles in front of them
+- Breaks visual hierarchy (player walks "over" elevated walls)
 
 **Do this instead:**
-- Use single Layer for all world objects
-- Layers are specifically designed for depth sorting
-- Layers are more performant than Containers for this use case
-- Reserve Containers for when you need grouped position/rotation/scale
+```typescript
+// IsometricTransform.calculateDepth() - MODIFIED
+calculateDepth(gridX: number, gridY: number, height: number = 0): number {
+  const screen = this.gridToScreen(gridX, gridY);
+  const elevationOffset = height * PIXELS_PER_LEVEL;
+  // Higher elevation = larger depth value = renders in front
+  return screen.y - elevationOffset + gridX * 0.0001;
+}
+```
 
-### Anti-Pattern 4: Rectangular Culling with Isometric View
+### Anti-Pattern 3: Generating Structures Post-Terrain
 
-**What people do:** Keep old `getCullBounds()` that divides screen coords by tile size.
+**What people do:** Generate terrain first, then try to place structures
 
-**Why it's wrong:** Isometric projection means diamond shape in grid space. Rectangular culling in grid space renders ~40% more tiles than necessary (corners of rectangle outside diamond).
-
-**Do this instead:**
-- Transform camera viewport corners to grid space
-- Calculate min/max bounds in grid space (becomes diamond)
-- Culling is automatically optimal for isometric projection
-
-### Anti-Pattern 5: Transforming Server Data
-
-**What people do:** Send isometric screen coordinates from server to client.
-
-**Why it's wrong:** Breaks client-server separation. If client changes projection (zoom, different aspect ratio), server data is wrong. Bloats network packets (screen coords are larger than grid coords).
+**Why it's wrong:**
+- Structures may conflict with terrain (walls on non-walkable tiles)
+- No way to ensure connectivity (walls block all paths)
+- Height data inconsistent with structure placement
 
 **Do this instead:**
-- Server always sends grid coordinates
-- Client transforms at render time
-- Allows client to change projection without server changes
-- Future-proofs for responsive design, mobile support
+- Generate base terrain (floor types)
+- Generate structures using SAME noise seed + different octave
+- Update tile IDs where structures placed
+- Generate collision map AFTER structures finalized
+
+### Anti-Pattern 4: Per-Tile Collision Detection
+
+**What people do:** Check TileRegistry.isBlocking on every movement validation
+
+**Why it's wrong:**
+- Already have collisions[][] in ChunkData
+- Redundant lookups hurt performance
+- Collision map is SOURCE OF TRUTH (includes structures)
+
+**Do this instead:**
+- Generate collisions[][] on server from tiles + structures
+- Send in ChunkData (already serialized)
+- Client uses boolean array directly (O(1) lookup)
+- TileRegistry only used for rendering/display properties
+
+## Build Order Recommendations
+
+### Phase 1: Foundation (No Visual Changes)
+1. TileRegistry interface + basic definitions (migrate existing 16 tiles)
+2. ChunkData extended with heights[][], structures[]
+3. generateTerrain() modified to output new fields (all zeros for now)
+4. Network layer verification (serialize/deserialize new fields)
+
+**Checkpoint:** Existing game still renders, no visual changes, types compile
+
+### Phase 2: Elevation Generation
+1. Add elevation noise layer to terrain generation
+2. StructureGenerator for simple walls
+3. Update collision map generation to include structures
+4. Server sends real height data
+
+**Checkpoint:** Data flows through system, client receives heights (not yet rendered)
+
+### Phase 3: Elevation Rendering
+1. IsometricTransform.heightToScreenY() method
+2. ElevationRenderer with side wall rendering
+3. TileRenderer integration (call ElevationRenderer for elevated tiles)
+4. DepthSorter modified for elevation
+
+**Checkpoint:** Visual elevation appears, tiles at different heights visible
+
+### Phase 4: Movement Integration
+1. PathfindingController passes heightMap to findPath()
+2. A* modified for elevation cost
+3. MovementController validation checks height (prevent climbing 3+ levels)
+
+**Checkpoint:** Pathfinding respects terrain elevation, player movement feels natural
+
+### Dependencies
+
+```
+TileRegistry → ChunkData types
+    ↓
+generateTerrain() modifications
+    ↓
+ChunkData serialization
+    ↓
+(CHECKPOINT: Data layer complete)
+    ↓
+ElevationRenderer → IsometricTransform
+    ↓
+TileRenderer integration
+    ↓
+(CHECKPOINT: Rendering complete)
+    ↓
+Pathfinding elevation cost
+    ↓
+(COMPLETE: All systems integrated)
+```
 
 ## Sources
 
-### Coordinate Transformation & Isometric Math
-- [Isometric Tiles Math - Clint Bellanger](https://clintbellanger.net/articles/isometric_math/) - Transformation formulas and architecture patterns
-- [Pikuma: Isometric Projection in Game Development](https://pikuma.com/blog/isometric-projection-in-games) - Core projection formulas and best practices
-- [Demystifying Isometric Projection in 2D Games with Python](https://medium.com/@kavierim/demystifying-isometric-projection-in-2d-games-with-python-bbcc2038a620) - Practical implementation
+Isometric elevation rendering:
+- [Handling Height in Isometric Tile Maps](https://erikonarheim.com/posts/handling-height-in-isometric/)
+- [Isometric Tiles Math](https://clintbellanger.net/articles/isometric_math/)
+- [Phaser Isometric Examples](https://phaser.io/examples/v3.85.0/depth-sorting/view/isometric-map)
 
-### Depth Sorting
-- [Isometric Depth Sorting for Moving Platforms - Envato Tuts+](https://code.tutsplus.com/isometric-depth-sorting-for-moving-platforms--cms-30226t) - Block-based sorting algorithms
-- [Drawing isometric boxes in the correct order](https://shaunlebron.github.io/IsometricBlocks/) - Topological sort visualization
-- [Isometric depth sorting - Mazebert](https://mazebert.com/forum/news/isometric-depth-sorting--id775/) - Performance considerations
+Tile systems and tilemaps:
+- [Tiles and tilemaps overview - MDN](https://developer.mozilla.org/en-US/docs/Games/Techniques/Tilemaps)
+- [Creating a Dynamic Tile System](https://www.gamedeveloper.com/programming/creating-a-dynamic-tile-system)
 
-### Phaser 3 Implementation
-- [Phaser 3 Layer Documentation](https://docs.phaser.io/api-documentation/class/gameobjects-layer) - Official Layer API
-- [Container Sorting - Phaser Discourse](https://phaser.discourse.group/t/container-sorting/4479) - Container vs Layer performance
-- [Layer vs Container - Rex Rainbow Notes](https://rexrainbow.github.io/phaser3-rex-notes/docs/site/layer/) - Comprehensive comparison
-- [Depth Sorting Examples - Ourcade](https://examples.ourcade.co/phaser3-typescript/depth-sorting/) - TypeScript examples
-- [Display List Documentation](https://docs.phaser.io/phaser/concepts/gameobjects/display-list) - Display list concepts
+Pathfinding with terrain cost:
+- [Movement costs for pathfinders](http://theory.stanford.edu/~amitp/GameProgramming/MovementCosts.html)
+- [Creating natural paths on terrains](https://www.gamedeveloper.com/programming/creating-natural-paths-on-terrains-using-pathfinding)
 
-### Architecture Patterns
-- [Three-Tier Client Server Architecture - GeeksforGeeks](https://www.geeksforgeeks.org/computer-networks/three-tier-client-server-architecture-in-distributed-system/) - Layer separation principles
-- [Best Features to Optimize 2D/3D Isometric Games - Retro Style Games](https://retrostylegames.com/blog/best-features-optimize-2d-3d-isometric-games/) - Optimization strategies
+Procedural generation:
+- [Red Blob Games: Making maps with noise](https://www.redblobgames.com/maps/terrain-from-noise/)
+- [Understanding procedural terrain generation](https://medium.com/@ashleythedev/understanding-procedural-terrain-generation-in-games-07ac63fca626)
 
-### Plugin References (For Comparison)
-- [phaser3-plugin-isometric - GitHub](https://github.com/sebashwa/phaser3-plugin-isometric) - Reference implementation
-- [Phaser 3 Isometric Plugin Examples](https://sebashwa.github.io/phaser3-plugin-isometric/) - Live examples
+Depth sorting:
+- [Isometric Depth Sorting for Moving Platforms](https://gamedevelopment.tutsplus.com/tutorials/isometric-depth-sorting-for-moving-platforms--cms-30226)
+- [Drawing isometric boxes in the correct order](https://shaunlebron.github.io/IsometricBlocks/)
 
 ---
-*Architecture research for: Into the Void isometric view integration*
+*Architecture research for: Elevation & Tile Definition Integration*
 *Researched: 2026-02-16*
-*Confidence: HIGH - Based on official Phaser documentation, established isometric game development patterns, and mathematical foundations from authoritative sources*
+*Confidence: HIGH - Direct codebase analysis + verified isometric rendering patterns*

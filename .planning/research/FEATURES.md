@@ -1,243 +1,270 @@
-# Feature Landscape: Isometric View Implementation
+# Feature Research: Isometric Elevation & Structures
 
-**Domain:** Isometric rendering for multiplayer 2D MMO
+**Domain:** Isometric 2D game terrain elevation and structure rendering
 **Researched:** 2026-02-16
-**Context:** Adding isometric transformation to existing top-down game with WASD/click-to-move, viewport culling, entity rendering with health bars, minimap, and HUD
+**Confidence:** MEDIUM
 
-## Table Stakes
+## Feature Landscape
 
-Features players expect. Missing = product feels incomplete.
+### Table Stakes (Users Expect These)
+
+Features users assume exist. Missing these = product feels incomplete.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Correct depth sorting (z-index) | Core to isometric visual coherence — entities must layer properly based on position | Medium | Y-position based sorting is minimum. Higher Y = render last. Need to handle overlapping sprites and multi-tile objects |
-| Diamond tile coordinate transformation | Players expect isometric diamond grid, not rectangular | Low | Math conversion: screen ↔ tile coords. 2:1 pixel ratio standard. Already have 32px tiles, need to map to 64x32 diamonds |
-| Accurate mouse/click detection | Click-to-move must work on diamond tiles, not just rectangles | Medium | Mouse coords → tile coords math. Adjacent tile disambiguation (diamond shape means overlap). Current click-to-move will break without this |
-| Proper tile rendering order | Tiles must draw back-to-front (row-by-row) to avoid visual glitches | Low | Draw row 0, then row 1, etc. Already have ChunkManager, extend for isometric ordering |
-| Entity positioning on tiles | Entities must align to isometric grid, not float incorrectly | Low | Convert entity world coords to isometric screen coords. Already have EntityRenderer, add transform |
-| Health bars above entities | Already implemented, must stay aligned in isometric space | Low | Current health bars are relative to container. Offset Y to account for sprite height |
-| Minimap representation | Players need to understand minimap perspective (orthogonal vs isometric) | Medium | Current minimap uses 0.15x zoom camera. Either keep orthogonal (easier to read) or match isometric view. Recommend orthogonal for clarity |
+| Side-face rendering for elevated tiles | Visual clarity of height differences | MEDIUM | Requires additional sprites or procedural drawing for vertical faces between elevation levels |
+| Depth sorting with height | Objects on higher terrain render above lower terrain | MEDIUM | Existing DepthSorter needs height component in depth calculation |
+| Elevation-aware walkability | Players can't walk through height cliffs | LOW | Pathfinding already exists, needs cost function with elevation rules |
+| Click detection respects elevation | Clicking elevated terrain selects correct tile | MEDIUM | Mouse picking must account for vertical offset of elevated surfaces |
+| Visual elevation transitions | Gradual slopes or stairs between levels | HIGH | Smooth transitions require intermediate tiles (ramps/stairs) or complex sprite work |
+| Structure walls block movement | Walls are impassable obstacles | LOW | Binary collision check, extends existing collision map |
+| Structure walls block line-of-sight | Walls occlude vision and entities | MEDIUM | Requires occlusion system beyond current depth sorting |
+| Height-based occlusion culling | Tall structures hide entities behind them | MEDIUM | Needs alpha fading or visibility detection for structures blocking view |
+| Minimap elevation indicators | Map shows height differences or structures | LOW | Color coding or markers on existing minimap system |
 
-## Differentiators
+### Differentiators (Competitive Advantage)
 
-Features that set product apart. Not expected, but valued.
+Features that set the product apart. Not required, but valuable.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Dynamic shadows | Adds depth perception and visual polish that matches modern isometric games | High | Pre-rendered shadows on tiles are table stakes for static objects. Dynamic shadows for moving entities differentiate quality. Could use simple circular shadow sprites offset by Y position |
-| Highlight/outline on hover | Improves UX for tile/entity selection in dense isometric scenes | Medium | Screen-space outlines (constant width) preferred over world-space. Can use Phaser post-processing or manual outline rendering. Critical for click-to-move clarity |
-| Smooth camera panning | Expected in modern isometric MMOs for exploration | Low | Already have viewport culling. Extend to support smooth camera drag (mouse edge pan or middle-click drag). WASD camera movement also expected |
-| Zoom levels (2-3 discrete) | Allows tactical overview vs detail view | Medium | 1.0x (default), 0.75x (zoomed out), 1.5x (zoomed in). Must recalculate viewport culling per zoom. Mouse wheel zoom standard |
-| Visual depth cues (elevation) | Enhances 3D feeling in 2.5D space | High | Stacked tiles for height variation. Not critical for initial implementation. Placeholder colored tiles sufficient first |
-| Tile edge anti-aliasing | Prevents jagged diamond edges with colored tiles | Low | Phaser antialiasing enabled by default. May need texture filter adjustments for crisp pixel art vs smooth gradients |
-| Behavior icons with isometric offset | Icons must not overlap sprites in dense scenes | Low | Current behavior icons at Y=-30. May need adjustment based on sprite height in isometric space |
+| Dynamic wall transparency | Walls fade when blocking player view | MEDIUM | Creates superior UX compared to static occlusion (Diablo 2 style) |
+| Multi-height structures | Structures with variable height per tile | HIGH | Allows complex buildings (e.g., towers, ramps) vs uniform-height only |
+| Tile interaction hooks (onClick, onStep, onEnter) | Extensible tile behavior system | MEDIUM | Enables traps, triggers, events without hardcoding tile logic |
+| TileDefinition registry pattern | Data-driven tile types with properties | LOW | Separates tile data from rendering, supports easy addition of new tiles |
+| Elevation affects gameplay | Height advantage in combat, fall damage | HIGH | Goes beyond visual to mechanical depth (deferred to combat milestone) |
+| Procedural side-face generation | Auto-generate cliff faces from elevation data | MEDIUM | Reduces art asset requirements, maintains visual consistency |
+| Per-tile elevation granularity | Each tile has independent height (0-5) | LOW | More flexible than zone-level or chunk-level elevation |
+| Smart pathfinding with elevation costs | Pathfinding prefers gentle slopes over cliffs | MEDIUM | Weighted A* with elevation penalties, better than binary walkable/blocked |
 
-## Anti-Features
+### Anti-Features (Commonly Requested, Often Problematic)
 
-Features to explicitly NOT build.
+Features that seem good but create problems.
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Camera rotation (4 or 8 directions) | Massively increases asset requirements (4x-8x sprites). Causes player disorientation. "Camera should never distract from gameplay" — design principle | Lock camera to single isometric angle (industry standard: 30-45 degrees from horizontal). Keep consistent viewpoint |
-| Free-form (non-grid) movement | Breaks depth sorting, complicates collision, loses tactical clarity expected in isometric MMOs | Keep existing grid-based movement. Smooth animation between grid positions acceptable, but logical position must snap to grid |
-| Pixel-perfect isometric (strict 2:1 ratio) | Constraint limits sprite design flexibility and is unnecessary for 96x96 sprites | Use approximate isometric (2:1 ratio for tiles, flexible sprite dimensions). Visual coherence matters more than mathematical purity |
-| Full 3D lighting system | Performance cost too high for 2D game. Pre-baked lighting simpler and more controllable | Pre-render tile shading/highlights. Use simple sprite-based shadows for entities. Artists control aesthetic directly |
-| Separate isometric tilemap system | Overkill for placeholder colored tiles. Adds complexity before value is proven | Transform coordinates in rendering layer only. Keep world data in rectangular grid. Isometric is purely presentational |
-| Occlusion culling for multi-level buildings | No buildings in current scope. Over-engineering | Defer until architecture/building systems are designed. Viewport culling sufficient for open world |
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Arbitrary precision elevation (floats) | "More realistic terrain" | Complicates pathfinding, collision, and rendering depth sorting with minimal visual benefit | Discrete levels (0-5) provide gameplay clarity and simpler implementation |
+| Camera rotation for viewing structures | "See behind walls" | Massively increases asset requirements (4-8 directions per sprite), causes player disorientation | Dynamic wall transparency/fading reveals hidden areas without rotation |
+| Pixel-perfect isometric click detection | "More accurate selection" | Mouse maps and pixel masks add complexity, poor performance on large maps | Diamond-shaped tile bounds with elevation offset sufficient for 128x64 tiles |
+| Separate tilemap layers per elevation | "Easier to manage height" | Multiple Phaser tilemaps create synchronization issues, memory overhead | Single tile grid with elevation property per tile, rendered with depth sorting |
+| Real-time shadows cast by structures | "More immersive 3D feel" | Heavy performance cost for 2D game, requires light source calculations | Static drop shadows or simple ambient occlusion baked into sprites |
+| Smooth terrain deformation | "Dynamic world changes" | Breaks tile-based pathfinding, requires mesh rendering instead of sprites | Pre-defined elevation transitions (ramps, stairs) as tile types |
 
 ## Feature Dependencies
 
 ```
-Coordinate transformation → Mouse click detection
-Coordinate transformation → Tile rendering order
-Coordinate transformation → Entity positioning
+TileDefinition Registry
+    └──required by──> Elevation System
+                          └──required by──> Side-Face Rendering
+                          └──required by──> Elevation-Aware Pathfinding
+                          └──required by──> Click Detection with Height
 
-Depth sorting → Entity rendering
-Depth sorting → Health bar positioning
-Depth sorting → Hover highlighting
+TileDefinition Registry
+    └──required by──> Structure Walls
+                          └──required by──> Wall-Based Occlusion
+                          └──required by──> Line-of-Sight Blocking
 
-Mouse click detection → Click-to-move
-Mouse click detection → Entity selection
-Mouse click detection → Hover highlighting
+Depth Sorting with Height
+    └──required by──> Height-Based Occlusion
+                          └──enhanced by──> Dynamic Wall Transparency
 
-Camera panning → Zoom levels
-Viewport culling → Camera panning
-Viewport culling → Zoom levels
+Elevation System ──enhances──> Procedural World Generation
+Side-Face Rendering ──enhances──> Visual Elevation Transitions
 
-Minimap representation → Camera panning (must update minimap camera)
+Multi-Height Structures ──conflicts with──> Simple Wall Collision
+    (requires per-tile height tracking vs boolean walkable flag)
+
+Dynamic Wall Transparency ──conflicts with──> Static Occlusion
+    (choose one approach, not both)
 ```
 
-## MVP Recommendation
+### Dependency Notes
 
-Prioritize (Phase 1):
-1. **Coordinate transformation** — Core math for isometric rendering
-2. **Diamond tile rendering** — Visual proof-of-concept with colored tiles
-3. **Depth sorting** — Y-position based z-index for entities and tiles
-4. **Mouse click detection** — Restore click-to-move functionality
-5. **Entity positioning** — Align existing entities to isometric grid
-6. **Health bar adjustment** — Keep health bars aligned above entities
+- **TileDefinition Registry required first:** Foundation for all tile-specific behavior (elevation, walls, hooks). Must exist before elevation or structures.
+- **Elevation System enables pathfinding:** Movement rules (1-level walkable, 2+ blocked) depend on elevation data being available during pathfinding.
+- **Side-face rendering depends on elevation data:** Cannot render cliff faces without knowing which tiles are elevated and by how much.
+- **Depth sorting must account for height:** Existing depth calculation uses gridX/gridY only. Height must be factored in: `depth = screenY + gridX * 0.0001 + height * tileHeight`.
+- **Click detection needs height offset:** Mouse-to-tile conversion must adjust Y coordinate by `height * tileHeightHalf` to hit elevated tiles correctly.
+- **Multi-height structures complicate collision:** Simple boolean walkable map insufficient; need height value per tile to determine if structure blocks at given elevation.
+- **Dynamic transparency vs static occlusion:** Diablo 2 uses fade-out, Age of Empires uses fixed occlusion. Choose one approach for consistency.
 
-Prioritize (Phase 2):
-1. **Hover highlighting** — Visual feedback for selection
-2. **Camera panning** — Edge pan or middle-click drag
-3. **Minimap adjustment** — Keep orthogonal or transform to match view
+## MVP Definition
 
-Defer:
-- **Zoom levels** — Not critical until camera panning proven
-- **Dynamic shadows** — Polish feature after core mechanics work
-- **Elevation/height** — Requires design decisions about world structure
-- **Behavior icon refinement** — Current system likely works, adjust if overlap occurs
+### Launch With (v1.3)
 
-## MVP Feature Details
+Minimum viable elevation system — what's needed to validate terrain depth.
 
-### Coordinate Transformation (Critical)
+- [x] **TileDefinition registry** — Foundation for tile properties, supports elevation and structure data
+- [x] **Terrain elevation (0-5 discrete levels)** — Core vertical dimension, per-tile granularity
+- [x] **Side-face rendering for elevation** — Visual clarity of height differences, procedurally generated or sprite-based
+- [x] **Elevation-aware pathfinding** — 1-level diff walkable, 2+ blocks movement
+- [x] **Depth sorting with height** — Objects on elevated terrain render correctly
+- [x] **Structure walls (boolean blocking)** — Impassable obstacles with uniform height
+- [x] **Click detection with elevation** — Mouse picking accounts for height offset
+- [x] **World-gen elevation noise** — Procedural terrain generation with elevation data
+- [x] **Minimap structure markers** — Walls visible on minimap as distinct markers
 
-**What:** Convert between rectangular world coordinates and isometric screen coordinates
+### Add After Validation (v1.4)
 
-**Implementation approach:**
-- World uses existing grid (x, y in tiles)
-- Screen coordinates calculated as:
-  - `screenX = (worldX - worldY) * (tileWidth / 2)`
-  - `screenY = (worldX + worldY) * (tileHeight / 2)`
-- Inverse for mouse → world:
-  - `worldX = (screenX / (tileWidth / 2) + screenY / (tileHeight / 2)) / 2`
-  - `worldY = (screenY / (tileHeight / 2) - screenX / (tileWidth / 2)) / 2`
+Features to add once core elevation is working.
 
-**Testing:** Click same tile positions in orthogonal vs isometric, verify world coordinates match
+- [ ] **Visual elevation transitions (ramps/stairs)** — Trigger: Players confused by cliff walkability without visual cue
+- [ ] **Multi-height structures** — Trigger: Need for towers, tiered buildings in world design
+- [ ] **Height-based occlusion culling** — Trigger: Structures visually block entities, causing UX confusion
+- [ ] **Dynamic wall transparency** — Trigger: Players complain about walls blocking view during gameplay
+- [ ] **Tile interaction hooks (onStep, onEnter, onClick)** — Trigger: Need for interactive tiles (traps, doors, triggers)
+- [ ] **Smart pathfinding with elevation costs** — Trigger: Pathfinding produces odd routes ignoring terrain difficulty
 
-### Diamond Tile Rendering (Critical)
+### Future Consideration (v2+)
 
-**What:** Render 64x32 diamond shapes for existing 32x32 square tiles
+Features to defer until core gameplay is validated.
 
-**Implementation approach:**
-- Use Phaser Graphics to draw colored diamonds (no sprites yet)
-- Colors match existing biome palette
-- Render in row-order (y=0, then y=1, etc) for correct layering
-- Origin at diamond center for easier positioning
+- [ ] **Elevation affects combat mechanics** — Why defer: Combat system not yet implemented (separate milestone)
+- [ ] **Fall damage from height differences** — Why defer: Requires health/damage system integration
+- [ ] **Procedural side-face texture variation** — Why defer: Visual polish, not functional requirement
+- [ ] **Per-structure custom occlusion zones** — Why defer: Complex editor tooling needed
+- [ ] **Bridges/overpass tiles** — Why defer: Requires multi-layer tile system (tile above and below)
 
-**Testing:** Verify no gaps between tiles, colors match biomes, no z-fighting
+## Feature Prioritization Matrix
 
-### Depth Sorting (Critical)
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| TileDefinition registry | HIGH | LOW | P1 |
+| Terrain elevation (0-5) | HIGH | MEDIUM | P1 |
+| Side-face rendering | HIGH | MEDIUM | P1 |
+| Elevation-aware pathfinding | HIGH | LOW | P1 |
+| Depth sorting with height | HIGH | LOW | P1 |
+| Structure walls | HIGH | LOW | P1 |
+| Click detection with elevation | HIGH | MEDIUM | P1 |
+| World-gen elevation | HIGH | MEDIUM | P1 |
+| Minimap structure markers | MEDIUM | LOW | P1 |
+| Visual transitions (ramps) | MEDIUM | HIGH | P2 |
+| Multi-height structures | MEDIUM | HIGH | P2 |
+| Height-based occlusion | MEDIUM | MEDIUM | P2 |
+| Dynamic wall transparency | LOW | MEDIUM | P2 |
+| Tile interaction hooks | HIGH | MEDIUM | P2 |
+| Smart elevation pathfinding | LOW | MEDIUM | P3 |
+| Elevation gameplay effects | LOW | HIGH | P3 |
+| Procedural textures | LOW | MEDIUM | P3 |
 
-**What:** Render entities/tiles back-to-front based on Y position
+**Priority key:**
+- P1: Must have for launch (v1.3) — table stakes features
+- P2: Should have, add when possible (v1.4) — improves UX
+- P3: Nice to have, future consideration (v2+) — polish and depth
 
-**Implementation approach:**
-- Set sprite depth = `(worldY * 1000) + worldX`
-- Higher Y positions render last (appear in front)
-- Tiles share same depth calculation
-- Phaser depth sorting handles rendering order automatically
+## Existing System Integration
 
-**Testing:** Move entity from low Y to high Y, verify it appears in front of tiles
+### Already Implemented (v1.2)
 
-### Mouse Click Detection (Critical)
+| System | Current State | Elevation Impact |
+|--------|---------------|------------------|
+| IsometricTransform | gridToScreen, screenToGrid, calculateDepth | Needs height parameter in calculateDepth |
+| DepthSorter | Throttled depth updates, Y-based sorting | Must incorporate height into depth calculation |
+| TileRenderer | Renders 128x64 diamond tiles | Needs side-face rendering for elevated tiles |
+| ViewportCuller | Diamond-shaped culling bounds | Works as-is, elevation doesn't affect culling |
+| ChunkManager | Loads/unloads chunks | Needs elevation data in ChunkData from server |
+| PathfindingController | A* pathfinding on grid | Needs elevation-aware cost function |
+| HoverController | Tile hover highlights | Works as-is, highlights correct tile at elevation |
+| CollisionMap | Boolean walkable/blocked 2D array | Needs elevation data or separate structure map |
+| Minimap | Orthogonal top-down view | Needs structure markers rendered on minimap camera |
 
-**What:** Convert mouse clicks to correct tile coordinates on diamond grid
+### Integration Points
 
-**Implementation approach:**
-- Transform screen click to world coordinates using inverse formulas
-- Round to nearest integer tile position
-- Verify clicked tile is walkable before pathfinding
-- Add visual highlight at calculated position for debugging
+- **IsometricTransform.calculateDepth():** Add optional `height` parameter: `calculateDepth(gridX, gridY, height = 0, priorityBoost = 0)`. Formula: `screenY + gridX * 0.0001 + height * ISO_TILE_HEIGHT + priorityBoost`.
+- **TileRenderer.renderTile():** Check tile elevation, render side-face sprite/graphic if `elevation > 0`. Side face extends from tile bottom to `elevation * ISO_TILE_HEIGHT / 2` pixels down.
+- **ChunkData interface:** Add `elevation: number[][]` (2D array matching tiles array). Server sends elevation data with chunk.
+- **PathfindingController cost function:** Check elevation difference between adjacent tiles. Cost = `1` if `abs(heightDiff) <= 1`, cost = `Infinity` if `abs(heightDiff) >= 2`.
+- **HoverController screenToTile():** Adjust Y coordinate by elevation: `adjustedY = screenY - (elevation * ISO_TILE_HEIGHT / 2)` before calling `isoTransform.screenToTile()`.
+- **MinimapCamera:** Add structure layer rendering. Iterate structure tiles, draw markers at grid positions on minimap camera.
 
-**Testing:** Click tile edges, verify correct tile selected. Click diamond corners, verify correct disambiguation
+## Competitor Feature Analysis
 
-### Hover Highlighting (Phase 2)
+### Isometric Games Reference
 
-**What:** Visual outline/highlight on hovered tile or entity
+| Feature | Diablo 2 (2000) | Age of Empires II (1999) | Rimworld (2018) | Our Approach |
+|---------|-----------------|--------------------------|-----------------|--------------|
+| Elevation | Fixed per map zone | Discrete levels (0-7) | Single-level only | Discrete levels (0-5), per-tile |
+| Side faces | Pre-rendered sprites | Pre-rendered cliff tiles | N/A (no elevation) | Procedural or sprite-based (TBD in planning) |
+| Walkability | Binary (walkable/blocked) | Gradual slopes walkable, cliffs blocked | All tiles walkable | 1-level walkable, 2+ blocked |
+| Wall occlusion | Walls fade on approach | Static occlusion | Wall transparency toggle (roof removal) | Dynamic fade (v1.4), static for v1.3 |
+| Structure height | Uniform height per structure | Variable height (walls, towers) | Uniform (no elevation) | Uniform (v1.3), variable (v1.4) |
+| Pathfinding | Binary walkable check | Elevation-weighted costs | Open terrain only | Binary for v1.3, weighted for v1.4 |
+| Click detection | Mouse maps (pixel masks) | Diamond bounds with elevation | Rectangular tiles (no iso) | Diamond bounds + elevation offset |
+| Tile system | Hardcoded tile types | Tile definitions with properties | Def-based (XML configs) | TileDefinition registry (TypeScript) |
 
-**Implementation approach:**
-- Draw highlight diamond using Graphics.strokeRect with transform
-- Color: white or accent color (match HUD theme)
-- Update on pointermove event
-- Clear on pointerout
+### Key Takeaways
 
-**Testing:** Hover tiles, verify highlight appears at cursor position. Hover entities, verify entity highlight not tile
+- **Diablo 2 approach:** Fixed elevation per zone, pre-rendered art. Simple but inflexible. Avoid this — use per-tile elevation.
+- **Age of Empires approach:** Discrete levels with transitions, weighted pathfinding. Good model for gradual complexity (binary → weighted).
+- **Rimworld approach:** Def-based tile system with properties. Excellent pattern for TileDefinition registry.
+- **Occlusion strategies:** Diablo 2 fades walls dynamically, AoE2 uses static occlusion. Start with static (simpler), add dynamic in v1.4.
+- **Click detection:** Mouse maps (Diablo 2) overkill for 128x64 tiles. Diamond bounds with elevation offset sufficient.
 
-## Current System Integration
+## Implementation Complexity Assessment
 
-**Existing features that continue to work:**
-- WASD movement (world coords unchanged)
-- Server-side movement validation (world coords unchanged)
-- Viewport culling (may need bounds adjustment for diamond rendering area)
-- HUD health/energy/XP bars (unaffected by world rendering)
-- WebSocket communication (unaffected)
-- Pathfinding A* (world grid unchanged)
+### LOW Complexity (1-3 days)
 
-**Existing features requiring adjustment:**
-- TileRenderer.createTile() — Add coordinate transform
-- EntityRenderer.createEntityContainer() — Add coordinate transform, verify health bar Y offset
-- ViewportCuller — Expand culling bounds to account for diamond shape extending beyond rectangular bounds
-- ChunkManager — Render tiles in Y-order, not arbitrary order
-- Click-to-move handler — Add inverse coordinate transform
-- Minimap camera — Decide orthogonal (no change) vs isometric (add transform)
+- TileDefinition registry pattern (interfaces + Map-based lookup)
+- Structure walls boolean blocking (extends collision map)
+- Depth sorting with height (formula adjustment)
+- Minimap structure markers (draw loop on minimap camera)
+- Click detection elevation offset (Y-coordinate adjustment)
 
-**Known edge cases:**
-- Entities at same Y position (e.g. Y=10) need secondary sort by X for deterministic ordering
-- Multi-tile entities (if added later) need special depth calculation based on base tile
-- Viewport edges in isometric space are rotated 45° — culling rectangle must expand to diamond bounding box
+### MEDIUM Complexity (3-7 days)
 
-## Performance Considerations
+- Terrain elevation system (ChunkData update, server/client sync)
+- Side-face rendering (sprite or procedural drawing logic)
+- Elevation-aware pathfinding (cost function with height check)
+- World-gen elevation noise (integrate Perlin noise into generation)
+- Height-based occlusion culling (visibility checks, alpha fading)
+- Tile interaction hooks (event system architecture)
 
-| Concern | At Current Scale | Mitigation |
-|---------|------------------|------------|
-| Coordinate transformation overhead | Low — simple math per tile/entity | Cache transformed positions when possible. Only recalculate on position change |
-| Depth sorting cost | Low — Phaser depth sorting is O(n log n) | Already sorting entities. Adding tiles to sort increases n, but still performant for visible entities (< 200) |
-| Diamond rendering | Low — Graphics.fillPath faster than sprites for solid colors | Use Graphics for MVP. If performance issues, pre-render diamond sprites and use sprite batching |
-| Viewport culling accuracy | Medium — diamond bounds exceed rectangular tiles | Calculate diamond bounding box (rotated 45°), cull against that. ~1.4x rectangular area |
-| Mouse picking per frame | Low — only on pointermove, not render loop | Acceptable. If lag occurs, throttle to 60fps max |
+### HIGH Complexity (7-14 days)
 
-## Confidence Assessment
-
-| Area | Confidence | Source Basis |
-|------|------------|--------------|
-| Core isometric math | HIGH | Multiple authoritative sources (Phaser docs, Clint Bellanger isometric math, game dev forums) |
-| Depth sorting approach | HIGH | Standard Y-position sorting verified across Unity/Godot/Phaser implementations |
-| Mouse picking complexity | MEDIUM | Math is well-documented, but diamond shape disambiguation requires careful implementation |
-| Minimap representation | MEDIUM | No clear consensus — some games keep orthogonal, others transform. Player preference varies |
-| Performance of colored tiles | HIGH | Graphics.fillPath well-optimized in Phaser. Multiple examples of simple isometric tile engines |
-| Shadow implementation | LOW | Many approaches exist (sprite-based, shader-based, pre-baked). Need to test what works best for this game |
+- Visual elevation transitions (ramps/stairs as tile types, sprite work)
+- Multi-height structures (per-tile height tracking, rendering complexity)
+- Dynamic wall transparency (player proximity detection, smooth fading)
+- Smart pathfinding with costs (weighted A* with elevation penalties)
+- Procedural side-face generation (texture sampling, dynamic sprite creation)
 
 ## Sources
 
-### High Confidence (Official/Authoritative)
-- [Phaser 3 Isometric Examples](https://phaser.io/examples/v3.85.0/depth-sorting/view/isometric-map) — Official Phaser isometric tilemap examples with depth sorting
-- [Phaser 3 Isometric Plugin](https://github.com/sebashwa/phaser3-plugin-isometric) — Community plugin showing isometric implementation patterns
-- [Clint Bellanger: Isometric Tiles Math](https://clintbellanger.net/articles/isometric_math/) — Authoritative coordinate transformation formulas
-- [2D Engine: Isometric Graphics Tutorial](https://2dengine.com/doc/isometric.html) — Comprehensive isometric rendering techniques
-- [Drawing Isometric Boxes in Correct Order](https://shaunlebron.github.io/IsometricBlocks/) — Topological sorting for depth ordering
+**Isometric Elevation Systems:**
+- [Handling Height in Isometric Tile Maps](https://erikonarheim.com/posts/handling-height-in-isometric/)
+- [Isometric Tiles Math](https://clintbellanger.net/articles/isometric_math/)
 
-### Medium Confidence (Verified Community Sources)
-- [GameDev.net: Isometric Depth Sorting](https://www.gamedev.net/forums/topic/470599-isometric-depth-sorting/) — Y-position sorting discussions
-- [Red Blob Games: Isometric Outline Rendering](https://www.redblobgames.com/x/1942-isometric/) — Visual techniques for outlines/highlighting
-- [Studica: Isometric Camera Unity](https://www.studica.com/blog/isometric-camera-unity/) — Camera control patterns transferable to Phaser
-- [80.lv: Frustum Culling Optimization for Isometric RTS](https://80.lv/articles/optimizing-isometric-rts-performance-with-frustum-culling) — Viewport culling for isometric maps
+**Pathfinding with Elevation:**
+- [GridGraph - A* Pathfinding Project](https://arongranberg.com/astar/documentation/stable/gridgraph.html)
+- [A* Pathfinding Project Features](https://arongranberg.com/astar/features)
 
-### Medium Confidence (Recent Isometric MMO Examples)
-- [Massively Overpowered: Dreadmyst Isometric MMORPG](https://massivelyop.com/2026/01/12/isometric-mmorpg-dreadmyst-reaches-over-7k-concurrency-and-mostly-positive-reviews-despite-server-issues/) — 2026 isometric MMO launch, player expectations
-- [MMORPG.com: Isometric MMO Discussion](https://forums.mmorpg.com/discussion/423774/what-would-it-take-to-get-you-interested-in-playing-a-isometric-mmo) — Player preferences for isometric MMOs
-- [MMORPG.GG: Best Isometric MMOs 2025](https://mmorpg.gg/best-isometric-mmos/) — Survey of current isometric MMO features
+**Depth Sorting and Occlusion:**
+- [Drawing isometric boxes in the correct order](https://shaunlebron.github.io/IsometricBlocks/)
+- [Unity - Manual: Sort Sprites with a Custom Sorting Axis](https://docs.unity3d.com/6000.2/Documentation/Manual/tilemaps/work-with-tilemaps/isometric-tilemaps/renderer/sort-sprites-custom-sorting-axis.html)
+- [Isometric Depth Sorting](https://mazebert.com/forum/news/isometric-depth-sorting--id775/)
 
-### Low Confidence (Implementation Details Requiring Validation)
-- [Pikuma: Isometric Projection](https://pikuma.com/blog/isometric-projection-in-games) — General overview, math needs verification against Phaser specifics
-- [Screaming Brain: Isometric Shadows Tutorial](https://screamingbrainstudios.com/isometric-shadows/) — Shadow techniques, but for static pre-rendered assets
-- [Minimaps Research](https://alejandro61299.github.io/Minimaps_Personal_Research/) — Minimap positioning statistics, limited sample size
-- [Unity Isometric Movement Discussions](https://forum.unity.com/threads/most-natural-isometric-character-movement.531173/) — Movement feel discussions, but Unity-specific
+**Wall Occlusion and Transparency:**
+- [Isometric Occlusion - Justin D Johnson](https://justindjohnson.com/softdev/isometric-occlusion/)
+- [Wall Fade for Isometric, Orthographic Game - Unity Discussions](https://discussions.unity.com/t/wall-fade-for-isometric-orthographic-game/1673205)
+- [Replicated Isometric Wall Fading Plugin - UE Marketplace](https://www.unrealengine.com/marketplace/en-US/product/isometric-wall-hiding-and-line-of-sight-plugin)
 
-## Research Methodology Notes
+**Click Detection with Height:**
+- [Mouse Maps for Isometric Height Maps - GameDev.net](https://gamedev.net/tutorials/programming/general-and-gameplay-programming/mouse-maps-for-isometric-height-maps-r2026/)
+- [How to find tile under cursor in multilevel isometric terrain - Godot Forum](https://forum.godotengine.org/t/solved-how-to-find-tile-under-cursor-in-a-multilevel-2d-isometric-terrain/7893)
 
-**Verification approach:**
-- Core math (coordinate transformation, depth sorting) verified across 3+ authoritative sources
-- Visual polish features (shadows, highlights) have multiple implementation approaches — flagged as needing prototyping
-- Player expectations drawn from 2026 isometric MMO launch (Dreadmyst) and community forums
-- Performance claims based on Phaser-specific documentation where available, extrapolated from Unity/Godot where not
+**Tile Definition Patterns:**
+- [Game Programming Design Patterns - The Factory Pattern](https://www.gamedeveloper.com/programming/game-programming-design-patterns---the-factory-pattern)
+- [Type Object · Behavioral Patterns · Game Programming Patterns](https://gameprogrammingpatterns.com/type-object.html)
+- [Flyweight · Design Patterns Revisited · Game Programming Patterns](https://gameprogrammingpatterns.com/flyweight.html)
 
-**Gaps identified:**
-- No Phaser-specific benchmark data for isometric performance at scale (100+ entities)
-- Minimap representation has no clear best practice — orthogonal vs isometric is aesthetic choice
-- Shadow implementation approach needs prototyping to determine performance/visual tradeoff
-- Zoom level implementation details light on Phaser specifics (viewport culling recalculation)
+**Event-Driven Tile Interactions:**
+- [Event-Driven Architecture in Game Development: Unity & GameMaker](https://medium.com/@ahmadrezakml/event-driven-architecture-in-game-development-unity-gamemaker-c76915361ff0)
+- [Event Queue · Decoupling Patterns · Game Programming Patterns](https://gameprogrammingpatterns.com/event-queue.html)
 
-**Confidence in recommendations:**
-- MVP features (coordinate transformation, depth sorting, mouse picking) — HIGH confidence, well-documented
-- Phase 2 features (hover highlight, camera pan) — MEDIUM confidence, standard patterns but need adaptation
-- Deferred features (zoom, shadows, elevation) — LOW confidence, multiple valid approaches, needs design exploration
+**Common Pitfalls:**
+- [What I learned from trying to make an Isometric game in Unity](https://www.gamedeveloper.com/programming/what-i-learned-from-trying-to-make-an-isometric-game-in-unity)
+- [Pikuma: Isometric Projection in Game Development](https://pikuma.com/blog/isometric-projection-in-games)
+
+---
+*Feature research for: Isometric elevation & structure systems*
+*Researched: 2026-02-16*
+*Confidence: MEDIUM — based on established isometric game patterns, official docs, and existing codebase analysis*

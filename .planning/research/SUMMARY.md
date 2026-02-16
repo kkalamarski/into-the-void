@@ -1,276 +1,250 @@
 # Project Research Summary
 
-**Project:** Into the Void v1.2 - Isometric View Transformation
-**Domain:** Isometric rendering for multiplayer 2D MMO with Phaser 3
+**Project:** Isometric Elevation & Structures Milestone
+**Domain:** Isometric 2D game terrain elevation and structure rendering
 **Researched:** 2026-02-16
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Adding isometric projection to an existing top-down multiplayer game requires a strict separation between coordinate spaces. Research confirms that the isometric transformation should be purely presentational - game logic stays in cartesian (grid) coordinates, with screen coordinates calculated only at render time. Native Phaser 3 capabilities (built-in since v3.50.0) are sufficient; the unmaintained phaser3-plugin-isometric should be avoided. The core transformation math is simple (20-30 lines), but integration requires careful attention to coordinate space boundaries to prevent common pitfalls like click detection misalignment, depth sorting instability, and multiplayer position desync.
+This research covers adding terrain elevation (height levels 0-5), side-face rendering, and structure walls to an existing Phaser 3.90.0 isometric multiplayer game. The key finding is that no new external dependencies are required - Phaser's native IsoBox and IsoTriangle geometry provides everything needed for side-face rendering. The recommended approach is to extend the existing tile system with elevation metadata through a TileDefinition registry pattern, enhance depth sorting to include vertical offset, and use Phaser's native isometric geometry for elevated tile faces.
 
-The recommended approach uses a transform layer pattern: create a centralized CoordinateTransform utility that handles all bidirectional conversions between grid and screen space. All rendering components (TileRenderer, EntityRenderer, ViewportCuller) use this utility for positioning and depth calculations. Game logic, server communication, pathfinding, and collision detection remain completely unchanged - they continue using grid coordinates. This pattern allows toggling between orthographic and isometric views by swapping transform implementations and provides clear debugging boundaries.
+The critical architecture insight is to avoid treating elevation as a separate system. Instead, elevation should be: (1) stored as parallel data alongside tiles in ChunkData (heights[][] array), (2) integrated into existing depth calculation as an additional parameter, and (3) rendered using the existing TileRenderer extended with ElevationRenderer composition. The existing systems (IsometricTransform, DepthSorter, TileRenderer, PathfindingController) remain largely intact with targeted extensions rather than wholesale replacements.
 
-The critical risk is coordinate space confusion, which manifests as "looks done but isn't" problems - visually correct rendering but broken click detection, pathfinding that produces strange paths, or multiplayer position drift. Prevention requires disciplined architecture: never mix coordinate systems, always transform at render boundaries, and validate coordinate conversions at multiple zoom levels and map edges. The second major risk is depth sorting instability causing sprite flickering, mitigated by using Phaser's Layer-based automatic depth sorting with throttled updates and proper depth value calculations.
+The primary risk is depth sorting breakdown when objects span multiple height levels. Simple Y-based sorting becomes non-transitive, causing flickering z-fighting artifacts. This is mitigated by immediately implementing composite depth calculation (screenY + elevation * elevationWeight + gridX * tiebreaker) before any visual rendering begins. Secondary risks include pathfinding treating all elevation changes as equal cost (players moonwalking up cliffs), side-face rendering explosion (6x draw calls), and ChunkData schema inadequacy forcing painful migrations later.
 
 ## Key Findings
 
 ### Recommended Stack
 
-Native Phaser 3 with custom coordinate utilities is the clear choice for isometric transformation. The phaser3-plugin-isometric is unmaintained (last updated 2018), predates Phaser's built-in isometric features, and adds unnecessary complexity for simple coordinate math. Phaser 3.50.0+ (released 2020) includes native isometric tilemap support and depth sorting APIs that handle all required functionality.
+The existing stack is sufficient - no new packages needed. Phaser 3.90.0 includes native IsoBox/IsoTriangle for side-face rendering (added in Phaser 3.50, stable in current version). TypeScript 5.4.0 supports the type registry pattern for tile definitions. The main additions are architectural components, not external dependencies.
 
 **Core technologies:**
-- **Phaser 3.90.0** (upgrade from 3.80.0): Game engine with native isometric support - Latest stable with built-in tilemap isometric orientation and depth sorting
-- **Custom coordinate utilities**: Cartesian to/from isometric transforms - 20-30 LOC of simple math provides full control without dependencies
-- **Phaser Layer API**: Automatic depth sorting - Built-in `Layer.depthSort()` optimized for frequent re-sorting of moving objects
-- **Native `setDepth()` method**: Z-ordering - Uses formula `depth = (gridX + gridY) * 1000 + gridY` for correct isometric layering
+- **Phaser 3.90.0** (current): Game engine with native isometric geometry - IsoBox provides three-face rendering without plugins or custom polygon math
+- **TypeScript 5.4.0** (current): Type-safe tile definitions - Type registry pattern scales well with metadata additions
+- **TileDefinition Registry** (new component): Centralized tile metadata with elevation + rendering hooks - TypeScript interface extension following existing EntityRegistry pattern
+- **Elevation-Aware Depth Sorter** (enhancement): Depth calculation including vertical offset - Extend existing calculateDepth() to include elevation parameter
+- **Side Face Renderer** (new component): Render vertical tile faces using IsoBox - New TileSideFaceRenderer class using Phaser's native geometry
 
-**No additional dependencies required.** The transformation math is straightforward (diamond projection with 2:1 aspect ratio), and all required rendering APIs exist in Phaser core.
+**Critical constraint:** Focus only on elevation extensions, not rebuilding isometric basics. The project already has validated IsometricTransform (grid-to-screen), DepthSorter (throttled updates), and TileRenderer (diamond tiles) that work correctly.
 
 ### Expected Features
 
-Isometric view transformation delivers the table stakes features needed for visual coherence and interactivity, with some polish features deferred to later phases. The MVP focuses on correct coordinate transformation, proper depth sorting, and restoring click-to-move functionality in isometric space.
-
 **Must have (table stakes):**
-- **Correct depth sorting** - Y-position based z-index so entities layer properly; without this, sprites flicker and appear in wrong order
-- **Diamond tile coordinate transformation** - Players expect isometric diamond grid; screen-to-grid and grid-to-screen conversions with 2:1 ratio
-- **Accurate mouse/click detection** - Click-to-move must work on diamond tiles; inverse transform from screen to grid coordinates
-- **Proper tile rendering order** - Back-to-front row ordering prevents visual glitches
-- **Entity positioning on tiles** - Entities aligned to isometric grid with health bars staying positioned correctly
-- **Minimap representation** - Keep orthogonal (easier to read) or transform to isometric (consistent with main view)
+- **TileDefinition registry** - Foundation for tile properties, supports elevation and structure data
+- **Terrain elevation (0-5 discrete levels)** - Core vertical dimension, per-tile granularity
+- **Side-face rendering for elevation** - Visual clarity of height differences, procedurally generated
+- **Elevation-aware pathfinding** - 1-level difference walkable, 2+ blocks movement
+- **Depth sorting with height** - Objects on elevated terrain render correctly above/below
+- **Structure walls (boolean blocking)** - Impassable obstacles with uniform height
+- **Click detection with elevation** - Mouse picking accounts for height offset
+- **World-gen elevation noise** - Procedural terrain generation with elevation data
+- **Minimap structure markers** - Walls visible on minimap as distinct markers
 
 **Should have (competitive):**
-- **Highlight/outline on hover** - Improves UX for tile/entity selection in dense isometric scenes; screen-space outlines preferred
-- **Smooth camera panning** - Edge pan or middle-click drag expected in modern isometric games
-- **Viewport culling optimization** - Diamond-shaped culling bounds to avoid rendering off-screen tiles
+- **Visual elevation transitions (ramps/stairs)** - Gradual slopes or stairs between levels (trigger: players confused by cliff walkability)
+- **Multi-height structures** - Structures with variable height per tile (trigger: need for towers, tiered buildings)
+- **Height-based occlusion culling** - Tall structures hide entities behind them
+- **Dynamic wall transparency** - Walls fade when blocking player view (Diablo 2 style)
+- **Tile interaction hooks** (onClick, onStep, onEnter) - Extensible tile behavior system
+- **Smart pathfinding with elevation costs** - Weighted A* prefers gentle slopes over cliffs
 
 **Defer (v2+):**
-- **Zoom levels (2-3 discrete)** - Tactical overview vs detail view; requires viewport culling recalculation per zoom
-- **Dynamic shadows** - Visual polish after core mechanics proven; simple circular shadow sprites sufficient initially
-- **Visual depth cues (elevation)** - Stacked tiles for height; needs design decisions about world structure
-- **Camera rotation** - Explicitly avoided (anti-feature); massively increases asset requirements and causes disorientation
+- **Elevation affects combat mechanics** - Height advantage in combat (requires combat system implementation)
+- **Fall damage from height differences** - Requires health/damage system integration
+- **Procedural side-face texture variation** - Visual polish, not functional requirement
+- **Bridges/overpass tiles** - Requires multi-layer tile system (tile above and below)
 
 ### Architecture Approach
 
-The transform layer separation pattern is the industry-standard architecture for isometric games. All coordinate transformations flow through a single `CoordinateTransform` utility, creating a clear boundary between world space (game logic) and screen space (rendering). The pattern uses Phaser's Layer API for automatic depth sorting rather than manual Container sorting, providing better performance for frequent re-sorting of moving entities.
+The integration strategy minimizes disruption to existing systems while adding elevation capabilities. Store height as separate 2D array parallel to tiles[][] (not embedded in tile definition), allowing any tile type at any height. Use TileDefinition registry as static object with type-safe lookups, following the existing EntityRegistry pattern. Extend rendering with composition - TileRenderer calls new ElevationRenderer for elevated tiles rather than replacing the rendering pipeline.
 
 **Major components:**
-1. **CoordinateTransform utility** - Centralized singleton for bidirectional grid-to-screen conversions and depth calculations; keeps transformation logic in one place, prevents scattered coordinate math
-2. **Layer-based Y-sort system** - Single Phaser Layer containing all world objects (tiles + entities); built-in `depthSort()` method handles automatic z-ordering
-3. **DepthManager system** - Orchestrates when depth sorting occurs; uses dirty flags and throttling (every 50ms) to optimize performance
-4. **Modified rendering components** - TileRenderer, EntityRenderer, ViewportCuller use CoordinateTransform for positioning; game logic (MovementController, PathfindingController) remains unchanged
-5. **Diamond-shaped viewport culling** - Transforms camera rectangle corners to grid space to calculate visible tile bounds; prevents rendering off-screen tiles while avoiding pop-in
 
-**Data flow:** Server sends grid coordinates → Client logic operates in grid space → Rendering layer applies transform → Sprites positioned at screen coordinates with depth values → Layer sorts by depth → Display. Input flow reverses: Mouse click at screen position → Transform to grid coordinates → Pathfinding/movement in grid space → Server validates in grid space.
+1. **TileDefinition Registry** (packages/shared-types/src/game/tile-registry.ts) - Static tile definitions with elevation metadata, walkability, speed modifiers, and optional rendering hooks. Registry pattern like EntityRegistry, type-safe lookups by TileId.
+
+2. **ChunkData Extension** (packages/shared-types/src/core/zone.ts) - Add heights[][] (parallel to tiles[][]) and structures[] array. Elevation stored separately from tile type to avoid combinatorial explosion (16 tiles × 6 heights = 96 definitions).
+
+3. **ElevationRenderer** (apps/web/src/game/rendering/ElevationRenderer.ts) - New component for side wall rendering using Phaser IsoBox. Calculates screen offset based on height levels (height × PIXELS_PER_LEVEL), renders top face at elevated position, adds south/east wall faces if elevated.
+
+4. **PathfindingController Enhancement** (packages/game-logic/src/movement/pathfinding.ts) - Modified A* cost function includes elevation penalty (base cost 1.0 + elevationDelta × 0.5). Prefers flat routes over climbing.
+
+5. **StructureGenerator** (packages/world-gen/src/generation/structure.ts) - New world-gen component for wall/structure placement using structural noise. Sets height data for wall tiles based on biome rules.
+
+**Data flow:** Server WorldGenerator → generateTerrain() produces tiles[][] + heights[][] → ChunkData serialized → Client ChunkManager → WorldScene renders via TileRenderer → ElevationRenderer for elevated tiles → depth includes elevation offset.
 
 ### Critical Pitfalls
 
-Research identified eight major pitfalls, with three requiring immediate attention in phase planning.
+1. **Depth Sorting Algorithm Breakdown** - Simple Y-based sorting becomes non-transitive with multi-height objects, causing flickering z-fighting. Prevention: Switch to composite depth calculation (screenY + elevation × elevationWeight + gridX × 0.0001) immediately, before any visual rendering. Use elevation weight of 10000 to separate layers.
 
-1. **Depth sorting instability (flickering sprites)** - Simple Y-based sorting breaks with overlapping entities of different sizes; use Phaser Layer with cached depth values and dirty flags; address in Phase 1 (Core Transformation) or compounds through all features
-2. **Click detection coordinate space confusion** - Mixing screen/grid coordinates causes click-to-move to target wrong tiles; maintain strict separation with transform utilities; address in Phase 1 or interaction features will be fundamentally broken
-3. **Viewport culling using wrong bounds** - Rectangular culling for diamond viewport renders 40% more tiles or causes pop-in; recalculate bounds for isometric projection; address in Phase 2 (Optimization) after core rendering works
-4. **Multiplayer position synchronization mismatch** - Tweening screen coordinates instead of world coordinates causes rubber-banding; keep all logic in grid space, transform only for rendering; address in Phase 3 (Multiplayer Integration)
-5. **Minimap coordinate misalignment** - Different projection between minimap/main view causes position drift; decide orthogonal vs isometric and apply consistently; address in Phase 4 (UI Integration)
+2. **Pathfinding Treats All Elevation as Equal Cost** - Existing A* uses Manhattan distance and uniform cost=1. Players will moonwalk up cliffs or get stuck at impassable heights. Prevention: Expand collision map to include elevation data, add elevation-aware cost function (base + elevationDiff × penalty), set MAX_STEP_HEIGHT to reject impossible climbs.
+
+3. **ChunkData Structure Assumes Flat Tiles** - Current tiles[][] and collisions[][] cannot represent multi-level terrain. Adding elevation retroactively forces painful schema migration. Prevention: Refactor ChunkData NOW to include heights[][] parallel array before any elevation work begins. Version the schema for future migrations.
+
+4. **Side-Face Rendering Explosion** - Each elevated tile needs up to 6 faces rendered (top + 4 sides + bottom). 64×64 zone with average elevation=2 creates 24,576 sprites vs current 4,096. FPS tanks. Prevention: Mesh side faces together into single sprite per chunk, implement visibility culling per face (only render south/east faces, check if neighbor is taller and occludes), use texture atlas for batching.
+
+5. **Click Detection Breaks with Elevated Terrain** - Current screenToTile assumes flat plane. Clicking wall tops selects wrong tile behind the wall. Prevention: Add elevation-aware screenToTile that adjusts Y coordinate by elevation offset, or use ray-casting approach projecting 3D ray through camera to intersect all elevation levels.
 
 ## Implications for Roadmap
 
-Based on research dependencies and risk mitigation, the isometric transformation should follow a five-phase structure. The ordering prioritizes establishing correct coordinate transformation and depth sorting early (Phase 1), optimizing performance once core mechanics work (Phase 2), and integrating with multiplayer/UI systems after the rendering pipeline is proven (Phase 3-4).
+Based on research, suggested phase structure follows strict dependency chain: foundation (no visual changes) → data layer complete → rendering complete → movement integrated.
 
-### Phase 1: Core Isometric Transformation
-**Rationale:** Foundation phase - coordinate transformation and depth sorting must be correct before any other isometric features. These are the load-bearing architectural decisions that all subsequent work depends on. Getting coordinate spaces wrong here creates compounding technical debt.
-
-**Delivers:**
-- CoordinateTransform utility with toScreen/toGrid/getDepthValue methods
-- Modified TileRenderer and EntityRenderer using isometric positioning
-- Layer-based depth sorting replacing Container approach
-- Unit tests verifying transform accuracy (toScreen → toGrid returns original values)
-
-**Addresses features:**
-- Diamond tile coordinate transformation (table stakes)
-- Correct depth sorting (table stakes)
-- Entity positioning on tiles (table stakes)
-
-**Avoids pitfalls:**
-- Depth sorting instability - Implements Layer + depth calculation from start
-- Click detection coordinate confusion - Establishes transform boundaries early
-- Pathfinding heuristic breaks - Keeps pathfinding in grid space, only rendering transforms
-
-**Research flag:** Standard patterns, skip research-phase. Transformation math well-documented in Phaser examples and isometric resources.
-
-### Phase 2: Rendering Optimization & Interaction
-**Rationale:** After core transformation works visually, optimize rendering performance and restore interactive features. Viewport culling critical for performance with large maps. Click-to-move must work in isometric space or game is unplayable.
+### Phase 1: Tile Definition Architecture
+**Rationale:** TileDefinition registry is required by all other systems. ChunkData schema changes must happen before any elevation work to avoid painful migrations. This phase establishes the foundation with zero visual changes - existing game continues working while types evolve.
 
 **Delivers:**
-- Diamond-shaped viewport culling bounds
-- Mouse click detection with inverse coordinate transform
-- Restored click-to-move pathfinding
-- Camera follow offset tuning for isometric centering
-- DepthManager with dirty flags and throttling
+- TileDefinition registry interface with basic definitions (migrate existing 16 tiles)
+- ChunkData extended with heights[][] and structures[] fields
+- generateTerrain() modified to output new fields (all zeros initially)
+- Network layer verification (serialize/deserialize validation)
 
-**Addresses features:**
-- Accurate mouse/click detection (table stakes)
-- Proper tile rendering order (table stakes)
-- Viewport culling optimization (should-have)
-- Smooth camera panning (should-have)
+**Addresses:**
+- Prevents "ChunkData structure assumes flat tiles" pitfall by refactoring schema upfront
+- Enables TileDefinition registry pattern from FEATURES.md (table stakes)
+- Sets up type-safe tile metadata system from STACK.md
 
-**Avoids pitfalls:**
-- Viewport culling wrong bounds - Calculates diamond culling from start
-- Camera follow offset incorrect - Tunes screen-space offset for diamond grid
+**Avoids:**
+- Schema migration pain later (HIGH recovery cost pitfall)
+- Combinatorial explosion of tile variants (FLOOR_E0, FLOOR_E1...)
+- Data desync between elevation and tile data
 
-**Research flag:** Standard patterns, skip research-phase. Culling and click detection documented in Phaser/isometric resources.
+**Dependencies:** None - this is the foundation phase
 
-### Phase 3: Multiplayer Integration
-**Rationale:** After rendering and interaction work locally, validate that coordinate transformation survives multiplayer synchronization. Tweened movement, server reconciliation, and remote player positioning must use grid coordinates to avoid desync.
-
-**Delivers:**
-- Audit of movement tweens to use world-space coordinates
-- Verification that server sends grid coordinates only
-- Testing with network latency (100ms+) to expose position drift
-- Remote player rendering using same transform as local player
-
-**Addresses features:**
-- Entity positioning consistency across clients
-- Movement animation correctness for remote players
-
-**Avoids pitfalls:**
-- Multiplayer position synchronization mismatch - Ensures tweens use grid space
-- Different draw order between client and server - Standardizes depth calculation
-
-**Research flag:** Standard patterns, skip research-phase. Multiplayer coordinate synchronization is well-understood pattern.
-
-### Phase 4: UI Integration
-**Rationale:** After core game rendering and multiplayer work, integrate isometric view with existing UI systems (minimap, HUD). Minimap requires design decision (orthogonal vs isometric) and consistent coordinate handling.
+### Phase 2: Elevation System Core
+**Rationale:** With data structures in place, generate real elevation data and wire it through the system. This phase makes elevation data flow from server to client before any visual rendering. Composite depth calculation must be implemented here to prevent depth sorting breakdown.
 
 **Delivers:**
-- Minimap projection decision (recommend orthogonal for readability)
-- Minimap click-to-move using correct coordinate space
-- Health bar Y-offset adjustment for isometric sprite heights
-- Behavior icon positioning verification
+- Elevation noise layer in terrain generation (uses biome elevation as base + terrain detail)
+- StructureGenerator for simple wall placement
+- Collision map generation includes structures
+- IsometricTransform.heightToScreenY() method
+- Enhanced calculateDepth() with elevation parameter
+- Server sends real height data to client
 
-**Addresses features:**
-- Minimap representation (table stakes)
-- Health bars above entities (table stakes)
+**Uses:**
+- TileDefinition registry for default elevation values
+- Phaser 3.90.0 calculateDepth() extension (from STACK.md)
+- Multi-octave noise approach (biome base + terrain detail) to avoid biome/elevation mismatch
 
-**Avoids pitfalls:**
-- Minimap coordinate misalignment - Establishes consistent projection early
+**Implements:**
+- Elevation as separate data layer (heights[][] parallel to tiles[][])
+- Composite depth calculation to prevent z-fighting
+- Elevation-aware depth sorting
 
-**Research flag:** Standard patterns, skip research-phase. Minimap coordinate handling straightforward.
+**Avoids:**
+- "Depth sorting breakdown" pitfall by implementing composite depth immediately
+- "Elevation noise mismatch" pitfall by reconciling biome/terrain noise layers
+- "Depth sorting throttle issues" by adapting throttle for elevation changes
 
-### Phase 5: Polish & Advanced Features
-**Rationale:** After all core functionality works, add polish features that enhance visual quality and UX. These are lower priority but improve perceived quality significantly.
+**Dependencies:** Phase 1 complete (ChunkData schema + TileDefinition registry exist)
+
+### Phase 3: Elevation Rendering
+**Rationale:** Data flows correctly, now make it visible. ElevationRenderer implements side-face rendering with visibility culling from the start to prevent rendering explosion. This phase makes terrain elevation appear visually.
 
 **Delivers:**
-- Hover highlighting with screen-space outlines
-- Tile edge anti-aliasing
-- Visual feedback for click targets
-- Optional: Dynamic shadows using circular shadow sprites
-- Optional: Zoom levels (requires viewport culling recalculation)
+- ElevationRenderer component with side wall rendering
+- TileRenderer integration (composition pattern - TileRenderer calls ElevationRenderer)
+- Side-face visibility culling (only render south/east faces, check neighbor occlusion)
+- DepthSorter includes elevation in depth calculation
+- Visual elevation appears in game
 
-**Addresses features:**
-- Highlight/outline on hover (should-have)
-- Tile edge anti-aliasing (should-have)
-- Dynamic shadows (deferred from v2+)
-- Zoom levels (deferred from v2+)
+**Addresses:**
+- Side-face rendering for elevation (table stakes from FEATURES.md)
+- Prevents "side-face rendering explosion" by implementing culling immediately
+- Visual clarity of height differences (table stakes)
 
-**Avoids pitfalls:**
-- No visual feedback for click targets - Adds hover highlights
+**Avoids:**
+- Rendering all 6 faces always (5-10x performance hit)
+- ViewportCuller missing tall structures (expand bounds by max height)
 
-**Research flag:** Skip research-phase for hover/highlighting (standard patterns). If implementing zoom levels, may need research-phase for viewport culling recalculation strategies.
+**Dependencies:** Phase 2 complete (elevation data flowing, depth calculation correct)
+
+### Phase 4: Structure Walls & Pathfinding
+**Rationale:** With elevation rendering working, add gameplay integration. Pathfinding must respect elevation changes, and structure walls need proper collision handling. This phase makes elevation affect player movement.
+
+**Delivers:**
+- PathfindingController passes heightMap to findPath()
+- A* modified for elevation cost (base + elevationDiff × penalty)
+- MovementController validation checks height (prevent climbing 3+ levels)
+- Structure wall collision integration
+- Click detection with elevation offset
+- Minimap structure markers
+
+**Addresses:**
+- Elevation-aware pathfinding (table stakes from FEATURES.md)
+- Structure walls block movement (table stakes)
+- Click detection with elevation (table stakes)
+- Prevents "pathfinding treats elevation as flat" pitfall
+
+**Avoids:**
+- Moonwalking up cliffs (impossible elevation changes)
+- Click detection broken on elevated terrain
+- Server/client desync on movement validation
+
+**Dependencies:** Phase 3 complete (rendering works, elevation visible)
 
 ### Phase Ordering Rationale
 
-- **Phase 1 before all others:** Coordinate transformation is foundational. Getting grid-to-screen conversion wrong creates cascading bugs in click detection, pathfinding, multiplayer sync. Depth sorting must work early or will cause constant rework.
-
-- **Phase 2 before Phase 3:** Optimization and interaction must work locally before testing with multiplayer latency. Culling performance and click detection are local concerns that don't involve network.
-
-- **Phase 3 before Phase 4:** Multiplayer synchronization more critical than UI polish. Remote player positions affect gameplay; minimap projection is UX concern. Validate network-facing features before cosmetic features.
-
-- **Phase 5 last:** Polish features depend on all core systems working. Hover highlights need click detection (Phase 2), shadows need depth sorting (Phase 1), zoom needs culling (Phase 2).
+- **Foundation first:** TileDefinition registry and ChunkData schema must exist before any elevation work. Schema changes later are painful (1-2 week recovery cost).
+- **Data before rendering:** Generate and flow elevation data through system before making it visible. Prevents implementing rendering twice when data structure changes.
+- **Depth calculation immediate:** Composite depth including elevation must be implemented before any multi-level rendering to prevent z-fighting. Non-negotiable.
+- **Rendering before gameplay:** Visual elevation must work correctly before pathfinding integration. Debugging pathfinding issues is impossible if you can't see terrain height.
+- **Culling from start:** Side-face visibility culling implemented in Phase 3 prevents performance crisis. Retrofitting culling after explosion is harder than doing it correctly initially.
 
 ### Research Flags
 
 **Phases with standard patterns (skip research-phase):**
-- **Phase 1 (Core Transformation):** Coordinate math and depth sorting well-documented in Phaser examples and isometric game dev resources
-- **Phase 2 (Rendering Optimization):** Viewport culling and click detection have established patterns
-- **Phase 3 (Multiplayer Integration):** Network synchronization patterns well-understood for grid-based games
-- **Phase 4 (UI Integration):** Minimap coordinate handling straightforward given transform layer
+- **Phase 1:** TileDefinition registry follows existing EntityRegistry pattern, ChunkData extension is straightforward interface addition
+- **Phase 2:** Depth calculation enhancement is well-documented isometric technique, noise generation follows existing BiomeGenerator pattern
+- **Phase 3:** Phaser IsoBox rendering is standard library feature with official documentation
+- **Phase 4:** A* pathfinding with elevation cost is established pathfinding pattern, click detection adjustment is documented isometric technique
 
-**Phases potentially needing research:**
-- **Phase 5 (Polish):** Only if implementing zoom levels - may need research into dynamic viewport culling strategies for multiple zoom levels
+**All phases use standard patterns.** Research has identified clear implementation approaches with proven examples. No phases require additional research during planning.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Phaser 3.90.0 verified as latest stable, native isometric support confirmed in v3.50.0+, plugin maintenance status verified on npm/GitHub |
-| Features | HIGH | Table stakes features validated against recent isometric MMO examples (Dreadmyst 2026), coordinate transformation requirements from authoritative sources (Clint Bellanger) |
-| Architecture | HIGH | Transform layer pattern used across Unity/Godot/Phaser implementations, Phaser Layer API well-documented for depth sorting, official examples demonstrate patterns |
-| Pitfalls | MEDIUM | Critical pitfalls (depth sorting, coordinate confusion) verified in multiple community sources, but some edge cases (multi-tile entities, platform-specific quirks) may emerge during implementation |
+| Stack | HIGH | Phaser 3.90.0 capabilities verified via official docs, IsoBox/IsoTriangle confirmed in release notes and API documentation. Existing codebase reviewed (IsometricTransform, DepthSorter verified). No new external dependencies required. |
+| Features | MEDIUM | Table stakes features validated against established isometric games (Diablo 2, Age of Empires II, Rimworld). MVP definition clearly scoped. Some differentiator features (dynamic transparency, multi-height structures) have less documentation but are deferreable to v1.4+. |
+| Architecture | HIGH | Direct codebase analysis of existing components completed. Integration points identified with specific file locations. Data flow patterns proven in existing world-gen system. Composition approach (ElevationRenderer called by TileRenderer) maintains existing architecture. |
+| Pitfalls | HIGH | Depth sorting breakdown is well-documented isometric pitfall with proven solutions. Pathfinding elevation issues validated through pathfinding literature. ChunkData schema risks identified from existing system analysis. Performance traps backed by rendering profiling guidelines. |
 
 **Overall confidence:** HIGH
 
-Research draws from official Phaser documentation, authoritative isometric game development resources (Clint Bellanger, Red Blob Games), and verified community implementations. The core technology decisions (native Phaser, no plugin) are well-supported. The transform layer pattern is industry-standard with proven examples.
+Research is comprehensive with verified sources. Phaser capabilities confirmed through official documentation. Architecture approach maintains existing patterns rather than introducing risk through complete rewrites. Pitfalls identified early with clear prevention strategies.
 
 ### Gaps to Address
 
-Research identified areas needing validation during implementation:
+- **Side-face texture approach:** Research identifies procedural Graphics rendering (current system) vs sprite-based textures but doesn't choose. Recommendation: Start with Graphics extension (incremental to existing system), migrate to sprites only if profiling shows bottleneck during Phase 4.
 
-- **Performance of per-frame depth sorting:** Not measured for this specific codebase. May need optimization if entity count exceeds 200+ visible entities. Mitigation: Implement dirty flags and throttling from start, profile during Phase 2.
+- **Elevation-to-biome constraints:** Research mentions constraining elevation per biome (e.g., craters = 0-2, ruins = 0-5) but doesn't specify exact ranges. Resolution: Define during Phase 2 planning based on existing biome definitions in BiomeGenerator.
 
-- **Phaser 3.80 to 3.90 breaking changes:** Assumed minimal based on Phaser's compatibility history, but should verify during Phase 1 upgrade. Mitigation: Review Phaser 3.81-3.90 changelogs before upgrading.
+- **MAX_STEP_HEIGHT value:** Research suggests "1-level difference walkable, 2+ blocks" but doesn't validate gameplay feel. Resolution: Implement 1-level maximum initially, make tunable parameter for playtesting adjustment.
 
-- **Minimap projection decision:** Research shows no consensus - some games keep orthogonal, others match main view. Player preference varies. Mitigation: Make design decision in Phase 4, implement toggle for testing if unclear.
+- **Minimap marker visual design:** Research confirms markers needed but not visual treatment. Resolution: Start with simple colored squares (walls = distinct color), iterate based on readability during Phase 4.
 
-- **Click detection with multi-tile entities:** Diamond shape means overlapping hit areas. Research covers single-tile entities but not large objects like buildings. Mitigation: Test with placeholder large sprites in Phase 2, adjust hit detection as needed.
-
-- **Camera bounds mapping:** How isometric camera bounds map to cartesian world bounds not fully validated. Mitigation: Test camera follow at zone edges and during zone transitions in Phase 2.
-
-- **Zoom level viewport culling:** Research indicates culling bounds must recalculate per zoom, but specific implementation strategy not validated. Mitigation: If implementing zoom in Phase 5, prototype culling approach first.
+These gaps are minor and resolvable during phase planning - they don't block architecture decisions or require additional research.
 
 ## Sources
 
-### Primary Sources (HIGH confidence)
+### Primary (HIGH confidence)
+- [Phaser Releases](https://github.com/phaserjs/phaser/releases) - v3.90.0 confirmed as latest stable (May 2025), IsoBox/IsoTriangle API verified
+- [IsoTriangle API Documentation](https://docs.phaser.io/api-documentation/class/gameobjects-isotriangle) - Face control and rendering properties confirmed
+- [IsoBox API Documentation](https://newdocs.phaser.io/docs/3.55.2/focus/Phaser.GameObjects.GameObjectFactory-isobox) - Isometric box geometry for side faces validated
+- Existing codebase analysis: IsometricTransform (gridToScreen, calculateDepth), DepthSorter (throttled updates), TileRenderer (diamond rendering), package.json (Phaser 3.90.0 verified)
 
-**Phaser Native Support:**
-- [Phaser 3.50.0 Release Notes](https://phaser.io/news/2020/12/phaser-350-released) - Native isometric tilemap support announcement
-- [Phaser Examples - Isometric Blocks](https://phaser.io/examples/v3.85.0/depth-sorting/view/isometric-blocks) - Official depth sorting pattern
-- [Phaser Examples - Create Isometric Manually](https://phaser.io/examples/v3.85.0/tilemap/isometric/view/create-isometric-manually) - Tilemap creation
-- [Phaser 3 Layer Documentation](https://docs.phaser.io/api-documentation/class/gameobjects-layer) - Official Layer API reference
+### Secondary (MEDIUM confidence)
+- [Handling Height in Isometric Tile Maps - Erik Onarheim](https://erikonarheim.com/posts/handling-height-in-isometric/) - Elevation-based z-index sorting, depth calculation formulas
+- [Isometric Tiles Math - Clint Bellanger](https://clintbellanger.net/articles/isometric_math/) - Grid-to-screen conversion with height offset
+- [Red Blob Games: Making maps with noise](https://www.redblobgames.com/maps/terrain-from-noise/) - Multi-octave noise for procedural elevation
+- [Movement costs for pathfinders - Red Blob Games](http://theory.stanford.edu/~amitp/GameProgramming/MovementCosts.html) - A* elevation cost calculation
+- [Design Patterns in TypeScript - Refactoring Guru](https://refactoring.guru/design-patterns/typescript) - Factory and registry patterns
+- [Type Object - Game Programming Patterns](https://gameprogrammingpatterns.com/type-object.html) - TileDefinition registry pattern
 
-**Coordinate Transformation:**
-- [Clint Bellanger: Isometric Tiles Math](https://clintbellanger.net/articles/isometric_math/) - Authoritative transformation formulas
-- [2D Engine: Isometric Graphics Tutorial](https://2dengine.com/doc/isometric.html) - Comprehensive isometric techniques
-
-**Depth Sorting:**
-- [Drawing Isometric Boxes in Correct Order](https://shaunlebron.github.io/IsometricBlocks/) - Topological sorting visualization
-- [Phaser Examples - Isometric Map](https://phaser.io/examples/v3.85.0/depth-sorting/view/isometric-map) - Official depth sorting example
-
-### Secondary Sources (MEDIUM confidence)
-
-**Architecture Patterns:**
-- [Pikuma: Isometric Projection in Games](https://pikuma.com/blog/isometric-projection-in-games) - Core projection formulas and patterns
-- [Creating an Isometric View in Phaser 3](https://tnodes.medium.com/creating-an-isometric-view-in-phaser-3-fada95927835) - Practical implementation
-- [Rex Rainbow: Layer vs Container](https://rexrainbow.github.io/phaser3-rex-notes/docs/site/layer/) - Performance comparison
-
-**Feature Expectations:**
-- [MMORPG.GG: Best Isometric MMOs 2025](https://mmorpg.gg/best-isometric-mmos/) - Survey of current features
-- [Dreadmyst Isometric MMORPG Launch](https://massivelyop.com/2026/01/12/isometric-mmorpg-dreadmyst-reaches-over-7k-concurrency-and-mostly-positive-reviews-despite-server-issues/) - 2026 player expectations
-
-**Pitfalls:**
-- [Isometric Depth Sorting - Mazebert Forum](https://mazebert.com/forum/news/isometric-depth-sorting--id775/) - Performance considerations
-- [Cheating at Z-Depth Sprite Sorting](https://blog.pocketcitygame.com/cheating-at-z-depth-sprite-sorting-in-an-isometric-game/) - Optimization techniques
-- [Frustum Culling Optimization for Isometric RTS](https://80.lv/articles/optimizing-isometric-rts-performance-with-frustum-culling) - Viewport culling strategies
-
-### Tertiary Sources (LOW confidence - needs validation)
-
-**Plugin Comparison:**
-- [phaser3-plugin-isometric GitHub](https://github.com/sebashwa/phaser3-plugin-isometric) - Unmaintained plugin for reference
-- [Snyk Advisor - Plugin Status](https://snyk.io/advisor/npm-package/phaser3-plugin-isometric) - Maintenance verification
-
-**Community Discussion:**
-- [Phaser Forum: Isometric Support](https://phaser.discourse.group/t/isometric-support/558) - Community patterns
-- [GameDev.net: Isometric Depth Sorting](https://www.gamedev.net/forums/topic/470599-isometric-depth-sorting/) - Y-position sorting discussions
+### Tertiary (LOW confidence, needs validation)
+- [GameDev.net: Isometric Depth Sorting in O(n)](https://www.gamedev.net/forums/topic/579515-isometric-depth-sorting-in-on-or-less/) - Topological sorting for overlapping structures (deferred to v2+)
+- [Occlusion culling in isometric engine - GameDev.net](https://www.gamedev.net/forums/topic/174754-occlusion-culling-in-a-complex-isometric-engine/) - Advanced occlusion techniques (not needed for MVP)
 
 ---
 *Research completed: 2026-02-16*

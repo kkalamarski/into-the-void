@@ -1,203 +1,289 @@
-# Technology Stack: Isometric Rendering in Phaser 3
+# Stack Research: Elevation & Structures
 
-**Project:** Into the Void v1.2 - Isometric View Transformation
+**Domain:** Isometric tile elevation and structure rendering
 **Researched:** 2026-02-16
 **Confidence:** HIGH
 
-## Executive Recommendation
+## Executive Summary
 
-**Use native Phaser 3 coordinate transforms + built-in depth sorting.** Roll your own isometric math with Phaser's existing rendering pipeline. Do NOT add phaser3-plugin-isometric (unmaintained since 2018).
+Adding terrain elevation (height levels 0-5), side-face rendering, and structure walls to the existing Phaser 3 isometric game requires NO new external dependencies. Phaser 3.90.0 includes native IsoBox and IsoTriangle geometry for rendering elevated tile faces, and the existing TypeScript/Phaser stack is sufficient. The main architectural additions are: (1) extending the tile definition system with elevation metadata and rendering hooks, (2) using Phaser's native isometric geometry for side faces, and (3) enhancing depth sorting to account for vertical layering.
 
 ## Recommended Stack
 
-### Core Framework
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| Phaser | 3.80.0 → 3.90.0 | Game engine | Already integrated. Upgrade to 3.90.0 for latest tilemap features and stability |
-| Native Phaser Tilemaps | 3.50+ | Isometric tilemap support | Built-in since 3.50.0, handles isometric orientation natively |
-| Custom coordinate utils | N/A | Cartesian ↔ Isometric transforms | Simple 2:1 dimetric math, 20-30 LOC, full control |
+### Core Framework (No Changes)
 
-### Supporting Libraries
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| Phaser | 3.90.0 (current) | Game engine with native isometric geometry | Built-in IsoBox/IsoTriangle provides side-face rendering without plugins. Already proven in existing isometric implementation. |
+| TypeScript | 5.4.0 (current) | Type-safe tile definitions | Current version sufficient. Type registry pattern for TileDefinition scales well with metadata additions. |
+
+**Recommendation:** Continue using existing Phaser 3.90.0. No upgrades needed.
+
+### New Architecture Components (No External Dependencies)
+
+| Component | Purpose | Implementation |
+|-----------|---------|----------------|
+| TileDefinition Registry | Centralized tile metadata with elevation + rendering hooks | TypeScript type registry pattern with interface extension. Each TileId gets definition object with height, walkable, renderHooks. |
+| Elevation-Aware Depth Sorter | Depth calculation including vertical offset | Extend existing IsometricTransform.calculateDepth() to include elevation parameter. Formula: `screenY + (elevation * elevationStep) + gridX * 0.0001`. |
+| Side Face Renderer | Render vertical tile faces using IsoBox | New TileSideFaceRenderer class using Phaser's native `scene.add.isobox()` for elevated terrain sides. |
+| Structure Wall System | Walls as elevated tiles with specific definitions | Reuse TileDefinition registry with wall-specific metadata (facing, height, blocking). |
+
+### Supporting Libraries (Existing)
+
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| N/A | - | - | None needed for isometric transform |
+| @into-the-void/world-gen | current | Procedural generation with elevation data | Already has TileId enum. Extend to generate elevation values (0-5) per tile. |
+| @into-the-void/game-logic | current | Movement validation with elevation | Extend pathfinding to respect elevation changes (max climb height per move). |
 
-## Rationale
+### Development Tools (No Changes)
 
-### Why Native Phaser + Custom Utils?
+| Tool | Purpose | Notes |
+|------|---------|-------|
+| Phaser Dev Tools | Runtime inspection | Use `scene.game.debug` to visualize elevation values and depth calculations. |
 
-**1. Plugin is unmaintained**
-- `phaser3-plugin-isometric` last published 2018-12-12 (v0.0.7)
-- No updates in 6+ years, marked as "Inactive" by npm
-- Phaser 3 has added native isometric support since 3.50.0 (2020-12)
-- Plugin predates Phaser's built-in isometric features
+## What Already Exists
 
-**2. Simple math, unnecessary dependency**
-The coordinate transform for 2:1 isometric is straightforward:
-```typescript
-// Cartesian → Isometric
-isoX = (cartX - cartY) * tileWidthHalf
-isoY = (cartX + cartY) * tileHeightHalf
+The project has validated isometric capabilities that DO NOT need re-implementation:
 
-// Isometric → Cartesian
-cartX = (isoX / tileWidthHalf + isoY / tileHeightHalf) / 2
-cartY = (isoY / tileHeightHalf - isoX / tileWidthHalf) / 2
-```
-This is 20-30 LOC vs. adding an unmaintained 3rd-party plugin. For a monorepo with existing `@into-the-void/game-logic` package, this math belongs there.
+| Existing Component | Coverage |
+|--------------------|----------|
+| IsometricTransform | Grid-to-screen conversion for 128x64 tiles (2:1 ratio) |
+| DepthSorter | Throttled depth updates with dirty tracking (100ms interval) |
+| TileRenderer | Diamond tile rendering with color fallbacks |
+| Phaser 3.90.0 | IsoBox and IsoTriangle geometry for side faces |
 
-**3. Depth sorting is built-in**
-Phaser 3's `setDepth()` handles z-ordering perfectly for isometric:
-```typescript
-sprite.setDepth(centerY + (x + y) * tileHeightHalf)
-```
-Official Phaser examples use this pattern. No plugin needed.
-
-**4. Project already uses Phaser 3.80.0**
-Existing integration at 3.80.0 (released 2024). Native isometric support has been stable since 3.50.0 (2020). No breaking changes expected in upgrade to 3.90.0.
-
-**5. Multiplayer constraints**
-- Game logic stays in Cartesian coordinates (world data, collision, movement)
-- Only rendering layer converts to isometric for display
-- Plugin abstracts too much, makes server/client coordinate sync harder
-- Custom utils give explicit control over conversion boundaries
-
-## Alternatives Considered
-
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| Coordinate Transform | Custom utils | phaser3-plugin-isometric | Unmaintained (2018), predates native features, overkill for simple math |
-| Tilemap Support | Native Phaser Tilemaps (3.50+) | Plugin tilemaps | Native support is official, maintained, documented |
-| Depth Sorting | `setDepth()` + formula | Plugin z-ordering | Native method works, examples exist, simpler |
-| 3D Physics | None (tile-based) | Plugin Arcade 3D | Not needed - world logic stays 2D Cartesian |
-
-### Why Not phaser3-rex-plugins?
-
-phaser3-rex-plugins is actively maintained (v1.80.18, published 13 days ago) but does NOT include isometric features. It's a UI/component library (buttons, grids, text effects), not isometric rendering. Irrelevant to this milestone.
-
-### Why Not @koreez/phaser3-isometric-plugin?
-
-Alternative fork of the isometric plugin, but also unmaintained and unnecessary given native Phaser features.
-
-## Implementation Approach
-
-### 1. Upgrade Phaser (Low Risk)
-```bash
-pnpm add phaser@^3.90.0
-```
-**Why:** Latest stable (3.90.0 released 2026), includes all isometric features from 3.50.0+. Project currently on 3.80.0.
-
-**Risk:** Minimal. Phaser maintains backward compatibility. Upgrade path is well-tested.
-
-### 2. Create Coordinate Utils in `@into-the-void/game-logic`
-```typescript
-// packages/game-logic/src/isometric/coordinates.ts
-export interface IsoConfig {
-  tileWidth: number;   // 96 for existing sprites
-  tileHeight: number;  // 48 for 2:1 dimetric
-}
-
-export function cartesianToIsometric(
-  cartX: number,
-  cartY: number,
-  config: IsoConfig
-): { isoX: number; isoY: number }
-
-export function isometricToCartesian(
-  isoX: number,
-  isoY: number,
-  config: IsoConfig
-): { cartX: number; cartY: number }
-
-export function calculateDepth(
-  cartX: number,
-  cartY: number,
-  config: IsoConfig,
-  centerY: number
-): number
-```
-
-**Why here:** Shared logic package, can be tested in isolation, used by both client rendering and (if needed) server validation.
-
-### 3. Integrate into Existing Rendering Pipeline
-Modify:
-- `apps/web/src/game/rendering/EntityRenderer.ts` - Apply transform when positioning sprites
-- `apps/web/src/game/scenes/WorldScene.ts` - Configure isometric camera/viewport
-- `apps/web/src/game/rendering/ChunkManager.ts` - Transform chunk positions
-- Keep world data in Cartesian, convert only at render time
-
-### 4. Depth Sorting Pattern
-Use Phaser's official example pattern from [Isometric Blocks example](https://phaser.io/examples/v3.85.0/depth-sorting/view/isometric-blocks):
-```typescript
-const ty = (x + y) * tileHeightHalf;
-sprite.setDepth(centerY + ty);
-```
-
-This ensures proper z-ordering for diamond tiles without sorting arrays every frame.
+**Critical:** These are already working. Focus ONLY on elevation extensions, not rebuilding isometric basics.
 
 ## Installation
 
-### Phase Start
+NO new packages required. All capabilities exist in current stack.
+
 ```bash
-# Upgrade Phaser to latest stable
-pnpm add phaser@^3.90.0
+# Verify Phaser version includes isometric geometry
+npm list phaser  # Should show 3.90.0 or higher
+
+# No additional dependencies needed
 ```
 
-### No Additional Dependencies
-All isometric functionality uses native Phaser + custom coordinate math in existing `@into-the-void/game-logic` package.
+## Alternatives Considered
 
-## Confidence Assessment
+| Recommended | Alternative | When to Use Alternative |
+|-------------|-------------|-------------------------|
+| Phaser native IsoBox/IsoTriangle | phaser3-plugin-isometric | NEVER. Plugin adds complexity, predates Phaser's native isometric support (added in 3.50). Native API is simpler and maintained by core team. |
+| Type registry pattern | Class inheritance hierarchy | If tile behaviors become complex enough to warrant strategy pattern per type. Current metadata approach cleaner for declarative definitions. |
+| Extend calculateDepth() | Separate elevation sorter | NEVER. Elevation is fundamentally part of depth. Splitting creates synchronization issues. |
+| Graphics.fillRect for side faces | Pre-rendered sprite sheets | When adding sprite art. Graphics approach correct for placeholder phase. Sprite sheets later via texture atlas (no architecture change). |
 
-### HIGH Confidence
-- **Phaser version:** 3.90.0 confirmed as latest (npm view phaser version)
-- **Native isometric support:** Phaser 3.50.0+ has built-in tilemap isometric orientation ([Release Notes](https://phaser.io/news/2020/12/phaser-350-released))
-- **Depth sorting pattern:** Official examples demonstrate `setDepth()` formula ([Isometric Blocks](https://phaser.io/examples/v3.85.0/depth-sorting/view/isometric-blocks), [Isometric Map](https://phaser.io/examples/v3.85.0/depth-sorting/view/isometric-map))
+## What NOT to Use
 
-### MEDIUM Confidence
-- **Plugin maintenance status:** Marked "Inactive" on npm ([Snyk Advisor](https://snyk.io/advisor/npm-package/phaser3-plugin-isometric)), last publish 2018-12-12
-- **Coordinate math simplicity:** Community consensus that transform is straightforward ([Medium article](https://tnodes.medium.com/creating-an-isometric-view-in-phaser-3-fada95927835), [Phaser forums](https://phaser.discourse.group/t/isometric-support/558))
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| phaser3-plugin-isometric | Deprecated pattern, predates native Phaser 3.50+ isometric support | Phaser's native IsoBox/IsoTriangle geometry |
+| Three.js or Babylon.js | Massive overkill for 2.5D isometric. Increases bundle size 10x+ for no benefit. | Phaser native isometric geometry |
+| Custom depth buffer | Painter's algorithm with proper depth calculation is sufficient for 2.5D isometric. | Enhanced calculateDepth() with elevation parameter |
+| Separate ECS system for tiles | Over-engineering. Tiles are static rendering primitives, not entities with behaviors. | TileDefinition registry with metadata |
+| Dynamic tile height changes | Requires re-rendering entire elevation faces, causes performance issues. | Static elevation per tile (set during world generation) |
 
-### LOW Confidence (needs validation)
-- **Performance of depth sorting per-frame:** Not measured. May need optimization if entity count > 1000s
-- **Phaser 3.80 → 3.90 breaking changes:** Assume none based on Phaser's compatibility history, but should verify in testing
+## Stack Patterns by Feature
 
-## Open Questions
+### Terrain Elevation (Height Levels 0-5)
 
-1. **Minimap rendering:** Does minimap stay top-down or also convert to isometric? (Design decision, not research)
-2. **Camera bounds:** How do isometric camera bounds map to Cartesian world bounds? (Implementation detail)
-3. **Click-to-move:** How to convert mouse position → isometric → Cartesian tile coordinates? (Covered by `isometricToCartesian` util)
+**Pattern:** Elevation as tile metadata + depth calculation enhancement
 
-## Key Findings Summary
+```typescript
+// Extend TileDefinition with elevation
+interface TileDefinition {
+  id: TileId;
+  elevation: number; // 0-5
+  walkable: boolean;
+  renderHook?: (renderer: TileRenderer, x: number, y: number, elevation: number) => void;
+}
 
-1. **No plugin needed:** Phaser 3.50+ has native isometric tilemap support
-2. **Roll your own math:** Coordinate transforms are simple (20-30 LOC), custom utils give control
-3. **Depth sorting built-in:** Use `setDepth()` with formula from official examples
-4. **Plugin unmaintained:** phaser3-plugin-isometric hasn't been updated since 2018
-5. **Current version OK:** Phaser 3.80.0 → 3.90.0 upgrade is low-risk, adds stability
+// Enhance depth calculation
+calculateDepth(gridX: number, gridY: number, elevation: number, priorityBoost: number = 0): number {
+  const screen = this.gridToScreen(gridX, gridY);
+  const elevationStep = this.tileHeight; // 64px per elevation level
+  return screen.y + (elevation * elevationStep) + gridX * 0.0001 + priorityBoost;
+}
+```
 
-## Verification Sources
+**Why:** Minimal change to existing depth sorter. Elevation becomes input parameter, not separate system.
 
-**Native Phaser Support:**
-- [Phaser 3.50.0 Released](https://phaser.io/news/2020/12/phaser-350-released)
-- [Phaser Editor 2D v3.10.0 - Isometric Tilemaps](https://phasereditor2d.com/blog/2020/12/phaser-editor-2d-v3100-released-phaser-350-layer-isometric-tilemaps)
-- [Phaser Examples - Create Isometric Manually](https://phaser.io/examples/v3.85.0/tilemap/isometric/view/create-isometric-manually)
-- [Tilemap API Documentation](https://docs.phaser.io/api-documentation/class/tilemaps-tilemap)
+### Side Face Rendering
 
-**Depth Sorting:**
-- [Phaser Examples - Isometric Blocks](https://phaser.io/examples/v3.85.0/depth-sorting/view/isometric-blocks)
-- [Phaser Examples - Isometric Map](https://phaser.io/examples/v3.85.0/depth-sorting/view/isometric-map)
-- [Phaser Depth Sorting Category](https://phaser.io/examples/v3/category/depth-sorting)
+**Pattern:** Phaser IsoBox for elevated tile faces
 
-**Plugin Maintenance:**
-- [phaser3-plugin-isometric on npm](https://www.npmjs.com/package/phaser3-plugin-isometric)
-- [Snyk Advisor - phaser3-plugin-isometric](https://snyk.io/advisor/npm-package/phaser3-plugin-isometric)
-- [sebashwa/phaser3-plugin-isometric GitHub](https://github.com/sebashwa/phaser3-plugin-isometric)
+```typescript
+// In TileSideFaceRenderer
+renderSideFaces(x: number, y: number, elevation: number): void {
+  if (elevation === 0) return; // No sides for ground level
 
-**Coordinate Math:**
-- [Creating an Isometric View in Phaser 3](https://tnodes.medium.com/creating-an-isometric-view-in-phaser-3-fada95927835)
-- [Phaser - Creating An Isometric View in Phaser 3](https://phaser.io/news/2020/07/creating-an-isometric-view-in-phaser-3)
-- [IsometricWorldToTileXY API Docs](https://newdocs.phaser.io/docs/3.54.0/focus/Phaser.Tilemaps.Components.IsometricWorldToTileXY)
+  const screenPos = this.isoTransform.gridToScreen(x, y);
+  const faceHeight = elevation * this.isoTransform.tileHeight;
 
-**Community Discussion:**
-- [Isometric Support - Phaser 3 Forum](https://phaser.discourse.group/t/isometric-support/558)
-- [Automatic Isometric Depth Sorting Help](https://phaser.discourse.group/t/automatic-isometric-depth-sorting-and-collisions-help/9656)
-- [Phaser 3.5 Isometric Demo Discussion](https://phaser.discourse.group/t/phaser-3-5-isometric-demo-how-to-continue/8543)
+  // Native Phaser geometry
+  const isoBox = this.scene.add.isobox(
+    screenPos.x,
+    screenPos.y,
+    this.isoTransform.tileWidth,
+    faceHeight,
+    0xSIDECOLOR
+  );
+  isoBox.setDepth(screenPos.y - 1); // Render behind tile top
+}
+```
+
+**Why:** IsoBox provides three faces (left, right, top) with individual colors. No custom polygon math needed.
+
+### Structure Walls
+
+**Pattern:** Walls as TileDefinitions with wall-specific metadata
+
+```typescript
+interface WallDefinition extends TileDefinition {
+  wallHeight: number; // 1-3 (in elevation units)
+  facing: 'N' | 'S' | 'E' | 'W'; // For texture/shadow direction
+  blocking: boolean; // Always true for walls
+}
+
+// Wall tiles in TileId enum
+enum TileId {
+  // ... existing tiles
+  WALL_METAL_N = 100,
+  WALL_METAL_E = 101,
+  // etc.
+}
+```
+
+**Why:** Reuses TileDefinition registry. Walls are just tiles with specific elevation and blocking rules.
+
+### TileDefinition Registry
+
+**Pattern:** TypeScript type registry with factory pattern
+
+```typescript
+// Registry with all definitions
+export const TILE_DEFINITIONS: Record<TileId, TileDefinition> = {
+  [TileId.VOID_FLOOR]: {
+    id: TileId.VOID_FLOOR,
+    elevation: 0,
+    walkable: true,
+  },
+  [TileId.ELEVATED_PLATFORM]: {
+    id: TileId.ELEVATED_PLATFORM,
+    elevation: 2,
+    walkable: true,
+    renderHook: renderPlatformWithSides,
+  },
+  // ... more definitions
+};
+
+// Hook pattern for custom rendering
+function renderPlatformWithSides(
+  renderer: TileRenderer,
+  x: number,
+  y: number,
+  elevation: number
+): void {
+  renderer.renderTileTop(x, y, elevation, 0x4a4a5a);
+  renderer.renderSideFaces(x, y, elevation);
+}
+```
+
+**Why:** Centralized definitions scale better than scattered logic. Hooks provide flexibility for special-case rendering without inheritance complexity.
+
+## Version Compatibility
+
+| Package | Compatible With | Notes |
+|---------|-----------------|-------|
+| phaser@3.90.0 | TypeScript 5.4.0 | Native IsoBox/IsoTriangle added in 3.50, stable in 3.90. Full TypeScript definitions included. |
+| @into-the-void/world-gen | Elevation data generation | Needs extension to generate elevation values (0-5) per tile. Compatible with existing noise-based generation. |
+| @into-the-void/game-logic | Movement with elevation | Pathfinding needs elevation cost function (e.g., max 1 elevation change per move). A* algorithm unchanged. |
+
+## Integration Points
+
+### World Generation (@into-the-void/world-gen)
+
+**Extend:** Add elevation to tile generation output.
+
+```typescript
+interface GeneratedTile {
+  x: number;
+  y: number;
+  tileId: TileId;
+  elevation: number; // NEW: 0-5 based on noise + biome rules
+}
+```
+
+**Impact:** Minimal. Elevation calculated from existing noise functions. Biomes define elevation ranges (e.g., Crater = 0-2, Ruins = 0-5).
+
+### Game Logic (@into-the-void/game-logic)
+
+**Extend:** Movement validation includes elevation change cost.
+
+```typescript
+// In pathfinding
+function isTraversable(from: Tile, to: Tile): boolean {
+  const elevationDiff = Math.abs(to.elevation - from.elevation);
+  return to.walkable && elevationDiff <= 1; // Max 1 level climb per move
+}
+```
+
+**Impact:** Minimal. A* cost function adds elevation check. No algorithm changes.
+
+### Rendering (apps/web/src/game/rendering)
+
+**Extend:** TileRenderer gets side face rendering, IsometricTransform gets elevation parameter.
+
+**Impact:** Moderate. Core rendering loop unchanged, but tile rendering expands from single diamond to diamond + side faces for elevated tiles.
+
+### Database (@into-the-void/database)
+
+**Extend:** Zone data schema includes elevation per tile.
+
+```sql
+-- Add elevation column to tiles or zones table
+ALTER TABLE zone_data ADD COLUMN elevation SMALLINT DEFAULT 0;
+```
+
+**Impact:** Minimal. Storage increase: ~1 byte per tile. 1000x1000 zone = +1MB.
+
+## Performance Considerations
+
+| Concern | Mitigation |
+|---------|------------|
+| Increased draw calls (side faces) | Use Phaser's IsoBox which batches in WebGL. Only render side faces for elevated tiles (elevation > 0). Viewport culling already in place. |
+| Depth sorting overhead | Elevation adds one multiplication to depth calculation. Negligible. Existing DepthSorter throttling (100ms) still applies. |
+| Memory for TileDefinition registry | Registry is static constants, loaded once. ~1KB total for 50-100 tile types. Negligible. |
+| Side face graphics memory | Each IsoBox is a batched geometry, not individual sprites. Memory scales with visible elevated tiles, not total tiles. Viewport culling limits to ~200-500 visible tiles. |
+
+## Sources
+
+### Phaser 3 Capabilities (HIGH CONFIDENCE)
+
+- [Phaser Releases](https://github.com/phaserjs/phaser/releases) - v3.90.0 confirmed as latest stable (May 2025)
+- [IsoTriangle API Documentation](https://docs.phaser.io/api-documentation/class/gameobjects-isotriangle) - Face control and rendering properties
+- [IsoBox API Documentation](https://newdocs.phaser.io/docs/3.55.2/focus/Phaser.GameObjects.GameObjectFactory-isobox) - Isometric box geometry for side faces
+- [Phaser Texture Documentation](https://docs.phaser.io/phaser/concepts/textures) - Texture atlas management
+
+### Isometric Elevation Techniques (MEDIUM CONFIDENCE)
+
+- [Handling Height in Isometric Tile Maps](https://erikonarheim.com/posts/handling-height-in-isometric/) - Elevation-based z-index sorting, depth calculation formulas
+- [GameDev.net: 2D Terrain with Elevation](https://www.gamedev.net/forums/topic/622604-2d-terrain-with-elevation/4967223/) - Vertical offset techniques
+- [Pikuma: Isometric Projection](https://pikuma.com/blog/isometric-projection-in-games) - Painter's algorithm for depth sorting
+
+### TypeScript Patterns (HIGH CONFIDENCE)
+
+- [Frontend Masters: Type Registry Pattern](https://frontendmasters.com/courses/typescript-v4/type-registry-pattern/) - TypeScript registry pattern for typed definitions
+- [Design Patterns in TypeScript](https://refactoring.guru/design-patterns/typescript) - Factory and registry patterns
+- [MDN: Tilemaps Overview](https://developer.mozilla.org/en-US/docs/Games/Techniques/Tilemaps) - General tile definition architecture
+
+### Verified Against
+
+- Existing codebase: IsometricTransform (gridToScreen, calculateDepth), DepthSorter (throttled updates), TileRenderer (diamond rendering)
+- Phaser 3.90.0 installed in package.json (verified via `/Users/krzysztof.kalamarski/Projects/into-the-void/package.json`)
+
+---
+*Stack research for: Elevation & Structures Milestone*
+*Researched: 2026-02-16*
+*Confidence: HIGH - Phaser capabilities verified via official docs, existing isometric implementation reviewed, no new external dependencies required*
