@@ -108,6 +108,29 @@ export function validateMovement(
 }
 
 /**
+ * Validate movement with elevation checks
+ * Blocks movement when elevation difference is greater than 1 level
+ */
+export function validateMovementWithElevation(
+  from: Position,
+  to: Position,
+  collisionMap: boolean[][],
+  heights: number[][]
+): { valid: boolean; reason?: string } {
+  // Check elevation delta BEFORE other checks (terrain steepness is primary blocker)
+  const fromHeight = heights[from.y]?.[from.x] ?? 0;
+  const toHeight = heights[to.y]?.[to.x] ?? 0;
+  const elevationDelta = Math.abs(toHeight - fromHeight);
+
+  if (elevationDelta > 1) {
+    return { valid: false, reason: 'Terrain too steep' };
+  }
+
+  // Delegate remaining checks to original validateMovement
+  return validateMovement(from, to, collisionMap);
+}
+
+/**
  * Check if movement would cause a zone transition
  */
 export function isZoneTransition(from: Position, to: Position): boolean {
