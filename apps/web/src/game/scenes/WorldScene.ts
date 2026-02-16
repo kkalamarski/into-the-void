@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ZONE_SIZE, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure } from '@into-the-void/shared-types';
-import { TileId } from '@into-the-void/world-gen';
+import { TileId, tileIdToString } from '@into-the-void/world-gen';
+import { TileRegistry } from '@into-the-void/tiles';
 import { TileRenderer } from '../rendering/TileRenderer';
 import { EntityRenderer } from '../rendering/EntityRenderer';
 import { ChunkManager } from '../rendering/ChunkManager';
@@ -47,6 +48,10 @@ export class WorldScene extends Phaser.Scene {
   private currentStructures: TileStructure[] = [];
   private lastOcclusionTime = 0;
   private occlusionInterval = 100; // Only check occlusion every 100ms
+  private currentTiles: number[][] | null = null;
+  private tileInfoPopup: Phaser.GameObjects.Container | null = null;
+  private leftMouseDown = false;
+  private rightMouseDown = false;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -183,6 +188,124 @@ export class WorldScene extends Phaser.Scene {
         this.pathfindingController.startPath(gridPos.x, gridPos.y, this.collisionMap);
       }
     });
+
+    // Track mouse buttons for tile inspection (both buttons = look at tile, like Tibia)
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.leftButtonDown()) this.leftMouseDown = true;
+      if (pointer.rightButtonDown()) this.rightMouseDown = true;
+
+      // Both buttons pressed - show tile info
+      if (this.leftMouseDown && this.rightMouseDown) {
+        this.showTileInfo(pointer);
+      }
+    });
+
+    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      if (!pointer.leftButtonDown()) this.leftMouseDown = false;
+      if (!pointer.rightButtonDown()) this.rightMouseDown = false;
+
+      // Hide tile info when any button released
+      this.hideTileInfo();
+    });
+
+    // Prevent context menu on right click
+    this.input.mouse?.disableContextMenu();
+  }
+
+  /**
+   * Show tile information popup (triggered by both mouse buttons)
+   */
+  private showTileInfo(pointer: Phaser.Input.Pointer): void {
+    if (!this.isoTransform || !this.currentTiles) return;
+
+    // Convert screen position to world position
+    const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+
+    // Convert to tile coordinates
+    const gridPos = this.isoTransform.screenToTileWithElevation(
+      worldPoint.x,
+      worldPoint.y,
+      (x, y) => this.getTileElevation(x, y)
+    );
+
+    // Check bounds
+    if (gridPos.x < 0 || gridPos.x >= ZONE_SIZE || gridPos.y < 0 || gridPos.y >= ZONE_SIZE) {
+      return;
+    }
+
+    // Get tile info from registry
+    const tileNumericId = this.currentTiles[gridPos.y]?.[gridPos.x];
+    if (tileNumericId === undefined) return;
+
+    const tileId = tileIdToString(tileNumericId as TileId);
+    const tileDef = TileRegistry.get(tileId);
+    const elevation = this.currentHeights?.[gridPos.y]?.[gridPos.x] ?? 0;
+    const isBlocked = this.collisionMap?.[gridPos.y]?.[gridPos.x] ?? false;
+
+    // Hide any existing popup
+    this.hideTileInfo();
+
+    // Create info popup
+    const popup = this.add.container(pointer.x, pointer.y - 100);
+    popup.setScrollFactor(0);
+    popup.setDepth(2000);
+
+    // Background
+    const bg = this.add.graphics();
+    bg.fillStyle(0x000000, 0.85);
+    bg.fillRoundedRect(-120, -60, 240, 120, 8);
+    bg.lineStyle(2, isBlocked ? 0xff4444 : 0x44ff44, 1);
+    bg.strokeRoundedRect(-120, -60, 240, 120, 8);
+    popup.add(bg);
+
+    // Title
+    const title = this.add.text(0, -45, tileDef.displayName, {
+      fontSize: '16px',
+      fontFamily: 'monospace',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0);
+    popup.add(title);
+
+    // Properties
+    const props = [
+      `Position: (${gridPos.x}, ${gridPos.y})`,
+      `Elevation: ${elevation}`,
+      `Blocking: ${isBlocked ? 'Yes' : 'No'}`,
+      `Speed: ${tileDef.movementSpeed}x`,
+    ];
+
+    const propsText = this.add.text(0, -20, props.join('\n'), {
+      fontSize: '12px',
+      fontFamily: 'monospace',
+      color: '#cccccc',
+      lineSpacing: 4,
+    }).setOrigin(0.5, 0);
+    popup.add(propsText);
+
+    // Description (if available)
+    if (tileDef.description) {
+      const desc = this.add.text(0, 35, tileDef.description, {
+        fontSize: '10px',
+        fontFamily: 'monospace',
+        color: '#aaaaaa',
+        wordWrap: { width: 220 },
+        align: 'center',
+      }).setOrigin(0.5, 0);
+      popup.add(desc);
+    }
+
+    this.tileInfoPopup = popup;
+  }
+
+  /**
+   * Hide tile information popup
+   */
+  private hideTileInfo(): void {
+    if (this.tileInfoPopup) {
+      this.tileInfoPopup.destroy();
+      this.tileInfoPopup = null;
+    }
   }
 
   private generatePlaceholderWorld(): void {
@@ -217,12 +340,14 @@ export class WorldScene extends Phaser.Scene {
 
     const elevation = this.getTileElevation(position.x, position.y);
     const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
-    const screenPos = this.isoTransform.gridToScreen(position.x, position.y);
+    // Use world coordinates for screen position so player aligns with chunk positions
+    const { worldX, worldY } = this.positionToWorldCoords(position);
+    const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
 
     // Create container for player (same pattern as entities)
     const container = this.add.container(screenPos.x, screenPos.y - elevationOffset);
-    container.setData('gridX', position.x);
-    container.setData('gridY', position.y);
+    container.setData('gridX', worldX);
+    container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
     // Blob shadow
@@ -238,8 +363,8 @@ export class WorldScene extends Phaser.Scene {
     // Store reference (as container now, not sprite)
     this.localPlayer = container as unknown as Phaser.GameObjects.Sprite; // Type hack for compatibility
 
-    // Set depth with local player priority
-    const depth = this.isoTransform.calculateDepth(position.x, position.y, elevation + 0.001);
+    // Set depth with local player priority (use world coordinates)
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation + 0.001);
     container.setDepth(depth);
 
     if (this.depthSorter) {
@@ -404,6 +529,18 @@ export class WorldScene extends Phaser.Scene {
     };
   }
 
+  /**
+   * Convert a Position (local coords + zoneId) to world coordinates.
+   * World coords = zoneCoords * ZONE_SIZE + localCoords
+   */
+  private positionToWorldCoords(position: Position): { worldX: number; worldY: number } {
+    const zoneCoords = this.parseZoneCoords(position.zoneId);
+    return {
+      worldX: zoneCoords.x * ZONE_SIZE + position.x,
+      worldY: zoneCoords.y * ZONE_SIZE + position.y,
+    };
+  }
+
   private getTileElevation(gridX: number, gridY: number): number {
     // Look up elevation from current zone's heights data
     // Default to 0 if heights not available or coordinates out of bounds
@@ -417,52 +554,46 @@ export class WorldScene extends Phaser.Scene {
 
     // Guard: Don't recreate container if it already exists (prevents memory leak)
     if (this.chunkContainers.has(zoneId)) {
+      // Still update currentTiles for the look feature
+      if (zoneId === this.currentZoneId) {
+        this.currentTiles = tiles;
+        this.currentHeights = heights;
+        this.currentStructures = structures;
+        this.currentBiome = biome;
+      }
       return;
     }
+
     const { x: chunkX, y: chunkY } = this.parseZoneCoords(zoneId);
 
-    // Calculate isometric world offset for this chunk
-    // Chunk (0,0) starts at origin, chunk (1,0) offsets by ZONE_SIZE tiles in X
+    // Calculate world grid offset for this chunk
     const chunkGridX = chunkX * ZONE_SIZE;
     const chunkGridY = chunkY * ZONE_SIZE;
-    const chunkOffset = this.isoTransform.gridToScreen(chunkGridX, chunkGridY);
 
-    // Create container at chunk offset
-    const container = this.add.container(chunkOffset.x, chunkOffset.y);
+    // Create container for cleanup tracking (positioned at 0,0 - tiles use world coords)
+    const container = this.add.container(0, 0);
 
-    // Create tiles relative to chunk origin (0,0 to ZONE_SIZE-1)
+    // Create tiles using WORLD coordinates for proper global depth sorting
     for (let y = 0; y < ZONE_SIZE; y++) {
       for (let x = 0; x < ZONE_SIZE; x++) {
         const tileId = tiles[y][x] as TileId;
         const elevation = heights[y][x];
-        const tile = this.tileRenderer.createTileWithElevation(x, y, tileId, elevation, heights);
+        // Use world coordinates (chunk offset + local position)
+        const worldX = chunkGridX + x;
+        const worldY = chunkGridY + y;
+        const tile = this.tileRenderer.createTileWithElevationWorld(worldX, worldY, tileId, elevation, heights, x, y);
         container.add(tile);
       }
     }
 
-    // Render blocking terrain features as small cubes on the floor
-    for (const structure of structures) {
-      if (structure.type === 'wall' || structure.type === 'feature') {
-        for (const featureTile of structure.tiles) {
-          const tileId = parseInt(featureTile.tileId, 10) as TileId;
-          const baseElevation = heights[featureTile.y]?.[featureTile.x] ?? 0;
-          const cube = this.createFeatureCube(
-            featureTile.x,
-            featureTile.y,
-            baseElevation,
-            tileId
-          );
-          cube.setData('isStructure', true);
-          cube.setData('structureHeight', featureTile.height);
-          container.add(cube);
-        }
-      }
-    }
+    // Structures are now rendered via tiles[][] with distinct colors
+    // No separate cube rendering needed
 
     this.chunkContainers.set(zoneId, container);
 
     if (zoneId === this.currentZoneId) {
       this.currentBiome = biome;
+      this.currentTiles = tiles;
       this.currentHeights = heights;
       this.currentStructures = structures;
       if (this.zoneHUD) {
@@ -477,133 +608,6 @@ export class WorldScene extends Phaser.Scene {
       container.destroy(true);
       this.chunkContainers.delete(zoneId);
     }
-  }
-
-  /**
-   * Create a small isometric cube for blocking terrain features.
-   * Renders as a small cube sitting on the floor at the tile's base elevation.
-   */
-  private createFeatureCube(
-    gridX: number,
-    gridY: number,
-    baseElevation: number,
-    tileId: TileId
-  ): Phaser.GameObjects.Container {
-    const isoTransform = this.tileRenderer!.getTransform();
-    const screenPos = isoTransform.gridToScreen(gridX, gridY);
-
-    // Cube dimensions (small - about 1/3 of a tile)
-    const cubeWidth = 40;
-    const cubeHeight = 20;
-    const cubeDepth = 16; // Visual height of the cube
-
-    // Elevation offset (16px per level from Phase 15)
-    const elevationOffset = baseElevation * 16;
-
-    // Get color for this tile type
-    const baseColor = this.getFeatureColor(tileId);
-    const topColor = baseColor;
-    const southColor = this.darkenColor(baseColor, 0.7);
-    const eastColor = this.darkenColor(baseColor, 0.5);
-
-    const graphics = this.add.graphics();
-
-    // Calculate cube vertices (centered on tile, elevated)
-    const cx = 0; // Center X (relative to container)
-    const cy = -elevationOffset; // Center Y with elevation
-
-    // Top face vertices (diamond)
-    const topPoints = [
-      { x: cx, y: cy - cubeHeight / 2 - cubeDepth },           // North
-      { x: cx + cubeWidth / 2, y: cy - cubeDepth },            // East
-      { x: cx, y: cy + cubeHeight / 2 - cubeDepth },           // South
-      { x: cx - cubeWidth / 2, y: cy - cubeDepth },            // West
-    ];
-
-    // South face vertices (parallelogram)
-    const southPoints = [
-      { x: cx - cubeWidth / 2, y: cy - cubeDepth },            // Top-left
-      { x: cx, y: cy + cubeHeight / 2 - cubeDepth },           // Top-right
-      { x: cx, y: cy + cubeHeight / 2 },                       // Bottom-right
-      { x: cx - cubeWidth / 2, y: cy },                        // Bottom-left
-    ];
-
-    // East face vertices (parallelogram)
-    const eastPoints = [
-      { x: cx, y: cy + cubeHeight / 2 - cubeDepth },           // Top-left
-      { x: cx + cubeWidth / 2, y: cy - cubeDepth },            // Top-right
-      { x: cx + cubeWidth / 2, y: cy },                        // Bottom-right
-      { x: cx, y: cy + cubeHeight / 2 },                       // Bottom-left
-    ];
-
-    // Draw south face first (back)
-    graphics.fillStyle(southColor, 1);
-    graphics.beginPath();
-    graphics.moveTo(southPoints[0].x, southPoints[0].y);
-    for (let i = 1; i < southPoints.length; i++) {
-      graphics.lineTo(southPoints[i].x, southPoints[i].y);
-    }
-    graphics.closePath();
-    graphics.fillPath();
-
-    // Draw east face (side)
-    graphics.fillStyle(eastColor, 1);
-    graphics.beginPath();
-    graphics.moveTo(eastPoints[0].x, eastPoints[0].y);
-    for (let i = 1; i < eastPoints.length; i++) {
-      graphics.lineTo(eastPoints[i].x, eastPoints[i].y);
-    }
-    graphics.closePath();
-    graphics.fillPath();
-
-    // Draw top face last (front)
-    graphics.fillStyle(topColor, 1);
-    graphics.beginPath();
-    graphics.moveTo(topPoints[0].x, topPoints[0].y);
-    for (let i = 1; i < topPoints.length; i++) {
-      graphics.lineTo(topPoints[i].x, topPoints[i].y);
-    }
-    graphics.closePath();
-    graphics.fillPath();
-
-    // Create container at screen position
-    const container = this.add.container(screenPos.x, screenPos.y, [graphics]);
-
-    // Set depth for proper sorting (same formula as tiles)
-    const depth = (gridX + gridY) * 32 + baseElevation * 0.1 + 0.5; // +0.5 to render above terrain
-    container.setDepth(depth);
-    container.setData('gridX', gridX);
-    container.setData('gridY', gridY);
-    container.setData('elevation', baseElevation);
-
-    return container;
-  }
-
-  /**
-   * Get color for a feature tile type
-   */
-  private getFeatureColor(tileId: TileId): number {
-    switch (tileId) {
-      case TileId.VOID_WALL: return 0x4a4a6a;
-      case TileId.CRYSTAL_FORMATION: return 0x7aaacc;
-      case TileId.TOXIC_POOL: return 0x7acc5a;
-      case TileId.RUINS_WALL: return 0x6a6a6a;
-      case TileId.ICE_WALL: return 0x8abace;
-      case TileId.LAVA: return 0xcc6a4a;
-      case TileId.FUNGAL_GROWTH: return 0x9a6a9a;
-      case TileId.CRATER_DEBRIS: return 0x7a7a7a;
-      default: return 0x5a5a6a;
-    }
-  }
-
-  /**
-   * Darken a color by a factor (0-1)
-   */
-  private darkenColor(color: number, factor: number): number {
-    const r = Math.floor(((color >> 16) & 0xff) * factor);
-    const g = Math.floor(((color >> 8) & 0xff) * factor);
-    const b = Math.floor((color & 0xff) * factor);
-    return (r << 16) | (g << 8) | b;
   }
 
   loadZone(tiles: number[][], collisions: boolean[][]): void {
@@ -708,11 +712,13 @@ export class WorldScene extends Phaser.Scene {
 
     const elevation = this.getTileElevation(player.position.x, player.position.y);
     const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
-    const screenPos = this.isoTransform.gridToScreen(player.position.x, player.position.y);
+    // Use world coordinates for screen position
+    const { worldX, worldY } = this.positionToWorldCoords(player.position);
+    const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
 
     const container = this.add.container(screenPos.x, screenPos.y - elevationOffset);
-    container.setData('gridX', player.position.x);
-    container.setData('gridY', player.position.y);
+    container.setData('gridX', worldX);
+    container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
     // Shadow
@@ -726,7 +732,7 @@ export class WorldScene extends Phaser.Scene {
     sprite.setTint(this.getFactionColor(player.faction));
     container.add(sprite);
 
-    const depth = this.isoTransform.calculateDepth(player.position.x, player.position.y, elevation);
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation);
     container.setDepth(depth);
 
     this.playerSprites.set(player.id, container as unknown as Phaser.GameObjects.Sprite);
@@ -746,7 +752,9 @@ export class WorldScene extends Phaser.Scene {
 
     const elevation = this.getTileElevation(position.x, position.y);
     const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
-    const screenPos = this.isoTransform.gridToScreen(position.x, position.y);
+    // Use world coordinates for screen position
+    const { worldX, worldY } = this.positionToWorldCoords(position);
+    const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
 
     // Mark player dirty for depth sorting
     if (this.depthSorter) {
@@ -761,10 +769,10 @@ export class WorldScene extends Phaser.Scene {
       duration: 100,
       ease: 'Linear',
       onComplete: () => {
-        sprite.setData('gridX', position.x);
-        sprite.setData('gridY', position.y);
+        sprite.setData('gridX', worldX);
+        sprite.setData('gridY', worldY);
         sprite.setData('elevation', elevation);
-        const depth = this.isoTransform!.calculateDepth(position.x, position.y, elevation);
+        const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevation);
         sprite.setDepth(depth);
       }
     });
@@ -775,7 +783,9 @@ export class WorldScene extends Phaser.Scene {
 
     const elevation = this.getTileElevation(position.x, position.y);
     const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
-    const screenPos = this.isoTransform.gridToScreen(position.x, position.y);
+    // Use world coordinates for screen position so player aligns with chunk positions
+    const { worldX, worldY } = this.positionToWorldCoords(position);
+    const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
     const targetY = screenPos.y - elevationOffset;
 
     if (reconciling && (this.localPlayer.x !== screenPos.x || this.localPlayer.y !== targetY)) {
@@ -792,11 +802,11 @@ export class WorldScene extends Phaser.Scene {
       this.localPlayer.y = targetY;
     }
 
-    // Update grid data and depth
-    this.localPlayer.setData('gridX', position.x);
-    this.localPlayer.setData('gridY', position.y);
+    // Update grid data and depth (use world coordinates for depth)
+    this.localPlayer.setData('gridX', worldX);
+    this.localPlayer.setData('gridY', worldY);
     this.localPlayer.setData('elevation', elevation);
-    const depth = this.isoTransform.calculateDepth(position.x, position.y, elevation + 0.001);
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation + 0.001);
     this.localPlayer.setDepth(depth);
   }
 
