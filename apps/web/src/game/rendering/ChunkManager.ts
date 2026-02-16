@@ -169,6 +169,7 @@ export class ChunkManager {
 
     // Update state
     this.chunkStates.set(zoneId, 'loaded');
+    this.pendingRequests.delete(zoneId);
 
     // Store chunk
     this.loadedChunks.set(zoneId, {
@@ -179,6 +180,9 @@ export class ChunkManager {
 
     // Notify renderer
     this.onChunkLoaded(chunkData, biome);
+
+    // Process next queued request (slot freed up)
+    this.processNextRequest();
   }
 
   /**
