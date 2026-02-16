@@ -5,15 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback.
-**Current focus:** Milestone complete — planning next milestone
+**Current focus:** v1.2 Isometric View — defining requirements
 
 ## Current Position
 
-Milestone: v1.1 Post-Login Game Experience — SHIPPED
-Phase: 7 of 7 (all complete)
-Status: Awaiting next milestone
+Milestone: v1.2 Isometric View
+Phase: Not started (defining requirements)
+Status: Defining requirements
+Last activity: 2026-02-16 — Milestone v1.2 started
 
-Progress: [██████████] 100% (v1.0: 3 phases, v1.1: 4 phases — all complete)
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -51,4 +52,4 @@ Stopped at: Completed v1.1 milestone archival
 Resume file: None
 
 ---
-*v1.1 COMPLETE: Run /gsd:new-milestone to start next milestone*
+*v1.2 started: 2026-02-16*

@@ -24,6 +24,19 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~9,120 LOC TypeScript
 
+## Current Milestone: v1.2 Isometric View
+
+**Goal:** Transform the game from top-down to isometric projection while preserving all existing gameplay.
+
+**Target features:**
+- Coordinate transformation layer (screen ↔ grid)
+- Depth sorting for proper visual occlusion
+- Screen-relative WASD controls (W=NW, S=SE, A=SW, D=NE)
+- Diamond-shaped viewport culling
+- Click-to-move with isometric coordinate conversion
+- Minimap adaptation for isometric view
+- Placeholder diamond tiles (art pipeline ready)
+
 ## Core Value
 
 Real-time multiplayer gameplay with responsive movement and visual feedback.
