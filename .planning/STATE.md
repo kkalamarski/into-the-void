@@ -9,17 +9,17 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 ## Current Position
 
-Phase: 16 of 16 (Structure Walls & Pathfinding)
-Plan: 5 of 5
-Status: In progress
-Last activity: 2026-02-16 — Completed 16-05-PLAN.md (Entity Occlusion Behind Structures)
+Phase: 16 of 16 (Structure Walls & Pathfinding) — COMPLETE
+Plan: All 5 plans executed
+Status: Milestone v1.3 complete
+Last activity: 2026-02-16 — Phase 16 execution complete, v1.3 shipped
 
-Progress: [███████████████░] 93% (15/16 phases complete)
+Progress: [████████████████] 100% (16/16 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 38 (from v1.0, v1.1, v1.2, and v1.3)
+- Total plans completed: 43 (from v1.0, v1.1, v1.2, and v1.3)
 - Average duration: ~4m per plan
 - Total execution time: ~2.48 hours
 
@@ -30,7 +30,7 @@ Progress: [███████████████░] 93% (15/16 phases c
 | v1.0 Auth & Character Screens | 1-3 | 7 | 2026-02-13 → 2026-02-14 |
 | v1.1 Post-Login Game Experience | 4-7 | 20 | 2026-02-14 → 2026-02-16 |
 | v1.2 Isometric View | 8-12 | 8 | 2026-02-16 → 2026-02-16 |
-| v1.3 Elevation & Structures | 13-16 | 8/12 | 2026-02-16 → in progress |
+| v1.3 Elevation & Structures | 13-16 | 12/12 | 2026-02-16 → 2026-02-16 |
 
 **Recent Trend:**
 - v1.0: 2 days (7 plans)
@@ -130,13 +130,20 @@ None yet.
 - All phases use standard patterns (no additional research needed)
 - Critical: Implement composite depth calculation in Phase 14 before rendering
 
+### Known Gaps
+
+**Server-side elevation validation not wired:**
+- `validateMovementWithElevation` and `findPathWithElevation` implemented in game-logic
+- Game-server still uses old `validateMovement` / `findPath`
+- Client enforces rules, server doesn't (future work)
+
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 16-05-PLAN.md (Entity Occlusion Behind Structures)
+Stopped at: Phase 16 and v1.3 milestone complete
 Resume file: None
 
-**Next action:** Phase 16 complete - all plans executed
+**Next action:** Run `/gsd:complete-milestone` to archive v1.3
 
 ---
-*Last updated: 2026-02-16 after Phase 16 Plan 04 execution complete*
+*Last updated: 2026-02-16 after Phase 16 execution complete, v1.3 shipped*

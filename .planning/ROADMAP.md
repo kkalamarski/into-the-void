@@ -5,7 +5,7 @@
 - ✅ **v1.0 Auth & Character Screens** — Phases 1-3 (shipped 2026-02-14)
 - ✅ **v1.1 Post-Login Game Experience** — Phases 4-7 (shipped 2026-02-16)
 - ✅ **v1.2 Isometric View** — Phases 8-12 (shipped 2026-02-16)
-- 🚧 **v1.3 Elevation & Structures** — Phases 13-16 (in progress)
+- ✅ **v1.3 Elevation & Structures** — Phases 13-16 (shipped 2026-02-16)
 
 ## Phases
 
@@ -109,14 +109,15 @@ Plans:
 
 </details>
 
-### 🚧 v1.3 Elevation & Structures (In Progress)
+<details>
+<summary>✅ v1.3 Elevation & Structures (Phases 13-16) — SHIPPED 2026-02-16</summary>
 
 **Milestone Goal:** Add vertical dimension to the world with terrain elevation, structure walls, and a scalable tile definition system.
 
 - [x] **Phase 13: Tile Definition Architecture** — Foundation for elevation system (completed 2026-02-16)
 - [x] **Phase 14: Elevation System Core** — Data generation and depth sorting (completed 2026-02-16)
 - [x] **Phase 15: Elevation Rendering** — Side-faces and visual appearance (completed 2026-02-16)
-- [ ] **Phase 16: Structure Walls & Pathfinding** — Gameplay integration
+- [x] **Phase 16: Structure Walls & Pathfinding** — Gameplay integration (completed 2026-02-16)
 
 ## Phase Details
 
@@ -182,11 +183,13 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 16-01-PLAN.md — Add elevation-based movement validation and pathfinding costs
-- [ ] 16-02-PLAN.md — Implement elevation-aware click detection
-- [ ] 16-03-PLAN.md — Create procedural wall generation in world-gen
-- [ ] 16-04-PLAN.md — Render structure walls and add minimap markers
-- [ ] 16-05-PLAN.md — Implement depth-based entity occlusion
+- [x] 16-01-PLAN.md — Add elevation-based movement validation and pathfinding costs
+- [x] 16-02-PLAN.md — Implement elevation-aware click detection
+- [x] 16-03-PLAN.md — Create procedural wall generation in world-gen
+- [x] 16-04-PLAN.md — Render structure walls and add minimap markers
+- [x] 16-05-PLAN.md — Implement depth-based entity occlusion
+
+</details>
 
 ## Progress
 
@@ -210,9 +213,12 @@ Phases execute in numeric order: 13 → 14 → 15 → 16
 | 13. Tile Definition Architecture | v1.3 | 3/3 | Complete | 2026-02-16 |
 | 14. Elevation System Core | v1.3 | 2/2 | Complete | 2026-02-16 |
 | 15. Elevation Rendering | v1.3 | 2/2 | Complete | 2026-02-16 |
-| 16. Structure Walls & Pathfinding | v1.3 | 0/5 | Planned | - |
+| 16. Structure Walls & Pathfinding | v1.3 | 5/5 | Complete | 2026-02-16 |
 
-**Total:** 16 phases (15 complete, 1 planned)
+**Total:** 16 phases (16 complete)
+
+**Known Gaps (future work):**
+- Server-side elevation validation not wired (client-side complete, server uses old functions)
 
 ---
-*Last updated: 2026-02-16 after Phase 16 planning complete*
+*Last updated: 2026-02-16 after Phase 16 execution complete*
