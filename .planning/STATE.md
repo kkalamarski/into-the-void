@@ -54,6 +54,7 @@ Progress: [█████████████░░░] 81% (13/16 phases c
 | Phase 13 P02 | 187 | 2 tasks | 11 files |
 | Phase 13 P03 | 217 | 3 tasks | 4 files |
 | Phase 14 P02 | 164s | 2 tasks | 3 files |
+| Phase 14-elevation-system-core P01 | 120 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,10 @@ Recent decisions affecting current work:
 - [Phase 13-03]: Dual mapping pattern (BIOME_TILES enum + BIOME_TILE_IDS strings) for gradual migration
 - [Phase 13-03]: Heights initialized from TileRegistry.get(tileId).defaultElevation (Phase 14 adds noise variation)
 - [Phase 13-03]: Deprecated isWalkable/getTileSpeedModifier delegate to TileRegistry for migration path
+- [Phase 14-01]: Separate SimplexNoise instance for heights prevents correlated patterns with terrain
+- [Phase 14-01]: FBM frequency 0.08 (vs terrain 0.05) creates finer height detail
+- [Phase 14-01]: Variance rounds to -1/0/+1 for subtle but visible elevation changes
+- [Phase 14-01]: Dual clamping (absolute 0-5 first, then biome-specific ranges) enforces both game limits and biome characteristics
 - [Phase 14-02]: Conservative elevation weight of 0.1 keeps screenY dominant in depth calculation
 - [Phase 14-02]: Container.setData('elevation') pattern for storing height values in depth sorting infrastructure
 - [Phase 14-02]: Conservative elevation weight (0.1) keeps screenY dominant in depth calculation
