@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { Entity, Creature, CreatureBehavior, EntityType } from '@into-the-void/shared-types';
 import { IsometricTransform } from '../utils/IsometricTransform';
 
+const ELEVATION_HEIGHT_STEP = 16; // Pixels per elevation level
+
 /**
  * EntityRenderer creates Phaser containers with nameplates, health bars and behavior icons for entities.
  *
@@ -24,18 +26,19 @@ export class EntityRenderer {
   /**
    * Creates a container with entity sprite, nameplate, optional health bar, and optional behavior icon.
    */
-  createEntityContainer(entity: Entity): Phaser.GameObjects.Container {
+  createEntityContainer(entity: Entity, elevation: number = 0): Phaser.GameObjects.Container {
     const screenPos = this.isoTransform.gridToScreen(
       entity.position.x,
       entity.position.y
     );
 
-    const container = this.scene.add.container(screenPos.x, screenPos.y);
+    const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
+    const container = this.scene.add.container(screenPos.x, screenPos.y - elevationOffset);
 
     // Store grid position and elevation for depth sorting
     container.setData('gridX', entity.position.x);
     container.setData('gridY', entity.position.y);
-    container.setData('elevation', 0);
+    container.setData('elevation', elevation);
 
     // Blob shadow at ground level (container origin)
     const shadow = this.scene.add.ellipse(0, 0, 40, 20, 0x000000, 0.3);
@@ -66,8 +69,8 @@ export class EntityRenderer {
       container.add(behaviorIcon);
     }
 
-    // Initial depth: Y-position with X-tiebreaker
-    const depth = this.isoTransform.calculateDepth(entity.position.x, entity.position.y);
+    // Initial depth: Y-position with X-tiebreaker and elevation
+    const depth = this.isoTransform.calculateDepth(entity.position.x, entity.position.y, elevation);
     container.setDepth(depth);
 
     return container;
@@ -189,8 +192,9 @@ export class EntityRenderer {
     gridY: number,
     elevation: number = 0
   ): void {
+    const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
     const screenPos = this.isoTransform.gridToScreen(gridX, gridY);
-    container.setPosition(screenPos.x, screenPos.y);
+    container.setPosition(screenPos.x, screenPos.y - elevationOffset);
 
     // Update stored grid position and elevation
     container.setData('gridX', gridX);
