@@ -237,10 +237,15 @@ export class WorldScene extends Phaser.Scene {
 
     let direction: Direction | null = null;
 
-    if (this.cursors?.up.isDown || this.wasd?.W.isDown) direction = 'n';
-    else if (this.cursors?.down.isDown || this.wasd?.S.isDown) direction = 's';
-    else if (this.cursors?.left.isDown || this.wasd?.A.isDown) direction = 'w';
-    else if (this.cursors?.right.isDown || this.wasd?.D.isDown) direction = 'e';
+    // Screen-relative mapping for isometric view:
+    // Visual "up" (W) = Northwest in grid
+    // Visual "right" (D) = Northeast in grid
+    // Visual "down" (S) = Southeast in grid
+    // Visual "left" (A) = Southwest in grid
+    if (this.cursors?.up.isDown || this.wasd?.W.isDown) direction = 'nw';
+    else if (this.cursors?.right.isDown || this.wasd?.D.isDown) direction = 'ne';
+    else if (this.cursors?.down.isDown || this.wasd?.S.isDown) direction = 'se';
+    else if (this.cursors?.left.isDown || this.wasd?.A.isDown) direction = 'sw';
 
     if (direction) {
       // Cancel any active pathfinding when WASD is used
