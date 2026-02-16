@@ -1,9 +1,11 @@
 import { BiomeType, ZONE_SIZE } from '@into-the-void/shared-types';
+import { TileRegistry, TILE_IDS } from '@into-the-void/tiles';
 import { SimplexNoise } from '../noise/simplex';
 import { SeededRandom } from '../random/seeded-random';
 
 /**
  * Tile types for terrain
+ * @deprecated Use TILE_IDS from @into-the-void/tiles instead
  */
 export enum TileId {
   VOID_FLOOR = 0,
@@ -22,6 +24,32 @@ export enum TileId {
   FUNGAL_GROWTH = 13,
   CRATER_FLOOR = 14,
   CRATER_DEBRIS = 15,
+}
+
+/**
+ * Convert numeric TileId to string tile ID
+ * Used for migration from enum-based to string-based tile system
+ */
+export function tileIdToString(id: TileId): string {
+  const mapping: Record<TileId, string> = {
+    [TileId.VOID_FLOOR]: TILE_IDS.VOID_FLOOR,
+    [TileId.VOID_WALL]: TILE_IDS.VOID_WALL,
+    [TileId.CRYSTAL_FLOOR]: TILE_IDS.CRYSTAL_FLOOR,
+    [TileId.CRYSTAL_FORMATION]: TILE_IDS.CRYSTAL_FORMATION,
+    [TileId.TOXIC_FLOOR]: TILE_IDS.TOXIC_FLOOR,
+    [TileId.TOXIC_POOL]: TILE_IDS.TOXIC_POOL,
+    [TileId.RUINS_FLOOR]: TILE_IDS.RUINS_FLOOR,
+    [TileId.RUINS_WALL]: TILE_IDS.RUINS_WALL,
+    [TileId.ICE_FLOOR]: TILE_IDS.ICE_FLOOR,
+    [TileId.ICE_WALL]: TILE_IDS.ICE_WALL,
+    [TileId.VOLCANIC_FLOOR]: TILE_IDS.VOLCANIC_FLOOR,
+    [TileId.LAVA]: TILE_IDS.LAVA,
+    [TileId.FUNGAL_FLOOR]: TILE_IDS.FUNGAL_FLOOR,
+    [TileId.FUNGAL_GROWTH]: TILE_IDS.FUNGAL_GROWTH,
+    [TileId.CRATER_FLOOR]: TILE_IDS.CRATER_FLOOR,
+    [TileId.CRATER_DEBRIS]: TILE_IDS.CRATER_DEBRIS,
+  };
+  return mapping[id] ?? TILE_IDS.VOID_FLOOR;
 }
 
 /**
@@ -51,6 +79,20 @@ const BIOME_TILES: Record<BiomeType, { floor: TileId; wall: TileId; feature: Til
 };
 
 /**
+ * Biome to tile mapping (string IDs)
+ */
+const BIOME_TILE_IDS: Record<BiomeType, { floor: string; wall: string; feature: string }> = {
+  void_plains: { floor: TILE_IDS.VOID_FLOOR, wall: TILE_IDS.VOID_WALL, feature: TILE_IDS.VOID_WALL },
+  crystal_caves: { floor: TILE_IDS.CRYSTAL_FLOOR, wall: TILE_IDS.CRYSTAL_FORMATION, feature: TILE_IDS.CRYSTAL_FORMATION },
+  toxic_wastes: { floor: TILE_IDS.TOXIC_FLOOR, wall: TILE_IDS.TOXIC_POOL, feature: TILE_IDS.TOXIC_POOL },
+  ancient_ruins: { floor: TILE_IDS.RUINS_FLOOR, wall: TILE_IDS.RUINS_WALL, feature: TILE_IDS.RUINS_WALL },
+  frozen_expanse: { floor: TILE_IDS.ICE_FLOOR, wall: TILE_IDS.ICE_WALL, feature: TILE_IDS.ICE_WALL },
+  volcanic_ridge: { floor: TILE_IDS.VOLCANIC_FLOOR, wall: TILE_IDS.LAVA, feature: TILE_IDS.LAVA },
+  fungal_forest: { floor: TILE_IDS.FUNGAL_FLOOR, wall: TILE_IDS.FUNGAL_GROWTH, feature: TILE_IDS.FUNGAL_GROWTH },
+  starfall_crater: { floor: TILE_IDS.CRATER_FLOOR, wall: TILE_IDS.CRATER_DEBRIS, feature: TILE_IDS.CRATER_DEBRIS },
+};
+
+/**
  * Generate terrain data for a chunk
  */
 export function generateTerrain(
@@ -58,19 +100,22 @@ export function generateTerrain(
   chunkX: number,
   chunkY: number,
   biome: BiomeType
-): { tiles: number[][]; collisions: boolean[][] } {
+): { tiles: number[][]; heights: number[][]; collisions: boolean[][] } {
   const noise = new SimplexNoise(`${worldSeed}_terrain_${chunkX}_${chunkY}`);
   const random = new SeededRandom(`${worldSeed}_terrain_${chunkX}_${chunkY}`);
 
   const tiles: number[][] = [];
+  const heights: number[][] = [];
   const collisions: boolean[][] = [];
-  const biomeTiles = BIOME_TILES[biome];
+  const biomeTileIds = BIOME_TILE_IDS[biome];
+  const biomeTiles = BIOME_TILES[biome]; // Keep for numeric output
 
   // Base threshold for walls/obstacles
   const wallThreshold = getWallThreshold(biome);
 
   for (let y = 0; y < ZONE_SIZE; y++) {
     tiles[y] = [];
+    heights[y] = [];
     collisions[y] = [];
 
     for (let x = 0; x < ZONE_SIZE; x++) {
@@ -86,23 +131,32 @@ export function generateTerrain(
       // Add some random features
       const hasFeature = !isWall && random.nextBool(0.02);
 
+      let tileId: string;
       if (isWall) {
         tiles[y][x] = biomeTiles.wall;
-        collisions[y][x] = true;
+        tileId = biomeTileIds.wall;
       } else if (hasFeature) {
         tiles[y][x] = biomeTiles.feature;
-        collisions[y][x] = isFeatureBlocking(biome);
+        tileId = biomeTileIds.feature;
       } else {
         tiles[y][x] = biomeTiles.floor;
-        collisions[y][x] = false;
+        tileId = biomeTileIds.floor;
       }
+
+      // Get collision from registry instead of hardcoded function
+      const tileDef = TileRegistry.get(tileId);
+      collisions[y][x] = tileDef.isBlocking;
+
+      // Set height from tile's default elevation
+      // Phase 14 will add noise-based height variation
+      heights[y][x] = tileDef.defaultElevation;
     }
   }
 
   // Ensure edges have some openings for zone transitions
-  ensureZoneConnectivity(tiles, collisions, biomeTiles.floor);
+  ensureZoneConnectivity(tiles, heights, collisions, biomeTiles.floor, biomeTileIds.floor);
 
-  return { tiles, collisions };
+  return { tiles, heights, collisions };
 }
 
 /**
@@ -144,8 +198,10 @@ function isFeatureBlocking(biome: BiomeType): boolean {
  */
 function ensureZoneConnectivity(
   tiles: number[][],
+  heights: number[][],
   collisions: boolean[][],
-  floorTile: TileId
+  floorTile: TileId,
+  floorTileId: string
 ): void {
   const size = ZONE_SIZE;
   const pathWidth = 3;
@@ -155,23 +211,29 @@ function ensureZoneConnectivity(
     Math.floor(size * 0.75),
   ];
 
+  const floorDef = TileRegistry.get(floorTileId);
+
   // Clear paths on edges
   for (const pos of pathPositions) {
     for (let i = 0; i < pathWidth; i++) {
       // Top edge
       tiles[0][pos + i] = floorTile;
+      heights[0][pos + i] = floorDef.defaultElevation;
       collisions[0][pos + i] = false;
 
       // Bottom edge
       tiles[size - 1][pos + i] = floorTile;
+      heights[size - 1][pos + i] = floorDef.defaultElevation;
       collisions[size - 1][pos + i] = false;
 
       // Left edge
       tiles[pos + i][0] = floorTile;
+      heights[pos + i][0] = floorDef.defaultElevation;
       collisions[pos + i][0] = false;
 
       // Right edge
       tiles[pos + i][size - 1] = floorTile;
+      heights[pos + i][size - 1] = floorDef.defaultElevation;
       collisions[pos + i][size - 1] = false;
     }
   }
@@ -179,27 +241,20 @@ function ensureZoneConnectivity(
 
 /**
  * Check if a tile is walkable
+ * @deprecated Use TileRegistry.get(tileId).isBlocking instead
  */
 export function isWalkable(tileId: TileId): boolean {
-  const nonWalkable = [
-    TileId.VOID_WALL,
-    TileId.CRYSTAL_FORMATION,
-    TileId.RUINS_WALL,
-    TileId.ICE_WALL,
-    TileId.LAVA,
-    TileId.CRATER_DEBRIS,
-  ];
-  return !nonWalkable.includes(tileId);
+  const stringId = tileIdToString(tileId);
+  const tileDef = TileRegistry.get(stringId);
+  return !tileDef.isBlocking;
 }
 
 /**
  * Get tile movement speed modifier
+ * @deprecated Use TileRegistry.get(tileId).movementSpeed instead
  */
 export function getTileSpeedModifier(tileId: TileId): number {
-  const modifiers: Partial<Record<TileId, number>> = {
-    [TileId.TOXIC_POOL]: 0.5, // Slow in toxic
-    [TileId.ICE_FLOOR]: 1.2, // Fast on ice
-    [TileId.FUNGAL_FLOOR]: 0.8, // Slightly slow in fungal
-  };
-  return modifiers[tileId] ?? 1.0;
+  const stringId = tileIdToString(tileId);
+  const tileDef = TileRegistry.get(stringId);
+  return tileDef.movementSpeed;
 }
