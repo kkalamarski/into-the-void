@@ -66,6 +66,7 @@ export class ChunkManager {
    * Loads 3x3 grid (current + adjacent), unloads distant.
    */
   updateChunks(playerZoneId: string): void {
+    this.currentPlayerZone = playerZoneId;
     const { x: playerX, y: playerY } = this.parseZoneId(playerZoneId);
 
     // Calculate required chunks (3x3 grid)
@@ -77,10 +78,10 @@ export class ChunkManager {
       }
     }
 
-    // Request new chunks
+    // Queue missing chunks with priority
     requiredChunks.forEach(zoneId => {
       if (!this.chunkStates.has(zoneId)) {
-        this.requestChunk(zoneId);
+        this.queueChunkRequest(zoneId);
       }
     });
 
@@ -95,24 +96,64 @@ export class ChunkManager {
     chunksToUnload.forEach(zoneId => {
       this.unloadChunk(zoneId);
     });
+
+    // Process queued requests
+    this.processNextRequest();
   }
 
   /**
-   * Request a chunk from server
+   * Process next chunk from priority queue
    */
-  private requestChunk(zoneId: string): void {
-    if (this.chunkStates.has(zoneId)) return;
+  private processNextRequest(): void {
+    // Count in-flight requests
+    let inFlight = 0;
+    this.chunkStates.forEach(state => {
+      if (state === 'loading') inFlight++;
+    });
 
-    this.chunkStates.set(zoneId, 'loading');
-    this.onChunkNeeded(zoneId);
+    // Process up to maxConcurrentRequests
+    while (inFlight < this.maxConcurrentRequests && this.requestQueue.size() > 0) {
+      const request = this.requestQueue.pop()!;
 
-    // Timeout fallback
-    setTimeout(() => {
-      if (this.chunkStates.get(zoneId) === 'loading') {
-        console.warn(`Chunk ${zoneId} load timeout`);
-        this.chunkStates.set(zoneId, 'failed');
+      // Skip if already processed (stale queue entry)
+      if (this.chunkStates.has(request.zoneId)) {
+        continue;
       }
-    }, this.loadTimeout);
+
+      this.chunkStates.set(request.zoneId, 'loading');
+      this.onChunkNeeded(request.zoneId);
+      inFlight++;
+
+      // Timeout handling
+      const zoneId = request.zoneId;
+      setTimeout(() => {
+        if (this.chunkStates.get(zoneId) === 'loading') {
+          console.warn(`Chunk ${zoneId} load timeout`);
+          this.chunkStates.set(zoneId, 'failed');
+          this.pendingRequests.delete(zoneId);
+          // Try next in queue
+          this.processNextRequest();
+        }
+      }, this.loadTimeout);
+    }
+  }
+
+  /**
+   * Queue a chunk request with priority based on distance to player
+   */
+  private queueChunkRequest(zoneId: string): void {
+    // Already queued or loaded
+    if (this.chunkStates.has(zoneId) || this.pendingRequests.has(zoneId)) {
+      return;
+    }
+
+    // Calculate priority (Manhattan distance from player zone)
+    const { x, y } = this.parseZoneId(zoneId);
+    const { x: px, y: py } = this.parseZoneId(this.currentPlayerZone);
+    const priority = Math.abs(x - px) + Math.abs(y - py);
+
+    this.requestQueue.push({ zoneId, priority });
+    this.pendingRequests.add(zoneId);
   }
 
   /**
