@@ -101,7 +101,7 @@ export class MinimapCamera {
     const markerSize = 32; // World units, appears as ~3.2px at zoom 0.1
 
     for (const structure of structures) {
-      if (structure.type === 'wall') {
+      if (structure.type === 'wall' || structure.type === 'feature') {
         for (const tile of structure.tiles) {
           const screenPos = this.isoTransform.gridToScreen(tile.x, tile.y);
 

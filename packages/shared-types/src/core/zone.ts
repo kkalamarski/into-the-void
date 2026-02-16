@@ -24,11 +24,11 @@ export interface Zone {
 }
 
 /**
- * Tile structure definition for multi-tile walls and buildings
+ * Tile structure definition for blocking terrain features
  */
 export interface TileStructure {
-  /** Structure type */
-  type: 'wall' | 'building';
+  /** Structure type: feature (natural blocking), wall (linear), building (multi-tile) */
+  type: 'feature' | 'wall' | 'building';
   /** Tiles comprising this structure */
   tiles: Array<{
     x: number;

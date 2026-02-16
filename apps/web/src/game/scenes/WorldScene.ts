@@ -440,9 +440,9 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    // Render structure walls (uses same side-face rendering as terrain)
+    // Render blocking terrain features (uses same side-face rendering as terrain)
     for (const structure of structures) {
-      if (structure.type === 'wall') {
+      if (structure.type === 'wall' || structure.type === 'feature') {
         for (const wallTile of structure.tiles) {
           // Create a modified heights array for structure rendering
           // Structure height already includes base elevation, use as-is

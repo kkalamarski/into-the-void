@@ -2,19 +2,20 @@ import { BiomeType, TileStructure, ZONE_SIZE } from '@into-the-void/shared-types
 import { TILE_IDS } from '@into-the-void/tiles';
 import { SimplexNoise } from '../noise/simplex';
 
-// Constants for wall generation
-const WALL_NOISE_THRESHOLD = 0.6;     // Higher = fewer walls
-const WALL_NOISE_FREQUENCY = 0.02;    // Lower = larger wall clusters
-const WALL_SAMPLE_SPACING = 8;        // Sample every Nth tile for anchor points
-const WALL_CONNECT_RANGE = 12;        // Max distance to connect anchors
+// Constants for blocking feature generation
+const FEATURE_NOISE_FREQUENCY = 0.08;    // Higher = more variation
+const FEATURE_THRESHOLD = 0.55;          // Higher = fewer features
+const CLUSTER_CHANCE = 0.4;              // Chance a feature grows into a cluster
+const MAX_CLUSTER_SIZE = 5;              // Max tiles in a cluster
+const EDGE_BUFFER = 4;                   // Avoid zone edges for connectivity
 
 /**
- * Per-type wall height configuration (STRUCT-01 requirement).
- * Different wall types have different heights above terrain base.
+ * Per-type feature height configuration (STRUCT-01 requirement).
+ * Different blocking features have different heights above terrain base.
  * Heights chosen for visual/gameplay variety per biome.
  */
-const WALL_HEIGHTS: Record<string, number> = {
-  [TILE_IDS.VOID_WALL]: 3,           // Standard void walls
+const FEATURE_HEIGHTS: Record<string, number> = {
+  [TILE_IDS.VOID_WALL]: 3,           // Void rock formations
   [TILE_IDS.CRYSTAL_FORMATION]: 5,   // Crystals grow tall
   [TILE_IDS.TOXIC_POOL]: 2,          // Low toxic barriers
   [TILE_IDS.RUINS_WALL]: 4,          // Ancient ruins crumbling but tall
@@ -25,20 +26,20 @@ const WALL_HEIGHTS: Record<string, number> = {
 };
 
 // Default height if tile ID not found in config
-const DEFAULT_WALL_HEIGHT = 3;
+const DEFAULT_FEATURE_HEIGHT = 3;
 
 /**
- * Get wall height for a specific wall tile type.
- * Returns the configured height above terrain base for this wall type.
+ * Get feature height for a specific blocking tile type.
+ * Returns the configured height above terrain base.
  */
-function getWallHeight(wallTileId: string): number {
-  return WALL_HEIGHTS[wallTileId] ?? DEFAULT_WALL_HEIGHT;
+function getFeatureHeight(featureTileId: string): number {
+  return FEATURE_HEIGHTS[featureTileId] ?? DEFAULT_FEATURE_HEIGHT;
 }
 
 /**
- * Generate structure walls procedurally for a chunk.
- * Uses noise to place anchor points, connects nearby anchors with line segments.
- * Updates collisions array in-place to block wall positions.
+ * Generate blocking terrain features procedurally for a chunk.
+ * Creates single features or organic clusters (not linear walls).
+ * Updates collisions array in-place to block feature positions.
  */
 export function generateStructures(
   worldSeed: string,
@@ -49,65 +50,51 @@ export function generateStructures(
   collisions: boolean[][]
 ): TileStructure[] {
   const structures: TileStructure[] = [];
-  const noise = new SimplexNoise(`${worldSeed}_structures_${chunkX}_${chunkY}`);
+  const noise = new SimplexNoise(`${worldSeed}_features_${chunkX}_${chunkY}`);
+  const clusterNoise = new SimplexNoise(`${worldSeed}_clusters_${chunkX}_${chunkY}`);
 
-  // Find candidate anchor positions for wall segments
-  const wallAnchors: Array<{ x: number; y: number }> = [];
+  const featureTileId = getFeatureTileIdForBiome(biome);
+  const featureHeight = getFeatureHeight(featureTileId);
 
-  // Sample grid at spacing intervals (avoid edges for zone connectivity)
-  for (let y = WALL_SAMPLE_SPACING; y < ZONE_SIZE - WALL_SAMPLE_SPACING; y += WALL_SAMPLE_SPACING) {
-    for (let x = WALL_SAMPLE_SPACING; x < ZONE_SIZE - WALL_SAMPLE_SPACING; x += WALL_SAMPLE_SPACING) {
-      // Skip if already blocked by terrain
-      if (collisions[y][x]) continue;
+  // Track which tiles have features to avoid overlap
+  const placed = new Set<string>();
+
+  // Scan zone for feature seed points
+  for (let y = EDGE_BUFFER; y < ZONE_SIZE - EDGE_BUFFER; y++) {
+    for (let x = EDGE_BUFFER; x < ZONE_SIZE - EDGE_BUFFER; x++) {
+      // Skip if already blocked or has a feature
+      if (collisions[y][x] || placed.has(`${x},${y}`)) continue;
 
       const worldX = chunkX * ZONE_SIZE + x;
       const worldY = chunkY * ZONE_SIZE + y;
-      const noiseValue = noise.noise2D(worldX * WALL_NOISE_FREQUENCY, worldY * WALL_NOISE_FREQUENCY);
+      const noiseValue = noise.noise2D(worldX * FEATURE_NOISE_FREQUENCY, worldY * FEATURE_NOISE_FREQUENCY);
 
-      if (noiseValue > WALL_NOISE_THRESHOLD) {
-        wallAnchors.push({ x, y });
-      }
-    }
-  }
+      if (noiseValue > FEATURE_THRESHOLD) {
+        // Decide if single feature or cluster
+        const clusterValue = clusterNoise.noise2D(worldX * 0.1, worldY * 0.1);
+        const isCluster = clusterValue > (1 - CLUSTER_CHANCE * 2); // Map to probability
 
-  // Connect nearby anchors into wall segments
-  const connected = new Set<string>();
+        const tiles: TileStructure['tiles'] = [];
 
-  for (const start of wallAnchors) {
-    const startKey = `${start.x},${start.y}`;
-    if (connected.has(startKey)) continue;
+        if (isCluster) {
+          // Grow an organic cluster
+          const clusterTiles = growCluster(x, y, heights, collisions, placed, clusterNoise, featureTileId, featureHeight);
+          tiles.push(...clusterTiles);
+        } else {
+          // Single feature
+          const baseHeight = heights[y]?.[x] ?? 0;
+          tiles.push({
+            x,
+            y,
+            tileId: featureTileId,
+            height: baseHeight + featureHeight
+          });
+          placed.add(`${x},${y}`);
+          collisions[y][x] = true;
+        }
 
-    // Find nearest unconnected anchor within range
-    let nearest: { x: number; y: number; distance: number } | null = null;
-    for (const end of wallAnchors) {
-      const endKey = `${end.x},${end.y}`;
-      if (start === end || connected.has(endKey)) continue;
-
-      const distance = Math.abs(end.x - start.x) + Math.abs(end.y - start.y);
-      if (distance <= WALL_CONNECT_RANGE && (!nearest || distance < nearest.distance)) {
-        nearest = { x: end.x, y: end.y, distance };
-      }
-    }
-
-    if (nearest) {
-      const wallSegment = createWallSegment(
-        start,
-        { x: nearest.x, y: nearest.y },
-        heights,
-        collisions,
-        biome
-      );
-
-      if (wallSegment.tiles.length > 0) {
-        structures.push(wallSegment);
-        connected.add(startKey);
-        connected.add(`${nearest.x},${nearest.y}`);
-
-        // Update collision map with wall positions
-        for (const tile of wallSegment.tiles) {
-          if (tile.y >= 0 && tile.y < ZONE_SIZE && tile.x >= 0 && tile.x < ZONE_SIZE) {
-            collisions[tile.y][tile.x] = true;
-          }
+        if (tiles.length > 0) {
+          structures.push({ type: 'feature', tiles });
         }
       }
     }
@@ -117,62 +104,78 @@ export function generateStructures(
 }
 
 /**
- * Create a wall segment between two points using Bresenham's line algorithm.
- * Wall height varies by tile type (per STRUCT-01).
+ * Grow an organic cluster from a seed point.
+ * Uses noise-influenced flood fill for natural shapes.
  */
-function createWallSegment(
-  start: { x: number; y: number },
-  end: { x: number; y: number },
+function growCluster(
+  seedX: number,
+  seedY: number,
   heights: number[][],
   collisions: boolean[][],
-  biome: BiomeType
-): TileStructure {
-  const wallTileId = getWallTileIdForBiome(biome);
-  const wallHeightAboveBase = getWallHeight(wallTileId); // Per-type height
+  placed: Set<string>,
+  noise: SimplexNoise,
+  featureTileId: string,
+  featureHeight: number
+): TileStructure['tiles'] {
   const tiles: TileStructure['tiles'] = [];
+  const queue: Array<{ x: number; y: number }> = [{ x: seedX, y: seedY }];
+  const visited = new Set<string>();
 
-  // Bresenham's line algorithm
-  const dx = Math.abs(end.x - start.x);
-  const dy = Math.abs(end.y - start.y);
-  const sx = start.x < end.x ? 1 : -1;
-  const sy = start.y < end.y ? 1 : -1;
-  let err = dx - dy;
-  let x = start.x;
-  let y = start.y;
+  // 4-directional neighbors for organic growth
+  const directions = [
+    { dx: 0, dy: -1 },
+    { dx: 0, dy: 1 },
+    { dx: -1, dy: 0 },
+    { dx: 1, dy: 0 },
+  ];
 
-  while (true) {
-    // Skip if tile already blocked by terrain
-    if (y >= 0 && y < ZONE_SIZE && x >= 0 && x < ZONE_SIZE && !collisions[y][x]) {
-      const baseHeight = heights[y]?.[x] ?? 0;
-      tiles.push({
-        x,
-        y,
-        tileId: wallTileId,
-        height: baseHeight + wallHeightAboveBase
-      });
-    }
+  while (queue.length > 0 && tiles.length < MAX_CLUSTER_SIZE) {
+    const current = queue.shift()!;
+    const key = `${current.x},${current.y}`;
 
-    if (x === end.x && y === end.y) break;
+    if (visited.has(key)) continue;
+    visited.add(key);
 
-    const e2 = 2 * err;
-    if (e2 > -dy) {
-      err -= dy;
-      x += sx;
-    }
-    if (e2 < dx) {
-      err += dx;
-      y += sy;
+    // Check bounds and availability
+    if (current.x < EDGE_BUFFER || current.x >= ZONE_SIZE - EDGE_BUFFER) continue;
+    if (current.y < EDGE_BUFFER || current.y >= ZONE_SIZE - EDGE_BUFFER) continue;
+    if (collisions[current.y][current.x] || placed.has(key)) continue;
+
+    // Add this tile to cluster
+    const baseHeight = heights[current.y]?.[current.x] ?? 0;
+    tiles.push({
+      x: current.x,
+      y: current.y,
+      tileId: featureTileId,
+      height: baseHeight + featureHeight
+    });
+    placed.add(key);
+    collisions[current.y][current.x] = true;
+
+    // Consider neighbors for expansion (noise-influenced)
+    for (const dir of directions) {
+      const nx = current.x + dir.dx;
+      const ny = current.y + dir.dy;
+      const nkey = `${nx},${ny}`;
+
+      if (visited.has(nkey) || placed.has(nkey)) continue;
+
+      // Use noise to decide if we grow in this direction (organic shape)
+      const growthNoise = noise.noise2D(nx * 0.2, ny * 0.2);
+      if (growthNoise > -0.2) { // ~60% chance to grow in any direction
+        queue.push({ x: nx, y: ny });
+      }
     }
   }
 
-  return { type: 'wall', tiles };
+  return tiles;
 }
 
 /**
- * Get appropriate wall tile ID for biome.
+ * Get appropriate blocking feature tile ID for biome.
  */
-function getWallTileIdForBiome(biome: BiomeType): string {
-  const wallTiles: Record<BiomeType, string> = {
+function getFeatureTileIdForBiome(biome: BiomeType): string {
+  const featureTiles: Record<BiomeType, string> = {
     void_plains: TILE_IDS.VOID_WALL,
     crystal_caves: TILE_IDS.CRYSTAL_FORMATION,
     toxic_wastes: TILE_IDS.TOXIC_POOL,
@@ -182,5 +185,5 @@ function getWallTileIdForBiome(biome: BiomeType): string {
     fungal_forest: TILE_IDS.FUNGAL_GROWTH,
     starfall_crater: TILE_IDS.CRATER_DEBRIS
   };
-  return wallTiles[biome];
+  return featureTiles[biome];
 }
