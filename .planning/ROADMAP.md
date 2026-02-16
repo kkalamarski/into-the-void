@@ -79,8 +79,8 @@ See: `.planning/milestones/v1.3-ROADMAP.md`
 **Plans**: 2 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — World coordinate consistency for depth sorting
-- [ ] 17-02-PLAN.md — Distance-based entity visibility
+- [x] 17-01-PLAN.md — World coordinate consistency for depth sorting
+- [x] 17-02-PLAN.md — Distance-based entity visibility
 
 #### Phase 18: Multi-Chunk Streaming
 **Goal**: Players can seamlessly explore infinite world with viewport-based chunk streaming
@@ -148,7 +148,7 @@ Phases execute in numeric order: 17 → 18 → 19 → 20
 | 14. Elevation System Core | v1.3 | 2/2 | Complete | 2026-02-16 |
 | 15. Elevation Rendering | v1.3 | 2/2 | Complete | 2026-02-16 |
 | 16. Structure Walls & Pathfinding | v1.3 | 5/5 | Complete | 2026-02-16 |
-| 17. World Coordinate Foundation | v1.4 | 0/2 | Planned | - |
+| 17. World Coordinate Foundation | v1.4 | 2/2 | Complete | 2026-02-16 |
 | 18. Multi-Chunk Streaming | v1.4 | 0/TBD | Not started | - |
 | 19. Biome Integration | v1.4 | 0/TBD | Not started | - |
 | 20. Testing & Polish | v1.4 | 0/TBD | Not started | - |
