@@ -555,6 +555,9 @@ export class WorldScene extends Phaser.Scene {
 
       this.chunkManager.updateChunks(newZoneId);
     }
+
+    // Clean up orphaned entities that are now out of range
+    this.cleanupOrphanedEntities();
   }
 
   private parseZoneCoords(zoneId: string): { x: number; y: number } {
@@ -714,6 +717,10 @@ export class WorldScene extends Phaser.Scene {
     // Get elevation for the correct zone
     const elevation = this.getTileElevation(entity.position.x, entity.position.y, entity.position.zoneId);
     const container = this.entityRenderer.createEntityContainer(entity, elevation);
+
+    // Store position for visibility checks during despawn
+    container.setData('position', { ...entity.position });
+
     this.entitySprites.set(entity.id, container);
 
     // Track zone ownership for cleanup on chunk unload
@@ -734,17 +741,67 @@ export class WorldScene extends Phaser.Scene {
     if (container) {
       container.destroy(true); // Destroy children too
       this.entitySprites.delete(entityId);
+
+      // Remove from orphaned tracking if present
+      const orphaned = this.entityZoneMap.get('_orphaned');
+      if (orphaned) {
+        orphaned.delete(entityId);
+      }
     }
   }
 
   /**
-   * Despawn all entities belonging to a zone (called on chunk unload)
+   * Clean up orphaned entities that are now out of visibility range.
+   * Called periodically (e.g., on player zone change).
+   */
+  cleanupOrphanedEntities(): void {
+    const orphaned = this.entityZoneMap.get('_orphaned');
+    if (!orphaned || orphaned.size === 0) return;
+
+    const toRemove: string[] = [];
+    orphaned.forEach(entityId => {
+      const container = this.entitySprites.get(entityId);
+      if (!container) {
+        toRemove.push(entityId);
+        return;
+      }
+
+      const position = container.getData('position') as { x: number; y: number; zoneId: string } | undefined;
+      if (!position || !this.isEntityVisible(position)) {
+        this.despawnEntity(entityId);
+        toRemove.push(entityId);
+      }
+    });
+
+    toRemove.forEach(id => orphaned.delete(id));
+  }
+
+  /**
+   * Despawn entities belonging to a zone (called on chunk unload).
+   * Entities still within visibility range are kept but moved to 'orphaned' tracking.
    */
   despawnEntitiesForZone(zoneId: string): void {
     const entityIds = this.entityZoneMap.get(zoneId);
     if (entityIds) {
       entityIds.forEach(entityId => {
-        this.despawnEntity(entityId);
+        const container = this.entitySprites.get(entityId);
+        if (!container) {
+          return;
+        }
+
+        // Check if entity is still visible
+        const position = container.getData('position') as { x: number; y: number; zoneId: string } | undefined;
+        if (position && this.isEntityVisible(position)) {
+          // Entity still visible - keep it but track as orphaned (no zone updates)
+          // It will be despawned when player moves away or on next visibility check
+          if (!this.entityZoneMap.has('_orphaned')) {
+            this.entityZoneMap.set('_orphaned', new Set());
+          }
+          this.entityZoneMap.get('_orphaned')!.add(entityId);
+        } else {
+          // Entity out of range - despawn immediately
+          this.despawnEntity(entityId);
+        }
       });
       this.entityZoneMap.delete(zoneId);
     }
@@ -778,6 +835,9 @@ export class WorldScene extends Phaser.Scene {
         this.despawnEntity(entityId);
         return;
       }
+
+      // Update stored position for future visibility checks
+      container.setData('position', { ...changes.position });
 
       // Get elevation for the correct zone
       const elevation = this.getTileElevation(changes.position.x, changes.position.y, changes.position.zoneId);
