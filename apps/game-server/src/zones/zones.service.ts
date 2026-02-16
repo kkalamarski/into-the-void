@@ -142,6 +142,16 @@ export class ZonesService implements OnModuleInit {
     return this.zones.size;
   }
 
+  /**
+   * Get cache statistics for monitoring.
+   */
+  getCacheStats(): { size: number; maxSize: number } {
+    return {
+      size: this.zones.size,
+      maxSize: 500,
+    };
+  }
+
   getWorldSeed(): string {
     return this.worldSeed;
   }
