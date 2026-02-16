@@ -15,6 +15,8 @@ interface GameState {
   loadingProgress: number;
   setLoadingStage: (stage: GameState['loadingStage']) => void;
   setLoadingProgress: (progress: number) => void;
+  chunksLoading: number; // Count of chunks currently loading
+  setChunksLoading: (count: number) => void;
 
   // Game instance
   game: Game | null;
@@ -58,6 +60,8 @@ export const useGameStore = create<GameState>((set) => ({
   loadingProgress: 0,
   setLoadingStage: (stage) => set({ loadingStage: stage }),
   setLoadingProgress: (progress) => set({ loadingProgress: progress }),
+  chunksLoading: 0,
+  setChunksLoading: (count) => set({ chunksLoading: count }),
 
   // Game instance
   game: null,
