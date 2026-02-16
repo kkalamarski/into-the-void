@@ -1,3 +1,5 @@
+import { IsometricTransform } from '../utils/IsometricTransform';
+
 /**
  * Calculates which tiles are visible within camera viewport.
  * Used for performance optimization - only visible tiles are rendered.
@@ -6,16 +8,19 @@ export class ViewportCuller {
   private tileSize: number;
   private cullPaddingX: number;
   private cullPaddingY: number;
+  private isoTransform: IsometricTransform;
 
-  constructor(tileSize: number, padding: number = 2) {
-    this.tileSize = tileSize;
+  constructor(tileWidth: number = 128, tileHeight: number = 64, padding: number = 4) {
+    this.tileSize = tileWidth; // Keep for backwards compat
+    this.isoTransform = new IsometricTransform(tileWidth, tileHeight);
     this.cullPaddingX = padding;
     this.cullPaddingY = padding;
   }
 
   /**
    * Calculate which tiles are visible in camera viewport.
-   * Returns min/max tile coordinates that should be rendered.
+   * For isometric, we convert screen corners to grid space and expand bounds.
+   * Uses expanded padding (4 tiles) to account for diamond projection.
    */
   getCullBounds(camera: Phaser.Cameras.Scene2D.Camera): {
     minTileX: number;
@@ -29,13 +34,25 @@ export class ViewportCuller {
     const camTop = camera.worldView.y;
     const camBottom = camTop + camera.worldView.height;
 
-    // Convert to tile coordinates with padding
-    const minTileX = Math.max(0, Math.floor(camLeft / this.tileSize) - this.cullPaddingX);
-    const maxTileX = Math.ceil(camRight / this.tileSize) + this.cullPaddingX;
-    const minTileY = Math.max(0, Math.floor(camTop / this.tileSize) - this.cullPaddingY);
-    const maxTileY = Math.ceil(camBottom / this.tileSize) + this.cullPaddingY;
+    // Convert all four corners to grid space
+    const topLeft = this.isoTransform.screenToGrid(camLeft, camTop);
+    const topRight = this.isoTransform.screenToGrid(camRight, camTop);
+    const bottomLeft = this.isoTransform.screenToGrid(camLeft, camBottom);
+    const bottomRight = this.isoTransform.screenToGrid(camRight, camBottom);
 
-    return { minTileX, maxTileX, minTileY, maxTileY };
+    // Find min/max across all corners
+    const minGridX = Math.floor(Math.min(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x));
+    const maxGridX = Math.ceil(Math.max(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x));
+    const minGridY = Math.floor(Math.min(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y));
+    const maxGridY = Math.ceil(Math.max(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y));
+
+    // Apply padding (expanded for isometric - 4 tiles per research)
+    return {
+      minTileX: minGridX - this.cullPaddingX,
+      maxTileX: maxGridX + this.cullPaddingX,
+      minTileY: minGridY - this.cullPaddingY,
+      maxTileY: maxGridY + this.cullPaddingY,
+    };
   }
 
   /**
