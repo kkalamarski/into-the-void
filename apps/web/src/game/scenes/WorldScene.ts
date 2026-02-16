@@ -19,7 +19,7 @@ export class WorldScene extends Phaser.Scene {
   private tileLayer: Phaser.GameObjects.Container | null = null;
   private tileRenderer: TileRenderer | null = null;
   private entityRenderer: EntityRenderer | null = null;
-  private tileSprites: Phaser.GameObjects.Sprite[][] = [];
+  private tileSprites: Phaser.GameObjects.GameObject[][] = [];
   private entitySprites: Map<string, Phaser.GameObjects.Container> = new Map();
   private playerSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
   private localPlayer: Phaser.GameObjects.Sprite | null = null;

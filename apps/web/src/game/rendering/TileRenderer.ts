@@ -46,17 +46,66 @@ export class TileRenderer {
   }
 
   /**
-   * Create a tile sprite at grid position
+   * Create a tile at grid position.
+   * Returns a diamond-shaped polygon graphic (placeholder until isometric sprites are available).
    */
-  createTile(x: number, y: number, tileId: TileId): Phaser.GameObjects.Sprite {
-    const texture = this.getTextureKey(tileId);
+  createTile(x: number, y: number, tileId: TileId): Phaser.GameObjects.GameObject {
     const screenPos = this.isoTransform.gridToScreen(x, y);
+    const color = this.getTileColor(tileId);
 
-    const sprite = this.scene.add.sprite(screenPos.x, screenPos.y, texture);
-    sprite.setOrigin(0.5, 0.5);  // Center origin for isometric diamond
-    sprite.setDepth(screenPos.y); // Static depth for tiles (never move)
+    // Create isometric diamond polygon
+    // Diamond points: top, right, bottom, left (relative to center)
+    const halfWidth = this.isoTransform.tileWidth / 2;
+    const halfHeight = this.isoTransform.tileHeight / 2;
 
-    return sprite;
+    const graphics = this.scene.add.graphics();
+    graphics.fillStyle(color, 1);
+    graphics.beginPath();
+    graphics.moveTo(screenPos.x, screenPos.y - halfHeight);      // Top
+    graphics.lineTo(screenPos.x + halfWidth, screenPos.y);       // Right
+    graphics.lineTo(screenPos.x, screenPos.y + halfHeight);      // Bottom
+    graphics.lineTo(screenPos.x - halfWidth, screenPos.y);       // Left
+    graphics.closePath();
+    graphics.fillPath();
+
+    // Add subtle border for visibility
+    graphics.lineStyle(1, 0x000000, 0.2);
+    graphics.beginPath();
+    graphics.moveTo(screenPos.x, screenPos.y - halfHeight);
+    graphics.lineTo(screenPos.x + halfWidth, screenPos.y);
+    graphics.lineTo(screenPos.x, screenPos.y + halfHeight);
+    graphics.lineTo(screenPos.x - halfWidth, screenPos.y);
+    graphics.closePath();
+    graphics.strokePath();
+
+    graphics.setDepth(screenPos.y);
+
+    return graphics;
+  }
+
+  /**
+   * Get color for a tile ID (placeholder colors until sprites are ready)
+   */
+  private getTileColor(tileId: TileId): number {
+    switch (tileId) {
+      case TileId.VOID_FLOOR: return 0x2a2a3a;
+      case TileId.VOID_WALL: return 0x1a1a2a;
+      case TileId.CRYSTAL_FLOOR: return 0x3a4a5a;
+      case TileId.CRYSTAL_FORMATION: return 0x5a7a9a;
+      case TileId.TOXIC_FLOOR: return 0x3a4a2a;
+      case TileId.TOXIC_POOL: return 0x5a8a3a;
+      case TileId.RUINS_FLOOR: return 0x4a4a4a;
+      case TileId.RUINS_WALL: return 0x3a3a3a;
+      case TileId.ICE_FLOOR: return 0x6a8aaa;
+      case TileId.ICE_WALL: return 0x4a6a8a;
+      case TileId.VOLCANIC_FLOOR: return 0x5a3a2a;
+      case TileId.LAVA: return 0xaa4a2a;
+      case TileId.FUNGAL_FLOOR: return 0x4a3a4a;
+      case TileId.FUNGAL_GROWTH: return 0x6a4a6a;
+      case TileId.CRATER_FLOOR: return 0x5a5a5a;
+      case TileId.CRATER_DEBRIS: return 0x4a4a4a;
+      default: return 0x3a3a4a;
+    }
   }
 
   /**
