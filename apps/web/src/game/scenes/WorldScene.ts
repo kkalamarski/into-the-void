@@ -660,6 +660,11 @@ export class WorldScene extends Phaser.Scene {
   spawnEntity(entity: Entity): void {
     if (this.entitySprites.has(entity.id) || !this.entityRenderer) return;
 
+    // Check visibility using world coordinate distance
+    if (!this.isEntityVisible(entity.position)) {
+      return; // Skip spawning - entity out of range
+    }
+
     const elevation = this.getTileElevation(entity.position.x, entity.position.y);
     const container = this.entityRenderer.createEntityContainer(entity, elevation);
     this.entitySprites.set(entity.id, container);
@@ -699,6 +704,12 @@ export class WorldScene extends Phaser.Scene {
 
     // Update position
     if (changes.position) {
+      // Check if entity moved out of visibility range
+      if (!this.isEntityVisible(changes.position)) {
+        this.despawnEntity(entityId);
+        return;
+      }
+
       const elevation = this.getTileElevation(changes.position.x, changes.position.y);
       // Convert to world coordinates for EntityRenderer
       const { worldX, worldY } = this.positionToWorldCoords(changes.position);
