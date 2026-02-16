@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { TileId } from '@into-the-void/world-gen';
+import { TileId, tileIdToString } from '@into-the-void/world-gen';
+import { TileRegistry } from '@into-the-void/tiles';
 import { IsometricTransform } from '../utils/IsometricTransform';
 
 const ELEVATION_HEIGHT_STEP = 16; // Pixels per elevation level (5 levels = 80px max)
@@ -86,28 +87,12 @@ export class TileRenderer {
   }
 
   /**
-   * Get color for a tile ID (placeholder colors until sprites are ready)
+   * Get color for a tile ID from TileRegistry (single source of truth)
    */
   private getTileColor(tileId: TileId): number {
-    switch (tileId) {
-      case TileId.VOID_FLOOR: return 0x2a2a3a;
-      case TileId.VOID_WALL: return 0x1a1a2a;
-      case TileId.CRYSTAL_FLOOR: return 0x3a4a5a;
-      case TileId.CRYSTAL_FORMATION: return 0x5a7a9a;
-      case TileId.TOXIC_FLOOR: return 0x3a4a2a;
-      case TileId.TOXIC_POOL: return 0x5a8a3a;
-      case TileId.RUINS_FLOOR: return 0x4a4a4a;
-      case TileId.RUINS_WALL: return 0x3a3a3a;
-      case TileId.ICE_FLOOR: return 0x6a8aaa;
-      case TileId.ICE_WALL: return 0x4a6a8a;
-      case TileId.VOLCANIC_FLOOR: return 0x5a3a2a;
-      case TileId.LAVA: return 0xaa4a2a;
-      case TileId.FUNGAL_FLOOR: return 0x4a3a4a;
-      case TileId.FUNGAL_GROWTH: return 0x6a4a6a;
-      case TileId.CRATER_FLOOR: return 0x5a5a5a;
-      case TileId.CRATER_DEBRIS: return 0x4a4a4a;
-      default: return 0x3a3a4a;
-    }
+    const stringId = tileIdToString(tileId);
+    const tileDef = TileRegistry.get(stringId);
+    return tileDef.color;
   }
 
   /**
@@ -166,6 +151,64 @@ export class TileRenderer {
 
     // Set depth using composite depth calculation
     const depth = this.isoTransform.calculateDepth(x, y, elevation);
+    container.setDepth(depth);
+
+    return container;
+  }
+
+  /**
+   * Create a tile using WORLD coordinates for position and depth.
+   * This ensures tiles participate in global depth sorting with players/entities.
+   * @param worldX World grid X coordinate (chunkX * ZONE_SIZE + localX)
+   * @param worldY World grid Y coordinate (chunkY * ZONE_SIZE + localY)
+   * @param tileId The tile type
+   * @param elevation Tile elevation
+   * @param heights Local heights array for side face calculation
+   * @param localX Local X within chunk (for heights array lookup)
+   * @param localY Local Y within chunk (for heights array lookup)
+   */
+  createTileWithElevationWorld(
+    worldX: number,
+    worldY: number,
+    tileId: TileId,
+    elevation: number,
+    heights: number[][],
+    localX: number,
+    localY: number
+  ): Phaser.GameObjects.Container {
+    // Use world coordinates for screen position
+    const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
+    const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
+
+    // Create container at world screen position
+    const container = this.scene.add.container(screenPos.x, screenPos.y - elevationOffset);
+    container.setData('gridX', worldX);
+    container.setData('gridY', worldY);
+    container.setData('elevation', elevation);
+
+    // Add side faces FIRST (render behind top face)
+    // Use local coordinates for heights array lookup
+
+    // South face (if south neighbor is lower)
+    if (localY < heights.length - 1 && heights[localY + 1][localX] < elevation) {
+      const elevationSteps = elevation - heights[localY + 1][localX];
+      const southFace = this.createSouthFace(elevationSteps);
+      container.add(southFace);
+    }
+
+    // East face (if east neighbor is lower)
+    if (localX < heights[0].length - 1 && heights[localY][localX + 1] < elevation) {
+      const elevationSteps = elevation - heights[localY][localX + 1];
+      const eastFace = this.createEastFace(elevationSteps);
+      container.add(eastFace);
+    }
+
+    // Add top face (renders in front of side faces)
+    const topFace = this.createTopFace(tileId);
+    container.add(topFace);
+
+    // Set depth using WORLD coordinates for global sorting
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation);
     container.setDepth(depth);
 
     return container;

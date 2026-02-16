@@ -68,6 +68,7 @@ class GameSocket {
     const serverEvents: (keyof ServerEvents)[] = [
       'zone:state',
       'zone:update',
+      'zone:chunk',
       'entity:spawn',
       'entity:despawn',
       'entity:update',

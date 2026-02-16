@@ -34,12 +34,13 @@ export class WorldGenerator {
       biome
     );
 
-    // Generate structure walls (modifies collisions in place)
+    // Generate structure features (modifies tiles and collisions in place)
     const structures = generateStructures(
       this.worldSeed,
       chunkX,
       chunkY,
       biome,
+      tiles,
       heights,
       collisions
     );

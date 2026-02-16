@@ -7,6 +7,8 @@ export const CRATER_FLOOR: TileDefinition = {
   movementSpeed: 1.0,
   textureKey: 'tile_crater_floor',
   defaultElevation: 0,
+  color: 0x222233, // Very dark blue-black meteor rock
+  description: 'Impact-fused ground. Scattered with meteorite fragments.',
 };
 
 export const CRATER_DEBRIS: TileDefinition = {
@@ -16,4 +18,6 @@ export const CRATER_DEBRIS: TileDefinition = {
   movementSpeed: 0,
   textureKey: 'tile_crater_debris',
   defaultElevation: 1,
+  color: 0x445566, // Dark metallic debris
+  description: 'Pile of meteorite debris. Cannot pass through.',
 };

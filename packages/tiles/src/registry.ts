@@ -10,6 +10,8 @@ const UNKNOWN_TILE: TileDefinition = {
   movementSpeed: 1.0,
   textureKey: 'tile_unknown',
   defaultElevation: 0,
+  color: 0xff00ff, // Magenta - obvious error color
+  description: 'Unknown tile type. This should not appear in normal gameplay.',
 };
 
 /**

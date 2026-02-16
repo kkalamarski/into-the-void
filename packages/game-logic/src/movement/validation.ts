@@ -41,23 +41,34 @@ export function calculateNewPosition(
   const vector = DIRECTION_VECTORS[direction];
   let newX = from.x + vector.dx;
   let newY = from.y + vector.dy;
-  let newZoneId = from.zoneId;
 
-  // Handle zone transitions
+  // Track zone offset changes (for diagonal zone transitions)
+  let zoneOffsetX = 0;
+  let zoneOffsetY = 0;
+
+  // Handle X boundary crossing
   if (newX < 0) {
     newX = ZONE_SIZE - 1;
-    newZoneId = getAdjacentZoneId(from.zoneId, 'w');
+    zoneOffsetX = -1; // Moving west
   } else if (newX >= ZONE_SIZE) {
     newX = 0;
-    newZoneId = getAdjacentZoneId(from.zoneId, 'e');
+    zoneOffsetX = 1; // Moving east
   }
 
+  // Handle Y boundary crossing
   if (newY < 0) {
     newY = ZONE_SIZE - 1;
-    newZoneId = getAdjacentZoneId(from.zoneId, 'n');
+    zoneOffsetY = -1; // Moving north
   } else if (newY >= ZONE_SIZE) {
     newY = 0;
-    newZoneId = getAdjacentZoneId(from.zoneId, 's');
+    zoneOffsetY = 1; // Moving south
+  }
+
+  // Calculate new zone ID by applying both offsets
+  let newZoneId = from.zoneId;
+  if (zoneOffsetX !== 0 || zoneOffsetY !== 0) {
+    const [, zoneX, zoneY] = from.zoneId.split('_').map(Number);
+    newZoneId = `z_${zoneX + zoneOffsetX}_${zoneY + zoneOffsetY}`;
   }
 
   return { x: newX, y: newY, zoneId: newZoneId };

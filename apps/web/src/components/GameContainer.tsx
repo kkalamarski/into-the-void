@@ -11,6 +11,7 @@ const GameContainer: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<Game | null>(null);
   const [phaserReady, setPhaserReady] = useState(false);
+  const previousZoneIdRef = useRef<string | null>(null);
 
   // Subscribe to zoneState from store - this contains zone:state event data
   const { connectionState, setGame, zoneState, player } = useGameStore();
@@ -38,6 +39,32 @@ const GameContainer: React.FC = () => {
     };
   }, [setGame]);
 
+  // Set up zone:chunk listener EARLY - before any chunk requests are made
+  // This must be registered before loadZoneFromState triggers requests
+  useEffect(() => {
+    const handleChunkData = (data: { zoneId: string; chunk: ChunkData; biome: BiomeType; entities?: Entity[] }) => {
+      console.log('[GameContainer] Received zone:chunk for', data.zoneId);
+      const worldScene = gameRef.current?.getWorldScene();
+      if (worldScene) {
+        worldScene.receiveChunkData(data.chunk, data.biome);
+
+        // Spawn entities from adjacent chunks with zone tracking for cleanup
+        // Client filters by visibility, zone tracking enables memory cleanup on unload
+        if (data.entities) {
+          data.entities.forEach(entity => {
+            worldScene.spawnEntity(entity, data.zoneId);
+          });
+        }
+      }
+    };
+
+    gameSocket.on('zone:chunk', handleChunkData);
+
+    return () => {
+      gameSocket.off('zone:chunk');
+    };
+  }, []); // No dependencies - set up immediately and persist
+
   // Load zone data into WorldScene when Phaser is ready and zoneState exists
   // IMPORTANT: Only depends on zoneState.zoneId to prevent re-rendering tiles on every player movement
   const zoneId = zoneState?.zoneId;
@@ -50,16 +77,29 @@ const GameContainer: React.FC = () => {
     // zoneState contains the zone:state event data with tiles
     const { chunk, biome, players } = zoneState;
 
-    // CRITICAL: Set up chunk request handler BEFORE loading zone
-    // (loadZoneFromState triggers updateChunks which needs this handler)
+    // Determine if this is initial load or zone transition
+    const isInitialLoad = previousZoneIdRef.current === null;
+    const isZoneTransition = previousZoneIdRef.current !== null && previousZoneIdRef.current !== zoneId;
+
+    // Update previous zone ref
+    previousZoneIdRef.current = zoneId ?? null;
+
+    // Set up chunk request handler (only needs to be done once, but harmless to repeat)
     worldScene.setChunkRequestHandler((requestZoneId: string) => {
+      console.log('[GameContainer] Emitting zone:request for', requestZoneId);
       gameSocket.emit('zone:request', { zoneId: requestZoneId });
     });
 
-    // CRITICAL: Pass tile data from zone:state to WorldScene
-    // This is the key link that connects socket data to Phaser rendering
-    if (chunk && chunk.tiles && chunk.tiles.length > 0) {
-      worldScene.loadZoneFromState(chunk, biome);
+    if (isInitialLoad) {
+      // INITIAL LOAD: Pass full tile data from zone:state to WorldScene
+      console.log('[GameContainer] Initial load for zone', zoneId);
+      if (chunk && chunk.tiles && chunk.tiles.length > 0) {
+        worldScene.loadZoneFromState(chunk, biome);
+      }
+    } else if (isZoneTransition) {
+      // ZONE TRANSITION: Just update chunks, don't re-render current zone
+      console.log('[GameContainer] Zone transition to', zoneId);
+      worldScene.onPlayerZoneChanged(zoneId!, biome);
     }
 
     // CRITICAL: Set collision map for pathfinding and movement validation
@@ -100,32 +140,6 @@ const GameContainer: React.FC = () => {
 
     worldScene.updateLocalPlayer(player.position);
   }, [phaserReady, player?.position?.x, player?.position?.y]);
-
-  // Listen for additional chunk data from server (for adjacent chunks)
-  useEffect(() => {
-    if (!phaserReady || !gameRef.current) return;
-
-    const handleChunkData = (data: { zoneId: string; chunk: ChunkData; biome: BiomeType; entities?: Entity[] }) => {
-      const worldScene = gameRef.current?.getWorldScene();
-      if (worldScene) {
-        worldScene.receiveChunkData(data.chunk, data.biome);
-
-        // Spawn entities from adjacent chunks with zone tracking for cleanup
-        // Client filters by visibility, zone tracking enables memory cleanup on unload
-        if (data.entities) {
-          data.entities.forEach(entity => {
-            worldScene.spawnEntity(entity, data.zoneId);
-          });
-        }
-      }
-    };
-
-    gameSocket.on('zone:chunk', handleChunkData);
-
-    return () => {
-      gameSocket.off('zone:chunk');
-    };
-  }, [phaserReady]);
 
   return (
     <div className="app">

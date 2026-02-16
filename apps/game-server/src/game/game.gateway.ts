@@ -263,21 +263,26 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: ClientEvents['zone:request']
   ) {
+    console.log('[GameGateway] zone:request received for', data.zoneId);
     try {
       const player = this.playerService.getPlayerBySocket(client.id);
-      if (!player) return;
+      if (!player) {
+        console.log('[GameGateway] No player found for socket', client.id);
+        return;
+      }
 
       // Get chunk data for requested zone
       const zoneState = await this.gameService.getZoneState(data.zoneId);
+      console.log('[GameGateway] Sending zone:chunk for', data.zoneId);
 
       // Send chunk, biome, AND entities for cross-chunk visibility
       // Include zoneId so client can track entities for cleanup on chunk unload
       // Client-side isEntityVisible filters based on 48-tile radius
       client.emit('zone:chunk', {
-        zoneId: data.zoneId,            // ADD: Include zoneId for client tracking
+        zoneId: data.zoneId,
         chunk: zoneState.chunk,
         biome: zoneState.biome,
-        entities: zoneState.entities,   // ADD: Include entities
+        entities: zoneState.entities,
       });
     } catch (error) {
       console.error(`Failed to load zone ${data.zoneId}:`, error);

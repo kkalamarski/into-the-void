@@ -242,28 +242,26 @@ export class EntityRenderer {
    * Entities behind tall structures fade to indicate they're obscured.
    *
    * @param entityContainers - Map of entity containers to check
-   * @param chunkContainer - The current chunk container with structure tiles
+   * @param chunkTiles - Array of tile containers for occlusion checking
    */
   applyOcclusion(
     entityContainers: Map<string, Phaser.GameObjects.Container>,
-    chunkContainer: Phaser.GameObjects.Container | null
+    chunkTiles: Phaser.GameObjects.Container[] | null
   ): void {
-    if (!chunkContainer) return;
+    if (!chunkTiles || chunkTiles.length === 0) return;
 
     // Collect occluders from chunk (structure tiles with height >= 3)
     const occluders: Occluder[] = [];
 
-    chunkContainer.list.forEach((child) => {
-      if (child instanceof Phaser.GameObjects.Container) {
-        const isStructure = child.getData('isStructure') as boolean;
-        const height = child.getData('structureHeight') as number ?? child.getData('elevation') as number ?? 0;
+    chunkTiles.forEach((tile) => {
+      const isStructure = tile.getData('isStructure') as boolean;
+      const height = tile.getData('structureHeight') as number ?? tile.getData('elevation') as number ?? 0;
 
-        if (isStructure && height >= OCCLUSION_MIN_HEIGHT) {
-          occluders.push({
-            depth: child.depth,
-            height
-          });
-        }
+      if (isStructure && height >= OCCLUSION_MIN_HEIGHT) {
+        occluders.push({
+          depth: tile.depth,
+          height
+        });
       }
     });
 

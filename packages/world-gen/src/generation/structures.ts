@@ -1,12 +1,28 @@
 import { BiomeType, TileStructure, ZONE_SIZE } from '@into-the-void/shared-types';
-import { TILE_IDS } from '@into-the-void/tiles';
+import { TileRegistry, TILE_IDS } from '@into-the-void/tiles';
 import { SimplexNoise } from '../noise/simplex';
+import { TileId } from './terrain';
 
 // Constants for blocking feature generation
 const FEATURE_SAMPLE_SPACING = 6;        // Check every Nth tile for features
 const FEATURE_NOISE_FREQUENCY = 0.05;    // Noise frequency for placement
 const FEATURE_THRESHOLD = 0.5;           // Higher = fewer features
 const EDGE_BUFFER = 4;                   // Avoid zone edges for connectivity
+
+/**
+ * Mapping from biome to numeric TileId for features.
+ * Used to update tiles[][] array for visual rendering.
+ */
+const BIOME_FEATURE_TILE_IDS: Record<BiomeType, TileId> = {
+  void_plains: TileId.VOID_WALL,
+  crystal_caves: TileId.CRYSTAL_FORMATION,
+  toxic_wastes: TileId.TOXIC_POOL,
+  ancient_ruins: TileId.RUINS_WALL,
+  frozen_expanse: TileId.ICE_WALL,
+  volcanic_ridge: TileId.LAVA,
+  fungal_forest: TileId.FUNGAL_GROWTH,
+  starfall_crater: TileId.CRATER_DEBRIS,
+};
 
 /**
  * Per-type feature height configuration.
@@ -32,13 +48,14 @@ function getFeatureHeight(featureTileId: string): number {
 /**
  * Generate blocking terrain features procedurally for a chunk.
  * Simple approach: sparse sampling, single tiles only.
- * Collisions are set exactly where tiles are placed.
+ * Modifies tiles[][] for visual rendering and collisions[][] for movement.
  */
 export function generateStructures(
   worldSeed: string,
   chunkX: number,
   chunkY: number,
   biome: BiomeType,
+  tiles: number[][],
   heights: number[][],
   collisions: boolean[][]
 ): TileStructure[] {
@@ -46,6 +63,7 @@ export function generateStructures(
   const noise = new SimplexNoise(`${worldSeed}_features_${chunkX}_${chunkY}`);
 
   const featureTileId = getFeatureTileIdForBiome(biome);
+  const featureNumericId = BIOME_FEATURE_TILE_IDS[biome];
   const featureHeight = getFeatureHeight(featureTileId);
 
   // Sparse sampling - check every FEATURE_SAMPLE_SPACING tiles
@@ -59,13 +77,17 @@ export function generateStructures(
       const noiseValue = noise.noise2D(worldX * FEATURE_NOISE_FREQUENCY, worldY * FEATURE_NOISE_FREQUENCY);
 
       if (noiseValue > FEATURE_THRESHOLD) {
-        // Place a single blocking feature
+        // Place a feature tile
         const baseHeight = heights[y]?.[x] ?? 0;
 
-        // Set collision FIRST
-        collisions[y][x] = true;
+        // Update tile for visual rendering
+        tiles[y][x] = featureNumericId;
 
-        // Then create the structure tile
+        // Set collision based on tile definition (respects design - e.g., toxic pools don't block)
+        const tileDef = TileRegistry.get(featureTileId);
+        collisions[y][x] = tileDef.isBlocking;
+
+        // Create structure entry for metadata
         structures.push({
           type: 'feature',
           tiles: [{

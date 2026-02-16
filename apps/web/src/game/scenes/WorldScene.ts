@@ -34,7 +34,8 @@ export class WorldScene extends Phaser.Scene {
   private moveDelay = 150; // ms between moves
   private lastMoveTime = 0;
   private chunkManager: ChunkManager | null = null;
-  private chunkContainers: Map<string, Phaser.GameObjects.Container> = new Map();
+  // Store tile arrays for cleanup (not containers - tiles need global depth sorting)
+  private chunkTiles: Map<string, Phaser.GameObjects.Container[]> = new Map();
   private currentZoneId: string = 'z_0_0';
   private onChunkRequest: ((zoneId: string) => void) | null = null;
   private viewportCuller: ViewportCuller | null = null;
@@ -114,8 +115,11 @@ export class WorldScene extends Phaser.Scene {
     this.chunkManager = new ChunkManager(
       // onChunkNeeded
       (zoneId: string) => {
+        console.log('[ChunkManager] onChunkNeeded:', zoneId, 'handler exists:', !!this.onChunkRequest);
         if (this.onChunkRequest) {
           this.onChunkRequest(zoneId);
+        } else {
+          console.warn('[ChunkManager] No chunk request handler set!');
         }
       },
       // onChunkLoaded
@@ -346,7 +350,8 @@ export class WorldScene extends Phaser.Scene {
   private createLocalPlayer(position: Position): void {
     if (!this.isoTransform) return;
 
-    const elevation = this.getTileElevation(position.x, position.y);
+    // Get elevation for the correct zone
+    const elevation = this.getTileElevation(position.x, position.y, position.zoneId);
     const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
     // Use world coordinates for screen position so player aligns with chunk positions
     const { worldX, worldY } = this.positionToWorldCoords(position);
@@ -371,8 +376,8 @@ export class WorldScene extends Phaser.Scene {
     // Store reference (as container now, not sprite)
     this.localPlayer = container as unknown as Phaser.GameObjects.Sprite; // Type hack for compatibility
 
-    // Set depth with local player priority (use world coordinates)
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation + 0.001);
+    // Set depth with priority boost to ensure player renders above terrain
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 10);
     container.setDepth(depth);
 
     if (this.depthSorter) {
@@ -484,11 +489,11 @@ export class WorldScene extends Phaser.Scene {
   private updateEntityOcclusion(): void {
     if (!this.entityRenderer) return;
 
-    // Get current zone's chunk container
-    const chunkContainer = this.chunkContainers.get(this.currentZoneId) ?? null;
+    // Get current zone's chunk tiles
+    const chunkTiles = this.chunkTiles.get(this.currentZoneId) ?? null;
 
     // Apply occlusion to entities
-    this.entityRenderer.applyOcclusion(this.entitySprites, chunkContainer);
+    this.entityRenderer.applyOcclusion(this.entitySprites, chunkTiles);
 
     // Also apply to remote players (convert Map<string, Sprite> to Map<string, Container>)
     const playerContainers = new Map<string, Phaser.GameObjects.Container>();
@@ -496,15 +501,17 @@ export class WorldScene extends Phaser.Scene {
       // playerSprites actually contain Containers cast as Sprites (from addPlayer)
       playerContainers.set(id, sprite as unknown as Phaser.GameObjects.Container);
     });
-    this.entityRenderer.applyOcclusion(playerContainers, chunkContainer);
+    this.entityRenderer.applyOcclusion(playerContainers, chunkTiles);
   }
 
   // Methods to be called from network layer
   setChunkRequestHandler(handler: (zoneId: string) => void): void {
+    console.log('[WorldScene] setChunkRequestHandler called');
     this.onChunkRequest = handler;
   }
 
   loadZoneFromState(chunkData: ChunkData, biome: BiomeType): void {
+    console.log('[WorldScene] loadZoneFromState called for', chunkData.zoneId, 'handler exists:', !!this.onChunkRequest);
     this.currentZoneId = chunkData.zoneId;
 
     // Receive initial chunk
@@ -522,9 +529,30 @@ export class WorldScene extends Phaser.Scene {
   }
 
   onPlayerZoneChanged(newZoneId: string, biome: BiomeType): void {
+    console.log('[WorldScene] onPlayerZoneChanged:', { from: this.currentZoneId, to: newZoneId });
     this.currentZoneId = newZoneId;
 
+    // Update current zone data from already-loaded chunk
+    // This ensures getTileElevation returns correct values for the new zone
     if (this.chunkManager) {
+      const chunk = this.chunkManager.getChunk(newZoneId);
+      if (chunk) {
+        this.currentHeights = chunk.data.heights;
+        this.currentTiles = chunk.data.tiles;
+        this.currentStructures = chunk.data.structures;
+        this.currentBiome = chunk.biome;
+
+        // Update collision map for movement validation in new zone
+        if (chunk.data.collisions) {
+          this.setCollisionMap(chunk.data.collisions);
+        }
+
+        // Update HUD
+        if (this.zoneHUD) {
+          this.zoneHUD.updateZone(newZoneId, chunk.biome);
+        }
+      }
+
       this.chunkManager.updateChunks(newZoneId);
     }
   }
@@ -575,9 +603,16 @@ export class WorldScene extends Phaser.Scene {
     return distance <= VISIBILITY_RADIUS;
   }
 
-  private getTileElevation(gridX: number, gridY: number): number {
-    // Look up elevation from current zone's heights data
-    // Default to 0 if heights not available or coordinates out of bounds
+  private getTileElevation(gridX: number, gridY: number, zoneId?: string): number {
+    // If a specific zone is requested and it differs from current zone,
+    // try to get heights from the chunk manager
+    if (zoneId && zoneId !== this.currentZoneId && this.chunkManager) {
+      const chunk = this.chunkManager.getChunk(zoneId);
+      if (chunk?.data.heights) {
+        return chunk.data.heights[gridY]?.[gridX] ?? 0;
+      }
+    }
+    // Default to current zone's heights
     return this.currentHeights?.[gridY]?.[gridX] ?? 0;
   }
 
@@ -586,8 +621,8 @@ export class WorldScene extends Phaser.Scene {
 
     const { zoneId, tiles, heights, structures } = chunkData;
 
-    // Guard: Don't recreate container if it already exists (prevents memory leak)
-    if (this.chunkContainers.has(zoneId)) {
+    // Guard: Don't recreate tiles if already exists (prevents memory leak)
+    if (this.chunkTiles.has(zoneId)) {
       // Still update currentTiles for the look feature
       if (zoneId === this.currentZoneId) {
         this.currentTiles = tiles;
@@ -604,10 +639,11 @@ export class WorldScene extends Phaser.Scene {
     const chunkGridX = chunkX * ZONE_SIZE;
     const chunkGridY = chunkY * ZONE_SIZE;
 
-    // Create container for cleanup tracking (positioned at 0,0 - tiles use world coords)
-    const container = this.add.container(0, 0);
+    // Store tiles in array for cleanup (NOT in container - need global depth sorting)
+    const chunkTileArray: Phaser.GameObjects.Container[] = [];
 
     // Create tiles using WORLD coordinates for proper global depth sorting
+    // Tiles are added directly to scene so their depth participates in global sorting
     for (let y = 0; y < ZONE_SIZE; y++) {
       for (let x = 0; x < ZONE_SIZE; x++) {
         const tileId = tiles[y][x] as TileId;
@@ -616,14 +652,15 @@ export class WorldScene extends Phaser.Scene {
         const worldX = chunkGridX + x;
         const worldY = chunkGridY + y;
         const tile = this.tileRenderer.createTileWithElevationWorld(worldX, worldY, tileId, elevation, heights, x, y);
-        container.add(tile);
+        // Tile is already added to scene by tileRenderer, just track for cleanup
+        chunkTileArray.push(tile);
       }
     }
 
     // Structures are now rendered via tiles[][] with distinct colors
     // No separate cube rendering needed
 
-    this.chunkContainers.set(zoneId, container);
+    this.chunkTiles.set(zoneId, chunkTileArray);
 
     if (zoneId === this.currentZoneId) {
       this.currentBiome = biome;
@@ -637,10 +674,10 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private unloadChunkContainer(zoneId: string): void {
-    const container = this.chunkContainers.get(zoneId);
-    if (container) {
-      container.destroy(true);
-      this.chunkContainers.delete(zoneId);
+    const tiles = this.chunkTiles.get(zoneId);
+    if (tiles) {
+      tiles.forEach(tile => tile.destroy(true));
+      this.chunkTiles.delete(zoneId);
     }
 
     // Despawn entities belonging to this zone to prevent memory leaks
@@ -674,7 +711,8 @@ export class WorldScene extends Phaser.Scene {
       return; // Skip spawning - entity out of range
     }
 
-    const elevation = this.getTileElevation(entity.position.x, entity.position.y);
+    // Get elevation for the correct zone
+    const elevation = this.getTileElevation(entity.position.x, entity.position.y, entity.position.zoneId);
     const container = this.entityRenderer.createEntityContainer(entity, elevation);
     this.entitySprites.set(entity.id, container);
 
@@ -741,7 +779,8 @@ export class WorldScene extends Phaser.Scene {
         return;
       }
 
-      const elevation = this.getTileElevation(changes.position.x, changes.position.y);
+      // Get elevation for the correct zone
+      const elevation = this.getTileElevation(changes.position.x, changes.position.y, changes.position.zoneId);
       // Convert to world coordinates for EntityRenderer
       const { worldX, worldY } = this.positionToWorldCoords(changes.position);
       this.entityRenderer.updateEntityPosition(container, worldX, worldY, elevation);
@@ -782,7 +821,8 @@ export class WorldScene extends Phaser.Scene {
   addPlayer(player: PlayerPublic): void {
     if (this.playerSprites.has(player.id) || !this.isoTransform) return;
 
-    const elevation = this.getTileElevation(player.position.x, player.position.y);
+    // Get elevation for the correct zone
+    const elevation = this.getTileElevation(player.position.x, player.position.y, player.position.zoneId);
     const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
     // Use world coordinates for screen position
     const { worldX, worldY } = this.positionToWorldCoords(player.position);
@@ -822,7 +862,8 @@ export class WorldScene extends Phaser.Scene {
     const sprite = this.playerSprites.get(playerId);
     if (!sprite || !this.isoTransform) return;
 
-    const elevation = this.getTileElevation(position.x, position.y);
+    // Get elevation for the correct zone
+    const elevation = this.getTileElevation(position.x, position.y, position.zoneId);
     const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
     // Use world coordinates for screen position
     const { worldX, worldY } = this.positionToWorldCoords(position);
@@ -853,10 +894,12 @@ export class WorldScene extends Phaser.Scene {
   updateLocalPlayerSprite(position: Position, reconciling = false): void {
     if (!this.localPlayer || !this.isoTransform) return;
 
-    const elevation = this.getTileElevation(position.x, position.y);
+    // Get elevation for the correct zone (handles race condition when zone:state arrives after position update)
+    const elevation = this.getTileElevation(position.x, position.y, position.zoneId);
     const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
     // Use world coordinates for screen position so player aligns with chunk positions
     const { worldX, worldY } = this.positionToWorldCoords(position);
+    console.log(`[WorldScene] updateLocalPlayerSprite: local(${position.x},${position.y}) zone=${position.zoneId} → world(${worldX},${worldY}) elev=${elevation}`);
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
     const targetY = screenPos.y - elevationOffset;
 
@@ -878,7 +921,8 @@ export class WorldScene extends Phaser.Scene {
     this.localPlayer.setData('gridX', worldX);
     this.localPlayer.setData('gridY', worldY);
     this.localPlayer.setData('elevation', elevation);
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation + 0.001);
+    // Use priorityBoost to ensure player renders above terrain at same position
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 10);
     this.localPlayer.setDepth(depth);
   }
 
@@ -974,8 +1018,8 @@ export class WorldScene extends Phaser.Scene {
       this.chunkManager.clear();
       this.chunkManager = null;
     }
-    this.chunkContainers.forEach(container => container.destroy(true));
-    this.chunkContainers.clear();
+    this.chunkTiles.forEach(tiles => tiles.forEach(tile => tile.destroy(true)));
+    this.chunkTiles.clear();
     this.tileSprites = [];
     this.lastCullBounds = null;
   }
