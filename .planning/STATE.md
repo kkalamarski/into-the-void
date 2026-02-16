@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 ## Current Position
 
 Phase: 16 of 16 (Structure Walls & Pathfinding)
-Plan: 4 of 5
+Plan: 5 of 5
 Status: In progress
-Last activity: 2026-02-16 — Completed 16-04-PLAN.md (Structure Wall Rendering & Minimap)
+Last activity: 2026-02-16 — Completed 16-05-PLAN.md (Entity Occlusion Behind Structures)
 
 Progress: [███████████████░] 93% (15/16 phases complete)
 
@@ -59,6 +59,7 @@ Progress: [███████████████░] 93% (15/16 phases c
 | Phase 15 P02 | 235s | 3 tasks | 3 files |
 | Phase 16 P01 | 104s | 2 tasks | 3 files |
 | Phase 16 P02 | 122 | 2 tasks | 2 files |
+| Phase 16 P05 | 206s | 2 tasks | 2 files |
 | Phase 16 P04 | 172 | 2 tasks | 2 files |
 
 ## Accumulated Context
@@ -108,6 +109,9 @@ Recent decisions affecting current work:
 - [Phase 16-01]: Backward compatible elevation functions (original validateMovement/findPath unchanged)
 - [Phase 16-02]: Single-pass elevation adjustment sufficient for small elevations
 - [Phase 16-02]: Callback pattern for elevation lookup maintains IsometricTransform decoupling
+- [Phase 16-05]: Only structures with height >= 3 can occlude entities (short walls don't hide from isometric view)
+- [Phase 16-05]: Occluded entities fade to alpha 0.3 (still visible but clearly obscured)
+- [Phase 16-05]: Depth threshold of 10.0 for occlusion (~1 tile screen distance)
 - [Phase 16]: Structure walls render with side faces using TileRenderer.createTileWithElevation (visual consistency with terrain)
 - [Phase 16]: Minimap markers at depth 999 with scrollFactor 1 (world-space, above terrain, below HUD)
 
@@ -129,10 +133,10 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 16-04-PLAN.md (Structure Wall Rendering & Minimap)
+Stopped at: Completed 16-05-PLAN.md (Entity Occlusion Behind Structures)
 Resume file: None
 
-**Next action:** Continue with Phase 16 Plan 05 (Entity Occlusion Behind Structures)
+**Next action:** Phase 16 complete - all plans executed
 
 ---
 *Last updated: 2026-02-16 after Phase 16 Plan 04 execution complete*
