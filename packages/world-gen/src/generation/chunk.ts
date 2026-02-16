@@ -2,6 +2,7 @@ import { ChunkData, BiomeType, ZONE_SIZE } from '@into-the-void/shared-types';
 import { BiomeGenerator } from './biome';
 import { generateTerrain } from './terrain';
 import { generateSpawnPoints } from './spawn';
+import { generateStructures } from './structures';
 import { createZoneId } from '@into-the-void/game-logic';
 
 /**
@@ -33,7 +34,17 @@ export class WorldGenerator {
       biome
     );
 
-    // Generate spawn points
+    // Generate structure walls (modifies collisions in place)
+    const structures = generateStructures(
+      this.worldSeed,
+      chunkX,
+      chunkY,
+      biome,
+      heights,
+      collisions
+    );
+
+    // Generate spawn points (uses updated collision map)
     const spawnPoints = generateSpawnPoints(
       this.worldSeed,
       chunkX,
@@ -46,7 +57,7 @@ export class WorldGenerator {
       zoneId,
       tiles,
       heights,
-      structures: [], // Phase 14+ will populate this
+      structures, // Now populated instead of empty []
       collisions,
       spawnPoints,
     };

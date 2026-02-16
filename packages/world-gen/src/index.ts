@@ -7,3 +7,4 @@ export * from './generation/chunk';
 export * from './generation/biome';
 export * from './generation/spawn';
 export * from './generation/terrain';
+export * from './generation/structures';
