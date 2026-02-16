@@ -93,6 +93,29 @@ const BIOME_TILE_IDS: Record<BiomeType, { floor: string; wall: string; feature: 
 };
 
 /**
+ * Biome-specific elevation ranges
+ * Heights are clamped to these ranges to maintain biome characteristics
+ */
+const BIOME_ELEVATION_RANGES: Record<BiomeType, { min: number; max: number }> = {
+  starfall_crater: { min: 0, max: 2 }, // Flat impact zone
+  ancient_ruins: { min: 0, max: 5 }, // Full range for multi-story structures
+  volcanic_ridge: { min: 1, max: 4 }, // Elevated terrain, no deep valleys
+  frozen_expanse: { min: 2, max: 5 }, // High-altitude ice sheets
+  crystal_caves: { min: 0, max: 4 }, // Underground caverns with height variation
+  toxic_wastes: { min: 0, max: 2 }, // Low-lying pools and waste
+  fungal_forest: { min: 0, max: 3 }, // Organic growth canopy
+  void_plains: { min: 0, max: 3 }, // Standard terrain variation
+};
+
+/**
+ * Clamp height to biome-specific range
+ */
+function clampToBiomeRange(height: number, biome: BiomeType): number {
+  const range = BIOME_ELEVATION_RANGES[biome];
+  return Math.max(range.min, Math.min(range.max, height));
+}
+
+/**
  * Generate terrain data for a chunk
  */
 export function generateTerrain(
