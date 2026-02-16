@@ -2,6 +2,8 @@ import { Direction, Position } from '@into-the-void/shared-types';
 import { findPath } from '@into-the-void/game-logic';
 import { useGameStore } from '../../store/gameStore';
 import { MovementController } from './MovementController';
+import Phaser from 'phaser';
+import { IsometricTransform } from '../utils/IsometricTransform';
 
 export class PathfindingController {
   private currentPath: Array<{ x: number; y: number }> = [];
@@ -9,10 +11,20 @@ export class PathfindingController {
   private executionTimer: number | null = null;
   private movementController: MovementController;
   private moveDelay: number;
+  private pathGraphics: Phaser.GameObjects.Graphics | null = null;
+  private scene: Phaser.Scene | null = null;
+  private isoTransform: IsometricTransform | null = null;
 
-  constructor(movementController: MovementController, moveDelay = 150) {
+  constructor(
+    movementController: MovementController,
+    moveDelay = 150,
+    scene?: Phaser.Scene,
+    isoTransform?: IsometricTransform
+  ) {
     this.movementController = movementController;
     this.moveDelay = moveDelay;
+    this.scene = scene ?? null;
+    this.isoTransform = isoTransform ?? null;
   }
 
   startPath(targetX: number, targetY: number, collisionMap: boolean[][]): boolean {
@@ -37,13 +49,63 @@ export class PathfindingController {
 
     this.currentPath = path;
     this.pathIndex = 1; // Skip current position (index 0)
+
+    // Draw path visualization
+    this.drawPath();
+
     this.executeNextStep();
     return true;
+  }
+
+  private drawPath(): void {
+    // Skip if no scene/transform (backward compatibility)
+    if (!this.scene || !this.isoTransform) return;
+
+    // Create or clear graphics
+    if (this.pathGraphics) {
+      this.pathGraphics.clear();
+    } else {
+      this.pathGraphics = this.scene.add.graphics();
+      this.pathGraphics.setDepth(10000); // Above all game objects
+    }
+
+    if (this.currentPath.length < 2) return;
+
+    // Draw path as connected line segments
+    this.pathGraphics.lineStyle(2, 0x00ff00, 0.6); // Green, semi-transparent
+
+    const firstTile = this.currentPath[0];
+    const firstScreen = this.isoTransform.gridToScreen(firstTile.x, firstTile.y);
+
+    this.pathGraphics.beginPath();
+    this.pathGraphics.moveTo(firstScreen.x, firstScreen.y);
+
+    for (let i = 1; i < this.currentPath.length; i++) {
+      const tile = this.currentPath[i];
+      const screen = this.isoTransform.gridToScreen(tile.x, tile.y);
+      this.pathGraphics.lineTo(screen.x, screen.y);
+    }
+
+    this.pathGraphics.strokePath();
+
+    // Draw waypoint dots
+    this.pathGraphics.fillStyle(0x00ff00, 0.8);
+    for (const tile of this.currentPath) {
+      const screen = this.isoTransform.gridToScreen(tile.x, tile.y);
+      this.pathGraphics.fillCircle(screen.x, screen.y, 3);
+    }
+  }
+
+  private clearPathGraphics(): void {
+    if (this.pathGraphics) {
+      this.pathGraphics.clear();
+    }
   }
 
   private executeNextStep(): void {
     if (this.pathIndex >= this.currentPath.length) {
       // Path complete
+      this.clearPathGraphics();
       this.currentPath = [];
       this.pathIndex = 0;
       return;
@@ -85,6 +147,9 @@ export class PathfindingController {
     }
     this.currentPath = [];
     this.pathIndex = 0;
+
+    // Clear path visualization
+    this.clearPathGraphics();
   }
 
   isPathActive(): boolean {
