@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 ## Current Position
 
 Phase: 16 of 16 (Structure Walls & Pathfinding)
-Plan: 1 of 5
+Plan: 4 of 5
 Status: In progress
-Last activity: 2026-02-16 — Completed 16-01-PLAN.md (Elevation Movement & Pathfinding)
+Last activity: 2026-02-16 — Completed 16-04-PLAN.md (Structure Wall Rendering & Minimap)
 
 Progress: [███████████████░] 93% (15/16 phases complete)
 
@@ -30,7 +30,7 @@ Progress: [███████████████░] 93% (15/16 phases c
 | v1.0 Auth & Character Screens | 1-3 | 7 | 2026-02-13 → 2026-02-14 |
 | v1.1 Post-Login Game Experience | 4-7 | 20 | 2026-02-14 → 2026-02-16 |
 | v1.2 Isometric View | 8-12 | 8 | 2026-02-16 → 2026-02-16 |
-| v1.3 Elevation & Structures | 13-16 | 7/12 | 2026-02-16 → in progress |
+| v1.3 Elevation & Structures | 13-16 | 8/12 | 2026-02-16 → in progress |
 
 **Recent Trend:**
 - v1.0: 2 days (7 plans)
@@ -59,6 +59,7 @@ Progress: [███████████████░] 93% (15/16 phases c
 | Phase 15 P02 | 235s | 3 tasks | 3 files |
 | Phase 16 P01 | 104s | 2 tasks | 3 files |
 | Phase 16 P02 | 122 | 2 tasks | 2 files |
+| Phase 16 P04 | 172 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -107,6 +108,8 @@ Recent decisions affecting current work:
 - [Phase 16-01]: Backward compatible elevation functions (original validateMovement/findPath unchanged)
 - [Phase 16-02]: Single-pass elevation adjustment sufficient for small elevations
 - [Phase 16-02]: Callback pattern for elevation lookup maintains IsometricTransform decoupling
+- [Phase 16]: Structure walls render with side faces using TileRenderer.createTileWithElevation (visual consistency with terrain)
+- [Phase 16]: Minimap markers at depth 999 with scrollFactor 1 (world-space, above terrain, below HUD)
 
 ### Pending Todos
 
@@ -126,10 +129,10 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 16-01-PLAN.md (Elevation Movement & Pathfinding)
+Stopped at: Completed 16-04-PLAN.md (Structure Wall Rendering & Minimap)
 Resume file: None
 
-**Next action:** Continue with Phase 16 Plan 02 (Wall Collision Integration)
+**Next action:** Continue with Phase 16 Plan 05 (Entity Occlusion Behind Structures)
 
 ---
-*Last updated: 2026-02-16 after Phase 15 execution complete*
+*Last updated: 2026-02-16 after Phase 16 Plan 04 execution complete*
