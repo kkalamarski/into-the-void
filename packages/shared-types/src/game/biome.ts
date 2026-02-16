@@ -70,3 +70,31 @@ export interface TileType {
   /** Whether tile is harvestable */
   harvestable: boolean;
 }
+
+/**
+ * Human-readable biome names for HUD display
+ */
+export const BIOME_DISPLAY_NAMES: Record<BiomeType, string> = {
+  void_plains: 'Void Plains',
+  crystal_caves: 'Crystal Caves',
+  toxic_wastes: 'Toxic Wastes',
+  ancient_ruins: 'Ancient Ruins',
+  frozen_expanse: 'Frozen Expanse',
+  volcanic_ridge: 'Volcanic Ridge',
+  fungal_forest: 'Fungal Forest',
+  starfall_crater: 'Starfall Crater',
+};
+
+/**
+ * Biome colors for UI elements (minimap, indicators)
+ */
+export const BIOME_COLORS: Record<BiomeType, string> = {
+  void_plains: '#4a4a5a',
+  crystal_caves: '#7b68ee',
+  toxic_wastes: '#9acd32',
+  ancient_ruins: '#8b7355',
+  frozen_expanse: '#b0e0e6',
+  volcanic_ridge: '#ff4500',
+  fungal_forest: '#9370db',
+  starfall_crater: '#191970',
+};
