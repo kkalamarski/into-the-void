@@ -130,10 +130,12 @@ Plans:
   3. ChunkData schema extended with heights[][] and structures[] arrays
   4. Server generates and serializes new chunk fields without breaking existing clients
   5. Tile hooks system supports onStep, onClick, onEnter, onExit, onTick for future extensibility
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 13-01: TBD
+- [ ] 13-01-PLAN.md — Create @into-the-void/tiles package with TileDefinition interface and TileRegistry
+- [ ] 13-02-PLAN.md — Define all 16 tile types and extend ChunkData with heights/structures
+- [ ] 13-03-PLAN.md — Integrate tiles package into world-gen with heights generation
 
 ### Phase 14: Elevation System Core
 **Goal**: Generate and flow elevation data through the system with composite depth sorting
@@ -199,7 +201,7 @@ Phases execute in numeric order: 13 → 14 → 15 → 16
 | 10. Multiplayer Integration | v1.2 | 1/1 | Complete | 2026-02-16 |
 | 11. UI Integration | v1.2 | 1/1 | Complete | 2026-02-16 |
 | 12. Polish | v1.2 | 1/1 | Complete | 2026-02-16 |
-| 13. Tile Definition Architecture | v1.3 | 0/? | Not started | - |
+| 13. Tile Definition Architecture | v1.3 | 0/3 | Planned | - |
 | 14. Elevation System Core | v1.3 | 0/? | Not started | - |
 | 15. Elevation Rendering | v1.3 | 0/? | Not started | - |
 | 16. Structure Walls & Pathfinding | v1.3 | 0/? | Not started | - |
@@ -207,4 +209,4 @@ Phases execute in numeric order: 13 → 14 → 15 → 16
 **Total:** 16 phases (12 complete, 4 planned)
 
 ---
-*Last updated: 2026-02-16 after v1.3 roadmap creation*
+*Last updated: 2026-02-16 after Phase 13 planning*
