@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { Entity, Creature, CreatureBehavior, EntityType } from '@into-the-void/shared-types';
+import { Entity, Creature, CreatureBehavior, EntityType, Position, ZONE_SIZE } from '@into-the-void/shared-types';
 import { IsometricTransform } from '../utils/IsometricTransform';
 
 const ELEVATION_HEIGHT_STEP = 16; // Pixels per elevation level
@@ -32,20 +32,33 @@ export class EntityRenderer {
   }
 
   /**
+   * Convert Position (local coords + zoneId) to world coordinates.
+   * World coords = zoneCoords * ZONE_SIZE + localCoords
+   */
+  private positionToWorldCoords(position: Position): { worldX: number; worldY: number } {
+    const parts = position.zoneId.split('_');
+    const zoneX = parseInt(parts[1], 10);
+    const zoneY = parseInt(parts[2], 10);
+    return {
+      worldX: zoneX * ZONE_SIZE + position.x,
+      worldY: zoneY * ZONE_SIZE + position.y,
+    };
+  }
+
+  /**
    * Creates a container with entity sprite, nameplate, optional health bar, and optional behavior icon.
    */
   createEntityContainer(entity: Entity, elevation: number = 0): Phaser.GameObjects.Container {
-    const screenPos = this.isoTransform.gridToScreen(
-      entity.position.x,
-      entity.position.y
-    );
+    // Convert to world coordinates for depth sorting
+    const { worldX, worldY } = this.positionToWorldCoords(entity.position);
+    const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
 
     const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
     const container = this.scene.add.container(screenPos.x, screenPos.y - elevationOffset);
 
-    // Store grid position and elevation for depth sorting
-    container.setData('gridX', entity.position.x);
-    container.setData('gridY', entity.position.y);
+    // Store world coordinates for depth sorting
+    container.setData('gridX', worldX);
+    container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
     // Blob shadow at ground level (container origin)
@@ -77,8 +90,8 @@ export class EntityRenderer {
       container.add(behaviorIcon);
     }
 
-    // Initial depth: Y-position with X-tiebreaker and elevation
-    const depth = this.isoTransform.calculateDepth(entity.position.x, entity.position.y, elevation);
+    // Initial depth: Y-position with X-tiebreaker and elevation (use world coordinates)
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation);
     container.setDepth(depth);
 
     return container;
@@ -193,6 +206,9 @@ export class EntityRenderer {
 
   /**
    * Update entity position for movement.
+   * @param gridX World grid X coordinate (not local)
+   * @param gridY World grid Y coordinate (not local)
+   * @param elevation Tile elevation
    */
   updateEntityPosition(
     container: Phaser.GameObjects.Container,
