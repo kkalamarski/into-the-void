@@ -24,6 +24,7 @@ export class ChunkManager {
   private onChunkNeeded: (zoneId: string) => void;
   private onChunkLoaded: (chunkData: ChunkData, biome: BiomeType) => void;
   private onChunkUnloaded: (zoneId: string) => void;
+  private onLoadingStateChange: (loadingCount: number) => void;
   private loadTimeout: number = 10000; // 10 seconds
   private requestQueue: Heap<ChunkRequest>;
   private pendingRequests: Set<string> = new Set();
@@ -33,11 +34,13 @@ export class ChunkManager {
   constructor(
     onChunkNeeded: (zoneId: string) => void,
     onChunkLoaded: (chunkData: ChunkData, biome: BiomeType) => void,
-    onChunkUnloaded: (zoneId: string) => void
+    onChunkUnloaded: (zoneId: string) => void,
+    onLoadingStateChange?: (loadingCount: number) => void
   ) {
     this.onChunkNeeded = onChunkNeeded;
     this.onChunkLoaded = onChunkLoaded;
     this.onChunkUnloaded = onChunkUnloaded;
+    this.onLoadingStateChange = onLoadingStateChange ?? (() => {});
 
     // Min-heap: lower priority number processed first
     this.requestQueue = new Heap((a: ChunkRequest, b: ChunkRequest) => a.priority - b.priority);
@@ -123,6 +126,7 @@ export class ChunkManager {
       this.chunkStates.set(request.zoneId, 'loading');
       this.onChunkNeeded(request.zoneId);
       inFlight++;
+      this.notifyLoadingStateChange();
 
       // Timeout handling
       const zoneId = request.zoneId;
@@ -131,6 +135,7 @@ export class ChunkManager {
           console.warn(`Chunk ${zoneId} load timeout`);
           this.chunkStates.set(zoneId, 'failed');
           this.pendingRequests.delete(zoneId);
+          this.notifyLoadingStateChange();
           // Try next in queue
           this.processNextRequest();
         }
@@ -170,6 +175,7 @@ export class ChunkManager {
     // Update state
     this.chunkStates.set(zoneId, 'loaded');
     this.pendingRequests.delete(zoneId);
+    this.notifyLoadingStateChange();
 
     // Store chunk
     this.loadedChunks.set(zoneId, {
@@ -219,6 +225,24 @@ export class ChunkManager {
    */
   getLoadedZoneIds(): string[] {
     return Array.from(this.loadedChunks.keys());
+  }
+
+  /**
+   * Get count of chunks currently loading
+   */
+  getLoadingChunkCount(): number {
+    let count = 0;
+    this.chunkStates.forEach(state => {
+      if (state === 'loading') count++;
+    });
+    return count;
+  }
+
+  /**
+   * Notify callback of loading state change
+   */
+  private notifyLoadingStateChange(): void {
+    this.onLoadingStateChange(this.getLoadingChunkCount());
   }
 
   /**
