@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { Entity, Creature, CreatureBehavior, EntityType } from '@into-the-void/shared-types';
+import { IsometricTransform } from '../utils/IsometricTransform';
 
 /**
  * EntityRenderer creates Phaser containers with health bars and behavior icons for entities.
@@ -10,38 +11,57 @@ import { Entity, Creature, CreatureBehavior, EntityType } from '@into-the-void/s
 export class EntityRenderer {
   private scene: Phaser.Scene;
   private tileSize: number;
+  private isoTransform: IsometricTransform;
+  private elevationOffset = 12; // Pixels entities hover above ground
 
-  constructor(scene: Phaser.Scene, tileSize: number) {
+  constructor(scene: Phaser.Scene, tileWidth: number = 128, tileHeight: number = 64) {
     this.scene = scene;
-    this.tileSize = tileSize;
+    this.tileSize = tileWidth; // Keep for backwards compat
+    this.isoTransform = new IsometricTransform(tileWidth, tileHeight);
   }
 
   /**
    * Creates a container with entity sprite, optional health bar, and optional behavior icon.
    */
   createEntityContainer(entity: Entity): Phaser.GameObjects.Container {
-    const container = this.scene.add.container(
-      entity.position.x * this.tileSize + this.tileSize / 2,
-      entity.position.y * this.tileSize + this.tileSize / 2
+    const screenPos = this.isoTransform.gridToScreen(
+      entity.position.x,
+      entity.position.y
     );
 
-    // Add entity sprite at (0, 0) relative to container
-    const sprite = this.scene.add.sprite(0, 0, this.getEntityTexture(entity.type));
+    const container = this.scene.add.container(screenPos.x, screenPos.y);
+
+    // Store grid position for depth sorting
+    container.setData('gridX', entity.position.x);
+    container.setData('gridY', entity.position.y);
+
+    // Blob shadow at ground level (container origin)
+    const shadow = this.scene.add.ellipse(0, 0, 40, 20, 0x000000, 0.3);
+    shadow.setOrigin(0.5, 0.5);
+    container.add(shadow);
+
+    // Entity sprite elevated above ground
+    const sprite = this.scene.add.sprite(0, -this.elevationOffset, this.getEntityTexture(entity.type));
+    sprite.setOrigin(0.5, 1.0); // Bottom-center origin for ground alignment
     container.add(sprite);
 
-    // Add health bar for damaged creatures
+    // Health bar for damaged creatures (positioned above elevated sprite)
     if (this.isCreature(entity) && entity.health < entity.maxHealth) {
       const healthBar = this.createHealthBar(entity.health, entity.maxHealth);
-      healthBar.y = -20;
+      healthBar.y = -this.elevationOffset - 24; // Above sprite
       container.add(healthBar);
     }
 
-    // Add behavior icon for all creatures
+    // Behavior icon for creatures (above health bar)
     if (this.isCreature(entity)) {
       const behaviorIcon = this.createBehaviorIcon(entity.behavior);
-      behaviorIcon.y = -30;
+      behaviorIcon.y = -this.elevationOffset - 34; // Above health bar
       container.add(behaviorIcon);
     }
+
+    // Initial depth: Y-position with X-tiebreaker
+    const depth = this.isoTransform.calculateDepth(entity.position.x, entity.position.y);
+    container.setDepth(depth);
 
     return container;
   }
@@ -136,5 +156,32 @@ export class EntityRenderer {
    */
   private isCreature(entity: Entity): entity is Creature {
     return entity.type === 'creature';
+  }
+
+  /**
+   * Update entity position for movement.
+   */
+  updateEntityPosition(
+    container: Phaser.GameObjects.Container,
+    gridX: number,
+    gridY: number
+  ): void {
+    const screenPos = this.isoTransform.gridToScreen(gridX, gridY);
+    container.setPosition(screenPos.x, screenPos.y);
+
+    // Update stored grid position
+    container.setData('gridX', gridX);
+    container.setData('gridY', gridY);
+
+    // Update depth
+    const depth = this.isoTransform.calculateDepth(gridX, gridY);
+    container.setDepth(depth);
+  }
+
+  /**
+   * Get the isometric transform instance.
+   */
+  getTransform(): IsometricTransform {
+    return this.isoTransform;
   }
 }
