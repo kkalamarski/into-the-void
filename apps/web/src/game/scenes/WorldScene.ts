@@ -13,6 +13,7 @@ import { PathfindingController } from '../systems/PathfindingController';
 import { HoverController } from '../systems/HoverController';
 import { IsometricTransform } from '../utils/IsometricTransform';
 import { DepthSorter } from '../rendering/DepthSorter';
+import { useGameStore } from '../../store/gameStore';
 
 export const ISO_TILE_WIDTH = 128;
 export const ISO_TILE_HEIGHT = 64;
@@ -562,10 +563,10 @@ export class WorldScene extends Phaser.Scene {
    * Returns true if entity is within VISIBILITY_RADIUS tiles.
    */
   private isEntityVisible(entityPosition: Position): boolean {
-    const player = this.movementController?.getPosition();
+    const player = useGameStore.getState().player;
     if (!player) return false;
 
-    const distance = this.calculateWorldDistance(player, entityPosition);
+    const distance = this.calculateWorldDistance(player.position, entityPosition);
     return distance <= VISIBILITY_RADIUS;
   }
 
