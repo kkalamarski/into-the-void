@@ -16,6 +16,8 @@ import { DepthSorter } from '../rendering/DepthSorter';
 
 export const ISO_TILE_WIDTH = 128;
 export const ISO_TILE_HEIGHT = 64;
+// Visibility radius in tiles (~1.5 chunks allows seeing into adjacent chunks)
+const VISIBILITY_RADIUS = 48;
 
 export class WorldScene extends Phaser.Scene {
   private tileLayer: Phaser.GameObjects.Container | null = null;
@@ -539,6 +541,32 @@ export class WorldScene extends Phaser.Scene {
       worldX: zoneCoords.x * ZONE_SIZE + position.x,
       worldY: zoneCoords.y * ZONE_SIZE + position.y,
     };
+  }
+
+  /**
+   * Calculate Euclidean distance between two positions using world coordinates.
+   * Used for visibility checks that span chunk boundaries.
+   */
+  private calculateWorldDistance(a: Position, b: Position): number {
+    const worldA = this.positionToWorldCoords(a);
+    const worldB = this.positionToWorldCoords(b);
+
+    const dx = worldA.worldX - worldB.worldX;
+    const dy = worldA.worldY - worldB.worldY;
+
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  /**
+   * Check if an entity is visible to the local player based on world coordinate distance.
+   * Returns true if entity is within VISIBILITY_RADIUS tiles.
+   */
+  private isEntityVisible(entityPosition: Position): boolean {
+    const player = this.movementController?.getPosition();
+    if (!player) return false;
+
+    const distance = this.calculateWorldDistance(player, entityPosition);
+    return distance <= VISIBILITY_RADIUS;
   }
 
   private getTileElevation(gridX: number, gridY: number): number {
