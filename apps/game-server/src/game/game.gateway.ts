@@ -258,4 +258,67 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Return timestamp for round-trip latency measurement
     return timestamp;
   }
+
+  @SubscribeMessage('zone:request')
+  async handleZoneRequest(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: ClientEvents['zone:request']
+  ) {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      // Get chunk data for requested zone
+      const zoneState = await this.gameService.getZoneState(data.zoneId);
+
+      // Send only chunk and biome (not players/entities for adjacent zones)
+      client.emit('zone:chunk', {
+        chunk: zoneState.chunk,
+        biome: zoneState.biome,
+      });
+    } catch (error) {
+      console.error(`Failed to load zone ${data.zoneId}:`, error);
+      client.emit('error', {
+        code: 'ZONE_LOAD_ERROR',
+        message: `Failed to load zone ${data.zoneId}`,
+      });
+    }
+  }
+
+  /**
+   * Update player's WebSocket room subscriptions to match 3x3 chunk grid.
+   * Player receives entity updates from current zone and 8 adjacent zones.
+   * Leaves old rooms and joins new rooms based on current position.
+   */
+  private updatePlayerRooms(client: Socket, playerZoneId: string): void {
+    // Get current rooms (exclude socket ID default room)
+    const currentRooms = Array.from(client.rooms).filter(r => r !== client.id);
+
+    // Parse player zone coordinates (format: z_X_Y)
+    const parts = playerZoneId.split('_');
+    const centerX = parseInt(parts[1], 10);
+    const centerY = parseInt(parts[2], 10);
+
+    // Calculate 3x3 grid (current + 8 adjacent)
+    const requiredRooms = new Set<string>();
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        requiredRooms.add(`z_${centerX + dx}_${centerY + dy}`);
+      }
+    }
+
+    // Leave rooms not in new grid
+    for (const room of currentRooms) {
+      if (!requiredRooms.has(room)) {
+        client.leave(room);
+      }
+    }
+
+    // Join rooms in new grid
+    for (const room of requiredRooms) {
+      if (!currentRooms.includes(room)) {
+        client.join(room);
+      }
+    }
+  }
 }
