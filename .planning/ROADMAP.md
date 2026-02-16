@@ -162,10 +162,11 @@ Plans:
   3. Entities on elevated terrain render at correct depth above tiles
   4. Viewport culling accounts for tall structures with expanded bounds
   5. Visual elevation differences are clear and performance is maintained
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 15-01: TBD
+- [ ] 15-01-PLAN.md — Add side-face rendering to TileRenderer with neighbor-based culling
+- [ ] 15-02-PLAN.md — Wire entity elevation offset and expand viewport culling bounds
 
 ### Phase 16: Structure Walls & Pathfinding
 **Goal**: Elevation affects player movement and pathfinding
@@ -204,10 +205,10 @@ Phases execute in numeric order: 13 → 14 → 15 → 16
 | 12. Polish | v1.2 | 1/1 | Complete | 2026-02-16 |
 | 13. Tile Definition Architecture | v1.3 | 3/3 | Complete | 2026-02-16 |
 | 14. Elevation System Core | v1.3 | 2/2 | Complete | 2026-02-16 |
-| 15. Elevation Rendering | v1.3 | 0/? | Not started | - |
+| 15. Elevation Rendering | v1.3 | 0/2 | Planned | - |
 | 16. Structure Walls & Pathfinding | v1.3 | 0/? | Not started | - |
 
 **Total:** 16 phases (14 complete, 2 planned)
 
 ---
-*Last updated: 2026-02-16 after Phase 14 execution complete*
+*Last updated: 2026-02-16 after Phase 15 planning complete*
