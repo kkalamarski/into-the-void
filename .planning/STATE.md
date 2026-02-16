@@ -2,146 +2,53 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-14)
+See: .planning/PROJECT.md (updated 2026-02-16)
 
-**Core value:** Players can create an account, log in, and select/create characters before entering the game world.
-**Current focus:** Phase 7 - Entities & HUD
+**Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback.
+**Current focus:** Milestone complete — planning next milestone
 
 ## Current Position
 
-Phase: 7 of 7 (Entities & HUD)
-Plan: 5 of 5
-Status: Complete
-Last activity: 2026-02-16 — Completed 07-05 (Human Verification: Phase 7 Complete)
+Milestone: v1.1 Post-Login Game Experience — SHIPPED
+Phase: 7 of 7 (all complete)
+Status: Awaiting next milestone
 
-Progress: [██████████] 100% (v1.0: 7/7 plans, v1.1: 17/17 plans, Phase 7: 5/5 plans executed - PHASE COMPLETE)
+Progress: [██████████] 100% (v1.0: 3 phases, v1.1: 4 phases — all complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 27 (v1.0: 7 plans, v1.1: 15 plans, Phase 7: 5 plans)
+- Total plans completed: 27 (v1.0: 7 plans, v1.1: 20 plans)
 - Average duration: 3m 58s
 - Total execution time: ~1.88 hours
 
-**By Phase:**
+**By Milestone:**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01-authentication-navigation | 3 | 5m 40s | 1m 53s |
-| 02-character-selection | 2 | 3m 19s | 1m 40s |
-| 03-character-creation | 2 | 13m 17s | 6m 39s |
-| 04-websocket-connection-auth-handshake | 5 | 17m 11s | 3m 26s |
-| 05-phaser-integration-world-rendering | 5 | 17m 20s | 3m 28s |
-| 06-movement-system | 5 | ~12m | 2m 24s |
-| 07-entities-hud | 5 | ~59m | 11m 48s |
-
-**Recent Trend:**
-- Last 5 plans: 07-01 (3m 39s), 07-03 (3m 0s), 07-02 (4m 35s), 07-04 (2m 40s), 07-05 (~45m)
-- Phase 06 completed with 4 bug fixes during human verification
-- Phase 07 COMPLETE with 10 bug fixes during human verification (sprite scaling, memory leaks, performance)
+| Milestone | Phases | Plans | Timeline |
+|-----------|--------|-------|----------|
+| v1.0 Auth & Character Screens | 1-3 | 7 | 2026-02-13 → 2026-02-14 |
+| v1.1 Post-Login Game Experience | 4-7 | 20 | 2026-02-14 → 2026-02-16 |
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting v1.1 work:
+Key decisions logged in PROJECT.md Key Decisions table.
 
-- React screens (not Phaser menus): Auth forms are standard web UI, React handles this better
-- React Router v7 action pattern: Modern form handling, automatic revalidation
-- Lore-correct factions: Verdant/Helix/Nexus match world-bible.md
-- E-XXXX error code format for user-facing errors with action hints (04-01)
-- 5-second auth timeout prevents stuck connections (04-01)
-- 2-minute connection state recovery window for brief disconnects (04-01)
-- Ping/pong using simple timestamp echo pattern (04-01)
-- [Phase 04]: Error modal uses CSS variables for design system consistency
-- [Phase 04]: Reconnect overlay non-blocking (pointer-events: none) to show game world during reconnection
-- [Phase 04]: Animated dots cycle every 500ms for visual reconnection feedback
-- [Phase 04]: 12 lore-accurate tips selected from world-bible.md for loading screen variety
-- [Phase 04]: Latency bars use 4-tier system (50/100/200ms) for clear visual feedback
-- [Phase 04]: Connection indicator always visible in top-right corner during gameplay
-- [Phase 04]: zone:state event updates player position from server-determined spawn location
-- [Phase 04]: 1-second delay for zone:state event processing before spawning stage
-- [Phase 04]: GameScreen handles connection orchestration, GameContainer only renders game
-- [Phase 04]: Loading stages progress: connecting (0-20%) → authenticating (20-40%) → loading-world (40-90%) → spawning (90-100%)
-- [Phase 05]: Generate all 16 tile textures at startup for immediate biome rendering
-- [Phase 05]: TileRenderer utility class centralizes texture mapping logic
-- [Phase 05]: loadZoneFromState method provides clean interface for server ChunkData
-- [Phase 05-02]: ViewportCuller with 2-tile padding prevents pop-in at viewport edges
-- [Phase 05-02]: Bounds caching in updateVisibleTiles prevents redundant calculations
-- [Phase 05-02]: ZoneHUD positioned at Y=50 to avoid overlap with ConnectionIndicator
-- [Phase 05-02]: Tier calculation uses danger level / 2.5 to map 1-10 range to 1-4 tiers
-- [Phase 05-04]: ZoneState extended with chunk and biome for complete zone data in single event
-- [Phase 05-04]: onReady callback via postBoot ensures Phaser fully initialized before React interactions
-- [Phase 05-04]: Typed getWorldScene() accessor provides type safety for React components
-- [Phase 05-05]: Human verification checkpoint validates complete Phase 5 integration
-- [Phase 05-05]: Visual testing confirms biome colors, HUD positioning, camera behavior
-- [Phase 05 COMPLETE]: World rendering with biome-colored tiles, ZoneHUD, and camera follow fully functional
-- [Phase 06-01]: Client-side collision validation prevents obvious rubber-banding on predicted moves
-- [Phase 06-01]: Pending input queue capped at 10 for memory safety on high latency
-- [Phase 06-01]: Server corrections use 50ms tween for visible but smooth position updates
-- [Phase 06-01]: Sequence field optional in events for backward compatibility
-- [Phase 06-02]: 140ms rate limit (10ms tolerance below 150ms client delay) prevents movement spam
-- [Phase 06-02]: Echo sequence in all responses including errors for client reconciliation
-- [Phase 06-02]: Use Map for rate limit tracking rather than Player object for clean separation
-- [Phase 06-03]: PathfindingController uses MovementController.processInput() for prediction consistency
-- [Phase 06-03]: 150ms delay between path steps matches WASD movement timing
-- [Phase 06-03]: WASD input immediately cancels active pathfinding
-- [Phase 06-04]: Collision map pushed to WorldScene immediately on zone:state for instant availability
-- [Phase 06-04]: Zone transitions detected by comparing currentZoneId !== zoneId
-- [Phase 06-04]: Pending inputs cleared on zone transition to prevent carryover prediction
-- [Phase 06-04]: player:moved handler checks for sequence number support (backward compatible)
-- [Phase 06-05]: Reconcile only updates sprite on actual position mismatch (fixes jitter)
-- [Phase 06-05]: HUD requires pointer-events: none to allow canvas clicks
-- [Phase 06-05]: Collision map set in GameContainer effect (zone:state arrives before Game created)
-- [Phase 06-05]: Removed placeholder world that conflicted with server collision map
-- [Phase 06 COMPLETE]: Movement with WASD, click-to-move pathfinding, server validation all functional
-- [Phase 07-03]: Optional chaining (player.energy ?? 100) for backward compatibility with servers not yet providing energy
-- [Phase 07-03]: Energy bar uses cyan/blue gradient for visual distinction from red health bar
-- [Phase 07-03]: EntityRegistry with typed configs for creatures (4), minerals (4), and items (4)
-- [Phase 07-03]: Entity configs include biome associations for future procedural spawning
-- [Phase 07-03]: Helper methods (getCreature, getMineral, getItem) provide clean registry API
-- [Phase 07-01]: Health bars show only when entity is damaged (health < maxHealth)
-- [Phase 07-01]: Lore-accurate behavior icons: passive→H (green), neutral→O (yellow), aggressive→P (orange), defensive→M (red)
-- [Phase 07-01]: Entity containers positioned with health bars at y=-20 and behavior icons at y=-30
-- [Phase 07-01]: Entity depth set to 5 (below player at 10) for proper z-ordering
-- [Phase 07-04]: Phaser multi-camera system for minimap (reuses tile rendering at 0.15x zoom)
-- [Phase 07-04]: Minimap positioned at bottom-right corner (180x180px, 20px padding)
-- [Phase 07-04]: Player indicator uses scrollFactor(0) for fixed screen positioning
-- [Phase 07-04]: Minimap camera follows player sprite (always centered in minimap)
-- [Phase 07-05]: TILE_SIZE changed to 96px to match sprite size specification in CLAUDE.md
-- [Phase 07-05]: Camera lerp 1,1 for instant player centering (prevents lag)
-- [Phase 07-05]: Viewport culling throttled to 100ms for performance (imperceptible to users)
-- [Phase 07-05]: pauseOnBlur enabled to prevent memory issues when browser tab loses focus
-- [Phase 07-05]: Physics system disabled (game uses tile-based movement, physics unused)
-- [Phase 07-05]: Tween cleanup with killTweensOf() prevents accumulation memory leak
-- [Phase 07-05]: Entity and player clearing methods on zone transitions prevent duplicates
-- [Phase 07-05]: Minimap camera ignores ZoneHUD elements for clean world-only view
-- [Phase 07 COMPLETE]: Entity rendering, HUD, and minimap production-ready with performance optimizations
+### Known Issues
+
+- Adjacent chunk loading times out (server zone:request not implemented)
+- WebSocket auth without handshake validation (guards on all handlers)
 
 ### Pending Todos
 
-- Adjacent chunk loading timing out (Phase 5 scope, edge jitter symptom)
-
-### Blockers/Concerns
-
-**From v1.0 Research:**
-- WebSocket handshake auth pattern — Verify backend game-server supports handshake.auth.token validation
-- Token refresh strategy needs backend validation — Check if NestJS auth module has refresh endpoint
-
-**From v1.1 Research:**
-- Phase 4: WebSocket auth without handshake validation (guards needed on all handlers)
-- Phase 4: Race condition between socket join and async DB queries (check connected status)
-- Phase 5: Phaser memory leaks on React unmount (proper cleanup sequence needed) — RESOLVED: Game.destroy() cleanup verified in 05-05
-- Phase 5: Adjacent chunk loading timing out (zone:request not implemented on server?)
-- Phase 6: Client prediction without server reconciliation (sequence numbers, rollback) — RESOLVED: Server reconciliation implemented in 06-04
+None — all v1.1 requirements complete.
 
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed Phase 7 with human verification and bug fixes
+Stopped at: Completed v1.1 milestone archival
 Resume file: None
 
 ---
-*Phase 7 COMPLETE: All v1.1 base features implemented and verified*
-*Next step: Begin Phase 8 planning or continue with additional features*
+*v1.1 COMPLETE: Run /gsd:new-milestone to start next milestone*

@@ -1,96 +1,95 @@
-# Into the Void — Auth & Character Screens
+# Into the Void
 
 ## What This Is
 
-A multiplayer 2D game with procedural world generation, real-time player interaction, and faction-based gameplay. Players explore zones, interact with entities, and engage in combat. **v1.0** added the pre-game experience: registration, login, character selection, and character creation screens.
+A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, and a complete auth-to-gameplay flow.
 
-## Current Milestone: v1.1 Post-Login Game Experience
+## Current State (v1.1 shipped)
 
-**Goal:** After selecting a character, the player appears in the game world and can play.
+**Shipped features:**
+- Authentication: Register, login, JWT tokens
+- Character management: Select, create characters with faction selection
+- WebSocket game connection with auth handshake
+- World rendering with 16 biome tile types and viewport culling
+- Movement: WASD keyboard + click-to-move A* pathfinding
+- Client-side prediction with server reconciliation
+- Entity rendering with health bars and behavior icons
+- HUD: Health, energy, XP bars + zone name + minimap
 
-**Target features:**
-- WebSocket connection wired to authenticated character
-- World rendering with color-coded tiles
-- HUD with health, energy, zone name
-- Movement (keyboard + click-to-move)
-- Entity registry for game configs
+**Tech stack:**
+- Frontend: React 18, Phaser 3, Zustand, React Router v7
+- Backend: NestJS (API + WebSocket game server)
+- Database: PostgreSQL with Drizzle ORM
+- Monorepo: NX with 3 apps + 4 shared packages
+
+**Codebase:** ~9,120 LOC TypeScript
 
 ## Core Value
 
-Players can create an account, log in, and select/create characters before entering the game world.
+Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 ## Requirements
 
 ### Validated
 
-<!-- Shipped and confirmed valuable. -->
-
 - ✓ REST API with JWT authentication — existing
 - ✓ Character CRUD API endpoints — existing
-- ✓ WebSocket game server with token auth — existing
-- ✓ React/Phaser web client — existing
-- ✓ Procedural world generation — existing
-- ✓ Player movement and zone transitions — existing
-- ✓ Entity interactions (minerals, items, creatures) — existing
-- ✓ Real-time multiplayer sync — existing
-- ✓ Landing page with Login/Register options — v1.0
-- ✓ Registration screen (email, password, confirm password) — v1.0
-- ✓ Login screen (email, password) — v1.0
-- ✓ Character selection screen with visual cards — v1.0
-- ✓ Character creation screen (name, faction selection) — v1.0
-- ✓ Auth flow integration (token storage, protected routes) — v1.0
+- ✓ Registration, login, character selection screens — v1.0
+- ✓ Character creation with faction selection — v1.0
+- ✓ WebSocket connection with auth handshake — v1.1
+- ✓ World rendering with color-coded tiles — v1.1
+- ✓ Viewport culling for performance — v1.1
+- ✓ Zone HUD with tier indicator — v1.1
+- ✓ WASD/arrow key movement — v1.1
+- ✓ Click-to-move pathfinding — v1.1
+- ✓ Client-side prediction with server reconciliation — v1.1
+- ✓ Other players visible and moving — v1.1
+- ✓ Entity rendering with health bars — v1.1
+- ✓ Creature behavior icons (H/O/P/M) — v1.1
+- ✓ HUD with health, energy, zone name — v1.1
+- ✓ Minimap with player position — v1.1
 
 ### Active
 
-<!-- Current scope. Building toward these. -->
-
-- [ ] WebSocket connection wired to auth flow (token + characterId)
-- [ ] Player spawns at correct position (spawn point or last known)
-- [ ] World renders with color-coded tiles (no sprites yet)
-- [ ] HUD displays health, energy, zone name
-- [ ] Movement works (WASD/arrows + click-to-move)
-- [ ] Entity registry in code (tiles, creatures, items configs)
+(No active requirements - awaiting next milestone definition)
 
 ### Out of Scope
 
-- OAuth/social login — email/password sufficient for v1
-- Password strength meter — basic validation only
-- Avatar uploads — characters don't have visual customization yet
-- Character deletion from UI — can be added later
-- "Remember me" / persistent sessions — tokens expire normally
-- Email verification flow — registration works immediately
-- Stat allocation during character creation — deferred to v2
-
-## Context
-
-**Current state (v1.0 shipped):**
-- ~1,479 LOC TypeScript/React added
-- Tech stack: React Router v7, Zustand with persist middleware, vanilla CSS
-- Auth flow: Login/Register → Character Select → Create Character → Game
-- Factions updated to lore-correct: Verdant Dynamics, Helix Extraction, Nexus Frontiers, Unaffiliated
-
-**Architecture:**
-- NX monorepo with 3 apps (api, game-server, web) and 4 packages
-- Backend handles: `/auth/register`, `/auth/login`, `/auth/me`, `/characters` CRUD
-- WebSocket auth via `authenticate(token, characterId)` method
-- CSS variables system with dark theme (--color-bg-*, --color-accent)
+- OAuth/social login — email/password sufficient
+- Sprite-based rendering — color tiles only until art pipeline ready
+- Combat system — separate milestone
+- Inventory UI — separate milestone
+- Chat system — separate milestone
+- Sound/music — polish phase
+- Mobile controls — web-first
 
 ## Constraints
 
-- **Tech stack**: React for screens (not Phaser UI) — matches existing patterns
-- **Styling**: Plain CSS with existing variable system — no new CSS framework
-- **Backend**: Use existing API endpoints — no backend changes needed
-- **Factions**: 4 options (verdant, helix, nexus, neutral) — from world-bible.md lore
+- **Tech stack**: React for UI, Phaser for game canvas — established pattern
+- **Styling**: Plain CSS with CSS variables — no framework
+- **Sprites**: 96x96 pixel size — from CLAUDE.md
+- **Factions**: Verdant Dynamics, Helix Extraction, Nexus Frontiers, Unaffiliated — from lore
+- **Tile size**: 96px for all tiles and sprites
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| React screens (not Phaser menus) | Auth forms are standard web UI, React handles this better | ✓ Good |
-| Visual character cards | Shows more info at a glance, feels more polished | ✓ Good |
-| React Router v7 action pattern | Modern form handling, automatic revalidation | ✓ Good |
-| Lore-correct factions | Verdant/Helix/Nexus match world-bible.md | ✓ Good |
-| Stat allocation deferred to v2 | Keep MVP simple, focus on core auth flow | — Pending |
+| React screens (not Phaser menus) | Auth forms are standard web UI | ✓ Good |
+| React Router v7 action pattern | Modern form handling | ✓ Good |
+| Lore-correct factions | Match world-bible.md | ✓ Good |
+| 5-second auth timeout | Prevents stuck connections | ✓ Good |
+| E-XXXX error codes | User-facing errors with action hints | ✓ Good |
+| Client-side prediction | Responsive movement feel | ✓ Good |
+| 140ms server rate limit | Prevents movement spam | ✓ Good |
+| Phaser multi-camera minimap | Reuses tile rendering | ✓ Good |
+| 96px TILE_SIZE | Matches sprite specification | ✓ Good |
+| pauseOnBlur enabled | Prevents memory leaks on tab switch | ✓ Good |
+
+## Known Issues
+
+- Adjacent chunk loading times out (server zone:request not implemented)
+- WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-14 after v1.0 milestone*
+*Last updated: 2026-02-16 after v1.1 milestone*
