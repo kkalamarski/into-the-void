@@ -95,10 +95,34 @@ export class PreloadScene extends Phaser.Scene {
       graphics.clear();
     }
 
-    // Player (centered at 48,48 for 96px tile)
+    // Player sphere - higher resolution with shading for 3D effect
+    const PLAYER_SIZE = 192; // 2x resolution for crisp rendering
+    const center = PLAYER_SIZE / 2;
+    const radius = 70;
+
+    // Base sphere color
     graphics.fillStyle(0x7b68ee);
-    graphics.fillCircle(48, 48, 36);
-    graphics.generateTexture('player', TILE_SIZE, TILE_SIZE);
+    graphics.fillCircle(center, center, radius);
+
+    // Highlight (top-left) for 3D sphere effect
+    graphics.fillStyle(0x9f8fff, 0.6);
+    graphics.fillCircle(center - radius * 0.3, center - radius * 0.3, radius * 0.5);
+
+    // Smaller bright highlight
+    graphics.fillStyle(0xffffff, 0.4);
+    graphics.fillCircle(center - radius * 0.4, center - radius * 0.4, radius * 0.2);
+
+    // Dark edge (bottom-right) for depth
+    graphics.lineStyle(3, 0x5040a0, 0.5);
+    graphics.beginPath();
+    graphics.arc(center, center, radius - 1, Math.PI * 0.1, Math.PI * 0.9);
+    graphics.strokePath();
+
+    // Outer ring for definition
+    graphics.lineStyle(2, 0x3a2a7a, 0.8);
+    graphics.strokeCircle(center, center, radius);
+
+    graphics.generateTexture('player', PLAYER_SIZE, PLAYER_SIZE);
     graphics.clear();
 
     // Creature (centered at 48,48 for 96px tile)

@@ -206,9 +206,10 @@ export class WorldScene extends Phaser.Scene {
     const shadow = this.add.ellipse(0, 0, 40, 20, 0x000000, 0.3);
     container.add(shadow);
 
-    // Player sprite elevated
+    // Player sprite elevated (texture is 2x resolution, scale down for crispness)
     const sprite = this.add.sprite(0, -12, 'player');
     sprite.setOrigin(0.5, 1.0);
+    sprite.setScale(0.5);
     container.add(sprite);
 
     // Store reference (as container now, not sprite)
@@ -489,9 +490,10 @@ export class WorldScene extends Phaser.Scene {
     const shadow = this.add.ellipse(0, 0, 40, 20, 0x000000, 0.3);
     container.add(shadow);
 
-    // Player sprite
+    // Player sprite (texture is 2x resolution, scale down for crispness)
     const sprite = this.add.sprite(0, -12, 'player');
     sprite.setOrigin(0.5, 1.0);
+    sprite.setScale(0.5);
     sprite.setTint(this.getFactionColor(player.faction));
     container.add(sprite);
 
