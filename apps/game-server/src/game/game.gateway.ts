@@ -78,8 +78,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
 
       if (result.success && result.player) {
-        // Join player to their zone room
-        client.join(result.player.position.zoneId);
+        // Join player to 3x3 grid of zone rooms (current + 8 adjacent)
+        this.updatePlayerRooms(client, result.player.position.zoneId);
 
         // Send initial zone state
         const zoneState = await this.gameService.getZoneState(
