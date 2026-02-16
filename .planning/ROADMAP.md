@@ -114,7 +114,7 @@ Plans:
 **Milestone Goal:** Add vertical dimension to the world with terrain elevation, structure walls, and a scalable tile definition system.
 
 - [x] **Phase 13: Tile Definition Architecture** — Foundation for elevation system (completed 2026-02-16)
-- [ ] **Phase 14: Elevation System Core** — Data generation and depth sorting
+- [x] **Phase 14: Elevation System Core** — Data generation and depth sorting (completed 2026-02-16)
 - [ ] **Phase 15: Elevation Rendering** — Side-faces and visual appearance
 - [ ] **Phase 16: Structure Walls & Pathfinding** — Gameplay integration
 
@@ -149,8 +149,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 14-01-PLAN.md — Add noise-based height generation with biome-specific ranges
-- [ ] 14-02-PLAN.md — Update depth sorting to include elevation component
+- [x] 14-01-PLAN.md — Add noise-based height generation with biome-specific ranges
+- [x] 14-02-PLAN.md — Update depth sorting to include elevation component
 
 ### Phase 15: Elevation Rendering
 **Goal**: Terrain elevation appears visually with side-face rendering
@@ -203,11 +203,11 @@ Phases execute in numeric order: 13 → 14 → 15 → 16
 | 11. UI Integration | v1.2 | 1/1 | Complete | 2026-02-16 |
 | 12. Polish | v1.2 | 1/1 | Complete | 2026-02-16 |
 | 13. Tile Definition Architecture | v1.3 | 3/3 | Complete | 2026-02-16 |
-| 14. Elevation System Core | v1.3 | 0/2 | Planned | - |
+| 14. Elevation System Core | v1.3 | 2/2 | Complete | 2026-02-16 |
 | 15. Elevation Rendering | v1.3 | 0/? | Not started | - |
 | 16. Structure Walls & Pathfinding | v1.3 | 0/? | Not started | - |
 
-**Total:** 16 phases (13 complete, 3 planned)
+**Total:** 16 phases (14 complete, 2 planned)
 
 ---
-*Last updated: 2026-02-16 after Phase 14 planning complete*
+*Last updated: 2026-02-16 after Phase 14 execution complete*
