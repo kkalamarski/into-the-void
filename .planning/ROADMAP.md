@@ -47,9 +47,9 @@ See: `.planning/milestones/v1.1-ROADMAP.md`
 **Plans**: 3 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Create IsometricTransform utility and update TileRenderer
-- [ ] 08-02-PLAN.md — Update EntityRenderer with shadows and create DepthSorter
-- [ ] 08-03-PLAN.md — Integrate isometric rendering in WorldScene with viewport culling
+- [x] 08-01-PLAN.md — Create IsometricTransform utility and update TileRenderer
+- [x] 08-02-PLAN.md — Update EntityRenderer with shadows and create DepthSorter
+- [x] 08-03-PLAN.md — Integrate isometric rendering in WorldScene with viewport culling
 
 #### Phase 9: Rendering Optimization & Interaction
 **Goal**: Viewport culling optimized and click-to-move restored in isometric space
@@ -121,7 +121,7 @@ Plans:
 | 5. World Rendering | v1.1 | 5/5 | Complete | 2026-02-14 |
 | 6. Movement System | v1.1 | 5/5 | Complete | 2026-02-15 |
 | 7. Entities & HUD | v1.1 | 5/5 | Complete | 2026-02-16 |
-| 8. Core Isometric Transformation | v1.2 | 0/3 | Planned | - |
+| 8. Core Isometric Transformation | v1.2 | 3/3 | Complete | 2026-02-16 |
 | 9. Rendering Optimization & Interaction | v1.2 | 0/TBD | Not started | - |
 | 10. Multiplayer Integration | v1.2 | 0/TBD | Not started | - |
 | 11. UI Integration | v1.2 | 0/TBD | Not started | - |
