@@ -1,74 +1,64 @@
-# Requirements: Into the Void v1.3
+# Requirements: Into the Void
 
 **Defined:** 2026-02-16
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.3 Requirements
+## v1.4 Requirements
 
-Requirements for Elevation & Structures milestone. Each maps to roadmap phases.
+Requirements for milestone v1.4: Infinite World & Seamless Chunks.
 
-### Tile Definition System
+### Coordinate System
 
-- [ ] **TILE-01**: TileDefinition interface exists with id, displayName, movementSpeed, isBlocking, texture, elevation properties
-- [ ] **TILE-02**: TileRegistry provides type-safe lookup by tile ID
-- [ ] **TILE-03**: Existing 16 tile types migrated to TileDefinition registry
-- [ ] **TILE-04**: Tile hooks system supports onStep, onClick, onEnter, onExit, onTick
-- [ ] **TILE-05**: ChunkData schema extended with heights[][] parallel array
-- [ ] **TILE-06**: ChunkData schema extended with structures[] array
+- [ ] **COORD-01**: Depth sorting uses world coordinates for correct z-order across chunks
+- [ ] **COORD-02**: Entity visibility uses world coordinate distance, not zone ID matching
+- [ ] **COORD-03**: Tile rendering calculates depth from world position (chunkX * 32 + localX)
 
-### Terrain Elevation
+### Chunk Streaming
 
-- [ ] **ELEV-01**: Tiles can have height levels 0-5
-- [ ] **ELEV-02**: Elevation data generated via noise in world-gen
-- [ ] **ELEV-03**: Side faces rendered for elevation differences (classic isometric look)
-- [ ] **ELEV-04**: Side-face visibility culling implemented (only render visible faces)
-- [ ] **ELEV-05**: Biome-specific elevation ranges defined (e.g., craters 0-2, ruins 0-5)
+- [ ] **CHUNK-01**: Client loads 3x3 grid of chunks around player position
+- [ ] **CHUNK-02**: Client requests chunks via WebSocket when approaching chunk boundary
+- [ ] **CHUNK-03**: Server generates chunks on demand with deterministic seed
+- [ ] **CHUNK-04**: Server caches generated chunks with LRU cleanup
+- [ ] **CHUNK-05**: Client unloads chunks when player moves beyond load radius
+- [ ] **CHUNK-06**: Loading indicator displayed while chunks are pending
+- [ ] **CHUNK-07**: Player can move seamlessly across chunk boundaries without visual breaks
 
-### Structure Walls
+### Biome Distribution
 
-- [ ] **STRUCT-01**: Wall tiles defined with variable height by type
-- [ ] **STRUCT-02**: All wall structures block movement regardless of height
-- [ ] **STRUCT-03**: World-gen places structure walls procedurally
-- [ ] **STRUCT-04**: Structure walls render with side faces same as terrain
+- [ ] **BIOME-01**: Biome determined per-tile using world coordinates (not per-chunk)
+- [ ] **BIOME-02**: Biome transitions are seamless using noise layers (no hard edges)
+- [ ] **BIOME-03**: HUD displays current biome name based on player position
+- [ ] **BIOME-04**: Temperature/moisture/elevation noise creates natural climate zones
 
-### Movement & Pathfinding
+### Memory & Performance
 
-- [ ] **MOVE-01**: 1-level elevation difference is walkable
-- [ ] **MOVE-02**: 2+ level elevation difference blocks movement
-- [ ] **MOVE-03**: A* pathfinding includes elevation cost penalty
-- [ ] **MOVE-04**: Pathfinding prefers flat routes over climbing when equal distance
-- [ ] **MOVE-05**: Click detection accounts for elevation offset
+- [ ] **MEM-01**: Phaser containers destroyed when chunks unload (no memory leaks)
+- [ ] **MEM-02**: WebSocket room subscriptions cleaned up during chunk transitions
+- [ ] **MEM-03**: Chunk requests use priority queue (visible chunks first)
+- [ ] **MEM-04**: Server chunk cache bounded with max size limit
 
-### Visual & Rendering
+## Future Requirements
 
-- [ ] **RENDER-01**: Depth sorting includes elevation in calculation (composite depth)
-- [ ] **RENDER-02**: Entities on elevated terrain render at correct depth
-- [ ] **RENDER-03**: Full occlusion - tall objects hide entities behind them
-- [ ] **RENDER-04**: Minimap shows structure walls as distinct markers
-- [ ] **RENDER-05**: Viewport culling accounts for tall structures (expanded bounds)
+Deferred to future release. Tracked but not in v1.4 roadmap.
 
-## v1.4+ Requirements
+### Optimization
 
-Deferred to future releases. Tracked but not in current roadmap.
+- **OPT-01**: Redis-based chunk cache for multi-server scaling
+- **OPT-02**: Predictive pre-loading based on player movement direction
+- **OPT-03**: Chunk fade-in animation (smooth appearance)
 
-### Visual Polish
+### World Modification
+
+- **MOD-01**: Player-modified chunks persist to database
+- **MOD-02**: Delta storage for terrain edits
+- **MOD-03**: Building/construction system
+
+### Visual Polish (from v1.3)
 
 - **VPOL-01**: Visual elevation transitions (ramps/stairs between levels)
 - **VPOL-02**: Dynamic wall transparency when blocking player view
 - **VPOL-03**: Procedural side-face texture variation per biome
 - **VPOL-04**: Shadows cast by elevated terrain and structures
-
-### Advanced Structures
-
-- **ADVS-01**: Multi-height structures (towers, tiered buildings)
-- **ADVS-02**: Bridges/overpass tiles (tile above and below)
-- **ADVS-03**: Destructible walls with durability
-
-### Gameplay Integration
-
-- **GAME-01**: Height advantage affects combat mechanics
-- **GAME-02**: Fall damage from height differences
-- **GAME-03**: Stamina cost for climbing elevation
 
 ## Out of Scope
 
@@ -76,11 +66,11 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Smooth terrain (float elevation) | Discrete levels (0-5) sufficient, avoids complexity |
-| Camera rotation | Breaks established isometric view, major rework |
-| Pixel-perfect click detection (mouse maps) | Unnecessary complexity, offset calculation sufficient |
-| Real-time shadows | Performance intensive, defer to polish phase |
-| Multi-layer tilemaps | Bridges/overpass deferred to v1.4+ |
+| Client-side chunk generation | Security risk, desync potential with multiplayer |
+| Unlimited chunk load radius | Memory explosion, server load |
+| Cross-chunk structures | Complexity — structures stay within single chunks |
+| Real-time chunk modification | Requires persistence layer, defer to building system |
+| Multi-server chunk sharing | Only needed at 1000+ players |
 
 ## Traceability
 
@@ -88,39 +78,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TILE-01 | Phase 13 | Pending |
-| TILE-02 | Phase 13 | Pending |
-| TILE-03 | Phase 13 | Pending |
-| TILE-04 | Phase 13 | Pending |
-| TILE-05 | Phase 13 | Pending |
-| TILE-06 | Phase 13 | Pending |
-| ELEV-01 | Phase 14 | Pending |
-| ELEV-02 | Phase 14 | Pending |
-| ELEV-05 | Phase 14 | Pending |
-| RENDER-01 | Phase 14 | Pending |
-| ELEV-03 | Phase 15 | Pending |
-| ELEV-04 | Phase 15 | Pending |
-| RENDER-02 | Phase 15 | Pending |
-| RENDER-05 | Phase 15 | Pending |
-| STRUCT-01 | Phase 16 | Pending |
-| STRUCT-02 | Phase 16 | Pending |
-| STRUCT-03 | Phase 16 | Pending |
-| STRUCT-04 | Phase 16 | Pending |
-| MOVE-01 | Phase 16 | Pending |
-| MOVE-02 | Phase 16 | Pending |
-| MOVE-03 | Phase 16 | Pending |
-| MOVE-04 | Phase 16 | Pending |
-| MOVE-05 | Phase 16 | Pending |
-| RENDER-03 | Phase 16 | Pending |
-| RENDER-04 | Phase 16 | Pending |
+| COORD-01 | — | Pending |
+| COORD-02 | — | Pending |
+| COORD-03 | — | Pending |
+| CHUNK-01 | — | Pending |
+| CHUNK-02 | — | Pending |
+| CHUNK-03 | — | Pending |
+| CHUNK-04 | — | Pending |
+| CHUNK-05 | — | Pending |
+| CHUNK-06 | — | Pending |
+| CHUNK-07 | — | Pending |
+| BIOME-01 | — | Pending |
+| BIOME-02 | — | Pending |
+| BIOME-03 | — | Pending |
+| BIOME-04 | — | Pending |
+| MEM-01 | — | Pending |
+| MEM-02 | — | Pending |
+| MEM-03 | — | Pending |
+| MEM-04 | — | Pending |
 
 **Coverage:**
-- v1.3 requirements: 25 total
-- Mapped to phases: 25
-- Unmapped: 0
-
-**Coverage validation:** ✓ 100% requirement coverage (all 25 requirements mapped)
+- v1.4 requirements: 18 total
+- Mapped to phases: 0
+- Unmapped: 18 (pending roadmap)
 
 ---
 *Requirements defined: 2026-02-16*
-*Last updated: 2026-02-16 after v1.3 roadmap creation*
+*Last updated: 2026-02-16 after initial definition*
