@@ -75,11 +75,10 @@ Plans:
   2. Remote player movement animates smoothly without rubber-banding
   3. Position sync maintains accuracy with network latency (100ms+)
   4. All clients show entities in same relative positions
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
+- [ ] 10-01-PLAN.md — Integrate remote players into depth sorting system
 
 #### Phase 11: UI Integration
 **Goal**: HUD elements adapt to isometric view without breaking
@@ -122,7 +121,7 @@ Plans:
 | 7. Entities & HUD | v1.1 | 5/5 | Complete | 2026-02-16 |
 | 8. Core Isometric Transformation | v1.2 | 3/3 | Complete | 2026-02-16 |
 | 9. Rendering Optimization & Interaction | v1.2 | 2/2 | Complete | 2026-02-16 |
-| 10. Multiplayer Integration | v1.2 | 0/TBD | Not started | - |
+| 10. Multiplayer Integration | v1.2 | 0/1 | Not started | - |
 | 11. UI Integration | v1.2 | 0/TBD | Not started | - |
 | 12. Polish | v1.2 | 0/TBD | Not started | - |
 
