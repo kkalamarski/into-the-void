@@ -68,7 +68,7 @@ export interface ClientEvents {
 export interface ServerEvents {
   'zone:state': import('../core/zone').ZoneState;
   'zone:update': Partial<import('../core/zone').ZoneState>;
-  'zone:chunk': { chunk: import('../core/zone').ChunkData; biome: import('../game/biome').BiomeType };
+  'zone:chunk': { zoneId: string; chunk: import('../core/zone').ChunkData; biome: import('../game/biome').BiomeType; entities?: import('../core/entity').Entity[] };
   'entity:spawn': import('../core/entity').Entity;
   'entity:despawn': { entityId: string };
   'entity:update': { entityId: string; changes: Partial<import('../core/entity').Entity> };
