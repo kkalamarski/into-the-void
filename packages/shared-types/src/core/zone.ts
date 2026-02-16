@@ -24,13 +24,32 @@ export interface Zone {
 }
 
 /**
+ * Tile structure definition for multi-tile walls and buildings
+ */
+export interface TileStructure {
+  /** Structure type */
+  type: 'wall' | 'building';
+  /** Tiles comprising this structure */
+  tiles: Array<{
+    x: number;
+    y: number;
+    tileId: string;
+    height: number;
+  }>;
+}
+
+/**
  * Chunk data (generated terrain for a zone)
  */
 export interface ChunkData {
   /** Zone ID this chunk belongs to */
   zoneId: string;
   /** Tile data (2D array of tile IDs) */
-  tiles: number[][];
+  tiles: number[][]; // Keep as number[][] for now - Phase 13-03 adds migration
+  /** Height data (2D array of elevation levels 0-5) - parallel to tiles[][] */
+  heights: number[][];
+  /** Structure data (walls, buildings) */
+  structures: TileStructure[];
   /** Collision map (true = blocked) */
   collisions: boolean[][];
   /** Spawn points for entities */
