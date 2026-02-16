@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature } from '@into-the-void/shared-types';
+import { ZONE_SIZE, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure } from '@into-the-void/shared-types';
 import { TileId } from '@into-the-void/world-gen';
 import { TileRenderer } from '../rendering/TileRenderer';
 import { EntityRenderer } from '../rendering/EntityRenderer';
@@ -44,6 +44,7 @@ export class WorldScene extends Phaser.Scene {
   private isoTransform: IsometricTransform | null = null;
   private depthSorter: DepthSorter | null = null;
   private currentHeights: number[][] | null = null;
+  private currentStructures: TileStructure[] = [];
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -383,7 +384,7 @@ export class WorldScene extends Phaser.Scene {
   private renderChunk(chunkData: ChunkData, biome: BiomeType): void {
     if (!this.tileRenderer || !this.isoTransform) return;
 
-    const { zoneId, tiles, heights } = chunkData;
+    const { zoneId, tiles, heights, structures } = chunkData;
 
     // Guard: Don't recreate container if it already exists (prevents memory leak)
     if (this.chunkContainers.has(zoneId)) {
@@ -410,13 +411,40 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
+    // Render structure walls (uses same side-face rendering as terrain)
+    for (const structure of structures) {
+      if (structure.type === 'wall') {
+        for (const wallTile of structure.tiles) {
+          // Create a modified heights array for structure rendering
+          // Structure height already includes base elevation, use as-is
+          // Parse tileId string back to number (TileId enum is numeric)
+          const tileId = parseInt(wallTile.tileId, 10) as TileId;
+          const tile = this.tileRenderer.createTileWithElevation(
+            wallTile.x,
+            wallTile.y,
+            tileId,
+            wallTile.height,
+            heights
+          );
+          tile.setData('isStructure', true);
+          tile.setData('structureHeight', wallTile.height);
+          container.add(tile);
+        }
+      }
+    }
+
     this.chunkContainers.set(zoneId, container);
 
     if (zoneId === this.currentZoneId) {
       this.currentBiome = biome;
       this.currentHeights = heights;
+      this.currentStructures = structures;
       if (this.zoneHUD) {
         this.zoneHUD.updateZone(zoneId, biome);
+      }
+      // Update minimap with structure markers
+      if (this.minimapCamera && structures.length > 0) {
+        this.minimapCamera.updateStructureMarkers(structures);
       }
     }
   }
