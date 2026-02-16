@@ -129,17 +129,21 @@ export class WorldScene extends Phaser.Scene {
       }
     });
 
-    // Setup camera zoom controls
-    this.input.on('wheel', (
-      _pointer: Phaser.Input.Pointer,
-      _gameObjects: Phaser.GameObjects.GameObject[],
-      _deltaX: number,
-      deltaY: number
-    ) => {
-      const zoom = this.cameras.main.zoom;
-      const newZoom = Phaser.Math.Clamp(zoom - deltaY * 0.001, 0.5, 2);
-      this.cameras.main.setZoom(newZoom);
-    });
+    // Set fixed zoom to show ~15x11 tiles viewport
+    this.cameras.main.setZoom(1.5);
+
+    // Disable scroll zoom to maintain fixed viewport
+    // (uncomment below to allow limited zoom adjustment)
+    // this.input.on('wheel', (
+    //   _pointer: Phaser.Input.Pointer,
+    //   _gameObjects: Phaser.GameObjects.GameObject[],
+    //   _deltaX: number,
+    //   deltaY: number
+    // ) => {
+    //   const zoom = this.cameras.main.zoom;
+    //   const newZoom = Phaser.Math.Clamp(zoom - deltaY * 0.001, 1.0, 2.0);
+    //   this.cameras.main.setZoom(newZoom);
+    // });
 
     // Click-to-move handler
     this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
