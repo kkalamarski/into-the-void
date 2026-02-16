@@ -83,8 +83,13 @@ export class WorldScene extends Phaser.Scene {
       this.updateLocalPlayerSprite(position, reconciling);
     });
 
-    // Initialize PathfindingController (after MovementController)
-    this.pathfindingController = new PathfindingController(this.movementController, this.moveDelay);
+    // Initialize PathfindingController with scene and isoTransform for path visualization
+    this.pathfindingController = new PathfindingController(
+      this.movementController,
+      this.moveDelay,
+      this,
+      this.isoTransform!
+    );
 
     // Initialize ChunkManager
     this.chunkManager = new ChunkManager(
