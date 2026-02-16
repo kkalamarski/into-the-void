@@ -32,9 +32,10 @@ export class EntityRenderer {
 
     const container = this.scene.add.container(screenPos.x, screenPos.y);
 
-    // Store grid position for depth sorting
+    // Store grid position and elevation for depth sorting
     container.setData('gridX', entity.position.x);
     container.setData('gridY', entity.position.y);
+    container.setData('elevation', 0);
 
     // Blob shadow at ground level (container origin)
     const shadow = this.scene.add.ellipse(0, 0, 40, 20, 0x000000, 0.3);
@@ -185,17 +186,19 @@ export class EntityRenderer {
   updateEntityPosition(
     container: Phaser.GameObjects.Container,
     gridX: number,
-    gridY: number
+    gridY: number,
+    elevation: number = 0
   ): void {
     const screenPos = this.isoTransform.gridToScreen(gridX, gridY);
     container.setPosition(screenPos.x, screenPos.y);
 
-    // Update stored grid position
+    // Update stored grid position and elevation
     container.setData('gridX', gridX);
     container.setData('gridY', gridY);
+    container.setData('elevation', elevation);
 
     // Update depth
-    const depth = this.isoTransform.calculateDepth(gridX, gridY);
+    const depth = this.isoTransform.calculateDepth(gridX, gridY, elevation);
     container.setDepth(depth);
   }
 

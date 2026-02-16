@@ -51,12 +51,13 @@ export class DepthSorter {
 
       const gridX = container.getData('gridX') as number;
       const gridY = container.getData('gridY') as number;
+      const elevation = (container.getData('elevation') as number) ?? 0;
 
       if (gridX === undefined || gridY === undefined) return;
 
       // Apply priority boost for local player
       const priorityBoost = id === this.localPlayerId ? this.localPlayerPriority : 0;
-      const depth = isoTransform.calculateDepth(gridX, gridY, priorityBoost);
+      const depth = isoTransform.calculateDepth(gridX, gridY, elevation, priorityBoost);
       container.setDepth(depth);
     });
 
@@ -75,11 +76,12 @@ export class DepthSorter {
   ): void {
     const gridX = container.getData('gridX') as number;
     const gridY = container.getData('gridY') as number;
+    const elevation = (container.getData('elevation') as number) ?? 0;
 
     if (gridX === undefined || gridY === undefined) return;
 
     const priorityBoost = entityId === this.localPlayerId ? this.localPlayerPriority : 0;
-    const depth = isoTransform.calculateDepth(gridX, gridY, priorityBoost);
+    const depth = isoTransform.calculateDepth(gridX, gridY, elevation, priorityBoost);
     container.setDepth(depth);
 
     // Remove from dirty set since we just updated
