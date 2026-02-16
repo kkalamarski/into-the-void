@@ -12,8 +12,8 @@ import { PathfindingController } from '../systems/PathfindingController';
 import { IsometricTransform } from '../utils/IsometricTransform';
 import { DepthSorter } from '../rendering/DepthSorter';
 
-const ISO_TILE_WIDTH = 128;
-const ISO_TILE_HEIGHT = 64;
+export const ISO_TILE_WIDTH = 128;
+export const ISO_TILE_HEIGHT = 64;
 
 export class WorldScene extends Phaser.Scene {
   private tileLayer: Phaser.GameObjects.Container | null = null;

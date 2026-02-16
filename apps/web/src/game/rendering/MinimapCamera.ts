@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { ZONE_SIZE } from '@into-the-void/shared-types';
-
-const TILE_SIZE = 96;
+import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../scenes/WorldScene';
 const MINIMAP_SIZE = 180;
 const MINIMAP_PADDING = 20;
 const MINIMAP_ZOOM = 0.15; // Zoomed out to show more area
@@ -30,7 +29,7 @@ export class MinimapCamera {
     // Configure minimap camera
     this.minimapCam.setZoom(MINIMAP_ZOOM);
     this.minimapCam.setBackgroundColor(0x111122);
-    this.minimapCam.setBounds(0, 0, ZONE_SIZE * TILE_SIZE, ZONE_SIZE * TILE_SIZE);
+    this.minimapCam.setBounds(0, 0, ZONE_SIZE * ISO_TILE_WIDTH, ZONE_SIZE * ISO_TILE_HEIGHT);
 
     // Give minimap camera a name for identification
     this.minimapCam.setName('minimap');
