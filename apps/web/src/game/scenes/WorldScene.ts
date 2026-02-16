@@ -43,6 +43,7 @@ export class WorldScene extends Phaser.Scene {
   private minimapCamera: MinimapCamera | null = null;
   private isoTransform: IsometricTransform | null = null;
   private depthSorter: DepthSorter | null = null;
+  private currentHeights: number[][] | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -369,7 +370,7 @@ export class WorldScene extends Phaser.Scene {
   private renderChunk(chunkData: ChunkData, biome: BiomeType): void {
     if (!this.tileRenderer || !this.isoTransform) return;
 
-    const { zoneId, tiles } = chunkData;
+    const { zoneId, tiles, heights } = chunkData;
 
     // Guard: Don't recreate container if it already exists (prevents memory leak)
     if (this.chunkContainers.has(zoneId)) {
@@ -390,7 +391,8 @@ export class WorldScene extends Phaser.Scene {
     for (let y = 0; y < ZONE_SIZE; y++) {
       for (let x = 0; x < ZONE_SIZE; x++) {
         const tileId = tiles[y][x] as TileId;
-        const tile = this.tileRenderer.createTile(x, y, tileId);
+        const elevation = heights[y][x];
+        const tile = this.tileRenderer.createTileWithElevation(x, y, tileId, elevation, heights);
         container.add(tile);
       }
     }
