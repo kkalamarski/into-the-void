@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 16 - Structure Walls & Pathfinding
+**Current focus:** Milestone v1.4 - Infinite World & Seamless Chunks
 
 ## Current Position
 
-Phase: 16 of 16 (Structure Walls & Pathfinding) — COMPLETE
-Plan: All 5 plans executed
-Status: Milestone v1.3 complete
-Last activity: 2026-02-16 — Phase 16 execution complete, v1.3 shipped
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-16 — Milestone v1.4 started
 
-Progress: [████████████████] 100% (16/16 phases complete)
+Progress: [░░░░░░░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -125,10 +125,12 @@ None yet.
 - Adjacent chunk loading times out (server zone:request not implemented)
 - WebSocket auth without handshake validation (guards on all handlers)
 
-**v1.3 Planning Notes:**
-- Research suggests 4-phase structure aligns with quick depth setting
-- All phases use standard patterns (no additional research needed)
-- Critical: Implement composite depth calculation in Phase 14 before rendering
+**v1.4 Planning Notes:**
+- Biome noise layer: world-coordinate based, not chunk-based
+- Mixed-scale biomes: large regions + micro-variation
+- Elevation: per-biome rules with edge blending
+- Chunk streaming: viewport + 1-chunk buffer pre-load
+- Server authoritative: generates all chunks on demand
 
 ### Known Gaps
 
@@ -140,10 +142,10 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Phase 16 and v1.3 milestone complete
+Stopped at: Milestone v1.4 requirements definition
 Resume file: None
 
-**Next action:** Run `/gsd:complete-milestone` to archive v1.3
+**Next action:** Define requirements, create roadmap
 
 ---
-*Last updated: 2026-02-16 after Phase 16 execution complete, v1.3 shipped*
+*Last updated: 2026-02-16 after v1.4 milestone started*

@@ -24,19 +24,18 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~9,120 LOC TypeScript
 
-## Current Milestone: v1.3 Elevation & Structures
+## Current Milestone: v1.4 Infinite World & Seamless Chunks
 
-**Goal:** Add vertical dimension to the world with terrain elevation, structure walls, and a scalable tile definition system.
+**Goal:** Transform the world from chunk-locked biomes to a truly infinite, seamlessly streaming world where biomes flow naturally across boundaries.
 
 **Target features:**
-- Tile definition system (TileDefinition interface, TileRegistry, hooks)
-- Terrain elevation (0-5 levels, side-face rendering)
-- Movement rules (1-level diff walkable, 2+ blocks)
-- Structure walls (variable height by type, always blocking)
-- Full occlusion depth sorting with height
-- World-gen elevation noise and structure placement
-- Pathfinding with elevation awareness
-- Minimap structure markers
+- Biome noise layer (world-coordinate based, not chunk-based)
+- Mixed-scale biomes (large regions + micro-variation within)
+- Continuous elevation with per-biome rules and edge blending
+- Chunk streaming based on viewport + 1-chunk buffer
+- Server-side chunk generation and caching
+- Seamless rendering with no pop-in
+- Entity consistency across chunk boundaries
 
 ## Core Value
 
@@ -62,15 +61,22 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Creature behavior icons (H/O/P/M) — v1.1
 - ✓ HUD with health, energy, zone name — v1.1
 - ✓ Minimap with player position — v1.1
+- ✓ Tile definition system with properties and hooks — v1.3
+- ✓ Terrain elevation (0-5 levels) with side-face rendering — v1.3
+- ✓ Structure walls with variable height — v1.3
+- ✓ Elevation-aware movement and pathfinding — v1.3
+- ✓ Depth sorting with height occlusion — v1.3
+- ✓ World-gen elevation and structure placement — v1.3
 
 ### Active
 
-- [ ] Tile definition system with properties and hooks
-- [ ] Terrain elevation (0-5 levels) with side-face rendering
-- [ ] Structure walls with variable height
-- [ ] Elevation-aware movement and pathfinding
-- [ ] Depth sorting with height occlusion
-- [ ] World-gen elevation and structure placement
+- [ ] Biome noise layer independent of chunk boundaries
+- [ ] Mixed-scale biome distribution (macro + micro)
+- [ ] Continuous elevation with biome-based rules
+- [ ] Viewport-based chunk streaming with pre-loading
+- [ ] Server chunk generation and caching
+- [ ] Seamless cross-chunk rendering
+- [ ] Entity visibility consistency across chunks
 
 ### Out of Scope
 
@@ -111,4 +117,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-16 after v1.3 milestone start*
+*Last updated: 2026-02-16 after v1.4 milestone start*
