@@ -44,6 +44,9 @@ importers:
       drizzle-orm:
         specifier: ^0.30.0
         version: 0.30.10(@types/pg@8.16.0)(@types/react@18.3.28)(pg@8.18.0)(react@18.3.1)
+      heap-js:
+        specifier: ^2.7.1
+        version: 2.7.1
       ioredis:
         specifier: ^5.4.0
         version: 5.9.3
@@ -3289,6 +3292,10 @@ packages:
   he@1.2.0:
     resolution: {integrity: sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==}
     hasBin: true
+
+  heap-js@2.7.1:
+    resolution: {integrity: sha512-EQfezRg0NCZGNlhlDR3Evrw1FVL2G3LhU7EgPoxufQKruNBSYA8MiRPHeWbU+36o+Fhel0wMwM+sLEiBAlNLJA==}
+    engines: {node: '>=10.0.0'}
 
   heap@0.2.7:
     resolution: {integrity: sha512-2bsegYkkHO+h/9MGbn6KWcE45cHZgPANo5LXF7EvWdT0yT2EguSVO1nDgU5c8+ZOPwp2vMNa7YFsJhVcDR9Sdg==}
@@ -8231,6 +8238,8 @@ snapshots:
       function-bind: 1.1.2
 
   he@1.2.0: {}
+
+  heap-js@2.7.1: {}
 
   heap@0.2.7: {}
 
