@@ -26,6 +26,7 @@ export class WorldScene extends Phaser.Scene {
   private entityRenderer: EntityRenderer | null = null;
   private tileSprites: Phaser.GameObjects.GameObject[][] = [];
   private entitySprites: Map<string, Phaser.GameObjects.Container> = new Map();
+  private entityZoneMap: Map<string, Set<string>> = new Map(); // zoneId -> Set<entityId>
   private playerSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
   private localPlayer: Phaser.GameObjects.Sprite | null = null;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
@@ -641,6 +642,9 @@ export class WorldScene extends Phaser.Scene {
       container.destroy(true);
       this.chunkContainers.delete(zoneId);
     }
+
+    // Despawn entities belonging to this zone to prevent memory leaks
+    this.despawnEntitiesForZone(zoneId);
   }
 
   loadZone(tiles: number[][], collisions: boolean[][]): void {
@@ -662,7 +666,7 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  spawnEntity(entity: Entity): void {
+  spawnEntity(entity: Entity, zoneId?: string): void {
     if (this.entitySprites.has(entity.id) || !this.entityRenderer) return;
 
     // Check visibility using world coordinate distance
@@ -673,6 +677,14 @@ export class WorldScene extends Phaser.Scene {
     const elevation = this.getTileElevation(entity.position.x, entity.position.y);
     const container = this.entityRenderer.createEntityContainer(entity, elevation);
     this.entitySprites.set(entity.id, container);
+
+    // Track zone ownership for cleanup on chunk unload
+    if (zoneId) {
+      if (!this.entityZoneMap.has(zoneId)) {
+        this.entityZoneMap.set(zoneId, new Set());
+      }
+      this.entityZoneMap.get(zoneId)!.add(entity.id);
+    }
 
     if (this.depthSorter) {
       this.depthSorter.markDirty(entity.id);
@@ -688,11 +700,25 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /**
+   * Despawn all entities belonging to a zone (called on chunk unload)
+   */
+  despawnEntitiesForZone(zoneId: string): void {
+    const entityIds = this.entityZoneMap.get(zoneId);
+    if (entityIds) {
+      entityIds.forEach(entityId => {
+        this.despawnEntity(entityId);
+      });
+      this.entityZoneMap.delete(zoneId);
+    }
+  }
+
+  /**
    * Clear all entities (for zone transitions)
    */
   clearEntities(): void {
     this.entitySprites.forEach((container) => container.destroy(true));
     this.entitySprites.clear();
+    this.entityZoneMap.clear(); // Also clear zone tracking
   }
 
   /**
