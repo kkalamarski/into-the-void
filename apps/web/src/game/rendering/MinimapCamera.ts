@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { ZONE_SIZE } from '@into-the-void/shared-types';
 
-const TILE_SIZE = 32;
+const TILE_SIZE = 96;
 const MINIMAP_SIZE = 180;
 const MINIMAP_PADDING = 20;
 const MINIMAP_ZOOM = 0.15; // Zoomed out to show more area
@@ -53,6 +53,10 @@ export class MinimapCamera {
     this.playerIndicator.setDepth(1001);
     this.updatePlayerIndicator();
 
+    // Make minimap camera ignore UI elements (border and player indicator)
+    // They should only render on main camera
+    this.minimapCam.ignore([this.border, this.playerIndicator]);
+
     // Handle window resize
     this.scene.scale.on('resize', this.handleResize, this);
   }
@@ -60,6 +64,15 @@ export class MinimapCamera {
   startFollow(target: Phaser.GameObjects.Sprite): void {
     if (this.minimapCam) {
       this.minimapCam.startFollow(target, true);
+    }
+  }
+
+  /**
+   * Make minimap camera ignore additional game objects (e.g., ZoneHUD elements)
+   */
+  ignore(gameObjects: Phaser.GameObjects.GameObject[]): void {
+    if (this.minimapCam) {
+      this.minimapCam.ignore(gameObjects);
     }
   }
 

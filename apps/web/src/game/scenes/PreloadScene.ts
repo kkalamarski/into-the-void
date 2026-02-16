@@ -54,7 +54,7 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private generateTileTextures(): void {
-    const TILE_SIZE = 32;
+    const TILE_SIZE = 96;
     const graphics = this.make.graphics({ x: 0, y: 0 });
 
     // Define all tile textures (16 total - 8 biomes, 2 tiles each)
@@ -95,36 +95,36 @@ export class PreloadScene extends Phaser.Scene {
       graphics.clear();
     }
 
-    // Player
+    // Player (centered at 48,48 for 96px tile)
     graphics.fillStyle(0x7b68ee);
-    graphics.fillCircle(16, 16, 12);
+    graphics.fillCircle(48, 48, 36);
     graphics.generateTexture('player', TILE_SIZE, TILE_SIZE);
     graphics.clear();
 
-    // Creature
+    // Creature (centered at 48,48 for 96px tile)
     graphics.fillStyle(0xff4444);
-    graphics.fillCircle(16, 16, 10);
+    graphics.fillCircle(48, 48, 30);
     graphics.generateTexture('creature', TILE_SIZE, TILE_SIZE);
     graphics.clear();
 
-    // Mineral
+    // Mineral (centered square for 96px tile)
     graphics.fillStyle(0x44ffff);
-    graphics.fillRect(8, 8, 16, 16);
+    graphics.fillRect(24, 24, 48, 48);
     graphics.generateTexture('mineral', TILE_SIZE, TILE_SIZE);
     graphics.clear();
 
-    // Item
+    // Item (smaller circle centered for 96px tile)
     graphics.fillStyle(0xffff44);
-    graphics.fillCircle(16, 16, 6);
+    graphics.fillCircle(48, 48, 18);
     graphics.generateTexture('item', TILE_SIZE, TILE_SIZE);
     graphics.clear();
 
-    // Plant
+    // Plant (triangle centered for 96px tile)
     graphics.fillStyle(0x44cc44); // green
     graphics.fillTriangle(
-      16, 4,   // top
-      8, 28,   // bottom left
-      24, 28   // bottom right
+      48, 12,  // top
+      24, 84,  // bottom left
+      72, 84   // bottom right
     );
     graphics.generateTexture('plant', TILE_SIZE, TILE_SIZE);
     graphics.clear();

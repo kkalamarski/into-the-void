@@ -10,7 +10,7 @@ import { MinimapCamera } from '../rendering/MinimapCamera';
 import { MovementController } from '../systems/MovementController';
 import { PathfindingController } from '../systems/PathfindingController';
 
-const TILE_SIZE = 32;
+const TILE_SIZE = 96;
 
 export class WorldScene extends Phaser.Scene {
   private tileLayer: Phaser.GameObjects.Container | null = null;
@@ -61,6 +61,11 @@ export class WorldScene extends Phaser.Scene {
     this.minimapCamera = new MinimapCamera(this);
     this.minimapCamera.create();
 
+    // Make minimap camera ignore ZoneHUD elements (they have scrollFactor 0)
+    if (this.zoneHUD) {
+      this.minimapCamera.ignore(this.zoneHUD.getGameObjects());
+    }
+
     // Initialize MovementController
     this.movementController = new MovementController();
     this.movementController.setPositionUpdateHandler((position, reconciling) => {
@@ -100,6 +105,13 @@ export class WorldScene extends Phaser.Scene {
     }
 
     // Tiles and player will be loaded via loadZoneFromState() when zone:state event arrives
+
+    // Cancel pathfinding when game loses focus (prevents timer issues)
+    this.game.events.on('blur', () => {
+      if (this.pathfindingController?.isPathActive()) {
+        this.pathfindingController.cancelPath();
+      }
+    });
 
     // Setup camera zoom controls
     this.input.on('wheel', (
@@ -173,9 +185,17 @@ export class WorldScene extends Phaser.Scene {
     this.localPlayer.setDepth(10);
   }
 
+  private lastCullTime = 0;
+  private cullInterval = 100; // Only check viewport culling every 100ms
+
   update(time: number): void {
     this.handleInput(time);
-    this.updateVisibleTiles();
+
+    // Throttle viewport culling to reduce CPU usage
+    if (time - this.lastCullTime >= this.cullInterval) {
+      this.lastCullTime = time;
+      this.updateVisibleTiles();
+    }
   }
 
   private handleInput(time: number): void {
@@ -344,6 +364,22 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Clear all entities (for zone transitions)
+   */
+  clearEntities(): void {
+    this.entitySprites.forEach((container) => container.destroy(true));
+    this.entitySprites.clear();
+  }
+
+  /**
+   * Clear all other players (for zone transitions)
+   */
+  clearOtherPlayers(): void {
+    this.playerSprites.forEach((sprite) => sprite.destroy());
+    this.playerSprites.clear();
+  }
+
   updateEntity(entityId: string, changes: Partial<Entity>): void {
     const container = this.entitySprites.get(entityId);
     if (!container) return;
@@ -406,6 +442,8 @@ export class WorldScene extends Phaser.Scene {
   movePlayer(playerId: string, position: Position): void {
     const sprite = this.playerSprites.get(playerId);
     if (sprite) {
+      // Kill any existing tweens on this sprite to prevent accumulation
+      this.tweens.killTweensOf(sprite);
       this.tweens.add({
         targets: sprite,
         x: position.x * TILE_SIZE + TILE_SIZE / 2,
@@ -423,6 +461,8 @@ export class WorldScene extends Phaser.Scene {
     const targetY = position.y * TILE_SIZE + TILE_SIZE / 2;
 
     if (reconciling && (this.localPlayer.x !== targetX || this.localPlayer.y !== targetY)) {
+      // Kill any existing tweens to prevent accumulation
+      this.tweens.killTweensOf(this.localPlayer);
       // Server correction - tween to correct position
       this.tweens.add({
         targets: this.localPlayer,
@@ -443,7 +483,8 @@ export class WorldScene extends Phaser.Scene {
     if (!this.localPlayer) {
       this.createLocalPlayer(position);
       // Set up camera to follow player
-      this.cameras.main.startFollow(this.localPlayer!, true, 0.1, 0.1);
+      // Camera instantly follows player (1, 1 = no lerp), keeping player centered
+      this.cameras.main.startFollow(this.localPlayer!, true, 1, 1);
       // Also set minimap to follow player
       if (this.minimapCamera) {
         this.minimapCamera.startFollow(this.localPlayer!);
