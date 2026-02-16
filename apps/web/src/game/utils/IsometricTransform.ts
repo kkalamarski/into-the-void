@@ -1,6 +1,7 @@
 export class IsometricTransform {
   private tileWidthHalf: number;
   private tileHeightHalf: number;
+  private elevationWeight = 0.1; // Conservative weight for elevation in depth calculation
 
   constructor(
     public readonly tileWidth: number = 128,
@@ -48,9 +49,18 @@ export class IsometricTransform {
   /**
    * Calculate depth value for Y-based sorting.
    * Uses screen Y position with grid X as tiebreaker (rightmost in front).
+   * Elevation component ensures entities on higher terrain render in front.
    */
-  calculateDepth(gridX: number, gridY: number, priorityBoost: number = 0): number {
+  calculateDepth(gridX: number, gridY: number, elevation: number = 0, priorityBoost: number = 0): number {
     const screen = this.gridToScreen(gridX, gridY);
-    return screen.y + gridX * 0.0001 + priorityBoost;
+    return screen.y + (gridX * 0.0001) + (elevation * this.elevationWeight) + priorityBoost;
+  }
+
+  /**
+   * Set elevation weight for runtime tuning of depth calculation.
+   * Default: 0.1 (conservative). Research suggests 0.05-0.2 is safe range.
+   */
+  setElevationWeight(weight: number): void {
+    this.elevationWeight = weight;
   }
 }
