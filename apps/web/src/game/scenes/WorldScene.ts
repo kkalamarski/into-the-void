@@ -468,10 +468,6 @@ export class WorldScene extends Phaser.Scene {
       if (this.zoneHUD) {
         this.zoneHUD.updateZone(zoneId, biome);
       }
-      // Update minimap with structure markers
-      if (this.minimapCamera && structures.length > 0) {
-        this.minimapCamera.updateStructureMarkers(structures);
-      }
     }
   }
 

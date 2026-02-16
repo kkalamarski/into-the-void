@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, TileStructure } from '@into-the-void/shared-types';
+import { ZONE_SIZE } from '@into-the-void/shared-types';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../scenes/WorldScene';
-import { IsometricTransform } from '../utils/IsometricTransform';
 
 const MINIMAP_SIZE = 180;
 const MINIMAP_PADDING = 20;
@@ -11,13 +10,9 @@ export class MinimapCamera {
   private scene: Phaser.Scene;
   private minimapCam: Phaser.Cameras.Scene2D.Camera | null = null;
   private playerIndicator: Phaser.GameObjects.Graphics | null = null;
-  private structureMarkers: Phaser.GameObjects.Graphics | null = null;
-  private isoTransform: IsometricTransform | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    // Create local transform for coordinate conversion
-    this.isoTransform = new IsometricTransform(ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
   }
 
   create(): void {
@@ -52,13 +47,8 @@ export class MinimapCamera {
     this.playerIndicator.setDepth(1001);
     this.updatePlayerIndicator();
 
-    // Create graphics for structure markers (rendered on main camera)
-    this.structureMarkers = this.scene.add.graphics();
-    this.structureMarkers.setScrollFactor(1); // Moves with world
-    this.structureMarkers.setDepth(999); // Above terrain, below HUD
-
-    // Make minimap camera ignore player indicator and structure markers (only render on main camera)
-    this.minimapCam.ignore([this.playerIndicator, this.structureMarkers]);
+    // Make minimap camera ignore player indicator (only render on main camera)
+    this.minimapCam.ignore([this.playerIndicator]);
 
     // Handle window resize
     this.scene.scale.on('resize', this.handleResize, this);
@@ -75,51 +65,7 @@ export class MinimapCamera {
    */
   ignore(gameObjects: Phaser.GameObjects.GameObject[]): void {
     if (this.minimapCam) {
-      const toIgnore = [...gameObjects];
-      if (this.structureMarkers) {
-        toIgnore.push(this.structureMarkers);
-      }
-      this.minimapCam.ignore(toIgnore);
-    }
-  }
-
-  /**
-   * Update structure markers for minimap display.
-   * Renders wall positions as orange rectangles on the minimap.
-   */
-  updateStructureMarkers(structures: TileStructure[]): void {
-    if (!this.structureMarkers || !this.isoTransform) return;
-
-    this.structureMarkers.clear();
-
-    // Wall markers: orange fill with white border
-    this.structureMarkers.fillStyle(0xff6b35, 0.9);
-    this.structureMarkers.lineStyle(1, 0xffffff, 0.5);
-
-    // Scale marker size for minimap zoom (MINIMAP_ZOOM = 0.1)
-    // At zoom 0.1, we need markers ~40px to be visible as ~4px
-    const markerSize = 32; // World units, appears as ~3.2px at zoom 0.1
-
-    for (const structure of structures) {
-      if (structure.type === 'wall' || structure.type === 'feature') {
-        for (const tile of structure.tiles) {
-          const screenPos = this.isoTransform.gridToScreen(tile.x, tile.y);
-
-          // Draw small rectangle at tile position
-          this.structureMarkers.fillRect(
-            screenPos.x - markerSize / 2,
-            screenPos.y - markerSize / 2,
-            markerSize,
-            markerSize
-          );
-          this.structureMarkers.strokeRect(
-            screenPos.x - markerSize / 2,
-            screenPos.y - markerSize / 2,
-            markerSize,
-            markerSize
-          );
-        }
-      }
+      this.minimapCam.ignore(gameObjects);
     }
   }
 
@@ -162,10 +108,6 @@ export class MinimapCamera {
     if (this.playerIndicator) {
       this.playerIndicator.destroy();
       this.playerIndicator = null;
-    }
-    if (this.structureMarkers) {
-      this.structureMarkers.destroy();
-      this.structureMarkers = null;
     }
   }
 }
