@@ -672,7 +672,9 @@ export class WorldScene extends Phaser.Scene {
     // Update position
     if (changes.position) {
       const elevation = this.getTileElevation(changes.position.x, changes.position.y);
-      this.entityRenderer.updateEntityPosition(container, changes.position.x, changes.position.y, elevation);
+      // Convert to world coordinates for EntityRenderer
+      const { worldX, worldY } = this.positionToWorldCoords(changes.position);
+      this.entityRenderer.updateEntityPosition(container, worldX, worldY, elevation);
 
       if (this.depthSorter) {
         this.depthSorter.markDirty(entityId);
