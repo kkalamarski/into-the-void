@@ -163,8 +163,12 @@ export class WorldScene extends Phaser.Scene {
       // Convert screen position to world position
       const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
 
-      // Convert to tile coordinates using isometric transform
-      const gridPos = this.isoTransform.screenToTile(worldPoint.x, worldPoint.y);
+      // Convert to tile coordinates using elevation-aware transform
+      const gridPos = this.isoTransform.screenToTileWithElevation(
+        worldPoint.x,
+        worldPoint.y,
+        (x, y) => this.getTileElevation(x, y)
+      );
 
       // Show click marker for visual feedback
       if (this.hoverController) {
