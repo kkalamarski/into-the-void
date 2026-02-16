@@ -91,6 +91,13 @@ export class ZoneHUD {
   }
 
   /**
+   * Get game objects for camera ignore lists
+   */
+  getGameObjects(): Phaser.GameObjects.GameObject[] {
+    return [this.zoneNameText, this.tierText];
+  }
+
+  /**
    * Cleanup
    */
   destroy(): void {

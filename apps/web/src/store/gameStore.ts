@@ -148,6 +148,10 @@ gameSocket.on('zone:state', (data: ZoneState) => {
   if (game) {
     const worldScene = game.getWorldScene();
     if (worldScene) {
+      // Clear old entities and players first to prevent duplicates
+      worldScene.clearEntities();
+      worldScene.clearOtherPlayers();
+
       // Spawn entities
       for (const entity of entities) {
         worldScene.spawnEntity(entity);
