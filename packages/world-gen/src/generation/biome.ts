@@ -73,6 +73,22 @@ export class BiomeGenerator {
   }
 
   /**
+   * Get domain warp offset for organic biome boundaries.
+   * Uses noise to offset coordinates before region lookup.
+   */
+  private getWarpOffset(worldX: number, worldY: number): { x: number; y: number } {
+    const warpScale = 0.003; // Controls boundary wiggle frequency
+    const regionSize = this.params.minBiomeChunks * this.params.chunkSize;
+    const warpStrength = regionSize * 0.4; // 40% of region size for organic edges
+
+    // Use different noise octaves for x and y warp
+    const warpX = this.temperatureNoise.fbm(worldX * warpScale, worldY * warpScale, 2) * warpStrength;
+    const warpY = this.moistureNoise.fbm(worldX * warpScale + 500, worldY * warpScale + 500, 2) * warpStrength;
+
+    return { x: warpX, y: warpY };
+  }
+
+  /**
    * Snap world coordinates to biome region center.
    * Guarantees minimum biome size by sampling at region centers only.
    */
@@ -88,11 +104,16 @@ export class BiomeGenerator {
 
   /**
    * Determine biome at a world position.
-   * Snaps to region centers to enforce minimum biome size.
+   * Uses domain warping for organic boundaries while maintaining minimum region sizes.
    */
   getBiome(worldX: number, worldY: number): BiomeType {
-    // Snap to region center for consistent biome within minimum region
-    const center = this.getRegionCenter(worldX, worldY);
+    // Apply domain warping for organic boundaries
+    const warp = this.getWarpOffset(worldX, worldY);
+    const warpedX = worldX + warp.x;
+    const warpedY = worldY + warp.y;
+
+    // Snap warped coordinates to region center
+    const center = this.getRegionCenter(warpedX, warpedY);
     const temp = this.getTemperature(center.x, center.y);
     const moisture = this.getMoisture(center.x, center.y);
     const elevation = this.getElevation(center.x, center.y);
