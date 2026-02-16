@@ -8,12 +8,16 @@ interface BiomeParams {
   temperatureScale: number;
   moistureScale: number;
   elevationScale: number;
+  minBiomeChunks: number; // Minimum biome region size in chunks
+  chunkSize: number; // Tiles per chunk (ZONE_SIZE)
 }
 
 const DEFAULT_BIOME_PARAMS: BiomeParams = {
-  temperatureScale: 0.001,   // ~1000 tiles per biome region
-  moistureScale: 0.0015,     // ~667 tiles per moisture zone
-  elevationScale: 0.0006,    // ~1667 tiles per elevation band
+  temperatureScale: 0.001,
+  moistureScale: 0.0015,
+  elevationScale: 0.0006,
+  minBiomeChunks: 20, // Minimum 20 chunks per biome region
+  chunkSize: 32, // ZONE_SIZE
 };
 
 /**
@@ -69,12 +73,29 @@ export class BiomeGenerator {
   }
 
   /**
-   * Determine biome at a world position
+   * Snap world coordinates to biome region center.
+   * Guarantees minimum biome size by sampling at region centers only.
+   */
+  private getRegionCenter(worldX: number, worldY: number): { x: number; y: number } {
+    const regionSize = this.params.minBiomeChunks * this.params.chunkSize;
+    const regionX = Math.floor(worldX / regionSize);
+    const regionY = Math.floor(worldY / regionSize);
+    return {
+      x: regionX * regionSize + regionSize / 2,
+      y: regionY * regionSize + regionSize / 2,
+    };
+  }
+
+  /**
+   * Determine biome at a world position.
+   * Snaps to region centers to enforce minimum biome size.
    */
   getBiome(worldX: number, worldY: number): BiomeType {
-    const temp = this.getTemperature(worldX, worldY);
-    const moisture = this.getMoisture(worldX, worldY);
-    const elevation = this.getElevation(worldX, worldY);
+    // Snap to region center for consistent biome within minimum region
+    const center = this.getRegionCenter(worldX, worldY);
+    const temp = this.getTemperature(center.x, center.y);
+    const moisture = this.getMoisture(center.x, center.y);
+    const elevation = this.getElevation(center.x, center.y);
 
     // High elevation = special biomes
     if (elevation > 0.8) {
