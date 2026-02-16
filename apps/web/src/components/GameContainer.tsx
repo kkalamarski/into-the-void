@@ -38,6 +38,8 @@ const GameContainer: React.FC = () => {
   }, [setGame]);
 
   // Load zone data into WorldScene when Phaser is ready and zoneState exists
+  // IMPORTANT: Only depends on zoneState.zoneId to prevent re-rendering tiles on every player movement
+  const zoneId = zoneState?.zoneId;
   useEffect(() => {
     if (!phaserReady || !gameRef.current || !zoneState) return;
 
@@ -45,7 +47,7 @@ const GameContainer: React.FC = () => {
     if (!worldScene || !gameRef.current.isWorldSceneActive()) return;
 
     // zoneState contains the zone:state event data with tiles
-    const { chunk, biome } = zoneState;
+    const { chunk, biome, players } = zoneState;
 
     // CRITICAL: Pass tile data from zone:state to WorldScene
     // This is the key link that connects socket data to Phaser rendering
@@ -58,9 +60,16 @@ const GameContainer: React.FC = () => {
       worldScene.setCollisionMap(chunk.collisions);
     }
 
-    // Update player position in scene
-    if (player?.position) {
-      worldScene.updateLocalPlayer(player.position);
+    // Spawn other players from zone state (handles race condition when zone:state
+    // arrives before Phaser is ready - gameStore handler may have missed them)
+    if (players && players.length > 0) {
+      const currentPlayerId = player?.id;
+      worldScene.clearOtherPlayers();
+      for (const p of players) {
+        if (p.id !== currentPlayerId) {
+          worldScene.addPlayer(p);
+        }
+      }
     }
 
     // Set up chunk request handler for adjacent chunks
@@ -68,7 +77,17 @@ const GameContainer: React.FC = () => {
       gameSocket.emit('zone:request', { zoneId: requestZoneId });
     });
 
-  }, [phaserReady, zoneState, player]);
+  }, [phaserReady, zoneId, player?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Update player position in scene separately (runs on position changes)
+  useEffect(() => {
+    if (!phaserReady || !gameRef.current || !player?.position) return;
+
+    const worldScene = gameRef.current.getWorldScene();
+    if (!worldScene || !gameRef.current.isWorldSceneActive()) return;
+
+    worldScene.updateLocalPlayer(player.position);
+  }, [phaserReady, player?.position?.x, player?.position?.y]);
 
   // Listen for additional chunk data from server (for adjacent chunks)
   useEffect(() => {
