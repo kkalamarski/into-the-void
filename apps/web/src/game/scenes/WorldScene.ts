@@ -45,6 +45,8 @@ export class WorldScene extends Phaser.Scene {
   private depthSorter: DepthSorter | null = null;
   private currentHeights: number[][] | null = null;
   private currentStructures: TileStructure[] = [];
+  private lastOcclusionTime = 0;
+  private occlusionInterval = 100; // Only check occlusion every 100ms
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -275,6 +277,12 @@ export class WorldScene extends Phaser.Scene {
       this.depthSorter.update(time, allContainers, this.isoTransform);
     }
 
+    // Throttled occlusion check
+    if (time - this.lastOcclusionTime >= this.occlusionInterval) {
+      this.lastOcclusionTime = time;
+      this.updateEntityOcclusion();
+    }
+
     // Update hover detection
     if (this.hoverController) {
       this.hoverController.update();
@@ -335,6 +343,27 @@ export class WorldScene extends Phaser.Scene {
         }
       }
     }
+  }
+
+  /**
+   * Update entity visibility based on occlusion by tall structures.
+   */
+  private updateEntityOcclusion(): void {
+    if (!this.entityRenderer) return;
+
+    // Get current zone's chunk container
+    const chunkContainer = this.chunkContainers.get(this.currentZoneId) ?? null;
+
+    // Apply occlusion to entities
+    this.entityRenderer.applyOcclusion(this.entitySprites, chunkContainer);
+
+    // Also apply to remote players (convert Map<string, Sprite> to Map<string, Container>)
+    const playerContainers = new Map<string, Phaser.GameObjects.Container>();
+    this.playerSprites.forEach((sprite, id) => {
+      // playerSprites actually contain Containers cast as Sprites (from addPlayer)
+      playerContainers.set(id, sprite as unknown as Phaser.GameObjects.Container);
+    });
+    this.entityRenderer.applyOcclusion(playerContainers, chunkContainer);
   }
 
   // Methods to be called from network layer
