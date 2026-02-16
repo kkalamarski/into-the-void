@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 ## Current Position
 
-Phase: 10 of 12 (Multiplayer Integration)
+Phase: 11 of 12 (UI Integration)
 Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-02-16 — Completed 10-01-PLAN.md (Remote Player Depth Sorting)
+Last activity: 2026-02-16 — Completed 11-01-PLAN.md (MinimapCamera and UI Integration)
 
-Progress: [████████████████░░░░] 83% (10 of 12 phases complete)
+Progress: [██████████████████░░] 92% (11 of 12 phases complete)
 
 ## Performance Metrics
 
@@ -29,12 +29,12 @@ Progress: [████████████████░░░░] 83% (10
 |-----------|--------|-------|----------|
 | v1.0 Auth & Character Screens | 1-3 | 7 | 2026-02-13 → 2026-02-14 |
 | v1.1 Post-Login Game Experience | 4-7 | 20 | 2026-02-14 → 2026-02-16 |
-| v1.2 Isometric View | 8-12 | 6 | 2026-02-16 → In progress |
+| v1.2 Isometric View | 8-12 | 7 | 2026-02-16 → In progress |
 
 **Recent Trend:**
 - v1.0: 2 days (7 plans)
 - v1.1: 3 days (20 plans)
-- v1.2: In progress (6 plans, Phase 8-10 complete)
+- v1.2: In progress (7 plans, Phase 8-11 complete)
 - Trend: Stable velocity, good parallelization
 
 **Recent Plans:**
@@ -47,6 +47,7 @@ Progress: [████████████████░░░░] 83% (10
 | Phase 09 P01 | 70 | 1 tasks | 1 files |
 | Phase 09 P02 | 167 | 2 tasks | 3 files |
 | Phase 10 P01 | 81 | 2 tasks | 1 files |
+| Phase 11 P01 | ~15m | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,8 @@ Recent decisions affecting current work:
 - [Phase 09]: Phaser Graphics for path visualization (depth 10000, green 0x00ff00)
 - [Phase 10]: Remote players included in depth sorting via unified container map
 - [Phase 10]: GameContainer spawns players from zoneState when Phaser ready (race condition fix)
+- [Phase 11]: Minimap uses CSS border overlay (Phaser Graphics can't render on top of camera viewport)
+- [Phase 11]: GameContainer spawns entities from zoneState when Phaser ready (same race condition fix as players)
 
 ### Pending Todos
 
@@ -85,10 +88,10 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 10-01-PLAN.md (Remote Player Depth Sorting) — Phase 10 complete
+Stopped at: Completed 11-01-PLAN.md (MinimapCamera and UI Integration) — Phase 11 complete
 Resume file: None
 
-**Next action:** Begin Phase 11 planning or continue with next phase in milestone v1.2
+**Next action:** Plan Phase 12 (Polish) or continue with next phase in milestone v1.2
 
 ---
 *v1.2 roadmap created: 2026-02-16*
