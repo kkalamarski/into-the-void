@@ -5,6 +5,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@into-the-void/shared-types": "workspace:*"
+    "@into-the-void/shared-types": "workspace:*",
+    "@into-the-void/tiles": "workspace:*"
   }
 }

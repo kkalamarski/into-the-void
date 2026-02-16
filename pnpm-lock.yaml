@@ -199,11 +199,20 @@ importers:
 
   packages/shared-types: {}
 
+  packages/tiles:
+    dependencies:
+      '@into-the-void/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
   packages/world-gen:
     dependencies:
       '@into-the-void/shared-types':
         specifier: workspace:*
         version: link:../shared-types
+      '@into-the-void/tiles':
+        specifier: workspace:*
+        version: link:../tiles
 
 packages:
 
