@@ -92,10 +92,14 @@ Plans:
   3. Server generates chunks on demand with deterministic seed and caches with LRU cleanup (max 500 chunks)
   4. Player can move seamlessly across chunk boundaries without pop-in or collision issues
   5. Phaser containers destroyed when chunks unload and WebSocket room subscriptions cleaned up (no memory leaks)
-**Plans**: TBD
+**Plans**: 5 plans in 2 waves
 
 Plans:
-- [ ] 18-01: [TBD during planning]
+- [ ] 18-01-PLAN.md — Server-side LRU cache for chunk storage (Wave 1)
+- [ ] 18-02-PLAN.md — WebSocket 3x3 room subscription management (Wave 1)
+- [ ] 18-03-PLAN.md — Client-side priority queue for chunk requests (Wave 1)
+- [ ] 18-04-PLAN.md — Chunk loading indicator UI (Wave 2)
+- [ ] 18-05-PLAN.md — Entity streaming for cross-chunk visibility (Wave 2)
 
 #### Phase 19: Biome Integration
 **Goal**: Biomes flow naturally across chunk boundaries with seamless transitions
