@@ -1,6 +1,12 @@
 import { ChunkData, BiomeType } from '@into-the-void/shared-types';
+import { Heap } from 'heap-js';
 
 type ChunkState = 'loading' | 'loaded' | 'failed';
+
+interface ChunkRequest {
+  zoneId: string;
+  priority: number; // Lower = higher priority (0=current, 1=adjacent, 2=corner)
+}
 
 interface LoadedChunk {
   data: ChunkData;
@@ -19,6 +25,10 @@ export class ChunkManager {
   private onChunkLoaded: (chunkData: ChunkData, biome: BiomeType) => void;
   private onChunkUnloaded: (zoneId: string) => void;
   private loadTimeout: number = 10000; // 10 seconds
+  private requestQueue: Heap<ChunkRequest>;
+  private pendingRequests: Set<string> = new Set();
+  private currentPlayerZone: string = 'z_0_0';
+  private maxConcurrentRequests: number = 3;
 
   constructor(
     onChunkNeeded: (zoneId: string) => void,
@@ -28,6 +38,9 @@ export class ChunkManager {
     this.onChunkNeeded = onChunkNeeded;
     this.onChunkLoaded = onChunkLoaded;
     this.onChunkUnloaded = onChunkUnloaded;
+
+    // Min-heap: lower priority number processed first
+    this.requestQueue = new Heap((a: ChunkRequest, b: ChunkRequest) => a.priority - b.priority);
   }
 
   /**
