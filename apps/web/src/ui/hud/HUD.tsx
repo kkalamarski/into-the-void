@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from '../../store/gameStore';
+import { BIOME_DISPLAY_NAMES, BIOME_COLORS, BiomeType } from '@into-the-void/shared-types';
 import './HUD.css';
 
 export const HUD: React.FC = () => {
-  const { player, toggleInventory, toggleChat } = useGameStore();
+  const { player, zoneState, toggleInventory, toggleChat } = useGameStore();
 
   if (!player) return null;
 
@@ -12,6 +13,30 @@ export const HUD: React.FC = () => {
   const maxEnergy = player.maxEnergy ?? 100;
   const energyPercent = (energy / maxEnergy) * 100;
   const xpPercent = (player.xp / player.xpToNextLevel) * 100;
+
+  // Biome display with hysteresis to prevent flickering
+  const [displayedBiome, setDisplayedBiome] = useState<BiomeType | null>(null);
+  const lastBiomeRef = useRef<BiomeType | null>(null);
+  const biomeStableCountRef = useRef(0);
+  const HYSTERESIS_FRAMES = 3; // Require 3 consistent frames before updating
+
+  useEffect(() => {
+    if (!zoneState?.biome) return;
+
+    const currentBiome = zoneState.biome;
+
+    if (currentBiome === lastBiomeRef.current) {
+      // Same biome, increment stability counter
+      biomeStableCountRef.current++;
+      if (biomeStableCountRef.current >= HYSTERESIS_FRAMES && displayedBiome !== currentBiome) {
+        setDisplayedBiome(currentBiome);
+      }
+    } else {
+      // Biome changed, reset counter
+      lastBiomeRef.current = currentBiome;
+      biomeStableCountRef.current = 1;
+    }
+  }, [zoneState?.biome, displayedBiome]);
 
   return (
     <div className="hud">
@@ -44,6 +69,15 @@ export const HUD: React.FC = () => {
             {player.xp} / {player.xpToNextLevel} XP
           </span>
         </div>
+        {displayedBiome && (
+          <div className="biome-indicator">
+            <span
+              className="biome-dot"
+              style={{ backgroundColor: BIOME_COLORS[displayedBiome] }}
+            />
+            <span className="biome-name">{BIOME_DISPLAY_NAMES[displayedBiome]}</span>
+          </div>
+        )}
       </div>
 
       <div className="hud-bottom">
