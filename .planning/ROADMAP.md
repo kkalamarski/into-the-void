@@ -63,8 +63,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Remap WASD to screen-relative diagonal directions
-- [ ] 09-02-PLAN.md — Add pathfinding path visualization using Graphics API
+- [x] 09-01-PLAN.md — Remap WASD to screen-relative diagonal directions
+- [x] 09-02-PLAN.md — Add pathfinding path visualization using Graphics API
 
 #### Phase 10: Multiplayer Integration
 **Goal**: Remote players and entities render correctly with position sync
@@ -121,9 +121,9 @@ Plans:
 | 6. Movement System | v1.1 | 5/5 | Complete | 2026-02-15 |
 | 7. Entities & HUD | v1.1 | 5/5 | Complete | 2026-02-16 |
 | 8. Core Isometric Transformation | v1.2 | 3/3 | Complete | 2026-02-16 |
-| 9. Rendering Optimization & Interaction | v1.2 | 0/2 | Not started | - |
+| 9. Rendering Optimization & Interaction | v1.2 | 2/2 | Complete | 2026-02-16 |
 | 10. Multiplayer Integration | v1.2 | 0/TBD | Not started | - |
 | 11. UI Integration | v1.2 | 0/TBD | Not started | - |
 | 12. Polish | v1.2 | 0/TBD | Not started | - |
 
-**Total:** 12 phases (7 complete, 5 in v1.2)
+**Total:** 12 phases (9 complete, 3 in v1.2)
