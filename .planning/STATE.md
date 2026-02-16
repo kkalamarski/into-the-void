@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 ## Current Position
 
 Phase: 16 of 16 (Structure Walls & Pathfinding)
-Plan: Not yet planned
-Status: Ready to plan
-Last activity: 2026-02-16 — Phase 15 complete, ready for Phase 16
+Plan: 1 of 5
+Status: In progress
+Last activity: 2026-02-16 — Completed 16-01-PLAN.md (Elevation Movement & Pathfinding)
 
 Progress: [███████████████░] 93% (15/16 phases complete)
 
@@ -57,6 +57,7 @@ Progress: [███████████████░] 93% (15/16 phases c
 | Phase 14-elevation-system-core P01 | 120 | 2 tasks | 1 files |
 | Phase 15 P01 | 133s | 2 tasks | 2 files |
 | Phase 15 P02 | 235s | 3 tasks | 3 files |
+| Phase 16 P01 | 104s | 2 tasks | 3 files |
 | Phase 16 P02 | 122 | 2 tasks | 2 files |
 
 ## Accumulated Context
@@ -100,6 +101,10 @@ Recent decisions affecting current work:
 - [Phase 15-02]: Viewport bounds expanded upward by 80px (MAX_STRUCTURE_HEIGHT) to prevent pop-in
 - [Phase 15-02]: Entities cache elevation in container data for depth sorting
 - [Phase 15-02]: getTileElevation helper with bounds checking (returns 0 if unavailable)
+- [Phase 16-01]: Elevation delta > 1 blocks movement (strict inequality allows 1-level climb)
+- [Phase 16-01]: Uphill pathfinding cost = 0.5 per level climbed (flat/downhill = 1.0)
+- [Phase 16-01]: Elevation check runs before other validations in movement (primary blocker)
+- [Phase 16-01]: Backward compatible elevation functions (original validateMovement/findPath unchanged)
 - [Phase 16-02]: Single-pass elevation adjustment sufficient for small elevations
 - [Phase 16-02]: Callback pattern for elevation lookup maintains IsometricTransform decoupling
 
@@ -121,10 +126,10 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Phase 15 complete, ready for Phase 16 planning
+Stopped at: Completed 16-01-PLAN.md (Elevation Movement & Pathfinding)
 Resume file: None
 
-**Next action:** Run `/gsd:plan-phase 16` to create execution plan for Structure Walls & Pathfinding
+**Next action:** Continue with Phase 16 Plan 02 (Wall Collision Integration)
 
 ---
 *Last updated: 2026-02-16 after Phase 15 execution complete*
