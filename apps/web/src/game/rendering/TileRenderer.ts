@@ -173,7 +173,8 @@ export class TileRenderer {
 
   /**
    * Create south-facing side face for elevated tiles.
-   * Renders as a rectangle extending down from diamond bottom point.
+   * Grid-south (y+1) is screen bottom-LEFT, so this face extends from bottom to left edge.
+   * Renders as a parallelogram on the left side of the tile.
    */
   private createSouthFace(elevationSteps: number): Phaser.GameObjects.Graphics {
     const halfWidth = this.isoTransform.tileWidth / 2;
@@ -182,14 +183,23 @@ export class TileRenderer {
 
     const graphics = this.scene.add.graphics();
     graphics.fillStyle(0x1a1a2a, 1); // Dark shading
-    graphics.fillRect(0, halfHeight, halfWidth, faceHeight);
+
+    // Left-side parallelogram (for grid-south neighbor)
+    graphics.beginPath();
+    graphics.moveTo(0, halfHeight);                    // Diamond bottom
+    graphics.lineTo(-halfWidth, 0);                    // Diamond left
+    graphics.lineTo(-halfWidth, faceHeight);           // Below left point
+    graphics.lineTo(0, halfHeight + faceHeight);       // Below bottom
+    graphics.closePath();
+    graphics.fillPath();
 
     return graphics;
   }
 
   /**
    * Create east-facing side face for elevated tiles.
-   * Renders as a parallelogram extending left from diamond bottom point.
+   * Grid-east (x+1) is screen bottom-RIGHT, so this face extends from bottom to right edge.
+   * Renders as a parallelogram on the right side of the tile.
    */
   private createEastFace(elevationSteps: number): Phaser.GameObjects.Graphics {
     const halfWidth = this.isoTransform.tileWidth / 2;
@@ -199,11 +209,12 @@ export class TileRenderer {
     const graphics = this.scene.add.graphics();
     graphics.fillStyle(0x0a0a1a, 1); // Even darker for two-tone shading
 
+    // Right-side parallelogram (for grid-east neighbor)
     graphics.beginPath();
-    graphics.moveTo(0, halfHeight); // Diamond bottom center
-    graphics.lineTo(-halfWidth, 0); // Diamond left point
-    graphics.lineTo(-halfWidth, faceHeight); // Left face bottom
-    graphics.lineTo(0, halfHeight + faceHeight); // Right face bottom
+    graphics.moveTo(0, halfHeight);                    // Diamond bottom
+    graphics.lineTo(halfWidth, 0);                     // Diamond right
+    graphics.lineTo(halfWidth, faceHeight);            // Below right point
+    graphics.lineTo(0, halfHeight + faceHeight);       // Below bottom
     graphics.closePath();
     graphics.fillPath();
 
