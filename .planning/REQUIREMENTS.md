@@ -1,71 +1,74 @@
-# Requirements: Into the Void v1.2
+# Requirements: Into the Void v1.3
 
 **Defined:** 2026-02-16
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.2 Requirements
+## v1.3 Requirements
 
-Requirements for isometric view transformation. Each maps to roadmap phases.
+Requirements for Elevation & Structures milestone. Each maps to roadmap phases.
 
-### Core Transformation
+### Tile Definition System
 
-- [x] **CORE-01**: Game renders tiles as isometric diamonds using 2:1 aspect ratio (128x64)
-- [x] **CORE-02**: Coordinate transform utility converts grid coordinates to screen positions
-- [x] **CORE-03**: Coordinate transform utility converts screen positions to grid coordinates
-- [x] **CORE-04**: Entities sort by depth correctly (closer to camera renders on top)
-- [x] **CORE-05**: Depth sorting uses Phaser Layer API with throttled updates
-- [x] **CORE-06**: Player sprite positioned correctly on isometric tile center
+- [ ] **TILE-01**: TileDefinition interface exists with id, displayName, movementSpeed, isBlocking, texture, elevation properties
+- [ ] **TILE-02**: TileRegistry provides type-safe lookup by tile ID
+- [ ] **TILE-03**: Existing 16 tile types migrated to TileDefinition registry
+- [ ] **TILE-04**: Tile hooks system supports onStep, onClick, onEnter, onExit, onTick
+- [ ] **TILE-05**: ChunkData schema extended with heights[][] parallel array
+- [ ] **TILE-06**: ChunkData schema extended with structures[] array
 
-### Movement & Controls
+### Terrain Elevation
 
-- [x] **MOVE-01**: WASD controls use screen-relative mapping (W=NW, S=SE, A=SW, D=NE)
-- [x] **MOVE-02**: Click-to-move works with isometric tile detection
-- [x] **MOVE-03**: Pathfinding visual path displays correctly on isometric grid
-- [x] **MOVE-04**: Movement tweens animate smoothly along isometric paths
+- [ ] **ELEV-01**: Tiles can have height levels 0-5
+- [ ] **ELEV-02**: Elevation data generated via noise in world-gen
+- [ ] **ELEV-03**: Side faces rendered for elevation differences (classic isometric look)
+- [ ] **ELEV-04**: Side-face visibility culling implemented (only render visible faces)
+- [ ] **ELEV-05**: Biome-specific elevation ranges defined (e.g., craters 0-2, ruins 0-5)
 
-### Rendering
+### Structure Walls
 
-- [x] **REND-01**: Tiles render in correct back-to-front order (no z-fighting)
-- [x] **REND-02**: Viewport culling uses diamond-shaped bounds for efficiency
-- [x] **REND-03**: Camera follows player with correct isometric offset
-- [x] **REND-04**: Adjacent chunk tiles align seamlessly at chunk boundaries
+- [ ] **STRUCT-01**: Wall tiles defined with variable height by type
+- [ ] **STRUCT-02**: All wall structures block movement regardless of height
+- [ ] **STRUCT-03**: World-gen places structure walls procedurally
+- [ ] **STRUCT-04**: Structure walls render with side faces same as terrain
 
-### Multiplayer
+### Movement & Pathfinding
 
-- [x] **MULT-01**: Remote players render at correct isometric positions
-- [x] **MULT-02**: Remote player movement tweens use grid coordinates
-- [x] **MULT-03**: Position sync maintains accuracy with 100ms+ latency
-- [x] **MULT-04**: Entity positions match between all connected clients
+- [ ] **MOVE-01**: 1-level elevation difference is walkable
+- [ ] **MOVE-02**: 2+ level elevation difference blocks movement
+- [ ] **MOVE-03**: A* pathfinding includes elevation cost penalty
+- [ ] **MOVE-04**: Pathfinding prefers flat routes over climbing when equal distance
+- [ ] **MOVE-05**: Click detection accounts for elevation offset
 
-### UI Integration
+### Visual & Rendering
 
-- [x] **UI-01**: Minimap remains orthogonal (top-down view)
-- [x] **UI-02**: Minimap player indicator shows correct relative position
-- [x] **UI-03**: Health bars position above entities at correct Y-offset
-- [x] **UI-04**: Behavior icons (H/O/P/M) position correctly above health bars
-- [x] **UI-05**: Zone HUD displays correctly (unchanged from v1.1)
+- [ ] **RENDER-01**: Depth sorting includes elevation in calculation (composite depth)
+- [ ] **RENDER-02**: Entities on elevated terrain render at correct depth
+- [ ] **RENDER-03**: Full occlusion - tall objects hide entities behind them
+- [ ] **RENDER-04**: Minimap shows structure walls as distinct markers
+- [ ] **RENDER-05**: Viewport culling accounts for tall structures (expanded bounds)
 
-### Polish
+## v1.4+ Requirements
 
-- [x] **PLSH-01**: Tiles highlight on mouse hover
-- [x] **PLSH-02**: Click target shows visual feedback before pathfinding starts
-- [x] **PLSH-03**: Entity highlight on mouse hover for selection feedback
+Deferred to future releases. Tracked but not in current roadmap.
 
-## Future Requirements
+### Visual Polish
 
-Deferred to future milestones. Not in current roadmap.
+- **VPOL-01**: Visual elevation transitions (ramps/stairs between levels)
+- **VPOL-02**: Dynamic wall transparency when blocking player view
+- **VPOL-03**: Procedural side-face texture variation per biome
+- **VPOL-04**: Shadows cast by elevated terrain and structures
 
-### Advanced Rendering
+### Advanced Structures
 
-- **ADVR-01**: Zoom levels (2-3 discrete levels for tactical overview)
-- **ADVR-02**: Dynamic shadows under entities
-- **ADVR-03**: Elevation/height variation for terrain depth
+- **ADVS-01**: Multi-height structures (towers, tiered buildings)
+- **ADVS-02**: Bridges/overpass tiles (tile above and below)
+- **ADVS-03**: Destructible walls with durability
 
-### Art Pipeline
+### Gameplay Integration
 
-- **ART-01**: Isometric sprite assets replace colored diamonds
-- **ART-02**: 8-direction entity sprites for movement animation
-- **ART-03**: Biome-specific isometric tile textures
+- **GAME-01**: Height advantage affects combat mechanics
+- **GAME-02**: Fall damage from height differences
+- **GAME-03**: Stamina cost for climbing elevation
 
 ## Out of Scope
 
@@ -73,11 +76,11 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Camera rotation | Massively increases asset requirements, causes player disorientation |
-| Free-form movement | Isometric works best with grid-snapped movement |
-| 3D lighting/shaders | Complexity without proportional visual benefit for 2D |
-| Pixel-perfect isometric ratio | 2:1 ratio sufficient, stricter ratios limit tile dimensions |
-| Separate tilemap system | Native Phaser approach simpler than plugin alternatives |
+| Smooth terrain (float elevation) | Discrete levels (0-5) sufficient, avoids complexity |
+| Camera rotation | Breaks established isometric view, major rework |
+| Pixel-perfect click detection (mouse maps) | Unnecessary complexity, offset calculation sufficient |
+| Real-time shadows | Performance intensive, defer to polish phase |
+| Multi-layer tilemaps | Bridges/overpass deferred to v1.4+ |
 
 ## Traceability
 
@@ -85,38 +88,37 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | Phase 8 | Complete |
-| CORE-02 | Phase 8 | Complete |
-| CORE-03 | Phase 8 | Complete |
-| CORE-04 | Phase 8 | Complete |
-| CORE-05 | Phase 8 | Complete |
-| CORE-06 | Phase 8 | Complete |
-| MOVE-01 | Phase 9 | Complete |
-| MOVE-02 | Phase 9 | Complete |
-| MOVE-03 | Phase 9 | Complete |
-| MOVE-04 | Phase 9 | Complete |
-| REND-01 | Phase 8 | Complete |
-| REND-02 | Phase 9 | Complete |
-| REND-03 | Phase 9 | Complete |
-| REND-04 | Phase 8 | Complete |
-| MULT-01 | Phase 10 | Complete |
-| MULT-02 | Phase 10 | Complete |
-| MULT-03 | Phase 10 | Complete |
-| MULT-04 | Phase 10 | Complete |
-| UI-01 | Phase 11 | Complete |
-| UI-02 | Phase 11 | Complete |
-| UI-03 | Phase 11 | Complete |
-| UI-04 | Phase 11 | Complete |
-| UI-05 | Phase 11 | Complete |
-| PLSH-01 | Phase 12 | Complete |
-| PLSH-02 | Phase 12 | Complete |
-| PLSH-03 | Phase 12 | Complete |
+| TILE-01 | TBD | Pending |
+| TILE-02 | TBD | Pending |
+| TILE-03 | TBD | Pending |
+| TILE-04 | TBD | Pending |
+| TILE-05 | TBD | Pending |
+| TILE-06 | TBD | Pending |
+| ELEV-01 | TBD | Pending |
+| ELEV-02 | TBD | Pending |
+| ELEV-03 | TBD | Pending |
+| ELEV-04 | TBD | Pending |
+| ELEV-05 | TBD | Pending |
+| STRUCT-01 | TBD | Pending |
+| STRUCT-02 | TBD | Pending |
+| STRUCT-03 | TBD | Pending |
+| STRUCT-04 | TBD | Pending |
+| MOVE-01 | TBD | Pending |
+| MOVE-02 | TBD | Pending |
+| MOVE-03 | TBD | Pending |
+| MOVE-04 | TBD | Pending |
+| MOVE-05 | TBD | Pending |
+| RENDER-01 | TBD | Pending |
+| RENDER-02 | TBD | Pending |
+| RENDER-03 | TBD | Pending |
+| RENDER-04 | TBD | Pending |
+| RENDER-05 | TBD | Pending |
 
 **Coverage:**
-- v1.2 requirements: 24 total
-- Completed: 24 ✓
-- Unmapped: 0 ✓
+- v1.3 requirements: 25 total
+- Mapped to phases: 0
+- Unmapped: 25
 
 ---
 *Requirements defined: 2026-02-16*
-*Last updated: 2026-02-16 — v1.2 milestone complete*
+*Last updated: 2026-02-16 after initial definition*
