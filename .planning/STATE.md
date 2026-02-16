@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 9 - Rendering Optimization & Interaction
+**Current focus:** Phase 10 - Multiplayer Integration
 
 ## Current Position
 
-Phase: 9 of 12 (Rendering Optimization & Interaction)
-Plan: 2 of 2 in current phase
+Phase: 10 of 12 (Multiplayer Integration)
+Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-02-16 — Completed 09-02-PLAN.md (Path Visualization)
+Last activity: 2026-02-16 — Completed 10-01-PLAN.md (Remote Player Depth Sorting)
 
-Progress: [███████████████░░░░░] 75% (9 of 12 phases complete)
+Progress: [████████████████░░░░] 83% (10 of 12 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 32 (from v1.0, v1.1, and v1.2)
-- Average duration: 3m 49s per plan
-- Total execution time: ~2.04 hours
+- Total plans completed: 33 (from v1.0, v1.1, and v1.2)
+- Average duration: 3m 44s per plan
+- Total execution time: ~2.05 hours
 
 **By Milestone:**
 
@@ -29,12 +29,12 @@ Progress: [███████████████░░░░░] 75% (9 
 |-----------|--------|-------|----------|
 | v1.0 Auth & Character Screens | 1-3 | 7 | 2026-02-13 → 2026-02-14 |
 | v1.1 Post-Login Game Experience | 4-7 | 20 | 2026-02-14 → 2026-02-16 |
-| v1.2 Isometric View | 8-12 | 5 | 2026-02-16 → In progress |
+| v1.2 Isometric View | 8-12 | 6 | 2026-02-16 → In progress |
 
 **Recent Trend:**
 - v1.0: 2 days (7 plans)
 - v1.1: 3 days (20 plans)
-- v1.2: In progress (5 plans, Phase 8-9 complete)
+- v1.2: In progress (6 plans, Phase 8-10 complete)
 - Trend: Stable velocity, good parallelization
 
 **Recent Plans:**
@@ -46,6 +46,7 @@ Progress: [███████████████░░░░░] 75% (9 
 | Phase 08 P03 | 7m 48s | 3 tasks | 3 files |
 | Phase 09 P01 | 70 | 1 tasks | 1 files |
 | Phase 09 P02 | 167 | 2 tasks | 3 files |
+| Phase 10 P01 | 81 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,7 @@ Recent decisions affecting current work:
 - [Phase 08]: Polygon-based tile rendering (diamond graphics until isometric sprites available)
 - [Phase 09]: Screen-relative WASD with camera transform (nw→w, ne→e for tilted view)
 - [Phase 09]: Phaser Graphics for path visualization (depth 10000, green 0x00ff00)
+- [Phase 10]: Remote players included in depth sorting via unified container map
 
 ### Pending Todos
 
@@ -82,10 +84,10 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 09-02-PLAN.md (Path Visualization) — Phase 9 complete
+Stopped at: Completed 10-01-PLAN.md (Remote Player Depth Sorting) — Phase 10 complete
 Resume file: None
 
-**Next action:** Begin Phase 10 planning or continue with next phase in milestone v1.2
+**Next action:** Begin Phase 11 planning or continue with next phase in milestone v1.2
 
 ---
 *v1.2 roadmap created: 2026-02-16*
