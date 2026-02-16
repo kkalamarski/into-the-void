@@ -3,7 +3,7 @@
 ## Milestones
 
 - v1.0 Auth & Character Screens - Phases 1-3 (shipped 2026-02-14)
-- v1.1 Post-Login Game Experience - Phases 4-7 (in progress)
+- v1.1 Post-Login Game Experience - Phases 4-7 (shipped 2026-02-16)
 
 ## Phases
 
@@ -114,13 +114,14 @@ Plans:
   4. Creatures display behavioral icons (Herbivore/Omnivore/Predator/Maniac)
   5. HUD displays player health bar, energy bar, zone name with tier, and minimap
 **Plans**: 5 plans
+**Completed**: 2026-02-16
 
 Plans:
-- [ ] 07-01-PLAN.md — EntityRenderer with health bars and behavior icons
-- [ ] 07-02-PLAN.md — Entity and player socket event handlers
-- [ ] 07-03-PLAN.md — HUD energy bar and entity registry
-- [ ] 07-04-PLAN.md — Minimap with player position and biome colors
-- [ ] 07-05-PLAN.md — Human verification checkpoint
+- [x] 07-01-PLAN.md — EntityRenderer with health bars and behavior icons
+- [x] 07-02-PLAN.md — Entity and player socket event handlers
+- [x] 07-03-PLAN.md — HUD energy bar and entity registry
+- [x] 07-04-PLAN.md — Minimap with player position and biome colors
+- [x] 07-05-PLAN.md — Human verification checkpoint
 
 ## Progress
 
@@ -135,4 +136,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 4. WebSocket Connection & Auth Handshake | v1.1 | 5/5 | Complete | 2026-02-14 |
 | 5. Phaser Integration & World Rendering | v1.1 | 5/5 | Complete | 2026-02-14 |
 | 6. Movement System | v1.1 | 5/5 | Complete | 2026-02-15 |
-| 7. Entities & HUD | v1.1 | 0/5 | Not started | - |
+| 7. Entities & HUD | v1.1 | 5/5 | Complete | 2026-02-16 |
