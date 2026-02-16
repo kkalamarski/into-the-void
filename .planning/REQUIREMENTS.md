@@ -68,7 +68,7 @@ Explicitly excluded. Documented to prevent scope creep.
 |---------|--------|
 | Client-side chunk generation | Security risk, desync potential with multiplayer |
 | Unlimited chunk load radius | Memory explosion, server load |
-| Cross-chunk structures | Complexity — structures stay within single chunks |
+| Cross-chunk structures | Complexity - structures stay within single chunks |
 | Real-time chunk modification | Requires persistence layer, defer to building system |
 | Multi-server chunk sharing | Only needed at 1000+ players |
 
@@ -78,30 +78,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| COORD-01 | — | Pending |
-| COORD-02 | — | Pending |
-| COORD-03 | — | Pending |
-| CHUNK-01 | — | Pending |
-| CHUNK-02 | — | Pending |
-| CHUNK-03 | — | Pending |
-| CHUNK-04 | — | Pending |
-| CHUNK-05 | — | Pending |
-| CHUNK-06 | — | Pending |
-| CHUNK-07 | — | Pending |
-| BIOME-01 | — | Pending |
-| BIOME-02 | — | Pending |
-| BIOME-03 | — | Pending |
-| BIOME-04 | — | Pending |
-| MEM-01 | — | Pending |
-| MEM-02 | — | Pending |
-| MEM-03 | — | Pending |
-| MEM-04 | — | Pending |
+| COORD-01 | Phase 17 | Pending |
+| COORD-02 | Phase 17 | Pending |
+| COORD-03 | Phase 17 | Pending |
+| CHUNK-01 | Phase 18 | Pending |
+| CHUNK-02 | Phase 18 | Pending |
+| CHUNK-03 | Phase 18 | Pending |
+| CHUNK-04 | Phase 18 | Pending |
+| CHUNK-05 | Phase 18 | Pending |
+| CHUNK-06 | Phase 18 | Pending |
+| CHUNK-07 | Phase 18 | Pending |
+| MEM-01 | Phase 18 | Pending |
+| MEM-02 | Phase 18 | Pending |
+| MEM-03 | Phase 18 | Pending |
+| MEM-04 | Phase 18 | Pending |
+| BIOME-01 | Phase 19 | Pending |
+| BIOME-02 | Phase 19 | Pending |
+| BIOME-03 | Phase 19 | Pending |
+| BIOME-04 | Phase 19 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 (pending roadmap)
+- Mapped to phases: 18
+- Unmapped: 0 (100% coverage)
 
 ---
 *Requirements defined: 2026-02-16*
-*Last updated: 2026-02-16 after initial definition*
+*Last updated: 2026-02-16 after roadmap creation*
