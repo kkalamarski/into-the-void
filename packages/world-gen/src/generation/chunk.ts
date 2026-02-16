@@ -23,18 +23,19 @@ export class WorldGenerator {
   generateChunk(chunkX: number, chunkY: number): ChunkData {
     const zoneId = createZoneId(chunkX, chunkY);
 
-    // Determine biome for this chunk
+    // Determine dominant biome for this chunk (used for structures and spawns)
     const biome = this.biomeGenerator.getChunkBiome(chunkX, chunkY, ZONE_SIZE);
 
-    // Generate terrain
+    // Generate terrain (uses BiomeGenerator for per-tile biome sampling)
     const { tiles, heights, collisions } = generateTerrain(
       this.worldSeed,
       chunkX,
       chunkY,
-      biome
+      this.biomeGenerator
     );
 
     // Generate structure features (modifies tiles and collisions in place)
+    // Uses dominant biome for consistency
     const structures = generateStructures(
       this.worldSeed,
       chunkX,
@@ -46,6 +47,7 @@ export class WorldGenerator {
     );
 
     // Generate spawn points (uses updated collision map)
+    // Uses dominant biome for spawn tables
     const spawnPoints = generateSpawnPoints(
       this.worldSeed,
       chunkX,

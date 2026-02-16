@@ -2,6 +2,7 @@ import { BiomeType, ZONE_SIZE } from '@into-the-void/shared-types';
 import { TileRegistry, TILE_IDS } from '@into-the-void/tiles';
 import { SimplexNoise } from '../noise/simplex';
 import { SeededRandom } from '../random/seeded-random';
+import { BiomeGenerator } from './biome';
 
 /**
  * Tile types for terrain
@@ -122,7 +123,7 @@ export function generateTerrain(
   worldSeed: string,
   chunkX: number,
   chunkY: number,
-  biome: BiomeType
+  biomeGenerator: BiomeGenerator
 ): { tiles: number[][]; heights: number[][]; collisions: boolean[][] } {
   const noise = new SimplexNoise(`${worldSeed}_terrain_${chunkX}_${chunkY}`);
   // IMPORTANT: Height noise uses GLOBAL seed (not chunk-specific) for seamless elevation across chunks
@@ -132,11 +133,6 @@ export function generateTerrain(
   const tiles: number[][] = [];
   const heights: number[][] = [];
   const collisions: boolean[][] = [];
-  const biomeTileIds = BIOME_TILE_IDS[biome];
-  const biomeTiles = BIOME_TILES[biome]; // Keep for numeric output
-
-  // Base threshold for walls/obstacles
-  const wallThreshold = getWallThreshold(biome);
 
   for (let y = 0; y < ZONE_SIZE; y++) {
     tiles[y] = [];
@@ -146,6 +142,12 @@ export function generateTerrain(
     for (let x = 0; x < ZONE_SIZE; x++) {
       const worldX = chunkX * ZONE_SIZE + x;
       const worldY = chunkY * ZONE_SIZE + y;
+
+      // Sample biome for this specific tile based on world coordinates
+      const biome = biomeGenerator.getBiome(worldX, worldY);
+      const biomeTileIds = BIOME_TILE_IDS[biome];
+      const biomeTiles = BIOME_TILES[biome];
+      const wallThreshold = getWallThreshold(biome);
 
       // Multi-octave noise for terrain
       const terrainValue = noise.fbm(worldX * 0.05, worldY * 0.05, 4);
@@ -177,12 +179,19 @@ export function generateTerrain(
       const heightValue = heightNoise.fbm(worldX * 0.03, worldY * 0.03, 2);
       // Map noise (-1 to 1) to height (0 to 3) for gentle terrain
       const rawHeight = Math.round((heightValue + 1) * 1.5);
-      heights[y][x] = Math.max(0, Math.min(3, rawHeight));
+      // Clamp to biome-specific range using per-tile biome
+      heights[y][x] = clampToBiomeRange(Math.max(0, Math.min(3, rawHeight)), biome);
     }
   }
 
   // Ensure edges have some openings for zone transitions
-  ensureZoneConnectivity(tiles, heights, collisions, biomeTiles.floor, biomeTileIds.floor, biome);
+  // Use dominant biome at chunk center for path tile selection
+  const centerX = chunkX * ZONE_SIZE + ZONE_SIZE / 2;
+  const centerY = chunkY * ZONE_SIZE + ZONE_SIZE / 2;
+  const dominantBiome = biomeGenerator.getBiome(centerX, centerY);
+  const pathTiles = BIOME_TILES[dominantBiome];
+  const pathTileIds = BIOME_TILE_IDS[dominantBiome];
+  ensureZoneConnectivity(tiles, heights, collisions, pathTiles.floor, pathTileIds.floor, dominantBiome);
 
   return { tiles, heights, collisions };
 }
