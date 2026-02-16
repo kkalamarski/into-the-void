@@ -4,6 +4,7 @@
 
 - ✅ **v1.0 Auth & Character Screens** — Phases 1-3 (shipped 2026-02-14)
 - ✅ **v1.1 Post-Login Game Experience** — Phases 4-7 (shipped 2026-02-16)
+- 🚧 **v1.2 Isometric View** — Phases 8-12 (in progress)
 
 ## Phases
 
@@ -30,6 +31,85 @@ See: `.planning/milestones/v1.1-ROADMAP.md`
 
 </details>
 
+### 🚧 v1.2 Isometric View (In Progress)
+
+**Milestone Goal:** Transform the game from top-down to isometric projection while preserving all existing gameplay.
+
+#### Phase 8: Core Isometric Transformation
+**Goal**: Game renders in isometric diamond view with proper depth sorting
+**Depends on**: Phase 7
+**Requirements**: CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, CORE-06, REND-01, REND-04
+**Success Criteria** (what must be TRUE):
+  1. Tiles render as isometric diamonds with 2:1 aspect ratio (96x48)
+  2. Player sprite positions correctly on tile center without offset drift
+  3. Entities sort by depth with no visible z-fighting or flickering
+  4. Adjacent chunk tiles align seamlessly at boundaries
+**Plans**: TBD
+
+Plans:
+- [ ] 08-01: TBD
+- [ ] 08-02: TBD
+- [ ] 08-03: TBD
+
+#### Phase 9: Rendering Optimization & Interaction
+**Goal**: Viewport culling optimized and click-to-move restored in isometric space
+**Depends on**: Phase 8
+**Requirements**: MOVE-01, MOVE-02, MOVE-03, MOVE-04, REND-02, REND-03
+**Success Criteria** (what must be TRUE):
+  1. WASD controls use screen-relative directions (W moves NW, S moves SE)
+  2. Click-to-move detects correct tile under mouse cursor
+  3. Pathfinding visual path displays correctly on isometric grid
+  4. Camera follows player with correct isometric centering
+**Plans**: TBD
+
+Plans:
+- [ ] 09-01: TBD
+- [ ] 09-02: TBD
+- [ ] 09-03: TBD
+
+#### Phase 10: Multiplayer Integration
+**Goal**: Remote players and entities render correctly with position sync
+**Depends on**: Phase 9
+**Requirements**: MULT-01, MULT-02, MULT-03, MULT-04
+**Success Criteria** (what must be TRUE):
+  1. Remote players appear at correct isometric positions matching local client
+  2. Remote player movement animates smoothly without rubber-banding
+  3. Position sync maintains accuracy with network latency (100ms+)
+  4. All clients show entities in same relative positions
+**Plans**: TBD
+
+Plans:
+- [ ] 10-01: TBD
+- [ ] 10-02: TBD
+
+#### Phase 11: UI Integration
+**Goal**: HUD elements adapt to isometric view without breaking
+**Depends on**: Phase 10
+**Requirements**: UI-01, UI-02, UI-03, UI-04, UI-05
+**Success Criteria** (what must be TRUE):
+  1. Minimap displays player position correctly (orthogonal view)
+  2. Health bars position above entities at correct Y-offset for isometric height
+  3. Behavior icons (H/O/P/M) position correctly above health bars
+  4. Zone HUD displays unchanged from v1.1
+**Plans**: TBD
+
+Plans:
+- [ ] 11-01: TBD
+- [ ] 11-02: TBD
+
+#### Phase 12: Polish
+**Goal**: Visual feedback and hover interactions enhance isometric experience
+**Depends on**: Phase 11
+**Requirements**: PLSH-01, PLSH-02, PLSH-03
+**Success Criteria** (what must be TRUE):
+  1. Tiles highlight on mouse hover showing selectable area
+  2. Click target shows visual feedback before pathfinding starts
+  3. Entities highlight on hover for selection feedback
+**Plans**: TBD
+
+Plans:
+- [ ] 12-01: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans | Status | Completed |
@@ -41,5 +121,10 @@ See: `.planning/milestones/v1.1-ROADMAP.md`
 | 5. World Rendering | v1.1 | 5/5 | Complete | 2026-02-14 |
 | 6. Movement System | v1.1 | 5/5 | Complete | 2026-02-15 |
 | 7. Entities & HUD | v1.1 | 5/5 | Complete | 2026-02-16 |
+| 8. Core Isometric Transformation | v1.2 | 0/TBD | Not started | - |
+| 9. Rendering Optimization & Interaction | v1.2 | 0/TBD | Not started | - |
+| 10. Multiplayer Integration | v1.2 | 0/TBD | Not started | - |
+| 11. UI Integration | v1.2 | 0/TBD | Not started | - |
+| 12. Polish | v1.2 | 0/TBD | Not started | - |
 
-**Total:** 7 phases, 27 plans completed
+**Total:** 12 phases (7 complete, 5 in v1.2)

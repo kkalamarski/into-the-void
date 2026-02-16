@@ -4,23 +4,23 @@
 
 See: .planning/PROJECT.md (updated 2026-02-16)
 
-**Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback.
-**Current focus:** v1.2 Isometric View — defining requirements
+**Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
+**Current focus:** Phase 8 - Core Isometric Transformation
 
 ## Current Position
 
-Milestone: v1.2 Isometric View
-Phase: Not started (defining requirements)
-Status: Defining requirements
-Last activity: 2026-02-16 — Milestone v1.2 started
+Phase: 8 of 12 (Core Isometric Transformation)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-16 — Roadmap created for v1.2 Isometric View milestone
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████░░░░░░░░░░] 58% (7 of 12 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 27 (v1.0: 7 plans, v1.1: 20 plans)
-- Average duration: 3m 58s
+- Total plans completed: 27 (from v1.0 and v1.1)
+- Average duration: 3m 58s per plan
 - Total execution time: ~1.88 hours
 
 **By Milestone:**
@@ -29,27 +29,47 @@ Progress: [░░░░░░░░░░] 0%
 |-----------|--------|-------|----------|
 | v1.0 Auth & Character Screens | 1-3 | 7 | 2026-02-13 → 2026-02-14 |
 | v1.1 Post-Login Game Experience | 4-7 | 20 | 2026-02-14 → 2026-02-16 |
+| v1.2 Isometric View | 8-12 | 0 | Not started |
+
+**Recent Trend:**
+- v1.0: 2 days (7 plans)
+- v1.1: 3 days (20 plans)
+- Trend: Stable velocity, good parallelization
 
 ## Accumulated Context
 
 ### Decisions
 
 Key decisions logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
 
-### Known Issues
-
-- Adjacent chunk loading times out (server zone:request not implemented)
-- WebSocket auth without handshake validation (guards on all handlers)
+- v1.1: Client-side prediction with server reconciliation
+- v1.1: Phaser multi-camera minimap reuses tile rendering
+- v1.1: 96px TILE_SIZE matches sprite specification
+- v1.1: pauseOnBlur prevents memory leaks on tab switch
 
 ### Pending Todos
 
-None — all v1.1 requirements complete.
+None yet.
+
+### Blockers/Concerns
+
+**Phase 8 (Planning):**
+- Phaser upgrade from 3.80.0 to 3.90.0 may have breaking changes
+- Coordinate transformation accuracy needs validation at map edges
+- Depth sorting performance with 200+ entities needs profiling
+
+**Known Issues from v1.1:**
+- Adjacent chunk loading times out (server zone:request not implemented)
+- WebSocket auth without handshake validation (guards on all handlers)
 
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed v1.1 milestone archival
+Stopped at: Roadmap created for v1.2 Isometric View (5 phases, 24 requirements mapped)
 Resume file: None
 
+**Next action:** Run `/gsd:plan-phase 8` to begin Core Isometric Transformation planning
+
 ---
-*v1.2 started: 2026-02-16*
+*v1.2 roadmap created: 2026-02-16*
