@@ -1,5 +1,9 @@
 import { IsometricTransform } from '../utils/IsometricTransform';
 
+const MAX_ELEVATION = 5;
+const ELEVATION_HEIGHT_STEP = 16;
+const MAX_STRUCTURE_HEIGHT = MAX_ELEVATION * ELEVATION_HEIGHT_STEP; // 80 pixels
+
 /**
  * Calculates which tiles are visible within camera viewport.
  * Used for performance optimization - only visible tiles are rendered.
@@ -34,9 +38,13 @@ export class ViewportCuller {
     const camTop = camera.worldView.y;
     const camBottom = camTop + camera.worldView.height;
 
+    // Expand bounds upward by maximum structure height
+    // Tall structures at elevation 5 extend 80px above their grid position
+    const expandedCamTop = camTop - MAX_STRUCTURE_HEIGHT;
+
     // Convert all four corners to grid space
-    const topLeft = this.isoTransform.screenToGrid(camLeft, camTop);
-    const topRight = this.isoTransform.screenToGrid(camRight, camTop);
+    const topLeft = this.isoTransform.screenToGrid(camLeft, expandedCamTop);
+    const topRight = this.isoTransform.screenToGrid(camRight, expandedCamTop);
     const bottomLeft = this.isoTransform.screenToGrid(camLeft, camBottom);
     const bottomRight = this.isoTransform.screenToGrid(camRight, camBottom);
 
