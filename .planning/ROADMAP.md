@@ -78,7 +78,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 10-01-PLAN.md — Integrate remote players into depth sorting system
+- [x] 10-01-PLAN.md — Integrate remote players into depth sorting system
 
 #### Phase 11: UI Integration
 **Goal**: HUD elements adapt to isometric view without breaking
@@ -121,8 +121,8 @@ Plans:
 | 7. Entities & HUD | v1.1 | 5/5 | Complete | 2026-02-16 |
 | 8. Core Isometric Transformation | v1.2 | 3/3 | Complete | 2026-02-16 |
 | 9. Rendering Optimization & Interaction | v1.2 | 2/2 | Complete | 2026-02-16 |
-| 10. Multiplayer Integration | v1.2 | 0/1 | Not started | - |
+| 10. Multiplayer Integration | v1.2 | 1/1 | Complete | 2026-02-16 |
 | 11. UI Integration | v1.2 | 0/TBD | Not started | - |
 | 12. Polish | v1.2 | 0/TBD | Not started | - |
 
-**Total:** 12 phases (9 complete, 3 in v1.2)
+**Total:** 12 phases (10 complete, 2 in v1.2)

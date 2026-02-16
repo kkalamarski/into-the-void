@@ -65,6 +65,7 @@ Recent decisions affecting current work:
 - [Phase 09]: Screen-relative WASD with camera transform (nw→w, ne→e for tilted view)
 - [Phase 09]: Phaser Graphics for path visualization (depth 10000, green 0x00ff00)
 - [Phase 10]: Remote players included in depth sorting via unified container map
+- [Phase 10]: GameContainer spawns players from zoneState when Phaser ready (race condition fix)
 
 ### Pending Todos
 
