@@ -3,9 +3,10 @@ import { Entity, Creature, CreatureBehavior, EntityType } from '@into-the-void/s
 import { IsometricTransform } from '../utils/IsometricTransform';
 
 /**
- * EntityRenderer creates Phaser containers with health bars and behavior icons for entities.
+ * EntityRenderer creates Phaser containers with nameplates, health bars and behavior icons for entities.
  *
- * Health bars appear above damaged entities, color-coded by health percentage.
+ * Nameplates display entity names above all entities for identification.
+ * Health bars appear above damaged creatures, color-coded by health percentage.
  * Behavior icons show creature threat level using lore-correct classifications (H/O/P/M).
  */
 export class EntityRenderer {
@@ -21,7 +22,7 @@ export class EntityRenderer {
   }
 
   /**
-   * Creates a container with entity sprite, optional health bar, and optional behavior icon.
+   * Creates a container with entity sprite, nameplate, optional health bar, and optional behavior icon.
    */
   createEntityContainer(entity: Entity): Phaser.GameObjects.Container {
     const screenPos = this.isoTransform.gridToScreen(
@@ -45,6 +46,11 @@ export class EntityRenderer {
     sprite.setOrigin(0.5, 1.0); // Bottom-center origin for ground alignment
     container.add(sprite);
 
+    // Nameplate above sprite (always visible for entity identification)
+    const nameplate = this.createNameplate(entity.name);
+    nameplate.y = -this.elevationOffset - 60; // Above sprite, health bar, and behavior icon
+    container.add(nameplate);
+
     // Health bar for damaged creatures (positioned above elevated sprite)
     if (this.isCreature(entity) && entity.health < entity.maxHealth) {
       const healthBar = this.createHealthBar(entity.health, entity.maxHealth);
@@ -64,6 +70,21 @@ export class EntityRenderer {
     container.setDepth(depth);
 
     return container;
+  }
+
+  /**
+   * Creates a nameplate text showing entity name.
+   */
+  createNameplate(name: string): Phaser.GameObjects.Text {
+    const text = this.scene.add.text(0, 0, name, {
+      fontSize: '11px',
+      color: '#ffffff',
+      backgroundColor: '#000000aa',
+      padding: { x: 4, y: 2 },
+    });
+    text.setOrigin(0.5, 0.5);
+
+    return text;
   }
 
   /**

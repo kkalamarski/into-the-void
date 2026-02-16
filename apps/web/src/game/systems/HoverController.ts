@@ -144,7 +144,8 @@ export class HoverController {
     overlay.fillStyle(0xffffff, 0.15);
     overlay.fillEllipse(0, -12, 50, 30);
 
-    // Add overlay to container at index 2 (after shadow and sprite, before health bar)
+    // Add overlay to container at index 2 (after shadow and sprite, before nameplate)
+    // Container structure: [0: shadow, 1: sprite, 2: overlay (hover), 3: nameplate, 4+: health bar/behavior icon]
     container.addAt(overlay, 2);
 
     // Store overlay reference
