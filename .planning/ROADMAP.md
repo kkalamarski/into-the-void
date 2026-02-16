@@ -76,10 +76,11 @@ See: `.planning/milestones/v1.3-ROADMAP.md`
   1. Depth sorting uses world coordinates (worldX = chunkX * 32 + localX) for correct z-order across chunks
   2. Entity visibility uses world coordinate distance instead of zone ID matching
   3. Tile rendering calculates depth from world position enabling seamless chunk boundaries
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 17-01: [TBD during planning]
+- [ ] 17-01-PLAN.md — World coordinate consistency for depth sorting
+- [ ] 17-02-PLAN.md — Distance-based entity visibility
 
 #### Phase 18: Multi-Chunk Streaming
 **Goal**: Players can seamlessly explore infinite world with viewport-based chunk streaming
@@ -147,7 +148,7 @@ Phases execute in numeric order: 17 → 18 → 19 → 20
 | 14. Elevation System Core | v1.3 | 2/2 | Complete | 2026-02-16 |
 | 15. Elevation Rendering | v1.3 | 2/2 | Complete | 2026-02-16 |
 | 16. Structure Walls & Pathfinding | v1.3 | 5/5 | Complete | 2026-02-16 |
-| 17. World Coordinate Foundation | v1.4 | 0/TBD | Not started | - |
+| 17. World Coordinate Foundation | v1.4 | 0/2 | Planned | - |
 | 18. Multi-Chunk Streaming | v1.4 | 0/TBD | Not started | - |
 | 19. Biome Integration | v1.4 | 0/TBD | Not started | - |
 | 20. Testing & Polish | v1.4 | 0/TBD | Not started | - |
@@ -155,4 +156,4 @@ Phases execute in numeric order: 17 → 18 → 19 → 20
 **Total:** 20 phases (16 complete, 4 pending)
 
 ---
-*Last updated: 2026-02-16 after v1.4 roadmap creation*
+*Last updated: 2026-02-16 after Phase 17 planning*
