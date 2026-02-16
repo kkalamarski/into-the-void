@@ -27,6 +27,33 @@
 ---
 
 
+## v1.2 Isometric View (Shipped: 2026-02-16)
+
+**Phases completed:** 5 phases (8-12), 8 plans
+
+**Delivered:** Isometric view transformation for the game. Top-down view converted to classic 2:1 isometric with proper depth sorting, screen-relative controls, and full multiplayer sync.
+
+**Key accomplishments:**
+- Isometric coordinate transformation (128x64 tiles, 2:1 ratio)
+- Depth sorting with elevation support (entity offset 12px, throttle 100ms)
+- Screen-relative WASD controls (W=NW, S=SE, A=SW, D=NE)
+- Diamond-shaped viewport culling for performance
+- Click-to-move with isometric coordinate conversion
+- Minimap orthogonal view with CSS border overlay
+- Hover and click feedback (tile hover, click markers, entity nameplates)
+
+**Stats:**
+- Timeline: 1 day (2026-02-16)
+- Plans: 8 total (3+2+1+1+1 per phase)
+- Git range: feat(08-01) → docs(phase-12)
+
+**Archives:**
+- `.planning/milestones/v1.2-ROADMAP.md`
+- `.planning/milestones/v1.2-REQUIREMENTS.md`
+
+---
+
+
 ## v1.1 Post-Login Game Experience (Shipped: 2026-02-16)
 
 **Phases completed:** 4 phases (4-7), 20 plans
