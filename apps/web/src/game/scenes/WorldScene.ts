@@ -236,9 +236,22 @@ export class WorldScene extends Phaser.Scene {
       this.updateVisibleTiles();
     }
 
-    // Throttled depth sorting
+    // Throttled depth sorting - include entities AND remote players
     if (this.depthSorter && this.isoTransform) {
-      this.depthSorter.update(time, this.entitySprites, this.isoTransform);
+      // Create combined map of all depth-sortable objects
+      const allContainers = new Map<string, Phaser.GameObjects.Container>();
+
+      // Add entities
+      this.entitySprites.forEach((container, id) => {
+        allContainers.set(id, container);
+      });
+
+      // Add remote players (use plain ID - matches markDirty call)
+      this.playerSprites.forEach((sprite, id) => {
+        allContainers.set(id, sprite as unknown as Phaser.GameObjects.Container);
+      });
+
+      this.depthSorter.update(time, allContainers, this.isoTransform);
     }
   }
 
@@ -340,6 +353,11 @@ export class WorldScene extends Phaser.Scene {
     if (!this.tileRenderer || !this.isoTransform) return;
 
     const { zoneId, tiles } = chunkData;
+
+    // Guard: Don't recreate container if it already exists (prevents memory leak)
+    if (this.chunkContainers.has(zoneId)) {
+      return;
+    }
     const { x: chunkX, y: chunkY } = this.parseZoneCoords(zoneId);
 
     // Calculate isometric world offset for this chunk
@@ -516,6 +534,11 @@ export class WorldScene extends Phaser.Scene {
     if (!sprite || !this.isoTransform) return;
 
     const screenPos = this.isoTransform.gridToScreen(position.x, position.y);
+
+    // Mark player dirty for depth sorting
+    if (this.depthSorter) {
+      this.depthSorter.markDirty(playerId);
+    }
 
     this.tweens.killTweensOf(sprite);
     this.tweens.add({
