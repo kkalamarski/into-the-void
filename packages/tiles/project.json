@@ -1,0 +1,27 @@
+{
+  "name": "tiles",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/tiles/src",
+  "projectType": "library",
+  "tags": ["scope:shared"],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/tiles",
+        "main": "packages/tiles/src/index.ts",
+        "tsConfig": "packages/tiles/tsconfig.lib.json",
+        "assets": [],
+        "generatePackageJson": true,
+        "format": ["cjs", "esm"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": ["packages/tiles/**/*.ts"]
+      }
+    }
+  }
+}

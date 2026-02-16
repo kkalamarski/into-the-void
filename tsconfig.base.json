@@ -25,7 +25,8 @@
       "@into-the-void/shared-types": ["packages/shared-types/src/index.ts"],
       "@into-the-void/game-logic": ["packages/game-logic/src/index.ts"],
       "@into-the-void/database": ["packages/database/src/index.ts"],
-      "@into-the-void/world-gen": ["packages/world-gen/src/index.ts"]
+      "@into-the-void/world-gen": ["packages/world-gen/src/index.ts"],
+      "@into-the-void/tiles": ["packages/tiles/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
