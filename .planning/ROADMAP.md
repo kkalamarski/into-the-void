@@ -52,7 +52,7 @@ Plans:
 - [x] 08-03-PLAN.md — Integrate isometric rendering in WorldScene with viewport culling
 
 #### Phase 9: Rendering Optimization & Interaction
-**Goal**: Viewport culling optimized and click-to-move restored in isometric space
+**Goal**: WASD controls feel natural in isometric space and pathfinding shows visual feedback
 **Depends on**: Phase 8
 **Requirements**: MOVE-01, MOVE-02, MOVE-03, MOVE-04, REND-02, REND-03
 **Success Criteria** (what must be TRUE):
@@ -60,12 +60,11 @@ Plans:
   2. Click-to-move detects correct tile under mouse cursor
   3. Pathfinding visual path displays correctly on isometric grid
   4. Camera follows player with correct isometric centering
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
-- [ ] 09-03: TBD
+- [ ] 09-01-PLAN.md — Remap WASD to screen-relative diagonal directions
+- [ ] 09-02-PLAN.md — Add pathfinding path visualization using Graphics API
 
 #### Phase 10: Multiplayer Integration
 **Goal**: Remote players and entities render correctly with position sync
@@ -122,7 +121,7 @@ Plans:
 | 6. Movement System | v1.1 | 5/5 | Complete | 2026-02-15 |
 | 7. Entities & HUD | v1.1 | 5/5 | Complete | 2026-02-16 |
 | 8. Core Isometric Transformation | v1.2 | 3/3 | Complete | 2026-02-16 |
-| 9. Rendering Optimization & Interaction | v1.2 | 0/TBD | Not started | - |
+| 9. Rendering Optimization & Interaction | v1.2 | 0/2 | Not started | - |
 | 10. Multiplayer Integration | v1.2 | 0/TBD | Not started | - |
 | 11. UI Integration | v1.2 | 0/TBD | Not started | - |
 | 12. Polish | v1.2 | 0/TBD | Not started | - |
