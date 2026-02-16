@@ -1,5 +1,7 @@
 import { ZONE_SIZE } from '@into-the-void/shared-types';
 
+const ELEVATION_CLIMB_COST = 0.5; // Additional cost per elevation level climbed
+
 interface PathNode {
   x: number;
   y: number;
@@ -246,4 +248,128 @@ export function getReachablePositions(
   }
 
   return reachable;
+}
+
+/**
+ * Find path using A* algorithm with elevation costs (within a single zone)
+ * Blocks movement when elevation difference > 1, adds cost penalty for uphill movement
+ */
+export function findPathWithElevation(
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  collisionMap: boolean[][],
+  heights: number[][],
+  maxIterations = 1000
+): Array<{ x: number; y: number }> | null {
+  // Validate start and end positions
+  if (
+    startX < 0 ||
+    startX >= ZONE_SIZE ||
+    startY < 0 ||
+    startY >= ZONE_SIZE ||
+    endX < 0 ||
+    endX >= ZONE_SIZE ||
+    endY < 0 ||
+    endY >= ZONE_SIZE
+  ) {
+    return null;
+  }
+
+  // Check if start or end is blocked
+  if (collisionMap[startY]?.[startX] || collisionMap[endY]?.[endX]) {
+    return null;
+  }
+
+  const openSet: PathNode[] = [];
+  const closedSet = new Set<string>();
+
+  const startNode: PathNode = {
+    x: startX,
+    y: startY,
+    g: 0,
+    h: manhattanDistance(startX, startY, endX, endY),
+    f: 0,
+    parent: null,
+  };
+  startNode.f = startNode.g + startNode.h;
+  openSet.push(startNode);
+
+  const directions = [
+    { dx: 0, dy: -1 }, // N
+    { dx: 0, dy: 1 }, // S
+    { dx: 1, dy: 0 }, // E
+    { dx: -1, dy: 0 }, // W
+  ];
+
+  let iterations = 0;
+
+  while (openSet.length > 0 && iterations < maxIterations) {
+    iterations++;
+
+    // Get node with lowest f score
+    openSet.sort((a, b) => a.f - b.f);
+    const current = openSet.shift()!;
+
+    // Check if we reached the goal
+    if (current.x === endX && current.y === endY) {
+      return reconstructPath(current);
+    }
+
+    closedSet.add(`${current.x},${current.y}`);
+
+    // Get current height for elevation checks
+    const currentHeight = heights[current.y]?.[current.x] ?? 0;
+
+    // Check neighbors
+    for (const dir of directions) {
+      const nx = current.x + dir.dx;
+      const ny = current.y + dir.dy;
+      const key = `${nx},${ny}`;
+
+      // Skip if out of bounds
+      if (nx < 0 || nx >= ZONE_SIZE || ny < 0 || ny >= ZONE_SIZE) {
+        continue;
+      }
+
+      // Skip if blocked or already visited
+      if (collisionMap[ny]?.[nx] || closedSet.has(key)) {
+        continue;
+      }
+
+      // Calculate elevation-based movement cost
+      const neighborHeight = heights[ny]?.[nx] ?? 0;
+      const elevationDelta = neighborHeight - currentHeight;
+
+      // Block if too steep (same rule as movement validation)
+      if (Math.abs(elevationDelta) > 1) {
+        continue; // Skip this neighbor
+      }
+
+      // Base cost = 1 for flat/downhill, add penalty for uphill
+      let moveCost = 1.0;
+      if (elevationDelta > 0) {
+        moveCost += elevationDelta * ELEVATION_CLIMB_COST;
+      }
+
+      const g = current.g + moveCost;
+      const h = manhattanDistance(nx, ny, endX, endY);
+      const f = g + h;
+
+      // Check if this path is better
+      const existingNode = openSet.find((n) => n.x === nx && n.y === ny);
+      if (existingNode) {
+        if (g < existingNode.g) {
+          existingNode.g = g;
+          existingNode.f = f;
+          existingNode.parent = current;
+        }
+      } else {
+        openSet.push({ x: nx, y: ny, g, h, f, parent: current });
+      }
+    }
+  }
+
+  return null; // No path found
 }

@@ -1,6 +1,8 @@
 // Movement
 export * from './movement/validation';
 export * from './movement/pathfinding';
+export { validateMovementWithElevation } from './movement/validation';
+export { findPathWithElevation } from './movement/pathfinding';
 
 // Combat
 export * from './combat/damage';
