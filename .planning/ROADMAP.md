@@ -110,10 +110,11 @@ Plans:
   2. Biome transitions are seamless using noise layers with no hard edges at chunk boundaries
   3. HUD displays current biome name based on player world position
   4. Temperature/moisture/elevation noise creates natural climate zones across multiple chunks
-**Plans**: TBD
+**Plans**: 2 plans in 1 wave
 
 Plans:
-- [ ] 19-01: [TBD during planning]
+- [ ] 19-01-PLAN.md — Per-tile biome sampling in terrain generation
+- [ ] 19-02-PLAN.md — HUD biome display component
 
 #### Phase 20: Testing & Polish
 **Goal**: Cross-chunk gameplay validated with edge cases resolved and UX polished
@@ -154,10 +155,10 @@ Phases execute in numeric order: 17 → 18 → 19 → 20
 | 16. Structure Walls & Pathfinding | v1.3 | 5/5 | Complete | 2026-02-16 |
 | 17. World Coordinate Foundation | v1.4 | 2/2 | Complete | 2026-02-16 |
 | 18. Multi-Chunk Streaming | v1.4 | 5/5 | Complete | 2026-02-16 |
-| 19. Biome Integration | v1.4 | 0/TBD | Not started | - |
+| 19. Biome Integration | v1.4 | 0/2 | Not started | - |
 | 20. Testing & Polish | v1.4 | 0/TBD | Not started | - |
 
-**Total:** 20 phases (16 complete, 4 pending)
+**Total:** 20 phases (18 complete, 2 pending)
 
 ---
-*Last updated: 2026-02-16 after Phase 17 planning*
+*Last updated: 2026-02-17 after Phase 19 planning*
