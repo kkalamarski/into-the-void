@@ -11,9 +11,9 @@ interface BiomeParams {
 }
 
 const DEFAULT_BIOME_PARAMS: BiomeParams = {
-  temperatureScale: 0.005,
-  moistureScale: 0.007,
-  elevationScale: 0.003,
+  temperatureScale: 0.001,   // ~1000 tiles per biome region
+  moistureScale: 0.0015,     // ~667 tiles per moisture zone
+  elevationScale: 0.0006,    // ~1667 tiles per elevation band
 };
 
 /**
