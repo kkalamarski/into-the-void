@@ -5,7 +5,7 @@ import { useGameStore } from '../store/gameStore';
 import { ConnectionIndicator } from './ConnectionIndicator';
 import { ReconnectOverlay } from './ReconnectOverlay';
 import { gameSocket } from '../network/socket';
-import { ChunkData, BiomeType } from '@into-the-void/shared-types';
+import { ChunkData, BiomeType, Entity } from '@into-the-void/shared-types';
 
 const GameContainer: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -14,6 +14,7 @@ const GameContainer: React.FC = () => {
 
   // Subscribe to zoneState from store - this contains zone:state event data
   const { connectionState, setGame, zoneState, player } = useGameStore();
+  const chunksLoading = useGameStore((state) => state.chunksLoading);
 
   // Initialize Phaser game
   useEffect(() => {
@@ -49,6 +50,12 @@ const GameContainer: React.FC = () => {
     // zoneState contains the zone:state event data with tiles
     const { chunk, biome, players } = zoneState;
 
+    // CRITICAL: Set up chunk request handler BEFORE loading zone
+    // (loadZoneFromState triggers updateChunks which needs this handler)
+    worldScene.setChunkRequestHandler((requestZoneId: string) => {
+      gameSocket.emit('zone:request', { zoneId: requestZoneId });
+    });
+
     // CRITICAL: Pass tile data from zone:state to WorldScene
     // This is the key link that connects socket data to Phaser rendering
     if (chunk && chunk.tiles && chunk.tiles.length > 0) {
@@ -82,11 +89,6 @@ const GameContainer: React.FC = () => {
       }
     }
 
-    // Set up chunk request handler for adjacent chunks
-    worldScene.setChunkRequestHandler((requestZoneId: string) => {
-      gameSocket.emit('zone:request', { zoneId: requestZoneId });
-    });
-
   }, [phaserReady, zoneId, player?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update player position in scene separately (runs on position changes)
@@ -103,10 +105,18 @@ const GameContainer: React.FC = () => {
   useEffect(() => {
     if (!phaserReady || !gameRef.current) return;
 
-    const handleChunkData = (data: { chunk: ChunkData; biome: BiomeType }) => {
+    const handleChunkData = (data: { zoneId: string; chunk: ChunkData; biome: BiomeType; entities?: Entity[] }) => {
       const worldScene = gameRef.current?.getWorldScene();
       if (worldScene) {
         worldScene.receiveChunkData(data.chunk, data.biome);
+
+        // Spawn entities from adjacent chunks with zone tracking for cleanup
+        // Client filters by visibility, zone tracking enables memory cleanup on unload
+        if (data.entities) {
+          data.entities.forEach(entity => {
+            worldScene.spawnEntity(entity, data.zoneId);
+          });
+        }
       }
     };
 
@@ -124,6 +134,14 @@ const GameContainer: React.FC = () => {
 
       {/* Always visible connection indicator */}
       <ConnectionIndicator />
+
+      {/* Chunk loading indicator */}
+      {chunksLoading > 0 && (
+        <div className="chunk-loading-indicator">
+          <div className="chunk-loading-spinner" />
+          <span>Loading terrain...</span>
+        </div>
+      )}
 
       {/* Show reconnect overlay when disconnected (but not on error) */}
       {connectionState === 'disconnected' && <ReconnectOverlay visible={true} />}
