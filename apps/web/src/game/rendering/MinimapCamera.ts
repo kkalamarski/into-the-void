@@ -1,14 +1,14 @@
 import Phaser from 'phaser';
 import { ZONE_SIZE } from '@into-the-void/shared-types';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../scenes/WorldScene';
+
 const MINIMAP_SIZE = 180;
 const MINIMAP_PADDING = 20;
-const MINIMAP_ZOOM = 0.15; // Zoomed out to show more area
+const MINIMAP_ZOOM = 0.1;
 
 export class MinimapCamera {
   private scene: Phaser.Scene;
   private minimapCam: Phaser.Cameras.Scene2D.Camera | null = null;
-  private border: Phaser.GameObjects.Graphics | null = null;
   private playerIndicator: Phaser.GameObjects.Graphics | null = null;
 
   constructor(scene: Phaser.Scene) {
@@ -29,22 +29,17 @@ export class MinimapCamera {
     // Configure minimap camera
     this.minimapCam.setZoom(MINIMAP_ZOOM);
     this.minimapCam.setBackgroundColor(0x111122);
-    this.minimapCam.setBounds(0, 0, ZONE_SIZE * ISO_TILE_WIDTH, ZONE_SIZE * ISO_TILE_HEIGHT);
+
+    // Isometric world is diamond-shaped in screen coordinates:
+    // Grid (0,0) → screen (0, 0), Grid (127,0) → screen (+8128, 4064)
+    // Grid (0,127) → screen (-8128, 4064), Grid (127,127) → screen (0, 8128)
+    // Bounds must encompass the entire diamond from -worldWidth/2 to +worldWidth/2
+    const worldWidth = ZONE_SIZE * ISO_TILE_WIDTH;
+    const worldHeight = ZONE_SIZE * ISO_TILE_HEIGHT;
+    this.minimapCam.setBounds(-worldWidth / 2, 0, worldWidth, worldHeight);
 
     // Give minimap camera a name for identification
     this.minimapCam.setName('minimap');
-
-    // Create border (fixed to screen, not world)
-    this.border = this.scene.add.graphics();
-    this.border.lineStyle(2, 0x666688, 1);
-    this.border.strokeRect(
-      mainCam.width - MINIMAP_SIZE - MINIMAP_PADDING,
-      mainCam.height - MINIMAP_SIZE - MINIMAP_PADDING,
-      MINIMAP_SIZE,
-      MINIMAP_SIZE
-    );
-    this.border.setScrollFactor(0);
-    this.border.setDepth(1000);
 
     // Create player indicator (rendered on main camera, fixed position)
     this.playerIndicator = this.scene.add.graphics();
@@ -52,9 +47,8 @@ export class MinimapCamera {
     this.playerIndicator.setDepth(1001);
     this.updatePlayerIndicator();
 
-    // Make minimap camera ignore UI elements (border and player indicator)
-    // They should only render on main camera
-    this.minimapCam.ignore([this.border, this.playerIndicator]);
+    // Make minimap camera ignore player indicator (only render on main camera)
+    this.minimapCam.ignore([this.playerIndicator]);
 
     // Handle window resize
     this.scene.scale.on('resize', this.handleResize, this);
@@ -76,18 +70,13 @@ export class MinimapCamera {
   }
 
   private handleResize(gameSize: Phaser.Structs.Size): void {
-    if (!this.minimapCam || !this.border) return;
+    if (!this.minimapCam) return;
 
     const newX = gameSize.width - MINIMAP_SIZE - MINIMAP_PADDING;
     const newY = gameSize.height - MINIMAP_SIZE - MINIMAP_PADDING;
 
     // Update minimap camera position
     this.minimapCam.setViewport(newX, newY, MINIMAP_SIZE, MINIMAP_SIZE);
-
-    // Update border position
-    this.border.clear();
-    this.border.lineStyle(2, 0x666688, 1);
-    this.border.strokeRect(newX, newY, MINIMAP_SIZE, MINIMAP_SIZE);
 
     // Update player indicator position
     this.updatePlayerIndicator();
@@ -115,10 +104,6 @@ export class MinimapCamera {
     if (this.minimapCam) {
       this.scene.cameras.remove(this.minimapCam);
       this.minimapCam = null;
-    }
-    if (this.border) {
-      this.border.destroy();
-      this.border = null;
     }
     if (this.playerIndicator) {
       this.playerIndicator.destroy();

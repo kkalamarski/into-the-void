@@ -23,6 +23,7 @@ export const GameUI: React.FC = () => {
     <div className="game-ui">
       <HUD />
       {showChat && <ChatPanel />}
+      <div className="minimap-border" />
     </div>
   );
 };

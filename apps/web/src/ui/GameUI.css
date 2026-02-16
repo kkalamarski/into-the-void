@@ -34,3 +34,17 @@
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
 }
+
+/* Minimap border - matches MinimapCamera.ts positioning */
+.minimap-border {
+  position: absolute;
+  bottom: 16px;  /* MINIMAP_PADDING (20) - PANEL_INNER_PADDING (4) */
+  right: 16px;
+  width: 188px;  /* MINIMAP_SIZE (180) + PANEL_INNER_PADDING * 2 (8) */
+  height: 188px;
+  background: transparent;
+  border: 2px solid var(--color-bg-tertiary);
+  border-radius: 8px;
+  pointer-events: none;
+  box-shadow: 0 0 0 4px var(--color-bg-secondary);  /* Outer glow effect like panel */
+}

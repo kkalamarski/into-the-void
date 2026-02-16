@@ -72,6 +72,16 @@ const GameContainer: React.FC = () => {
       }
     }
 
+    // Spawn entities from zone state (handles race condition when zone:state
+    // arrives before Phaser is ready - gameStore handler may have missed them)
+    const { entities } = zoneState;
+    if (entities && entities.length > 0) {
+      worldScene.clearEntities();
+      for (const entity of entities) {
+        worldScene.spawnEntity(entity);
+      }
+    }
+
     // Set up chunk request handler for adjacent chunks
     worldScene.setChunkRequestHandler((requestZoneId: string) => {
       gameSocket.emit('zone:request', { zoneId: requestZoneId });

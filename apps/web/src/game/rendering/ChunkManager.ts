@@ -108,6 +108,11 @@ export class ChunkManager {
   receiveChunk(chunkData: ChunkData, biome: BiomeType): void {
     const { zoneId } = chunkData;
 
+    // Guard: Don't reprocess chunk if already loaded (prevents memory leak from duplicate calls)
+    if (this.chunkStates.get(zoneId) === 'loaded') {
+      return;
+    }
+
     // Update state
     this.chunkStates.set(zoneId, 'loaded');
 
