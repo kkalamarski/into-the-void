@@ -20,13 +20,10 @@ export class Game {
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
       scene: [BootScene, PreloadScene, WorldScene],
-      physics: {
-        default: 'arcade',
-        arcade: {
-          gravity: { x: 0, y: 0 },
-          debug: false,
-        },
-      },
+      // Pause game loop when tab loses focus to prevent memory issues
+      pauseOnBlur: true,
+      // Disable physics - we use tile-based movement
+      physics: undefined,
       callbacks: {
         postBoot: () => {
           // Notify when Phaser is ready
