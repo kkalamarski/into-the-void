@@ -179,10 +179,14 @@ Plans:
   4. Click detection accounts for elevation offset (clicks on elevated terrain work correctly)
   5. Structure walls render with side faces and appear on minimap as distinct markers
   6. Tall objects hide entities behind them (full occlusion)
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 16-01: TBD
+- [ ] 16-01-PLAN.md — Add elevation-based movement validation and pathfinding costs
+- [ ] 16-02-PLAN.md — Implement elevation-aware click detection
+- [ ] 16-03-PLAN.md — Create procedural wall generation in world-gen
+- [ ] 16-04-PLAN.md — Render structure walls and add minimap markers
+- [ ] 16-05-PLAN.md — Implement depth-based entity occlusion
 
 ## Progress
 
@@ -206,9 +210,9 @@ Phases execute in numeric order: 13 → 14 → 15 → 16
 | 13. Tile Definition Architecture | v1.3 | 3/3 | Complete | 2026-02-16 |
 | 14. Elevation System Core | v1.3 | 2/2 | Complete | 2026-02-16 |
 | 15. Elevation Rendering | v1.3 | 2/2 | Complete | 2026-02-16 |
-| 16. Structure Walls & Pathfinding | v1.3 | 0/? | Not started | - |
+| 16. Structure Walls & Pathfinding | v1.3 | 0/5 | Planned | - |
 
 **Total:** 16 phases (15 complete, 1 planned)
 
 ---
-*Last updated: 2026-02-16 after Phase 15 execution complete*
+*Last updated: 2026-02-16 after Phase 16 planning complete*
