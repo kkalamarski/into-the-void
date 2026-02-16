@@ -230,5 +230,7 @@ export class ChunkManager {
     });
     this.loadedChunks.clear();
     this.chunkStates.clear();
+    this.pendingRequests.clear();
+    this.requestQueue.clear();
   }
 }
