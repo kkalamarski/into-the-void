@@ -57,6 +57,7 @@ Progress: [███████████████░] 93% (15/16 phases c
 | Phase 14-elevation-system-core P01 | 120 | 2 tasks | 1 files |
 | Phase 15 P01 | 133s | 2 tasks | 2 files |
 | Phase 15 P02 | 235s | 3 tasks | 3 files |
+| Phase 16 P02 | 122 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,8 @@ Recent decisions affecting current work:
 - [Phase 15-02]: Viewport bounds expanded upward by 80px (MAX_STRUCTURE_HEIGHT) to prevent pop-in
 - [Phase 15-02]: Entities cache elevation in container data for depth sorting
 - [Phase 15-02]: getTileElevation helper with bounds checking (returns 0 if unavailable)
+- [Phase 16-02]: Single-pass elevation adjustment sufficient for small elevations
+- [Phase 16-02]: Callback pattern for elevation lookup maintains IsometricTransform decoupling
 
 ### Pending Todos
 
