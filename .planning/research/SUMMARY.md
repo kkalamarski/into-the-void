@@ -1,259 +1,277 @@
 # Project Research Summary
 
-**Project:** Into the Void - Post-Login Game Experience
-**Domain:** Multiplayer 2D Sci-Fi Survival MMO (WebSocket-based real-time gameplay)
-**Researched:** 2026-02-14
+**Project:** Into the Void v1.2 - Isometric View Transformation
+**Domain:** Isometric rendering for multiplayer 2D MMO with Phaser 3
+**Researched:** 2026-02-16
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Into the Void is a multiplayer 2D sci-fi survival MMO with solid existing infrastructure. The current stack (React + Phaser 3, NestJS + Socket.IO, Zustand, shared packages for game-logic/world-gen) is production-ready and requires minimal new dependencies. The core challenge is integrating three distinct layers—React UI (HUD), Phaser canvas (game rendering), and WebSocket networking (real-time state sync)—while avoiding common pitfalls that cause memory leaks, desync, and poor network feel.
+Adding isometric projection to an existing top-down multiplayer game requires a strict separation between coordinate spaces. Research confirms that the isometric transformation should be purely presentational - game logic stays in cartesian (grid) coordinates, with screen coordinates calculated only at render time. Native Phaser 3 capabilities (built-in since v3.50.0) are sufficient; the unmaintained phaser3-plugin-isometric should be avoided. The core transformation math is simple (20-30 lines), but integration requires careful attention to coordinate space boundaries to prevent common pitfalls like click detection misalignment, depth sorting instability, and multiplayer position desync.
 
-The recommended approach follows proven patterns from established multiplayer games: EventBus bridge for React-Phaser communication, client-side prediction with server reconciliation for responsive movement, entity interpolation for smooth rendering, and zone-based Socket.IO rooms for scalable broadcasts. The existing architecture already implements WebSocket authentication, zone state sync, and movement validation—new work focuses on completing the client-side game loop and wiring HUD components.
+The recommended approach uses a transform layer pattern: create a centralized CoordinateTransform utility that handles all bidirectional conversions between grid and screen space. All rendering components (TileRenderer, EntityRenderer, ViewportCuller) use this utility for positioning and depth calculations. Game logic, server communication, pathfinding, and collision detection remain completely unchanged - they continue using grid coordinates. This pattern allows toggling between orthographic and isometric views by swapping transform implementations and provides clear debugging boundaries.
 
-Key risks center around integration boundaries and timing: Phaser memory leaks on React unmount, race conditions between async auth and socket room joins, missing client-side prediction causing laggy feel, and Zustand updates from game loop causing React render thrashing. These are well-documented problems with established solutions that must be implemented correctly from the start rather than retrofitted later.
+The critical risk is coordinate space confusion, which manifests as "looks done but isn't" problems - visually correct rendering but broken click detection, pathfinding that produces strange paths, or multiplayer position drift. Prevention requires disciplined architecture: never mix coordinate systems, always transform at render boundaries, and validate coordinate conversions at multiple zoom levels and map edges. The second major risk is depth sorting instability causing sprite flickering, mitigated by using Phaser's Layer-based automatic depth sorting with throttled updates and proper depth value calculations.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack is sufficient—no major library additions needed. Focus is on minor version updates and integration patterns rather than new technology adoption.
+Native Phaser 3 with custom coordinate utilities is the clear choice for isometric transformation. The phaser3-plugin-isometric is unmaintained (last updated 2018), predates Phaser's built-in isometric features, and adds unnecessary complexity for simple coordinate math. Phaser 3.50.0+ (released 2020) includes native isometric tilemap support and depth sorting APIs that handle all required functionality.
 
 **Core technologies:**
-- Phaser 3.90+ (from 3.80): Stability improvements for EXPAND scale mode, better DynamicTexture rendering, camera matrix fixes
-- Socket.IO 4.8.3 (from 4.7): Improved transport fallback, binary data fixes, better cookie handling with credentials
-- Immer 10.0 (NEW): Immutable state updates for nested Zustand state, prevents accidental mutations in entity/zone registries
-- TypeScript 5.9 (from 5.4): Latest stable release with improved type inference and performance
+- **Phaser 3.90.0** (upgrade from 3.80.0): Game engine with native isometric support - Latest stable with built-in tilemap isometric orientation and depth sorting
+- **Custom coordinate utilities**: Cartesian to/from isometric transforms - 20-30 LOC of simple math provides full control without dependencies
+- **Phaser Layer API**: Automatic depth sorting - Built-in `Layer.depthSort()` optimized for frequent re-sorting of moving objects
+- **Native `setDepth()` method**: Z-ordering - Uses formula `depth = (gridX + gridY) * 1000 + gridY` for correct isometric layering
 
-**Integration patterns (critical success factors):**
-- EventBus pattern: Official Phaser-React template approach for decoupled cross-boundary communication
-- Client prediction + server reconciliation: Industry standard from QuakeWorld, now universal for responsive multiplayer feel
-- Object pooling for entities: Prevents FPS drops from garbage collection (35-40 FPS → stable 60 FPS with 3x entities)
-- Socket.IO zone-based rooms: Already implemented in existing gateway, provides efficient broadcast isolation
+**No additional dependencies required.** The transformation math is straightforward (diamond projection with 2:1 aspect ratio), and all required rendering APIs exist in Phaser core.
 
 ### Expected Features
 
-**Must have (table stakes for post-login MVP):**
-- WASD/arrow key movement with client-side prediction (PC game baseline, prevents laggy feel)
-- Tile-based world rendering with color-coded biomes (no sprites, color tiles as stated requirement)
-- Viewport culling for performance (essential for worlds larger than single screen)
-- Network state synchronization via Socket.IO (multiplayer core, already partially implemented)
-- Player health/energy display in HUD (survival mechanic feedback)
-- Current zone/biome indicator (critical per lore: entering wrong tier = death)
-- Other player entities visible with smooth interpolation (multiplayer awareness)
-- Click-to-move with A* pathfinding (genre expectation for isometric/top-down games)
-- Static entity registry in code (fast spawns, lore-consistent "species catalog")
+Isometric view transformation delivers the table stakes features needed for visual coherence and interactivity, with some polish features deferred to later phases. The MVP focuses on correct coordinate transformation, proper depth sorting, and restoring click-to-move functionality in isometric space.
 
-**Should have (competitive differentiators):**
-- Dual movement system: WASD + click simultaneous (tactical flexibility, rare in MMOs)
-- Faction-specific HUD theming via CSS variables (immersion in corporate identity)
-- Entity behavioral classification icons (Herbivore/Predator/Maniac per lore)
-- Client-side prediction with visible rollback (network transparency, builds trust vs teleporting)
-- Minimap with biome color-coding (strategic planning, MMORPG standard placement)
+**Must have (table stakes):**
+- **Correct depth sorting** - Y-position based z-index so entities layer properly; without this, sprites flicker and appear in wrong order
+- **Diamond tile coordinate transformation** - Players expect isometric diamond grid; screen-to-grid and grid-to-screen conversions with 2:1 ratio
+- **Accurate mouse/click detection** - Click-to-move must work on diamond tiles; inverse transform from screen to grid coordinates
+- **Proper tile rendering order** - Back-to-front row ordering prevents visual glitches
+- **Entity positioning on tiles** - Entities aligned to isometric grid with health bars staying positioned correctly
+- **Minimap representation** - Keep orthogonal (easier to read) or transform to isometric (consistent with main view)
 
-**Defer (v2+ until MVP validated):**
-- Procedural chunk streaming (premature optimization until world size demonstrates need)
-- Advanced interpolation for all entities (start simple, optimize after profiling)
-- Biome tier visual indicators (defer until multiple tiers accessible)
-- Disconnect/reconnect action queue (add after network stability issues identified)
+**Should have (competitive):**
+- **Highlight/outline on hover** - Improves UX for tile/entity selection in dense isometric scenes; screen-space outlines preferred
+- **Smooth camera panning** - Edge pan or middle-click drag expected in modern isometric games
+- **Viewport culling optimization** - Diamond-shaped culling bounds to avoid rendering off-screen tiles
 
-**Anti-features (avoid):**
-- Real-time interpolation for all entities: CPU cost at MMO scale, use viewport culling instead
-- Minimap with full entity tracking: Information overload, removes survival tension
-- Pixel-perfect pathfinding: Overkill for tile-based movement, use grid-resolution A*
-- Global entity registry shared across clients: Bandwidth explosion, use zone-based interest management
+**Defer (v2+):**
+- **Zoom levels (2-3 discrete)** - Tactical overview vs detail view; requires viewport culling recalculation per zoom
+- **Dynamic shadows** - Visual polish after core mechanics proven; simple circular shadow sprites sufficient initially
+- **Visual depth cues (elevation)** - Stacked tiles for height; needs design decisions about world structure
+- **Camera rotation** - Explicitly avoided (anti-feature); massively increases asset requirements and causes disorientation
 
 ### Architecture Approach
 
-The integration architecture connects three layers through clear boundaries: React (UI state in Zustand), Phaser (game rendering/input), and Socket.IO (network sync). EventBus acts as the decoupling layer between React and Phaser, NetworkSync coordinates socket events to store updates and EventBus emissions, and EntityRegistry manages client-side entity lifecycle with object pooling.
+The transform layer separation pattern is the industry-standard architecture for isometric games. All coordinate transformations flow through a single `CoordinateTransform` utility, creating a clear boundary between world space (game logic) and screen space (rendering). The pattern uses Phaser's Layer API for automatic depth sorting rather than manual Container sorting, providing better performance for frequent re-sorting of moving entities.
 
 **Major components:**
-1. **EventBus (NEW)** — React ↔ Phaser bridge using Phaser EventEmitter, official template pattern for decoupled communication
-2. **NetworkSync (NEW)** — Centralized socket event handler registration, coordinates socket → Zustand → EventBus flow
-3. **EntityRegistry (NEW)** — Client-side entity management with object pooling, prevents garbage collection FPS drops
-4. **WorldScene (EXTEND)** — Phaser scene for tile rendering, entity sprites, input handling with client prediction
-5. **GameGateway (EXISTS)** — NestJS WebSocket gateway with auth handshake, zone room management, movement validation
-6. **ZonesService (EXISTS)** — Lazy chunk loading with 5-minute cleanup, in-memory entity registry
-7. **gameStore (EXTEND)** — Add entity registry slice and zone state, use Immer middleware for nested updates
+1. **CoordinateTransform utility** - Centralized singleton for bidirectional grid-to-screen conversions and depth calculations; keeps transformation logic in one place, prevents scattered coordinate math
+2. **Layer-based Y-sort system** - Single Phaser Layer containing all world objects (tiles + entities); built-in `depthSort()` method handles automatic z-ordering
+3. **DepthManager system** - Orchestrates when depth sorting occurs; uses dirty flags and throttling (every 50ms) to optimize performance
+4. **Modified rendering components** - TileRenderer, EntityRenderer, ViewportCuller use CoordinateTransform for positioning; game logic (MovementController, PathfindingController) remains unchanged
+5. **Diamond-shaped viewport culling** - Transforms camera rectangle corners to grid space to calculate visible tile bounds; prevents rendering off-screen tiles while avoiding pop-in
 
-**Data flow patterns:**
-- Connection: CharacterSelect → socket.connect() → auth event with JWT → server validates → join zone room → client receives zone:state → Phaser renders
-- Movement: User input → client predicts position → update local sprite immediately → emit to server → server validates → broadcast to zone → client reconciles if mismatch
-- Entity sync: Server emits entity:spawn to zone room → NetworkSync updates store → EventBus bridges to Phaser → EntityRegistry spawns sprite from pool
+**Data flow:** Server sends grid coordinates → Client logic operates in grid space → Rendering layer applies transform → Sprites positioned at screen coordinates with depth values → Layer sorts by depth → Display. Input flow reverses: Mouse click at screen position → Transform to grid coordinates → Pathfinding/movement in grid space → Server validates in grid space.
 
 ### Critical Pitfalls
 
-1. **WebSocket auth without handshake validation** — Token validation in auth handler doesn't prevent unauthenticated clients from calling other message handlers. Add guards to ALL handlers except 'auth', use NestJS execution order (Middleware → Guards → Handler), store authenticated state in socket.data. Address in Phase 1 (Connection & Auth).
+Research identified eight major pitfalls, with three requiring immediate attention in phase planning.
 
-2. **Race condition between socket join and async database queries** — Socket disconnects while DB query in-flight, then client.join(roomId) executes AFTER disconnect, creating ghost players in rooms. Check client.connected status BEFORE every join() call, perform all async operations before socket mutations. Address in Phase 1.
-
-3. **Phaser memory leaks on React unmount** — game.destroy() doesn't fully clean up cache, world, event listeners. Use useLayoutEffect (not useEffect), manual cleanup sequence (cache.destroy(), world.destroy(), events.removeAllListeners(), window event cleanup), ref to prevent double-init in StrictMode. Address in Phase 2 (Phaser Integration).
-
-4. **Client prediction without server reconciliation** — Client predicts movement for responsiveness but never reconciles with server state, causing position desync, wall clipping, impossible positions. Implement sequence numbers, input buffering, state rollback/fast-forward pattern. Address in Phase 3 (Movement Validation).
-
-5. **Entity interpolation missing or misconfigured** — Rendering entities directly from server updates (10-20Hz) looks choppy at 60fps. Maintain buffer of 2-3 server states, render 100ms in past, interpolate between snapshots. Address in Phase 4 (Entity Rendering).
-
-6. **Zustand store updates inside Phaser game loop** — Calling Zustand setters from update() (60fps) triggers React re-renders every frame, UI sluggish, FPS tanks. Keep Phaser state in Phaser (game.data/scene.data), Zustand only for UI-relevant state, event-driven updates only. Address in Phase 2 & 5 (Integration + State Bridge).
-
-7. **Missing reconnection state recovery** — Player disconnects/reconnects with new socket ID, server treats as new connection, loses position/zone/combat state. Store session by characterId (not socket ID), implement 30-60 second grace period, transfer state from old socket to new. Address in Phase 1.
-
-8. **NestJS guard/middleware execution order confusion** — Guards run in unexpected order, allowing auth bypass or performance issues from premature DB queries. Understand execution order (Middleware → Global Guards → Controller Guards → Route Guards), use @UseGuards array in correct order, document dependencies. Address in Phase 1.
+1. **Depth sorting instability (flickering sprites)** - Simple Y-based sorting breaks with overlapping entities of different sizes; use Phaser Layer with cached depth values and dirty flags; address in Phase 1 (Core Transformation) or compounds through all features
+2. **Click detection coordinate space confusion** - Mixing screen/grid coordinates causes click-to-move to target wrong tiles; maintain strict separation with transform utilities; address in Phase 1 or interaction features will be fundamentally broken
+3. **Viewport culling using wrong bounds** - Rectangular culling for diamond viewport renders 40% more tiles or causes pop-in; recalculate bounds for isometric projection; address in Phase 2 (Optimization) after core rendering works
+4. **Multiplayer position synchronization mismatch** - Tweening screen coordinates instead of world coordinates causes rubber-banding; keep all logic in grid space, transform only for rendering; address in Phase 3 (Multiplayer Integration)
+5. **Minimap coordinate misalignment** - Different projection between minimap/main view causes position drift; decide orthogonal vs isometric and apply consistently; address in Phase 4 (UI Integration)
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure follows dependency order and pitfall prevention:
+Based on research dependencies and risk mitigation, the isometric transformation should follow a five-phase structure. The ordering prioritizes establishing correct coordinate transformation and depth sorting early (Phase 1), optimizing performance once core mechanics work (Phase 2), and integrating with multiplayer/UI systems after the rendering pipeline is proven (Phase 3-4).
 
-### Phase 1: WebSocket Connection & Auth Handshake
-**Rationale:** Foundation for all multiplayer features. Auth race conditions and guard issues must be solved before building complex state sync. Existing gateway has partial implementation but missing guard protection and reconnection handling.
+### Phase 1: Core Isometric Transformation
+**Rationale:** Foundation phase - coordinate transformation and depth sorting must be correct before any other isometric features. These are the load-bearing architectural decisions that all subsequent work depends on. Getting coordinate spaces wrong here creates compounding technical debt.
 
-**Delivers:** Secure WebSocket connection with JWT validation, character authentication, zone room subscription, session restoration on reconnect
+**Delivers:**
+- CoordinateTransform utility with toScreen/toGrid/getDepthValue methods
+- Modified TileRenderer and EntityRenderer using isometric positioning
+- Layer-based depth sorting replacing Container approach
+- Unit tests verifying transform accuracy (toScreen → toGrid returns original values)
 
-**Addresses:**
-- Must-have: Network state synchronization (foundation)
-- Critical pitfalls: Auth without guards (#1), room join race conditions (#2), missing reconnection (#7), guard execution order (#8)
+**Addresses features:**
+- Diamond tile coordinate transformation (table stakes)
+- Correct depth sorting (table stakes)
+- Entity positioning on tiles (table stakes)
 
-**Implementation notes:**
-- Add WsAuthGuard to all @SubscribeMessage handlers except 'auth'
-- Implement IoAdapter middleware for handshake-level JWT validation
-- Store session by characterId in PlayerService with 60-second grace period
-- Check client.connected before all client.join() calls
-- Test: send 'player:move' before 'auth' → should reject with 401
+**Avoids pitfalls:**
+- Depth sorting instability - Implements Layer + depth calculation from start
+- Click detection coordinate confusion - Establishes transform boundaries early
+- Pathfinding heuristic breaks - Keeps pathfinding in grid space, only rendering transforms
 
-### Phase 2: Phaser Integration & Canvas Setup
-**Rationale:** Game rendering foundation. Memory leak and state management patterns must be correct before adding entities/movement. EventBus pattern establishes React-Phaser boundary.
+**Research flag:** Standard patterns, skip research-phase. Transformation math well-documented in Phaser examples and isometric resources.
 
-**Delivers:** Phaser game instance with proper lifecycle, EventBus for React-Phaser communication, tile-based world rendering with viewport culling, HUD shell
+### Phase 2: Rendering Optimization & Interaction
+**Rationale:** After core transformation works visually, optimize rendering performance and restore interactive features. Viewport culling critical for performance with large maps. Click-to-move must work in isometric space or game is unplayable.
 
-**Addresses:**
-- Must-have: Tile-based world rendering, viewport culling
-- Should-have: Faction-specific HUD theming
-- Critical pitfalls: Phaser memory leaks (#3), Zustand in game loop (#6)
+**Delivers:**
+- Diamond-shaped viewport culling bounds
+- Mouse click detection with inverse coordinate transform
+- Restored click-to-move pathfinding
+- Camera follow offset tuning for isometric centering
+- DepthManager with dirty flags and throttling
 
-**Implementation notes:**
-- Create EventBus.ts following official Phaser-React template pattern
-- Use useLayoutEffect (not useEffect) for Phaser initialization
-- Comprehensive cleanup: cache.destroy(), world.destroy(), event listener removal
-- Test: mount/unmount 10 times → heap size stable in DevTools profiler
+**Addresses features:**
+- Accurate mouse/click detection (table stakes)
+- Proper tile rendering order (table stakes)
+- Viewport culling optimization (should-have)
+- Smooth camera panning (should-have)
 
-### Phase 3: Movement Validation & Sync
-**Rationale:** Core gameplay interaction. Client prediction pattern is complex and must be implemented correctly from start, not retrofitted. Builds on Phase 1 (auth/connection) and Phase 2 (rendering).
+**Avoids pitfalls:**
+- Viewport culling wrong bounds - Calculates diamond culling from start
+- Camera follow offset incorrect - Tunes screen-space offset for diamond grid
 
-**Delivers:** WASD/arrow key input, client-side prediction with immediate visual feedback, server-authoritative validation, smooth correction on mismatch, click-to-move with A* pathfinding
+**Research flag:** Standard patterns, skip research-phase. Culling and click detection documented in Phaser/isometric resources.
 
-**Addresses:**
-- Must-have: WASD movement, click-to-move, network state sync (movement)
-- Should-have: Dual movement system (WASD + click simultaneous)
-- Critical pitfall: Client prediction without reconciliation (#4)
+### Phase 3: Multiplayer Integration
+**Rationale:** After rendering and interaction work locally, validate that coordinate transformation survives multiplayer synchronization. Tweened movement, server reconciliation, and remote player positioning must use grid coordinates to avoid desync.
 
-**Implementation notes:**
-- Implement sequence numbers for inputs sent to server
-- Client buffer stores last 100ms of inputs
-- Server includes last processed sequence in player:moved events
-- Client rewinds to sequence, applies unacknowledged inputs, fast-forwards to present
-- Use game-logic package for both client and server validation
-- Test: 200ms artificial latency → movement feels instant locally
+**Delivers:**
+- Audit of movement tweens to use world-space coordinates
+- Verification that server sends grid coordinates only
+- Testing with network latency (100ms+) to expose position drift
+- Remote player rendering using same transform as local player
 
-### Phase 4: Entity Rendering & Registry
-**Rationale:** Multiplayer awareness. Requires movement sync (Phase 3) working first. Object pooling and interpolation prevent performance issues that are hard to fix later.
+**Addresses features:**
+- Entity positioning consistency across clients
+- Movement animation correctness for remote players
 
-**Delivers:** Other player entities visible, entity spawn/despawn/update sync, object pooling for sprite reuse, smooth interpolation for remote entities, entity behavioral icons
+**Avoids pitfalls:**
+- Multiplayer position synchronization mismatch - Ensures tweens use grid space
+- Different draw order between client and server - Standardizes depth calculation
 
-**Addresses:**
-- Must-have: Other player entities, static entity registry
-- Should-have: Entity behavioral classification icons
-- Critical pitfall: Entity interpolation missing (#5)
+**Research flag:** Standard patterns, skip research-phase. Multiplayer coordinate synchronization is well-understood pattern.
 
-**Implementation notes:**
-- Create EntityRegistry.ts with object pooling
-- Maintain buffer of 2-3 server states per entity
-- Render entities 100ms in past (interpolation delay)
-- Linear interpolation between snapshots for smooth 60fps rendering
-- Phaser tweens for position updates (duration: 100ms, ease: Linear)
-- Test: Remote player moves smoothly at 60fps with 20Hz server updates
+### Phase 4: UI Integration
+**Rationale:** After core game rendering and multiplayer work, integrate isometric view with existing UI systems (minimap, HUD). Minimap requires design decision (orthogonal vs isometric) and consistent coordinate handling.
 
-### Phase 5: HUD Implementation & State Bridge
-**Rationale:** UI layer completes the post-login experience. Depends on game state from Phases 3-4. EventBus pattern from Phase 2 makes this integration clean.
+**Delivers:**
+- Minimap projection decision (recommend orthogonal for readability)
+- Minimap click-to-move using correct coordinate space
+- Health bar Y-offset adjustment for isometric sprite heights
+- Behavior icon positioning verification
 
-**Delivers:** Health/energy display, zone/biome indicator, minimap with biome colors, quick slots/hotbar, connection state indicators
+**Addresses features:**
+- Minimap representation (table stakes)
+- Health bars above entities (table stakes)
 
-**Addresses:**
-- Must-have: Player health/energy display, current zone indicator
-- Should-have: Minimap with biome color-coding
+**Avoids pitfalls:**
+- Minimap coordinate misalignment - Establishes consistent projection early
 
-**Implementation notes:**
-- HUD components subscribe to EventBus events (player:health-changed, zone:changed)
-- Zustand store only holds UI-relevant state (showInventory, chatMessages)
-- No Zustand updates from Phaser update() loop
-- Debounce any game-state-to-UI updates to max 10/second
-- Test: FPS stable with all HUD components mounted
+**Research flag:** Standard patterns, skip research-phase. Minimap coordinate handling straightforward.
+
+### Phase 5: Polish & Advanced Features
+**Rationale:** After all core functionality works, add polish features that enhance visual quality and UX. These are lower priority but improve perceived quality significantly.
+
+**Delivers:**
+- Hover highlighting with screen-space outlines
+- Tile edge anti-aliasing
+- Visual feedback for click targets
+- Optional: Dynamic shadows using circular shadow sprites
+- Optional: Zoom levels (requires viewport culling recalculation)
+
+**Addresses features:**
+- Highlight/outline on hover (should-have)
+- Tile edge anti-aliasing (should-have)
+- Dynamic shadows (deferred from v2+)
+- Zoom levels (deferred from v2+)
+
+**Avoids pitfalls:**
+- No visual feedback for click targets - Adds hover highlights
+
+**Research flag:** Skip research-phase for hover/highlighting (standard patterns). If implementing zoom levels, may need research-phase for viewport culling recalculation strategies.
 
 ### Phase Ordering Rationale
 
-- **Phase 1 first:** Auth race conditions and guard issues create security holes and ghost player bugs. Session restoration prevents user frustration from network hiccups. All subsequent phases depend on reliable connection.
+- **Phase 1 before all others:** Coordinate transformation is foundational. Getting grid-to-screen conversion wrong creates cascading bugs in click detection, pathfinding, multiplayer sync. Depth sorting must work early or will cause constant rework.
 
-- **Phase 2 before 3:** Memory leaks from Phaser destroy issues compound with entity spawning. EventBus pattern must exist before movement/entities need to communicate with React. State management boundaries prevent later refactoring.
+- **Phase 2 before Phase 3:** Optimization and interaction must work locally before testing with multiplayer latency. Culling performance and click detection are local concerns that don't involve network.
 
-- **Phase 3 before 4:** Entity interpolation requires understanding movement sync first. Client prediction pattern for player movement applies to remote entities. Click-to-move pathfinding validates A* implementation before entity AI pathfinding.
+- **Phase 3 before Phase 4:** Multiplayer synchronization more critical than UI polish. Remote player positions affect gameplay; minimap projection is UX concern. Validate network-facing features before cosmetic features.
 
-- **Phase 4 before 5:** HUD displays entity/player state, so entities must exist first. Object pooling benefits from early implementation before entity types proliferate. Interpolation smoothness is user-facing quality metric.
-
-- **Phase 5 last:** UI is consumer of game state, not producer. HUD can be stubbed during earlier phases. EventBus established in Phase 2 makes final wiring straightforward.
+- **Phase 5 last:** Polish features depend on all core systems working. Hover highlights need click detection (Phase 2), shadows need depth sorting (Phase 1), zoom needs culling (Phase 2).
 
 ### Research Flags
 
-**Phases needing deeper research during planning:**
-- **Phase 3:** Click-to-move A* pathfinding implementation — while pattern is standard, grid-based A* for Phaser 3 has nuances around tile coordinate conversion and performance optimization. May need research-phase for pathfinding library selection (custom vs library).
-
 **Phases with standard patterns (skip research-phase):**
-- **Phase 1:** WebSocket auth patterns well-documented in NestJS + Socket.IO docs, guard execution order is official framework behavior
-- **Phase 2:** Phaser-React integration using official template pattern, memory cleanup is documented
-- **Phase 4:** Object pooling and interpolation are established patterns with clear implementation guides
-- **Phase 5:** React component → EventBus subscription is straightforward once EventBus established
+- **Phase 1 (Core Transformation):** Coordinate math and depth sorting well-documented in Phaser examples and isometric game dev resources
+- **Phase 2 (Rendering Optimization):** Viewport culling and click detection have established patterns
+- **Phase 3 (Multiplayer Integration):** Network synchronization patterns well-understood for grid-based games
+- **Phase 4 (UI Integration):** Minimap coordinate handling straightforward given transform layer
+
+**Phases potentially needing research:**
+- **Phase 5 (Polish):** Only if implementing zoom levels - may need research into dynamic viewport culling strategies for multiple zoom levels
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Existing stack validated, version updates minor, integration patterns from official sources |
-| Features | MEDIUM-HIGH | Table stakes identified from competitor analysis, differentiators from lore alignment, anti-features from performance research |
-| Architecture | HIGH | Existing codebase examined, integration patterns verified against official Phaser-React template and NestJS docs |
-| Pitfalls | HIGH | All pitfalls sourced from official GitHub issues, established multiplayer game dev resources (Valve, Gabriel Gambetta), and NestJS documentation |
+| Stack | HIGH | Phaser 3.90.0 verified as latest stable, native isometric support confirmed in v3.50.0+, plugin maintenance status verified on npm/GitHub |
+| Features | HIGH | Table stakes features validated against recent isometric MMO examples (Dreadmyst 2026), coordinate transformation requirements from authoritative sources (Clint Bellanger) |
+| Architecture | HIGH | Transform layer pattern used across Unity/Godot/Phaser implementations, Phaser Layer API well-documented for depth sorting, official examples demonstrate patterns |
+| Pitfalls | MEDIUM | Critical pitfalls (depth sorting, coordinate confusion) verified in multiple community sources, but some edge cases (multi-tile entities, platform-specific quirks) may emerge during implementation |
 
 **Overall confidence:** HIGH
 
+Research draws from official Phaser documentation, authoritative isometric game development resources (Clint Bellanger, Red Blob Games), and verified community implementations. The core technology decisions (native Phaser, no plugin) are well-supported. The transform layer pattern is industry-standard with proven examples.
+
 ### Gaps to Address
 
-- **A* pathfinding library selection:** Research identified grid-based A* as the pattern but didn't evaluate specific Phaser 3 pathfinding libraries (custom vs easystarjs vs Phaser plugins). Address during Phase 3 planning with targeted research-phase if needed.
+Research identified areas needing validation during implementation:
 
-- **Chunk streaming implementation details:** Deferred to v2+ but will eventually need research on Phaser tilemap chunking patterns, off-main-thread generation, and cache strategies. Flag for future milestone research.
+- **Performance of per-frame depth sorting:** Not measured for this specific codebase. May need optimization if entity count exceeds 200+ visible entities. Mitigation: Implement dirty flags and throttling from start, profile during Phase 2.
 
-- **Specific collision map data structure:** Research established client needs collision map for prediction validation but didn't specify optimal format (2D array vs tilemap vs spatial hash). Validate during Phase 3 implementation based on world-gen package output.
+- **Phaser 3.80 to 3.90 breaking changes:** Assumed minimal based on Phaser's compatibility history, but should verify during Phase 1 upgrade. Mitigation: Review Phaser 3.81-3.90 changelogs before upgrading.
 
-- **Minimap rendering approach:** Should-have feature with standard placement (top-right) identified but implementation approach (separate Phaser scene vs Canvas 2D vs pre-rendered) needs validation during Phase 5 based on performance profiling.
+- **Minimap projection decision:** Research shows no consensus - some games keep orthogonal, others match main view. Player preference varies. Mitigation: Make design decision in Phase 4, implement toggle for testing if unclear.
+
+- **Click detection with multi-tile entities:** Diamond shape means overlapping hit areas. Research covers single-tile entities but not large objects like buildings. Mitigation: Test with placeholder large sprites in Phase 2, adjust hit detection as needed.
+
+- **Camera bounds mapping:** How isometric camera bounds map to cartesian world bounds not fully validated. Mitigation: Test camera follow at zone edges and during zone transitions in Phase 2.
+
+- **Zoom level viewport culling:** Research indicates culling bounds must recalculate per zoom, but specific implementation strategy not validated. Mitigation: If implementing zoom in Phase 5, prototype culling approach first.
 
 ## Sources
 
-### Primary (HIGH confidence)
-- [Phaser 3.90 Changelog](https://phaser.io/news/2025/05/phaser-v390-released) — Version updates and features
-- [Socket.IO 4.8.0 Changelog](https://socket.io/docs/v4/changelog/4.8.0) — Transport improvements
-- [Socket.IO Rooms Documentation](https://socket.io/docs/v3/rooms/) — Zone isolation pattern
-- [Official Phaser-React Template](https://github.com/phaserjs/template-react) — EventBus pattern
-- [NestJS WebSocket Guards Documentation](https://docs.nestjs.com/websockets/guards) — Auth patterns
-- [Client-Side Prediction and Server Reconciliation - Gabriel Gambetta](https://www.gabrielgambetta.com/client-side-prediction-server-reconciliation.html) — Movement sync pattern
-- [Fast-Paced Multiplayer: Entity Interpolation - Gabriel Gambetta](https://www.gabrielgambetta.com/entity-interpolation.html) — Rendering pattern
-- [Source Multiplayer Networking - Valve](https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking) — Industry best practices
+### Primary Sources (HIGH confidence)
 
-### Secondary (MEDIUM confidence)
-- [Phaser 3 Object Pooling](https://blog.ourcade.co/posts/2020/phaser-3-optimization-object-pool-basic/) — Performance benchmarks
-- [Building Multiplayer Games Using Phaser 3 and Socket.IO](https://blog.yudiz.com/how-to-build-multiplayer-games-using-phaser3-and-socket-io/) — Integration patterns
-- [The Wrong Way to Integrate Phaser With React](https://medium.com/@larry.sassainsworth/the-wrong-way-to-integrate-phaser-with-react-d85e3b226cf9) — Anti-patterns
-- [Zustand WebSocket Discussion #1651](https://github.com/pmndrs/zustand/discussions/1651) — State sync patterns
-- [NestJS Guards Execution Order Issue #1567](https://github.com/nestjs/docs.nestjs.com/issues/1567) — Framework behavior
+**Phaser Native Support:**
+- [Phaser 3.50.0 Release Notes](https://phaser.io/news/2020/12/phaser-350-released) - Native isometric tilemap support announcement
+- [Phaser Examples - Isometric Blocks](https://phaser.io/examples/v3.85.0/depth-sorting/view/isometric-blocks) - Official depth sorting pattern
+- [Phaser Examples - Create Isometric Manually](https://phaser.io/examples/v3.85.0/tilemap/isometric/view/create-isometric-manually) - Tilemap creation
+- [Phaser 3 Layer Documentation](https://docs.phaser.io/api-documentation/class/gameobjects-layer) - Official Layer API reference
 
-### Tertiary (LOW confidence, needs validation)
-- Competitor feature analysis (Tibia, Minecraft Dungeons) — Used for feature prioritization but implementation details differ
-- Unity/Godot optimization guides — 2D patterns transferable but engine-specific optimizations don't apply
+**Coordinate Transformation:**
+- [Clint Bellanger: Isometric Tiles Math](https://clintbellanger.net/articles/isometric_math/) - Authoritative transformation formulas
+- [2D Engine: Isometric Graphics Tutorial](https://2dengine.com/doc/isometric.html) - Comprehensive isometric techniques
+
+**Depth Sorting:**
+- [Drawing Isometric Boxes in Correct Order](https://shaunlebron.github.io/IsometricBlocks/) - Topological sorting visualization
+- [Phaser Examples - Isometric Map](https://phaser.io/examples/v3.85.0/depth-sorting/view/isometric-map) - Official depth sorting example
+
+### Secondary Sources (MEDIUM confidence)
+
+**Architecture Patterns:**
+- [Pikuma: Isometric Projection in Games](https://pikuma.com/blog/isometric-projection-in-games) - Core projection formulas and patterns
+- [Creating an Isometric View in Phaser 3](https://tnodes.medium.com/creating-an-isometric-view-in-phaser-3-fada95927835) - Practical implementation
+- [Rex Rainbow: Layer vs Container](https://rexrainbow.github.io/phaser3-rex-notes/docs/site/layer/) - Performance comparison
+
+**Feature Expectations:**
+- [MMORPG.GG: Best Isometric MMOs 2025](https://mmorpg.gg/best-isometric-mmos/) - Survey of current features
+- [Dreadmyst Isometric MMORPG Launch](https://massivelyop.com/2026/01/12/isometric-mmorpg-dreadmyst-reaches-over-7k-concurrency-and-mostly-positive-reviews-despite-server-issues/) - 2026 player expectations
+
+**Pitfalls:**
+- [Isometric Depth Sorting - Mazebert Forum](https://mazebert.com/forum/news/isometric-depth-sorting--id775/) - Performance considerations
+- [Cheating at Z-Depth Sprite Sorting](https://blog.pocketcitygame.com/cheating-at-z-depth-sprite-sorting-in-an-isometric-game/) - Optimization techniques
+- [Frustum Culling Optimization for Isometric RTS](https://80.lv/articles/optimizing-isometric-rts-performance-with-frustum-culling) - Viewport culling strategies
+
+### Tertiary Sources (LOW confidence - needs validation)
+
+**Plugin Comparison:**
+- [phaser3-plugin-isometric GitHub](https://github.com/sebashwa/phaser3-plugin-isometric) - Unmaintained plugin for reference
+- [Snyk Advisor - Plugin Status](https://snyk.io/advisor/npm-package/phaser3-plugin-isometric) - Maintenance verification
+
+**Community Discussion:**
+- [Phaser Forum: Isometric Support](https://phaser.discourse.group/t/isometric-support/558) - Community patterns
+- [GameDev.net: Isometric Depth Sorting](https://www.gamedev.net/forums/topic/470599-isometric-depth-sorting/) - Y-position sorting discussions
 
 ---
-*Research completed: 2026-02-14*
+*Research completed: 2026-02-16*
 *Ready for roadmap: yes*

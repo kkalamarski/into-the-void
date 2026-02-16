@@ -1,296 +1,243 @@
-# Feature Research
+# Feature Landscape: Isometric View Implementation
 
-**Domain:** Post-login 2D multiplayer game experience (HUD, world rendering, movement, entity display)
-**Researched:** 2026-02-14
-**Confidence:** MEDIUM-HIGH
+**Domain:** Isometric rendering for multiplayer 2D MMO
+**Researched:** 2026-02-16
+**Context:** Adding isometric transformation to existing top-down game with WASD/click-to-move, viewport culling, entity rendering with health bars, minimap, and HUD
 
-## Feature Landscape
+## Table Stakes
 
-### Table Stakes (Users Expect These)
-
-Features users assume exist. Missing these = product feels incomplete.
+Features players expect. Missing = product feels incomplete.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Player health/energy display | Core survival mechanic feedback | LOW | Simple numeric display, updates on server events. Standard HUD element. |
-| Current zone/biome indicator | Spatial awareness in procedural world | LOW | Text display updated on zone transitions. Critical for survival tier awareness. |
-| Player position on world | Basic navigation | MEDIUM | Minimap or coordinate display. MMORPG standard (right side, top placement per genre conventions). |
-| WASD/arrow key movement | PC game standard | MEDIUM | Requires client-side prediction + server reconciliation to avoid input lag. Phaser input handling standard. |
-| Click-to-move fallback | Accessibility + genre expectation (isometric games) | MEDIUM | A* pathfinding required. Computational cost depends on grid complexity. |
-| Visual feedback for movement input | Player expects immediate response | LOW | Client-side prediction shows movement before server confirmation. Prevents "laggy" feel. |
-| Other player entities visible | Multiplayer awareness | MEDIUM | Entity interpolation between server updates for smooth movement. Requires viewport culling for performance. |
-| Entity health indicators | Combat feedback | LOW | Visual bars above entities. Standard MMO pattern. Color-coded (green=ally, red=enemy, yellow=neutral). |
-| Tile-based world rendering | Visual representation of zones | MEDIUM | Phaser TilemapLayer with dynamic tinting for color-coded biomes. No sprite requirement = simple geometry rendering. |
-| Viewport culling (render only visible) | Performance requirement | MEDIUM | Essential for MMO scale. Only render tiles/entities within camera bounds. Standard Phaser frustum culling. |
-| Network state synchronization | Multiplayer core | HIGH | Socket.IO event listeners for player positions, entity spawns/despawns, health updates. Requires interpolation for smooth remote player movement. |
-| Disconnect/reconnect handling | Network reliability | MEDIUM | Graceful degradation when connection lost. Queue actions, sync on reconnect. |
+| Correct depth sorting (z-index) | Core to isometric visual coherence — entities must layer properly based on position | Medium | Y-position based sorting is minimum. Higher Y = render last. Need to handle overlapping sprites and multi-tile objects |
+| Diamond tile coordinate transformation | Players expect isometric diamond grid, not rectangular | Low | Math conversion: screen ↔ tile coords. 2:1 pixel ratio standard. Already have 32px tiles, need to map to 64x32 diamonds |
+| Accurate mouse/click detection | Click-to-move must work on diamond tiles, not just rectangles | Medium | Mouse coords → tile coords math. Adjacent tile disambiguation (diamond shape means overlap). Current click-to-move will break without this |
+| Proper tile rendering order | Tiles must draw back-to-front (row-by-row) to avoid visual glitches | Low | Draw row 0, then row 1, etc. Already have ChunkManager, extend for isometric ordering |
+| Entity positioning on tiles | Entities must align to isometric grid, not float incorrectly | Low | Convert entity world coords to isometric screen coords. Already have EntityRenderer, add transform |
+| Health bars above entities | Already implemented, must stay aligned in isometric space | Low | Current health bars are relative to container. Offset Y to account for sprite height |
+| Minimap representation | Players need to understand minimap perspective (orthogonal vs isometric) | Medium | Current minimap uses 0.15x zoom camera. Either keep orthogonal (easier to read) or match isometric view. Recommend orthogonal for clarity |
 
-### Differentiators (Competitive Advantage)
+## Differentiators
 
-Features that set the product apart. Not required, but valuable.
+Features that set product apart. Not expected, but valued.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Dual movement system (keyboard + click simultaneous) | Tactical flexibility—move while targeting different location | MEDIUM | Rare in MMOs. Keyboard sets continuous direction, click overrides temporarily. Requires state machine for movement modes. |
-| Faction-specific HUD theming | Immersion in corporate identity | LOW | CSS variables + Phaser UI tinting. Verdant=green/organic, Helix=industrial/orange, Nexus=neutral/blue. |
-| Biome tier visual indicators | Risk awareness at a glance | LOW | Color-coded zone name (Tier I=green, II=yellow, III=orange, IV=red). Prevents accidental high-tier zone entry. |
-| Client-side prediction with visible rollback | Network transparency | HIGH | Show predicted position, smooth correction on server authority. Builds trust vs "teleporting" corrections. Industry best practice from QuakeWorld, now standard in competitive games. |
-| Entity behavioral classification icons | Survival information density | MEDIUM | Herbivore/Omnivore/Predator/Maniac icons above creatures. Per lore: critical for survival decisions. High user value for knowledge workers. |
-| Procedural chunk streaming | Seamless large-world exploration | HIGH | Load world chunks as player approaches, unload distant chunks. Prevents memory bloat. Common in voxel games, less in 2D—competitive advantage for scale. |
-| Static entity registry (no database queries) | Performance + lore consistency | LOW | Entity configs in code (not DB). Fits "species catalog" lore. Fast lookups, no server lag for spawns. |
-| Minimap with biome color-coding | Strategic planning | MEDIUM | Orthogonal view showing biome patches. MMORPG placement standard: right side, top corner. Helps route planning for resource gathering. |
+| Dynamic shadows | Adds depth perception and visual polish that matches modern isometric games | High | Pre-rendered shadows on tiles are table stakes for static objects. Dynamic shadows for moving entities differentiate quality. Could use simple circular shadow sprites offset by Y position |
+| Highlight/outline on hover | Improves UX for tile/entity selection in dense isometric scenes | Medium | Screen-space outlines (constant width) preferred over world-space. Can use Phaser post-processing or manual outline rendering. Critical for click-to-move clarity |
+| Smooth camera panning | Expected in modern isometric MMOs for exploration | Low | Already have viewport culling. Extend to support smooth camera drag (mouse edge pan or middle-click drag). WASD camera movement also expected |
+| Zoom levels (2-3 discrete) | Allows tactical overview vs detail view | Medium | 1.0x (default), 0.75x (zoomed out), 1.5x (zoomed in). Must recalculate viewport culling per zoom. Mouse wheel zoom standard |
+| Visual depth cues (elevation) | Enhances 3D feeling in 2.5D space | High | Stacked tiles for height variation. Not critical for initial implementation. Placeholder colored tiles sufficient first |
+| Tile edge anti-aliasing | Prevents jagged diamond edges with colored tiles | Low | Phaser antialiasing enabled by default. May need texture filter adjustments for crisp pixel art vs smooth gradients |
+| Behavior icons with isometric offset | Icons must not overlap sprites in dense scenes | Low | Current behavior icons at Y=-30. May need adjustment based on sprite height in isometric space |
 
-### Anti-Features (Commonly Requested, Often Problematic)
+## Anti-Features
 
-Features that seem good but create problems.
+Features to explicitly NOT build.
 
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| Real-time interpolation for all entities | "Smooth movement for everyone" | Massive client CPU cost at MMO scale (hundreds of entities). Memory overhead for buffering snapshots. | Viewport-based culling + interpolation only for entities within render distance (24-128 blocks pattern from Minecraft). Despawn distant entities client-side. |
-| Minimap with full entity tracking | "See all players/creatures" | Information overload. Performance cost. Removes exploration risk (ruins survival tension). | Show only: self, party members, points of interest. Creatures appear only if detected (proximity-based). Maintains lore's "dangerous frontier" theme. |
-| Pixel-perfect pathfinding | "Shortest path always" | A* becomes expensive on large maps. Overkill for tile-based movement where "good enough" paths work. | Grid-based A* with tile resolution (not sub-tile). Acceptable for isometric/tile games. Cache common paths. |
-| Animated sprite fallbacks | "Looks better than colored tiles" | Scope creep. Asset production pipeline. Conflicts with stated "no sprites, color tiles" requirement. | Embrace the aesthetic. Use color + shape variation. Crystalline Wastes = sharp triangles, Fungal Depths = organic blobs. Gameplay > visuals. |
-| Global entity registry shared across clients | "Everyone sees everything" | Network bandwidth explosion. State synchronization nightmare. Irrelevant entities (why sync creatures 5km away?). | Zone-based entity interest management. Server sends only entities in player's current zone + adjacent zones. Standard MMO architecture. |
-| Client-side combat resolution | "Instant feedback" | Cheating vulnerability. Authority must stay server-side for multiplayer integrity. | Client predicts visual effects only. Server resolves damage, sends authoritative results. Client reconciles if mismatch. |
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| Camera rotation (4 or 8 directions) | Massively increases asset requirements (4x-8x sprites). Causes player disorientation. "Camera should never distract from gameplay" — design principle | Lock camera to single isometric angle (industry standard: 30-45 degrees from horizontal). Keep consistent viewpoint |
+| Free-form (non-grid) movement | Breaks depth sorting, complicates collision, loses tactical clarity expected in isometric MMOs | Keep existing grid-based movement. Smooth animation between grid positions acceptable, but logical position must snap to grid |
+| Pixel-perfect isometric (strict 2:1 ratio) | Constraint limits sprite design flexibility and is unnecessary for 96x96 sprites | Use approximate isometric (2:1 ratio for tiles, flexible sprite dimensions). Visual coherence matters more than mathematical purity |
+| Full 3D lighting system | Performance cost too high for 2D game. Pre-baked lighting simpler and more controllable | Pre-render tile shading/highlights. Use simple sprite-based shadows for entities. Artists control aesthetic directly |
+| Separate isometric tilemap system | Overkill for placeholder colored tiles. Adds complexity before value is proven | Transform coordinates in rendering layer only. Keep world data in rectangular grid. Isometric is purely presentational |
+| Occlusion culling for multi-level buildings | No buildings in current scope. Over-engineering | Defer until architecture/building systems are designed. Viewport culling sufficient for open world |
 
 ## Feature Dependencies
 
 ```
-Tile-based World Rendering
-    └──requires──> Viewport Culling
-                       └──requires──> Camera Setup
+Coordinate transformation → Mouse click detection
+Coordinate transformation → Tile rendering order
+Coordinate transformation → Entity positioning
 
-Click-to-Move
-    └──requires──> Pathfinding (A*)
-    └──requires──> Tile-based World (grid for pathing)
+Depth sorting → Entity rendering
+Depth sorting → Health bar positioning
+Depth sorting → Hover highlighting
 
-Dual Movement System
-    └──requires──> WASD Movement
-    └──requires──> Click-to-Move
-    └──requires──> Movement State Machine
+Mouse click detection → Click-to-move
+Mouse click detection → Entity selection
+Mouse click detection → Hover highlighting
 
-Network State Sync
-    └──requires──> Socket.IO Connection (existing)
-    └──requires──> Client-Side Prediction
-    └──requires──> Entity Interpolation
+Camera panning → Zoom levels
+Viewport culling → Camera panning
+Viewport culling → Zoom levels
 
-Other Player Entities
-    └──requires──> Network State Sync
-    └──requires──> Viewport Culling
-    └──enhances──> Entity Health Indicators
-
-Minimap
-    └──requires──> Tile-based World Rendering
-    └──requires──> Biome Data Access
-    └──enhances──> Zone Indicator
-
-Procedural Chunk Streaming
-    └──requires──> Viewport Culling
-    └──requires──> Tile-based World Rendering
-    ├──enhances──> Performance (memory management)
-    └──conflicts──> Full World Preload (architectural incompatibility)
-
-Entity Behavioral Icons
-    └──requires──> Static Entity Registry
-    └──requires──> Other Player Entities (entities visible)
+Minimap representation → Camera panning (must update minimap camera)
 ```
 
-### Dependency Notes
+## MVP Recommendation
 
-- **Tile-based World Rendering requires Viewport Culling:** Without culling, rendering performance degrades quickly. Procedural worlds can be massive (Minecraft patterns show 128-block render distances are manageable, full world is not).
-- **Click-to-Move requires Pathfinding:** Cannot implement click-to-move without route calculation. A* is industry standard for grid-based 2D games.
-- **Dual Movement requires both input systems:** Keyboard sets base direction, click sets target. State machine resolves priority (click overrides keyboard until destination reached).
-- **Network State Sync requires Client-Side Prediction:** Without prediction, input lag makes movement feel sluggish (>100ms delay noticeable). QuakeWorld (1996) established this pattern, now industry standard.
-- **Procedural Chunk Streaming conflicts with Full World Preload:** Architectural decision. Chunk streaming = scalable but complex. Full preload = simple but memory-limited. Lore suggests large procedural world → streaming recommended.
+Prioritize (Phase 1):
+1. **Coordinate transformation** — Core math for isometric rendering
+2. **Diamond tile rendering** — Visual proof-of-concept with colored tiles
+3. **Depth sorting** — Y-position based z-index for entities and tiles
+4. **Mouse click detection** — Restore click-to-move functionality
+5. **Entity positioning** — Align existing entities to isometric grid
+6. **Health bar adjustment** — Keep health bars aligned above entities
 
-## MVP Definition
+Prioritize (Phase 2):
+1. **Hover highlighting** — Visual feedback for selection
+2. **Camera panning** — Edge pan or middle-click drag
+3. **Minimap adjustment** — Keep orthogonal or transform to match view
 
-### Launch With (v1) — This Milestone
+Defer:
+- **Zoom levels** — Not critical until camera panning proven
+- **Dynamic shadows** — Polish feature after core mechanics work
+- **Elevation/height** — Requires design decisions about world structure
+- **Behavior icon refinement** — Current system likely works, adjust if overlap occurs
 
-Minimum viable post-login experience — what's needed to validate core gameplay loop.
+## MVP Feature Details
 
-- [x] **Player Health/Energy Display** — Core survival feedback. Without this, players don't know if they're dying.
-- [x] **Current Zone/Biome Indicator** — Spatial awareness. Critical per lore: entering wrong tier = death.
-- [x] **WASD/Arrow Key Movement** — PC game baseline. Players expect keyboard control.
-- [x] **Tile-based World Rendering (color-coded)** — Visual world representation. Stated requirement: no sprites, color tiles.
-- [x] **Viewport Culling** — Performance. Required for any world larger than single screen.
-- [x] **Network State Sync (basic)** — Multiplayer core. Position updates, health sync.
-- [x] **Other Player Entities (basic)** — Multiplayer awareness. See other players moving.
-- [x] **Click-to-Move** — Genre expectation (isometric/top-down). Accessibility.
-- [x] **Static Entity Registry** — Entity configs in code. Fast spawns, lore consistency.
+### Coordinate Transformation (Critical)
 
-### Add After Validation (v1.x)
+**What:** Convert between rectangular world coordinates and isometric screen coordinates
 
-Features to add once core movement + world rendering working.
+**Implementation approach:**
+- World uses existing grid (x, y in tiles)
+- Screen coordinates calculated as:
+  - `screenX = (worldX - worldY) * (tileWidth / 2)`
+  - `screenY = (worldX + worldY) * (tileHeight / 2)`
+- Inverse for mouse → world:
+  - `worldX = (screenX / (tileWidth / 2) + screenY / (tileHeight / 2)) / 2`
+  - `worldY = (screenY / (tileHeight / 2) - screenX / (tileWidth / 2)) / 2`
 
-- [ ] **Dual Movement System** — Tactical enhancement. Add after single-mode movement stable.
-- [ ] **Entity Health Indicators** — Combat feedback. Add when combat encounters implemented (later milestone).
-- [ ] **Client-Side Prediction (refined)** — Network feel. Basic sync first, optimize after bottlenecks identified.
-- [ ] **Entity Behavioral Icons** — Survival info. Add when creature variety increases (later milestone: more than 2-3 creature types).
-- [ ] **Minimap** — Strategic planning. Useful after world size justifies it (multiple zones explorable).
-- [ ] **Faction-Specific HUD Theming** — Polish. Add when HUD stable and not changing frequently.
+**Testing:** Click same tile positions in orthogonal vs isometric, verify world coordinates match
 
-### Future Consideration (v2+)
+### Diamond Tile Rendering (Critical)
 
-Features to defer until product-market fit established.
+**What:** Render 64x32 diamond shapes for existing 32x32 square tiles
 
-- [ ] **Procedural Chunk Streaming** — Defer until world size demonstrates need. Premature optimization if zones fit in memory.
-- [ ] **Advanced Interpolation (all entities)** — Defer until performance profiling shows it's affordable. Start with simple position updates.
-- [ ] **Biome Tier Visual Indicators** — Defer until tier system fully implemented (multiple tiers accessible).
-- [ ] **Disconnect/Reconnect Queue** — Defer until network stability issues identified in production.
+**Implementation approach:**
+- Use Phaser Graphics to draw colored diamonds (no sprites yet)
+- Colors match existing biome palette
+- Render in row-order (y=0, then y=1, etc) for correct layering
+- Origin at diamond center for easier positioning
 
-## Feature Prioritization Matrix
+**Testing:** Verify no gaps between tiles, colors match biomes, no z-fighting
 
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| WASD Movement | HIGH | MEDIUM | P1 |
-| Tile-based World Rendering | HIGH | MEDIUM | P1 |
-| Viewport Culling | HIGH (performance) | MEDIUM | P1 |
-| Network State Sync | HIGH | HIGH | P1 |
-| Health/Energy Display | HIGH | LOW | P1 |
-| Zone Indicator | HIGH (survival) | LOW | P1 |
-| Other Player Entities | HIGH (multiplayer) | MEDIUM | P1 |
-| Click-to-Move | MEDIUM | MEDIUM | P1 |
-| Static Entity Registry | MEDIUM | LOW | P1 |
-| Client-Side Prediction | MEDIUM (feel) | HIGH | P2 |
-| Dual Movement System | MEDIUM (tactical) | MEDIUM | P2 |
-| Entity Health Indicators | MEDIUM | LOW | P2 |
-| Minimap | MEDIUM | MEDIUM | P2 |
-| Entity Behavioral Icons | MEDIUM | MEDIUM | P2 |
-| Faction HUD Theming | LOW (polish) | LOW | P2 |
-| Biome Tier Indicators | LOW | LOW | P2 |
-| Procedural Chunk Streaming | HIGH (scale) | HIGH | P3 |
-| Advanced Interpolation | LOW (optimization) | MEDIUM | P3 |
-| Disconnect Queue | LOW | MEDIUM | P3 |
+### Depth Sorting (Critical)
 
-**Priority key:**
-- P1: Must have for this milestone (post-login MVP)
-- P2: Should have, add in subsequent milestones
-- P3: Nice to have, future consideration once core stable
+**What:** Render entities/tiles back-to-front based on Y position
 
-## Competitor Feature Analysis
+**Implementation approach:**
+- Set sprite depth = `(worldY * 1000) + worldX`
+- Higher Y positions render last (appear in front)
+- Tiles share same depth calculation
+- Phaser depth sorting handles rendering order automatically
 
-| Feature | Tibia (tile MMO) | Minecraft Dungeons (isometric) | Our Approach |
-|---------|------------------|-------------------------------|--------------|
-| Movement Input | Click-to-move only | WASD + gamepad | Dual system: WASD + click (both work, click overrides) |
-| World Rendering | Sprite-based tiles | 3D isometric sprites | Color-coded geometric tiles (no sprites, stated requirement) |
-| HUD Layout | Minimal (chat + stats) | Action bar + health overlay | Faction-themed HUD with survival stats (health, energy, zone tier) |
-| Minimap | Top-right, simple | Bottom-right, rotates with player | Top-right (MMORPG standard), orthogonal (no rotation = simpler, matches tile rendering) |
-| Entity Display | Sprites + nameplates | 3D models + health bars | Color tiles + behavioral icons (Herbivore/Predator/etc per lore) |
-| Network Model | Server authority, high latency tolerance | Local co-op (low latency) | Server authority + client-side prediction (Socket.IO, <100ms tolerance) |
-| Zone Transitions | Instant (loading screen) | Seamless chunks | Seamless with chunk streaming (future) or instant per zone (MVP) |
-| Viewport | Fixed tile count (11x11 common) | Dynamic 3D frustum | Dynamic tile frustum based on screen size + zoom level |
+**Testing:** Move entity from low Y to high Y, verify it appears in front of tiles
 
-**Key Takeaways:**
-- **Tibia's click-only movement** works but feels dated. WASD expected by modern PC gamers.
-- **Minecraft Dungeons' WASD** feels good but lacks precision. Click-to-move adds tactical positioning.
-- **Our dual system** combines best of both: keyboard for continuous exploration, click for precise combat positioning.
-- **Color-coded tiles vs sprites** is a constraint (no sprites) turned advantage (faster rendering, clear biome differentiation).
-- **Client-side prediction** is mandatory for Socket.IO. Tibia's high-latency model (2000s tech) no longer acceptable. Modern players expect <100ms input response per industry standards (QuakeWorld legacy, now universal in multiplayer).
+### Mouse Click Detection (Critical)
 
-## Technical Implementation Notes
+**What:** Convert mouse clicks to correct tile coordinates on diamond grid
 
-### Phaser 3 Patterns (from research)
+**Implementation approach:**
+- Transform screen click to world coordinates using inverse formulas
+- Round to nearest integer tile position
+- Verify clicked tile is walkable before pathfinding
+- Add visual highlight at calculated position for debugging
 
-**HUD as Separate Scene:**
-- Multiple scenes running simultaneously (GameScene + HUDScene)
-- HUD scene has `setScrollFactor(0)` to prevent camera movement affecting it
-- Event emitters for GameScene → HUDScene communication (health updates, zone changes)
-- Common issue: HUD scene with black background blocking GameScene. Solution: transparent background, careful camera viewport setup.
+**Testing:** Click tile edges, verify correct tile selected. Click diamond corners, verify correct disambiguation
 
-**Tilemap Rendering:**
-- Use `DynamicTilemapLayer` (or unified `TilemapLayer` in Phaser 3.50+) for color-coding
-- Per-tile tinting via `tile.tint` property (0xRRGGBB)
-- Color codes from lore: Luminous Canopy = green/blue tints, Volcanic Reaches = red/orange, Crystalline Wastes = cyan/white, etc.
-- Viewport culling automatic in Phaser's tilemap rendering (only visible tiles rendered)
+### Hover Highlighting (Phase 2)
 
-**Socket.IO + Phaser State Management:**
-- Client-server architecture: client displays, handles input, sends to server; server broadcasts to all clients
-- Socket listeners: `socket.on('newPlayer', ...)`, `socket.on('playerMoved', ...)`, `socket.on('playerDisconnected', ...)`
-- Phaser Groups for entity management: `this.otherPlayers = this.add.group()` to manage all remote players as one unit
-- Interpolation: buffer last 2 server updates, interpolate between them based on time delta (standard pattern from Gabriel Gambetta's Fast-Paced Multiplayer series)
+**What:** Visual outline/highlight on hovered tile or entity
 
-**Click-to-Move Pathfinding:**
-- A* algorithm on tile grid (not sub-tile precision)
-- Detect click: `Input.on('pointerdown', ...)`, convert to world coordinates, convert to tile coordinates
-- Calculate path, store waypoints, move player tile-by-tile along path
-- Stop on collision or new input (keyboard overrides pathfinding)
+**Implementation approach:**
+- Draw highlight diamond using Graphics.strokeRect with transform
+- Color: white or accent color (match HUD theme)
+- Update on pointermove event
+- Clear on pointerout
 
-**Client-Side Prediction:**
-- Player inputs movement → immediately update local position
-- Send input to server
-- Server calculates authoritative position → sends back
-- Client compares predicted vs authoritative, applies smooth correction if mismatch
-- Critical for <100ms input feel with Socket.IO latency (typically 50-150ms)
+**Testing:** Hover tiles, verify highlight appears at cursor position. Hover entities, verify entity highlight not tile
 
-### Performance Considerations
+## Current System Integration
 
-**Viewport Culling Ranges (from Minecraft research):**
-- Spawn entities: 24-128 block range from player (Minecraft pattern)
-- Despawn entities: >128 blocks (instant) or >32 blocks with timer (probabilistic)
-- Adapt for 2D: use tile distance instead of 3D spherical distance
-- Recommended for MMO: render entities within viewport + 1 screen buffer, despawn beyond 2 screens
+**Existing features that continue to work:**
+- WASD movement (world coords unchanged)
+- Server-side movement validation (world coords unchanged)
+- Viewport culling (may need bounds adjustment for diamond rendering area)
+- HUD health/energy/XP bars (unaffected by world rendering)
+- WebSocket communication (unaffected)
+- Pathfinding A* (world grid unchanged)
 
-**Chunk Streaming (future):**
-- Load chunks as player approaches (trigger: within 2 chunks of unloaded chunk)
-- Unload chunks as player leaves (trigger: >5 chunks away)
-- Lag spike issue: generate chunks off main thread or pre-generate and cache
-- 2D voxel/tile games struggle with on-the-fly generation → cache common chunk types (per biome templates)
+**Existing features requiring adjustment:**
+- TileRenderer.createTile() — Add coordinate transform
+- EntityRenderer.createEntityContainer() — Add coordinate transform, verify health bar Y offset
+- ViewportCuller — Expand culling bounds to account for diamond shape extending beyond rectangular bounds
+- ChunkManager — Render tiles in Y-order, not arbitrary order
+- Click-to-move handler — Add inverse coordinate transform
+- Minimap camera — Decide orthogonal (no change) vs isometric (add transform)
 
-**Entity Interpolation Cost:**
-- Linear interpolation: cheap (2 vector lerps per entity per frame)
-- Becomes expensive at scale: 100 entities = fine, 1000 entities = noticeable CPU cost
-- Mitigation: interpolate only entities within viewport (culling applies to interpolation too)
-- Buffer size: 2 snapshots sufficient (current + previous). More snapshots = smoother but higher memory + lag.
+**Known edge cases:**
+- Entities at same Y position (e.g. Y=10) need secondary sort by X for deterministic ordering
+- Multi-tile entities (if added later) need special depth calculation based on base tile
+- Viewport edges in isometric space are rotated 45° — culling rectangle must expand to diamond bounding box
+
+## Performance Considerations
+
+| Concern | At Current Scale | Mitigation |
+|---------|------------------|------------|
+| Coordinate transformation overhead | Low — simple math per tile/entity | Cache transformed positions when possible. Only recalculate on position change |
+| Depth sorting cost | Low — Phaser depth sorting is O(n log n) | Already sorting entities. Adding tiles to sort increases n, but still performant for visible entities (< 200) |
+| Diamond rendering | Low — Graphics.fillPath faster than sprites for solid colors | Use Graphics for MVP. If performance issues, pre-render diamond sprites and use sprite batching |
+| Viewport culling accuracy | Medium — diamond bounds exceed rectangular tiles | Calculate diamond bounding box (rotated 45°), cull against that. ~1.4x rectangular area |
+| Mouse picking per frame | Low — only on pointermove, not render loop | Acceptable. If lag occurs, throttle to 60fps max |
+
+## Confidence Assessment
+
+| Area | Confidence | Source Basis |
+|------|------------|--------------|
+| Core isometric math | HIGH | Multiple authoritative sources (Phaser docs, Clint Bellanger isometric math, game dev forums) |
+| Depth sorting approach | HIGH | Standard Y-position sorting verified across Unity/Godot/Phaser implementations |
+| Mouse picking complexity | MEDIUM | Math is well-documented, but diamond shape disambiguation requires careful implementation |
+| Minimap representation | MEDIUM | No clear consensus — some games keep orthogonal, others transform. Player preference varies |
+| Performance of colored tiles | HIGH | Graphics.fillPath well-optimized in Phaser. Multiple examples of simple isometric tile engines |
+| Shadow implementation | LOW | Many approaches exist (sprite-based, shader-based, pre-baked). Need to test what works best for this game |
 
 ## Sources
 
-### Phaser 3 HUD & Scene Management
-- [Phaser - Game HUD Plugin Tutorial](https://phaser.io/news/2016/04/game-hud-plugin-tutorial)
-- [How To Create A Game HUD Plugin In Phaser - GameDev Academy](https://gamedevacademy.org/how-to-create-a-game-hud-plugin-in-phaser/)
-- [HUD scene - Multiple Scenes - Phaser 3 - Phaser](https://phaser.discourse.group/t/hud-scene-multiple-scenes/6348)
-- [BaseScene, HUD and Event Emitter file structure in Phaser 3.60 – Tickle Monster](https://www.ticklemonster.com.au/2023/07/18/basescene-hud-and-event-emitter-file-structure-in-phaser-3-60/)
+### High Confidence (Official/Authoritative)
+- [Phaser 3 Isometric Examples](https://phaser.io/examples/v3.85.0/depth-sorting/view/isometric-map) — Official Phaser isometric tilemap examples with depth sorting
+- [Phaser 3 Isometric Plugin](https://github.com/sebashwa/phaser3-plugin-isometric) — Community plugin showing isometric implementation patterns
+- [Clint Bellanger: Isometric Tiles Math](https://clintbellanger.net/articles/isometric_math/) — Authoritative coordinate transformation formulas
+- [2D Engine: Isometric Graphics Tutorial](https://2dengine.com/doc/isometric.html) — Comprehensive isometric rendering techniques
+- [Drawing Isometric Boxes in Correct Order](https://shaunlebron.github.io/IsometricBlocks/) — Topological sorting for depth ordering
 
-### Tile-Based Rendering & Performance
-- [Tiles and tilemaps overview - Game development | MDN](https://developer.mozilla.org/en-US/docs/Games/Techniques/Tilemaps)
-- [mastering tilemap types: A Guide to Game World Foundations](https://www.game-developers.org/mastering-tilemap-types-game-dev-2026)
-- [Optimize performance of 2D games with Unity Tilemap](https://unity.com/how-to/optimize-performance-2d-games-unity-tilemap)
-- [Deprecated: Phaser 3 API Documentation - Class: DynamicTilemapLayer](https://photonstorm.github.io/phaser3-docs/Phaser.Tilemaps.DynamicTilemapLayer.html)
-- [Modular Game Worlds in Phaser 3 (Tilemaps #1) — Static Maps | by Michael Hadley | Medium](https://medium.com/@michaelwesthadley/modular-game-worlds-in-phaser-3-tilemaps-1-958fc7e6bbd6)
+### Medium Confidence (Verified Community Sources)
+- [GameDev.net: Isometric Depth Sorting](https://www.gamedev.net/forums/topic/470599-isometric-depth-sorting/) — Y-position sorting discussions
+- [Red Blob Games: Isometric Outline Rendering](https://www.redblobgames.com/x/1942-isometric/) — Visual techniques for outlines/highlighting
+- [Studica: Isometric Camera Unity](https://www.studica.com/blog/isometric-camera-unity/) — Camera control patterns transferable to Phaser
+- [80.lv: Frustum Culling Optimization for Isometric RTS](https://80.lv/articles/optimizing-isometric-rts-performance-with-frustum-culling) — Viewport culling for isometric maps
 
-### Movement Systems & Pathfinding
-- [Desktop mouse and keyboard controls - Game development | MDN](https://developer.mozilla.org/en-US/docs/Games/Techniques/Control_mechanisms/Desktop_with_mouse_and_keyboard)
-- [Implementing a Pathfinding Algorithm in a 2D Game | by Modern Code | Medium](https://medium.com/@moderncode/implementing-a-pathfinding-algorithm-in-a-2d-game-7847d26d557)
-- [A* Pathfinding in 2D Games: The Basics for a simple Top-down Scenario](https://shendriks.dev/posts/2024-07-13-a-star-pathfinding-in-2d-games-the-basics-for-top-down-scenarios/)
+### Medium Confidence (Recent Isometric MMO Examples)
+- [Massively Overpowered: Dreadmyst Isometric MMORPG](https://massivelyop.com/2026/01/12/isometric-mmorpg-dreadmyst-reaches-over-7k-concurrency-and-mostly-positive-reviews-despite-server-issues/) — 2026 isometric MMO launch, player expectations
+- [MMORPG.com: Isometric MMO Discussion](https://forums.mmorpg.com/discussion/423774/what-would-it-take-to-get-you-interested-in-playing-a-isometric-mmo) — Player preferences for isometric MMOs
+- [MMORPG.GG: Best Isometric MMOs 2025](https://mmorpg.gg/best-isometric-mmos/) — Survey of current isometric MMO features
 
-### Multiplayer Networking Patterns
-- [Phaser - Clients Synchronization Tutorial](https://phaser.io/news/2017/04/clients-synchronization-tutorial)
-- [Building Multiplayer Games Using Phaser 3 and Socket.IO: A Helpful Guide](https://blog.yudiz.com/how-to-build-multiplayer-games-using-phaser3-and-socket-io/)
-- [Client-Side Prediction and Server Reconciliation - Gabriel Gambetta](https://www.gabrielgambetta.com/client-side-prediction-server-reconciliation.html)
-- [Fast-Paced Multiplayer (Part III): Entity Interpolation](https://www.gabrielgambetta.com/entity-interpolation.html)
-- [Create A Basic Multiplayer Game In Phaser 3 With Socket.io - Part 2 - GameDev Academy](https://gamedevacademy.org/create-a-basic-multiplayer-game-in-phaser-3-with-socket-io-part-2/)
+### Low Confidence (Implementation Details Requiring Validation)
+- [Pikuma: Isometric Projection](https://pikuma.com/blog/isometric-projection-in-games) — General overview, math needs verification against Phaser specifics
+- [Screaming Brain: Isometric Shadows Tutorial](https://screamingbrainstudios.com/isometric-shadows/) — Shadow techniques, but for static pre-rendered assets
+- [Minimaps Research](https://alejandro61299.github.io/Minimaps_Personal_Research/) — Minimap positioning statistics, limited sample size
+- [Unity Isometric Movement Discussions](https://forum.unity.com/threads/most-natural-isometric-character-movement.531173/) — Movement feel discussions, but Unity-specific
 
-### Viewport Culling & Entity Management
-- [What is Culling in Game Design? | Pingle Studio](https://pinglestudio.com/knowledge-base/for-beginners/what-is-culling-in-game-design)
-- [Optimizing 3D performance — Godot Engine (stable) documentation in English](https://docs.godotengine.org/en/stable/tutorials/optimization/optimizing_3d_performance.html)
-- [Minecraft Mob Spawning Radius Explained (2026 Update)](https://flavor365.com/minecraft-mob-spawning-radius-explained-2026-update/)
-- [Simulation distance – Minecraft Wiki](https://minecraft.fandom.com/wiki/Simulation_distance)
+## Research Methodology Notes
 
-### HUD & UI Design Patterns
-- [UX and UI in game design: exploring HUD, inventory, and menus | by Bruna Delfino | Medium](https://medium.com/@brdelfino.work/ux-and-ui-in-game-design-exploring-hud-inventory-and-menus-5d8c189deb65)
-- [Minimaps Research | Minimaps_Personal_Research](https://alejandro61299.github.io/Minimaps_Personal_Research/)
-- [About our approach to HUD design | News | Caliber is a team-based online game](https://playcaliber.com/en/news/638/about-our-approach-to-hud-design/)
+**Verification approach:**
+- Core math (coordinate transformation, depth sorting) verified across 3+ authoritative sources
+- Visual polish features (shadows, highlights) have multiple implementation approaches — flagged as needing prototyping
+- Player expectations drawn from 2026 isometric MMO launch (Dreadmyst) and community forums
+- Performance claims based on Phaser-specific documentation where available, extrapolated from Unity/Godot where not
 
-### Procedural World Generation & Chunk Loading
-- [Optimizing Game Performance: Techniques for Procedural Content Generation Customization - Wayline](https://www.wayline.io/blog/optimizing-game-performance-procedural-content-customization)
-- [Implementing 2D World Chunking and World Positions - For Beginners - GameDev.net](https://www.gamedev.net/forums/topic/704136-implementing-2d-world-chunking-and-world-positions/)
+**Gaps identified:**
+- No Phaser-specific benchmark data for isometric performance at scale (100+ entities)
+- Minimap representation has no clear best practice — orthogonal vs isometric is aesthetic choice
+- Shadow implementation approach needs prototyping to determine performance/visual tradeoff
+- Zoom level implementation details light on Phaser specifics (viewport culling recalculation)
 
-### Competitor Analysis
-- [Tile-Based MMOs](https://tilemmos.neocities.org/)
-- [2D Tile Based MMO - Game Design and Theory - GameDev.net](https://www.gamedev.net/forums/topic/604960-2d-tile-based-mmo/4827904/)
-- [Every Upcoming MMORPG 2026 - The Tank Club](https://thetankclub.com/mmorpg-2026/)
-
----
-*Feature research for: Post-login 2D multiplayer game experience*
-*Researched: 2026-02-14*
-*Confidence: MEDIUM-HIGH (Phaser patterns HIGH, multiplayer networking MEDIUM due to Socket.IO-specific implementation variations)*
+**Confidence in recommendations:**
+- MVP features (coordinate transformation, depth sorting, mouse picking) — HIGH confidence, well-documented
+- Phase 2 features (hover highlight, camera pan) — MEDIUM confidence, standard patterns but need adaptation
+- Deferred features (zoom, shadows, elevation) — LOW confidence, multiple valid approaches, needs design exploration

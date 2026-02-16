@@ -1,237 +1,237 @@
 # Pitfalls Research
 
-**Domain:** Multiplayer 2D MMO - Post-Login Game Experience Integration
-**Researched:** 2026-02-14
-**Confidence:** HIGH
+**Domain:** Adding Isometric View to Existing Top-Down Multiplayer Game
+**Researched:** 2026-02-16
+**Confidence:** MEDIUM
 
 ## Critical Pitfalls
 
-### Pitfall 1: WebSocket Auth Without Handshake Validation
+### Pitfall 1: Depth Sorting Instability (Flickering Sprites)
 
 **What goes wrong:**
-Token validation happens AFTER auth event is emitted, allowing unauthenticated clients to send game events (move, interact, chat) before authentication completes. The current implementation authenticates via `@SubscribeMessage('auth')` but doesn't prevent clients from calling other message handlers before auth succeeds.
+Sprites flicker or appear in wrong order when moving, especially near tall objects. The player walks "behind" a tree at one moment, then "in front" the next frame without changing position. Multi-tile entities and moving platforms cause constant z-order recalculation leading to visual glitches.
 
 **Why it happens:**
-NestJS WebSocket guards must be explicitly added to prevent this. Socket.IO middleware runs on connection, but NestJS @SubscribeMessage handlers are independently accessible without guards. Developers assume the auth event alone secures the gateway.
+Simple Y-based sorting (`depth = y`) breaks down with overlapping entities of different sizes. The depth sorting relationship is non-transitive — if A is behind B and B is behind C, A might not be behind C. This creates cyclic dependencies where no single draw order is correct. Naive implementations recalculate every sprite's depth every frame, causing O(n²) performance and visual instability.
 
 **How to avoid:**
-- Add WebSocket guards to ALL message handlers except 'auth'
-- Implement middleware that validates JWT during initial handshake, not just in auth handler
-- Store authenticated state in socket data (`socket.data.authenticated = true`) after successful auth
-- Reject all non-auth events if `socket.data.authenticated !== true`
-- Use NestJS execution order: Middleware → Guards → Interceptors → Pipes → Handler
+- Use cartesian coordinates (world space) for all game logic and depth sorting
+- Apply isometric projection ONLY at render time for screen coordinates
+- Implement spatial indexing to reduce sorting from O(n²) to O(n log n)
+- For entities larger than one tile, use bottom-center point for depth calculation
+- Consider layer-based approach: background layer → entities layer → overlay layer
+- Cache depth values and only recalculate when entity position actually changes
+- For moving platforms, segment large objects into smaller parts to break cycles
 
 **Warning signs:**
-- Players can send movement commands before auth:success response
-- Server logs show "player not found" errors for valid socket IDs
-- handleDisconnect() runs before handleAuth() completes
-- Race conditions where player joins zone before authentication finishes
+- Sprites "popping" between layers during movement
+- Frame rate drops when many entities are on screen
+- Different draw order between client and server in multiplayer
+- Sorting behaves differently at different camera zooms
 
 **Phase to address:**
-Phase 1 (WebSocket Connection & Auth Handshake) - Must be bulletproof before any game state syncing
+Phase 1 (Core Transformation) — depth sorting must be correct from the start or will compound through all features.
 
 ---
 
-### Pitfall 2: Race Condition Between Socket Join and Async Database Queries
+### Pitfall 2: Click Detection Coordinate Space Confusion
 
 **What goes wrong:**
-Socket disconnects while database query is in-flight, then `socket.join(roomId)` executes AFTER disconnect. This creates ghost players in rooms who can never leave, causing permanent memory leaks and incorrect player counts. The current gateway implementation has async database calls between auth validation and room joining.
+Player clicks on an entity but hits the tile behind it. Click-to-move puts player in wrong location. Pathfinding starts from incorrect coordinates. Appears visually correct but logically broken — "looks done but isn't."
 
 **Why it happens:**
-Socket.IO allows joining rooms even after socket is destroyed if the async operation started before disconnect. Database latency (even 50ms) creates a window where disconnect can happen. `handleAuth()` has multiple await points before `client.join(zoneId)` executes.
+Isometric projection is purely visual. Game logic uses cartesian grid (0,0 is top-left), but screen rendering uses isometric projection (0,0 is NOT at screen top-left). Developers mix coordinate spaces — transforming click position to isometric space instead of world space, or using screen coordinates directly in game logic.
 
 **How to avoid:**
-- Check `client.connected` status BEFORE every `client.join()` call
-- Perform all async operations (DB queries) before starting socket mutations
-- Use atomic pattern: validate → fetch data → check still connected → mutate socket state
-- Add timeout to auth handler (5 seconds max) to prevent hanging connections
-- Implement cleanup verification in handleDisconnect that force-removes from all rooms
+- Maintain strict separation: world space (game logic) vs. screen space (rendering)
+- All click detection: `screenCoords → worldCoords` via inverse projection
+- Never use isometric coordinates in game logic (pathfinding, collision, movement)
+- Create coordinate transform utility with clear naming:
+  - `worldToScreen(x, y)` → isometric screen position
+  - `screenToWorld(screenX, screenY)` → cartesian world position
+- Test click detection with entities at boundaries (zone edges, overlapping sprites)
+- Add visual debug mode showing world grid overlaid on isometric view
 
 **Warning signs:**
-- Zone player counts don't match actual connected players
-- Players see themselves duplicated in player lists
-- Server memory grows over time (room leaks)
-- "player:left" events never fire for some disconnects
-- Error logs showing "Cannot join room on destroyed socket"
+- Click targets are "off" by consistent offset
+- Click detection breaks at different zoom levels
+- Entity hover states trigger on wrong tiles
+- Pathfinding produces visually strange paths (diagonal when should be straight)
 
 **Phase to address:**
-Phase 1 (WebSocket Connection & Auth Handshake) - Race conditions must be eliminated before phase 2
+Phase 1 (Core Transformation) — coordinate system must be correct before adding interaction features.
 
 ---
 
-### Pitfall 3: Phaser Game Instance Memory Leaks on React Unmount
+### Pitfall 3: Viewport Culling Using Wrong Bounds
 
 **What goes wrong:**
-Calling `game.destroy()` in useEffect cleanup doesn't fully clean up Phaser. The "world" group and "cache" remain in memory. Event listeners on window/document persist. Multiple re-mounts (like navigating away and back) create multiple Phaser instances, causing 500MB+ memory bloat and eventual browser crashes.
+Tiles/entities outside visible area still render (performance regression), or tiles inside visible area get culled (visual pop-in). Existing `ViewportCuller` calculates rectangular bounds but isometric view is diamond-shaped — culling too little (wasted rendering) or too much (missing tiles).
 
 **Why it happens:**
-Phaser's destroy() method has known incomplete cleanup. React's frequent re-rendering conflicts with canvas-based libraries. Developers assume destroy() handles everything. WebGL contexts, texture atlases, and event listeners require manual cleanup.
+Top-down viewport culling uses `camera.worldView` rectangle directly. In isometric view, the visible area is rotated 45° (diamond shape), so rectangular bounds either:
+- Are too small → tiles at screen edges missing (tight bounds)
+- Are too large → rendering tiles outside view (loose bounds)
+
+The padding calculation (`cullPaddingX/Y = 2`) was tuned for top-down and may be insufficient for isometric where sprite height extends beyond tile bounds.
 
 **How to avoid:**
-- Use `useLayoutEffect` (not useEffect) for Phaser initialization to ensure sync timing
-- Manual cleanup sequence in unmount:
-  ```typescript
-  game.cache.destroy();
-  game.world.destroy();
-  game.events.removeAllListeners();
-  window.removeEventListener('resize', resizeHandler);
-  game.destroy(true); // true = remove canvas
-  ```
-- Store cleanup functions in ref to ensure they execute even on abrupt unmounts
-- Only initialize Phaser once - use ref to prevent double initialization in StrictMode
-- Consider iframe isolation for complete sandbox if memory issues persist
+- Recalculate culling bounds for isometric projection
+- Increase padding to account for sprite height (sprites are taller than tiles in isometric)
+- Use bounding box that encompasses the diamond-shaped viewport, not the rectangle
+- For tall objects (trees, buildings), extend culling bounds upward
+- Test culling at multiple zoom levels and camera positions
+- Add debug visualization showing culling bounds vs. actual visible area
+- Consider pre-calculating culling regions per chunk instead of per-frame
 
 **Warning signs:**
-- Browser DevTools memory profiler shows increasing heap size
-- Multiple canvas elements in DOM after navigation
-- "Maximum call stack exceeded" errors after several mounts/unmounts
-- Texture loading errors on second game initialization
-- FPS degradation after returning to game screen multiple times
+- Sprites pop in at screen edges when camera moves
+- FPS drops compared to top-down view with same entity count
+- Minimap shows more entities than main view renders
+- Culling behaves differently at different zoom levels
+- Tall sprites (trees, buildings) appear/disappear abruptly
 
 **Phase to address:**
-Phase 2 (Phaser Integration & Canvas Setup) - Must be solved before entity rendering to prevent cascading issues
+Phase 2 (Rendering Optimization) — after core transformation works, optimize for performance.
 
 ---
 
-### Pitfall 4: Client Prediction Without Server Reconciliation
+### Pitfall 4: Multiplayer Position Synchronization Mismatch
 
 **What goes wrong:**
-Client predicts movement immediately for responsiveness but never reconciles with server state. Players can walk through walls client-side, appear in impossible positions to other players, or desync permanently after packet loss. Position divergence grows over time.
+Remote players appear at slightly wrong positions. Tweened movement animations look jerky or stutter. Players appear to "slide" diagonally when moving straight. Server reconciliation causes rubber-banding more frequently than in top-down view.
 
 **Why it happens:**
-Implementing instant client response is easy. Adding reconciliation is complex. Developers ship "feels responsive" without "stays in sync." The pattern requires sequence numbers, input buffering, and state rollback that aren't obvious requirements.
+Movement tweens use screen-space coordinates instead of world-space coordinates. The existing code tweens to `position.x * TILE_SIZE + TILE_SIZE / 2` which works in top-down but in isometric, the screen position is different. If client prediction uses world coords but reconciliation uses screen coords (or vice versa), positions desync.
 
 **How to avoid:**
-- Every client input must have sequence number sent to server
-- Client stores last N inputs (buffer ~100ms worth)
-- Server includes last processed sequence number in every state update
-- Client rewinds to that sequence, applies unacknowledged inputs, fast-forwards to present
-- Use authoritative server pattern - server position is ALWAYS truth
-- Implement smoothing (linear interpolation over 100-200ms) for corrections, not instant snapping
-- Add visual feedback when prediction was wrong (particle effect, sound cue)
+- Keep all game logic (movement, collision, prediction) in world space
+- Transform to screen space ONLY when updating sprite positions
+- Ensure server and client use identical coordinate transformation functions
+- Tween world-space positions, not screen-space positions
+- After tween completes, apply isometric projection for rendering
+- Test with high latency to expose synchronization issues
+- Verify remote player positions match local simulation
 
 **Warning signs:**
-- Player positions differ between clients viewing same zone
-- Players teleport backward occasionally (server correction without smoothing)
-- Movement feels great on localhost but terrible on high latency
-- Players report "walking through walls" or "getting stuck in terrain"
-- Combat hits/misses disagree between attacker and target perspectives
+- Remote players "drift" slightly from expected positions
+- More frequent rubber-banding than top-down view
+- Movement animations look correct for local player but wrong for remote players
+- Position corrections happen every frame instead of occasionally
+- Remote players appear to move in wrong direction briefly before correcting
 
 **Phase to address:**
-Phase 3 (Movement Validation & Sync) - Core pattern must be established here, not retrofitted later
+Phase 3 (Multiplayer Integration) — after rendering works, ensure multiplayer synchronization survives coordinate transform.
 
 ---
 
-### Pitfall 5: Entity Interpolation Missing or Misconfigured
+### Pitfall 5: Minimap Coordinate Misalignment
 
 **What goes wrong:**
-Remote players/entities render exactly at positions from server updates (10-20Hz). Movement looks choppy and jittery. Players complain about "laggy" visuals even though network latency is fine. Attempting to fix by increasing update frequency overloads network.
+Minimap shows player at different relative position than main view. Clicking minimap teleports player to wrong location. Minimap entities appear offset from their actual positions. The minimap still uses top-down projection while main view uses isometric, causing coordinate mismatch.
 
 **Why it happens:**
-Rendering entities directly from server snapshots without interpolation. Developer assumes 20 updates/second is enough (it's not for smooth 60fps rendering). Lack of understanding that rendering should be time-delayed by ~100ms to always have "future" state to interpolate toward.
+Minimap camera renders with different projection than main camera. Existing `MinimapCamera` was designed for top-down view and may not account for isometric transformation. Entity positions on minimap are calculated differently than main view positions, causing drift.
 
 **How to avoid:**
-- Client maintains buffer of 2-3 most recent server states per entity
-- Render entities 100ms in the past (configurable, called "interpolation delay")
-- For each frame, find two snapshots that bracket the render time
-- Linearly interpolate position/rotation between those snapshots
-- Handle buffer starvation (packet loss): extrapolate using last known velocity for max 200ms, then freeze
-- Never snap positions - always smooth transitions even during catch-up
+- Minimap should remain top-down (traditional approach) OR apply same isometric projection as main view (consistent but harder to read)
+- If minimap stays top-down: use world coordinates directly, don't apply isometric transform
+- If minimap goes isometric: apply exact same transformation as main camera
+- Minimap click detection must use same coordinate space as minimap rendering
+- Test that clicking minimap and main view produce same world position
+- Verify entity positions match between minimap and main view
 
 **Warning signs:**
-- Remote players move in visible "steps" not smooth motion
-- Animation frames don't match movement speed (sliding/skating)
-- High FPS but still looks choppy for remote entities
-- Extrapolation causing players to "overshoot" then rubber-band back
-- Movement appears smooth for local player, jittery for everyone else
+- Minimap and main view show player at different relative positions
+- Clicking minimap location doesn't move player to expected position
+- Minimap entities drift from main view entities
+- Minimap "center" doesn't match player's screen position
+- Zoom level affects minimap-to-world coordinate conversion
 
 **Phase to address:**
-Phase 4 (Entity Rendering & Registry) - Must be implemented when first entity rendering happens
+Phase 4 (UI Integration) — after main view works, integrate isometric with existing UI systems.
 
 ---
 
-### Pitfall 6: Zustand Store Updates Inside Phaser Game Loop
+### Pitfall 6: Pathfinding Heuristic Breaks with Isometric
 
 **What goes wrong:**
-Calling Zustand setters from Phaser's update() loop (60 times/second) triggers React re-renders on every frame. UI becomes sluggish, FPS tanks, browser becomes unresponsive. The "Maximum update depth exceeded" error appears from infinite update loops.
+A* pathfinding produces sub-optimal paths. Characters take long diagonal routes instead of straight lines. Pathfinding is slower than in top-down view. Click-to-move produces visually strange paths that are technically valid but look wrong.
 
 **Why it happens:**
-Phaser update loop runs at frame rate. Each Zustand update triggers subscriber notifications. React components re-render synchronously. Developers treat Zustand like a game state store when it's a React state manager. Mixing render loops (Phaser @ 60fps, React @ UI events) causes thrashing.
+Manhattan distance heuristic assumes x and y axes are equal, but in isometric they play asymmetric roles. Each odd row is offset, making diagonal movement cost different than top-down. Pathfinding runs on world grid (correct) but heuristic doesn't account for visual representation causing paths that look wrong even though logically correct.
 
 **How to avoid:**
-- Phaser game state lives in Phaser (game.data, scene.data, or custom manager)
-- Zustand only holds UI-relevant state (menus, chat, inventory open/closed)
-- Use event-driven updates to Zustand, not continuous polling
-- Debounce/throttle any Zustand updates from game loop (max 10/second)
-- Prefer Phaser events → Socket events → Server → Zustand flow
-- Use shallow equality checks and specific selectors to minimize re-renders
+- Keep pathfinding in world space (cartesian grid) — DO NOT pathfind in screen space
+- Verify heuristic matches actual movement cost in your grid
+- For staggered isometric grids, adjust heuristic to account for row offset
+- Test diagonal vs. straight paths have correct relative costs
+- Consider Euclidean distance instead of Manhattan for isometric
+- Visualize pathfinding debug info to spot heuristic issues early
 
 **Warning signs:**
-- FPS drops to 10-20 when UI components are mounted
-- React DevTools profiler shows components re-rendering every frame
-- Chat/inventory UI lags when opening/typing
-- Browser DevTools shows warning about "Maximum update depth"
-- State updates work fine for 1 minute then freeze browser
+- Paths that should be straight are diagonal
+- Pathfinding prefers one diagonal direction over another
+- A* explores many more nodes than expected
+- Paths look "wrong" visually even though they reach destination
+- Different path chosen depending on starting row (odd vs. even)
 
 **Phase to address:**
-Phase 2 (Phaser Integration) and Phase 5 (State Management Bridge) - Architectural boundary must be clear from start
+Phase 1 (Core Transformation) — pathfinding must work correctly with coordinate transform before adding complex navigation features.
 
 ---
 
-### Pitfall 7: Missing Reconnection State Recovery
+### Pitfall 7: Camera Follow Offset Incorrect for Diamond Grid
 
 **What goes wrong:**
-Player disconnects (network hiccup, mobile switching WiFi to cellular), reconnects with new socket ID, but game server treats them as brand new connection. Player loses position, zone state, combat status. Server sees "ghost" player from old session still in game.
+Player sprite not centered on screen. Camera "drifts" as player moves. Camera centering behaves differently at different zoom levels. Feels "off" even though player is technically in viewport.
 
 **Why it happens:**
-Socket.IO assigns new socket ID on reconnection. Server keys everything by socket ID not player/character ID. No reconnection window grace period. No session restoration logic. `handleDisconnect` immediately purges all player state.
+Camera follow offset was tuned for rectangular top-down grid. Isometric diamond grid has different "center" — the visual center of a diamond is not the same as rectangular center. Camera follow uses world coordinates but needs screen-space offset adjustment for proper centering.
 
 **How to avoid:**
-- Store session data by characterId + userId, not socket ID
-- Implement grace period (30-60 seconds) before purging disconnected player state
-- On auth, check if characterId is already "in-game" with different socket
-- Gracefully transfer state from old socket to new socket
-- Re-subscribe to zones, restore combat state, resend missed events
-- Provide UI feedback: "Reconnecting..." → "Restoring session..." → "Connected"
-- Client maintains queue of sent-but-unacknowledged events to replay on reconnect
+- Calculate camera offset in screen space, not world space
+- The "center" of isometric view is shifted compared to top-down
+- Test camera follow at multiple zoom levels
+- Adjust camera offset to account for sprite anchor point in isometric projection
+- Consider lerp smoothing for camera movement in isometric view
+- Visual test: player should feel centered even when grid isn't perfectly centered
 
 **Warning signs:**
-- Players lose progress when network blips occur
-- Duplicate players appear briefly (old session + new session)
-- Combat state lost mid-fight after reconnect
-- "Already in zone" errors preventing rejoining
-- Players complain about being "kicked" during mobile gameplay
+- Player appears off-center vertically or horizontally
+- Camera "jumps" when changing zoom levels
+- Camera follow behaves differently in different zones
+- Player feels off-center even though technically at screen center coordinates
+- Camera offset changes when entering different biomes (if tile heights vary)
 
 **Phase to address:**
-Phase 1 (WebSocket Connection) - Recovery pattern must exist before complex state is introduced
+Phase 2 (Rendering Optimization) — after basic rendering works, tune camera feel.
 
 ---
 
-### Pitfall 8: NestJS Guard/Middleware Execution Order Confusion
+### Pitfall 8: Animation Direction Mapping for 8-Way Movement
 
 **What goes wrong:**
-WebSocket guards are added but auth still fails unexpectedly. JWT validation runs BEFORE character ownership check, allowing players to authenticate with valid JWT but control other players' characters. Or guards run in wrong order causing database queries to happen before auth.
+Character faces wrong direction when moving diagonally. 4-way animations (N/S/E/W) don't translate correctly to isometric view. Animation transitions look janky. Direction sprite selection is off by 45°.
 
 **Why it happens:**
-NestJS execution order is non-obvious: Middleware → Global Guards → Controller Guards → Route Guards → Interceptors → Pipes. Multiple guards execute in binding order. WebSocket gateways can't use middleware directly - need custom adapter. Developers assume guards are "auth" but they're generic CanActivate checks.
+Top-down uses cardinal directions (N/E/S/W). Isometric view rotates the display 45°, so "up" on screen is actually "north-east" in world space. Animation direction mapping uses world-space direction but should use screen-space direction for sprite selection.
 
 **How to avoid:**
-- Understand execution order: Middleware → Guards (global, controller, route) → Handler
-- For WebSockets, create IoAdapter to add middleware for handshake-level checks
-- Guards should check `socket.data` set by earlier middleware/guards
-- Order matters: AuthGuard before CharacterOwnershipGuard before ZoneAccessGuard
-- Use @UseGuards() with array in correct order: `@UseGuards([AuthGuard, OwnershipGuard])`
-- Document guard dependencies and required socket.data fields
+- If using 4-way animations: map world directions to screen directions with 45° rotation
+- If upgrading to 8-way animations: ensure angle calculations account for isometric rotation
+- Create direction mapping utility: `worldDirectionToSpriteDirection()`
+- Test all 8 cardinal/diagonal directions produce correct sprite
+- Ensure smooth transitions between directions (don't snap instantly)
 
 **Warning signs:**
-- Guards pass sometimes, fail other times for same conditions
-- Database queries in guards causing performance issues
-- "Unauthorized" errors even with valid tokens
-- Player can control characters they don't own
-- Guard execution logs show unexpected order
+- Character sprite faces wrong direction during diagonal movement
+- Direction changes don't match visual movement direction
+- Animation direction snaps instead of smoothly transitioning
+- Character appears to "moonwalk" (moving one direction, facing another)
 
 **Phase to address:**
-Phase 1 (WebSocket Auth) - Guard architecture must be correct before building on it
+Phase 5 (Polish & Animation) — after movement works, make animations feel right.
 
 ---
 
@@ -241,29 +241,24 @@ Shortcuts that seem reasonable but create long-term problems.
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| No client-side prediction (wait for server) | Simple to implement, no sync issues | Feels sluggish (RTT latency visible), poor UX on high ping | MVP only - must fix by beta |
-| Direct position snapping (no interpolation) | Easy rendering logic | Choppy visuals, looks unprofessional | Prototype phase, replace in Phase 4 |
-| Store Phaser instance in Zustand | Convenient access from React | Memory leaks, coupling issues, re-render problems | Never - architecturally wrong |
-| Socket ID as player identifier | Matches Socket.IO model | Reconnection impossible, session recovery broken | Never - use characterId |
-| Global event listeners without cleanup | Quick prototyping | Memory leaks, duplicate handlers | Prototype only |
-| Auth via query params instead of handshake | Easier debugging | Security risk (logged URLs), timing issues | Local dev only |
-| Single-threaded game loop and networking | Simpler architecture | Poor performance at scale | Acceptable until 50+ concurrent players/zone |
-| Manual room management without abstraction | Direct Socket.IO usage | Hard to debug, race conditions | Never for production |
+| Using screen-space coords in game logic | Simpler initial implementation | Multiplayer desync, impossible to switch back to top-down | Never — always separate world/screen |
+| Simple Y-based depth sorting | Fast to implement, works for small scenes | Flickering sprites, visual glitches with tall objects | MVP only, must refactor for production |
+| Same culling bounds as top-down | No changes needed | Performance regression or visual pop-in | Never — requires minimal adjustment |
+| Skip coordinate transform utilities | Fewer files, inline conversions | Bug-prone, inconsistent transformations | Never — utilities take 10 minutes to write |
+| Keep minimap top-down "temporarily" | Minimap keeps working | Users confused by different projections | Acceptable if documented as intentional design choice |
+| Re-calculate depth every frame | Simpler logic | O(n²) performance, causes flickering | Never — cache and dirty-flag approach is better |
 
 ## Integration Gotchas
 
-Common mistakes when connecting components.
+Common mistakes when connecting to external services.
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| React → Phaser | Creating Phaser game in useEffect without cleanup | Use useLayoutEffect + comprehensive cleanup (cache, world, events) + ref to prevent double-init |
-| Phaser → React | Calling Zustand from Phaser update loop | Event-driven updates only, debounce to max 10/sec |
-| Socket.IO → NestJS | Assuming @SubscribeMessage provides auth | Add guards to every handler, validate socket.data.authenticated |
-| JWT → WebSocket | Validating token in message handler instead of handshake | Use IoAdapter middleware for handshake auth |
-| Client Events → Server | Sending events before auth:success response | Queue events client-side until authenticated flag is true |
-| Server State → Client Rendering | Rendering server updates at exact timestamps | Maintain 2-3 state buffer, render 100ms in past, interpolate |
-| Zone Transitions | Leaving old room before new room state is ready | Fetch new zone state BEFORE leaving old room, atomic swap |
-| Character Selection → Game | Starting WebSocket connection before character selected | Wait for character selection, pass characterId to connection |
+| Phaser Arcade Physics | Using physics bodies with isometric — collision shapes don't match visuals | Keep physics in world space, separate from rendering projection |
+| Socket.IO position sync | Sending screen coordinates instead of world coordinates | Always send world coordinates, clients transform to screen space |
+| Tiled map editor | Importing isometric tilemap as orthogonal or vice versa | Verify tilemap orientation matches game projection type |
+| Phaser camera zoom | Zoom breaks coordinate transformations | Test all coordinate conversions at multiple zoom levels |
+| Depth sorting plugins | Using pre-built Y-sort plugins designed for orthogonal | Write custom depth function or verify plugin supports isometric |
 
 ## Performance Traps
 
@@ -271,29 +266,11 @@ Patterns that work at small scale but fail as usage grows.
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Broadcasting all entity updates to all zone players | Works fine initially | Send only visible entities based on view distance | 20+ players in one zone |
-| Storing entire zone state in client memory | Convenient full access | Use viewport-based culling, load entities on-demand | Zones with 1000+ entities |
-| Sending zone:state on every player movement | Seems responsive | Send incremental updates (entity:update), full state only on join/zone change | 10+ players moving simultaneously |
-| Validating every input with database query | Ensures correctness | Cache player state in memory, sync to DB periodically | 100+ actions/second server-wide |
-| No spatial partitioning for collision/visibility | Simple O(n²) checks | Use quadtree or grid-based spatial hash | 50+ entities in visibility range |
-| Texture atlases loaded per-entity | Easy asset management | Preload shared atlases on scene start | 20+ unique entity types |
-| Unthrottled chat messages | Real-time feel | Rate limit (5 msg/sec per player) + cooldown | First spam attack |
-| WebSocket events without message size limit | Flexible payloads | Enforce max message size (10KB), reject over-limit | First malicious client |
-
-## Security Mistakes
-
-Domain-specific security issues beyond general web security.
-
-| Mistake | Risk | Prevention |
-|---------|------|------------|
-| Trusting client position updates | Teleportation hacks, wall clipping | Server validates all movement with game-logic package, reject impossible moves |
-| No rate limiting on WebSocket events | DDoS via spam events, server overload | Rate limit per event type (move: 60/sec, interact: 10/sec, chat: 5/sec) |
-| Sending other players' JWT/characterIds to client | Account takeover, impersonation | Strip sensitive fields, only send PlayerPublic type |
-| Using predictable entity/room IDs | Zone/player enumeration attacks | Use UUIDs for all IDs, validate access rights |
-| No input sanitization on chat | XSS if displayed in web UI, injection | Sanitize + length limit all text inputs before broadcast |
-| Allowing unauthenticated socket connections | Resource exhaustion | Disconnect unauthenticated sockets after 5 second timeout |
-| Exposing internal game state in error messages | Information leakage | Generic error messages to client, detailed logs server-side only |
-| No validation of characterId ownership | Player can control any character | Verify JWT userId matches character owner in database |
+| Per-frame depth sorting for all sprites | FPS drops with many entities | Cache depth, dirty-flag when position changes | >50 moving entities |
+| Rectangular culling bounds for diamond viewport | Rendering 2x more tiles than necessary | Calculate diamond-shaped culling bounds | Always (immediate waste) |
+| Recalculating isometric transform per sprite | CPU spikes during rendering | Batch transform calculations, cache results | >200 sprites on screen |
+| No spatial indexing for depth sorting | O(n²) sorting every frame | Use quadtree or grid-based spatial index | >100 entities |
+| Tweening in screen space | Multiplayer desync, constant recalculation | Tween in world space, transform to screen after | Multiplayer immediately |
 
 ## UX Pitfalls
 
@@ -301,29 +278,26 @@ Common user experience mistakes in this domain.
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| No visual feedback during authentication | User doesn't know if login worked | Show "Connecting..." → "Authenticating..." → "Loading zone..." states |
-| No reconnection UI | User assumes game crashed | Display "Connection lost, reconnecting..." with retry countdown |
-| Instant position corrections (snapping) | Jarring teleportation, feels broken | Smooth interpolation over 100-200ms with easing |
-| No indication when server rejects action | Silent failures frustrate users | Visual feedback (red flash, error message) on rejection |
-| Missing transition when changing zones | Disorienting instant switch | Fade out → load → fade in with loading indicator |
-| No offline mode or graceful degradation | Total failure on disconnect | Queue actions locally, sync when reconnected |
-| Entities pop in/out without animation | Unprofessional, jarring | Spawn/despawn animations (fade, scale) |
-| No indication of other players' network state | Can't tell if they're lagging | Show latency indicator, gray out laggy players |
+| No visual feedback for click targets | User clicks empty space expecting interaction | Highlight tiles/entities on hover with isometric-aware hit detection |
+| Minimap uses different projection | Confusion about location, can't correlate views | Keep minimap top-down but clearly label it OR match main view projection |
+| Camera not centered on player | Player feels "off" even if functional | Calculate proper screen-space offset for diamond grid centering |
+| Pathfinding paths look "wrong" visually | Appears like a bug even if technically correct | Tune heuristic for visual correctness, not just optimal distance |
+| No depth sorting for UI elements | UI elements appear behind game sprites | Set UI to fixed depth layer above all game objects |
 
 ## "Looks Done But Isn't" Checklist
 
 Things that appear complete but are missing critical pieces.
 
-- [ ] **WebSocket Auth:** Often missing guard on non-auth handlers — verify every @SubscribeMessage has @UseGuards except 'auth'
-- [ ] **Phaser Cleanup:** Often missing cache/world destroy — check useEffect return has full cleanup sequence
-- [ ] **Movement Sync:** Often missing server reconciliation — verify client rewinds state when server update arrives
-- [ ] **Entity Interpolation:** Often missing interpolation delay — check entities render in past, not at exact server time
-- [ ] **Reconnection:** Often missing session restoration — verify characterId can reconnect and resume state
-- [ ] **Zone Transitions:** Often missing atomic room swap — verify new zone loaded before leaving old zone room
-- [ ] **Error Handling:** Often missing client-side error display — verify 'error' event shows user-facing message
-- [ ] **Input Validation:** Often missing impossible move rejection — verify server uses game-logic package for validation
-- [ ] **Memory Cleanup:** Often missing event listener removal — verify window/document listeners cleaned up on unmount
-- [ ] **Race Conditions:** Often missing socket.connected check — verify client.join() checks connection status first
+- [ ] **Click detection:** Works at (0,0) but not tested at zone boundaries — verify at zone edges and negative coordinates
+- [ ] **Depth sorting:** Works with single-tile entities but not tested with multi-tile entities (trees, buildings) — verify large sprite sorting
+- [ ] **Viewport culling:** Works at zoom=1.0 but breaks at other zoom levels — test at 0.5x, 1.0x, 2.0x zoom
+- [ ] **Multiplayer sync:** Works on localhost but not tested with latency — test with 100ms+ latency
+- [ ] **Coordinate transforms:** Work for player position but not tested for entity spawning, projectiles, effects — verify all position updates
+- [ ] **Minimap:** Renders correctly but click-to-move from minimap not tested — verify minimap interaction
+- [ ] **Pathfinding:** Produces valid paths but not tested for visual correctness — verify paths look natural in isometric view
+- [ ] **Camera follow:** Centered at startup but not tested during zone transitions — verify camera during zone changes
+- [ ] **Animation directions:** Work for cardinal directions but diagonals not tested — verify all 8 directions
+- [ ] **Depth sorting:** Works for moving entities but not tested for stationary overlapping entities — verify static scene composition
 
 ## Recovery Strategies
 
@@ -331,14 +305,14 @@ When pitfalls occur despite prevention, how to recover.
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Auth without guards | MEDIUM | Add WsAuthGuard, create IoAdapter middleware, migrate handlers incrementally |
-| Room join race condition | LOW | Add socket.connected check before joins, force cleanup on disconnect |
-| Phaser memory leaks | LOW | Add comprehensive cleanup in useLayoutEffect return, test with mount/unmount cycles |
-| No client prediction | HIGH | Requires refactor - add sequence numbers, input buffer, reconciliation logic |
-| Missing interpolation | MEDIUM | Add state buffer to entity manager, implement lerp in render loop |
-| Zustand in game loop | MEDIUM | Extract Phaser state to separate manager, refactor to event-driven updates |
-| No reconnection | HIGH | Requires session system - store by characterId, add grace period, restoration logic |
-| Wrong guard order | LOW | Reorder @UseGuards array, document dependencies, add integration test |
+| Mixed coordinate spaces in codebase | HIGH | Audit all position calculations, create transform utilities, refactor systematically by system |
+| Depth sorting flickering | MEDIUM | Implement spatial indexing, cache depth values, add dirty flags for position changes |
+| Viewport culling wrong bounds | LOW | Recalculate culling bounds for diamond shape, increase padding for sprite height |
+| Click detection offset | MEDIUM | Create inverse transform function, test at multiple zoom levels and positions |
+| Multiplayer position desync | HIGH | Standardize on world-space for logic, audit all tween code, verify server/client use same transforms |
+| Minimap coordinate mismatch | LOW | Choose projection (top-down or isometric), apply consistent transform, fix click handlers |
+| Pathfinding wrong heuristic | LOW | Switch to Euclidean distance or adjust Manhattan for row offset |
+| Camera offset incorrect | LOW | Calculate screen-space offset, test at multiple zooms, adjust based on visual feedback |
 
 ## Pitfall-to-Phase Mapping
 
@@ -346,55 +320,66 @@ How roadmap phases should address these pitfalls.
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| WebSocket auth without guards | Phase 1: Connection & Auth | Test: Send 'player:move' before 'auth' → should reject |
-| Room join race condition | Phase 1: Connection & Auth | Test: Disconnect during auth → no ghost player in room |
-| Phaser memory leaks | Phase 2: Phaser Integration | Test: Mount/unmount 10 times → heap size stable |
-| Missing client prediction | Phase 3: Movement Validation | Test: 200ms latency → movement feels instant locally |
-| Missing interpolation | Phase 4: Entity Rendering | Test: Remote player moves smoothly at 60fps with 20Hz updates |
-| Zustand in game loop | Phase 2 & 5: Integration & State Bridge | Test: FPS stable with UI components mounted |
-| No reconnection | Phase 1: Connection & Auth | Test: Close WebSocket → reconnect → session restored |
-| Guard execution order | Phase 1: Connection & Auth | Test: Guards run in documented order, auth before ownership |
+| Depth sorting instability | Phase 1: Core Transformation | Stress test with 100+ overlapping entities, verify no flickering |
+| Click detection coord confusion | Phase 1: Core Transformation | Click test at zone boundaries, multiple zooms, verify world coords |
+| Viewport culling wrong bounds | Phase 2: Rendering Optimization | Visual debug mode showing culling bounds, FPS comparison to top-down |
+| Multiplayer position mismatch | Phase 3: Multiplayer Integration | Test with 200ms latency, verify remote players don't rubber-band |
+| Minimap coordinate misalignment | Phase 4: UI Integration | Click same world position in minimap and main view, verify both work |
+| Pathfinding heuristic breaks | Phase 1: Core Transformation | Visual inspection of paths, A* node exploration count comparison |
+| Camera follow offset incorrect | Phase 2: Rendering Optimization | Visual centering test at 0.5x, 1.0x, 2.0x zoom |
+| Animation direction mapping wrong | Phase 5: Polish & Animation | Test all 8 directions, verify sprite faces correct screen direction |
 
 ## Sources
 
-**WebSocket & Socket.IO:**
-- [Socket.IO Middlewares Documentation](https://socket.io/docs/v4/middlewares/)
-- [Socket.IO JWT Authentication Guide](https://socket.io/how-to/use-with-json-web-tokens)
-- [GitHub Issue: socket.join room leak #4380](https://github.com/socketio/socket.io/issues/4380)
-- [WebSocket Reconnection Best Practices](https://oneuptime.com/blog/post/2026-01-24-websocket-reconnection-logic/view)
-- [Socket.IO Room Management for Character Selection](https://blog.yarsalabs.com/real-time-character-selection-for-multiplayer-game-using-socket/)
+### Depth Sorting & Z-Index Issues
+- [Isometric depth sorting - Mazebert Forum](https://mazebert.com/forum/news/isometric-depth-sorting--id775/)
+- [Drawing isometric boxes in the correct order - Shaun Lebron](https://shaunlebron.github.io/IsometricBlocks/)
+- [Isometric Depth Sorting for Moving Platforms - Envato Tuts+](https://gamedevelopment.tutsplus.com/tutorials/isometric-depth-sorting-for-moving-platforms--cms-30226)
+- [Cheating at z-depth sprite sorting - Pocket City Game Blog](https://blog.pocketcitygame.com/cheating-at-z-depth-sprite-sorting-in-an-isometric-game/)
 
-**Phaser & React Integration:**
-- [The Wrong Way to Integrate Phaser With React](https://medium.com/@larry.sassainsworth/the-wrong-way-to-integrate-phaser-with-react-d85e3b226cf9)
-- [GitHub Issue: Game.destroy() throws error in React #4305](https://github.com/phaserjs/phaser/issues/4305)
-- [GitHub Issue: Phaser memory leak #2138](https://github.com/photonstorm/phaser/issues/2138)
-- [Phaser React Integration Tutorial by Leo Kuo](https://leokuo0724.medium.com/how-to-integrate-phaser-into-react-a7119e428228)
-- [Official Phaser React Template](https://github.com/phaserjs/template-react)
+### Coordinate Transformation & Click Detection
+- [Isometric Coordinates Documentation](https://isometric-tiles.readthedocs.io/)
+- [Going Isometric - Packt](https://www.packtpub.com/en-us/learning/how-to-tutorials/going-isometric/)
+- [Love2D Isometric Mapping: Fixing the "Off-by-One" X-Coordinate Error - Medium](https://medium.com/@zgza778/love2d-isometric-mapping-fixing-the-off-by-one-x-coordinate-error-5f3c1327c8bb)
+- [How to create an Iso player that follows mouse clicks - phaser-plugin-isometric](https://github.com/lewster32/phaser-plugin-isometric/issues/27)
 
-**Multiplayer Networking:**
-- [Client-Side Prediction and Server Reconciliation - Gabriel Gambetta](https://www.gabrielgambetta.com/client-side-prediction-server-reconciliation.html)
-- [Source Multiplayer Networking - Valve](https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking)
-- [Lag Compensation Methods - Valve](https://developer.valvesoftware.com/wiki/Latency_Compensating_Methods_in_Client/Server_In-game_Protocol_Design_and_Optimization)
-- [Entity Interpolation and Prediction](https://www.oreilly.com/library/view/unity-multiplayer-games/9781849692328/ch06.html)
-- [How Multiplayer Games Sync State - Medium](https://medium.com/@qingweilim/how-do-multiplayer-games-sync-their-state-part-1-ab72d6a54043)
+### Collision & Hit Detection
+- [3D Collision Detection in 2D Isometric game - GameDev.net](https://www.gamedev.net/forums/topic/709015-3d-collision-detection-in-2d-isometric-game/)
+- [Collision detection with isometric tilemap - GameDev.net](https://www.gamedev.net/forums/topic/640471-collision-detection-with-isometric-tilemap/)
 
-**NestJS Architecture:**
-- [NestJS Guards Execution Order Issue #1567](https://github.com/nestjs/docs.nestjs.com/issues/1567)
-- [Guards vs Middlewares vs Interceptors in NestJS](https://medium.com/@kevinpatelcse/guards-vs-middlewares-vs-interceptors-vs-pipes-in-nestjs-a-comprehensive-guide-37841a7873f1)
-- [NestJS WebSocket Guards Documentation](https://docs.nestjs.com/websockets/guards)
-- [Understanding Guards in NestJS - LogRocket](https://blog.logrocket.com/understanding-guards-nestjs/)
+### Multiplayer Synchronization
+- [The story of Bloc: An isometric, multiplayer building game - Medium](https://medium.com/@joemaidman/the-story-of-bloc-an-isometric-multiplayer-building-game-4227a59fcdbf)
+- [How do multiplayer games sync their state? Part 1 - Medium](https://medium.com/@qingweilim/how-do-multiplayer-games-sync-their-state-part-1-ab72d6a54043)
 
-**State Management:**
-- [Zustand Performance Pitfalls](https://philipp-raab.medium.com/zustand-state-management-a-performance-booster-with-some-pitfalls-071c4cbee17a)
-- [Taming Infinite Loop with Zustand](https://medium.com/@oladejoboluwatife10/taming-the-infinite-loop-how-we-fixed-a-react-native-state-management-bug-with-zustand-20c8664ebb90)
-- [React State Management Performance Issues](https://medium.com/@bloodturtle/react-state-management-why-context-api-might-be-causing-performance-issues-and-how-zustand-can-ec7718103a71)
+### Viewport Culling & Camera
+- [Frustum Culling Optimization For Isometric RTS Maps - 80.lv](https://80.lv/articles/optimizing-isometric-rts-performance-with-frustum-culling)
+- [How to position the camera for isometric assets - Game Developer](https://www.gamedeveloper.com/design/how-to-position-the-camera-for-isometric-assets)
+- [Unity Issue Tracker - Grid.GetCellCenterWorld isometric offset](https://issuetracker.unity3d.com/issues/grid-dot-getcellcenterworld-returns-a-value-offset-from-the-center-when-using-an-isometric-grid-layout)
 
-**Graphics & Rendering:**
-- [Phaser Texture Atlas Bleeding Issues](https://docs.phaser.io/phaser/concepts/textures)
-- [Input Buffering in Games - Wayline](https://www.wayline.io/blog/art-of-input-buffering)
-- [Dealing with Network Latency - Unity](https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.7/manual/learn/dealing-with-latency.html)
+### Minimap Coordinate Issues
+- [Minimaps Research - Personal Research](https://alejandro61299.github.io/Minimaps_Personal_Research/)
+- [In isometric mode, rotate minimap to match map orientation - Cataclysm-DDA Issue](https://github.com/CleverRaven/Cataclysm-DDA/issues/21951)
+
+### Pathfinding in Isometric Grids
+- [A* Pathfinding on an Isometric Map - GameDev.net](https://www.gamedev.net/forums/topic/424827-a-pathfinding-on-an-isometric-map/)
+- [Using A*pathfinding on an isometric game map - Unity Discussions](https://discussions.unity.com/t/using-a-pathfinding-on-an-isometric-game-map/506454)
+- [Question about A* Pathfinding Project and Isometric grids - Support Forum](https://forum.arongranberg.com/t/question-about-a-pathfinding-project-and-isometric-grids/12433)
+
+### Phaser Isometric Performance
+- [Phaser 3.50.0 Released - Isometric Tilemap Support](https://phaser.io/news/2020/12/phaser-350-released)
+- [How I optimized my Phaser 3 action game — in 2025 - Medium](https://franzeus.medium.com/how-i-optimized-my-phaser-3-action-game-in-2025-5a648753f62b)
+- [Tips on speeding up Phaser games - GitHub Gist](https://gist.github.com/MarcL/748f29faecc6e3aa679a385bffbdf6fe)
+
+### Animation Direction
+- [8 Direction Animated Isometric Sprite - itch.io](https://noherodev.itch.io/8dir-sprite-base)
+- [Issue with 8 direction isometric sprite animations - GDevelop Forum](https://forum.gdevelop.io/t/issue-with-8-direction-isometric-sprite-animations/51020)
+- [8-Directional Movement/Animation - Godot Recipes](https://kidscancode.org/godot_recipes/4.x/2d/8_direction/index.html)
+
+### General Isometric Concepts
+- [Top down perspective vs isometric projection - Liza.io](https://liza.io/top-down-perspective-vs-isometric-projection2-5d/)
+- [What is an Isometric Game - Retro Style Games](https://retrostylegames.com/blog/what-is-isometric-game/)
+- [Isometric video game graphics - Wikipedia](https://en.wikipedia.org/wiki/Isometric_video_game_graphics)
 
 ---
-*Pitfalls research for: Multiplayer 2D MMO Post-Login Game Experience*
-*Researched: 2026-02-14*
-*Overall Confidence: HIGH (combination of official docs, established patterns, and validated against existing codebase)*
+*Pitfalls research for: Adding Isometric View to Existing Top-Down Multiplayer Game*
+*Researched: 2026-02-16*
