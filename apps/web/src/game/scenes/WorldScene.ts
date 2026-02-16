@@ -9,8 +9,11 @@ import { ZoneHUD } from '../ui/ZoneHUD';
 import { MinimapCamera } from '../rendering/MinimapCamera';
 import { MovementController } from '../systems/MovementController';
 import { PathfindingController } from '../systems/PathfindingController';
+import { IsometricTransform } from '../utils/IsometricTransform';
+import { DepthSorter } from '../rendering/DepthSorter';
 
-const TILE_SIZE = 96;
+const ISO_TILE_WIDTH = 128;
+const ISO_TILE_HEIGHT = 64;
 
 export class WorldScene extends Phaser.Scene {
   private tileLayer: Phaser.GameObjects.Container | null = null;
@@ -36,6 +39,8 @@ export class WorldScene extends Phaser.Scene {
   private pathfindingController: PathfindingController | null = null;
   private collisionMap: boolean[][] | null = null;
   private minimapCamera: MinimapCamera | null = null;
+  private isoTransform: IsometricTransform | null = null;
+  private depthSorter: DepthSorter | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -45,14 +50,20 @@ export class WorldScene extends Phaser.Scene {
     // Create tile container
     this.tileLayer = this.add.container(0, 0);
 
-    // Initialize TileRenderer
-    this.tileRenderer = new TileRenderer(this, TILE_SIZE);
+    // Initialize IsometricTransform
+    this.isoTransform = new IsometricTransform(ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
 
-    // Initialize EntityRenderer
-    this.entityRenderer = new EntityRenderer(this, TILE_SIZE);
+    // Initialize DepthSorter
+    this.depthSorter = new DepthSorter();
 
-    // Initialize ViewportCuller
-    this.viewportCuller = new ViewportCuller(TILE_SIZE, 2);
+    // Initialize TileRenderer with isometric dimensions
+    this.tileRenderer = new TileRenderer(this, ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
+
+    // Initialize EntityRenderer with isometric dimensions
+    this.entityRenderer = new EntityRenderer(this, ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
+
+    // Initialize ViewportCuller with isometric dimensions and expanded padding
+    this.viewportCuller = new ViewportCuller(ISO_TILE_WIDTH, ISO_TILE_HEIGHT, 4);
 
     // Initialize ZoneHUD
     this.zoneHUD = new ZoneHUD(this);
@@ -130,33 +141,26 @@ export class WorldScene extends Phaser.Scene {
       // Only handle left click for movement
       if (pointer.rightButtonDown()) return;
 
+      if (!this.isoTransform) return;
+
       // Convert screen position to world position
       const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
 
-      // Convert to tile coordinates
-      const tileX = Math.floor(worldPoint.x / TILE_SIZE);
-      const tileY = Math.floor(worldPoint.y / TILE_SIZE);
+      // Convert to tile coordinates using isometric transform
+      const gridPos = this.isoTransform.screenToTile(worldPoint.x, worldPoint.y);
 
       // Start pathfinding if we have collision map
       if (this.pathfindingController && this.collisionMap) {
-        this.pathfindingController.startPath(tileX, tileY, this.collisionMap);
+        this.pathfindingController.startPath(gridPos.x, gridPos.y, this.collisionMap);
       }
     });
   }
 
   private generatePlaceholderWorld(): void {
-    if (!this.tileLayer || !this.entityRenderer) return;
+    if (!this.tileLayer || !this.entityRenderer || !this.isoTransform) return;
 
-    // Generate a simple placeholder grid
-    for (let y = 0; y < ZONE_SIZE; y++) {
-      for (let x = 0; x < ZONE_SIZE; x++) {
-        const isWall = Math.random() > 0.85 && !(x === 32 && y === 32); // Leave spawn clear
-        const texture = isWall ? 'tile_wall' : 'tile_floor';
-        const tile = this.add.sprite(x * TILE_SIZE, y * TILE_SIZE, texture);
-        tile.setOrigin(0, 0);
-        this.tileLayer.add(tile);
-      }
-    }
+    // Generate a simple placeholder grid (no longer used - kept for compatibility)
+    // Tiles are now rendered via TileRenderer in renderChunk()
 
     // Add some test entities using EntityRenderer
     for (let i = 0; i < 10; i++) {
@@ -171,18 +175,43 @@ export class WorldScene extends Phaser.Scene {
         active: true
       };
       const container = this.entityRenderer.createEntityContainer(testEntity);
-      container.setDepth(5);
       this.entitySprites.set(testEntity.id, container);
+
+      if (this.depthSorter) {
+        this.depthSorter.markDirty(testEntity.id);
+      }
     }
   }
 
   private createLocalPlayer(position: Position): void {
-    this.localPlayer = this.add.sprite(
-      position.x * TILE_SIZE + TILE_SIZE / 2,
-      position.y * TILE_SIZE + TILE_SIZE / 2,
-      'player'
-    );
-    this.localPlayer.setDepth(10);
+    if (!this.isoTransform) return;
+
+    const screenPos = this.isoTransform.gridToScreen(position.x, position.y);
+
+    // Create container for player (same pattern as entities)
+    const container = this.add.container(screenPos.x, screenPos.y);
+    container.setData('gridX', position.x);
+    container.setData('gridY', position.y);
+
+    // Blob shadow
+    const shadow = this.add.ellipse(0, 0, 40, 20, 0x000000, 0.3);
+    container.add(shadow);
+
+    // Player sprite elevated
+    const sprite = this.add.sprite(0, -12, 'player');
+    sprite.setOrigin(0.5, 1.0);
+    container.add(sprite);
+
+    // Store reference (as container now, not sprite)
+    this.localPlayer = container as unknown as Phaser.GameObjects.Sprite; // Type hack for compatibility
+
+    // Set depth with local player priority
+    const depth = this.isoTransform.calculateDepth(position.x, position.y, 0.001);
+    container.setDepth(depth);
+
+    if (this.depthSorter) {
+      this.depthSorter.setLocalPlayer('local');
+    }
   }
 
   private lastCullTime = 0;
@@ -191,10 +220,15 @@ export class WorldScene extends Phaser.Scene {
   update(time: number): void {
     this.handleInput(time);
 
-    // Throttle viewport culling to reduce CPU usage
+    // Throttled viewport culling
     if (time - this.lastCullTime >= this.cullInterval) {
       this.lastCullTime = time;
       this.updateVisibleTiles();
+    }
+
+    // Throttled depth sorting
+    if (this.depthSorter && this.isoTransform) {
+      this.depthSorter.update(time, this.entitySprites, this.isoTransform);
     }
   }
 
@@ -288,19 +322,21 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private renderChunk(chunkData: ChunkData, biome: BiomeType): void {
-    if (!this.tileRenderer) return;
+    if (!this.tileRenderer || !this.isoTransform) return;
 
     const { zoneId, tiles } = chunkData;
     const { x: chunkX, y: chunkY } = this.parseZoneCoords(zoneId);
 
-    // Calculate world offset for this chunk
-    const offsetX = chunkX * ZONE_SIZE * TILE_SIZE;
-    const offsetY = chunkY * ZONE_SIZE * TILE_SIZE;
+    // Calculate isometric world offset for this chunk
+    // Chunk (0,0) starts at origin, chunk (1,0) offsets by ZONE_SIZE tiles in X
+    const chunkGridX = chunkX * ZONE_SIZE;
+    const chunkGridY = chunkY * ZONE_SIZE;
+    const chunkOffset = this.isoTransform.gridToScreen(chunkGridX, chunkGridY);
 
-    // Create container for this chunk
-    const container = this.add.container(offsetX, offsetY);
+    // Create container at chunk offset
+    const container = this.add.container(chunkOffset.x, chunkOffset.y);
 
-    // Create tiles
+    // Create tiles relative to chunk origin (0,0 to ZONE_SIZE-1)
     for (let y = 0; y < ZONE_SIZE; y++) {
       for (let x = 0; x < ZONE_SIZE; x++) {
         const tileId = tiles[y][x] as TileId;
@@ -309,10 +345,8 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    // Store container
     this.chunkContainers.set(zoneId, container);
 
-    // Update biome and HUD for current zone
     if (zoneId === this.currentZoneId) {
       this.currentBiome = biome;
       if (this.zoneHUD) {
@@ -352,8 +386,11 @@ export class WorldScene extends Phaser.Scene {
     if (this.entitySprites.has(entity.id) || !this.entityRenderer) return;
 
     const container = this.entityRenderer.createEntityContainer(entity);
-    container.setDepth(5); // Below player at 10
     this.entitySprites.set(entity.id, container);
+
+    if (this.depthSorter) {
+      this.depthSorter.markDirty(entity.id);
+    }
   }
 
   despawnEntity(entityId: string): void {
@@ -382,12 +419,19 @@ export class WorldScene extends Phaser.Scene {
 
   updateEntity(entityId: string, changes: Partial<Entity>): void {
     const container = this.entitySprites.get(entityId);
-    if (!container) return;
+    if (!container || !this.isoTransform) return;
 
     // Update position
     if (changes.position) {
-      container.x = changes.position.x * TILE_SIZE + TILE_SIZE / 2;
-      container.y = changes.position.y * TILE_SIZE + TILE_SIZE / 2;
+      const screenPos = this.isoTransform.gridToScreen(changes.position.x, changes.position.y);
+      container.x = screenPos.x;
+      container.y = screenPos.y;
+      container.setData('gridX', changes.position.x);
+      container.setData('gridY', changes.position.y);
+
+      if (this.depthSorter) {
+        this.depthSorter.markDirty(entityId);
+      }
     }
 
     // Update health bar if health changed for creatures
@@ -419,16 +463,28 @@ export class WorldScene extends Phaser.Scene {
   }
 
   addPlayer(player: PlayerPublic): void {
-    if (this.playerSprites.has(player.id)) return;
+    if (this.playerSprites.has(player.id) || !this.isoTransform) return;
 
-    const sprite = this.add.sprite(
-      player.position.x * TILE_SIZE + TILE_SIZE / 2,
-      player.position.y * TILE_SIZE + TILE_SIZE / 2,
-      'player'
-    );
+    const screenPos = this.isoTransform.gridToScreen(player.position.x, player.position.y);
+
+    const container = this.add.container(screenPos.x, screenPos.y);
+    container.setData('gridX', player.position.x);
+    container.setData('gridY', player.position.y);
+
+    // Shadow
+    const shadow = this.add.ellipse(0, 0, 40, 20, 0x000000, 0.3);
+    container.add(shadow);
+
+    // Player sprite
+    const sprite = this.add.sprite(0, -12, 'player');
+    sprite.setOrigin(0.5, 1.0);
     sprite.setTint(this.getFactionColor(player.faction));
-    sprite.setDepth(10);
-    this.playerSprites.set(player.id, sprite);
+    container.add(sprite);
+
+    const depth = this.isoTransform.calculateDepth(player.position.x, player.position.y);
+    container.setDepth(depth);
+
+    this.playerSprites.set(player.id, container as unknown as Phaser.GameObjects.Sprite);
   }
 
   removePlayer(playerId: string): void {
@@ -441,41 +497,50 @@ export class WorldScene extends Phaser.Scene {
 
   movePlayer(playerId: string, position: Position): void {
     const sprite = this.playerSprites.get(playerId);
-    if (sprite) {
-      // Kill any existing tweens on this sprite to prevent accumulation
-      this.tweens.killTweensOf(sprite);
-      this.tweens.add({
-        targets: sprite,
-        x: position.x * TILE_SIZE + TILE_SIZE / 2,
-        y: position.y * TILE_SIZE + TILE_SIZE / 2,
-        duration: 100,
-        ease: 'Linear',
-      });
-    }
+    if (!sprite || !this.isoTransform) return;
+
+    const screenPos = this.isoTransform.gridToScreen(position.x, position.y);
+
+    this.tweens.killTweensOf(sprite);
+    this.tweens.add({
+      targets: sprite,
+      x: screenPos.x,
+      y: screenPos.y,
+      duration: 100,
+      ease: 'Linear',
+      onComplete: () => {
+        sprite.setData('gridX', position.x);
+        sprite.setData('gridY', position.y);
+        const depth = this.isoTransform!.calculateDepth(position.x, position.y);
+        sprite.setDepth(depth);
+      }
+    });
   }
 
   updateLocalPlayerSprite(position: Position, reconciling = false): void {
-    if (!this.localPlayer) return;
+    if (!this.localPlayer || !this.isoTransform) return;
 
-    const targetX = position.x * TILE_SIZE + TILE_SIZE / 2;
-    const targetY = position.y * TILE_SIZE + TILE_SIZE / 2;
+    const screenPos = this.isoTransform.gridToScreen(position.x, position.y);
 
-    if (reconciling && (this.localPlayer.x !== targetX || this.localPlayer.y !== targetY)) {
-      // Kill any existing tweens to prevent accumulation
+    if (reconciling && (this.localPlayer.x !== screenPos.x || this.localPlayer.y !== screenPos.y)) {
       this.tweens.killTweensOf(this.localPlayer);
-      // Server correction - tween to correct position
       this.tweens.add({
         targets: this.localPlayer,
-        x: targetX,
-        y: targetY,
+        x: screenPos.x,
+        y: screenPos.y,
         duration: 50,
         ease: 'Cubic.easeOut',
       });
     } else {
-      // Prediction - instant update for responsiveness
-      this.localPlayer.x = targetX;
-      this.localPlayer.y = targetY;
+      this.localPlayer.x = screenPos.x;
+      this.localPlayer.y = screenPos.y;
     }
+
+    // Update grid data and depth
+    this.localPlayer.setData('gridX', position.x);
+    this.localPlayer.setData('gridY', position.y);
+    const depth = this.isoTransform.calculateDepth(position.x, position.y, 0.001);
+    this.localPlayer.setDepth(depth);
   }
 
   updateLocalPlayer(position: Position): void {
@@ -546,6 +611,11 @@ export class WorldScene extends Phaser.Scene {
       this.movementController.clearPendingInputs();
       this.movementController = null;
     }
+    if (this.depthSorter) {
+      this.depthSorter.clear();
+      this.depthSorter = null;
+    }
+    this.isoTransform = null;
     if (this.entityRenderer) {
       this.entityRenderer = null;
     }
