@@ -124,6 +124,10 @@ export class WorldScene extends Phaser.Scene {
       // onChunkUnloaded
       (zoneId: string) => {
         this.unloadChunkContainer(zoneId);
+      },
+      // onLoadingStateChange
+      (loadingCount: number) => {
+        useGameStore.getState().setChunksLoading(loadingCount);
       }
     );
 
