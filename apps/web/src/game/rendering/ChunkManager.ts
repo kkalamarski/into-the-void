@@ -100,6 +100,14 @@ export class ChunkManager {
       this.unloadChunk(zoneId);
     });
 
+    // Cancel loading requests for chunks no longer needed
+    this.chunkStates.forEach((state, zoneId) => {
+      if (state === 'loading' && !requiredChunks.has(zoneId)) {
+        this.chunkStates.delete(zoneId);
+        this.pendingRequests.delete(zoneId);
+      }
+    });
+
     // Process queued requests
     this.processNextRequest();
   }
@@ -172,10 +180,25 @@ export class ChunkManager {
       return;
     }
 
-    // Update state
-    this.chunkStates.set(zoneId, 'loaded');
+    // Clear loading state
     this.pendingRequests.delete(zoneId);
     this.notifyLoadingStateChange();
+
+    // Check if chunk is still needed (player may have moved while chunk was loading)
+    const { x: px, y: py } = this.parseZoneId(this.currentPlayerZone);
+    const { x, y } = this.parseZoneId(zoneId);
+    const distance = Math.max(Math.abs(x - px), Math.abs(y - py)); // Chebyshev distance
+
+    if (distance > 1) {
+      // Chunk no longer needed (player moved away), discard without rendering
+      this.chunkStates.delete(zoneId);
+      // Process next queued request
+      this.processNextRequest();
+      return;
+    }
+
+    // Update state to loaded
+    this.chunkStates.set(zoneId, 'loaded');
 
     // Store chunk
     this.loadedChunks.set(zoneId, {
