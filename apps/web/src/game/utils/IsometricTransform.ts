@@ -47,6 +47,35 @@ export class IsometricTransform {
   }
 
   /**
+   * Convert screen position to tile coordinates with elevation correction.
+   * Uses iterative approach: initial guess -> get elevation -> adjust -> re-calculate.
+   * Max 2 iterations to ensure convergence.
+   *
+   * @param screenX - Screen X coordinate
+   * @param screenY - Screen Y coordinate
+   * @param getElevation - Function to get elevation at grid coordinates
+   * @param elevationHeightStep - Pixels per elevation level (default: 16)
+   */
+  screenToTileWithElevation(
+    screenX: number,
+    screenY: number,
+    getElevation: (x: number, y: number) => number,
+    elevationHeightStep: number = 16
+  ): { x: number; y: number } {
+    // First pass: get initial tile guess
+    let tile = this.screenToTile(screenX, screenY);
+
+    // Second pass: adjust for elevation at that tile
+    const elevation = getElevation(tile.x, tile.y);
+    if (elevation > 0) {
+      const adjustedScreenY = screenY + elevation * elevationHeightStep;
+      tile = this.screenToTile(screenX, adjustedScreenY);
+    }
+
+    return tile;
+  }
+
+  /**
    * Calculate depth value for Y-based sorting.
    * Uses screen Y position with grid X as tiebreaker (rightmost in front).
    * Elevation component ensures entities on higher terrain render in front.
