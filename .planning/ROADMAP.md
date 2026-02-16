@@ -95,11 +95,11 @@ Plans:
 **Plans**: 5 plans in 2 waves
 
 Plans:
-- [ ] 18-01-PLAN.md — Server-side LRU cache for chunk storage (Wave 1)
-- [ ] 18-02-PLAN.md — WebSocket 3x3 room subscription management (Wave 1)
-- [ ] 18-03-PLAN.md — Client-side priority queue for chunk requests (Wave 1)
-- [ ] 18-04-PLAN.md — Chunk loading indicator UI (Wave 2)
-- [ ] 18-05-PLAN.md — Entity streaming for cross-chunk visibility (Wave 2)
+- [x] 18-01-PLAN.md — Server-side LRU cache for chunk storage (Wave 1)
+- [x] 18-02-PLAN.md — WebSocket 3x3 room subscription management (Wave 1)
+- [x] 18-03-PLAN.md — Client-side priority queue for chunk requests (Wave 1)
+- [x] 18-04-PLAN.md — Chunk loading indicator UI (Wave 2)
+- [x] 18-05-PLAN.md — Entity streaming for cross-chunk visibility (Wave 2)
 
 #### Phase 19: Biome Integration
 **Goal**: Biomes flow naturally across chunk boundaries with seamless transitions
@@ -153,7 +153,7 @@ Phases execute in numeric order: 17 → 18 → 19 → 20
 | 15. Elevation Rendering | v1.3 | 2/2 | Complete | 2026-02-16 |
 | 16. Structure Walls & Pathfinding | v1.3 | 5/5 | Complete | 2026-02-16 |
 | 17. World Coordinate Foundation | v1.4 | 2/2 | Complete | 2026-02-16 |
-| 18. Multi-Chunk Streaming | v1.4 | 0/TBD | Not started | - |
+| 18. Multi-Chunk Streaming | v1.4 | 5/5 | Complete | 2026-02-16 |
 | 19. Biome Integration | v1.4 | 0/TBD | Not started | - |
 | 20. Testing & Polish | v1.4 | 0/TBD | Not started | - |
 
