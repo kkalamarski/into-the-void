@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 ## Current Position
 
 Phase: 13 of 16 (Tile Definition Architecture)
-Plan: 2 of 3 complete
-Status: Executing
-Last activity: 2026-02-16 — Plan 13-02 complete
+Plan: 3 of 3 complete
+Status: Complete
+Last activity: 2026-02-16 — Phase 13 complete
 
 Progress: [████████████░░░░] 75% (12/16 phases complete)
 
@@ -30,7 +30,7 @@ Progress: [████████████░░░░] 75% (12/16 phases c
 | v1.0 Auth & Character Screens | 1-3 | 7 | 2026-02-13 → 2026-02-14 |
 | v1.1 Post-Login Game Experience | 4-7 | 20 | 2026-02-14 → 2026-02-16 |
 | v1.2 Isometric View | 8-12 | 8 | 2026-02-16 → 2026-02-16 |
-| v1.3 Elevation & Structures | 13-16 | 2/12 | 2026-02-16 → in progress |
+| v1.3 Elevation & Structures | 13-16 | 3/12 | 2026-02-16 → in progress |
 
 **Recent Trend:**
 - v1.0: 2 days (7 plans)
@@ -52,6 +52,7 @@ Progress: [████████████░░░░] 75% (12/16 phases c
 | Phase 12 P01 | 1080s | 3 tasks | 3 files |
 | Phase 13 P01 | 136 | 2 tasks | 8 files |
 | Phase 13 P02 | 187 | 2 tasks | 11 files |
+| Phase 13 P03 | 217 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,9 @@ Recent decisions affecting current work:
 - [Phase 13-02]: All 16 tiles defined with movement speeds matching terrain.ts (ICE=1.2, TOXIC=0.5, FUNGAL=0.8)
 - [Phase 13-02]: TileStructure interface for multi-tile walls/buildings (renamed from Structure to avoid entity conflict)
 - [Phase 13-02]: ChunkData extended with heights[][] and structures[] for elevation system support
+- [Phase 13-03]: Dual mapping pattern (BIOME_TILES enum + BIOME_TILE_IDS strings) for gradual migration
+- [Phase 13-03]: Heights initialized from TileRegistry.get(tileId).defaultElevation (Phase 14 adds noise variation)
+- [Phase 13-03]: Deprecated isWalkable/getTileSpeedModifier delegate to TileRegistry for migration path
 
 ### Pending Todos
 
@@ -94,10 +98,10 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 13-02-PLAN.md
+Stopped at: Completed Phase 13 (Tile Definition Architecture)
 Resume file: None
 
-**Next action:** Continue with plan 13-03 (World-Gen Integration)
+**Next action:** Begin Phase 14 (Depth System)
 
 ---
-*Last updated: 2026-02-16 after Phase 13 Plan 02 completion*
+*Last updated: 2026-02-16 after Phase 13 Plan 03 completion*
