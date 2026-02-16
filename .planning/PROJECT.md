@@ -24,18 +24,19 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~9,120 LOC TypeScript
 
-## Current Milestone: v1.2 Isometric View
+## Current Milestone: v1.3 Elevation & Structures
 
-**Goal:** Transform the game from top-down to isometric projection while preserving all existing gameplay.
+**Goal:** Add vertical dimension to the world with terrain elevation, structure walls, and a scalable tile definition system.
 
 **Target features:**
-- Coordinate transformation layer (screen ↔ grid)
-- Depth sorting for proper visual occlusion
-- Screen-relative WASD controls (W=NW, S=SE, A=SW, D=NE)
-- Diamond-shaped viewport culling
-- Click-to-move with isometric coordinate conversion
-- Minimap adaptation for isometric view
-- Placeholder diamond tiles (art pipeline ready)
+- Tile definition system (TileDefinition interface, TileRegistry, hooks)
+- Terrain elevation (0-5 levels, side-face rendering)
+- Movement rules (1-level diff walkable, 2+ blocks)
+- Structure walls (variable height by type, always blocking)
+- Full occlusion depth sorting with height
+- World-gen elevation noise and structure placement
+- Pathfinding with elevation awareness
+- Minimap structure markers
 
 ## Core Value
 
@@ -64,7 +65,12 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 ### Active
 
-(No active requirements - awaiting next milestone definition)
+- [ ] Tile definition system with properties and hooks
+- [ ] Terrain elevation (0-5 levels) with side-face rendering
+- [ ] Structure walls with variable height
+- [ ] Elevation-aware movement and pathfinding
+- [ ] Depth sorting with height occlusion
+- [ ] World-gen elevation and structure placement
 
 ### Out of Scope
 
@@ -105,4 +111,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-16 after v1.1 milestone*
+*Last updated: 2026-02-16 after v1.3 milestone start*

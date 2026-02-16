@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.2 Isometric View milestone complete
+**Current focus:** v1.3 Elevation & Structures
 
 ## Current Position
 
-Phase: 12 of 12 (Polish)
-Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-02-16 — Completed 12-01-PLAN.md (Hover and Click Feedback)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-16 — Milestone v1.3 started
 
-Progress: [████████████████████] 100% (12 of 12 phases complete)
+Progress: [░░░░░░░░░░░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -92,10 +92,10 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 12-01-PLAN.md (Hover and Click Feedback) — Phase 12 complete, v1.2 milestone complete
+Stopped at: Starting v1.3 Elevation & Structures milestone
 Resume file: None
 
-**Next action:** v1.2 milestone complete! All 12 phases finished. Ready for next milestone planning or feature work.
+**Next action:** Define requirements and create roadmap for v1.3.
 
 ---
-*v1.2 roadmap created: 2026-02-16*
+*v1.3 milestone started: 2026-02-16*
