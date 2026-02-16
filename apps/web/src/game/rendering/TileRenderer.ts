@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { TileId } from '@into-the-void/world-gen';
+import { IsometricTransform } from '../utils/IsometricTransform';
 
 /**
  * Mapping from TileId enum to Phaser texture keys
@@ -29,10 +30,12 @@ export const TILE_TEXTURE_MAP: Record<TileId, string> = {
 export class TileRenderer {
   private scene: Phaser.Scene;
   private tileSize: number;
+  private isoTransform: IsometricTransform;
 
-  constructor(scene: Phaser.Scene, tileSize: number = 32) {
+  constructor(scene: Phaser.Scene, tileWidth: number = 128, tileHeight: number = 64) {
     this.scene = scene;
-    this.tileSize = tileSize;
+    this.tileSize = tileWidth; // Keep for backwards compat, but tileWidth is primary
+    this.isoTransform = new IsometricTransform(tileWidth, tileHeight);
   }
 
   /**
@@ -47,12 +50,12 @@ export class TileRenderer {
    */
   createTile(x: number, y: number, tileId: TileId): Phaser.GameObjects.Sprite {
     const texture = this.getTextureKey(tileId);
-    const sprite = this.scene.add.sprite(
-      x * this.tileSize,
-      y * this.tileSize,
-      texture
-    );
-    sprite.setOrigin(0, 0);
+    const screenPos = this.isoTransform.gridToScreen(x, y);
+
+    const sprite = this.scene.add.sprite(screenPos.x, screenPos.y, texture);
+    sprite.setOrigin(0.5, 0.5);  // Center origin for isometric diamond
+    sprite.setDepth(screenPos.y); // Static depth for tiles (never move)
+
     return sprite;
   }
 
@@ -61,5 +64,12 @@ export class TileRenderer {
    */
   getTileSize(): number {
     return this.tileSize;
+  }
+
+  /**
+   * Get the isometric transform instance
+   */
+  getTransform(): IsometricTransform {
+    return this.isoTransform;
   }
 }
