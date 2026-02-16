@@ -59,6 +59,8 @@ export class PlayerService {
         position: character.position,
         health: character.health,
         maxHealth: character.maxHealth,
+        energy: 100, // Default energy until database schema is updated
+        maxEnergy: 100,
         level: character.level,
         xp: character.xp,
         xpToNextLevel: character.level * 100,
