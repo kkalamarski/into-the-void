@@ -146,10 +146,11 @@ Plans:
   2. Biome-specific elevation ranges enforced (e.g., craters 0-2, ruins 0-5)
   3. Depth sorting includes elevation in composite calculation (screenY + elevation × weight)
   4. Elevation data flows from server world-gen through ChunkData to client without errors
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 14-01: TBD
+- [ ] 14-01-PLAN.md — Add noise-based height generation with biome-specific ranges
+- [ ] 14-02-PLAN.md — Update depth sorting to include elevation component
 
 ### Phase 15: Elevation Rendering
 **Goal**: Terrain elevation appears visually with side-face rendering
@@ -202,11 +203,11 @@ Phases execute in numeric order: 13 → 14 → 15 → 16
 | 11. UI Integration | v1.2 | 1/1 | Complete | 2026-02-16 |
 | 12. Polish | v1.2 | 1/1 | Complete | 2026-02-16 |
 | 13. Tile Definition Architecture | v1.3 | 3/3 | Complete | 2026-02-16 |
-| 14. Elevation System Core | v1.3 | 0/? | Not started | - |
+| 14. Elevation System Core | v1.3 | 0/2 | Planned | - |
 | 15. Elevation Rendering | v1.3 | 0/? | Not started | - |
 | 16. Structure Walls & Pathfinding | v1.3 | 0/? | Not started | - |
 
 **Total:** 16 phases (13 complete, 3 planned)
 
 ---
-*Last updated: 2026-02-16 after Phase 13 execution complete*
+*Last updated: 2026-02-16 after Phase 14 planning complete*
