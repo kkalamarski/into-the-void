@@ -146,11 +146,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (result.success) {
         // Notify players in old and new zone
         if (result.oldZoneId && result.newZoneId) {
-          // Zone transition
-          client.leave(result.oldZoneId);
-          client.join(result.newZoneId);
+          // Zone transition - update 3x3 room subscriptions
+          this.updatePlayerRooms(client, result.newZoneId);
 
-          // Notify old zone
+          // Notify old zone (broadcast to all rooms player just left)
           this.server.to(result.oldZoneId).emit('player:left', {
             playerId: result.playerId,
           });
