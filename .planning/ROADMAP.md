@@ -89,11 +89,10 @@ Plans:
   2. Health bars position above entities at correct Y-offset for isometric height
   3. Behavior icons (H/O/P/M) position correctly above health bars
   4. Zone HUD displays unchanged from v1.1
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 11-01: TBD
-- [ ] 11-02: TBD
+- [ ] 11-01-PLAN.md — Fix MinimapCamera coordinates and verify UI integration
 
 #### Phase 12: Polish
 **Goal**: Visual feedback and hover interactions enhance isometric experience
@@ -122,7 +121,7 @@ Plans:
 | 8. Core Isometric Transformation | v1.2 | 3/3 | Complete | 2026-02-16 |
 | 9. Rendering Optimization & Interaction | v1.2 | 2/2 | Complete | 2026-02-16 |
 | 10. Multiplayer Integration | v1.2 | 1/1 | Complete | 2026-02-16 |
-| 11. UI Integration | v1.2 | 0/TBD | Not started | - |
+| 11. UI Integration | v1.2 | 0/1 | Not started | - |
 | 12. Polish | v1.2 | 0/TBD | Not started | - |
 
 **Total:** 12 phases (10 complete, 2 in v1.2)
