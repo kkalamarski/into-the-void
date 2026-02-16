@@ -102,10 +102,10 @@ Plans:
   1. Tiles highlight on mouse hover showing selectable area
   2. Click target shows visual feedback before pathfinding starts
   3. Entities highlight on hover for selection feedback
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 12-01: TBD
+- [ ] 12-01-PLAN.md — Add HoverController with tile hover, click markers, and entity hover feedback
 
 ## Progress
 
@@ -122,6 +122,6 @@ Plans:
 | 9. Rendering Optimization & Interaction | v1.2 | 2/2 | Complete | 2026-02-16 |
 | 10. Multiplayer Integration | v1.2 | 1/1 | Complete | 2026-02-16 |
 | 11. UI Integration | v1.2 | 1/1 | Complete | 2026-02-16 |
-| 12. Polish | v1.2 | 0/TBD | Not started | - |
+| 12. Polish | v1.2 | 0/1 | Not started | - |
 
 **Total:** 12 phases (11 complete, 1 in v1.2)
