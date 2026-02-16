@@ -208,12 +208,15 @@ export class WorldScene extends Phaser.Scene {
   private createLocalPlayer(position: Position): void {
     if (!this.isoTransform) return;
 
+    const elevation = this.getTileElevation(position.x, position.y);
+    const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
     const screenPos = this.isoTransform.gridToScreen(position.x, position.y);
 
     // Create container for player (same pattern as entities)
-    const container = this.add.container(screenPos.x, screenPos.y);
+    const container = this.add.container(screenPos.x, screenPos.y - elevationOffset);
     container.setData('gridX', position.x);
     container.setData('gridY', position.y);
+    container.setData('elevation', elevation);
 
     // Blob shadow
     const shadow = this.add.ellipse(0, 0, 40, 20, 0x000000, 0.3);
@@ -229,7 +232,7 @@ export class WorldScene extends Phaser.Scene {
     this.localPlayer = container as unknown as Phaser.GameObjects.Sprite; // Type hack for compatibility
 
     // Set depth with local player priority
-    const depth = this.isoTransform.calculateDepth(position.x, position.y, 0.001);
+    const depth = this.isoTransform.calculateDepth(position.x, position.y, elevation + 0.001);
     container.setDepth(depth);
 
     if (this.depthSorter) {
@@ -367,6 +370,12 @@ export class WorldScene extends Phaser.Scene {
     };
   }
 
+  private getTileElevation(gridX: number, gridY: number): number {
+    // Look up elevation from current zone's heights data
+    // Default to 0 if heights not available or coordinates out of bounds
+    return this.currentHeights?.[gridY]?.[gridX] ?? 0;
+  }
+
   private renderChunk(chunkData: ChunkData, biome: BiomeType): void {
     if (!this.tileRenderer || !this.isoTransform) return;
 
@@ -401,6 +410,7 @@ export class WorldScene extends Phaser.Scene {
 
     if (zoneId === this.currentZoneId) {
       this.currentBiome = biome;
+      this.currentHeights = heights;
       if (this.zoneHUD) {
         this.zoneHUD.updateZone(zoneId, biome);
       }
@@ -437,7 +447,8 @@ export class WorldScene extends Phaser.Scene {
   spawnEntity(entity: Entity): void {
     if (this.entitySprites.has(entity.id) || !this.entityRenderer) return;
 
-    const container = this.entityRenderer.createEntityContainer(entity);
+    const elevation = this.getTileElevation(entity.position.x, entity.position.y);
+    const container = this.entityRenderer.createEntityContainer(entity, elevation);
     this.entitySprites.set(entity.id, container);
 
     if (this.depthSorter) {
@@ -471,15 +482,12 @@ export class WorldScene extends Phaser.Scene {
 
   updateEntity(entityId: string, changes: Partial<Entity>): void {
     const container = this.entitySprites.get(entityId);
-    if (!container || !this.isoTransform) return;
+    if (!container || !this.isoTransform || !this.entityRenderer) return;
 
     // Update position
     if (changes.position) {
-      const screenPos = this.isoTransform.gridToScreen(changes.position.x, changes.position.y);
-      container.x = screenPos.x;
-      container.y = screenPos.y;
-      container.setData('gridX', changes.position.x);
-      container.setData('gridY', changes.position.y);
+      const elevation = this.getTileElevation(changes.position.x, changes.position.y);
+      this.entityRenderer.updateEntityPosition(container, changes.position.x, changes.position.y, elevation);
 
       if (this.depthSorter) {
         this.depthSorter.markDirty(entityId);
@@ -517,11 +525,14 @@ export class WorldScene extends Phaser.Scene {
   addPlayer(player: PlayerPublic): void {
     if (this.playerSprites.has(player.id) || !this.isoTransform) return;
 
+    const elevation = this.getTileElevation(player.position.x, player.position.y);
+    const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
     const screenPos = this.isoTransform.gridToScreen(player.position.x, player.position.y);
 
-    const container = this.add.container(screenPos.x, screenPos.y);
+    const container = this.add.container(screenPos.x, screenPos.y - elevationOffset);
     container.setData('gridX', player.position.x);
     container.setData('gridY', player.position.y);
+    container.setData('elevation', elevation);
 
     // Shadow
     const shadow = this.add.ellipse(0, 0, 40, 20, 0x000000, 0.3);
@@ -534,7 +545,7 @@ export class WorldScene extends Phaser.Scene {
     sprite.setTint(this.getFactionColor(player.faction));
     container.add(sprite);
 
-    const depth = this.isoTransform.calculateDepth(player.position.x, player.position.y);
+    const depth = this.isoTransform.calculateDepth(player.position.x, player.position.y, elevation);
     container.setDepth(depth);
 
     this.playerSprites.set(player.id, container as unknown as Phaser.GameObjects.Sprite);
@@ -552,6 +563,8 @@ export class WorldScene extends Phaser.Scene {
     const sprite = this.playerSprites.get(playerId);
     if (!sprite || !this.isoTransform) return;
 
+    const elevation = this.getTileElevation(position.x, position.y);
+    const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
     const screenPos = this.isoTransform.gridToScreen(position.x, position.y);
 
     // Mark player dirty for depth sorting
@@ -563,13 +576,14 @@ export class WorldScene extends Phaser.Scene {
     this.tweens.add({
       targets: sprite,
       x: screenPos.x,
-      y: screenPos.y,
+      y: screenPos.y - elevationOffset,
       duration: 100,
       ease: 'Linear',
       onComplete: () => {
         sprite.setData('gridX', position.x);
         sprite.setData('gridY', position.y);
-        const depth = this.isoTransform!.calculateDepth(position.x, position.y);
+        sprite.setData('elevation', elevation);
+        const depth = this.isoTransform!.calculateDepth(position.x, position.y, elevation);
         sprite.setDepth(depth);
       }
     });
@@ -578,26 +592,30 @@ export class WorldScene extends Phaser.Scene {
   updateLocalPlayerSprite(position: Position, reconciling = false): void {
     if (!this.localPlayer || !this.isoTransform) return;
 
+    const elevation = this.getTileElevation(position.x, position.y);
+    const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
     const screenPos = this.isoTransform.gridToScreen(position.x, position.y);
+    const targetY = screenPos.y - elevationOffset;
 
-    if (reconciling && (this.localPlayer.x !== screenPos.x || this.localPlayer.y !== screenPos.y)) {
+    if (reconciling && (this.localPlayer.x !== screenPos.x || this.localPlayer.y !== targetY)) {
       this.tweens.killTweensOf(this.localPlayer);
       this.tweens.add({
         targets: this.localPlayer,
         x: screenPos.x,
-        y: screenPos.y,
+        y: targetY,
         duration: 50,
         ease: 'Cubic.easeOut',
       });
     } else {
       this.localPlayer.x = screenPos.x;
-      this.localPlayer.y = screenPos.y;
+      this.localPlayer.y = targetY;
     }
 
     // Update grid data and depth
     this.localPlayer.setData('gridX', position.x);
     this.localPlayer.setData('gridY', position.y);
-    const depth = this.isoTransform.calculateDepth(position.x, position.y, 0.001);
+    this.localPlayer.setData('elevation', elevation);
+    const depth = this.isoTransform.calculateDepth(position.x, position.y, elevation + 0.001);
     this.localPlayer.setDepth(depth);
   }
 
