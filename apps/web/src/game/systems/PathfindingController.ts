@@ -71,29 +71,31 @@ export class PathfindingController {
 
     if (this.currentPath.length < 2) return;
 
-    // Draw path as connected line segments
-    this.pathGraphics.lineStyle(2, 0x00ff00, 0.6); // Green, semi-transparent
+    // Only draw destination marker (full path will use sprites later)
+    const destination = this.currentPath[this.currentPath.length - 1];
+    const destScreen = this.isoTransform.gridToScreen(destination.x, destination.y);
 
-    const firstTile = this.currentPath[0];
-    const firstScreen = this.isoTransform.gridToScreen(firstTile.x, firstTile.y);
+    // Draw isometric diamond outline at destination
+    const hw = 64; // Half tile width (128/2)
+    const hh = 32; // Half tile height (64/2)
 
+    this.pathGraphics.lineStyle(2, 0x00ff00, 0.8);
     this.pathGraphics.beginPath();
-    this.pathGraphics.moveTo(firstScreen.x, firstScreen.y);
-
-    for (let i = 1; i < this.currentPath.length; i++) {
-      const tile = this.currentPath[i];
-      const screen = this.isoTransform.gridToScreen(tile.x, tile.y);
-      this.pathGraphics.lineTo(screen.x, screen.y);
-    }
-
+    this.pathGraphics.moveTo(destScreen.x, destScreen.y - hh); // Top
+    this.pathGraphics.lineTo(destScreen.x + hw, destScreen.y); // Right
+    this.pathGraphics.lineTo(destScreen.x, destScreen.y + hh); // Bottom
+    this.pathGraphics.lineTo(destScreen.x - hw, destScreen.y); // Left
+    this.pathGraphics.closePath();
     this.pathGraphics.strokePath();
 
-    // Draw waypoint dots
-    this.pathGraphics.fillStyle(0x00ff00, 0.8);
-    for (const tile of this.currentPath) {
-      const screen = this.isoTransform.gridToScreen(tile.x, tile.y);
-      this.pathGraphics.fillCircle(screen.x, screen.y, 3);
-    }
+    // Fill with semi-transparent green
+    this.pathGraphics.fillStyle(0x00ff00, 0.2);
+    this.pathGraphics.fillPoints([
+      { x: destScreen.x, y: destScreen.y - hh },
+      { x: destScreen.x + hw, y: destScreen.y },
+      { x: destScreen.x, y: destScreen.y + hh },
+      { x: destScreen.x - hw, y: destScreen.y },
+    ], true);
   }
 
   private clearPathGraphics(): void {
