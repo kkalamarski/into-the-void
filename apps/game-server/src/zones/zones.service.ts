@@ -2,28 +2,34 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChunkData, Entity, SpawnPoint } from '@into-the-void/shared-types';
 import { generateChunk } from '@into-the-void/world-gen';
+import { LRUCache } from 'lru-cache';
 
 interface ZoneState {
   chunk: ChunkData;
   entities: Map<string, Entity>;
-  lastAccessed: number;
 }
 
 @Injectable()
 export class ZonesService implements OnModuleInit {
-  private zones: Map<string, ZoneState> = new Map();
+  private zones: LRUCache<string, ZoneState>;
   private worldSeed: string;
 
   constructor(private readonly configService: ConfigService) {
     this.worldSeed = configService.get<string>('WORLD_SEED', 'into-the-void-alpha-1');
+    this.zones = new LRUCache<string, ZoneState>({
+      max: 500, // Max chunks in memory (supports ~250 concurrent players)
+      ttl: 5 * 60 * 1000, // 5 minute TTL for inactive chunks
+      updateAgeOnGet: true, // Refresh TTL on access
+      updateAgeOnHas: false, // Don't refresh on existence check
+      dispose: (value, key) => {
+        console.log(`[ZonesService] Evicted chunk ${key}`);
+      },
+    });
   }
 
   onModuleInit() {
     // Preload spawn zone
     this.loadZone('z_0_0');
-
-    // Start cleanup interval for unused zones
-    setInterval(() => this.cleanupUnusedZones(), 60000);
   }
 
   private loadZone(zoneId: string): ZoneState {
@@ -43,7 +49,6 @@ export class ZonesService implements OnModuleInit {
     const zoneState: ZoneState = {
       chunk,
       entities,
-      lastAccessed: Date.now(),
     };
 
     this.zones.set(zoneId, zoneState);
@@ -72,20 +77,6 @@ export class ZonesService implements OnModuleInit {
     };
   }
 
-  private cleanupUnusedZones(): void {
-    const now = Date.now();
-    const maxAge = 5 * 60 * 1000; // 5 minutes
-
-    for (const [zoneId, state] of this.zones.entries()) {
-      if (now - state.lastAccessed > maxAge) {
-        // Don't remove spawn zone
-        if (zoneId !== 'z_0_0') {
-          this.zones.delete(zoneId);
-        }
-      }
-    }
-  }
-
   async getChunk(zoneId: string): Promise<ChunkData> {
     let zoneState = this.zones.get(zoneId);
 
@@ -93,7 +84,6 @@ export class ZonesService implements OnModuleInit {
       zoneState = this.loadZone(zoneId);
     }
 
-    zoneState.lastAccessed = Date.now();
     return zoneState.chunk;
   }
 
@@ -104,7 +94,6 @@ export class ZonesService implements OnModuleInit {
       zoneState = this.loadZone(zoneId);
     }
 
-    zoneState.lastAccessed = Date.now();
     return Array.from(zoneState.entities.values()).filter((e) => e.active);
   }
 
@@ -112,7 +101,6 @@ export class ZonesService implements OnModuleInit {
     const zoneState = this.zones.get(zoneId);
     if (!zoneState) return undefined;
 
-    zoneState.lastAccessed = Date.now();
     return zoneState.entities.get(entityId);
   }
 
