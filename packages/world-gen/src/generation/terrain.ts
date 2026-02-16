@@ -125,6 +125,7 @@ export function generateTerrain(
   biome: BiomeType
 ): { tiles: number[][]; heights: number[][]; collisions: boolean[][] } {
   const noise = new SimplexNoise(`${worldSeed}_terrain_${chunkX}_${chunkY}`);
+  const heightNoise = new SimplexNoise(`${worldSeed}_height_${chunkX}_${chunkY}`);
   const random = new SeededRandom(`${worldSeed}_terrain_${chunkX}_${chunkY}`);
 
   const tiles: number[][] = [];
@@ -170,14 +171,18 @@ export function generateTerrain(
       const tileDef = TileRegistry.get(tileId);
       collisions[y][x] = tileDef.isBlocking;
 
-      // Set height from tile's default elevation
-      // Phase 14 will add noise-based height variation
-      heights[y][x] = tileDef.defaultElevation;
+      // Add noise-based height variation around tile's default elevation
+      const baseHeight = tileDef.defaultElevation;
+      const heightValue = heightNoise.fbm(worldX * 0.08, worldY * 0.08, 3);
+      const variance = Math.round(heightValue); // -1, 0, or +1
+      const rawHeight = baseHeight + variance;
+      const clampedAbsolute = Math.max(0, Math.min(5, rawHeight));
+      heights[y][x] = clampToBiomeRange(clampedAbsolute, biome);
     }
   }
 
   // Ensure edges have some openings for zone transitions
-  ensureZoneConnectivity(tiles, heights, collisions, biomeTiles.floor, biomeTileIds.floor);
+  ensureZoneConnectivity(tiles, heights, collisions, biomeTiles.floor, biomeTileIds.floor, biome);
 
   return { tiles, heights, collisions };
 }
@@ -224,7 +229,8 @@ function ensureZoneConnectivity(
   heights: number[][],
   collisions: boolean[][],
   floorTile: TileId,
-  floorTileId: string
+  floorTileId: string,
+  biome: BiomeType
 ): void {
   const size = ZONE_SIZE;
   const pathWidth = 3;
@@ -235,28 +241,30 @@ function ensureZoneConnectivity(
   ];
 
   const floorDef = TileRegistry.get(floorTileId);
+  const baseHeight = floorDef.defaultElevation;
+  const clampedHeight = clampToBiomeRange(baseHeight, biome);
 
   // Clear paths on edges
   for (const pos of pathPositions) {
     for (let i = 0; i < pathWidth; i++) {
       // Top edge
       tiles[0][pos + i] = floorTile;
-      heights[0][pos + i] = floorDef.defaultElevation;
+      heights[0][pos + i] = clampedHeight;
       collisions[0][pos + i] = false;
 
       // Bottom edge
       tiles[size - 1][pos + i] = floorTile;
-      heights[size - 1][pos + i] = floorDef.defaultElevation;
+      heights[size - 1][pos + i] = clampedHeight;
       collisions[size - 1][pos + i] = false;
 
       // Left edge
       tiles[pos + i][0] = floorTile;
-      heights[pos + i][0] = floorDef.defaultElevation;
+      heights[pos + i][0] = clampedHeight;
       collisions[pos + i][0] = false;
 
       // Right edge
       tiles[pos + i][size - 1] = floorTile;
-      heights[pos + i][size - 1] = floorDef.defaultElevation;
+      heights[pos + i][size - 1] = clampedHeight;
       collisions[pos + i][size - 1] = false;
     }
   }
