@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 10 - Multiplayer Integration
+**Current focus:** v1.2 Isometric View milestone complete
 
 ## Current Position
 

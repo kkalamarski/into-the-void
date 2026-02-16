@@ -9,47 +9,47 @@ Requirements for isometric view transformation. Each maps to roadmap phases.
 
 ### Core Transformation
 
-- [ ] **CORE-01**: Game renders tiles as isometric diamonds using 2:1 aspect ratio (96x48)
-- [ ] **CORE-02**: Coordinate transform utility converts grid coordinates to screen positions
-- [ ] **CORE-03**: Coordinate transform utility converts screen positions to grid coordinates
-- [ ] **CORE-04**: Entities sort by depth correctly (closer to camera renders on top)
-- [ ] **CORE-05**: Depth sorting uses Phaser Layer API with throttled updates
-- [ ] **CORE-06**: Player sprite positioned correctly on isometric tile center
+- [x] **CORE-01**: Game renders tiles as isometric diamonds using 2:1 aspect ratio (128x64)
+- [x] **CORE-02**: Coordinate transform utility converts grid coordinates to screen positions
+- [x] **CORE-03**: Coordinate transform utility converts screen positions to grid coordinates
+- [x] **CORE-04**: Entities sort by depth correctly (closer to camera renders on top)
+- [x] **CORE-05**: Depth sorting uses Phaser Layer API with throttled updates
+- [x] **CORE-06**: Player sprite positioned correctly on isometric tile center
 
 ### Movement & Controls
 
-- [ ] **MOVE-01**: WASD controls use screen-relative mapping (W=NW, S=SE, A=SW, D=NE)
-- [ ] **MOVE-02**: Click-to-move works with isometric tile detection
-- [ ] **MOVE-03**: Pathfinding visual path displays correctly on isometric grid
-- [ ] **MOVE-04**: Movement tweens animate smoothly along isometric paths
+- [x] **MOVE-01**: WASD controls use screen-relative mapping (W=NW, S=SE, A=SW, D=NE)
+- [x] **MOVE-02**: Click-to-move works with isometric tile detection
+- [x] **MOVE-03**: Pathfinding visual path displays correctly on isometric grid
+- [x] **MOVE-04**: Movement tweens animate smoothly along isometric paths
 
 ### Rendering
 
-- [ ] **REND-01**: Tiles render in correct back-to-front order (no z-fighting)
-- [ ] **REND-02**: Viewport culling uses diamond-shaped bounds for efficiency
-- [ ] **REND-03**: Camera follows player with correct isometric offset
-- [ ] **REND-04**: Adjacent chunk tiles align seamlessly at chunk boundaries
+- [x] **REND-01**: Tiles render in correct back-to-front order (no z-fighting)
+- [x] **REND-02**: Viewport culling uses diamond-shaped bounds for efficiency
+- [x] **REND-03**: Camera follows player with correct isometric offset
+- [x] **REND-04**: Adjacent chunk tiles align seamlessly at chunk boundaries
 
 ### Multiplayer
 
-- [ ] **MULT-01**: Remote players render at correct isometric positions
-- [ ] **MULT-02**: Remote player movement tweens use grid coordinates
-- [ ] **MULT-03**: Position sync maintains accuracy with 100ms+ latency
-- [ ] **MULT-04**: Entity positions match between all connected clients
+- [x] **MULT-01**: Remote players render at correct isometric positions
+- [x] **MULT-02**: Remote player movement tweens use grid coordinates
+- [x] **MULT-03**: Position sync maintains accuracy with 100ms+ latency
+- [x] **MULT-04**: Entity positions match between all connected clients
 
 ### UI Integration
 
-- [ ] **UI-01**: Minimap remains orthogonal (top-down view)
-- [ ] **UI-02**: Minimap player indicator shows correct relative position
-- [ ] **UI-03**: Health bars position above entities at correct Y-offset
-- [ ] **UI-04**: Behavior icons (H/O/P/M) position correctly above health bars
-- [ ] **UI-05**: Zone HUD displays correctly (unchanged from v1.1)
+- [x] **UI-01**: Minimap remains orthogonal (top-down view)
+- [x] **UI-02**: Minimap player indicator shows correct relative position
+- [x] **UI-03**: Health bars position above entities at correct Y-offset
+- [x] **UI-04**: Behavior icons (H/O/P/M) position correctly above health bars
+- [x] **UI-05**: Zone HUD displays correctly (unchanged from v1.1)
 
 ### Polish
 
-- [ ] **PLSH-01**: Tiles highlight on mouse hover
-- [ ] **PLSH-02**: Click target shows visual feedback before pathfinding starts
-- [ ] **PLSH-03**: Entity highlight on mouse hover for selection feedback
+- [x] **PLSH-01**: Tiles highlight on mouse hover
+- [x] **PLSH-02**: Click target shows visual feedback before pathfinding starts
+- [x] **PLSH-03**: Entity highlight on mouse hover for selection feedback
 
 ## Future Requirements
 
@@ -85,38 +85,38 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | Phase 8 | Pending |
-| CORE-02 | Phase 8 | Pending |
-| CORE-03 | Phase 8 | Pending |
-| CORE-04 | Phase 8 | Pending |
-| CORE-05 | Phase 8 | Pending |
-| CORE-06 | Phase 8 | Pending |
-| MOVE-01 | Phase 9 | Pending |
-| MOVE-02 | Phase 9 | Pending |
-| MOVE-03 | Phase 9 | Pending |
-| MOVE-04 | Phase 9 | Pending |
-| REND-01 | Phase 8 | Pending |
-| REND-02 | Phase 9 | Pending |
-| REND-03 | Phase 9 | Pending |
-| REND-04 | Phase 8 | Pending |
-| MULT-01 | Phase 10 | Pending |
-| MULT-02 | Phase 10 | Pending |
-| MULT-03 | Phase 10 | Pending |
-| MULT-04 | Phase 10 | Pending |
-| UI-01 | Phase 11 | Pending |
-| UI-02 | Phase 11 | Pending |
-| UI-03 | Phase 11 | Pending |
-| UI-04 | Phase 11 | Pending |
-| UI-05 | Phase 11 | Pending |
-| PLSH-01 | Phase 12 | Pending |
-| PLSH-02 | Phase 12 | Pending |
-| PLSH-03 | Phase 12 | Pending |
+| CORE-01 | Phase 8 | Complete |
+| CORE-02 | Phase 8 | Complete |
+| CORE-03 | Phase 8 | Complete |
+| CORE-04 | Phase 8 | Complete |
+| CORE-05 | Phase 8 | Complete |
+| CORE-06 | Phase 8 | Complete |
+| MOVE-01 | Phase 9 | Complete |
+| MOVE-02 | Phase 9 | Complete |
+| MOVE-03 | Phase 9 | Complete |
+| MOVE-04 | Phase 9 | Complete |
+| REND-01 | Phase 8 | Complete |
+| REND-02 | Phase 9 | Complete |
+| REND-03 | Phase 9 | Complete |
+| REND-04 | Phase 8 | Complete |
+| MULT-01 | Phase 10 | Complete |
+| MULT-02 | Phase 10 | Complete |
+| MULT-03 | Phase 10 | Complete |
+| MULT-04 | Phase 10 | Complete |
+| UI-01 | Phase 11 | Complete |
+| UI-02 | Phase 11 | Complete |
+| UI-03 | Phase 11 | Complete |
+| UI-04 | Phase 11 | Complete |
+| UI-05 | Phase 11 | Complete |
+| PLSH-01 | Phase 12 | Complete |
+| PLSH-02 | Phase 12 | Complete |
+| PLSH-03 | Phase 12 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 24 total
-- Mapped to phases: 24
+- Completed: 24 ✓
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-16*
-*Last updated: 2026-02-16 after initial definition*
+*Last updated: 2026-02-16 — v1.2 milestone complete*
