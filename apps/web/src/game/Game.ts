@@ -20,8 +20,6 @@ export class Game {
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
       scene: [BootScene, PreloadScene, WorldScene],
-      // Pause game loop when tab loses focus to prevent memory issues
-      pauseOnBlur: true,
       // Disable physics - we use tile-based movement
       physics: undefined,
       callbacks: {

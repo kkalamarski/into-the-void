@@ -277,8 +277,8 @@ export class WorldScene extends Phaser.Scene {
     // Update tile visibility
     for (let y = 0; y < this.tileSprites.length; y++) {
       for (let x = 0; x < this.tileSprites[y].length; x++) {
-        const tile = this.tileSprites[y][x];
-        if (tile) {
+        const tile = this.tileSprites[y][x] as Phaser.GameObjects.GameObject & { visible: boolean; setVisible: (value: boolean) => void };
+        if (tile && 'visible' in tile && 'setVisible' in tile) {
           const isVisible = this.viewportCuller.isTileVisible(x, y, bounds);
           if (tile.visible !== isVisible) {
             tile.setVisible(isVisible);
