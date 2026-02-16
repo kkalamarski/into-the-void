@@ -115,7 +115,7 @@ Plans:
 
 - [x] **Phase 13: Tile Definition Architecture** — Foundation for elevation system (completed 2026-02-16)
 - [x] **Phase 14: Elevation System Core** — Data generation and depth sorting (completed 2026-02-16)
-- [ ] **Phase 15: Elevation Rendering** — Side-faces and visual appearance
+- [x] **Phase 15: Elevation Rendering** — Side-faces and visual appearance (completed 2026-02-16)
 - [ ] **Phase 16: Structure Walls & Pathfinding** — Gameplay integration
 
 ## Phase Details
@@ -165,8 +165,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 15-01-PLAN.md — Add side-face rendering to TileRenderer with neighbor-based culling
-- [ ] 15-02-PLAN.md — Wire entity elevation offset and expand viewport culling bounds
+- [x] 15-01-PLAN.md — Add side-face rendering to TileRenderer with neighbor-based culling
+- [x] 15-02-PLAN.md — Wire entity elevation offset and expand viewport culling bounds
 
 ### Phase 16: Structure Walls & Pathfinding
 **Goal**: Elevation affects player movement and pathfinding
@@ -205,10 +205,10 @@ Phases execute in numeric order: 13 → 14 → 15 → 16
 | 12. Polish | v1.2 | 1/1 | Complete | 2026-02-16 |
 | 13. Tile Definition Architecture | v1.3 | 3/3 | Complete | 2026-02-16 |
 | 14. Elevation System Core | v1.3 | 2/2 | Complete | 2026-02-16 |
-| 15. Elevation Rendering | v1.3 | 0/2 | Planned | - |
+| 15. Elevation Rendering | v1.3 | 2/2 | Complete | 2026-02-16 |
 | 16. Structure Walls & Pathfinding | v1.3 | 0/? | Not started | - |
 
-**Total:** 16 phases (14 complete, 2 planned)
+**Total:** 16 phases (15 complete, 1 planned)
 
 ---
-*Last updated: 2026-02-16 after Phase 15 planning complete*
+*Last updated: 2026-02-16 after Phase 15 execution complete*
