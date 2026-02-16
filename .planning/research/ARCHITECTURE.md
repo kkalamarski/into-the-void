@@ -1,606 +1,563 @@
-# Architecture Research: Elevation & Tile Definition Integration
+# Architecture Research: Infinite World Chunk Streaming
 
-**Domain:** Isometric terrain elevation and tile definition systems for existing game
+**Domain:** Multiplayer 2D Infinite World Game with Chunk Streaming
 **Researched:** 2026-02-16
 **Confidence:** HIGH
 
-## Integration Context
+## Standard Architecture
 
-This is NOT a new project - it's integrating new features (elevation system, tile definition registry, structure walls) into an existing isometric 2D multiplayer game with:
-
-- Established rendering pipeline: TileRenderer → Phaser Graphics → IsometricTransform → DepthSorter
-- Procedural generation: WorldGenerator → BiomeGenerator → terrain.ts (SimplexNoise) → ChunkData
-- Movement system: PathfindingController → A* pathfinding → collision map
-- Network architecture: game-server generates chunks → client ChunkManager → WorldScene renders
-
-**Critical constraint:** Minimize disruption to existing systems while adding elevation and tile definition capabilities.
-
-## Current Architecture (As-Is)
-
-### Data Flow
+### System Overview
 
 ```
-Server-Side Generation:
-WorldGenerator → generateTerrain()
-    ↓
-SimplexNoise (fbm) → TileId enum (0-15)
-    ↓
-ChunkData { tiles[][], collisions[][], spawnPoints[] }
-    ↓
-WebSocket → Client
-
-Client-Side Rendering:
-ChunkData → ChunkManager
-    ↓
-TileRenderer.createTile(x, y, TileId)
-    ↓
-Graphics diamond (placeholder) OR future sprite
-    ↓
-IsometricTransform.gridToScreen(x, y)
-    ↓
-Phaser Container at calculated position
-    ↓
-DepthSorter (Y-based + X tiebreaker)
+┌─────────────────────────────────────────────────────────────────────┐
+│                         CLIENT (Phaser)                             │
+├─────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
+│  │ ChunkManager │  │ TileRenderer │  │ ViewportCuller│              │
+│  │  - tracks    │  │  - renders   │  │  - culls     │              │
+│  │  - requests  │  │  - caches    │  │  - optimizes │              │
+│  │  - unloads   │  │  sprites     │  │  rendering   │              │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘              │
+│         │                 │                  │                       │
+│         └─────────────────┴──────────────────┘                       │
+│                           │                                          │
+├───────────────────────────┼──────────────────────────────────────────┤
+│                     WebSocket (Socket.IO)                            │
+├───────────────────────────┼──────────────────────────────────────────┤
+│                         SERVER (NestJS)                              │
+├─────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
+│  │ GameGateway  │  │ ZonesService │  │ WorldGenerator│              │
+│  │  - handles   │  │  - caches    │  │  - biome     │              │
+│  │  - routes    │  │  - unloads   │  │  - terrain   │              │
+│  │  chunk reqs  │  │  old zones   │  │  - structures│              │
+│  └──────────────┘  └──────────────┘  └──────────────┘              │
+├─────────────────────────────────────────────────────────────────────┤
+│                    WORLD GENERATION (packages)                       │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  BiomeGenerator → TerrainGenerator → StructureGenerator     │    │
+│  │  (noise layers)    (tiles+heights)    (features)            │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Key Components
+### Component Responsibilities
 
-| Component | Current Responsibility | Location |
-|-----------|----------------------|----------|
-| TileId enum | 16 hardcoded tile types | packages/world-gen/src/generation/terrain.ts |
-| generateTerrain() | noise → tiles + collisions | packages/world-gen/src/generation/terrain.ts |
-| ChunkData | Serialized zone data | packages/shared-types/src/core/zone.ts |
-| TileRenderer | Graphics diamond rendering | apps/web/src/game/rendering/TileRenderer.ts |
-| IsometricTransform | Grid↔Screen conversion | apps/web/src/game/utils/IsometricTransform.ts |
-| A* pathfinding | Collision-based movement | packages/game-logic/src/movement/pathfinding.ts |
+| Component | Responsibility | Typical Implementation |
+|-----------|----------------|------------------------|
+| **ChunkManager (client)** | Track viewport, request chunks from server, cache loaded chunks, unload distant chunks | Map-based cache with state tracking (loading/loaded/failed) |
+| **ViewportCuller (client)** | Calculate visible tiles based on camera, hide/show tiles dynamically | Frustum culling using camera bounds + padding |
+| **TileRenderer (client)** | Create Phaser sprites/graphics for tiles, apply elevations, handle isometric projection | Container-based rendering with depth sorting |
+| **GameGateway (server)** | Handle WebSocket events for chunk requests, route to ZonesService | NestJS WebSocket gateway with event handlers |
+| **ZonesService (server)** | Cache generated chunks, lazy-load on demand, cleanup old zones | Map-based cache with LRU cleanup (5min TTL) |
+| **WorldGenerator (server)** | Generate chunks deterministically from seed, apply biome noise layers | Simplex noise with multiple octaves (fbm) |
+| **BiomeGenerator (server)** | Generate temperature/moisture/elevation noise fields | 3 separate noise instances with different scales |
 
-### Current Limitations
+## Recommended Project Structure
 
-1. **No tile metadata:** TileId is just a number, no properties attached
-2. **No elevation:** All tiles rendered at same Z-level
-3. **Binary collision:** true/false, no movement cost variations
-4. **Hardcoded tiles:** Adding new tiles requires modifying enum + multiple functions
-5. **No side walls:** Elevated tiles have no visual height representation
-
-## Target Architecture (To-Be)
-
-### System Overview with Elevation
-
+### EXISTING Structure (No Changes)
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    SHARED-TYPES LAYER                        │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────────┐  ┌──────────────────────────────────┐  │
-│  │ TileDefinition  │  │      ChunkData (MODIFIED)        │  │
-│  │   Registry      │  │  - tiles[][]                     │  │
-│  │                 │  │  - heights[][] (NEW)             │  │
-│  │ - id            │  │  - structures[] (NEW)            │  │
-│  │ - displayName   │  │  - collisions[][]                │  │
-│  │ - isBlocking    │  │  - spawnPoints[]                 │  │
-│  │ - speedModifier │  │                                  │  │
-│  │ - texture       │  └──────────────────────────────────┘  │
-│  │ - elevation     │                                         │
-│  │ - hooks         │                                         │
-│  └─────────────────┘                                         │
-└─────────────────────────────────────────────────────────────┘
-                               ↓
-┌─────────────────────────────────────────────────────────────┐
-│                    WORLD-GEN LAYER                           │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  TerrainGenerator (MODIFIED)                        │    │
-│  │  - Generate tiles[][] using noise                   │    │
-│  │  - Generate heights[][] using elevation noise       │    │
-│  │  - Generate structures using structural noise       │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                               │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  StructureGenerator (NEW)                           │    │
-│  │  - Place walls based on noise patterns              │    │
-│  │  - Set height data for wall tiles                   │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-                               ↓
-┌─────────────────────────────────────────────────────────────┐
-│                    GAME-LOGIC LAYER                          │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  Pathfinding (MODIFIED)                             │    │
-│  │  - A* with elevation cost calculation               │    │
-│  │  - Movement cost = base + elevationDelta * penalty  │    │
-│  │  - Line of sight elevation blocking                 │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-                               ↓
-┌─────────────────────────────────────────────────────────────┐
-│                    CLIENT RENDERING LAYER                    │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  TileRenderer (MODIFIED)                            │    │
-│  │  - Render tile top face at grid position           │    │
-│  │  - Render side faces based on height difference    │    │
-│  │  - Use TileDefinition for texture lookup           │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                               │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  ElevationRenderer (NEW)                            │    │
-│  │  - Draw vertical side walls for elevated tiles     │    │
-│  │  - Calculate screen offset based on height levels  │    │
-│  │  - Adjust depth for proper layering                │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                               │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │  IsometricTransform (MODIFIED)                      │    │
-│  │  - Add heightToScreenY(height) method              │    │
-│  │  - Modify calculateDepth() for elevation           │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
+packages/
+├── world-gen/              # Already contains biome + chunk generation
+│   ├── noise/simplex.ts    # Simplex noise implementation (existing)
+│   ├── generation/
+│   │   ├── biome.ts        # BiomeGenerator (existing) ✓
+│   │   ├── chunk.ts        # WorldGenerator (existing) ✓
+│   │   ├── terrain.ts      # Terrain generation (existing)
+│   │   └── structures.ts   # Structure generation (existing)
+│
+├── tiles/                  # Tile definitions (existing)
+│   ├── registry.ts         # TileRegistry singleton (existing) ✓
+│   └── definitions/        # Biome-specific tiles (existing)
+│
+apps/
+├── web/                    # Client (existing)
+│   └── game/
+│       ├── rendering/
+│       │   ├── ChunkManager.ts       # Chunk lifecycle (existing) ✓
+│       │   ├── TileRenderer.ts       # Tile rendering (existing) ✓
+│       │   └── ViewportCuller.ts     # Culling (existing) ✓
+│       └── scenes/
+│           └── WorldScene.ts         # Main scene (existing) ✓
+│
+└── game-server/            # Server (existing)
+    ├── game/
+    │   └── game.gateway.ts          # WebSocket handler (existing) ✓
+    └── zones/
+        └── zones.service.ts         # Zone caching (existing) ✓
 ```
 
-## Component Integration Strategy
+### NEW Components Required
 
-### NEW Components
+**NONE** - All required architecture already exists. The milestone only requires:
+1. **Biome noise integration** - Already implemented in BiomeGenerator
+2. **Chunk streaming** - Already implemented in ChunkManager + GameGateway
+3. **Viewport-based loading** - Already implemented with zone:request event
 
-| Component | Purpose | Location | Creates |
-|-----------|---------|----------|---------|
-| TileRegistry | Static tile definitions | packages/shared-types/src/game/tile-registry.ts | Registry pattern like EntityRegistry |
-| StructureGenerator | Wall/structure placement | packages/world-gen/src/generation/structure.ts | Wall tiles with heights |
-| ElevationRenderer | Side wall rendering | apps/web/src/game/rendering/ElevationRenderer.ts | Graphics for tile sides |
+### Integration Points to Activate
 
-### MODIFIED Components
+The architecture is **already built**, but currently operates in **single-zone mode**. To enable infinite world:
 
-| Component | What Changes | Why | Complexity |
-|-----------|--------------|-----|------------|
-| ChunkData | Add heights[][], structures[] | Serialize elevation data | LOW - extends interface |
-| generateTerrain() | Add elevation noise layer | Generate height variation | MEDIUM - new noise octave |
-| TileRenderer | Lookup TileDefinition, call ElevationRenderer | Use registry for properties | LOW - method delegation |
-| IsometricTransform | Add heightToScreenY() method | Convert elevation to screen offset | LOW - math formula |
-| pathfinding.ts | Add elevation cost in g-score | Prefer flat terrain | MEDIUM - modify A* cost |
-| DepthSorter | Include elevation in depth calc | Elevated tiles render in front | LOW - add height offset |
+| Location | Current State | Needs Activation |
+|----------|---------------|------------------|
+| `ChunkManager.updateChunks()` | Loads 3x3 grid around player | ✓ Already correct |
+| `zone:request` event | Implemented in GameGateway | ✓ Already correct |
+| `BiomeGenerator` | Generates biomes from noise | ✓ Already correct |
+| `WorldGenerator.generateChunk()` | Deterministic generation | ✓ Already correct |
+| `ZonesService` | Caches + cleans up old zones | ✓ Already correct |
+
+**The system is fully architected** - it just needs the initial zone to be treated as chunk (0,0) instead of a standalone zone.
 
 ## Architectural Patterns
 
-### Pattern 1: Registry with Static Data
+### Pattern 1: Viewport-Based Chunk Loading
 
-**What:** TileRegistry as static object with type-safe lookups, following EntityRegistry pattern
+**What:** Load only chunks within N tiles of player viewport, unload when player moves away
 
-**When to use:** When you have game data that is:
-- Known at compile time
-- Shared between client and server
-- Referenced by ID frequently
+**When to use:** Any infinite world game where entire world can't fit in memory
 
 **Trade-offs:**
-- Pros: Type-safe, no runtime loading, can't get out of sync
-- Cons: Adding tiles requires code changes (acceptable for game data)
+- **Pros:** Constant memory usage regardless of world size, seamless exploration
+- **Cons:** Network latency when crossing chunk boundaries, need chunk caching strategy
 
 **Example:**
 ```typescript
-// packages/shared-types/src/game/tile-registry.ts
-export interface TileDefinition {
-  id: string;
-  displayName: string;
-  isBlocking: boolean;
-  speedModifier: number;  // 1.0 = normal, 0.5 = slow, 1.2 = fast
-  textureKey: string;
-  defaultElevation: number; // 0-5 levels
-  hooks?: {
-    onStep?: (player: Entity) => void;  // For damage tiles, etc.
-  };
-}
+// ChunkManager.updateChunks() - ALREADY IMPLEMENTED
+updateChunks(playerZoneId: string): void {
+  const { x: playerX, y: playerY } = this.parseZoneId(playerZoneId);
 
-export const TileRegistry = {
-  definitions: {
-    'void_floor': {
-      id: 'void_floor',
-      displayName: 'Void Floor',
-      isBlocking: false,
-      speedModifier: 1.0,
-      textureKey: 'tile_void_floor',
-      defaultElevation: 0,
-    },
-    'void_wall': {
-      id: 'void_wall',
-      displayName: 'Void Wall',
-      isBlocking: true,
-      speedModifier: 0,
-      textureKey: 'tile_void_wall',
-      defaultElevation: 2, // Walls are elevated
-    },
-    // ... other tiles
-  } as Record<string, TileDefinition>,
+  // Calculate required chunks (3x3 grid)
+  const requiredChunks = new Set<string>();
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const zoneId = this.createZoneId(playerX + dx, playerY + dy);
+      requiredChunks.add(zoneId);
+    }
+  }
 
-  get(id: string): TileDefinition | undefined {
-    return this.definitions[id];
-  },
+  // Request new chunks
+  requiredChunks.forEach(zoneId => {
+    if (!this.chunkStates.has(zoneId)) {
+      this.requestChunk(zoneId); // Triggers zone:request event
+    }
+  });
 
-  getBlocking(): string[] {
-    return Object.values(this.definitions)
-      .filter(d => d.isBlocking)
-      .map(d => d.id);
-  },
-};
-```
-
-### Pattern 2: Elevation as Separate Data Layer
-
-**What:** Store height as separate 2D array parallel to tiles[][], not embedded in tile definition
-
-**When to use:** When tile type and height are independent variables (same tile can be at different heights)
-
-**Trade-offs:**
-- Pros: Flexible - any tile at any height, smaller data (uint8 vs object)
-- Cons: Two arrays to manage, potential desync bugs
-
-**Example:**
-```typescript
-// packages/shared-types/src/core/zone.ts
-export interface ChunkData {
-  zoneId: string;
-  tiles: string[][];      // Tile IDs (string refs to TileRegistry)
-  heights: number[][];    // 0-5 elevation levels (uint8)
-  structures: Structure[]; // Wall segments (NEW)
-  collisions: boolean[][]; // Derived from tiles + structures
-  spawnPoints: SpawnPoint[];
-}
-
-export interface Structure {
-  type: 'wall' | 'building';
-  tiles: { x: number; y: number; tileId: string; height: number }[];
+  // Unload distant chunks
+  this.loadedChunks.forEach((_, zoneId) => {
+    if (!requiredChunks.has(zoneId)) {
+      this.unloadChunk(zoneId);
+    }
+  });
 }
 ```
 
-### Pattern 3: Side Wall Rendering with Screen Offset
+### Pattern 2: Deterministic Chunk Generation
 
-**What:** Render tile faces at different Y positions based on elevation, using depth for layering
+**What:** Generate same chunk data every time from world seed + coordinates, no database needed
 
-**When to use:** Isometric games where elevation is visualized as stacked tiles
+**When to use:** Procedural worlds where terrain is mathematically defined, infinite storage impossible
 
 **Trade-offs:**
-- Pros: Clear visual hierarchy, works with existing depth sorting
-- Cons: More draw calls, requires careful depth calculation
+- **Pros:** Zero storage cost, infinite world size, instant "regeneration" of same chunk
+- **Cons:** Can't modify terrain permanently (unless you store deltas), CPU cost on first generation
 
 **Example:**
 ```typescript
-// apps/web/src/game/rendering/ElevationRenderer.ts
-export class ElevationRenderer {
-  private PIXELS_PER_LEVEL = 16; // Screen pixels per elevation level
+// WorldGenerator - ALREADY IMPLEMENTED
+class WorldGenerator {
+  private biomeGenerator: BiomeGenerator;
 
-  renderTileWithElevation(
-    x: number,
-    y: number,
-    tileId: string,
-    height: number
-  ): Phaser.GameObjects.Container {
-    const container = this.scene.add.container(0, 0);
-    const tileDef = TileRegistry.get(tileId);
+  constructor(worldSeed: string) {
+    this.biomeGenerator = new BiomeGenerator(worldSeed);
+  }
 
-    // Base screen position
-    const screenPos = this.isoTransform.gridToScreen(x, y);
+  generateChunk(chunkX: number, chunkY: number): ChunkData {
+    // Same seed + coords = same result always
+    const biome = this.biomeGenerator.getChunkBiome(chunkX, chunkY, ZONE_SIZE);
+    const { tiles, heights, collisions } = generateTerrain(
+      this.worldSeed,
+      chunkX,
+      chunkY,
+      biome
+    );
+    // ... structures, spawns
+    return { zoneId: `z_${chunkX}_${chunkY}`, tiles, heights, ... };
+  }
+}
+```
 
-    // Elevation offset (higher tiles render higher on screen)
-    const elevationOffset = height * this.PIXELS_PER_LEVEL;
+### Pattern 3: Multi-Layer Noise Biome System
 
-    // Top face at elevated position
-    const topFace = this.createTileFace(tileId);
-    topFace.setPosition(screenPos.x, screenPos.y - elevationOffset);
-    container.add(topFace);
+**What:** Combine multiple noise functions (temperature, moisture, elevation) to determine biome at each point
 
-    // Side walls (only if elevated)
-    if (height > 0) {
-      const sideFaces = this.createSideWalls(tileId, height);
-      sideFaces.forEach(face => {
-        face.setPosition(screenPos.x, screenPos.y - elevationOffset);
-        container.add(face);
-      });
+**When to use:** Realistic biome transitions, avoid hard boundaries, support smooth gradients
+
+**Trade-offs:**
+- **Pros:** Natural-looking world, smooth transitions, realistic climate zones
+- **Cons:** More computation than simple random biomes, harder to guarantee specific biome placement
+
+**Example:**
+```typescript
+// BiomeGenerator - ALREADY IMPLEMENTED
+class BiomeGenerator {
+  private temperatureNoise: SimplexNoise;
+  private moistureNoise: SimplexNoise;
+  private elevationNoise: SimplexNoise;
+
+  getBiome(worldX: number, worldY: number): BiomeType {
+    const temp = this.getTemperature(worldX, worldY);      // 0-1
+    const moisture = this.getMoisture(worldX, worldY);     // 0-1
+    const elevation = this.getElevation(worldX, worldY);   // 0-1
+
+    // High elevation = special biomes
+    if (elevation > 0.8) {
+      if (temp < 0.3) return 'frozen_expanse';
+      if (temp > 0.7) return 'volcanic_ridge';
+      return 'ancient_ruins';
     }
 
-    // Depth includes elevation (higher = rendered in front)
-    const depth = this.isoTransform.calculateDepth(x, y) + elevationOffset;
-    container.setDepth(depth);
-
-    return container;
-  }
-
-  private createSideWalls(tileId: string, height: number): Phaser.GameObjects.Graphics[] {
-    // South and east faces visible in isometric view
-    const southWall = this.createWallFace('south', height);
-    const eastWall = this.createWallFace('east', height);
-    return [southWall, eastWall];
+    // Temperate zones based on temp/moisture
+    if (temp < 0.3) return 'frozen_expanse';
+    if (temp > 0.7 && moisture < 0.3) return 'volcanic_ridge';
+    // ... more biome rules
   }
 }
 ```
 
-### Pattern 4: Elevation-Aware Pathfinding Cost
+### Pattern 4: Server-Side Chunk Cache with LRU Cleanup
 
-**What:** Modify A* g-score to penalize elevation changes, preferring flat routes
+**What:** Cache generated chunks on server to avoid regenerating every request, clean up old unused chunks
 
-**When to use:** When movement over terrain should consider height differences
+**When to use:** Multiplayer games where chunk generation is expensive, multiple players may need same chunk
 
 **Trade-offs:**
-- Pros: Realistic pathfinding, avoids unnecessary climbing
-- Cons: More complex than pure distance, needs tuning
+- **Pros:** Faster chunk delivery to clients, reduced CPU usage, consistent entity state
+- **Cons:** Memory usage grows with active area, need cleanup strategy, cache invalidation complexity
 
 **Example:**
 ```typescript
-// packages/game-logic/src/movement/pathfinding.ts (MODIFIED)
-export function findPath(
-  startX: number,
-  startY: number,
-  endX: number,
-  endY: number,
-  collisionMap: boolean[][],
-  heightMap: number[][], // NEW parameter
-  maxIterations = 1000
-): Array<{ x: number; y: number }> | null {
-  // ... existing setup ...
+// ZonesService - ALREADY IMPLEMENTED
+@Injectable()
+export class ZonesService {
+  private zones: Map<string, ZoneState> = new Map();
 
-  // Modified neighbor processing
-  for (const dir of directions) {
-    const nx = current.x + dir.dx;
-    const ny = current.y + dir.dy;
+  async getChunk(zoneId: string): Promise<ChunkData> {
+    let zoneState = this.zones.get(zoneId);
 
-    // ... existing bounds/collision checks ...
+    if (!zoneState) {
+      zoneState = this.loadZone(zoneId); // Generate + cache
+    }
 
-    // Calculate movement cost with elevation penalty
-    const currentHeight = heightMap[current.y]?.[current.x] ?? 0;
-    const nextHeight = heightMap[ny]?.[nx] ?? 0;
-    const elevationDelta = Math.abs(nextHeight - currentHeight);
+    zoneState.lastAccessed = Date.now();
+    return zoneState.chunk;
+  }
 
-    // Base cost 1.0, +0.5 per elevation level difference
-    const movementCost = 1.0 + (elevationDelta * 0.5);
-    const g = current.g + movementCost;
+  private cleanupUnusedZones(): void {
+    const now = Date.now();
+    const maxAge = 5 * 60 * 1000; // 5 minutes
 
-    // ... rest of A* logic ...
+    for (const [zoneId, state] of this.zones.entries()) {
+      if (now - state.lastAccessed > maxAge) {
+        if (zoneId !== 'z_0_0') { // Keep spawn zone
+          this.zones.delete(zoneId);
+        }
+      }
+    }
   }
 }
 ```
 
-## Data Flow with Elevation
+### Pattern 5: WebSocket Chunk Streaming
 
-### Generation Flow (Server-Side)
+**What:** Use persistent WebSocket connection to stream chunks on demand as player moves
 
-```
-WorldGenerator.generateChunk(chunkX, chunkY)
-    ↓
-1. BiomeGenerator determines biome
-    ↓
-2. TerrainGenerator:
-   - Base noise → tile IDs
-   - Elevation noise → heights[][]
-   - Edge connectivity (unchanged)
-    ↓
-3. StructureGenerator (NEW):
-   - Structural noise → wall placement
-   - Set wall heights based on biome
-    ↓
-4. Collision map generation:
-   - Check TileRegistry.isBlocking
-   - Include structure walls
-    ↓
-ChunkData { tiles[][], heights[][], structures[], collisions[][], spawnPoints[] }
-```
+**When to use:** Real-time multiplayer games where HTTP request overhead is too high
 
-### Rendering Flow (Client-Side)
+**Trade-offs:**
+- **Pros:** Low latency, bidirectional communication, server can push updates
+- **Cons:** Maintain connection state, need reconnection logic, harder to scale than HTTP
 
-```
-ChunkManager.receiveChunk(chunkData, biome)
-    ↓
-WorldScene.renderChunk(chunkData, biome)
-    ↓
-For each tile (x, y):
-  1. TileRenderer.createTileWithElevation(x, y, tileId, height)
-       ↓
-  2. TileRegistry.get(tileId) → TileDefinition
-       ↓
-  3. ElevationRenderer.renderTileWithElevation():
-       - Calculate screenPos from IsometricTransform
-       - Apply elevation offset: screenY -= (height * PIXELS_PER_LEVEL)
-       - Render top face at elevated position
-       - IF height > adjacent tiles: render side walls
-       - Calculate depth including elevation
-       ↓
-  4. Add to chunk container at calculated position
+**Example:**
+```typescript
+// GameGateway - ALREADY IMPLEMENTED
+@SubscribeMessage('zone:request')
+async handleZoneRequest(
+  @ConnectedSocket() client: Socket,
+  @MessageBody() data: { zoneId: string }
+) {
+  const player = this.playerService.getPlayerBySocket(client.id);
+  if (!player) return;
+
+  // Get chunk data (cached or generate)
+  const zoneState = await this.gameService.getZoneState(data.zoneId);
+
+  // Send only chunk + biome (not players/entities for adjacent zones)
+  client.emit('zone:chunk', {
+    chunk: zoneState.chunk,
+    biome: zoneState.biome,
+  });
+}
 ```
 
-### Pathfinding Flow (Client-Side)
+## Data Flow
+
+### Chunk Request Flow
 
 ```
-PathfindingController.startPath(targetX, targetY, collisionMap)
+Player moves to edge of loaded area
     ↓
-Pass heightMap (extracted from ChunkData.heights)
+ChunkManager.updateChunks() detects missing chunk
     ↓
-findPath() A* algorithm:
-  - Standard distance heuristic (Manhattan)
-  - Modified g-score: base cost + elevation penalty
-  - Prefer routes with minimal elevation change
+requestChunk() → emit('zone:request', { zoneId: 'z_1_2' })
     ↓
-Return path array { x, y }[]
+[WebSocket] → GameGateway.handleZoneRequest()
     ↓
-PathfindingController moves player along path
+GameService.getZoneState() → ZonesService.getChunk()
+    ↓
+ZonesService checks cache → MISS → loadZone()
+    ↓
+loadZone() → generateChunk() → WorldGenerator
+    ↓
+WorldGenerator:
+  - BiomeGenerator.getChunkBiome() (noise layers)
+  - generateTerrain() (tiles + heights + collisions)
+  - generateStructures() (features)
+  - generateSpawnPoints() (entities)
+    ↓
+Return ChunkData to ZonesService (cache it)
+    ↓
+ZonesService returns to GameService
+    ↓
+GameGateway emits 'zone:chunk' event
+    ↓
+[WebSocket] → Client receives zone:chunk
+    ↓
+ChunkManager.receiveChunk() → store + render
+    ↓
+renderChunk() → TileRenderer creates sprites
+    ↓
+ViewportCuller optimizes visibility
 ```
 
-## Integration Points
+### Biome Noise Generation Flow
 
-### NEW Interfaces to Existing Systems
+```
+WorldGenerator.generateChunk(x, y)
+    ↓
+BiomeGenerator.getChunkBiome(x, y, ZONE_SIZE)
+    ↓
+Calculate chunk center: centerX = x * 32 + 16, centerY = y * 32 + 16
+    ↓
+BiomeGenerator.getBiome(centerX, centerY)
+    ↓
+Parallel noise sampling:
+  - temperatureNoise.fbm(x * 0.005, y * 0.005, 4 octaves)
+  - moistureNoise.fbm(x * 0.007, y * 0.007, 4 octaves)
+  - elevationNoise.fbm(x * 0.003, y * 0.003, 6 octaves)
+    ↓
+Normalize to 0-1 range
+    ↓
+Apply biome rules:
+  - elevation > 0.8 → high altitude biomes
+  - elevation < 0.2 → low altitude biomes
+  - else: temp/moisture matrix
+    ↓
+Return BiomeType (e.g., 'volcanic_ridge')
+```
 
-| Interface | Connects | How |
-|-----------|----------|-----|
-| ChunkData.heights | generateTerrain() → TileRenderer | Parallel array to tiles[][] |
-| ChunkData.structures | StructureGenerator → collision generation | Array of wall segments |
-| TileRegistry | TileRenderer + pathfinding | Lookup tile properties by ID |
-| heightMap | pathfinding A* cost | Passed as parameter, optional (defaults to flat) |
-| ElevationRenderer | TileRenderer | Composition - TileRenderer calls ElevationRenderer |
+### Client Chunk Cache Management
 
-### Existing Systems NOT Modified
+```
+ChunkManager maintains:
+  - loadedChunks: Map<zoneId, LoadedChunk>
+  - chunkStates: Map<zoneId, 'loading' | 'loaded' | 'failed'>
 
-| System | Why Unchanged | Integration Method |
-|--------|---------------|-------------------|
-| BiomeGenerator | Height is orthogonal to biome | Heights generated per-biome rules |
-| EntityRenderer | Entities float above terrain | Already uses elevation offset |
-| ChunkManager | Just passes data | ChunkData extended, manager agnostic |
-| NetworkLayer | Serialization unchanged | ChunkData JSON compatible |
-| ViewportCuller | Culls by grid position | Elevation irrelevant to culling |
+On player movement:
+  1. Calculate required chunks (3x3 grid around player)
+  2. Request missing chunks (set state = 'loading')
+  3. Unload distant chunks (remove from maps, destroy sprites)
+
+On chunk received:
+  1. Update state to 'loaded'
+  2. Store chunk data
+  3. Call onChunkLoaded callback → renderChunk()
+
+Timeout handling:
+  - 10 second timeout per chunk
+  - On timeout: mark 'failed', log warning
+  - Client can retry by moving away and back
+```
 
 ## Scaling Considerations
 
-| Scale | Performance Impact | Mitigation |
-|-------|-------------------|------------|
-| 64x64 zone | 4096 tiles, ~8k-12k draw calls with elevation | Acceptable - current placeholder uses Graphics per tile anyway |
-| Multiple chunks loaded | 9 chunks = 36k tiles | Already mitigated by ViewportCuller (only renders visible) |
-| Complex structures | Walls add ~5-10% more tiles | StructureGenerator limits wall density |
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| **0-100 players** | Current architecture is perfect. Single NestJS server, in-memory chunk cache, 3x3 chunk loading (9 chunks per player = ~900 chunks max). Memory: ~10KB per chunk = 9MB for all players. |
+| **100-1000 players** | Add Redis for chunk cache sharing across server instances. Use Socket.IO Redis adapter for multi-server WebSocket support. Horizontal scaling: 1 server per ~200 players. Memory becomes stateless (Redis holds it). |
+| **1000-10000 players** | Shard world by regions (e.g., x coordinate ranges). Each server handles specific world regions. Redis Cluster for distributed cache. Consider chunk pre-generation for popular areas. Add CDN for static chunk data if chunks rarely change. |
+| **10000+ players** | Dedicated chunk generation service (microservice). Separate WebSocket gateway servers from game logic servers. Message queue (Kafka/RabbitMQ) for chunk requests. Database persistence for modified chunks (player edits). Consider read replicas for chunk data. |
 
-### Performance Strategy
+### Scaling Priorities
 
-1. **Immediate (MVP):** Graphics-based rendering (current system) extended with side walls
-2. **Phase 2 (if needed):** Sprite-based tilemap using Phaser Tilemap API with elevation layers
-3. **Phase 3 (optimization):** GPU instancing for repeated tile sprites
+1. **First bottleneck:** Memory usage from chunk cache (100-500 players)
+   - **Fix:** Move chunk cache to Redis, share across servers
+   - **Cost:** Add Redis server (~$20/mo for managed service)
+   - **Benefit:** Near-infinite cache capacity, shared state
 
-**Recommendation:** Start with Graphics extension. Current codebase already uses Graphics per tile, adding side walls is incremental. Only migrate to Tilemap if profiling shows bottleneck.
+2. **Second bottleneck:** CPU for chunk generation (500-2000 players)
+   - **Fix:** Pre-generate popular areas during off-peak hours
+   - **Alternative:** Dedicated chunk generation worker service
+   - **Benefit:** Reduce real-time generation load by 60-80%
 
-## Anti-Patterns to Avoid
+3. **Third bottleneck:** WebSocket connection limits (2000-5000 players)
+   - **Fix:** Horizontal scaling with Socket.IO Redis adapter
+   - **Setup:** Multiple game-server instances behind load balancer
+   - **Benefit:** Each server handles ~500-1000 connections
 
-### Anti-Pattern 1: Embedding Height in Tile Definition
+## Anti-Patterns
 
-**What people do:** Make height part of TileDefinition (e.g., "void_floor_height_2")
+### Anti-Pattern 1: Loading Entire World at Once
 
-**Why it's wrong:**
-- Combinatorial explosion: 16 tiles × 6 heights = 96 definitions
-- Loses semantic meaning (tile type vs terrain topology)
-- Can't dynamically adjust height (structures, terrain deformation)
-
-**Do this instead:**
-- Tile ID references type (floor, wall, etc.)
-- Height stored separately in heights[][]
-- TileDefinition has defaultElevation as hint, not absolute
-
-### Anti-Pattern 2: Calculating Depth Without Elevation
-
-**What people do:** Keep Y-based depth sorting, ignore height
+**What people do:** Generate all chunks on server startup, send full world to client
 
 **Why it's wrong:**
-- Elevated tiles render behind ground tiles in front of them
-- Breaks visual hierarchy (player walks "over" elevated walls)
+- Infinite world = infinite memory usage (impossible)
+- Client can't render millions of tiles (browser crashes)
+- Load times grow linearly with world size
 
-**Do this instead:**
-```typescript
-// IsometricTransform.calculateDepth() - MODIFIED
-calculateDepth(gridX: number, gridY: number, height: number = 0): number {
-  const screen = this.gridToScreen(gridX, gridY);
-  const elevationOffset = height * PIXELS_PER_LEVEL;
-  // Higher elevation = larger depth value = renders in front
-  return screen.y - elevationOffset + gridX * 0.0001;
-}
-```
+**Do this instead:** Load 3x3 chunk grid around player (9 chunks), lazy-generate on demand
 
-### Anti-Pattern 3: Generating Structures Post-Terrain
+### Anti-Pattern 2: Regenerating Same Chunk Every Time
 
-**What people do:** Generate terrain first, then try to place structures
+**What people do:** No server-side cache, generate chunk from seed on every request
 
 **Why it's wrong:**
-- Structures may conflict with terrain (walls on non-walkable tiles)
-- No way to ensure connectivity (walls block all paths)
-- Height data inconsistent with structure placement
+- Wastes CPU (noise generation is expensive)
+- Entities spawn/despawn incorrectly (regeneration creates new entities)
+- Can't support world modifications (mining, building)
 
-**Do this instead:**
-- Generate base terrain (floor types)
-- Generate structures using SAME noise seed + different octave
-- Update tile IDs where structures placed
-- Generate collision map AFTER structures finalized
+**Do this instead:** Cache generated chunks on server with LRU cleanup, treat chunks as stateful
 
-### Anti-Pattern 4: Per-Tile Collision Detection
+### Anti-Pattern 3: Sending Full Chunk Data for Adjacent Zones
 
-**What people do:** Check TileRegistry.isBlocking on every movement validation
+**What people do:** When loading adjacent chunks, send players/entities for all 9 chunks
 
 **Why it's wrong:**
-- Already have collisions[][] in ChunkData
-- Redundant lookups hurt performance
-- Collision map is SOURCE OF TRUTH (includes structures)
+- Massive network payload (players see ~100+ entities at once)
+- Client renders entities outside viewport
+- Entity updates flood network (100 entities × 10 updates/sec = 1000 events/sec)
 
-**Do this instead:**
-- Generate collisions[][] on server from tiles + structures
-- Send in ChunkData (already serialized)
-- Client uses boolean array directly (O(1) lookup)
-- TileRegistry only used for rendering/display properties
+**Do this instead:** Send only tiles/biome for adjacent chunks, send entities only for current chunk
 
-## Build Order Recommendations
+### Anti-Pattern 4: Hard-Coded Biome Boundaries
 
-### Phase 1: Foundation (No Visual Changes)
-1. TileRegistry interface + basic definitions (migrate existing 16 tiles)
-2. ChunkData extended with heights[][], structures[]
-3. generateTerrain() modified to output new fields (all zeros for now)
-4. Network layer verification (serialize/deserialize new fields)
+**What people do:** Assign biomes to chunks randomly or in grid pattern
 
-**Checkpoint:** Existing game still renders, no visual changes, types compile
+**Why it's wrong:**
+- Ugly hard borders (volcanic next to frozen)
+- No natural climate zones (temperature should be continuous)
+- Can't have gradual transitions
 
-### Phase 2: Elevation Generation
-1. Add elevation noise layer to terrain generation
-2. StructureGenerator for simple walls
-3. Update collision map generation to include structures
-4. Server sends real height data
+**Do this instead:** Use noise layers (temperature/moisture/elevation) for smooth biome distribution
 
-**Checkpoint:** Data flows through system, client receives heights (not yet rendered)
+### Anti-Pattern 5: No Chunk Unloading
 
-### Phase 3: Elevation Rendering
-1. IsometricTransform.heightToScreenY() method
-2. ElevationRenderer with side wall rendering
-3. TileRenderer integration (call ElevationRenderer for elevated tiles)
-4. DepthSorter modified for elevation
+**What people do:** Load chunks as player explores, never unload old chunks
 
-**Checkpoint:** Visual elevation appears, tiles at different heights visible
+**Why it's wrong:**
+- Memory leak (grows unbounded as player explores)
+- Eventually crashes client/server
+- Rendering performance degrades (culling thousands of sprites)
 
-### Phase 4: Movement Integration
-1. PathfindingController passes heightMap to findPath()
-2. A* modified for elevation cost
-3. MovementController validation checks height (prevent climbing 3+ levels)
+**Do this instead:** Unload chunks outside viewport radius, clean up old server-side chunks (5min TTL)
 
-**Checkpoint:** Pathfinding respects terrain elevation, player movement feels natural
+### Anti-Pattern 6: Synchronous Chunk Generation
 
-### Dependencies
+**What people do:** Block WebSocket event handler until chunk generates
 
-```
-TileRegistry → ChunkData types
-    ↓
-generateTerrain() modifications
-    ↓
-ChunkData serialization
-    ↓
-(CHECKPOINT: Data layer complete)
-    ↓
-ElevationRenderer → IsometricTransform
-    ↓
-TileRenderer integration
-    ↓
-(CHECKPOINT: Rendering complete)
-    ↓
-Pathfinding elevation cost
-    ↓
-(COMPLETE: All systems integrated)
-```
+**Why it's wrong:**
+- Freezes entire server (async I/O blocked)
+- Other players experience lag
+- Can't handle concurrent chunk requests
+
+**Do this instead:** Use async/await, allow Node.js event loop to process other requests during generation
+
+## Integration Points
+
+### External Services
+
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| **Socket.IO** | WebSocket gateway for chunk streaming | Already integrated in GameGateway |
+| **SimplexNoise** | Deterministic noise generation from seed | Already integrated in BiomeGenerator |
+| **Phaser** | Client-side rendering engine | Already integrated in WorldScene |
+| **NestJS** | Server-side framework for WebSocket handlers | Already integrated across game-server |
+
+### Internal Boundaries
+
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| **Client ↔ Server** | WebSocket (Socket.IO) events: `zone:request` / `zone:chunk` | Already implemented, bidirectional |
+| **GameGateway ↔ ZonesService** | Direct method calls (same process) | Standard NestJS dependency injection |
+| **ZonesService ↔ WorldGenerator** | Function call to `generateChunk()` | Stateless generation, thread-safe |
+| **WorldGenerator ↔ BiomeGenerator** | Method calls on instance | Generator created once per chunk generation |
+| **ChunkManager ↔ TileRenderer** | Callback pattern: `onChunkLoaded(chunk, biome)` | Clean separation of concerns |
+| **WorldScene ↔ ChunkManager** | WorldScene provides callbacks to ChunkManager constructor | Inversion of control pattern |
+
+## Build Order Recommendation
+
+The architecture is **already complete**. No new components needed. The milestone can proceed directly to implementation:
+
+### Phase 1: Coordinate System Migration (Foundation)
+- Treat zones as chunks with coordinates
+- Update position.zoneId format (`z_x_y`)
+- Ensure all coordinate parsing is consistent
+
+### Phase 2: Enable Multi-Chunk Loading (Activation)
+- ChunkManager already loads 3x3 grid
+- Just ensure it's called on player movement
+- Test chunk request/receive flow
+
+### Phase 3: Biome Visualization (Polish)
+- BiomeGenerator already generates biomes
+- Display biome in HUD
+- Visual transitions between chunks
+
+### Phase 4: Testing & Optimization (Validation)
+- Test cross-chunk movement
+- Verify chunk cleanup works
+- Performance profiling (memory, CPU)
+
+**No new architectural components required.** The system is fully designed and implemented.
 
 ## Sources
 
-Isometric elevation rendering:
-- [Handling Height in Isometric Tile Maps](https://erikonarheim.com/posts/handling-height-in-isometric/)
-- [Isometric Tiles Math](https://clintbellanger.net/articles/isometric_math/)
-- [Phaser Isometric Examples](https://phaser.io/examples/v3.85.0/depth-sorting/view/isometric-map)
-
-Tile systems and tilemaps:
-- [Tiles and tilemaps overview - MDN](https://developer.mozilla.org/en-US/docs/Games/Techniques/Tilemaps)
-- [Creating a Dynamic Tile System](https://www.gamedeveloper.com/programming/creating-a-dynamic-tile-system)
-
-Pathfinding with terrain cost:
-- [Movement costs for pathfinders](http://theory.stanford.edu/~amitp/GameProgramming/MovementCosts.html)
-- [Creating natural paths on terrains](https://www.gamedeveloper.com/programming/creating-natural-paths-on-terrains-using-pathfinding)
-
-Procedural generation:
+- [GitHub - ToberoCat/InfiniteWorld: This repo shows how to create a infinite chunk based world](https://github.com/ToberoCat/InfiniteWorld)
+- [Godot 4+ Multiplayer Seamless Open-World Chunks](https://github.com/godotengine/godot-docs/issues/8981)
+- [Hytale is finally here! – Hytale](https://hytale.com/news/2026/1/hytale-is-finally-here)
+- [AutoBiomes: procedural generation of multi-biome landscapes](https://cgvr.cs.uni-bremen.de/papers/cgi20/AutoBiomes.pdf)
+- [Making of OPCraft (Part 2): On-chain procedural terrain generation](https://lattice.xyz/blog/making-of-opcraft-part-2-on-chain-procedural-terrain-generation)
+- [Procedural World Generation with Biomes in Unity](https://medium.com/@mrrsff/procedural-world-generation-with-biomes-in-unity-a474e11ff0b7)
+- [Fractal-based terrain generation for infinite planetary worlds](https://www.daydreamsoft.com/blog/fractal-based-terrain-generation-for-infinite-planetary-worlds)
+- [How Minecraft Terrain Generation Works](https://cybrancee.com/blog/how-minecraft-terrain-generation-works/)
 - [Red Blob Games: Making maps with noise](https://www.redblobgames.com/maps/terrain-from-noise/)
-- [Understanding procedural terrain generation](https://medium.com/@ashleythedev/understanding-procedural-terrain-generation-in-games-07ac63fca626)
-
-Depth sorting:
-- [Isometric Depth Sorting for Moving Platforms](https://gamedevelopment.tutsplus.com/tutorials/isometric-depth-sorting-for-moving-platforms--cms-30226)
-- [Drawing isometric boxes in the correct order](https://shaunlebron.github.io/IsometricBlocks/)
+- [Generating complex, multi-biome procedural terrain with Simplex noise](https://parzivail.com/procedural-terrain-generaion/)
+- [Let's Make a Voxel Engine - Chunk Management](https://sites.google.com/site/letsmakeavoxelengine/home/chunk-management)
+- [Unity: Terrain chunk loading and unloading](https://discussions.unity.com/t/terrain-chunk-loading-and-unloading/245160)
+- [Chunk Loading System - Roblox Developer Forum](https://devforum.roblox.com/t/chunk-loading-system/3256694)
+- [Level Streaming in Open-World Games](https://medium.com/@business.sebastian1524/level-streaming-in-open-world-games-revolutionizing-immersive-experiences-0afdd8ffed88)
+- [Making a multiplayer web game with websocket that can be scalable](https://medium.com/@dragonblade9x/making-a-multiplayer-web-game-with-websocket-that-can-be-scalable-to-millions-of-users-923cc8bd4d3b)
+- [Scalable WebSocket Architecture](https://blog.hathora.dev/scalable-websocket-architecture/)
+- [Designing a Layered WebSocket Architecture for Scalable Real-Time Systems](https://medium.com/@jamala.zawia/designing-a-layered-websocket-architecture-for-scalable-real-time-systems-1ba3591e3ffb)
+- [Streaming at Scale: SSE, WebSockets & Designing Real-Time AI APIs](https://learnwithparam.com/blog/streaming-at-scale-sse-websockets-real-time-ai-apis)
+- [Chunking WebSocket Transmission](https://www.xjavascript.com/blog/chunking-websocket-transmission/)
+- [WebSocket architecture best practices](https://ably.com/topic/websocket-architecture-best-practices)
+- [A description of the new Client Cache for server developers](https://gist.github.com/Tomcc/4be79d3eafcd158c5059abd4ab2e8d35)
+- [Data Locality · Optimization Patterns · Game Programming Patterns](https://gameprogrammingpatterns.com/data-locality.html)
+- [Architecture Patterns: Caching](https://kislayverma.com/software-architecture/architecture-patterns-caching-part-1)
+- [Client-Server Game Architecture - Gabriel Gambetta](https://www.gabrielgambetta.com/client-server-game-architecture.html)
+- [Mastering Multiplayer Game Architecture - Getgud.io](https://www.getgud.io/blog/mastering-multiplayer-game-architecture-choosing-the-right-approach/)
 
 ---
-*Architecture research for: Elevation & Tile Definition Integration*
+*Architecture research for: Into the Void - Infinite World Chunk Streaming*
 *Researched: 2026-02-16*
-*Confidence: HIGH - Direct codebase analysis + verified isometric rendering patterns*

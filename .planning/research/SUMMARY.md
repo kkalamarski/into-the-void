@@ -1,250 +1,271 @@
 # Project Research Summary
 
-**Project:** Isometric Elevation & Structures Milestone
-**Domain:** Isometric 2D game terrain elevation and structure rendering
+**Project:** Into the Void - Infinite World with Seamless Chunk Streaming
+**Domain:** Multiplayer 2D Sci-Fi Survival MMO with Procedural World Generation
 **Researched:** 2026-02-16
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This research covers adding terrain elevation (height levels 0-5), side-face rendering, and structure walls to an existing Phaser 3.90.0 isometric multiplayer game. The key finding is that no new external dependencies are required - Phaser's native IsoBox and IsoTriangle geometry provides everything needed for side-face rendering. The recommended approach is to extend the existing tile system with elevation metadata through a TileDefinition registry pattern, enhance depth sorting to include vertical offset, and use Phaser's native isometric geometry for elevated tile faces.
+The existing codebase is already architected for infinite world chunk streaming. All required components exist: SimplexNoise for seamless terrain, BiomeGenerator with multi-layer noise (temperature/moisture/elevation), ChunkManager handling 3x3 pre-loading, and Socket.IO room-based zone subscriptions. Zero new dependencies needed. The milestone requires activating existing patterns, not building new systems.
 
-The critical architecture insight is to avoid treating elevation as a separate system. Instead, elevation should be: (1) stored as parallel data alongside tiles in ChunkData (heights[][] array), (2) integrated into existing depth calculation as an additional parameter, and (3) rendered using the existing TileRenderer extended with ElevationRenderer composition. The existing systems (IsometricTransform, DepthSorter, TileRenderer, PathfindingController) remain largely intact with targeted extensions rather than wholesale replacements.
+The recommended approach is to treat zones as chunks with coordinates, enable the existing 3x3 chunk loading that already works, and integrate the BiomeGenerator that's already generating seamless biomes. The architecture uses deterministic server-side generation with client-side caching, WebSocket streaming for chunk delivery, and viewport-based loading with automatic unloading of distant chunks.
 
-The primary risk is depth sorting breakdown when objects span multiple height levels. Simple Y-based sorting becomes non-transitive, causing flickering z-fighting artifacts. This is mitigated by immediately implementing composite depth calculation (screenY + elevation * elevationWeight + gridX * tiebreaker) before any visual rendering begins. Secondary risks include pathfinding treating all elevation changes as equal cost (players moonwalking up cliffs), side-face rendering explosion (6x draw calls), and ChunkData schema inadequacy forcing painful migrations later.
+Key risks are entity visibility across chunk boundaries (must use world coordinates, not zone ID matching), depth sorting breaks without world coordinates, and memory leaks from Phaser containers if not explicitly destroyed. All risks are preventable with existing code patterns - the research identified that critical systems like BiomeGenerator and SimplexNoise already use world coordinates correctly.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack is sufficient - no new packages needed. Phaser 3.90.0 includes native IsoBox/IsoTriangle for side-face rendering (added in Phaser 3.50, stable in current version). TypeScript 5.4.0 supports the type registry pattern for tile definitions. The main additions are architectural components, not external dependencies.
+The stack is complete. No new packages needed. Research verified that all capabilities for infinite world streaming exist in current dependencies. SimplexNoise (custom implementation) uses world coordinates for seamless terrain across chunks. BiomeGenerator uses three noise layers (temperature 0.005, moisture 0.007, elevation 0.003 scales) for natural biome transitions. ChunkManager loads 3x3 grids and tracks chunk states. Socket.IO 4.7 handles room-based broadcasting. Phaser 3.80 provides native Container destruction for memory cleanup.
 
-**Core technologies:**
-- **Phaser 3.90.0** (current): Game engine with native isometric geometry - IsoBox provides three-face rendering without plugins or custom polygon math
-- **TypeScript 5.4.0** (current): Type-safe tile definitions - Type registry pattern scales well with metadata additions
-- **TileDefinition Registry** (new component): Centralized tile metadata with elevation + rendering hooks - TypeScript interface extension following existing EntityRegistry pattern
-- **Elevation-Aware Depth Sorter** (enhancement): Depth calculation including vertical offset - Extend existing calculateDepth() to include elevation parameter
-- **Side Face Renderer** (new component): Render vertical tile faces using IsoBox - New TileSideFaceRenderer class using Phaser's native geometry
-
-**Critical constraint:** Focus only on elevation extensions, not rebuilding isometric basics. The project already has validated IsometricTransform (grid-to-screen), DepthSorter (throttled updates), and TileRenderer (diamond tiles) that work correctly.
+**Core technologies (all present):**
+- SimplexNoise (custom) — Multi-octave procedural noise with fbm() and ridged(), already uses world coordinates for seamless generation
+- BiomeGenerator (custom) — Three noise layers (temperature/moisture/elevation) generate seamless biomes, already correct for infinite world
+- Socket.IO ^4.7.0 — Room-based broadcasting for zone subscriptions, proven scalable for chunk streaming
+- Phaser ^3.80.0 — Client rendering with native Container destruction for memory cleanup
+- ChunkManager (custom) — 3x3 chunk loading with state tracking (loading/loaded/failed), already correct for infinite world
+- WorldGenerator (custom) — Deterministic chunk generation from world seed, perfect for infinite world (no storage needed)
 
 ### Expected Features
 
-**Must have (table stakes):**
-- **TileDefinition registry** - Foundation for tile properties, supports elevation and structure data
-- **Terrain elevation (0-5 discrete levels)** - Core vertical dimension, per-tile granularity
-- **Side-face rendering for elevation** - Visual clarity of height differences, procedurally generated
-- **Elevation-aware pathfinding** - 1-level difference walkable, 2+ blocks movement
-- **Depth sorting with height** - Objects on elevated terrain render correctly above/below
-- **Structure walls (boolean blocking)** - Impassable obstacles with uniform height
-- **Click detection with elevation** - Mouse picking accounts for height offset
-- **World-gen elevation noise** - Procedural terrain generation with elevation data
-- **Minimap structure markers** - Walls visible on minimap as distinct markers
+Research reveals this milestone focuses on infrastructure (chunk streaming, biome integration) not visual features. The elevation and structure features referenced in other documentation are already implemented. This milestone activates infinite world capabilities that exist but currently operate in single-zone mode.
 
-**Should have (competitive):**
-- **Visual elevation transitions (ramps/stairs)** - Gradual slopes or stairs between levels (trigger: players confused by cliff walkability)
-- **Multi-height structures** - Structures with variable height per tile (trigger: need for towers, tiered buildings)
-- **Height-based occlusion culling** - Tall structures hide entities behind them
-- **Dynamic wall transparency** - Walls fade when blocking player view (Diablo 2 style)
-- **Tile interaction hooks** (onClick, onStep, onEnter) - Extensible tile behavior system
-- **Smart pathfinding with elevation costs** - Weighted A* prefers gentle slopes over cliffs
+**Must have (table stakes - infrastructure):**
+- 3x3 chunk pre-loading around player position
+- Seamless biome transitions using noise layers
+- Deterministic chunk generation from world seed
+- Chunk unloading when player moves away
+- Viewport-based chunk requests via WebSocket
+- Server-side chunk caching with cleanup
+
+**Should have (competitive - UX):**
+- Loading indicators for pending chunks
+- Biome display in HUD
+- Smooth chunk fade-in (not instant pop)
+- Minimap updates for multi-chunk view
 
 **Defer (v2+):**
-- **Elevation affects combat mechanics** - Height advantage in combat (requires combat system implementation)
-- **Fall damage from height differences** - Requires health/damage system integration
-- **Procedural side-face texture variation** - Visual polish, not functional requirement
-- **Bridges/overpass tiles** - Requires multi-layer tile system (tile above and below)
+- Redis-based chunk cache (only needed at 100+ players)
+- Multi-server scaling with Pub/Sub (only at 1000+ players)
+- Player-modified chunks (building/terrain editing)
+- Predictive pre-loading based on movement direction
 
 ### Architecture Approach
 
-The integration strategy minimizes disruption to existing systems while adding elevation capabilities. Store height as separate 2D array parallel to tiles[][] (not embedded in tile definition), allowing any tile type at any height. Use TileDefinition registry as static object with type-safe lookups, following the existing EntityRegistry pattern. Extend rendering with composition - TileRenderer calls new ElevationRenderer for elevated tiles rather than replacing the rendering pipeline.
+The architecture uses a viewport-based chunk loading pattern with deterministic server-side generation. Client ChunkManager tracks loaded chunks and requests missing ones via WebSocket. Server ZonesService caches generated chunks with LRU cleanup (5min TTL). WorldGenerator produces deterministic chunks from seed, using BiomeGenerator for noise-based biome assignment. All generation uses world coordinates (not chunk-local) for seamless boundaries.
 
-**Major components:**
-
-1. **TileDefinition Registry** (packages/shared-types/src/game/tile-registry.ts) - Static tile definitions with elevation metadata, walkability, speed modifiers, and optional rendering hooks. Registry pattern like EntityRegistry, type-safe lookups by TileId.
-
-2. **ChunkData Extension** (packages/shared-types/src/core/zone.ts) - Add heights[][] (parallel to tiles[][]) and structures[] array. Elevation stored separately from tile type to avoid combinatorial explosion (16 tiles × 6 heights = 96 definitions).
-
-3. **ElevationRenderer** (apps/web/src/game/rendering/ElevationRenderer.ts) - New component for side wall rendering using Phaser IsoBox. Calculates screen offset based on height levels (height × PIXELS_PER_LEVEL), renders top face at elevated position, adds south/east wall faces if elevated.
-
-4. **PathfindingController Enhancement** (packages/game-logic/src/movement/pathfinding.ts) - Modified A* cost function includes elevation penalty (base cost 1.0 + elevationDelta × 0.5). Prefers flat routes over climbing.
-
-5. **StructureGenerator** (packages/world-gen/src/generation/structure.ts) - New world-gen component for wall/structure placement using structural noise. Sets height data for wall tiles based on biome rules.
-
-**Data flow:** Server WorldGenerator → generateTerrain() produces tiles[][] + heights[][] → ChunkData serialized → Client ChunkManager → WorldScene renders via TileRenderer → ElevationRenderer for elevated tiles → depth includes elevation offset.
+**Major components (all existing):**
+1. ChunkManager (client) — Tracks viewport, requests chunks from server, caches loaded chunks, unloads distant chunks (Map-based cache with state tracking)
+2. ViewportCuller (client) — Calculates visible tiles based on camera bounds, hides/shows tiles dynamically (frustum culling with padding)
+3. TileRenderer (client) — Creates Phaser sprites/graphics for tiles, handles isometric projection with elevation (Container-based rendering with depth sorting)
+4. GameGateway (server) — Handles WebSocket events for chunk requests, routes to ZonesService (NestJS WebSocket gateway with event handlers)
+5. ZonesService (server) — Caches generated chunks, lazy-loads on demand, cleanup old zones (Map-based cache with LRU cleanup)
+6. WorldGenerator (server) — Generates chunks deterministically from seed, applies biome noise layers (Simplex noise with multiple octaves)
+7. BiomeGenerator (server) — Generates temperature/moisture/elevation noise fields using world coordinates (3 separate noise instances with different scales)
 
 ### Critical Pitfalls
 
-1. **Depth Sorting Algorithm Breakdown** - Simple Y-based sorting becomes non-transitive with multi-height objects, causing flickering z-fighting. Prevention: Switch to composite depth calculation (screenY + elevation × elevationWeight + gridX × 0.0001) immediately, before any visual rendering. Use elevation weight of 10000 to separate layers.
+1. **Entity Visibility Boundary Mismatch** — Visibility logic uses zone ID matching (`zoneId !== player.zoneId`) instead of world coordinate distance. This causes entities to disappear at chunk edges. Fix: Replace zone ID matching with world coordinate distance checks using `getSubscribedZones()` pattern (already exists in codebase lines 117-128). Must address in Phase 1 before cross-chunk movement.
 
-2. **Pathfinding Treats All Elevation as Equal Cost** - Existing A* uses Manhattan distance and uniform cost=1. Players will moonwalk up cliffs or get stuck at impassable heights. Prevention: Expand collision map to include elevation data, add elevation-aware cost function (base + elevationDiff × penalty), set MAX_STEP_HEIGHT to reject impossible climbs.
+2. **Depth Sorting Breaks at Chunk Boundaries** — Depth calculation uses local chunk coordinates (0-31) instead of world coordinates, causing z-fighting between chunks. Each chunk's tiles have overlapping depth values. Fix: Pass world coordinates to depth calculation (`worldX = chunkX * ZONE_SIZE + localX`). Pattern already exists in `createTileWithElevationWorld()`. Must address in Phase 1 for correct rendering.
 
-3. **ChunkData Structure Assumes Flat Tiles** - Current tiles[][] and collisions[][] cannot represent multi-level terrain. Adding elevation retroactively forces painful schema migration. Prevention: Refactor ChunkData NOW to include heights[][] parallel array before any elevation work begins. Version the schema for future migrations.
+3. **WebSocket Room Subscription Leak** — Players join new zone rooms but don't leave old rooms during transitions. After 10 zone transitions, player is subscribed to 10 rooms receiving 10x traffic. Memory leaks on server. Fix: Always `client.leaveAll()` before joining new room, track subscriptions in PlayerService, explicit cleanup on disconnect. Critical for Phase 2 when 3x3 loading (9 rooms per player) is active.
 
-4. **Side-Face Rendering Explosion** - Each elevated tile needs up to 6 faces rendered (top + 4 sides + bottom). 64×64 zone with average elevation=2 creates 24,576 sprites vs current 4,096. FPS tanks. Prevention: Mesh side faces together into single sprite per chunk, implement visibility culling per face (only render south/east faces, check if neighbor is taller and occludes), use texture atlas for batching.
+4. **Phaser Container Memory Leak** — ChunkManager unloads chunks by deleting from Map but doesn't destroy Phaser containers. Each chunk has 1024 tile containers (32x32 grid). After 100 chunks, client has 102,400 undestroyed containers (~500MB RAM). Fix: Call `container.destroy(true)` recursively on all children before Map.delete(). Must address in Phase 2 when chunk unloading is active.
 
-5. **Click Detection Breaks with Elevated Terrain** - Current screenToTile assumes flat plane. Clicking wall tops selects wrong tile behind the wall. Prevention: Add elevation-aware screenToTile that adjusts Y coordinate by elevation offset, or use ray-casting approach projecting 3D ray through camera to intersect all elevation levels.
+5. **Biome Transition Artifacts** — BiomeGenerator determines biome per-chunk using chunk center, creating hard boundaries between chunks. Fix: Sample biome at each tile's world coordinates (pattern already exists as `getBiomeAt(worldX, worldY)` in codebase line 77). Requires terrain generation refactor for Phase 3.
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure follows strict dependency chain: foundation (no visual changes) → data layer complete → rendering complete → movement integrated.
+Based on research, the milestone should be structured around activating existing capabilities rather than building new systems. The architecture is complete but operates in single-zone mode. Phasing should focus on coordinate system migration first (foundation), then multi-chunk activation (core feature), then polish (biome blending, UX).
 
-### Phase 1: Tile Definition Architecture
-**Rationale:** TileDefinition registry is required by all other systems. ChunkData schema changes must happen before any elevation work to avoid painful migrations. This phase establishes the foundation with zero visual changes - existing game continues working while types evolve.
-
-**Delivers:**
-- TileDefinition registry interface with basic definitions (migrate existing 16 tiles)
-- ChunkData extended with heights[][] and structures[] fields
-- generateTerrain() modified to output new fields (all zeros initially)
-- Network layer verification (serialize/deserialize validation)
-
-**Addresses:**
-- Prevents "ChunkData structure assumes flat tiles" pitfall by refactoring schema upfront
-- Enables TileDefinition registry pattern from FEATURES.md (table stakes)
-- Sets up type-safe tile metadata system from STACK.md
-
-**Avoids:**
-- Schema migration pain later (HIGH recovery cost pitfall)
-- Combinatorial explosion of tile variants (FLOOR_E0, FLOOR_E1...)
-- Data desync between elevation and tile data
-
-**Dependencies:** None - this is the foundation phase
-
-### Phase 2: Elevation System Core
-**Rationale:** With data structures in place, generate real elevation data and wire it through the system. This phase makes elevation data flow from server to client before any visual rendering. Composite depth calculation must be implemented here to prevent depth sorting breakdown.
+### Phase 1: Infinite World Foundation (Coordinate System & World Coordinates)
+**Rationale:** All rendering, visibility, and depth calculations must use world coordinates before multi-chunk loading works. Current code uses chunk-local coordinates (0-31) which causes depth sorting and entity visibility to break at chunk boundaries. This phase establishes the coordinate foundation that all subsequent phases depend on.
 
 **Delivers:**
-- Elevation noise layer in terrain generation (uses biome elevation as base + terrain detail)
-- StructureGenerator for simple wall placement
-- Collision map generation includes structures
-- IsometricTransform.heightToScreenY() method
-- Enhanced calculateDepth() with elevation parameter
-- Server sends real height data to client
+- Coordinate system treating zones as chunks (`z_x_y` format)
+- Depth sorting using world coordinates (not chunk-local)
+- Entity visibility using world coordinate distance (not zone ID matching)
+- Deterministic chunk generation with versioning
+- Foundation for seamless cross-chunk gameplay
 
-**Uses:**
-- TileDefinition registry for default elevation values
-- Phaser 3.90.0 calculateDepth() extension (from STACK.md)
-- Multi-octave noise approach (biome base + terrain detail) to avoid biome/elevation mismatch
+**Addresses features:**
+- Deterministic chunk generation from world seed (table stakes)
+- Seamless biome transitions (infrastructure for Phase 2)
 
-**Implements:**
-- Elevation as separate data layer (heights[][] parallel to tiles[][])
-- Composite depth calculation to prevent z-fighting
-- Elevation-aware depth sorting
+**Avoids pitfalls:**
+- Pitfall 1: Entity visibility boundary mismatch (use world coords)
+- Pitfall 2: Depth sorting breaks at boundaries (world coord depth)
+- Pitfall 4: Procedural generation seed desync (add versioning)
+- Pitfall 8: Structure generation non-determinism (verify SeededRandom usage)
 
-**Avoids:**
-- "Depth sorting breakdown" pitfall by implementing composite depth immediately
-- "Elevation noise mismatch" pitfall by reconciling biome/terrain noise layers
-- "Depth sorting throttle issues" by adapting throttle for elevation changes
+**Research flag:** SKIP RESEARCH - patterns already verified in codebase, official docs sufficient.
 
-**Dependencies:** Phase 1 complete (ChunkData schema + TileDefinition registry exist)
-
-### Phase 3: Elevation Rendering
-**Rationale:** Data flows correctly, now make it visible. ElevationRenderer implements side-face rendering with visibility culling from the start to prevent rendering explosion. This phase makes terrain elevation appear visually.
+### Phase 2: Multi-Chunk Streaming (3x3 Loading & Unloading)
+**Rationale:** With world coordinates established, activate the existing 3x3 chunk loading system. ChunkManager already implements this pattern but needs WebSocket integration for chunk requests and cleanup logic for Phaser containers. This is the core feature that enables infinite exploration.
 
 **Delivers:**
-- ElevationRenderer component with side wall rendering
-- TileRenderer integration (composition pattern - TileRenderer calls ElevationRenderer)
-- Side-face visibility culling (only render south/east faces, check neighbor occlusion)
-- DepthSorter includes elevation in depth calculation
-- Visual elevation appears in game
+- 3x3 chunk pre-loading around player position
+- Viewport-based chunk requests via WebSocket
+- Chunk unloading when player moves away
+- Server-side chunk caching with LRU cleanup
+- Cross-chunk movement without visual breaks
 
-**Addresses:**
-- Side-face rendering for elevation (table stakes from FEATURES.md)
-- Prevents "side-face rendering explosion" by implementing culling immediately
-- Visual clarity of height differences (table stakes)
+**Uses stack:**
+- Socket.IO 4.7 (room-based chunk streaming)
+- ChunkManager (3x3 grid loading, already implemented)
+- ZonesService (server-side chunk cache with 5min TTL)
+- Phaser Container destruction (memory cleanup)
 
-**Avoids:**
-- Rendering all 6 faces always (5-10x performance hit)
-- ViewportCuller missing tall structures (expand bounds by max height)
+**Implements architecture:**
+- Pattern 1: Viewport-Based Chunk Loading (3x3 grid)
+- Pattern 4: Server-Side Chunk Cache with LRU Cleanup
+- Pattern 5: WebSocket Chunk Streaming (zone:request / zone:chunk events)
 
-**Dependencies:** Phase 2 complete (elevation data flowing, depth calculation correct)
+**Avoids pitfalls:**
+- Pitfall 3: WebSocket room subscription leak (explicit leave/join for 9 rooms)
+- Pitfall 5: Phaser container memory leak (destroy containers on unload)
+- Pitfall 7: Client prediction rollback (mark chunks as predicted vs confirmed)
+- Pitfall 9: Chunk loading priority deadlock (priority queue for requests)
+- Pitfall 10: Server chunk cache unbounded (LRU with max size 500 chunks)
 
-### Phase 4: Structure Walls & Pathfinding
-**Rationale:** With elevation rendering working, add gameplay integration. Pathfinding must respect elevation changes, and structure walls need proper collision handling. This phase makes elevation affect player movement.
+**Research flag:** SKIP RESEARCH - architecture documented, WebSocket patterns established in game-server.
+
+### Phase 3: Biome Integration & Visualization (Seamless Biome Transitions)
+**Rationale:** With multi-chunk loading working, integrate BiomeGenerator for natural biome distribution. This is primarily a world generation enhancement - the noise system already exists and uses world coordinates correctly. Main work is terrain generation refactor to sample biome per-tile instead of per-chunk.
 
 **Delivers:**
-- PathfindingController passes heightMap to findPath()
-- A* modified for elevation cost (base + elevationDiff × penalty)
-- MovementController validation checks height (prevent climbing 3+ levels)
-- Structure wall collision integration
-- Click detection with elevation offset
-- Minimap structure markers
+- Seamless biome transitions using noise layers
+- Per-tile biome sampling (not per-chunk)
+- Biome display in HUD
+- Natural climate zones (temperature/moisture gradients)
+- No visible grid artifacts at chunk boundaries
 
-**Addresses:**
-- Elevation-aware pathfinding (table stakes from FEATURES.md)
-- Structure walls block movement (table stakes)
-- Click detection with elevation (table stakes)
-- Prevents "pathfinding treats elevation as flat" pitfall
+**Uses stack:**
+- BiomeGenerator (already uses world coords, correct for infinite world)
+- SimplexNoise (multi-octave fbm with temperature/moisture/elevation)
+- TerrainGenerator (refactor to use per-tile biome sampling)
 
-**Avoids:**
-- Moonwalking up cliffs (impossible elevation changes)
-- Click detection broken on elevated terrain
-- Server/client desync on movement validation
+**Implements architecture:**
+- Pattern 3: Multi-Layer Noise Biome System (temperature/moisture/elevation)
+- Integration with WorldGenerator for per-tile biome lookup
 
-**Dependencies:** Phase 3 complete (rendering works, elevation visible)
+**Avoids pitfalls:**
+- Pitfall 6: Biome transition artifacts (use `getBiomeAt(worldX, worldY)` per tile)
+
+**Research flag:** SKIP RESEARCH - BiomeGenerator already implemented and researched, pattern is clear.
+
+### Phase 4: Testing, Optimization & Polish (Validation)
+**Rationale:** With core systems active, this phase validates performance, fixes edge cases discovered in testing, and adds UX polish. Research shows pre-loading (3x3 grid) masks network latency well, so optimization focuses on memory usage and chunk request patterns.
+
+**Delivers:**
+- Cross-chunk movement testing (collision, pathfinding, visibility)
+- Memory profiling (verify cleanup works, no leaks)
+- Performance optimization (chunk request debouncing, priority queue)
+- UX polish (loading indicators, fade-in animations, minimap updates)
+- Edge case fixes discovered in integration testing
+
+**Uses stack:**
+- Chrome DevTools (network profiling, memory profiler)
+- Phaser Dev Tools (runtime chunk inspection)
+
+**Addresses features:**
+- Loading indicators for pending chunks (UX polish)
+- Smooth chunk fade-in (UX polish)
+- Minimap updates for multi-chunk view (UX polish)
+
+**Avoids pitfalls:**
+- Pitfall 12: Chunk loading priority deadlock (debounce requests, priority queue)
+- Validate all Phase 1-3 pitfall fixes with integration testing
+
+**Research flag:** SKIP RESEARCH - testing and optimization, no new patterns.
 
 ### Phase Ordering Rationale
 
-- **Foundation first:** TileDefinition registry and ChunkData schema must exist before any elevation work. Schema changes later are painful (1-2 week recovery cost).
-- **Data before rendering:** Generate and flow elevation data through system before making it visible. Prevents implementing rendering twice when data structure changes.
-- **Depth calculation immediate:** Composite depth including elevation must be implemented before any multi-level rendering to prevent z-fighting. Non-negotiable.
-- **Rendering before gameplay:** Visual elevation must work correctly before pathfinding integration. Debugging pathfinding issues is impossible if you can't see terrain height.
-- **Culling from start:** Side-face visibility culling implemented in Phase 3 prevents performance crisis. Retrofitting culling after explosion is harder than doing it correctly initially.
+- **Phase 1 first** because depth sorting and visibility MUST use world coordinates before multi-chunk rendering works. Without this foundation, chunks render incorrectly and entities disappear at boundaries. Research confirms existing code has world coordinate patterns (BiomeGenerator, SimplexNoise) but rendering/visibility doesn't use them yet.
+
+- **Phase 2 depends on Phase 1** because 3x3 chunk loading only works if depth sorting uses world coordinates. Loading 9 chunks with chunk-local depth causes z-fighting. Room subscription management (9 rooms per player) also requires careful leak prevention.
+
+- **Phase 3 after Phase 2** because biome transitions are visual polish, not functional blocker. Multi-chunk streaming must work first. BiomeGenerator already uses world coordinates, so this is primarily a terrain generation refactor (per-tile sampling instead of per-chunk).
+
+- **Phase 4 is validation** of all previous phases working together. Research shows performance bottleneck is network latency (50-200ms), not generation (5-15ms) or rendering (0.1ms), so pre-loading masks latency. Optimization focuses on memory cleanup and request patterns.
+
+**Dependency chain:** World coordinates → Multi-chunk loading → Biome integration → Testing/polish
 
 ### Research Flags
 
-**Phases with standard patterns (skip research-phase):**
-- **Phase 1:** TileDefinition registry follows existing EntityRegistry pattern, ChunkData extension is straightforward interface addition
-- **Phase 2:** Depth calculation enhancement is well-documented isometric technique, noise generation follows existing BiomeGenerator pattern
-- **Phase 3:** Phaser IsoBox rendering is standard library feature with official documentation
-- **Phase 4:** A* pathfinding with elevation cost is established pathfinding pattern, click detection adjustment is documented isometric technique
+Phases with standard patterns (skip research-phase):
+- **Phase 1:** World coordinate conversion is established pattern, SimplexNoise and BiomeGenerator already demonstrate correct usage
+- **Phase 2:** WebSocket chunk streaming pattern documented in Socket.IO official docs, ChunkManager already implements 3x3 loading
+- **Phase 3:** BiomeGenerator already researched and implemented, pattern is clear (per-tile sampling using world coords)
+- **Phase 4:** Testing and optimization phase, no new domain-specific patterns
 
-**All phases use standard patterns.** Research has identified clear implementation approaches with proven examples. No phases require additional research during planning.
+**No phases need `/gsd:research-phase`** - all patterns verified in existing codebase and official documentation. Research completed at project level is sufficient.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Phaser 3.90.0 capabilities verified via official docs, IsoBox/IsoTriangle confirmed in release notes and API documentation. Existing codebase reviewed (IsometricTransform, DepthSorter verified). No new external dependencies required. |
-| Features | MEDIUM | Table stakes features validated against established isometric games (Diablo 2, Age of Empires II, Rimworld). MVP definition clearly scoped. Some differentiator features (dynamic transparency, multi-height structures) have less documentation but are deferreable to v1.4+. |
-| Architecture | HIGH | Direct codebase analysis of existing components completed. Integration points identified with specific file locations. Data flow patterns proven in existing world-gen system. Composition approach (ElevationRenderer called by TileRenderer) maintains existing architecture. |
-| Pitfalls | HIGH | Depth sorting breakdown is well-documented isometric pitfall with proven solutions. Pathfinding elevation issues validated through pathfinding literature. ChunkData schema risks identified from existing system analysis. Performance traps backed by rendering profiling guidelines. |
+| Stack | HIGH | All required capabilities verified in existing codebase. Zero new dependencies needed. SimplexNoise, BiomeGenerator, ChunkManager, Socket.IO all confirmed working with world coordinates. |
+| Features | HIGH | Feature scope clear - activate existing infrastructure, not build new visual features. Elevation/structures already implemented. This milestone is about infinite world, not terrain features. |
+| Architecture | HIGH | Architecture is complete and verified. All components exist (ChunkManager, WorldGenerator, BiomeGenerator, ZonesService). Patterns documented with examples from codebase. Integration points identified. |
+| Pitfalls | HIGH | All 10 critical pitfalls identified with specific codebase line numbers, warning signs, prevention strategies, and phase assignments. Recovery costs assessed. Common mistakes well-documented. |
 
 **Overall confidence:** HIGH
 
-Research is comprehensive with verified sources. Phaser capabilities confirmed through official documentation. Architecture approach maintains existing patterns rather than introducing risk through complete rewrites. Pitfalls identified early with clear prevention strategies.
-
 ### Gaps to Address
 
-- **Side-face texture approach:** Research identifies procedural Graphics rendering (current system) vs sprite-based textures but doesn't choose. Recommendation: Start with Graphics extension (incremental to existing system), migrate to sprites only if profiling shows bottleneck during Phase 4.
+**Minor gaps requiring validation during implementation:**
 
-- **Elevation-to-biome constraints:** Research mentions constraining elevation per biome (e.g., craters = 0-2, ruins = 0-5) but doesn't specify exact ranges. Resolution: Define during Phase 2 planning based on existing biome definitions in BiomeGenerator.
+- **Generation version schema** — ChunkData needs generation version field for cache invalidation. Research identified the requirement (Pitfall 4) but implementation details depend on schema design decisions. Add version field to ChunkData, include in cache key.
 
-- **MAX_STEP_HEIGHT value:** Research suggests "1-level difference walkable, 2+ blocks" but doesn't validate gameplay feel. Resolution: Implement 1-level maximum initially, make tunable parameter for playtesting adjustment.
+- **Chunk request rate limiting** — Research recommends 10 chunks/second per client (Security Mistakes section) but optimal limit depends on server capacity. Start with 10/sec, tune based on load testing in Phase 4.
 
-- **Minimap marker visual design:** Research confirms markers needed but not visual treatment. Resolution: Start with simple colored squares (walls = distinct color), iterate based on readability during Phase 4.
+- **Biome transition zone width** — Research suggests 3-5 tile transition zone for blending, but visual quality depends on tile artwork and biome combinations. Test different widths in Phase 3, may need artist input.
 
-These gaps are minor and resolvable during phase planning - they don't block architecture decisions or require additional research.
+- **Server chunk cache size** — Research recommends max 500 chunks for LRU cache, but optimal size depends on player distribution and server memory. Start with 500, monitor memory usage in Phase 4, adjust based on data.
+
+**All gaps are minor and can be resolved during implementation.** No gaps block milestone planning or execution. Research provided sufficient guidance for all critical decisions.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Phaser Releases](https://github.com/phaserjs/phaser/releases) - v3.90.0 confirmed as latest stable (May 2025), IsoBox/IsoTriangle API verified
-- [IsoTriangle API Documentation](https://docs.phaser.io/api-documentation/class/gameobjects-isotriangle) - Face control and rendering properties confirmed
-- [IsoBox API Documentation](https://newdocs.phaser.io/docs/3.55.2/focus/Phaser.GameObjects.GameObjectFactory-isobox) - Isometric box geometry for side faces validated
-- Existing codebase analysis: IsometricTransform (gridToScreen, calculateDepth), DepthSorter (throttled updates), TileRenderer (diamond rendering), package.json (Phaser 3.90.0 verified)
+
+**Current Codebase (verified implementation):**
+- `/packages/world-gen/src/generation/biome.ts` — BiomeGenerator using world coordinates (lines 74+)
+- `/packages/world-gen/src/generation/terrain.ts` — SimplexNoise with world coords (line 129)
+- `/packages/world-gen/src/generation/chunk.ts` — WorldGenerator deterministic generation
+- `/apps/web/src/game/rendering/ChunkManager.ts` — 3x3 chunk loading (line 55)
+- `/apps/web/src/game/rendering/TileRenderer.ts` — World vs local coordinate rendering (lines 170-215)
+- `/apps/game-server/src/game/game.gateway.ts` — WebSocket room join/leave (line 82)
+- `/packages/game-logic/src/visibility/range.ts` — Entity visibility patterns (lines 117-128)
+
+**Official Documentation:**
+- Socket.IO Rooms — https://socket.io/docs/v3/rooms/ — Room-based broadcasting patterns verified
+- Socket.IO Broadcasting — https://socket.io/docs/v3/broadcasting-events/ — Event emission to specific clients/rooms
+- Phaser 3.80 Performance Optimization — https://phaser.io/news/2025/03/how-i-optimized-my-phaser-3-action-game-in-2025 — Object pooling case study (container destruction)
 
 ### Secondary (MEDIUM confidence)
-- [Handling Height in Isometric Tile Maps - Erik Onarheim](https://erikonarheim.com/posts/handling-height-in-isometric/) - Elevation-based z-index sorting, depth calculation formulas
-- [Isometric Tiles Math - Clint Bellanger](https://clintbellanger.net/articles/isometric_math/) - Grid-to-screen conversion with height offset
-- [Red Blob Games: Making maps with noise](https://www.redblobgames.com/maps/terrain-from-noise/) - Multi-octave noise for procedural elevation
-- [Movement costs for pathfinders - Red Blob Games](http://theory.stanford.edu/~amitp/GameProgramming/MovementCosts.html) - A* elevation cost calculation
-- [Design Patterns in TypeScript - Refactoring Guru](https://refactoring.guru/design-patterns/typescript) - Factory and registry patterns
-- [Type Object - Game Programming Patterns](https://gameprogrammingpatterns.com/type-object.html) - TileDefinition registry pattern
 
-### Tertiary (LOW confidence, needs validation)
-- [GameDev.net: Isometric Depth Sorting in O(n)](https://www.gamedev.net/forums/topic/579515-isometric-depth-sorting-in-on-or-less/) - Topological sorting for overlapping structures (deferred to v2+)
-- [Occlusion culling in isometric engine - GameDev.net](https://www.gamedev.net/forums/topic/174754-occlusion-culling-in-a-complex-isometric-engine/) - Advanced occlusion techniques (not needed for MVP)
+**Architecture Patterns:**
+- Minecraft Terrain Generation — https://cybrancee.com/blog/how-minecraft-terrain-generation-works/ — Chunk-based world generation patterns
+- Red Blob Games: Making Maps with Noise — https://www.redblobgames.com/maps/terrain-from-noise/ — Multi-octave noise patterns, persistence and lacunarity
+- Procedural World Generation with Biomes — https://medium.com/@mrrsff/procedural-world-generation-with-biomes-in-unity-a474e11ff0b7 — Multi-biome landscape generation
+- Client-Server Game Architecture — https://www.gabrielgambetta.com/client-server-game-architecture.html — Multiplayer synchronization patterns
+
+**Multiplayer & Synchronization:**
+- WebSocket Architecture Best Practices — https://ably.com/topic/websocket-architecture-best-practices — Scalable WebSocket patterns
+- How to Handle Real-Time Synchronization in Large Multiplayer World — https://vocal.media/gamers/how-to-handle-real-time-synchronization-in-a-large-multiplayer-world — Synchronization strategies
+
+**Performance & Memory:**
+- Phaser Object Pooling Tutorial — https://www.thepolyglotdeveloper.com/2020/09/object-pooling-sprites-phaser-game-performance-gains/ — Container management for performance
+- Chunk Loading Performance Impact — https://gameteam.io/blog/minecraft-server-chunk-loading-performance-impact/ — Server-side chunk caching strategies
+
+### Tertiary (LOW confidence - informational context)
+
+- AutoBiomes Research — https://link.springer.com/article/10.1007/s00371-020-01920-7 — Academic multi-biome approach (potentially over-engineering for 2D grid)
+- WebSocket Chunking — https://www.xjavascript.com/blog/chunking-websocket-transmission/ — File transfer chunking (different use case, useful context)
 
 ---
 *Research completed: 2026-02-16*
