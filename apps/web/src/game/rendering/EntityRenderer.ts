@@ -3,6 +3,14 @@ import { Entity, Creature, CreatureBehavior, EntityType } from '@into-the-void/s
 import { IsometricTransform } from '../utils/IsometricTransform';
 
 const ELEVATION_HEIGHT_STEP = 16; // Pixels per elevation level
+const OCCLUSION_DEPTH_THRESHOLD = 10.0;  // Structures this far "in front" occlude entities
+const OCCLUSION_MIN_HEIGHT = 3;          // Only structures >= 3 elevation levels occlude
+const OCCLUDED_ALPHA = 0.3;              // Alpha for occluded entities (30% visible)
+
+interface Occluder {
+  depth: number;
+  height: number;
+}
 
 /**
  * EntityRenderer creates Phaser containers with nameplates, health bars and behavior icons for entities.
@@ -211,5 +219,69 @@ export class EntityRenderer {
    */
   getTransform(): IsometricTransform {
     return this.isoTransform;
+  }
+
+  /**
+   * Apply depth-based occlusion to entities.
+   * Entities behind tall structures fade to indicate they're obscured.
+   *
+   * @param entityContainers - Map of entity containers to check
+   * @param chunkContainer - The current chunk container with structure tiles
+   */
+  applyOcclusion(
+    entityContainers: Map<string, Phaser.GameObjects.Container>,
+    chunkContainer: Phaser.GameObjects.Container | null
+  ): void {
+    if (!chunkContainer) return;
+
+    // Collect occluders from chunk (structure tiles with height >= 3)
+    const occluders: Occluder[] = [];
+
+    chunkContainer.list.forEach((child) => {
+      if (child instanceof Phaser.GameObjects.Container) {
+        const isStructure = child.getData('isStructure') as boolean;
+        const height = child.getData('structureHeight') as number ?? child.getData('elevation') as number ?? 0;
+
+        if (isStructure && height >= OCCLUSION_MIN_HEIGHT) {
+          occluders.push({
+            depth: child.depth,
+            height
+          });
+        }
+      }
+    });
+
+    // Early exit if no occluders
+    if (occluders.length === 0) {
+      // Reset all entities to full alpha
+      entityContainers.forEach((container) => {
+        if (container.alpha !== 1.0) {
+          container.setAlpha(1.0);
+        }
+      });
+      return;
+    }
+
+    // Check each entity against occluders
+    entityContainers.forEach((container) => {
+      const entityDepth = container.depth;
+      let isOccluded = false;
+
+      for (const occluder of occluders) {
+        const depthDiff = occluder.depth - entityDepth;
+
+        // Occluder is "in front" if depth greater, and close enough
+        if (depthDiff > 0 && depthDiff < OCCLUSION_DEPTH_THRESHOLD) {
+          isOccluded = true;
+          break;
+        }
+      }
+
+      // Update alpha based on occlusion
+      const targetAlpha = isOccluded ? OCCLUDED_ALPHA : 1.0;
+      if (container.alpha !== targetAlpha) {
+        container.setAlpha(targetAlpha);
+      }
+    });
   }
 }
