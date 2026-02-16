@@ -5,6 +5,7 @@
 - ✅ **v1.0 Auth & Character Screens** — Phases 1-3 (shipped 2026-02-14)
 - ✅ **v1.1 Post-Login Game Experience** — Phases 4-7 (shipped 2026-02-16)
 - ✅ **v1.2 Isometric View** — Phases 8-12 (shipped 2026-02-16)
+- 🚧 **v1.3 Elevation & Structures** — Phases 13-16 (in progress)
 
 ## Phases
 
@@ -31,9 +32,8 @@ See: `.planning/milestones/v1.1-ROADMAP.md`
 
 </details>
 
-### ✅ v1.2 Isometric View (Complete)
-
-**Milestone Goal:** Transform the game from top-down to isometric projection while preserving all existing gameplay.
+<details>
+<summary>✅ v1.2 Isometric View (Phases 8-12) — SHIPPED 2026-02-16</summary>
 
 #### Phase 8: Core Isometric Transformation
 **Goal**: Game renders in isometric diamond view with proper depth sorting
@@ -107,7 +107,83 @@ Plans:
 Plans:
 - [x] 12-01-PLAN.md — Add HoverController with tile hover, click markers, and entity hover feedback
 
+</details>
+
+### 🚧 v1.3 Elevation & Structures (In Progress)
+
+**Milestone Goal:** Add vertical dimension to the world with terrain elevation, structure walls, and a scalable tile definition system.
+
+- [ ] **Phase 13: Tile Definition Architecture** — Foundation for elevation system
+- [ ] **Phase 14: Elevation System Core** — Data generation and depth sorting
+- [ ] **Phase 15: Elevation Rendering** — Side-faces and visual appearance
+- [ ] **Phase 16: Structure Walls & Pathfinding** — Gameplay integration
+
+## Phase Details
+
+### Phase 13: Tile Definition Architecture
+**Goal**: Establish scalable tile system with elevation metadata
+**Depends on**: Phase 12 (depth sorting foundation exists)
+**Requirements**: TILE-01, TILE-02, TILE-03, TILE-04, TILE-05, TILE-06
+**Success Criteria** (what must be TRUE):
+  1. TileDefinition interface exists with id, displayName, movementSpeed, isBlocking, elevation properties
+  2. All 16 existing tile types migrated to TileDefinition registry with type-safe lookups
+  3. ChunkData schema extended with heights[][] and structures[] arrays
+  4. Server generates and serializes new chunk fields without breaking existing clients
+  5. Tile hooks system supports onStep, onClick, onEnter, onExit, onTick for future extensibility
+**Plans**: TBD
+
+Plans:
+- [ ] 13-01: TBD
+
+### Phase 14: Elevation System Core
+**Goal**: Generate and flow elevation data through the system with composite depth sorting
+**Depends on**: Phase 13 (TileDefinition registry and ChunkData schema exist)
+**Requirements**: ELEV-01, ELEV-02, ELEV-05, RENDER-01
+**Success Criteria** (what must be TRUE):
+  1. Tiles have height levels 0-5 generated via noise in world-gen
+  2. Biome-specific elevation ranges enforced (e.g., craters 0-2, ruins 0-5)
+  3. Depth sorting includes elevation in composite calculation (screenY + elevation × weight)
+  4. Elevation data flows from server world-gen through ChunkData to client without errors
+**Plans**: TBD
+
+Plans:
+- [ ] 14-01: TBD
+
+### Phase 15: Elevation Rendering
+**Goal**: Terrain elevation appears visually with side-face rendering
+**Depends on**: Phase 14 (elevation data flowing, depth calculation correct)
+**Requirements**: ELEV-03, ELEV-04, RENDER-02, RENDER-05
+**Success Criteria** (what must be TRUE):
+  1. Side faces render for elevation differences with classic isometric look
+  2. Side-face visibility culling implemented (only render south/east faces, check neighbor occlusion)
+  3. Entities on elevated terrain render at correct depth above tiles
+  4. Viewport culling accounts for tall structures with expanded bounds
+  5. Visual elevation differences are clear and performance is maintained
+**Plans**: TBD
+
+Plans:
+- [ ] 15-01: TBD
+
+### Phase 16: Structure Walls & Pathfinding
+**Goal**: Elevation affects player movement and pathfinding
+**Depends on**: Phase 15 (elevation rendering works, elevation visible)
+**Requirements**: STRUCT-01, STRUCT-02, STRUCT-03, STRUCT-04, MOVE-01, MOVE-02, MOVE-03, MOVE-04, MOVE-05, RENDER-03, RENDER-04
+**Success Criteria** (what must be TRUE):
+  1. Wall tiles defined with variable height by type and all walls block movement
+  2. 1-level elevation difference is walkable, 2+ level difference blocks movement
+  3. A* pathfinding includes elevation cost penalty and prefers flat routes over climbing
+  4. Click detection accounts for elevation offset (clicks on elevated terrain work correctly)
+  5. Structure walls render with side faces and appear on minimap as distinct markers
+  6. Tall objects hide entities behind them (full occlusion)
+**Plans**: TBD
+
+Plans:
+- [ ] 16-01: TBD
+
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 13 → 14 → 15 → 16
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -123,5 +199,12 @@ Plans:
 | 10. Multiplayer Integration | v1.2 | 1/1 | Complete | 2026-02-16 |
 | 11. UI Integration | v1.2 | 1/1 | Complete | 2026-02-16 |
 | 12. Polish | v1.2 | 1/1 | Complete | 2026-02-16 |
+| 13. Tile Definition Architecture | v1.3 | 0/? | Not started | - |
+| 14. Elevation System Core | v1.3 | 0/? | Not started | - |
+| 15. Elevation Rendering | v1.3 | 0/? | Not started | - |
+| 16. Structure Walls & Pathfinding | v1.3 | 0/? | Not started | - |
 
-**Total:** 12 phases (12 complete)
+**Total:** 16 phases (12 complete, 4 planned)
+
+---
+*Last updated: 2026-02-16 after v1.3 roadmap creation*

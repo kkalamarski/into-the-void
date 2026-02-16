@@ -88,37 +88,39 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TILE-01 | TBD | Pending |
-| TILE-02 | TBD | Pending |
-| TILE-03 | TBD | Pending |
-| TILE-04 | TBD | Pending |
-| TILE-05 | TBD | Pending |
-| TILE-06 | TBD | Pending |
-| ELEV-01 | TBD | Pending |
-| ELEV-02 | TBD | Pending |
-| ELEV-03 | TBD | Pending |
-| ELEV-04 | TBD | Pending |
-| ELEV-05 | TBD | Pending |
-| STRUCT-01 | TBD | Pending |
-| STRUCT-02 | TBD | Pending |
-| STRUCT-03 | TBD | Pending |
-| STRUCT-04 | TBD | Pending |
-| MOVE-01 | TBD | Pending |
-| MOVE-02 | TBD | Pending |
-| MOVE-03 | TBD | Pending |
-| MOVE-04 | TBD | Pending |
-| MOVE-05 | TBD | Pending |
-| RENDER-01 | TBD | Pending |
-| RENDER-02 | TBD | Pending |
-| RENDER-03 | TBD | Pending |
-| RENDER-04 | TBD | Pending |
-| RENDER-05 | TBD | Pending |
+| TILE-01 | Phase 13 | Pending |
+| TILE-02 | Phase 13 | Pending |
+| TILE-03 | Phase 13 | Pending |
+| TILE-04 | Phase 13 | Pending |
+| TILE-05 | Phase 13 | Pending |
+| TILE-06 | Phase 13 | Pending |
+| ELEV-01 | Phase 14 | Pending |
+| ELEV-02 | Phase 14 | Pending |
+| ELEV-05 | Phase 14 | Pending |
+| RENDER-01 | Phase 14 | Pending |
+| ELEV-03 | Phase 15 | Pending |
+| ELEV-04 | Phase 15 | Pending |
+| RENDER-02 | Phase 15 | Pending |
+| RENDER-05 | Phase 15 | Pending |
+| STRUCT-01 | Phase 16 | Pending |
+| STRUCT-02 | Phase 16 | Pending |
+| STRUCT-03 | Phase 16 | Pending |
+| STRUCT-04 | Phase 16 | Pending |
+| MOVE-01 | Phase 16 | Pending |
+| MOVE-02 | Phase 16 | Pending |
+| MOVE-03 | Phase 16 | Pending |
+| MOVE-04 | Phase 16 | Pending |
+| MOVE-05 | Phase 16 | Pending |
+| RENDER-03 | Phase 16 | Pending |
+| RENDER-04 | Phase 16 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 25 total
-- Mapped to phases: 0
-- Unmapped: 25
+- Mapped to phases: 25
+- Unmapped: 0
+
+**Coverage validation:** ✓ 100% requirement coverage (all 25 requirements mapped)
 
 ---
 *Requirements defined: 2026-02-16*
-*Last updated: 2026-02-16 after initial definition*
+*Last updated: 2026-02-16 after v1.3 roadmap creation*
