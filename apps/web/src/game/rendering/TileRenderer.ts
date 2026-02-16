@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { TileId } from '@into-the-void/world-gen';
 import { IsometricTransform } from '../utils/IsometricTransform';
 
+const ELEVATION_HEIGHT_STEP = 16; // Pixels per elevation level (5 levels = 80px max)
+
 /**
  * Mapping from TileId enum to Phaser texture keys
  */
@@ -120,5 +122,124 @@ export class TileRenderer {
    */
   getTransform(): IsometricTransform {
     return this.isoTransform;
+  }
+
+  /**
+   * Create a tile with elevation support, including side faces for height differences.
+   * Returns a container with proper depth and elevation offset.
+   */
+  createTileWithElevation(
+    x: number,
+    y: number,
+    tileId: TileId,
+    elevation: number,
+    heights: number[][]
+  ): Phaser.GameObjects.Container {
+    const screenPos = this.isoTransform.gridToScreen(x, y);
+    const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
+
+    // Create container at elevated position
+    const container = this.scene.add.container(screenPos.x, screenPos.y - elevationOffset);
+    container.setData('gridX', x);
+    container.setData('gridY', y);
+    container.setData('elevation', elevation);
+
+    // Add side faces FIRST (render behind top face)
+
+    // South face (if south neighbor is lower)
+    if (y < heights.length - 1 && heights[y + 1][x] < elevation) {
+      const elevationSteps = elevation - heights[y + 1][x];
+      const southFace = this.createSouthFace(elevationSteps);
+      container.add(southFace);
+    }
+
+    // East face (if east neighbor is lower)
+    if (x < heights[0].length - 1 && heights[y][x + 1] < elevation) {
+      const elevationSteps = elevation - heights[y][x + 1];
+      const eastFace = this.createEastFace(elevationSteps);
+      container.add(eastFace);
+    }
+
+    // Add top face (renders in front of side faces)
+    const topFace = this.createTopFace(tileId);
+    container.add(topFace);
+
+    // Set depth using composite depth calculation
+    const depth = this.isoTransform.calculateDepth(x, y, elevation);
+    container.setDepth(depth);
+
+    return container;
+  }
+
+  /**
+   * Create south-facing side face for elevated tiles.
+   * Renders as a rectangle extending down from diamond bottom point.
+   */
+  private createSouthFace(elevationSteps: number): Phaser.GameObjects.Graphics {
+    const halfWidth = this.isoTransform.tileWidth / 2;
+    const halfHeight = this.isoTransform.tileHeight / 2;
+    const faceHeight = elevationSteps * ELEVATION_HEIGHT_STEP;
+
+    const graphics = this.scene.add.graphics();
+    graphics.fillStyle(0x1a1a2a, 1); // Dark shading
+    graphics.fillRect(0, halfHeight, halfWidth, faceHeight);
+
+    return graphics;
+  }
+
+  /**
+   * Create east-facing side face for elevated tiles.
+   * Renders as a parallelogram extending left from diamond bottom point.
+   */
+  private createEastFace(elevationSteps: number): Phaser.GameObjects.Graphics {
+    const halfWidth = this.isoTransform.tileWidth / 2;
+    const halfHeight = this.isoTransform.tileHeight / 2;
+    const faceHeight = elevationSteps * ELEVATION_HEIGHT_STEP;
+
+    const graphics = this.scene.add.graphics();
+    graphics.fillStyle(0x0a0a1a, 1); // Even darker for two-tone shading
+
+    graphics.beginPath();
+    graphics.moveTo(0, halfHeight); // Diamond bottom center
+    graphics.lineTo(-halfWidth, 0); // Diamond left point
+    graphics.lineTo(-halfWidth, faceHeight); // Left face bottom
+    graphics.lineTo(0, halfHeight + faceHeight); // Right face bottom
+    graphics.closePath();
+    graphics.fillPath();
+
+    return graphics;
+  }
+
+  /**
+   * Create top face (diamond shape) relative to container origin.
+   */
+  private createTopFace(tileId: TileId): Phaser.GameObjects.Graphics {
+    const color = this.getTileColor(tileId);
+    const halfWidth = this.isoTransform.tileWidth / 2;
+    const halfHeight = this.isoTransform.tileHeight / 2;
+
+    const graphics = this.scene.add.graphics();
+    graphics.fillStyle(color, 1);
+
+    // Draw diamond relative to (0, 0)
+    graphics.beginPath();
+    graphics.moveTo(0, -halfHeight);      // Top
+    graphics.lineTo(halfWidth, 0);        // Right
+    graphics.lineTo(0, halfHeight);       // Bottom
+    graphics.lineTo(-halfWidth, 0);       // Left
+    graphics.closePath();
+    graphics.fillPath();
+
+    // Add subtle border
+    graphics.lineStyle(1, 0x000000, 0.2);
+    graphics.beginPath();
+    graphics.moveTo(0, -halfHeight);
+    graphics.lineTo(halfWidth, 0);
+    graphics.lineTo(0, halfHeight);
+    graphics.lineTo(-halfWidth, 0);
+    graphics.closePath();
+    graphics.strokePath();
+
+    return graphics;
   }
 }
