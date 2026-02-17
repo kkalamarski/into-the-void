@@ -51,6 +51,28 @@ export async function updateEquipment(
 }
 
 /**
+ * Atomically update both items and equipment in a single DB write.
+ *
+ * CRITICAL: Use this for ALL operations that modify both inventory items and equipment
+ * (equip, unequip, pickup-and-equip). NEVER call updateInventoryItems + updateEquipment
+ * as separate awaited operations - this creates a race window where a crash between
+ * the two writes can duplicate items.
+ *
+ * This function generates a single SQL UPDATE statement with multiple SET columns,
+ * which PostgreSQL executes atomically.
+ */
+export async function updateInventoryFull(
+  db: DbClient,
+  characterId: string,
+  data: { items: Inventory['items']; equipment: Inventory['equipment'] }
+): Promise<void> {
+  await db
+    .update(inventories)
+    .set({ items: data.items, equipment: data.equipment })
+    .where(eq(inventories.characterId, characterId));
+}
+
+/**
  * Update entire inventory
  */
 export async function updateInventory(
