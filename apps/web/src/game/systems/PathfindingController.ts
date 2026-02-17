@@ -1,9 +1,19 @@
-import { Direction, Position, MOVE_DELAY_MS } from '@into-the-void/shared-types';
+import { Direction, Position, MOVE_DELAY_MS, ZONE_SIZE } from '@into-the-void/shared-types';
 import { findPath } from '@into-the-void/game-logic';
 import { useGameStore } from '../../store/gameStore';
 import { MovementController } from './MovementController';
 import Phaser from 'phaser';
 import { IsometricTransform } from '../utils/IsometricTransform';
+
+// Convert world coordinate to chunk-local coordinate (0 to ZONE_SIZE-1)
+function worldToLocal(coord: number): number {
+  return ((coord % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+}
+
+// Get chunk origin from world coordinate
+function getChunkOrigin(coord: number): number {
+  return Math.floor(coord / ZONE_SIZE) * ZONE_SIZE;
+}
 
 export class PathfindingController {
   private currentPath: Array<{ x: number; y: number }> = [];
@@ -39,15 +49,36 @@ export class PathfindingController {
     // Don't pathfind to current position
     if (startX === targetX && startY === targetY) return false;
 
-    // Use existing A* pathfinding from game-logic
-    const path = findPath(startX, startY, targetX, targetY, collisionMap);
+    // Check if start and target are in the same chunk
+    const startChunkX = getChunkOrigin(startX);
+    const startChunkY = getChunkOrigin(startY);
+    const targetChunkX = getChunkOrigin(targetX);
+    const targetChunkY = getChunkOrigin(targetY);
 
-    if (!path || path.length < 2) {
+    if (startChunkX !== targetChunkX || startChunkY !== targetChunkY) {
+      console.warn('PathfindingController: Cross-chunk pathfinding not supported');
+      return false;
+    }
+
+    // Convert world coordinates to chunk-local for pathfinding
+    const localStartX = worldToLocal(startX);
+    const localStartY = worldToLocal(startY);
+    const localTargetX = worldToLocal(targetX);
+    const localTargetY = worldToLocal(targetY);
+
+    // Use existing A* pathfinding from game-logic (in local coordinates)
+    const localPath = findPath(localStartX, localStartY, localTargetX, localTargetY, collisionMap);
+
+    if (!localPath || localPath.length < 2) {
       console.warn('PathfindingController: No path found to target');
       return false;
     }
 
-    this.currentPath = path;
+    // Convert path back to world coordinates
+    this.currentPath = localPath.map(p => ({
+      x: p.x + startChunkX,
+      y: p.y + startChunkY,
+    }));
     this.pathIndex = 1; // Skip current position (index 0)
 
     // Draw path visualization
