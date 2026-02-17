@@ -469,6 +469,34 @@ export class WorldScene extends Phaser.Scene {
 
       this.lastMoveTime = time;
       this.movementController.processInput(direction);
+
+      // Update moveDelay based on destination tile's movementSpeed
+      const player = useGameStore.getState().player;
+      if (player && this.chunkManager) {
+        const { worldX, worldY } = this.positionToWorldCoords(player.position);
+        // Calculate which chunk this tile belongs to
+        const chunkX = Math.floor(worldX / ZONE_SIZE);
+        const chunkY = Math.floor(worldY / ZONE_SIZE);
+        const zoneId = `z_${chunkX}_${chunkY}`;
+        const chunk = this.chunkManager.getChunk(zoneId);
+        if (chunk?.data.tiles) {
+          const localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+          const localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+          const tileNumericId = chunk.data.tiles[localY]?.[localX];
+          if (tileNumericId !== undefined) {
+            const tileId = tileIdToString(tileNumericId as TileId);
+            const tileDef = TileRegistry.get(tileId);
+            // Guard against movementSpeed <= 0 (walls are blocked anyway)
+            if (tileDef.movementSpeed > 0) {
+              this.moveDelay = Math.round(MOVE_DELAY_MS / tileDef.movementSpeed);
+            } else {
+              this.moveDelay = MOVE_DELAY_MS;
+            }
+            // Propagate to PathfindingController for click-to-move
+            this.pathfindingController?.setMoveDelay(this.moveDelay);
+          }
+        }
+      }
     }
   }
 
