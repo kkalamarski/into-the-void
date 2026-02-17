@@ -5,7 +5,7 @@ import { BiomeType } from '../game/biome';
 /**
  * Zone size in tiles
  */
-export const ZONE_SIZE = 64;
+export const ZONE_SIZE = 32;
 
 /**
  * Zone data
