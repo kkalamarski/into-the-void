@@ -237,6 +237,41 @@ export class InventoryService {
   }
 
   /**
+   * Move item from one slot to another.
+   * If toSlot is occupied, swap the two items' slot values.
+   * If toSlot is empty, just update fromItem's slot.
+   */
+  async moveSlot(
+    playerId: string,
+    fromSlot: number,
+    toSlot: number
+  ): Promise<{ success: boolean; reason?: string }> {
+    const inventory = this.inventories.get(playerId);
+    if (!inventory) {
+      return { success: false, reason: 'Player inventory not loaded' };
+    }
+
+    const fromItem = inventory.items.find((i) => i.slot === fromSlot);
+    if (!fromItem) {
+      return { success: false, reason: 'No item in fromSlot' };
+    }
+
+    const toItem = inventory.items.find((i) => i.slot === toSlot);
+
+    // Swap or move
+    fromItem.slot = toSlot;
+    if (toItem) {
+      toItem.slot = fromSlot;
+    }
+
+    // Persist
+    const db = this.databaseService.getClient();
+    await updateInventoryItems(db, playerId, inventory.items);
+
+    return { success: true };
+  }
+
+  /**
    * Unequip a specific module by instanceId from the modules array back to inventory.
    * Checks that inventory has room before moving.
    */

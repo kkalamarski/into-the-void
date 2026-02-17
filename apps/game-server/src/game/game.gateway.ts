@@ -460,6 +460,27 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('inventory:reorder')
+  async handleInventoryReorder(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: ClientEvents['inventory:reorder']
+  ) {
+    const player = this.playerService.getPlayerBySocket(client.id);
+    if (!player) return;
+
+    await this.inventoryService.moveSlot(
+      player.id,
+      data.fromSlot,
+      data.toSlot
+    );
+
+    // Always emit inventory:update to clear client pendingReorder
+    const inventory = this.inventoryService.getInventory(player.id);
+    if (inventory) {
+      client.emit('inventory:update', inventory);
+    }
+  }
+
   /**
    * Update player's WebSocket room subscriptions to match 3x3 chunk grid.
    * Player receives entity updates from current zone and 8 adjacent zones.
