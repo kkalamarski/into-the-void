@@ -1,563 +1,473 @@
-# Architecture Research: Infinite World Chunk Streaming
+# Architecture Research
 
-**Domain:** Multiplayer 2D Infinite World Game with Chunk Streaming
-**Researched:** 2026-02-16
-**Confidence:** HIGH
+**Domain:** Multiplayer isometric MMO — movement system overhaul (Phaser 3 + NestJS WebSocket)
+**Researched:** 2026-02-17
+**Confidence:** HIGH (direct codebase audit + official Phaser docs + verified networking patterns)
 
 ## Standard Architecture
 
-### System Overview
+### System Overview (Current State)
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         CLIENT (Phaser)                             │
-├─────────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
-│  │ ChunkManager │  │ TileRenderer │  │ ViewportCuller│              │
-│  │  - tracks    │  │  - renders   │  │  - culls     │              │
-│  │  - requests  │  │  - caches    │  │  - optimizes │              │
-│  │  - unloads   │  │  sprites     │  │  rendering   │              │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘              │
-│         │                 │                  │                       │
-│         └─────────────────┴──────────────────┘                       │
-│                           │                                          │
-├───────────────────────────┼──────────────────────────────────────────┤
-│                     WebSocket (Socket.IO)                            │
-├───────────────────────────┼──────────────────────────────────────────┤
-│                         SERVER (NestJS)                              │
-├─────────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
-│  │ GameGateway  │  │ ZonesService │  │ WorldGenerator│              │
-│  │  - handles   │  │  - caches    │  │  - biome     │              │
-│  │  - routes    │  │  - unloads   │  │  - terrain   │              │
-│  │  chunk reqs  │  │  old zones   │  │  - structures│              │
-│  └──────────────┘  └──────────────┘  └──────────────┘              │
-├─────────────────────────────────────────────────────────────────────┤
-│                    WORLD GENERATION (packages)                       │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │  BiomeGenerator → TerrainGenerator → StructureGenerator     │    │
-│  │  (noise layers)    (tiles+heights)    (features)            │    │
-│  └─────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        CLIENT (Phaser 3)                         │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌─────────────────┐  ┌───────────────────┐   │
+│  │  WorldScene  │  │  MovementCtrl   │  │ PathfindingCtrl   │   │
+│  │  update()    │  │  processInput() │  │  startPath()      │   │
+│  │  handleInput │  │  reconcile()    │  │  executeNextStep  │   │
+│  └──────┬───────┘  └───────┬─────────┘  └─────────┬─────────┘   │
+│         │                  │                       │             │
+│  ┌──────▼───────────────────▼───────────────────────▼─────────┐  │
+│  │                    gameStore (Zustand)                       │  │
+│  │  player.position  |  collisionMap  |  zoneState             │  │
+│  └──────────────────────────┬────────────────────────────────┘  │
+│                             │ socket.emit('player:move')         │
+├─────────────────────────────┼───────────────────────────────────┤
+│                     NETWORK LAYER                                │
+│                Socket.IO (WebSocket)                             │
+├─────────────────────────────┼───────────────────────────────────┤
+│                        SERVER (NestJS)                           │
+│  ┌──────────────────────────▼────────────────────────────────┐  │
+│  │                   GameGateway                               │  │
+│  │  handleMove() -> rate limit (140ms) -> GameService          │  │
+│  └──────────────────────────┬────────────────────────────────┘  │
+│                             │                                    │
+│  ┌──────────────────────────▼────────────────────────────────┐  │
+│  │  GameService / PlayerService                               │  │
+│  │  validateMovement() -> updatePosition() -> broadcast()     │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Component Responsibilities
+### Component Responsibilities (Existing — Verified by Codebase Audit)
 
-| Component | Responsibility | Typical Implementation |
-|-----------|----------------|------------------------|
-| **ChunkManager (client)** | Track viewport, request chunks from server, cache loaded chunks, unload distant chunks | Map-based cache with state tracking (loading/loaded/failed) |
-| **ViewportCuller (client)** | Calculate visible tiles based on camera, hide/show tiles dynamically | Frustum culling using camera bounds + padding |
-| **TileRenderer (client)** | Create Phaser sprites/graphics for tiles, apply elevations, handle isometric projection | Container-based rendering with depth sorting |
-| **GameGateway (server)** | Handle WebSocket events for chunk requests, route to ZonesService | NestJS WebSocket gateway with event handlers |
-| **ZonesService (server)** | Cache generated chunks, lazy-load on demand, cleanup old zones | Map-based cache with LRU cleanup (5min TTL) |
-| **WorldGenerator (server)** | Generate chunks deterministically from seed, apply biome noise layers | Simplex noise with multiple octaves (fbm) |
-| **BiomeGenerator (server)** | Generate temperature/moisture/elevation noise fields | 3 separate noise instances with different scales |
+| Component | Responsibility | Location |
+|-----------|----------------|----------|
+| `WorldScene.handleInput()` | Poll keyboard each frame, throttle by `moveDelay` (500ms), emit direction | `WorldScene.ts:430` |
+| `MovementController.processInput()` | Apply input locally (prediction), store pending, emit socket | `MovementController.ts:26` |
+| `MovementController.reconcile()` | Discard acked inputs, replay unacked from server position | `MovementController.ts:85` |
+| `PathfindingController` | A* click-to-move, dispatches to `MovementController.processInput()` | `PathfindingController.ts` |
+| `WorldScene.updateLocalPlayerSprite()` | Snap sprite to predicted position; 50ms tween on reconciliation | `WorldScene.ts:977` |
+| `WorldScene.movePlayer()` | Tween remote players to server position at 100ms Linear | `WorldScene.ts:944` |
+| `MinimapCamera` | Second Phaser camera at zoom 0.075, follows `localPlayer` sprite | `MinimapCamera.ts` |
+| `GameGateway.handleMove()` | Rate limit 140ms, validate, broadcast `player:moved` with sequence | `game.gateway.ts:120` |
+| `gameStore` listeners | Route `player:moved` to `MovementController.reconcile()` or tween | `gameStore.ts:185` |
 
-## Recommended Project Structure
+### Key Facts Established by Codebase Audit
 
-### EXISTING Structure (No Changes)
+- **Current move delay:** 500ms client (`WorldScene.moveDelay`), 140ms server rate limit. The client throttle is the effective bottleneck — server is permissive relative to that.
+- **Current input:** 4-directional keyboard mapped to isometric diagonals (W=nw, D=ne, S=se, A=sw). An `else-if` chain breaks simultaneous key detection.
+- **8-directional already partially wired:** `PathfindingController.getDirection()` returns all 8 directions. `DIRECTION_VECTORS` defines all 8. `calculateNewPosition()` handles all 8. `Direction` type has all 8 values. The gap is `handleInput()` using sequential `else-if` instead of key combination logic.
+- **Camera:** `cameras.main.startFollow(localPlayer, true, 1, 1)` — lerp values of 1 = instant snap. No smoothing exists.
+- **Prediction movement:** Sprite snaps instantly to predicted tile. No tween on the happy path.
+- **Reconciliation tween:** 50ms `Cubic.easeOut` on mismatch, instant on correct prediction. The algorithm is correct but duration may be visually abrupt.
+- **Remote player interpolation:** 100ms Linear tween on `movePlayer()`. Appropriate for 150ms cadence.
+- **Position type:** Integer tile coordinates + `zoneId` string. No fractional sub-tile position exists anywhere.
+
+---
+
+## Recommended Architecture for Movement Overhaul
+
+### What Changes vs. What Stays
+
 ```
-packages/
-├── world-gen/              # Already contains biome + chunk generation
-│   ├── noise/simplex.ts    # Simplex noise implementation (existing)
-│   ├── generation/
-│   │   ├── biome.ts        # BiomeGenerator (existing) ✓
-│   │   ├── chunk.ts        # WorldGenerator (existing) ✓
-│   │   ├── terrain.ts      # Terrain generation (existing)
-│   │   └── structures.ts   # Structure generation (existing)
-│
-├── tiles/                  # Tile definitions (existing)
-│   ├── registry.ts         # TileRegistry singleton (existing) ✓
-│   └── definitions/        # Biome-specific tiles (existing)
-│
-apps/
-├── web/                    # Client (existing)
-│   └── game/
-│       ├── rendering/
-│       │   ├── ChunkManager.ts       # Chunk lifecycle (existing) ✓
-│       │   ├── TileRenderer.ts       # Tile rendering (existing) ✓
-│       │   └── ViewportCuller.ts     # Culling (existing) ✓
-│       └── scenes/
-│           └── WorldScene.ts         # Main scene (existing) ✓
-│
-└── game-server/            # Server (existing)
-    ├── game/
-    │   └── game.gateway.ts          # WebSocket handler (existing) ✓
-    └── zones/
-        └── zones.service.ts         # Zone caching (existing) ✓
+STAYS UNCHANGED                    CHANGES
+────────────────────               ────────────────────────────────
+Socket event shape ('player:move') WorldScene.moveDelay: 500ms -> 150ms
+Direction type (all 8 exist)       handleInput: else-if -> resolveDirection()
+Reconcile algorithm                camera lerp: (1,1) -> (0.1, 0.1)
+Position type (integer tile)       prediction: snap -> 130ms Linear tween
+Server rate limit logic            reconcile tween: 50ms -> 80ms
+gameStore shape                    PathfindingController moveDelay (sync via constant)
+MinimapCamera structure            SpriteAnimationController (NEW component)
+ChunkManager / zoneId system
+A* pathfinding
 ```
 
-### NEW Components Required
+### System Overview (Target Architecture)
 
-**NONE** - All required architecture already exists. The milestone only requires:
-1. **Biome noise integration** - Already implemented in BiomeGenerator
-2. **Chunk streaming** - Already implemented in ChunkManager + GameGateway
-3. **Viewport-based loading** - Already implemented with zone:request event
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        CLIENT (Phaser 3)                         │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  WorldScene.handleInput()  [per frame, with 150ms guard] │   │
+│  │  resolveDirection(keys) -> 8-dir                         │   │
+│  └────────────────┬──────────────────────────────┬──────────┘   │
+│                   │                              │              │
+│  ┌────────────────▼───────────┐  ┌───────────────▼──────────┐   │
+│  │  MovementController        │  │  SpriteAnimController     │   │
+│  │  processInput(dir)         │  │  setFacing(dir)           │   │
+│  │  reconcile(pos, seq)       │  │  (directional sprite anim)│   │
+│  └────────────────┬───────────┘  └──────────────────────────┘   │
+│                   │                                              │
+│  ┌────────────────▼───────────────────────────────────────────┐  │
+│  │  WorldScene.updateLocalPlayerSprite()                       │  │
+│  │  prediction: 130ms Linear tween to target tile             │  │
+│  │  reconcile:  80ms Cubic.easeOut tween on mismatch          │  │
+│  │  camera: startFollow(target, true, 0.1, 0.1)               │  │
+│  └────────────────────────────────────────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                     Socket.IO (shape unchanged)                   │
+├─────────────────────────────────────────────────────────────────┤
+│                     SERVER (NestJS)                               │
+│  GameGateway.handleMove() rate limit: 140ms -> 125ms             │
+│  (adjusted for tighter client cadence tolerance)                 │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-### Integration Points to Activate
-
-The architecture is **already built**, but currently operates in **single-zone mode**. To enable infinite world:
-
-| Location | Current State | Needs Activation |
-|----------|---------------|------------------|
-| `ChunkManager.updateChunks()` | Loads 3x3 grid around player | ✓ Already correct |
-| `zone:request` event | Implemented in GameGateway | ✓ Already correct |
-| `BiomeGenerator` | Generates biomes from noise | ✓ Already correct |
-| `WorldGenerator.generateChunk()` | Deterministic generation | ✓ Already correct |
-| `ZonesService` | Caches + cleans up old zones | ✓ Already correct |
-
-**The system is fully architected** - it just needs the initial zone to be treated as chunk (0,0) instead of a standalone zone.
+---
 
 ## Architectural Patterns
 
-### Pattern 1: Viewport-Based Chunk Loading
+### Pattern 1: 8-Directional Key Combination Resolution
 
-**What:** Load only chunks within N tiles of player viewport, unload when player moves away
+**What:** Read all 8 keys simultaneously and resolve to a single `Direction` by checking key pairs before single keys. The existing `else-if` chain in `handleInput()` silently prevents diagonal+diagonal combos (e.g., W+D = north).
 
-**When to use:** Any infinite world game where entire world can't fit in memory
+**When to use:** When moving from 4-key to 8-key directional input in an isometric game.
 
-**Trade-offs:**
-- **Pros:** Constant memory usage regardless of world size, seamless exploration
-- **Cons:** Network latency when crossing chunk boundaries, need chunk caching strategy
+**Trade-offs:** Slightly more code than an `else-if` chain but eliminates "stuck between diagonals" feel. Must define priority for 3+ simultaneous keys (first matching pair wins).
 
 **Example:**
+
 ```typescript
-// ChunkManager.updateChunks() - ALREADY IMPLEMENTED
-updateChunks(playerZoneId: string): void {
-  const { x: playerX, y: playerY } = this.parseZoneId(playerZoneId);
+// Replace the else-if chain in WorldScene.handleInput():
+private resolveDirection(): Direction | null {
+  const up = this.cursors?.up.isDown || this.wasd?.W.isDown;
+  const down = this.cursors?.down.isDown || this.wasd?.S.isDown;
+  const left = this.cursors?.left.isDown || this.wasd?.A.isDown;
+  const right = this.cursors?.right.isDown || this.wasd?.D.isDown;
 
-  // Calculate required chunks (3x3 grid)
-  const requiredChunks = new Set<string>();
-  for (let dy = -1; dy <= 1; dy++) {
-    for (let dx = -1; dx <= 1; dx++) {
-      const zoneId = this.createZoneId(playerX + dx, playerY + dy);
-      requiredChunks.add(zoneId);
-    }
-  }
+  // Isometric screen-space mapping (existing single-key behavior preserved):
+  // W->nw, D->ne, S->se, A->sw
+  // Combos: W+D->n (NE+NW=North), D+S->e (NE+SE=East), S+A->s, W+A->w
+  if (up && right) return 'n';
+  if (down && right) return 'e';
+  if (down && left) return 's';
+  if (up && left) return 'w';
+  if (up) return 'nw';
+  if (right) return 'ne';
+  if (down) return 'se';
+  if (left) return 'sw';
+  return null;
+}
+```
 
-  // Request new chunks
-  requiredChunks.forEach(zoneId => {
-    if (!this.chunkStates.has(zoneId)) {
-      this.requestChunk(zoneId); // Triggers zone:request event
-    }
+**Important:** The existing isometric screen-space mapping is correct. W maps to 'nw' (up-left in isometric view). W+D (up-left + up-right) = 'n' (straight up in isometric). This completes the 8-direction set without changing single-key behavior.
+
+### Pattern 2: Tweened Tile-to-Tile Movement (Visual Smoothing)
+
+**What:** Tween the sprite from its current screen position to the predicted target tile position over `moveDelay - buffer` milliseconds. The logical position in gameStore updates instantly; only the visual representation tweens.
+
+**When to use:** Any tile-based game where move rate is fast enough that instant snap is jarring (under ~300ms/tile). At 150ms/tile, instant snap is visibly jerky.
+
+**Trade-offs:** The sprite is always slightly behind the logical tile position by `tween_duration`. At 150ms this is imperceptible. Risk: if tween duration exceeds moveDelay, tweens stack and sprite lags far behind. Must kill existing tween before starting next (`tweens.killTweensOf`).
+
+**Example:**
+
+```typescript
+// In WorldScene.updateLocalPlayerSprite() prediction branch:
+if (!reconciling) {
+  this.tweens.killTweensOf(this.localPlayer);
+  this.tweens.add({
+    targets: this.localPlayer,
+    x: screenPos.x,
+    y: targetY,
+    duration: 130,  // moveDelay (150ms) minus 20ms buffer
+    ease: 'Linear',
   });
-
-  // Unload distant chunks
-  this.loadedChunks.forEach((_, zoneId) => {
-    if (!requiredChunks.has(zoneId)) {
-      this.unloadChunk(zoneId);
-    }
-  });
-}
-```
-
-### Pattern 2: Deterministic Chunk Generation
-
-**What:** Generate same chunk data every time from world seed + coordinates, no database needed
-
-**When to use:** Procedural worlds where terrain is mathematically defined, infinite storage impossible
-
-**Trade-offs:**
-- **Pros:** Zero storage cost, infinite world size, instant "regeneration" of same chunk
-- **Cons:** Can't modify terrain permanently (unless you store deltas), CPU cost on first generation
-
-**Example:**
-```typescript
-// WorldGenerator - ALREADY IMPLEMENTED
-class WorldGenerator {
-  private biomeGenerator: BiomeGenerator;
-
-  constructor(worldSeed: string) {
-    this.biomeGenerator = new BiomeGenerator(worldSeed);
-  }
-
-  generateChunk(chunkX: number, chunkY: number): ChunkData {
-    // Same seed + coords = same result always
-    const biome = this.biomeGenerator.getChunkBiome(chunkX, chunkY, ZONE_SIZE);
-    const { tiles, heights, collisions } = generateTerrain(
-      this.worldSeed,
-      chunkX,
-      chunkY,
-      biome
-    );
-    // ... structures, spawns
-    return { zoneId: `z_${chunkX}_${chunkY}`, tiles, heights, ... };
-  }
-}
-```
-
-### Pattern 3: Multi-Layer Noise Biome System
-
-**What:** Combine multiple noise functions (temperature, moisture, elevation) to determine biome at each point
-
-**When to use:** Realistic biome transitions, avoid hard boundaries, support smooth gradients
-
-**Trade-offs:**
-- **Pros:** Natural-looking world, smooth transitions, realistic climate zones
-- **Cons:** More computation than simple random biomes, harder to guarantee specific biome placement
-
-**Example:**
-```typescript
-// BiomeGenerator - ALREADY IMPLEMENTED
-class BiomeGenerator {
-  private temperatureNoise: SimplexNoise;
-  private moistureNoise: SimplexNoise;
-  private elevationNoise: SimplexNoise;
-
-  getBiome(worldX: number, worldY: number): BiomeType {
-    const temp = this.getTemperature(worldX, worldY);      // 0-1
-    const moisture = this.getMoisture(worldX, worldY);     // 0-1
-    const elevation = this.getElevation(worldX, worldY);   // 0-1
-
-    // High elevation = special biomes
-    if (elevation > 0.8) {
-      if (temp < 0.3) return 'frozen_expanse';
-      if (temp > 0.7) return 'volcanic_ridge';
-      return 'ancient_ruins';
-    }
-
-    // Temperate zones based on temp/moisture
-    if (temp < 0.3) return 'frozen_expanse';
-    if (temp > 0.7 && moisture < 0.3) return 'volcanic_ridge';
-    // ... more biome rules
-  }
-}
-```
-
-### Pattern 4: Server-Side Chunk Cache with LRU Cleanup
-
-**What:** Cache generated chunks on server to avoid regenerating every request, clean up old unused chunks
-
-**When to use:** Multiplayer games where chunk generation is expensive, multiple players may need same chunk
-
-**Trade-offs:**
-- **Pros:** Faster chunk delivery to clients, reduced CPU usage, consistent entity state
-- **Cons:** Memory usage grows with active area, need cleanup strategy, cache invalidation complexity
-
-**Example:**
-```typescript
-// ZonesService - ALREADY IMPLEMENTED
-@Injectable()
-export class ZonesService {
-  private zones: Map<string, ZoneState> = new Map();
-
-  async getChunk(zoneId: string): Promise<ChunkData> {
-    let zoneState = this.zones.get(zoneId);
-
-    if (!zoneState) {
-      zoneState = this.loadZone(zoneId); // Generate + cache
-    }
-
-    zoneState.lastAccessed = Date.now();
-    return zoneState.chunk;
-  }
-
-  private cleanupUnusedZones(): void {
-    const now = Date.now();
-    const maxAge = 5 * 60 * 1000; // 5 minutes
-
-    for (const [zoneId, state] of this.zones.entries()) {
-      if (now - state.lastAccessed > maxAge) {
-        if (zoneId !== 'z_0_0') { // Keep spawn zone
-          this.zones.delete(zoneId);
-        }
-      }
-    }
-  }
-}
-```
-
-### Pattern 5: WebSocket Chunk Streaming
-
-**What:** Use persistent WebSocket connection to stream chunks on demand as player moves
-
-**When to use:** Real-time multiplayer games where HTTP request overhead is too high
-
-**Trade-offs:**
-- **Pros:** Low latency, bidirectional communication, server can push updates
-- **Cons:** Maintain connection state, need reconnection logic, harder to scale than HTTP
-
-**Example:**
-```typescript
-// GameGateway - ALREADY IMPLEMENTED
-@SubscribeMessage('zone:request')
-async handleZoneRequest(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() data: { zoneId: string }
-) {
-  const player = this.playerService.getPlayerBySocket(client.id);
-  if (!player) return;
-
-  // Get chunk data (cached or generate)
-  const zoneState = await this.gameService.getZoneState(data.zoneId);
-
-  // Send only chunk + biome (not players/entities for adjacent zones)
-  client.emit('zone:chunk', {
-    chunk: zoneState.chunk,
-    biome: zoneState.biome,
+} else {
+  // Reconciliation: smooth correction
+  this.tweens.killTweensOf(this.localPlayer);
+  this.tweens.add({
+    targets: this.localPlayer,
+    x: screenPos.x,
+    y: targetY,
+    duration: 80,   // increased from 50ms for less abruptness
+    ease: 'Cubic.easeOut',
   });
 }
 ```
+
+**Confidence:** HIGH. The exact same pattern is already used for remote players in `WorldScene.movePlayer()` at line 960-974. This extends it consistently to local player prediction.
+
+### Pattern 3: Camera Lerp Smoothing
+
+**What:** Change `startFollow` lerp values from 1 (instant snap) to ~0.1 (smooth interpolation). Each frame Phaser moves the camera a fraction of the distance to the target, producing a fluid trailing effect.
+
+**When to use:** When the player sprite tweens between tiles rather than snapping. Without camera lerp, the camera still snaps even though the sprite glides — negating the visual smoothness.
+
+**Trade-offs:** Values below 0.08 feel "floaty" and visually disconnect the camera from the player. Values above 0.15 don't add perceptible smoothing beyond what the tween achieves. Official Phaser docs cite 0.1 as the smooth-follow sweet spot.
+
+**Example:**
+
+```typescript
+// In WorldScene.updateLocalPlayer(), change:
+// this.cameras.main.startFollow(this.localPlayer!, true, 1, 1);
+// To:
+this.cameras.main.startFollow(
+  this.localPlayer!,
+  true,   // roundPixels: prevents sub-pixel jitter (Phaser docs recommendation)
+  0.1,    // lerpX
+  0.1     // lerpY
+);
+```
+
+**Minimap impact:** `MinimapCamera.startFollow(target, true)` has no lerp parameter — it correctly defaults to lerp=1 (instant). The minimap is a spatial orientation tool and should track exact position. No change needed.
+
+**Source:** Phaser 3 official camera docs confirm lerp range 0-1, default 1 = instant, 0.1 = smooth. `roundPixels: true` prevents the sub-pixel jitter noted in Phaser GitHub issue #3738.
+
+### Pattern 4: Server Rate Limit Alignment with Client Cadence
+
+**What:** The server rate limit and client `moveDelay` must maintain adequate tolerance for network jitter. When the client sends moves every 150ms, the server must accept events that arrive up to ~20-25ms early due to timing variance.
+
+**When to use:** Any time client move cadence changes.
+
+**Trade-offs:** Too tight a server limit causes false rejections under normal latency (visible as position corrections every few tiles). Too loose allows speed-hack clients to move faster.
+
+**Calculation:**
+```
+Current:  client=500ms, server=140ms, tolerance=360ms (generous)
+Target:   client=150ms, server=125ms, tolerance=25ms (acceptable for typical jitter)
+Rule:     server_limit = client_delay * 0.85, floor at 100ms
+          150 * 0.85 = 127.5, rounded to 125ms
+```
+
+The current 140ms server limit is borderline adequate for 150ms client delay (10ms tolerance), but reducing to 125ms provides a safer 25ms buffer.
+
+---
 
 ## Data Flow
 
-### Chunk Request Flow
+### Local Player Input Flow (Target)
 
 ```
-Player moves to edge of loaded area
-    ↓
-ChunkManager.updateChunks() detects missing chunk
-    ↓
-requestChunk() → emit('zone:request', { zoneId: 'z_1_2' })
-    ↓
-[WebSocket] → GameGateway.handleZoneRequest()
-    ↓
-GameService.getZoneState() → ZonesService.getChunk()
-    ↓
-ZonesService checks cache → MISS → loadZone()
-    ↓
-loadZone() → generateChunk() → WorldGenerator
-    ↓
-WorldGenerator:
-  - BiomeGenerator.getChunkBiome() (noise layers)
-  - generateTerrain() (tiles + heights + collisions)
-  - generateStructures() (features)
-  - generateSpawnPoints() (entities)
-    ↓
-Return ChunkData to ZonesService (cache it)
-    ↓
-ZonesService returns to GameService
-    ↓
-GameGateway emits 'zone:chunk' event
-    ↓
-[WebSocket] → Client receives zone:chunk
-    ↓
-ChunkManager.receiveChunk() → store + render
-    ↓
-renderChunk() → TileRenderer creates sprites
-    ↓
-ViewportCuller optimizes visibility
+WorldScene.update(time)
+    |
+    v
+handleInput(time)
+    |
+    +-- time - lastMoveTime < 150ms? --> return (throttle)
+    |
+    +-- resolveDirection(keys) --> Direction | null
+    |       W+D->'n', W->'nw', D->'ne', etc.
+    |
+    +-- pathfindingController.cancelPath() (if active)
+    |
+    +-- MovementController.processInput(dir)
+    |       +-- client-side collision check
+    |       +-- calculateNewPosition(player.pos, dir) --> newPos
+    |       +-- gameStore.setPlayer({ position: newPos })
+    |       +-- onPositionUpdate(newPos, reconciling=false)
+    |       |       --> WorldScene.updateLocalPlayerSprite
+    |       |           tweens.killTweensOf(localPlayer)
+    |       |           tweens.add({ x, y, duration: 130, ease: 'Linear' })
+    |       |           camera follows sprite via lerp=0.1
+    |       +-- socket.emit('player:move', { direction, sequence })
+    |
+    +-- SpriteAnimationController.setFacing(dir)  [NEW]
 ```
 
-### Biome Noise Generation Flow
+### Server Reconciliation Flow (Unchanged Algorithm, Adjusted Timing)
 
 ```
-WorldGenerator.generateChunk(x, y)
-    ↓
-BiomeGenerator.getChunkBiome(x, y, ZONE_SIZE)
-    ↓
-Calculate chunk center: centerX = x * 32 + 16, centerY = y * 32 + 16
-    ↓
-BiomeGenerator.getBiome(centerX, centerY)
-    ↓
-Parallel noise sampling:
-  - temperatureNoise.fbm(x * 0.005, y * 0.005, 4 octaves)
-  - moistureNoise.fbm(x * 0.007, y * 0.007, 4 octaves)
-  - elevationNoise.fbm(x * 0.003, y * 0.003, 6 octaves)
-    ↓
-Normalize to 0-1 range
-    ↓
-Apply biome rules:
-  - elevation > 0.8 → high altitude biomes
-  - elevation < 0.2 → low altitude biomes
-  - else: temp/moisture matrix
-    ↓
-Return BiomeType (e.g., 'volcanic_ridge')
+server emits 'player:moved' { playerId, position, lastProcessedInput }
+    |
+gameStore.ts listener (line 185)
+    |
+    +-- data.playerId === currentPlayer.id?
+    |       YES --> MovementController.reconcile(position, lastProcessedInput)
+    |               +-- pendingInputs = filter(seq > lastProcessedInput)
+    |               +-- reconciledPos = replay pending from serverPosition
+    |               +-- mismatch from currentClientPosition?
+    |               |       YES --> gameStore.setPlayer({ position: reconciledPos })
+    |               |               onPositionUpdate(reconciledPos, reconciling=true)
+    |               |                --> tween 80ms Cubic.easeOut  [was 50ms]
+    |               +-- NO mismatch --> no-op (prediction was correct, common case)
+    |
+    +-- other player --> WorldScene.movePlayer(playerId, position)
+            --> tween 100ms Linear [unchanged]
 ```
 
-### Client Chunk Cache Management
+### PathfindingController Sync (Critical Detail)
 
-```
-ChunkManager maintains:
-  - loadedChunks: Map<zoneId, LoadedChunk>
-  - chunkStates: Map<zoneId, 'loading' | 'loaded' | 'failed'>
+`PathfindingController` is constructed with `moveDelay` from `WorldScene`:
 
-On player movement:
-  1. Calculate required chunks (3x3 grid around player)
-  2. Request missing chunks (set state = 'loading')
-  3. Unload distant chunks (remove from maps, destroy sprites)
-
-On chunk received:
-  1. Update state to 'loaded'
-  2. Store chunk data
-  3. Call onChunkLoaded callback → renderChunk()
-
-Timeout handling:
-  - 10 second timeout per chunk
-  - On timeout: mark 'failed', log warning
-  - Client can retry by moving away and back
+```typescript
+// WorldScene.ts line 103:
+this.pathfindingController = new PathfindingController(
+  this.movementController,
+  this.moveDelay,   // <-- this.moveDelay is what changes (500 -> 150)
+  this,
+  this.isoTransform!
+);
 ```
 
-## Scaling Considerations
+When `WorldScene.moveDelay` changes, `PathfindingController`'s internal delay changes automatically because it uses the value at construction time. No separate change to `PathfindingController` is needed — but the constant must be defined at the `WorldScene` level and passed consistently.
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| **0-100 players** | Current architecture is perfect. Single NestJS server, in-memory chunk cache, 3x3 chunk loading (9 chunks per player = ~900 chunks max). Memory: ~10KB per chunk = 9MB for all players. |
-| **100-1000 players** | Add Redis for chunk cache sharing across server instances. Use Socket.IO Redis adapter for multi-server WebSocket support. Horizontal scaling: 1 server per ~200 players. Memory becomes stateless (Redis holds it). |
-| **1000-10000 players** | Shard world by regions (e.g., x coordinate ranges). Each server handles specific world regions. Redis Cluster for distributed cache. Consider chunk pre-generation for popular areas. Add CDN for static chunk data if chunks rarely change. |
-| **10000+ players** | Dedicated chunk generation service (microservice). Separate WebSocket gateway servers from game logic servers. Message queue (Kafka/RabbitMQ) for chunk requests. Database persistence for modified chunks (player edits). Consider read replicas for chunk data. |
+---
 
-### Scaling Priorities
+## New vs. Modified Components
 
-1. **First bottleneck:** Memory usage from chunk cache (100-500 players)
-   - **Fix:** Move chunk cache to Redis, share across servers
-   - **Cost:** Add Redis server (~$20/mo for managed service)
-   - **Benefit:** Near-infinite cache capacity, shared state
+| Component | Status | Change |
+|-----------|--------|--------|
+| `WorldScene.handleInput()` | MODIFY | Replace `else-if` chain with `resolveDirection()` for 8-key combo support |
+| `WorldScene.moveDelay` | MODIFY | 500ms -> 150ms; extract to `MOVE_DELAY_MS` constant |
+| `WorldScene.updateLocalPlayer()` | MODIFY | `startFollow` lerp from `(1, 1)` to `(0.1, 0.1)` |
+| `WorldScene.updateLocalPlayerSprite()` | MODIFY | Prediction: snap -> 130ms Linear tween; reconcile: keep pattern, increase 50ms -> 80ms |
+| `MovementController` | NO CHANGE | Already handles all 8 directions; reconcile algorithm is correct |
+| `PathfindingController` | NO CHANGE | Already uses full 8-direction `getDirection()`; uses `moveDelay` from constructor |
+| `SpriteAnimationController` | NEW | Maps `Direction` to sprite frame/animation; stateful (tracks last facing); owned by `WorldScene` |
+| `GameGateway.handleMove()` | MODIFY | Rate limit: `< 140` -> `< 125` to match tighter client cadence |
+| `game-logic/movement/validation.ts` | NO CHANGE | All 8 directions already in `DIRECTION_VECTORS` |
+| `shared-types/position.ts` | NO CHANGE | `Direction` type already has all 8 values |
+| `MinimapCamera` | NO CHANGE | Correctly at lerp=1 (instant); should stay that way |
 
-2. **Second bottleneck:** CPU for chunk generation (500-2000 players)
-   - **Fix:** Pre-generate popular areas during off-peak hours
-   - **Alternative:** Dedicated chunk generation worker service
-   - **Benefit:** Reduce real-time generation load by 60-80%
-
-3. **Third bottleneck:** WebSocket connection limits (2000-5000 players)
-   - **Fix:** Horizontal scaling with Socket.IO Redis adapter
-   - **Setup:** Multiple game-server instances behind load balancer
-   - **Benefit:** Each server handles ~500-1000 connections
-
-## Anti-Patterns
-
-### Anti-Pattern 1: Loading Entire World at Once
-
-**What people do:** Generate all chunks on server startup, send full world to client
-
-**Why it's wrong:**
-- Infinite world = infinite memory usage (impossible)
-- Client can't render millions of tiles (browser crashes)
-- Load times grow linearly with world size
-
-**Do this instead:** Load 3x3 chunk grid around player (9 chunks), lazy-generate on demand
-
-### Anti-Pattern 2: Regenerating Same Chunk Every Time
-
-**What people do:** No server-side cache, generate chunk from seed on every request
-
-**Why it's wrong:**
-- Wastes CPU (noise generation is expensive)
-- Entities spawn/despawn incorrectly (regeneration creates new entities)
-- Can't support world modifications (mining, building)
-
-**Do this instead:** Cache generated chunks on server with LRU cleanup, treat chunks as stateful
-
-### Anti-Pattern 3: Sending Full Chunk Data for Adjacent Zones
-
-**What people do:** When loading adjacent chunks, send players/entities for all 9 chunks
-
-**Why it's wrong:**
-- Massive network payload (players see ~100+ entities at once)
-- Client renders entities outside viewport
-- Entity updates flood network (100 entities × 10 updates/sec = 1000 events/sec)
-
-**Do this instead:** Send only tiles/biome for adjacent chunks, send entities only for current chunk
-
-### Anti-Pattern 4: Hard-Coded Biome Boundaries
-
-**What people do:** Assign biomes to chunks randomly or in grid pattern
-
-**Why it's wrong:**
-- Ugly hard borders (volcanic next to frozen)
-- No natural climate zones (temperature should be continuous)
-- Can't have gradual transitions
-
-**Do this instead:** Use noise layers (temperature/moisture/elevation) for smooth biome distribution
-
-### Anti-Pattern 5: No Chunk Unloading
-
-**What people do:** Load chunks as player explores, never unload old chunks
-
-**Why it's wrong:**
-- Memory leak (grows unbounded as player explores)
-- Eventually crashes client/server
-- Rendering performance degrades (culling thousands of sprites)
-
-**Do this instead:** Unload chunks outside viewport radius, clean up old server-side chunks (5min TTL)
-
-### Anti-Pattern 6: Synchronous Chunk Generation
-
-**What people do:** Block WebSocket event handler until chunk generates
-
-**Why it's wrong:**
-- Freezes entire server (async I/O blocked)
-- Other players experience lag
-- Can't handle concurrent chunk requests
-
-**Do this instead:** Use async/await, allow Node.js event loop to process other requests during generation
+---
 
 ## Integration Points
-
-### External Services
-
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| **Socket.IO** | WebSocket gateway for chunk streaming | Already integrated in GameGateway |
-| **SimplexNoise** | Deterministic noise generation from seed | Already integrated in BiomeGenerator |
-| **Phaser** | Client-side rendering engine | Already integrated in WorldScene |
-| **NestJS** | Server-side framework for WebSocket handlers | Already integrated across game-server |
 
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| **Client ↔ Server** | WebSocket (Socket.IO) events: `zone:request` / `zone:chunk` | Already implemented, bidirectional |
-| **GameGateway ↔ ZonesService** | Direct method calls (same process) | Standard NestJS dependency injection |
-| **ZonesService ↔ WorldGenerator** | Function call to `generateChunk()` | Stateless generation, thread-safe |
-| **WorldGenerator ↔ BiomeGenerator** | Method calls on instance | Generator created once per chunk generation |
-| **ChunkManager ↔ TileRenderer** | Callback pattern: `onChunkLoaded(chunk, biome)` | Clean separation of concerns |
-| **WorldScene ↔ ChunkManager** | WorldScene provides callbacks to ChunkManager constructor | Inversion of control pattern |
+| `WorldScene` <-> `MovementController` | Direct method call + `onPositionUpdate` callback | The callback is the seam for sprite updates; reconciling=true/false flag drives tween vs snap behavior |
+| `MovementController` <-> `gameStore` | `useGameStore.getState()` called synchronously | No subscription; reads/writes state directly |
+| `gameStore` socket listeners <-> `WorldScene` | `worldScene.getMovementController()` | gameStore calls into WorldScene on `player:moved`; this coupling is existing and intentional |
+| `WorldScene` <-> `PathfindingController` | Constructor injection of `MovementController` + `moveDelay` | PathfindingController calls `movementController.processInput()` — unchanged at runtime |
+| `WorldScene` <-> `SpriteAnimationController` | Owned and called by WorldScene each frame after direction resolution | WorldScene calls `setFacing(dir)` and (eventually) `playWalkCycle()` |
+| `MovementController` <-> `gameSocket` | Direct `gameSocket.emit` inside controller | Socket is a module-level singleton; no injection needed |
 
-## Build Order Recommendation
+### Critical Interaction: Prediction Tween + Camera Lerp
 
-The architecture is **already complete**. No new components needed. The milestone can proceed directly to implementation:
+When `startFollow` lerp=0.1 is active, Phaser's camera tracks the `localPlayer` container's **live position** (updated continuously by the active tween), not the logical tile center. This means:
 
-### Phase 1: Coordinate System Migration (Foundation)
-- Treat zones as chunks with coordinates
-- Update position.zoneId format (`z_x_y`)
-- Ensure all coordinate parsing is consistent
+1. Prediction fires -> tween starts moving `localPlayer` container toward target tile
+2. Camera lerps toward `localPlayer.x/y` each frame, tracking the tween's intermediate positions
+3. Result: camera appears to glide with the player organically
 
-### Phase 2: Enable Multi-Chunk Loading (Activation)
-- ChunkManager already loads 3x3 grid
-- Just ensure it's called on player movement
-- Test chunk request/receive flow
+No special coordination is required between the tween and camera systems — `startFollow` uses the live position automatically.
 
-### Phase 3: Biome Visualization (Polish)
-- BiomeGenerator already generates biomes
-- Display biome in HUD
-- Visual transitions between chunks
+**Timing math:** At 150ms moveDelay with 130ms tween duration, there is a 20ms idle window between tween completion and next move. If the player holds a key continuously, the next `processInput` fires after 150ms, killing the just-completed tween and starting the next one. Stack risk is minimal.
 
-### Phase 4: Testing & Optimization (Validation)
-- Test cross-chunk movement
-- Verify chunk cleanup works
-- Performance profiling (memory, CPU)
+---
 
-**No new architectural components required.** The system is fully designed and implemented.
+## Recommended Project Structure
+
+```
+apps/web/src/game/
+├── systems/
+│   ├── MovementController.ts       [NO CHANGE]
+│   ├── PathfindingController.ts    [NO CHANGE]
+│   ├── HoverController.ts          [NO CHANGE]
+│   └── SpriteAnimationController.ts  [NEW]
+├── scenes/
+│   └── WorldScene.ts               [MODIFY: handleInput, moveDelay, lerp, tween]
+└── rendering/
+    └── MinimapCamera.ts            [NO CHANGE]
+
+apps/game-server/src/game/
+└── game.gateway.ts                 [MODIFY: rate limit 140ms -> 125ms]
+```
+
+---
+
+## Scaling Considerations
+
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| Current (small playerbase) | Tween approach is fine; Phaser tween manager is efficient at 6-7 tweens/sec per player |
+| ~100 concurrent players/zone | moveDelay reduction (500->150ms) triples `player:moved` broadcast frequency; at 100 players: 100 * 6.67 = 667 events/sec. Well within Socket.IO capacity |
+| ~500+ concurrent players | Consider delta-compression on `player:moved`; currently sends full position each time |
+| 1000+ players/zone | Zone sharding or position update batching; outside scope of this milestone |
+
+### Performance Impact of Tween Approach
+
+Phaser's tween manager is designed for frequent tween creation/destruction. Killing and restarting tweens at 6.67hz per moving player is trivial. The previous remote player implementation (`movePlayer`) already does this and has not shown performance issues.
+
+---
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Changing Position Type to Sub-Tile
+
+**What people do:** Add `subX: number, subY: number` to `Position` to enable fluid, pixel-level movement alongside tile-based logic.
+
+**Why it's wrong:** The entire server validation, reconciliation, pathfinding, and collision system is built on integer tile coordinates. Sub-tile position requires rewriting `validateMovement`, `calculateNewPosition`, A* pathfinding, and zone boundary detection (which relies on integer overflow). It also invalidates the existing sequence-number reconciliation model which assumes discrete tile steps.
+
+**Do this instead:** Keep positions as integer tile coordinates. Visual smoothness is achieved by tweening the sprite between integer positions on the client. The server's authoritative model stays tile-based.
+
+### Anti-Pattern 2: Reducing moveDelay Without Adjusting Server Rate Limit
+
+**What people do:** Change `WorldScene.moveDelay` to 150ms but leave server rate limit at 140ms.
+
+**Why it's wrong:** Current tolerance buffer = 500ms - 140ms = 360ms. At 150ms client delay: 150ms - 140ms = 10ms. Normal network jitter of 10-15ms will cause the server to reject valid moves as "too fast", triggering `reconcile()` every few tiles, visible as stuttering even when prediction was correct.
+
+**Do this instead:** Lower server rate limit to 125ms when client `moveDelay` is 150ms. This provides a 25ms tolerance which absorbs typical jitter while detecting clients moving at under 125ms (clear speed hacking).
+
+### Anti-Pattern 3: Applying Camera Lerp to the Minimap
+
+**What people do:** Apply `lerp=0.1` to `MinimapCamera.startFollow()` for consistency.
+
+**Why it's wrong:** The minimap is a spatial orientation tool. Players use it to gauge proximity to zone edges and entities. Camera lag on the minimap creates an "I'm looking at where I was 100ms ago" disorientation and makes the position dot misleading.
+
+**Do this instead:** Keep `MinimapCamera.startFollow(target, true)` with no lerp. Minimap = instant. Main camera = lerp 0.1.
+
+### Anti-Pattern 4: PathfindingController Using a Different moveDelay Than WorldScene
+
+**What people do:** Update `WorldScene.moveDelay` but construct `PathfindingController` with a hardcoded value or forget to update the constructor argument.
+
+**Why it's wrong:** `PathfindingController` uses `this.moveDelay` internally to schedule `setTimeout(executeNextStep, this.moveDelay)`. If this value differs from `WorldScene.moveDelay`, WASD and click-to-move operate at different speeds. One will violate the server rate limit, triggering reconciliation.
+
+**Do this instead:** Define `const MOVE_DELAY_MS = 150` as a named constant in `WorldScene.ts` and pass it to both `this.moveDelay = MOVE_DELAY_MS` and `new PathfindingController(controller, MOVE_DELAY_MS, ...)`.
+
+### Anti-Pattern 5: Tween Duration >= moveDelay
+
+**What people do:** Set prediction tween duration to 150ms (same as moveDelay).
+
+**Why it's wrong:** If the player holds a key and moves continuously, the new move fires exactly when the previous tween completes. Due to `setTimeout` and `requestAnimationFrame` timing imprecision, tweens may overlap by 5-10ms. `tweens.killTweensOf` handles this, but if duration equals delay exactly, the sprite may never reach the target position before being redirected — creating a "rubber band" drift toward target tiles.
+
+**Do this instead:** Set tween duration to `moveDelay - 20ms` (e.g., 130ms for 150ms delay). The 20ms buffer ensures each tween completes cleanly before the next begins.
+
+---
+
+## Build Order for Movement Refactor
+
+Based on dependency order and multiplayer sync risk (lowest risk first):
+
+1. **Server rate limit adjustment** — `game.gateway.ts` line 133: `< 140` -> `< 125`. No client changes. Prevents false rejections once client cadence changes.
+
+2. **Extract `MOVE_DELAY_MS` constant and reduce it** — Define `const MOVE_DELAY_MS = 150` in `WorldScene.ts`. Update `this.moveDelay = MOVE_DELAY_MS`. Pass to `PathfindingController` constructor. Verify both WASD and click-to-move fire at same cadence.
+
+3. **8-directional input resolution** — Replace `else-if` chain in `handleInput()` with `resolveDirection()`. Manually test W+D=n, D+S=e, S+A=s, W+A=w plus all 4 single-key diagonals.
+
+4. **Prediction sprite tween** — Modify `updateLocalPlayerSprite()` prediction branch: instant snap -> 130ms Linear tween. Add `tweens.killTweensOf` before each. Verify tween completes before next move fires.
+
+5. **Camera lerp** — Change `startFollow` lerp from `(1, 1)` to `(0.1, 0.1)` after confirming step 4 looks smooth. Verify minimap camera is untouched.
+
+6. **Reconciliation tween tuning** — Increase reconciliation tween from 50ms -> 80ms `Cubic.easeOut`. Test by deliberately causing prediction mismatches (move into collision near boundary).
+
+7. **SpriteAnimationController scaffold** — Create the class, integrate call site in `handleInput()` after direction resolution. Start as a no-op stub. Implement directional frames only when sprite assets have directional variants.
+
+---
 
 ## Sources
 
-- [GitHub - ToberoCat/InfiniteWorld: This repo shows how to create a infinite chunk based world](https://github.com/ToberoCat/InfiniteWorld)
-- [Godot 4+ Multiplayer Seamless Open-World Chunks](https://github.com/godotengine/godot-docs/issues/8981)
-- [Hytale is finally here! – Hytale](https://hytale.com/news/2026/1/hytale-is-finally-here)
-- [AutoBiomes: procedural generation of multi-biome landscapes](https://cgvr.cs.uni-bremen.de/papers/cgi20/AutoBiomes.pdf)
-- [Making of OPCraft (Part 2): On-chain procedural terrain generation](https://lattice.xyz/blog/making-of-opcraft-part-2-on-chain-procedural-terrain-generation)
-- [Procedural World Generation with Biomes in Unity](https://medium.com/@mrrsff/procedural-world-generation-with-biomes-in-unity-a474e11ff0b7)
-- [Fractal-based terrain generation for infinite planetary worlds](https://www.daydreamsoft.com/blog/fractal-based-terrain-generation-for-infinite-planetary-worlds)
-- [How Minecraft Terrain Generation Works](https://cybrancee.com/blog/how-minecraft-terrain-generation-works/)
-- [Red Blob Games: Making maps with noise](https://www.redblobgames.com/maps/terrain-from-noise/)
-- [Generating complex, multi-biome procedural terrain with Simplex noise](https://parzivail.com/procedural-terrain-generaion/)
-- [Let's Make a Voxel Engine - Chunk Management](https://sites.google.com/site/letsmakeavoxelengine/home/chunk-management)
-- [Unity: Terrain chunk loading and unloading](https://discussions.unity.com/t/terrain-chunk-loading-and-unloading/245160)
-- [Chunk Loading System - Roblox Developer Forum](https://devforum.roblox.com/t/chunk-loading-system/3256694)
-- [Level Streaming in Open-World Games](https://medium.com/@business.sebastian1524/level-streaming-in-open-world-games-revolutionizing-immersive-experiences-0afdd8ffed88)
-- [Making a multiplayer web game with websocket that can be scalable](https://medium.com/@dragonblade9x/making-a-multiplayer-web-game-with-websocket-that-can-be-scalable-to-millions-of-users-923cc8bd4d3b)
-- [Scalable WebSocket Architecture](https://blog.hathora.dev/scalable-websocket-architecture/)
-- [Designing a Layered WebSocket Architecture for Scalable Real-Time Systems](https://medium.com/@jamala.zawia/designing-a-layered-websocket-architecture-for-scalable-real-time-systems-1ba3591e3ffb)
-- [Streaming at Scale: SSE, WebSockets & Designing Real-Time AI APIs](https://learnwithparam.com/blog/streaming-at-scale-sse-websockets-real-time-ai-apis)
-- [Chunking WebSocket Transmission](https://www.xjavascript.com/blog/chunking-websocket-transmission/)
-- [WebSocket architecture best practices](https://ably.com/topic/websocket-architecture-best-practices)
-- [A description of the new Client Cache for server developers](https://gist.github.com/Tomcc/4be79d3eafcd158c5059abd4ab2e8d35)
-- [Data Locality · Optimization Patterns · Game Programming Patterns](https://gameprogrammingpatterns.com/data-locality.html)
-- [Architecture Patterns: Caching](https://kislayverma.com/software-architecture/architecture-patterns-caching-part-1)
-- [Client-Server Game Architecture - Gabriel Gambetta](https://www.gabrielgambetta.com/client-server-game-architecture.html)
-- [Mastering Multiplayer Game Architecture - Getgud.io](https://www.getgud.io/blog/mastering-multiplayer-game-architecture-choosing-the-right-approach/)
+- Phaser 3 Official Docs — Camera concepts: https://docs.phaser.io/phaser/concepts/cameras
+- Phaser 3 API — camera.startFollow: https://newdocs.phaser.io/docs/3.60.0/focus/Phaser.Cameras.Scene2D.Camera-startFollow
+- Phaser 3 API — camera.lerp: https://newdocs.phaser.io/docs/3.80.0/focus/Phaser.Cameras.Scene2D.Camera-lerp
+- Client-side prediction smoothing pattern: https://www.gamedev.net/forums/topic/658931-smoothing-corrections-to-client-side-prediction/5168001/
+- Tile-based MMO movement networking tradeoffs: https://gamedev.net/forums/topic/604243-mmomultiplayer-movement/4824164
+- Client-side prediction algorithm: https://en.wikipedia.org/wiki/Client-side_prediction
+- Colyseus + Phaser 3 interpolation tutorial: https://learn.colyseus.io/phaser/3-client-predicted-input.html
+- Codebase: `apps/web/src/game/scenes/WorldScene.ts` (direct audit)
+- Codebase: `apps/web/src/game/systems/MovementController.ts` (direct audit)
+- Codebase: `apps/web/src/game/systems/PathfindingController.ts` (direct audit)
+- Codebase: `apps/game-server/src/game/game.gateway.ts` (direct audit)
+- Codebase: `packages/game-logic/src/movement/validation.ts` (direct audit)
+- Codebase: `packages/shared-types/src/core/position.ts` (direct audit)
 
 ---
-*Architecture research for: Into the Void - Infinite World Chunk Streaming*
-*Researched: 2026-02-16*
+*Architecture research for: Into the Void — movement system overhaul (smooth movement, 8-directional input, camera interpolation)*
+*Researched: 2026-02-17*

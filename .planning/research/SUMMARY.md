@@ -1,272 +1,211 @@
 # Project Research Summary
 
-**Project:** Into the Void - Infinite World with Seamless Chunk Streaming
-**Domain:** Multiplayer 2D Sci-Fi Survival MMO with Procedural World Generation
-**Researched:** 2026-02-16
+**Project:** Into the Void — Movement System Overhaul
+**Domain:** Multiplayer isometric MMO — smooth movement, 8-directional input, camera interpolation
+**Researched:** 2026-02-17
 **Confidence:** HIGH
 
 ## Executive Summary
 
-The existing codebase is already architected for infinite world chunk streaming. All required components exist: SimplexNoise for seamless terrain, BiomeGenerator with multi-layer noise (temperature/moisture/elevation), ChunkManager handling 3x3 pre-loading, and Socket.IO room-based zone subscriptions. Zero new dependencies needed. The milestone requires activating existing patterns, not building new systems.
+The movement system overhaul is a focused, low-risk milestone. All required capabilities already exist in the installed stack (Phaser 3.90.0, shared-types, game-logic) — this is a code-change-only effort with zero new dependencies. The core problem is architectural: the client input handler uses a sequential `else-if` chain that only maps 4 isometric diagonals (W=NW, D=NE, S=SE, A=SW), leaving cardinal directions N/S/E/W unreachable via keyboard. The Direction type, DIRECTION_VECTORS, MovementController, and server-side validation already support all 8 directions fully. The fix is approximately 30 lines in `WorldScene.handleInput()`, one parameter change for camera lerp, and a tween added to prediction sprite updates.
 
-The recommended approach is to treat zones as chunks with coordinates, enable the existing 3x3 chunk loading that already works, and integrate the BiomeGenerator that's already generating seamless biomes. The architecture uses deterministic server-side generation with client-side caching, WebSocket streaming for chunk delivery, and viewport-based loading with automatic unloading of distant chunks.
+The recommended approach is an incremental, dependency-ordered build: adjust the server rate limit first (prevents false rejections once client cadence tightens), extract a unified `MOVE_DELAY_MS = 150` constant (eliminates the 500ms vs 150ms inconsistency that makes WASD feel 3x slower than click-to-move), add 8-directional input resolution, add tile-to-tile sprite tweening, then smooth camera follow. Each step is independently testable and does not touch the prediction/reconciliation architecture, which is correct and must not be modified. Only the visual layer changes (sprite position, camera follow parameters).
 
-Key risks are entity visibility across chunk boundaries (must use world coordinates, not zone ID matching), depth sorting breaks without world coordinates, and memory leaks from Phaser containers if not explicitly destroyed. All risks are preventable with existing code patterns - the research identified that critical systems like BiomeGenerator and SimplexNoise already use world coordinates correctly.
+The primary risks are timing-related rather than architectural. Tween duration must be 20ms shorter than moveDelay to prevent visual drift during sustained input. The server rate limit must be reduced from 140ms to 125ms before the client delay is reduced, or normal network jitter will trigger false rejections. The minimap camera must retain instant-follow (lerp=1) while only the main camera receives smooth follow. The pitfalls research also documents a second body of knowledge on infinite world chunk streaming — that material applies to a future milestone, not this sprint.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-The stack is complete. No new packages needed. Research verified that all capabilities for infinite world streaming exist in current dependencies. SimplexNoise (custom implementation) uses world coordinates for seamless terrain across chunks. BiomeGenerator uses three noise layers (temperature 0.005, moisture 0.007, elevation 0.003 scales) for natural biome transitions. ChunkManager loads 3x3 grids and tracks chunk states. Socket.IO 4.7 handles room-based broadcasting. Phaser 3.80 provides native Container destruction for memory cleanup.
+No new packages are needed. Phaser 3.90.0 provides all required primitives: `camera.startFollow()` with lerpX/lerpY for smooth camera interpolation, `Key.isDown` boolean checks readable simultaneously for 8-directional input, and `this.tweens.add()` for sprite interpolation. The `Direction` type in `@into-the-void/shared-types` already includes all 8 values. `DIRECTION_VECTORS` in `@into-the-void/game-logic` already has correct dx/dy for all 8 directions. The full stack is present and verified against installed Phaser 3.90.0 type definitions.
 
-**Core technologies (all present):**
-- SimplexNoise (custom) — Multi-octave procedural noise with fbm() and ridged(), already uses world coordinates for seamless generation
-- BiomeGenerator (custom) — Three noise layers (temperature/moisture/elevation) generate seamless biomes, already correct for infinite world
-- Socket.IO ^4.7.0 — Room-based broadcasting for zone subscriptions, proven scalable for chunk streaming
-- Phaser ^3.80.0 — Client rendering with native Container destruction for memory cleanup
-- ChunkManager (custom) — 3x3 chunk loading with state tracking (loading/loaded/failed), already correct for infinite world
-- WorldGenerator (custom) — Deterministic chunk generation from world seed, perfect for infinite world (no storage needed)
+**Core technologies:**
+- **Phaser 3.90.0** (camera lerp) — `camera.startFollow(target, true, 0.1, 0.1)` confirmed at line 3671 of installed phaser.d.ts; `roundPixels: true` prevents sub-pixel jitter on isometric grid
+- **Phaser 3.90.0** (keyboard input) — Simultaneous `Key.isDown` checks per frame; replaces sequential `else-if` chain with combination detection; no plugin required
+- **Phaser 3.90.0** (tweens) — `this.tweens.add({ duration: 130, ease: 'Linear' })` for prediction path; same pattern already used for remote players in `movePlayer()`
+- **@into-the-void/shared-types** — `Direction` type already has all 8 values at `packages/shared-types/src/core/position.ts` line 16; no type changes needed
+- **@into-the-void/game-logic** — `calculateNewPosition()` and `validateMovement()` already handle all 8 directions; A* pathfinding is the only component needing later diagonal support (P3, future milestone)
 
 ### Expected Features
 
-Research reveals this milestone focuses on infrastructure (chunk streaming, biome integration) not visual features. The elevation and structure features referenced in other documentation are already implemented. This milestone activates infinite world capabilities that exist but currently operate in single-zone mode.
+Research cross-referenced against Tibia (official docs), Albion Online (community), and Path of Exile 2 movement conventions. All P1 features are pure client-side changes. Only terrain-speed movement (P2) requires server-side coordination.
 
-**Must have (table stakes - infrastructure):**
-- 3x3 chunk pre-loading around player position
-- Seamless biome transitions using noise layers
-- Deterministic chunk generation from world seed
-- Chunk unloading when player moves away
-- Viewport-based chunk requests via WebSocket
-- Server-side chunk caching with cleanup
+**Must have (table stakes):**
+- **Full 8-direction WASD** — tiles directly N/S/E/W are currently unreachable; this is the stated problem. Map single keys to isometric diagonals (existing behavior preserved), dual-key combos to cardinals (W+D=N, D+S=E, S+A=S, W+A=W)
+- **Consistent movement speed** — 500ms WASD vs 150ms click-to-move is perceptibly broken; character visibly moves 3x slower on keyboard vs mouse. Unify to 150ms via `MOVE_DELAY_MS` constant passed to both `WorldScene.moveDelay` and `PathfindingController` constructor
+- **Smooth camera follow** — Change `startFollow` lerp from `(1, 1)` to `(0.1, 0.1)`. One parameter change. Every reference game has smooth camera tracking.
+- **Accurate tile hover with elevation** — `HoverController.update()` calls flat `screenToTile()`; replace with `screenToTileWithElevation()` which is already implemented and tested by click-to-move. Pure bug fix.
+- **Tile-to-tile movement animation** — Tween local player sprite over 130ms (Linear ease) during prediction. Currently only the reconciliation path tweens (50ms); the normal prediction path snaps directly.
 
-**Should have (competitive - UX):**
-- Loading indicators for pending chunks
-- Biome display in HUD
-- Smooth chunk fade-in (not instant pop)
-- Minimap updates for multi-chunk view
+**Should have (competitive):**
+- **Terrain-speed movement** — `movementSpeed` field already exists on tile definitions and displays in the UI but is never applied. `effectiveDelay = moveDelay / tile.movementSpeed`. Requires server-side coordination; client and server must apply the same multiplier or prediction diverges.
+- **Path visualization with step dots** — Draw waypoint dots along full click-to-move path in `PathfindingController.drawPath()`. Pure client-side visual; no server changes.
 
 **Defer (v2+):**
-- Redis-based chunk cache (only needed at 100+ players)
-- Multi-server scaling with Pub/Sub (only at 1000+ players)
-- Player-modified chunks (building/terrain editing)
-- Predictive pre-loading based on movement direction
+- **Keyboard facing-without-moving** — Only useful once directional combat or emotes exist in the roadmap
+- **Diagonal A* pathfinding** — Requires server validation changes; separate investigation after movement milestone is stable
+- **Run/walk toggle** — Requires stamina system not yet designed; high coupling across systems not yet built
 
 ### Architecture Approach
 
-The architecture uses a viewport-based chunk loading pattern with deterministic server-side generation. Client ChunkManager tracks loaded chunks and requests missing ones via WebSocket. Server ZonesService caches generated chunks with LRU cleanup (5min TTL). WorldGenerator produces deterministic chunks from seed, using BiomeGenerator for noise-based biome assignment. All generation uses world coordinates (not chunk-local) for seamless boundaries.
+The architecture stays almost entirely unchanged. The client prediction/reconciliation loop in `MovementController` is correct and already handles all 8 directions. The server WebSocket protocol shape (`{ direction: Direction; sequence?: number }`) does not change. What changes is confined to five narrow locations: `WorldScene.handleInput()` (key resolution logic), `WorldScene.moveDelay` (constant value 500 to 150), `WorldScene.updateLocalPlayer()` (camera lerp parameters), `WorldScene.updateLocalPlayerSprite()` (prediction path adds tween; reconciliation tween increases from 50ms to 80ms), and `GameGateway.handleMove()` (rate limit tolerance 140ms to 125ms). A new `SpriteAnimationController` is scaffolded as a no-op stub, establishing the correct integration point for future directional sprite animations.
 
-**Major components (all existing):**
-1. ChunkManager (client) — Tracks viewport, requests chunks from server, caches loaded chunks, unloads distant chunks (Map-based cache with state tracking)
-2. ViewportCuller (client) — Calculates visible tiles based on camera bounds, hides/shows tiles dynamically (frustum culling with padding)
-3. TileRenderer (client) — Creates Phaser sprites/graphics for tiles, handles isometric projection with elevation (Container-based rendering with depth sorting)
-4. GameGateway (server) — Handles WebSocket events for chunk requests, routes to ZonesService (NestJS WebSocket gateway with event handlers)
-5. ZonesService (server) — Caches generated chunks, lazy-loads on demand, cleanup old zones (Map-based cache with LRU cleanup)
-6. WorldGenerator (server) — Generates chunks deterministically from seed, applies biome noise layers (Simplex noise with multiple octaves)
-7. BiomeGenerator (server) — Generates temperature/moisture/elevation noise fields using world coordinates (3 separate noise instances with different scales)
+**Major components:**
+
+1. **WorldScene** (MODIFY) — Replace `else-if` input chain with `resolveDirection()`, extract `MOVE_DELAY_MS = 150`, change camera lerp to `(0.1, 0.1)`, add prediction tween
+2. **MovementController** (NO CHANGE) — Prediction and reconciliation algorithm is correct; accepts all 8 directions; sequence replay logic is unaffected
+3. **PathfindingController** (NO CHANGE) — Uses `moveDelay` from constructor injection; automatically syncs when `WorldScene.moveDelay` changes; `getDirection()` already returns all 8 directions
+4. **GameGateway** (MODIFY) — Rate limit `< 140` to `< 125`; provides 25ms jitter tolerance at 150ms client cadence
+5. **SpriteAnimationController** (NEW STUB) — Maps Direction to sprite frames; starts as no-op; owned and called by WorldScene; does not change any game logic
 
 ### Critical Pitfalls
 
-1. **Entity Visibility Boundary Mismatch** — Visibility logic uses zone ID matching (`zoneId !== player.zoneId`) instead of world coordinate distance. This causes entities to disappear at chunk edges. Fix: Replace zone ID matching with world coordinate distance checks using `getSubscribedZones()` pattern (already exists in codebase lines 117-128). Must address in Phase 1 before cross-chunk movement.
+1. **Server rate limit becomes incompatible the moment client cadence tightens** — At 150ms client delay against 140ms server limit, only 10ms tolerance remains. Normal network jitter of 10-15ms triggers false rejections every few tiles, causing `reconcile()` to fire on correct predictions. Prevention: adjust server limit to 125ms first, as a standalone change, before any client work begins.
 
-2. **Depth Sorting Breaks at Chunk Boundaries** — Depth calculation uses local chunk coordinates (0-31) instead of world coordinates, causing z-fighting between chunks. Each chunk's tiles have overlapping depth values. Fix: Pass world coordinates to depth calculation (`worldX = chunkX * ZONE_SIZE + localX`). Pattern already exists in `createTileWithElevationWorld()`. Must address in Phase 1 for correct rendering.
+2. **Tween duration at or above moveDelay causes visual drift** — At 150ms delay, a 150ms tween completes exactly when the next move fires. Due to `setTimeout`/`requestAnimationFrame` timing imprecision, tweens overlap by 5-10ms and sprite never fully reaches target before being redirected. Prevention: set tween duration to `moveDelay - 20ms` (130ms); always call `tweens.killTweensOf(target)` before starting each new tween.
 
-3. **WebSocket Room Subscription Leak** — Players join new zone rooms but don't leave old rooms during transitions. After 10 zone transitions, player is subscribed to 10 rooms receiving 10x traffic. Memory leaks on server. Fix: Always `client.leaveAll()` before joining new room, track subscriptions in PlayerService, explicit cleanup on disconnect. Critical for Phase 2 when 3x3 loading (9 rooms per player) is active.
+3. **PathfindingController and WorldScene using different moveDelay values** — `PathfindingController` receives `moveDelay` at construction time. If a hardcoded value is used in either location, WASD and click-to-move operate at different speeds. One will violate the server rate limit, triggering reconciliation on every third step. Prevention: define `const MOVE_DELAY_MS = 150` in WorldScene and pass it to both `this.moveDelay` and the `PathfindingController` constructor.
 
-4. **Phaser Container Memory Leak** — ChunkManager unloads chunks by deleting from Map but doesn't destroy Phaser containers. Each chunk has 1024 tile containers (32x32 grid). After 100 chunks, client has 102,400 undestroyed containers (~500MB RAM). Fix: Call `container.destroy(true)` recursively on all children before Map.delete(). Must address in Phase 2 when chunk unloading is active.
+4. **Camera lerp applied to minimap** — Minimap is a spatial orientation tool. Lerp on minimap creates "looking at where I was 100ms ago" disorientation and makes the position dot misleading. `MinimapCamera.startFollow(target, true)` already has no lerp parameter — do not add one.
 
-5. **Biome Transition Artifacts** — BiomeGenerator determines biome per-chunk using chunk center, creating hard boundaries between chunks. Fix: Sample biome at each tile's world coordinates (pattern already exists as `getBiomeAt(worldX, worldY)` in codebase line 77). Requires terrain generation refactor for Phase 3.
+5. **Diagonal speed advantage if diagonal A* is added in a future phase** — In the tile-step model, diagonal moves cover sqrt(2) more world distance at the same rate limit as cardinal moves, producing a 41% speed advantage in PvP. For this milestone (visual improvement only), equal rate limits are acceptable. Must be addressed before any PvP distance-based mechanic: server applies `cardinalDelay = 140ms`, `diagonalDelay = round(140 * sqrt(2)) = 197ms`.
+
+---
 
 ## Implications for Roadmap
 
-Based on research, the milestone should be structured around activating existing capabilities rather than building new systems. The architecture is complete but operates in single-zone mode. Phasing should focus on coordinate system migration first (foundation), then multi-chunk activation (core feature), then polish (biome blending, UX).
+Build order is dictated by dependency chains and multiplayer sync risk. Server changes land first (lowest risk, no user-visible change). Constant extraction second (structural prerequisite). User-visible changes last, in order of visual dependency.
 
-### Phase 1: Infinite World Foundation (Coordinate System & World Coordinates)
-**Rationale:** All rendering, visibility, and depth calculations must use world coordinates before multi-chunk loading works. Current code uses chunk-local coordinates (0-31) which causes depth sorting and entity visibility to break at chunk boundaries. This phase establishes the coordinate foundation that all subsequent phases depend on.
+### Phase 1: Server Rate Limit Alignment
 
-**Delivers:**
-- Coordinate system treating zones as chunks (`z_x_y` format)
-- Depth sorting using world coordinates (not chunk-local)
-- Entity visibility using world coordinate distance (not zone ID matching)
-- Deterministic chunk generation with versioning
-- Foundation for seamless cross-chunk gameplay
+**Rationale:** Any reduction in client `moveDelay` will immediately cause false rejections against the existing 140ms server rate limit. This change is isolated to one line in `game.gateway.ts` with no client impact. It must land before Phase 2, and it can be deployed and verified independently.
+**Delivers:** Server accepts moves at 150ms cadence with 25ms jitter tolerance (down from 360ms tolerance at 500ms cadence).
+**Addresses:** PITFALLS.md Pitfall 2 (rate limit incompatible with smooth movement)
+**Avoids:** Reconciliation thrashing that would appear immediately in Phase 2 if this is skipped
+**Research flag:** SKIP — exact values calculated and verified in ARCHITECTURE.md (Pattern 4, rate limit calculation).
 
-**Addresses features:**
-- Deterministic chunk generation from world seed (table stakes)
-- Seamless biome transitions (infrastructure for Phase 2)
+### Phase 2: Movement Speed Unification
 
-**Avoids pitfalls:**
-- Pitfall 1: Entity visibility boundary mismatch (use world coords)
-- Pitfall 2: Depth sorting breaks at boundaries (world coord depth)
-- Pitfall 4: Procedural generation seed desync (add versioning)
-- Pitfall 8: Structure generation non-determinism (verify SeededRandom usage)
+**Rationale:** A single `MOVE_DELAY_MS` constant must be established before any other changes, because tween duration, pathfinding step interval, and input throttle all depend on it. Doing this before input changes means speed is unified even before diagonals are added.
+**Delivers:** WASD and click-to-move run at identical 150ms cadence. `const MOVE_DELAY_MS = 150` defined and passed to both systems. First observable improvement: click-to-move is unchanged, WASD is visibly faster.
+**Addresses:** FEATURES.md "Consistent movement speed" (table stakes); PITFALLS.md Anti-Pattern 4 (split moveDelay)
+**Avoids:** Speed divergence that would appear under sustained input once tweens are added in Phase 4
+**Research flag:** SKIP — confirmed in ARCHITECTURE.md (PathfindingController sync detail).
 
-**Research flag:** SKIP RESEARCH - patterns already verified in codebase, official docs sufficient.
+### Phase 3: 8-Directional Input Resolution
 
-### Phase 2: Multi-Chunk Streaming (3x3 Loading & Unloading)
-**Rationale:** With world coordinates established, activate the existing 3x3 chunk loading system. ChunkManager already implements this pattern but needs WebSocket integration for chunk requests and cleanup logic for Phaser containers. This is the core feature that enables infinite exploration.
+**Rationale:** The stated core problem. Safe to implement after server rate limit and client delay are aligned. The `resolveDirection()` function replaces the `else-if` chain. Single-key behavior is preserved (W still maps to 'nw', matching existing isometric screen convention). Dual-key combos add cardinal directions (W+D=N, meaning up-left + up-right = straight up in isometric view).
+**Delivers:** All 8 directions reachable via keyboard. N/S/E/W tiles accessible without click-to-move. No type or game-logic changes required anywhere.
+**Addresses:** FEATURES.md "Full 8-direction WASD" (P1 table stakes)
+**Avoids:** PITFALLS.md Pitfall 6 (isometric keyboard mapping confusion) — diagonal-first check order ensures no flickering when two keys are held
+**Research flag:** SKIP — exact implementation specified in STACK.md (8-directional input section) and ARCHITECTURE.md (Pattern 1).
 
-**Delivers:**
-- 3x3 chunk pre-loading around player position
-- Viewport-based chunk requests via WebSocket
-- Chunk unloading when player moves away
-- Server-side chunk caching with LRU cleanup
-- Cross-chunk movement without visual breaks
+### Phase 4: Tile-to-Tile Movement Animation
 
-**Uses stack:**
-- Socket.IO 4.7 (room-based chunk streaming)
-- ChunkManager (3x3 grid loading, already implemented)
-- ZonesService (server-side chunk cache with 5min TTL)
-- Phaser Container destruction (memory cleanup)
+**Rationale:** Requires unified moveDelay (Phase 2) to set tween duration correctly. Sprite tweening transforms the visual quality of all movement — both WASD and click-to-move benefit. This is the highest user-impact change in the milestone, and it follows 8-directional input so all 8 directions animate correctly from the start.
+**Delivers:** Sprite glides smoothly between tiles (130ms Linear tween on prediction path). Reconciliation tween increased from 50ms to 80ms `Cubic.easeOut` for less abrupt corrections. Remote player interpolation (100ms Linear) unchanged.
+**Addresses:** FEATURES.md "Tile-to-tile movement animation" (table stakes); improves feel across all 8 directions simultaneously
+**Avoids:** PITFALLS.md Anti-Pattern 5 (tween duration >= moveDelay) — 130ms < 150ms with 20ms buffer; PITFALLS.md Integration Gotcha (tweens + prediction) — `killTweensOf` called before each tween
+**Research flag:** SKIP — exact implementation mirrors existing `movePlayer()` for remote players at `WorldScene.ts:944`. Pattern is proven in the codebase.
 
-**Implements architecture:**
-- Pattern 1: Viewport-Based Chunk Loading (3x3 grid)
-- Pattern 4: Server-Side Chunk Cache with LRU Cleanup
-- Pattern 5: WebSocket Chunk Streaming (zone:request / zone:chunk events)
+### Phase 5: Smooth Camera Follow
 
-**Avoids pitfalls:**
-- Pitfall 3: WebSocket room subscription leak (explicit leave/join for 9 rooms)
-- Pitfall 5: Phaser container memory leak (destroy containers on unload)
-- Pitfall 7: Client prediction rollback (mark chunks as predicted vs confirmed)
-- Pitfall 9: Chunk loading priority deadlock (priority queue for requests)
-- Pitfall 10: Server chunk cache unbounded (LRU with max size 500 chunks)
+**Rationale:** Camera lerp interacts with sprite tweening — both together produce the organic follow feel. Camera lerp alone (without sprite tween) creates a "rubber band" look where the camera moves but the sprite snaps. Phase 5 after Phase 4 ensures the full combined effect is visible and testable.
+**Delivers:** Main camera lerp `(0.1, 0.1)`. Minimap camera unchanged at instant-follow. Camera glides with the sprite tween organically — no special coordination between tween and camera is needed because `startFollow` tracks live sprite position.
+**Addresses:** FEATURES.md "Smooth camera follow" (table stakes)
+**Avoids:** PITFALLS.md Anti-Pattern 3 (applying lerp to minimap); Phaser Issue #5018 interaction (deadzone + lerp quirk) by omitting deadzone from this phase
+**Research flag:** SKIP — one parameter change verified in STACK.md and ARCHITECTURE.md (Pattern 3). Phaser docs confirm 0.1 is the documented smooth-follow value.
 
-**Research flag:** SKIP RESEARCH - architecture documented, WebSocket patterns established in game-server.
+### Phase 6: Hover Elevation Bug Fix
 
-### Phase 3: Biome Integration & Visualization (Seamless Biome Transitions)
-**Rationale:** With multi-chunk loading working, integrate BiomeGenerator for natural biome distribution. This is primarily a world generation enhancement - the noise system already exists and uses world coordinates correctly. Main work is terrain generation refactor to sample biome per-tile instead of per-chunk.
+**Rationale:** Isolated change that does not interact with movement timing or tweens. Placed after all movement changes are validated to keep test surface clean. This is a pure bug fix — `screenToTileWithElevation()` already exists and is confirmed correct by click-to-move usage.
+**Delivers:** Tile hover highlight correctly tracks elevated tiles. The green hover diamond no longer appears behind raised surfaces.
+**Addresses:** FEATURES.md "Accurate tile hover with elevation" (table stakes, bug fix)
+**Avoids:** Visual mismatch between hover diamond and actual tile under cursor on elevated terrain
+**Research flag:** SKIP — method already exists, tested, and used by click-to-move. One method call swap in `HoverController.update()`.
 
-**Delivers:**
-- Seamless biome transitions using noise layers
-- Per-tile biome sampling (not per-chunk)
-- Biome display in HUD
-- Natural climate zones (temperature/moisture gradients)
-- No visible grid artifacts at chunk boundaries
+### Phase 7: SpriteAnimationController Scaffold
 
-**Uses stack:**
-- BiomeGenerator (already uses world coords, correct for infinite world)
-- SimplexNoise (multi-octave fbm with temperature/moisture/elevation)
-- TerrainGenerator (refactor to use per-tile biome sampling)
-
-**Implements architecture:**
-- Pattern 3: Multi-Layer Noise Biome System (temperature/moisture/elevation)
-- Integration with WorldGenerator for per-tile biome lookup
-
-**Avoids pitfalls:**
-- Pitfall 6: Biome transition artifacts (use `getBiomeAt(worldX, worldY)` per tile)
-
-**Research flag:** SKIP RESEARCH - BiomeGenerator already implemented and researched, pattern is clear.
-
-### Phase 4: Testing, Optimization & Polish (Validation)
-**Rationale:** With core systems active, this phase validates performance, fixes edge cases discovered in testing, and adds UX polish. Research shows pre-loading (3x3 grid) masks network latency well, so optimization focuses on memory usage and chunk request patterns.
-
-**Delivers:**
-- Cross-chunk movement testing (collision, pathfinding, visibility)
-- Memory profiling (verify cleanup works, no leaks)
-- Performance optimization (chunk request debouncing, priority queue)
-- UX polish (loading indicators, fade-in animations, minimap updates)
-- Edge case fixes discovered in integration testing
-
-**Uses stack:**
-- Chrome DevTools (network profiling, memory profiler)
-- Phaser Dev Tools (runtime chunk inspection)
-
-**Addresses features:**
-- Loading indicators for pending chunks (UX polish)
-- Smooth chunk fade-in (UX polish)
-- Minimap updates for multi-chunk view (UX polish)
-
-**Avoids pitfalls:**
-- Pitfall 12: Chunk loading priority deadlock (debounce requests, priority queue)
-- Validate all Phase 1-3 pitfall fixes with integration testing
-
-**Research flag:** SKIP RESEARCH - testing and optimization, no new patterns.
+**Rationale:** Establishes the integration point for future directional sprite animations without requiring sprite art to exist. Creates the class as a no-op, wires the call site into `WorldScene.handleInput()` after direction resolution. Future directional animation frames plug in without touching WorldScene.
+**Delivers:** `SpriteAnimationController` class stub, call site integrated, no visible game change. Directional facing state tracked internally but not yet applied.
+**Addresses:** ARCHITECTURE.md "SpriteAnimationController (NEW)" component; future-proofs for directional combat without premature implementation
+**Avoids:** PITFALLS.md Pitfall 7 (animation tracks wrong direction) — establishes input-driven direction tracking from the start rather than deriving from position delta later
+**Research flag:** SKIP for stub. Research needed when directional sprite assets are created (how isometric screen directions map to 96x96 sprite frame indices).
 
 ### Phase Ordering Rationale
 
-- **Phase 1 first** because depth sorting and visibility MUST use world coordinates before multi-chunk rendering works. Without this foundation, chunks render incorrectly and entities disappear at boundaries. Research confirms existing code has world coordinate patterns (BiomeGenerator, SimplexNoise) but rendering/visibility doesn't use them yet.
-
-- **Phase 2 depends on Phase 1** because 3x3 chunk loading only works if depth sorting uses world coordinates. Loading 9 chunks with chunk-local depth causes z-fighting. Room subscription management (9 rooms per player) also requires careful leak prevention.
-
-- **Phase 3 after Phase 2** because biome transitions are visual polish, not functional blocker. Multi-chunk streaming must work first. BiomeGenerator already uses world coordinates, so this is primarily a terrain generation refactor (per-tile sampling instead of per-chunk).
-
-- **Phase 4 is validation** of all previous phases working together. Research shows performance bottleneck is network latency (50-200ms), not generation (5-15ms) or rendering (0.1ms), so pre-loading masks latency. Optimization focuses on memory cleanup and request patterns.
-
-**Dependency chain:** World coordinates → Multi-chunk loading → Biome integration → Testing/polish
+- Phases 1-2 are purely backend/constant changes with zero user-visible impact — they de-risk the remaining phases completely
+- Phases 3-5 are ordered by visual dependency: input must work across all 8 directions before animation is meaningful; animation must exist before camera lerp shows its full effect
+- Phase 6 is isolated and cannot affect movement timing — placed after all movement-related work is validated
+- Phase 7 is infrastructure scaffolding with no visible change — placed last so it does not interfere with visual QA of Phases 4-6
+- Terrain-speed movement (P2 feature) and path visualization (P2 feature) are excluded from this milestone. Terrain speed requires server-side coordination; path step dots are polish. Neither blocks the core movement feel improvement.
 
 ### Research Flags
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1:** World coordinate conversion is established pattern, SimplexNoise and BiomeGenerator already demonstrate correct usage
-- **Phase 2:** WebSocket chunk streaming pattern documented in Socket.IO official docs, ChunkManager already implements 3x3 loading
-- **Phase 3:** BiomeGenerator already researched and implemented, pattern is clear (per-tile sampling using world coords)
-- **Phase 4:** Testing and optimization phase, no new domain-specific patterns
+All phases in this milestone use standard, well-verified patterns. No phase requires `/gsd:research-phase`.
 
-**No phases need `/gsd:research-phase`** - all patterns verified in existing codebase and official documentation. Research completed at project level is sufficient.
+**Future milestones that will need research before starting:**
+- **Diagonal A* pathfinding** — Server validation changes, rate-limit split for cardinal vs diagonal (197ms vs 140ms), interaction with reconciliation. Research needed before starting; do not combine with any movement polish sprint.
+- **Terrain-speed movement** — Server-side tick validation, client/server multiplier parity, edge cases for near-zero movementSpeed tiles. Research needed when server team is available to coordinate.
+- **Infinite world chunk streaming** — Extensive pitfalls documented in PITFALLS.md Part 2 (Pitfalls 1-10 for chunk streaming). That entire section forms the research base for the next major milestone.
+
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All required capabilities verified in existing codebase. Zero new dependencies needed. SimplexNoise, BiomeGenerator, ChunkManager, Socket.IO all confirmed working with world coordinates. |
-| Features | HIGH | Feature scope clear - activate existing infrastructure, not build new visual features. Elevation/structures already implemented. This milestone is about infinite world, not terrain features. |
-| Architecture | HIGH | Architecture is complete and verified. All components exist (ChunkManager, WorldGenerator, BiomeGenerator, ZonesService). Patterns documented with examples from codebase. Integration points identified. |
-| Pitfalls | HIGH | All 10 critical pitfalls identified with specific codebase line numbers, warning signs, prevention strategies, and phase assignments. Recovery costs assessed. Common mistakes well-documented. |
+| Stack | HIGH | All APIs verified in installed Phaser 3.90.0 type definitions at specific line numbers. Zero version unknowns. Zero new packages. |
+| Features | HIGH | P1 features confirmed via direct codebase inspection. P2/P3 features via competitor analysis (Tibia official docs, PoE2 community, Albion Online discussions). |
+| Architecture | HIGH | All components, file locations, and line numbers verified by direct codebase audit. Target architecture derived from patterns already proven in remote player handling (`movePlayer()`). |
+| Pitfalls | HIGH | Movement pitfalls confirmed against Gabriel Gambetta's authoritative prediction/reconciliation model and Valve networking docs. Codebase-specific pitfalls confirmed by direct inspection of `game.gateway.ts`, `MovementController.ts`, `WorldScene.ts`. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-**Minor gaps requiring validation during implementation:**
+- **Diagonal move speed fairness in tile-step model:** All 8 directions use the same 150ms rate limit. Diagonal moves cover sqrt(2) more world distance, producing a 41% speed advantage. For this milestone (visual smoothness improvement), equal rate limits are acceptable. Document as a known tradeoff to address before any PvP distance-based mechanic.
 
-- **Generation version schema** — ChunkData needs generation version field for cache invalidation. Research identified the requirement (Pitfall 4) but implementation details depend on schema design decisions. Add version field to ChunkData, include in cache key.
+- **Reconciliation tween tuning:** The increase from 50ms to 80ms is a recommended value based on movement feel analysis, not a hard threshold. The correct value depends on server round-trip time in production. This is a low-stakes calibration tunable after deployment without architectural changes.
 
-- **Chunk request rate limiting** — Research recommends 10 chunks/second per client (Security Mistakes section) but optimal limit depends on server capacity. Start with 10/sec, tune based on load testing in Phase 4.
+- **SpriteAnimationController direction semantics:** The stub is straightforward, but when directional sprite frames are created for the 96x96 sprites, the mapping of isometric screen directions to frame indices requires art/lore team alignment. Not a blocker for this milestone; flag for when directional sprites are commissioned.
 
-- **Biome transition zone width** — Research suggests 3-5 tile transition zone for blending, but visual quality depends on tile artwork and biome combinations. Test different widths in Phase 3, may need artist input.
-
-- **Server chunk cache size** — Research recommends max 500 chunks for LRU cache, but optimal size depends on player distribution and server memory. Start with 500, monitor memory usage in Phase 4, adjust based on data.
-
-**All gaps are minor and can be resolved during implementation.** No gaps block milestone planning or execution. Research provided sufficient guidance for all critical decisions.
+---
 
 ## Sources
 
-### Primary (HIGH confidence)
+### Primary (HIGH confidence — verified in installed codebase)
 
-**Current Codebase (verified implementation):**
-- `/packages/world-gen/src/generation/biome.ts` — BiomeGenerator using world coordinates (lines 74+)
-- `/packages/world-gen/src/generation/terrain.ts` — SimplexNoise with world coords (line 129)
-- `/packages/world-gen/src/generation/chunk.ts` — WorldGenerator deterministic generation
-- `/apps/web/src/game/rendering/ChunkManager.ts` — 3x3 chunk loading (line 55)
-- `/apps/web/src/game/rendering/TileRenderer.ts` — World vs local coordinate rendering (lines 170-215)
-- `/apps/game-server/src/game/game.gateway.ts` — WebSocket room join/leave (line 82)
-- `/packages/game-logic/src/visibility/range.ts` — Entity visibility patterns (lines 117-128)
+- `apps/web/src/game/scenes/WorldScene.ts` — Camera `startFollow(target, true, 1, 1)` at line 1017; input handling (4-direction only) at lines 430-453; `moveDelay = 500`; remote player `movePlayer()` tween at lines 944-974
+- `apps/web/src/game/systems/MovementController.ts` — `processInput(direction: Direction)` accepts all 8 directions; reconciliation algorithm correct and unchanged
+- `apps/web/src/game/systems/PathfindingController.ts` — `moveDelay` injected via constructor at `WorldScene.ts:103`; `getDirection()` returns all 8 directions at lines 176-190
+- `apps/game-server/src/game/game.gateway.ts` — Rate limit `< 140ms` at line 133
+- `packages/game-logic/src/movement/validation.ts` — `DIRECTION_VECTORS` has all 8 directions; `calculateNewPosition()` and `validateMovement()` handle all 8
+- `packages/game-logic/src/movement/pathfinding.ts` — Cardinal-only A* neighbors at lines 82-87; `getDirection()` handles all 8 results at lines 176-190
+- `packages/shared-types/src/core/position.ts` — `Direction` type includes all 8 values at line 16
+- `node_modules/.pnpm/phaser@3.90.0/.../phaser.d.ts` — `startFollow` signature confirmed at line 3671; `setLerp` confirmed at line 3671; `Key.isDown` boolean confirmed at line 62987
 
-**Official Documentation:**
-- Socket.IO Rooms — https://socket.io/docs/v3/rooms/ — Room-based broadcasting patterns verified
-- Socket.IO Broadcasting — https://socket.io/docs/v3/broadcasting-events/ — Event emission to specific clients/rooms
-- Phaser 3.80 Performance Optimization — https://phaser.io/news/2025/03/how-i-optimized-my-phaser-3-action-game-in-2025 — Object pooling case study (container destruction)
+### Secondary (MEDIUM confidence — official documentation)
 
-### Secondary (MEDIUM confidence)
+- Phaser 3 Official Camera Docs — `startFollow()` lerp parameters; `roundPixels: true` recommendation: https://docs.phaser.io/phaser/concepts/cameras
+- Phaser 3 API camera.lerp — Default 1 (instant snap), 0.1 = smooth: https://newdocs.phaser.io/docs/3.80.0/focus/Phaser.Cameras.Scene2D.Camera-lerp
+- Phaser 3 API startFollow — Signature `startFollow(target, roundPixels, lerpX, lerpY, offsetX, offsetY)`: https://newdocs.phaser.io/docs/3.70.0/focus/Phaser.Cameras.Scene2D.Camera-startFollow
+- Tibia official controls documentation — 8-direction movement confirmation: https://www.tibia.com/gameguides/?subtopic=manual&section=controls
+- Client-side prediction / server reconciliation — Gabriel Gambetta (canonical source): https://www.gabrielgambetta.com/client-side-prediction-live-demo.html
+- Source Multiplayer Networking — Valve Developer Community: https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking
+- Handling height in isometric tilemaps (elevation correction): https://erikonarheim.com/posts/handling-height-in-isometric/
 
-**Architecture Patterns:**
-- Minecraft Terrain Generation — https://cybrancee.com/blog/how-minecraft-terrain-generation-works/ — Chunk-based world generation patterns
-- Red Blob Games: Making Maps with Noise — https://www.redblobgames.com/maps/terrain-from-noise/ — Multi-octave noise patterns, persistence and lacunarity
-- Procedural World Generation with Biomes — https://medium.com/@mrrsff/procedural-world-generation-with-biomes-in-unity-a474e11ff0b7 — Multi-biome landscape generation
-- Client-Server Game Architecture — https://www.gabrielgambetta.com/client-server-game-architecture.html — Multiplayer synchronization patterns
+### Tertiary (MEDIUM confidence — community consensus)
 
-**Multiplayer & Synchronization:**
-- WebSocket Architecture Best Practices — https://ably.com/topic/websocket-architecture-best-practices — Scalable WebSocket patterns
-- How to Handle Real-Time Synchronization in Large Multiplayer World — https://vocal.media/gamers/how-to-handle-real-time-synchronization-in-a-large-multiplayer-world — Synchronization strategies
-
-**Performance & Memory:**
-- Phaser Object Pooling Tutorial — https://www.thepolyglotdeveloper.com/2020/09/object-pooling-sprites-phaser-game-performance-gains/ — Container management for performance
-- Chunk Loading Performance Impact — https://gameteam.io/blog/minecraft-server-chunk-loading-performance-impact/ — Server-side chunk caching strategies
-
-### Tertiary (LOW confidence - informational context)
-
-- AutoBiomes Research — https://link.springer.com/article/10.1007/s00371-020-01920-7 — Academic multi-biome approach (potentially over-engineering for 2D grid)
-- WebSocket Chunking — https://www.xjavascript.com/blog/chunking-websocket-transmission/ — File transfer chunking (different use case, useful context)
+- Phaser 3 WASD simultaneous `isDown` pattern: https://phaser.discourse.group/t/wasd-keyboard-movement-phaser-3/8297
+- Path of Exile 2 WASD 8-direction implementation feedback: https://steamcommunity.com/app/2694490/discussions/0/594008890765478462/
+- Albion Online WASD vs click-to-move community discussion: https://steamcommunity.com/app/761890/discussions/0/3046104336680783318/
+- Phaser Camera lerp + deadzone interaction Issue #5018 (avoid deadzone in initial implementation): https://github.com/phaserjs/phaser/issues/5018
+- Diagonal movement fix in 2D top-down games: https://jslegenddev.substack.com/p/how-to-fix-diagonal-movement-in-2d
 
 ---
-*Research completed: 2026-02-16*
+
+*Research completed: 2026-02-17*
 *Ready for roadmap: yes*

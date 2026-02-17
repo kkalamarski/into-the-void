@@ -1,8 +1,379 @@
 # Pitfalls Research
 
+**Domain:** Multiplayer 2D Isometric MMO — Movement System Overhaul
+**Researched:** 2026-02-17
+**Confidence:** HIGH
+
+---
+
+> This file covers two milestone areas: (1) Movement System Overhaul pitfalls (new section), and (2) Infinite World Chunk Streaming pitfalls (existing research, 2026-02-16). Both are relevant to Into the Void's active development.
+
+---
+
+# Part 1: Movement System Overhaul Pitfalls
+
+**Scope:** Adding smooth movement, 8-directional controls, and free movement to an existing tile-based multiplayer game with client-side prediction and server reconciliation.
+
+**Current system (from codebase analysis):**
+- Direction-based movement protocol: client sends `{ direction: Direction; sequence?: number }`
+- Server rate limits at 140ms minimum between moves
+- `MovementController` does client-side prediction, stores `PendingInput[]`, replays on reconciliation
+- `PathfindingController` uses cardinal-only A* and translates nodes to Direction enum
+- `validateMovement` enforces `dx <= 1, dy <= 1` (exactly 1 tile per move)
+- Isometric screen mapping: W=NW, D=NE, S=SE, A=SW (visually correct, grid diagonal)
+- `moveDelay = 500ms` in WorldScene (2 tiles/sec), `150ms` in PathfindingController
+
+---
+
+## Critical Pitfalls
+
+### Pitfall 1: Diagonal Speed Advantage Breaks Fairness and Server Validation
+
+**What goes wrong:**
+When adding 8-directional or free movement, diagonal moves travel sqrt(2) (~1.414x) more screen distance than cardinal moves in the same time. A player holding NE moves 41% faster than holding N. Server rate-limit (140ms) applies equally, so diagonal players cover more ground. PvP balance, loot acquisition range, and anti-cheat tolerances all break at the same rate-limit threshold.
+
+**Why it happens:**
+Current system moves exactly 1 tile per direction, so all 8 directions are treated as equal-cost. This is grid-correct for tile movement but wrong for perceived world distance. The existing `DIRECTION_VECTORS` in `validation.ts` assigns `{ dx: 1, dy: -1 }` to NE — a unit-grid move, not a unit-world move.
+
+**How to avoid:**
+- For tile-based 8-directional (current model): Apply a diagonal cooldown multiplier. Diagonal moves should cost ~1.414x the rate-limit (197ms instead of 140ms), or reduce diagonal tile movement distance when moving diagonally.
+- For free movement (pixel/sub-tile): Normalize velocity vectors before applying speed. `velocity.normalize().scale(speed)` before sending or applying movement.
+- Keep server validation consistent: if diagonal is allowed at 1-tile distance, server must check `Math.sqrt(dx*dx + dy*dy) <= 1.0` (Euclidean), not `dx <= 1 && dy <= 1` (Chebyshev).
+- Update `validateMovement` in `packages/game-logic/src/movement/validation.ts` to use Euclidean distance, not separate dx/dy checks.
+
+**Warning signs:**
+- Diagonal players consistently outrace cardinal players in timed tests
+- Anti-cheat false-positives for diagonal fast-movers
+- PvP reports of "unfair" kiting or escape advantage
+- Server `MOVEMENT_BLOCKED` errors for valid diagonal moves (dx=1, dy=1 rejected when Chebyshev check fails)
+
+**Phase to address:**
+Movement Foundation phase — Must define movement model (tile-step vs continuous) and update both server validation AND client prediction simultaneously.
+
+---
+
+### Pitfall 2: Server Rate Limit (140ms) Incompatible with Smooth Visual Movement
+
+**What goes wrong:**
+The current `moveDelay = 500ms` in `WorldScene` and `140ms` server rate limit were designed for deliberate tile-stepping. Adding smooth movement requires sending direction input every frame (~16ms at 60fps) or on keydown, but the server will reject 90% of packets as rate-limited (`MOVEMENT_BLOCKED: Movement too fast`). Client prediction shows smooth movement; server reconciliation snaps player back repeatedly.
+
+**Why it happens:**
+The 140ms rate limit (`game.gateway.ts:133`) was calibrated to prevent speed hacking in tile mode. Smooth movement requires either: (a) a much shorter rate limit with continuous position updates, or (b) a velocity/intent-based protocol where client sends "I started moving NE" and "I stopped moving" rather than per-tile events. The existing protocol has no concept of "movement intent" — only discrete tile steps.
+
+**How to avoid:**
+- Switch to velocity/intent protocol: `{ intent: 'start' | 'stop', direction: Direction, timestamp: number }` with server simulating movement continuously at a tick rate.
+- OR keep tile protocol but increase tick rate: 8 tiles/sec requires 125ms interval (not 500ms in client, 140ms server tolerance).
+- Do NOT reduce server rate limit below network round-trip time (typically 50-200ms) — this causes reconciliation thrashing.
+- The server must run its own movement simulation loop (e.g., 20 ticks/sec) separate from WebSocket message handling.
+- Update `PathfindingController.moveDelay` to match new server tick rate.
+
+**Warning signs:**
+- Console flooding with `MOVEMENT_BLOCKED` errors during WASD hold
+- Player sprite visibly "rubber-bands" every 140ms during smooth movement
+- `pendingInputs` array grows unbounded (hitting the `> 10` safety check constantly)
+- Network tab shows many rejected 400-level game events
+
+**Phase to address:**
+Movement Foundation phase — Server tick architecture must be decided before any client movement changes.
+
+---
+
+### Pitfall 3: Client Prediction and Server Reconciliation Desync with Variable-Distance Moves
+
+**What goes wrong:**
+The current reconciliation in `MovementController.reconcile()` replays `PendingInput` list by re-calling `calculateNewPosition(position, direction)` for each unacknowledged input. This works correctly when every input moves exactly 1 tile. If smooth movement introduces variable-distance moves (e.g., movement that takes 0.5 tiles/frame), replaying by direction enum becomes wrong — the same direction input on replay produces 1-tile moves even if the original produced fractional moves.
+
+**Why it happens:**
+`calculateNewPosition` in `game-logic/validation.ts` always moves exactly 1 tile in the direction. There is no concept of "movement duration" or "movement speed" in the pending input. If the transition is to continuous movement where position is a float coordinate, the entire prediction/reconciliation loop must change — inputs must store velocity and duration, not just direction.
+
+**How to avoid:**
+- If staying with tile model: Keep direction-only inputs. Prediction/reconciliation is already correct for this model.
+- If moving to continuous model: `PendingInput` must store `{ velocity: Vector2, duration: number, sequence: number }`, not just direction.
+- Server acknowledgment must include `{ serverPosition: { x: float, y: float }, lastProcessedInput: number }`.
+- Client reconciliation must integrate velocity * duration for unacknowledged inputs, not just call `calculateNewPosition`.
+- Consider: Gabriel Gambetta's reconciliation model requires server simulation to exactly match client simulation — any difference in physics step size, floating point precision, or order of operations causes permanent drift.
+
+**Warning signs:**
+- After any server correction, player position drifts progressively further from server
+- `positionMismatch` fires on every server update even when player is stationary
+- Players report "teleporting" during heavy input or lag spikes
+- Reconciled position differs from expected by more than 1 tile
+
+**Phase to address:**
+Movement Foundation phase — Define movement model first. Prediction/reconciliation refactor is a single atomic unit that must not be done piecemeal.
+
+---
+
+### Pitfall 4: Pathfinding System Breaks Silently with New Movement Model
+
+**What goes wrong:**
+`PathfindingController` uses `findPath()` from `game-logic/pathfinding.ts`, which generates cardinal-only A* paths (N/S/E/W directions only — the `directions` array excludes diagonals). `getDirection()` can return diagonal directions (NE/NW/SE/SW) but the A* never produces paths requiring them. If movement model changes to 8-directional, A* paths are suboptimal (longer routes). If movement changes to free/continuous, A* produces tile-center waypoints that the movement system must lerp between — the `executeNextStep` setTimeout pattern will break for continuous physics.
+
+Additionally, `PathfindingController.startPath()` calls `useGameStore.getState().player.position` at the time of the click — if player position has a pending unreconciled prediction, pathfinding starts from wrong position.
+
+**Why it happens:**
+Pathfinding is decoupled from movement protocol. It generates a list of `{x, y}` tile coordinates and relies on `movementController.processInput(direction)` at fixed intervals. This coupling assumes: (a) movement is always tile-to-tile, (b) each step completes in exactly `moveDelay` ms, (c) player position at step N is always the predicted position from step N-1.
+
+**How to avoid:**
+- Enable diagonal pathfinding in `findPath()` if 8-directional movement is added (add `{dx:1,dy:-1}` etc. to `directions` array with proper cost: `Math.SQRT2` not `1`).
+- If switching to continuous movement: Replace step-by-step pathfinding with a waypoint system. Movement controller lerps toward next waypoint, pathfinding controller feeds next waypoint when player arrives within threshold distance.
+- Always read player position from server-confirmed state (not predicted) when starting a path. Add `confirmedPosition` field to player state separate from `predictedPosition`.
+- Pathfinding must be recalculated when server rejects movement (reconciliation correction > 0.5 tiles should cancel active path).
+
+**Warning signs:**
+- Click-to-move paths are longer than expected for diagonal travel
+- Pathfinding starts from wrong position after lag spike
+- Player "oscillates" at the end of a path (missing final tile, re-pathing repeatedly)
+- `executeNextStep` fires but player hasn't reached the previous waypoint yet
+
+**Phase to address:**
+Movement Polish phase — After core movement model is stable. Pathfinding update must wait for confirmed movement model.
+
+---
+
+### Pitfall 5: Zone Transition Prediction Creates Collision Map Desync
+
+**What goes wrong:**
+`MovementController.processInput()` skips collision checks for zone transitions (`if (newPos.zoneId === player.position.zoneId)` condition). This was intentional: the client doesn't have collision data for adjacent zones at prediction time. When smooth/8-directional movement is added, players near zone boundaries will predict movement into the adjacent zone without local collision validation. Server may reject (blocked terrain in adjacent zone), causing rubber-band at every zone edge crossing.
+
+Additionally, `setCollisionMap()` in `WorldScene` only sets collision for the current zone. When player crosses into a new zone, the collision map isn't updated until `onPlayerZoneChanged` is called — a server round-trip. During this window, all client collision checks use stale data.
+
+**Why it happens:**
+The tile-step system hides this bug: players rarely cross zone boundaries mid-animation because movement is discrete. Smooth movement makes the zone boundary a continuous region where the player's visual position is in zone B while the game state is still in zone A, creating a wide desync window.
+
+**How to avoid:**
+- Pre-load adjacent zone collision maps when player is within 3 tiles of zone boundary. ChunkManager already pre-loads adjacent zone geometry — add collision map extraction.
+- `MovementController` should validate cross-zone moves against the pre-loaded adjacent collision map.
+- Zone transition should be committed on server confirmation, not on client prediction.
+- Add a `borderBuffer` zone concept: tiles 0-3 and 61-63 (near zone edge for ZONE_SIZE=64) trigger adjacent zone collision pre-fetch.
+
+**Warning signs:**
+- Players rubber-band specifically at zone boundary edges, not in zone interior
+- Console shows `setCollisionMap` called after player has already moved several tiles into new zone
+- Server returns `MOVEMENT_BLOCKED` for positions that appear empty on client minimap
+
+**Phase to address:**
+Movement Foundation phase — Zone transition logic is tightly coupled with collision validation and must be addressed as part of the movement model change.
+
+---
+
+### Pitfall 6: Isometric Keyboard Mapping Confusion When Adding Diagonal Movement
+
+**What goes wrong:**
+The current keyboard map (W=NW, D=NE, S=SE, A=SW) is a visual-screen mapping: pressing "up" moves the player visually upward on screen (NW in grid). This is the correct isometric convention. However, if 8-directional movement is added and developers map diagonal keys (Q/E/Z/C or W+D combinations) without maintaining this visual convention, the movement feels inconsistent: some directions are "screen-relative", others are "grid-relative".
+
+Additionally, simultaneous key combinations (W+D = NE in screen coords = N in grid coords) must be detected and their grid equivalents calculated. The current implementation reads single keys only (line 440-443 in WorldScene).
+
+**Why it happens:**
+Adding diagonal keys seems simple — just add `if (W && D) direction = 'n'` — but the mapping becomes non-obvious to players. The existing single-key visual mapping is intuitive; the 8-directional extension requires careful thought about which combinations map to which visual directions.
+
+**How to avoid:**
+- Maintain visual-screen convention for ALL 8 directions: W+D = visual NE = grid N, A+W = visual NW = grid W.
+- Read simultaneous key state in `update()`, not `keydown` events. The current `handleInput()` approach reads `isDown` which correctly handles simultaneous keys.
+- Priority order for diagonal: diagonal key combos take precedence over single keys, to avoid "flickering" between NW and W when player taps W while A is held.
+- Test: press W, then add D while W is held — player should smoothly transition to combined direction without losing W direction first.
+- In isometric, diagonal movement maps to cardinal directions — verify `DIRECTION_VECTORS` comment in `validation.ts` is updated to reflect the new visual/grid relationship.
+
+**Warning signs:**
+- Players report "wrong direction" for certain key combinations
+- Diagonal movement feels slower/different from expected
+- Path visualization (green diamond) appears in wrong tile when moving diagonally
+
+**Phase to address:**
+Input Handling phase — Isolated to client only, but must be consistent with server-side direction enum from the start.
+
+---
+
+### Pitfall 7: Animation System Must Track Direction State Separately from Position
+
+**What goes wrong:**
+Adding directional movement requires directional sprite animations (player faces NE when moving NE). The current system has a single `player` sprite with no direction state. If movement direction is derived from position delta (current position minus previous position) rather than from input, the sprite direction will lag by one frame, and "slide-to-stop" animations will show wrong facing direction on final frame.
+
+For remote players, `movePlayer()` in WorldScene only receives `{ playerId, position }` — no direction. Remote players can never show correct facing direction without a protocol change to send direction alongside position.
+
+**Why it happens:**
+The current protocol (`player:moved: { playerId, position, lastProcessedInput? }`) was designed for position-only reconciliation. Direction state was never part of the contract because tile movement's direction was implicit from previous/current position delta. When multiple animations exist per direction (idle-N, walk-N, idle-NE, walk-NE...), the position delta approach produces visible glitches during reconciliation corrections.
+
+**How to avoid:**
+- Add `direction: Direction` to the `player:moved` server event in `ServerEvents` interface.
+- Store last movement direction in `MovementController` and include it in position updates.
+- Animate based on input direction, not position delta. Input direction is known before position changes.
+- Use a separate "facing direction" that updates on input but doesn't reset to idle until movement stops for N frames (prevents rapid idle→walk flicker during slow moves).
+- Keep a separate `idleDirection` state: when movement stops, hold the last movement direction for idle animation.
+
+**Warning signs:**
+- Remote players always face the same direction regardless of movement
+- Player sprite shows brief "wrong direction" frame during reconciliation corrections
+- Direction resets to default (south) when any server correction occurs
+- Smooth camera follow causes player to appear to slide forward after stopping
+
+**Phase to address:**
+Animation & Polish phase — After movement protocol is stable. Do NOT add direction to protocol before confirming final movement model.
+
+---
+
+### Pitfall 8: Speed Hack Surface Area Increases Significantly with Smooth Movement
+
+**What goes wrong:**
+The current anti-cheat is simple: `if (now - lastMoveTime < 140) reject`. For continuous movement, there is no simple "minimum time between moves" — instead, position drift must be validated. The server must check: "is this position reachable from the last confirmed position in the elapsed time, given the player's speed?" This is significantly harder and has well-known edge cases.
+
+Tolerance windows (10-15% speed tolerance to handle network jitter) create a cheat surface: players can exploit the tolerance to gain 10-15% movement speed advantage by manipulating timestamps or sending inputs slightly faster than allowed.
+
+**Why it happens:**
+Tile movement has a binary anti-cheat: correct distance (1 tile) or not. Continuous movement requires a range check. The range must account for: network latency (player moved during in-flight time), server tick jitter, and legitimate lag spikes. Any range-based check has a threshold that determined cheaters will probe.
+
+**How to avoid:**
+- Validate using server-simulated position, not client-reported position. Server runs its own movement simulation; client input just changes velocity direction.
+- Never trust client-provided position for authoritative state. The server's simulation IS the position.
+- Rate limit direction changes (not position updates): e.g., max 10 direction changes per second, not 60.
+- For tile-based 8-directional (staying in current model): keep binary anti-cheat. Minimum 197ms for diagonal moves (140ms * sqrt(2)), 140ms for cardinal moves.
+- Log anomalous movement patterns server-side: > 5 consecutive max-speed moves in a straight line warrants scrutiny.
+
+**Warning signs:**
+- Players report others moving noticeably faster than themselves
+- Server logs show many moves at exactly the minimum tolerance threshold (140ms or 197ms)
+- Teleportation hacks: player position jumps > 2 tiles per server tick (easy to detect with absolute position validation)
+
+**Phase to address:**
+Movement Foundation phase — Anti-cheat must be re-evaluated whenever the movement model changes. Do not ship new movement model without updated server validation.
+
+---
+
+## Technical Debt Patterns (Movement-Specific)
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Keep direction-enum protocol for smooth movement | No server-side changes | Latency visible as stutter at network-limited fps | Only if target move speed is <= 4 tiles/sec |
+| Derive animation direction from position delta | No protocol changes | 1-frame lag on direction change, wrong direction on corrections | Never for responsive action games |
+| Single collision map for current zone only | No adjacent zone pre-fetch | Rubber-band at every zone boundary with smooth movement | Only if zone boundaries are rare/explicit |
+| Same rate limit for cardinal and diagonal | Simpler server logic | 41% speed advantage for diagonal movement | Never in competitive or PvP contexts |
+| Client-authoritative position for smooth display | Zero latency feel | Speed hacks trivially effective | Single-player only, never multiplayer |
+| Pathfinding without diagonal support | Simpler A* code | Suboptimal paths, unnatural-looking movement | MVP only, replace before any PvP feature |
+| Hard-code `moveDelay` as constant | Easy to tune | Cannot vary speed by terrain, status effects, faction | Until speed modifiers are needed |
+
+---
+
+## Integration Gotchas (Movement-Specific)
+
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| Phaser tweens + prediction | Tweens complete asynchronously; new prediction fires before tween finishes, causing double-move visual | Kill tween before applying new prediction position; use `tweens.killTweensOf(target)` |
+| Camera follow + reconciliation | Camera follows predicted position; server correction causes camera snap, not smooth correction | Camera follows server-confirmed position with lerp; predicted position is sprite-only offset |
+| Socket.IO + high-frequency moves | TCP nagle algorithm batches small packets; creates burst delivery of 3-5 queued moves at once | Enable `socket.setNoDelay(true)` (already done via Socket.IO defaults), but also buffer server-side |
+| PathfindingController + reconciliation | Pathfinding reads `player.position` from Zustand (predicted); reconciliation corrects position; pathfinding re-reads stale position | Cancel active path whenever server reconciliation fires a position correction |
+| Rate limiter + diagonal | Single rate limit applied to all 8 directions causes 41% diagonal speed advantage | Two rate limits: `cardinalDelay = 140ms`, `diagonalDelay = Math.round(140 * Math.SQRT2)ms` |
+| `DIRECTION_VECTORS` + world distance | Vectors `(1,1)` for diagonal are grid-unit, not world-unit | Normalize diagonal vectors before applying world-distance checks |
+
+---
+
+## Performance Traps (Movement-Specific)
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Pending inputs array grows unbounded at high latency | Memory creep, reconciliation replays wrong inputs | Hard cap at 10-20 inputs (already implemented), but also discard inputs older than 2s | 200ms+ latency with rapid input |
+| `useGameStore.getState()` called every input frame | Zustand store subscription overhead under rapid input | Batch position updates, only update store when position actually changes | >30 inputs/sec |
+| Full collision map scan per movement validation | O(n) scan on 64x64 grid = 4096 checks per move | Already uses direct index lookup `collisionMap[y][x]` — maintain this pattern | Not a current issue, maintain pattern |
+| Tween queue buildup for remote players | Remote players teleport when tweens cannot keep up with server update rate | Kill previous tween before starting new one (already in `movePlayer()`) | >5 position updates/sec for remote player |
+| Path visualization redraws every pathfind step | Graphics object clear+redraw causes frame spike | Current implementation only draws destination marker — maintain this | Only draw final destination, not full path |
+
+---
+
+## Security Mistakes (Movement-Specific)
+
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Trusting client position for adjacency checks (interaction, combat) | Player warps to interact with entity 50 tiles away | Server validates `distance(player.position, target.position) <= interactionRange` using server position |
+| Rate limit based on server receive time, not client timestamp | Network jitter allows burst of 3 moves in 50ms then none for 300ms | Use server-side move timestamps with rolling window, not last-receive-time delta |
+| No upper bound on movement distance per message | Malicious client sends `{direction:'ne'}` 100 times in 1 packet (if batching added) | Validate: max 1 direction per `player:move` message; reject arrays |
+| Logging player positions to console in production | Information leak about zone structure, collision positions | Remove `console.log` from movement handlers before production |
+| No validation that `direction` is a valid `Direction` enum value | Client sends `direction: 'hack'`, crashes server-side `DIRECTION_VECTORS['hack']` | Use `if (!DIRECTION_VECTORS[data.direction]) reject` before processing |
+
+---
+
+## UX Pitfalls (Movement-Specific)
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Player sprite doesn't face movement direction | Feels unresponsive, "gliding" movement | Add directional sprites/animations; update facing on input, not on position |
+| Reconciliation correction causes camera jerk | Motion sickness, disorientation | Camera follows confirmed position with 0.1-0.2 lerp factor; sprite snaps |
+| Pathfinding cancels on any server move event | Click-to-move feels broken during lag | Only cancel path if reconciliation moves player > 1 tile from predicted |
+| No visual feedback when movement is blocked | Pressing keys does nothing, players think game is frozen | Show "bump" animation on blocked move; red flash on collision tile |
+| Diagonal movement feels faster to the player | Exploitation of speed advantage; immersion break | Ensure diagonal visual speed matches cardinal speed (normalize) |
+| Click-to-move path disappears on pathfind failure | No indication path failed | Show brief "X" marker at destination if pathfind fails |
+| Zone transition stutters player movement | Teleport-like effect at every chunk border | Pre-load adjacent chunk data; smooth zone transition with position continuity |
+
+---
+
+## "Looks Done But Isn't" Checklist (Movement-Specific)
+
+- [ ] **8-directional movement works**: But did you verify diagonal speed equals cardinal speed? Measure tiles/second for N vs NE over 10 seconds.
+- [ ] **Smooth movement renders**: But does server reconciliation produce rubber-band under 150ms simulated latency? Test with `Chrome DevTools -> Network -> Add latency`.
+- [ ] **Pathfinding produces valid paths**: But does pathfinding use diagonal-capable A*? Count path steps for NE destination — should be ~sqrt(2)x fewer steps than cardinal path.
+- [ ] **Zone transition works**: But does it work for diagonal zone transitions (corner crossings)? Move NE through zone corner, verify both zone offsets update correctly in `calculateNewPosition`.
+- [ ] **Direction-based animation plays**: But does it play correct direction when movement is stopped by collision? Bump north wall, verify player faces north.
+- [ ] **Anti-cheat validates correctly**: But does the rate limit account for diagonal cost? Test: hold NE at maximum speed for 10 seconds, verify server does not reject any valid moves.
+- [ ] **Remote players move smoothly**: But do they show correct facing direction? Ask another client to move SE while you watch — their sprite should face SE.
+- [ ] **Pathfinding + prediction coexist**: Cancel active path, move with WASD — does pathfinding correctly cancel and not resume on next WASD release?
+
+---
+
+## Recovery Strategies (Movement-Specific)
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Diagonal speed advantage shipped | MEDIUM | Server-side hotfix: add diagonal rate limit (197ms), clients see smooth fix on next server restart |
+| Protocol changed without updating pathfinding | HIGH | Revert movement protocol, update pathfinding, re-test before re-releasing |
+| Animation direction from position delta | LOW | Add direction field to move events, update `player:moved` and `ServerEvents` types |
+| Zone boundary collision desync | MEDIUM | Pre-load adjacent collision maps (ChunkManager already loads adjacent chunks — extract collisions) |
+| Rate limit too strict for smooth movement | LOW | Adjust server constant, redeploy; no client changes needed |
+| Reconciliation loop produces drift | HIGH | Usually requires full prediction/reconciliation rewrite; cannot be patched incrementally |
+
+---
+
+## Pitfall-to-Phase Mapping (Movement-Specific)
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Diagonal speed advantage | Movement Foundation | Measure tiles/sec: cardinal vs diagonal must be within 5% |
+| Rate limit incompatible with smooth movement | Movement Foundation | Hold WASD for 5s: zero MOVEMENT_BLOCKED errors in console |
+| Prediction/reconciliation desync with variable moves | Movement Foundation | Simulate 300ms latency: position error < 0.5 tiles after correction |
+| Pathfinding breaks with new model | Movement Polish | Click-to-move across full zone: path completes without cancellation |
+| Zone transition collision desync | Movement Foundation | Cross zone boundary diagonally: no rubber-band, movement continues |
+| Isometric keyboard mapping confusion | Input Handling | Blind playtest: 5 players, 0 direction confusion reports |
+| Animation tracks wrong direction | Animation & Polish | Server correction: sprite faces correct direction 100% of the time |
+| Speed hack surface area increases | Movement Foundation | Server validates: no client can exceed max speed by > 5% |
+
+---
+
+## Sources (Movement Research)
+
+- [Fast-Paced Multiplayer: Client-Side Prediction - Gabriel Gambetta](https://www.gabrielgambetta.com/client-side-prediction-live-demo.html) — HIGH confidence, canonical source on prediction/reconciliation
+- [Source Multiplayer Networking - Valve Developer Community](https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking) — HIGH confidence, production-proven techniques
+- [How to Fix Diagonal Movement in 2D Top-Down Games](https://jslegenddev.substack.com/p/how-to-fix-diagonal-movement-in-2d) — MEDIUM confidence, community source verified against math
+- [Server Authoritative Movement Questions - GameDev.net](https://gamedev.net/forums/topic/706590-server-authoritative-movement-questions/) — MEDIUM confidence, practitioner discussion
+- [MMO Movement System - GameDev.net](https://www.gamedev.net/forums/topic/710824-mmo-movement-system/) — MEDIUM confidence, MMO-specific context
+- [UDP Multiplayer Movement Jitter - GameDev.net](https://gamedev.net/forums/topic/661334-udp-multiplayer-movement-jitter/) — MEDIUM confidence
+- [Mirror Networking: Client-Side Prediction](https://mirror-networking.gitbook.io/docs/manual/general/client-side-prediction) — MEDIUM confidence
+- [Server-side Movement Anti-Cheat - Roblox Forum](https://devforum.roblox.com/t/server-side-movement-is-it-a-viable-anti-cheat-option/2685020) — MEDIUM confidence
+
+**Codebase analysis (HIGH confidence — direct inspection):**
+- `apps/web/src/game/systems/MovementController.ts` — prediction/reconciliation loop
+- `apps/web/src/game/systems/PathfindingController.ts` — A* execution, cardinal-only
+- `apps/web/src/game/scenes/WorldScene.ts` — input handling, keyboard mapping, `moveDelay`
+- `apps/game-server/src/game/game.gateway.ts` — rate limiting, `player:move` handler
+- `packages/game-logic/src/movement/validation.ts` — `validateMovement`, `DIRECTION_VECTORS`
+- `packages/game-logic/src/movement/pathfinding.ts` — A* algorithm, cardinal-only directions
+- `packages/shared-types/src/network/events.ts` — protocol: `direction-only` move events
+
+---
+
+# Part 2: Infinite World Chunk Streaming Pitfalls
+
 **Domain:** Infinite World Chunk Streaming for Multiplayer 2D Tile-Based Game
 **Researched:** 2026-02-16
 **Confidence:** HIGH
+
+---
 
 ## Critical Pitfalls
 
@@ -287,7 +658,7 @@ Phase 2 (Multi-Chunk Streaming) — When implementing server-side chunk manageme
 
 ---
 
-## Technical Debt Patterns
+## Technical Debt Patterns (Chunk Streaming)
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
@@ -299,7 +670,7 @@ Phase 2 (Multi-Chunk Streaming) — When implementing server-side chunk manageme
 | Broadcast all entity updates to all zone subscribers | Simple pub/sub, no targeting logic | Wastes bandwidth on entities outside player visibility | Until player count per zone exceeds ~20 |
 | Synchronous chunk generation on main thread | Simple code, no threading complexity | 100-500ms freeze per chunk, visible stutter | Never for production, only early prototype |
 
-## Integration Gotchas
+## Integration Gotchas (Chunk Streaming)
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
@@ -312,7 +683,7 @@ Phase 2 (Multi-Chunk Streaming) — When implementing server-side chunk manageme
 | Chunk unloading | Removing from Map without destroying Phaser objects | Explicitly call .destroy(true) on all containers and children |
 | Chunk boundaries | Assuming entities stop at chunk edge | Visibility and collision must work across chunk boundaries |
 
-## Performance Traps
+## Performance Traps (Chunk Streaming)
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
@@ -324,7 +695,7 @@ Phase 2 (Multi-Chunk Streaming) — When implementing server-side chunk manageme
 | No chunk request debouncing | Server floods with duplicate requests | Debounce requests: ignore duplicates within 500ms window | Rapid player movement near boundaries |
 | Unbounded server chunk cache | Server memory grows until crash | LRU cache with max size (500 chunks), aggressive cleanup policy | >100 concurrent players exploring |
 
-## Security Mistakes
+## Security Mistakes (Chunk Streaming)
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
@@ -335,7 +706,7 @@ Phase 2 (Multi-Chunk Streaming) — When implementing server-side chunk manageme
 | No chunk data size limits | Malicious mod generates chunks with 1M entities, crashes other clients | Validate chunk size before broadcast, limit entities to 100 per chunk |
 | Client can request any chunk | Map revelation exploit: client requests all chunks, reveals entire map | Only allow requests for chunks within N distance of player position |
 
-## UX Pitfalls
+## UX Pitfalls (Chunk Streaming)
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
@@ -347,7 +718,7 @@ Phase 2 (Multi-Chunk Streaming) — When implementing server-side chunk manageme
 | Minimap shows unloaded chunks as black | Looks broken, player thinks game is buggy | Show as fog/unexplored, different from void biome |
 | Chunk loading during combat | Enemy disappears mid-fight, feels unfair | Pre-load chunks in combat zones, increase load radius during combat |
 
-## "Looks Done But Isn't" Checklist
+## "Looks Done But Isn't" Checklist (Chunk Streaming)
 
 - [ ] **Chunk Loading:** Visual rendering works, but did you verify depth sorting uses world coords? Test entities at chunk boundaries.
 - [ ] **Biome Transitions:** Chunks generate different biomes, but are boundaries seamless? Stand at boundary and verify no hard line.
@@ -362,7 +733,7 @@ Phase 2 (Multi-Chunk Streaming) — When implementing server-side chunk manageme
 - [ ] **Server Cache Bounds:** Cache cleanup runs, but does server memory stay bounded under 100 concurrent players exploring?
 - [ ] **Chunk Request Spam:** Player movement smooth, but check network logs—any duplicate chunk requests within 1 second?
 
-## Recovery Strategies
+## Recovery Strategies (Chunk Streaming)
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
@@ -377,7 +748,7 @@ Phase 2 (Multi-Chunk Streaming) — When implementing server-side chunk manageme
 | Chunk loading priority deadlock | LOW | Add priority queue, debounce requests, update pathfinding wait logic |
 | Server chunk cache unbounded | MEDIUM | Implement LRU cache, add size limits, tune cleanup parameters, may require Redis for multi-server |
 
-## Pitfall-to-Phase Mapping
+## Pitfall-to-Phase Mapping (Chunk Streaming)
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
@@ -392,59 +763,14 @@ Phase 2 (Multi-Chunk Streaming) — When implementing server-side chunk manageme
 | Chunk loading priority deadlock | Phase 2: Multi-Chunk Streaming | Pathfind across 3 chunks, verify smooth loading with no cancellations |
 | Server chunk cache unbounded | Phase 2: Multi-Chunk Streaming | 100 players explore for 1 hour, server memory stays under 200MB |
 
-## Sources
+## Sources (Chunk Streaming Research)
 
-### Research Sources
-
-**Multiplayer Synchronization:**
 - [How to Handle Real-Time Synchronization in a Large Multiplayer World](https://vocal.media/gamers/how-to-handle-real-time-synchronization-in-a-large-multiplayer-world)
 - [Multiplayer Game Development Basics: Networking, Matchmaking, and Sync](https://medium.com/coinmonks/multiplayer-game-development-basics-networking-matchmaking-and-sync-6b4b8b117dde)
-- [Modding:Synchronization - Vintage Story Wiki](https://wiki.vintagestory.at/Modding:Synchronization)
-
-**Chunk Loading Performance:**
 - [Lag Spikes - Procedural Chunk-based 2D Tilemap World Generation](https://discussions.unity.com/t/lag-spikes-procedural-chunk-based-2d-tilemap-world-generation-w-advanced-rule-tiles-on-the-fly/900130)
-- [Chunk Loading system for tile-based procedural generation](https://devforum.roblox.com/t/chunk-loading-system-for-tile-based-procedural-generation/3809926)
-- [Minecraft Server Chunk Loading: Performance Impact](https://gameteam.io/blog/minecraft-server-chunk-loading-performance-impact/)
-
-**Biome Transitions:**
-- [The Future of World Generation – Hytale](https://hytale.com/news/2026/1/the-future-of-world-generation)
-- [Procedural World Generation with Biomes in Unity](https://medium.com/@mrrsff/procedural-world-generation-with-biomes-in-unity-a474e11ff0b7)
-- [AutoBiomes: procedural generation of multi-biome landscapes](https://link.springer.com/article/10.1007/s00371-020-01920-7)
-
-**Depth Sorting & Rendering:**
-- [Isometric depth sorting - GameDev.net](https://www.gamedev.net/forums/topic/470599-isometric-depth-sorting/)
-- [Unity - Manual: Tilemap Renderer isometric modes](https://docs.unity3d.com/Manual/Tilemap-Isometric-RenderModes.html)
-- [Chunk batch drawing an isometric map?](https://www.gamedev.net/forums/topic/698662-chunk-batch-drawing-an-isometric-map/)
-
-**Client-Side Prediction:**
 - [Client-Side Prediction and Server Reconciliation - Gabriel Gambetta](https://www.gabrielgambetta.com/client-side-prediction-server-reconciliation.html)
-- [Predicting Chaos: Implementing Physics-Based Multiplayer Games](https://medium.com/@yaman_15640/predicting-chaos-implementing-physics-based-multiplayer-games-with-client-side-prediction-and-d82571316d5f)
-
-**Memory Management:**
-- [The Unity Memory Leak Detective: How I Learned to Hunt Down Memory Issues](https://outscal.com/blog/unity-memory-leak-investigation)
-- [Address the Point of Interest system memory leak in vanilla](https://github.com/neoforged/NeoForge/issues/398)
-- [Memory Leak In a Voxel Game](https://devforum.roblox.com/t/memory-leak-in-a-voxel-game/3030897)
-
-**WebSocket Room Management:**
-- [How to Handle WebSocket Room/Channel Management](https://oneuptime.com/blog/post/2026-01-24-websocket-room-channel-management/view)
 - [Rooms | Socket.IO](https://socket.io/docs/v3/rooms/)
-- [WebSocket architecture best practices](https://ably.com/topic/websocket-architecture-best-practices)
-
-**Deterministic Generation:**
-- [Procedural generation - Wikipedia](https://en.wikipedia.org/wiki/Procedural_generation)
-- [Map seed - Grokipedia](https://grokipedia.com/page/Map_seed)
-- [Deterministic simulation for lockstep multiplayer engines](https://www.daydreamsoft.com/blog/deterministic-simulation-for-lockstep-multiplayer-engines)
-
-### Codebase Analysis
-- `packages/world-gen/src/generation/chunk.ts` - Chunk generation, biome per-chunk
-- `apps/web/src/game/rendering/ChunkManager.ts` - 3x3 chunk loading, unload logic
-- `apps/game-server/src/zones/zones.service.ts` - Server-side chunk caching, cleanup
-- `apps/web/src/game/rendering/ViewportCuller.ts` - Viewport culling with padding
-- `packages/game-logic/src/visibility/range.ts` - Entity visibility using zone ID matching
-- `apps/game-server/src/game/game.gateway.ts` - WebSocket room join/leave on zone transition
-- `apps/web/src/game/rendering/TileRenderer.ts` - World vs local coordinate rendering
-- `apps/web/src/game/rendering/DepthSorter.ts` - Depth calculation from grid coordinates
 
 ---
-*Pitfalls research for: Infinite World Chunk Streaming (Multiplayer 2D Tile-Based Game)*
-*Researched: 2026-02-16*
+*Pitfalls research for: Movement System Overhaul + Infinite World Chunk Streaming (Multiplayer 2D Isometric MMO)*
+*Updated: 2026-02-17*

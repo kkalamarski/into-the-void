@@ -1,385 +1,210 @@
-# Stack Research: Infinite World Chunk Streaming
+# Stack Research: Movement System Overhaul
 
-**Domain:** Infinite procedural world with seamless chunk streaming
-**Researched:** 2026-02-16
+**Domain:** Isometric MMO — smooth movement, 8-directional input, camera interpolation
+**Researched:** 2026-02-17
 **Confidence:** HIGH
 
 ## Executive Summary
 
-The existing stack is ALREADY COMPLETE for infinite world chunk streaming. No new dependencies needed. The codebase has custom SimplexNoise with multi-octave support for seamless terrain, BiomeGenerator using world-coordinate-based noise layers (temperature/moisture/elevation), ChunkManager handling 3x3 pre-loading, Socket.IO 4.7 for room-based zone subscriptions, and Phaser 3.80 with native Container pooling. The milestone requires zero package installations - only extending existing patterns.
+No new npm packages are needed for the movement system overhaul. Phaser 3.90.0 (installed) provides every required primitive natively: `camera.startFollow()` with lerpX/lerpY parameters for smooth camera interpolation, simultaneous `Key.isDown` checks for 8-directional diagonal detection, and `this.tweens.add()` for sprite position interpolation during server reconciliation. The overhaul is a code-change-only milestone — all capability exists in the installed stack.
+
+The core problem is architectural: the current system maps only 4 keys (W/A/S/D) to 4 isometric diagonal directions (NE/NW/SE/SW), leaving N/S/E/W unreachable. Fixing this requires reading simultaneous key combinations in `handleInput()` and adding N/S/E/W directions to the `Direction` type. Camera snap-to-player (`lerp: 1, 1`) needs to become smooth follow (`lerp: 0.1, 0.1`). No dependencies change.
+
+---
 
 ## Recommended Stack
 
-### Core Technologies (All Present - NO CHANGES)
+### Core Technologies (All Present — NO NEW PACKAGES)
 
 | Technology | Version | Purpose | Why Sufficient |
 |------------|---------|---------|----------------|
-| SimplexNoise (custom) | Current | Multi-octave procedural noise | Custom implementation already supports fbm() and ridged() with seeded deterministic generation. Uses world coordinates (not chunk-local) for seamless cross-chunk terrain. NO external library needed. |
-| BiomeGenerator (custom) | Current | Multi-layer biome noise | Three noise layers (temperature 0.005, moisture 0.007, elevation 0.003 scales) generate seamless biomes across chunks. Already uses world coordinates. Pattern is CORRECT for infinite world. |
-| Socket.IO | ^4.7.0 | Real-time chunk streaming | Room-based broadcasting perfect for zone subscriptions. Players join/leave zone rooms (`client.join(zoneId)`), server sends chunk data to requesting clients. Proven scalable. |
-| Phaser | ^3.80.0 | Client-side rendering | Native Container destruction (`container.destroy(true)`) handles memory cleanup. ViewportCuller already throttles visibility checks (100ms). NO pooling library needed. |
-| ChunkManager (custom) | Current | 3x3 chunk loading | Existing component loads/unloads 3x3 grid around player, tracks chunk states (loading/loaded/failed), handles timeouts. Ready for infinite world - NO changes needed. |
-| WorldGenerator (custom) | Current | Deterministic chunk generation | Server-side generation using world seed. `generateChunk(chunkX, chunkY)` produces identical results on repeat calls. Perfect for infinite world (no storage needed). |
+| Phaser 3 | 3.90.0 (installed) | Camera follow with lerp, tween interpolation | `camera.startFollow(target, roundPixels, lerpX, lerpY)` — verified in installed types at line 3671 of phaser.d.ts. lerpX/lerpY range 0.0–1.0; 0.1 gives smooth follow, 1.0 = instant snap (current behavior). |
+| Phaser 3 Keyboard | 3.90.0 (installed) | Simultaneous multi-key detection | `Key.isDown` (boolean) is readable on every key simultaneously in the update loop. No plugin needed. Check `W.isDown && A.isDown` = NW diagonal. Verified in types at line 62987. |
+| Phaser 3 Tweens | 3.90.0 (installed) | Sprite interpolation during reconciliation | `this.tweens.add({ targets, x, y, duration, ease })` already used in `movePlayer()` for remote players. Same pattern extends to local player smooth reconciliation. |
+| `@into-the-void/shared-types` | workspace | Direction type must expand | Current `Direction = 'n' \| 's' \| 'e' \| 'w' \| 'ne' \| 'nw' \| 'se' \| 'sw'` already supports all 8 directions. `DIRECTION_VECTORS` in game-logic already has all 8 vectors. The types are complete — only the input handling and pathfinding need updating. |
+| `@into-the-void/game-logic` | workspace | Movement validation for all 8 directions | `calculateNewPosition()` and `validateMovement()` already handle all 8 `Direction` values. N/S/E/W movement was always valid at the data layer — only the input mapping was missing. |
 
-### Supporting Libraries (Already Installed - NOT ACTIVELY USED)
+### What Needs Code Changes (NOT New Packages)
 
-| Library | Version | Purpose | Current Status |
-|---------|---------|---------|----------------|
-| ioredis | ^5.4.0 | OPTIONAL server-side chunk cache | Installed but not used for chunks. Can add LRU cache to reduce WorldGenerator calls, but generation is fast (~5-15ms) so NOT required for MVP. |
-| drizzle-orm | ^0.30.0 | OPTIONAL persistent chunks | Can store player-modified chunks in PostgreSQL, but procedural generation sufficient for read-only infinite world. Defer until player building/terrain modification. |
+| Component | File | Current State | Change Required |
+|-----------|------|--------------|-----------------|
+| Input mapping | `WorldScene.ts:430-453` | WASD → 4 diagonal-only directions | Read key combinations: `W+D = ne`, `W+A = nw`, `S+D = se`, `S+A = sw`, `W only = n`, `S only = s`, `D only = e`, `A only = w` |
+| Camera follow lerp | `WorldScene.ts:1017` | `startFollow(target, true, 1, 1)` — instant snap | Change to `startFollow(target, true, 0.1, 0.1)` for smooth follow. `roundPixels=true` prevents jitter. |
+| Player tween on move | `WorldScene.ts:994-999` | Direct position assignment `localPlayer.x = screenPos.x` | Add `this.tweens.add()` with 80–120ms duration matching `moveDelay` for the visual glide between tiles |
+| A* pathfinding | `game-logic/src/movement/pathfinding.ts:82-87` | Only explores N/S/E/W (4 cardinal directions) | Add diagonal neighbors (NE/NW/SE/SW) to directions array for complete 8-directional pathfinding |
+| Pathfinding cost | `pathfinding.ts` | Diagonal costs same as cardinal (1.0) | Apply `Math.SQRT2` (~1.414) cost for diagonals to prevent diagonal preference bias |
 
-### Development Tools (No Changes)
+---
 
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| Phaser Dev Tools | Runtime chunk inspection | Use `scene.game.debug` to visualize chunk boundaries, loaded zones |
-| Chrome DevTools | Network profiling | Monitor Socket.IO chunk transmission size (currently ~3KB JSON per 32x32 chunk) |
+## Phaser 3 API Reference (Verified from Installed 3.90.0 Types)
 
-## What Already Exists (DO NOT RE-IMPLEMENT)
+### Camera Smooth Follow
 
-The project has VALIDATED infinite-world-ready capabilities:
+```typescript
+// CURRENT (instant snap):
+this.cameras.main.startFollow(this.localPlayer!, true, 1, 1);
 
-| Existing Component | Infinite World Readiness | Evidence |
-|--------------------|--------------------------|----------|
-| SimplexNoise | Uses WORLD coordinates for height noise (`heightNoise.fbm(worldX * 0.03, worldY * 0.03)`) | packages/world-gen/src/generation/terrain.ts:129 |
-| BiomeGenerator | `getBiome(worldX, worldY)` takes world coordinates, not chunk-local | packages/world-gen/src/generation/biome.ts:74 |
-| ChunkManager | Loads 3x3 grid, unloads distant chunks, tracks state | apps/web/src/game/rendering/ChunkManager.ts:55 |
-| Socket.IO rooms | Players join zone rooms on auth, broadcast zone events | apps/game-server/src/game/game.gateway.ts:82 |
-| ViewportCuller | Throttled visibility culling (100ms) for tiles | apps/web/src/game/scenes/WorldScene.ts:382 |
-| Phaser Container pooling | Container destruction on chunk unload | apps/web/src/game/scenes/WorldScene.ts:607 |
+// RECOMMENDED (smooth follow):
+this.cameras.main.startFollow(
+  this.localPlayer!,
+  true,   // roundPixels — prevents sub-pixel jitter (KEEP TRUE for isometric grid)
+  0.1,    // lerpX — 0.1 = 10% per frame toward target; tune between 0.08-0.15
+  0.1     // lerpY — match lerpX for equal horizontal/vertical tracking
+);
 
-**Critical:** These patterns are ALREADY CORRECT for infinite world. Focus on USING them, not replacing them.
-
-## Installation
-
-```bash
-# NO NEW PACKAGES NEEDED
-# All capabilities present in existing dependencies
-
-# Verify current stack
-pnpm list phaser socket.io  # Should show 3.80.0 and 4.7.0
-
-# Optional: If adding Redis chunk cache (future optimization)
-# (ioredis ^5.4.0 already installed, just need to use it)
-
-# Optional: If persisting modified chunks (future feature)
-# (drizzle-orm ^0.30.0 already installed, just add chunk schema)
+// Alternative: set after startFollow for live tuning
+this.cameras.main.setLerp(0.1, 0.1);
 ```
 
-## Alternatives Considered
+**Why lerpX=0.1:** At 60fps, the camera closes 10% of remaining distance per frame. This gives 95% convergence in ~29 frames (~0.5 seconds). Tibia-style games use 0.08-0.12 for a floating "weight" feel. Values below 0.05 feel sluggish; above 0.2 approaches instant snap.
 
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| SimplexNoise (custom) | fast-simplex-noise npm | If need 3D/4D noise (we only use 2D), OR if performance bottleneck (unlikely - noise runs server-side during generation, not per-frame). Custom implementation is 200 lines, no dependency, works. |
-| Socket.IO rooms | Redis Pub/Sub for cross-server zones | If scaling to 10,000+ concurrent players across multiple game servers (premature for current scope). Single server handles hundreds of players fine. |
-| In-memory Map<zoneId, chunk> | Redis LRU cache | If WorldGenerator.generateChunk() becomes bottleneck. Current generation is ~5-15ms per chunk, fast enough. Cache only if profiling shows >50ms generation time. |
-| JSON serialization (current) | Protocol Buffers / MessagePack | If chunk bandwidth exceeds 100KB per chunk. Current: 32x32 tiles + heights + collisions = ~3KB JSON. Well under Socket.IO limits (1MB default). Binary format premature. |
-| Phaser Container destroy/create | Custom object pool library | If creating/destroying 1000+ containers per second. Current: max 9 chunks in 3x3 grid, rare churn (only on zone transitions). Pooling overkill. |
+**Deadzone option (if needed):** `this.cameras.main.setDeadzone(128, 64)` — camera only moves when player exits a 128x64px rectangle in screen center. Tibia uses this pattern (camera doesn't follow single-tile moves). Adds complexity; evaluate after basic lerp is working.
 
-## What NOT to Use
+### 8-Directional Input Detection
+
+```typescript
+// In handleInput() — read all 8 combinations each frame:
+const W = this.wasd!.W.isDown;
+const A = this.wasd!.A.isDown;
+const S = this.wasd!.S.isDown;
+const D = this.wasd!.D.isDown;
+
+// Diagonal takes precedence when two keys held (isometric visual clarity):
+let direction: Direction | null = null;
+if (W && D) direction = 'ne';        // Screen-up + screen-right = NE in isometric grid
+else if (W && A) direction = 'nw';   // Screen-up + screen-left = NW
+else if (S && D) direction = 'se';   // Screen-down + screen-right = SE
+else if (S && A) direction = 'sw';   // Screen-down + screen-left = SW
+else if (W) direction = 'n';         // Screen-up alone = N (currently unreachable!)
+else if (S) direction = 's';         // Screen-down alone = S (currently unreachable!)
+else if (D) direction = 'e';         // Screen-right alone = E (currently unreachable!)
+else if (A) direction = 'w';         // Screen-left alone = W (currently unreachable!)
+```
+
+**Why diagonal-first check order:** If W+D pressed, player intends northeast. Checking diagonals first prevents W alone triggering when D is also held.
+
+**Why not `Phaser.Input.Keyboard.JustDown()`:** `JustDown` fires only on the frame a key is first pressed. For held movement, `isDown` is correct — it returns true every frame the key is held, which feeds into the `moveDelay` throttle already in place.
+
+### Sprite Interpolation Between Tiles
+
+```typescript
+// CURRENT (snap on prediction):
+this.localPlayer.x = screenPos.x;
+this.localPlayer.y = targetY;
+
+// RECOMMENDED (tween between tiles — visual smoothness):
+this.tweens.killTweensOf(this.localPlayer);
+this.tweens.add({
+  targets: this.localPlayer,
+  x: screenPos.x,
+  y: targetY,
+  duration: this.moveDelay * 0.8,  // 80% of move delay = arrives slightly before next input
+  ease: 'Sine.easeOut',            // Ease out = fast start, gentle arrival (natural movement)
+  onComplete: () => {
+    // Update grid data AFTER tween completes, not before
+    this.localPlayer!.setData('gridX', worldX);
+    this.localPlayer!.setData('gridY', worldY);
+  }
+});
+```
+
+**Why `Sine.easeOut`:** Isometric grid movement looks most natural with fast-start easing. `Linear` looks mechanical (robot-like). `Cubic.easeOut` is too dramatic. `Sine.easeOut` matches Tibia's movement feel — quick step, smooth stop.
+
+**Why `moveDelay * 0.8`:** The tween should complete before the next movement input is processed. At `moveDelay = 500ms`, the tween is `400ms`, giving 100ms headroom. Prevents visual overlap of consecutive moves.
+
+**Reconciliation tween (existing pattern, keep):** The existing `Cubic.easeOut` at 50ms duration for reconciliation corrections is correct. Server corrections are micro-corrections (1-2 tiles), so faster ease is appropriate.
+
+---
+
+## What NOT to Add
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| Perlin Noise libraries | Simplex has better isotropy for 2D (no directional artifacts). Perlin patent expired but inferior algorithm. | Existing SimplexNoise custom implementation |
-| Custom WebSocket protocol | Reinventing wheel. Socket.IO provides rooms, reconnection, binary support, heartbeat, automatic upgrades. | Socket.IO 4.7 (current) |
-| Client-side chunk generation | SECURITY RISK (cheating - clients can modify seed), bandwidth waste (send seed vs data), desync potential (version mismatch in noise algorithm). | Server-side WorldGenerator (current pattern) |
-| Storing all chunks in database | Infinite world = infinite storage cost. 1 million chunks at 10KB each = 10GB. Procedural generation is free (deterministic from seed). | Store ONLY player-modified chunks (future optimization) |
-| Quadtree / spatial indexing | Over-engineering for 3x3 grid. Map.get(zoneId) is O(1), quadtree is O(log n). Quadtree adds complexity for zero benefit at this scale. | Map<zoneId, chunk> (current ChunkManager) |
-| Upgrading Phaser to 4.x (beta) | Phaser 4 still in alpha/beta (as of Feb 2026). Breaking API changes, unstable. 3.80 is stable, proven. | Phaser 3.80 (current) |
+| `phaser3-rex-plugins` (EightDirection plugin) | Requires Arcade Physics engine enabled in game config. This project uses no physics engine (correct for tile-based grid). Adding Arcade Physics would conflict with manual collision detection via `collisionMap`. Heavy dependency (~2MB) for a single feature. | Native `Key.isDown` combination checking in update loop |
+| `phaser3-plugin-isometric` (sebashwa) | Third-party isometric helper. Project already has custom `IsometricTransform` class with `gridToScreen()` and `screenToTile()`. Adding another isometric library creates competing conventions and dual maintenance burden. | Existing `IsometricTransform` (already works correctly) |
+| Custom interpolation math (lerp in update loop) | Manual `x += (targetX - x) * 0.1` per frame is frame-rate dependent and drifts at non-60fps. | `camera.setLerp()` + `this.tweens.add()` — both are delta-time aware in Phaser 3 |
+| Camera pan with `camera.pan()` | `camera.pan()` is for cinematic sequences (cutscenes). It takes absolute coordinates and ignores `startFollow`. Combining both causes conflicts. | `camera.startFollow()` with lerpX/lerpY |
+| `camera.setDeadzone()` in phase 1 | Deadzone + lerp interaction has a known quirk (Issue #5018 in Phaser GitHub): position teleport can cause visible stutter. Test lerp alone first, add deadzone only if needed. | `camera.startFollow(target, true, 0.1, 0.1)` alone first |
+| Velocity-based movement (physics) | Would require replacing discrete tile-step system with continuous position tracking. Breaks server-side collision model, zone boundary detection, A* pathfinding. Server validates discrete tile positions — physics velocity doesn't map to this. | Current tile-step system with visual interpolation via tweens |
 
-## Stack Patterns by Use Case
+---
 
-### Current Scope: Infinite Seamless World (READ-ONLY)
+## Alternatives Considered
 
-**Pattern: Deterministic procedural generation + 3x3 pre-loading + room-based streaming**
+| Recommended Approach | Alternative | Why Alternative Is Worse |
+|----------------------|-------------|--------------------------|
+| Native `Key.isDown` for 8-direction | rex-plugins EightDirection plugin | Requires Arcade Physics. Overkill — 5 lines of native code replaces a dependency |
+| `camera.startFollow()` with `lerpX=0.1` | Manual camera pan in `update()` loop | Frame-rate dependent without delta-time. `startFollow` lerp is delta-time corrected in Phaser 3 |
+| `Sine.easeOut` tween for tile movement | Linear tween | Linear looks mechanical. Sine easeOut matches organic footstep feel of Tibia/Minecraft Dungeons |
+| Diagonal A* cost = `Math.SQRT2` (~1.414) | Diagonal cost = 1.0 (same as cardinal) | Equal cost causes path to prefer diagonal zig-zags. Chebyshev weight makes diagonals feel natural |
+| `moveDelay` for all 8 directions unchanged | Slower diagonal speed (Euclidean scaling) | Euclidean diagonal is `√2` faster than cardinal — penalizing diagonals is controversial in isometric games where diagonals are the primary movement axis |
 
-**Server:**
-```typescript
-// WorldGenerator uses world seed for deterministic generation
-const generator = new WorldGenerator(worldSeed);
-const chunk = generator.generateChunk(chunkX, chunkY);  // Deterministic - same input = same output
+---
 
-// BiomeGenerator uses WORLD coordinates (not chunk-local)
-const biome = biomeGenerator.getBiome(worldX, worldY);  // Seamless across chunks
-```
+## Integration Notes
 
-**Client:**
-```typescript
-// ChunkManager pre-loads 3x3 grid
-chunkManager.updateChunks(playerZoneId);  // Loads current + 8 adjacent, unloads distant
+### Existing Systems Unaffected
 
-// Socket.IO room-based streaming
-socket.join(zoneId);  // Subscribe to zone events
-socket.emit('chunk:request', { zoneId });  // Request chunk data
-socket.on('chunk:data', (chunkData) => { ... });  // Receive chunk
-```
+| System | Status | Reason |
+|--------|--------|--------|
+| Client-side prediction (`MovementController`) | No change needed | `processInput(direction: Direction)` already accepts all 8 directions. Only the caller (input handler) was missing N/S/E/W. |
+| Server reconciliation | No change needed | `reconcile()` replays pending inputs; direction values don't affect reconciliation logic |
+| A* pathfinding results (`PathfindingController`) | Minor change | `getDirection()` already handles all 8 directions in switch statement (lines 176-190). The A* generator (`findPath`) needs 8 neighbors, not 4. |
+| Zone boundary transitions | No change needed | `calculateNewPosition()` handles all 8 directions including diagonal zone boundary crossing |
+| Collision map validation | No change needed | `validateMovement()` checks `to.x/y` position, not direction. 8-direction moves produce valid `to` positions. |
+| MinimapCamera | No change needed | Follows same `localPlayer` container as main camera |
+| Depth sorting | No change needed | Depth calculated from grid position, not movement direction |
 
-**Why:**
-- Deterministic generation = no DB storage needed (re-generate on demand)
-- World-coordinate noise = seamless biomes across chunk boundaries
-- 3x3 pre-loading = 1-chunk buffer in all directions prevents visible pop-in
-- Room-based streaming = efficient broadcast to players in same zone
-- At ZONE_SIZE=32 and player speed ~4 tiles/sec, 1-chunk buffer = ~8 seconds notice for loading
+### Server-Side Changes (game-server)
 
-**Bottleneck:** Network latency (50-200ms) >> Generation time (5-15ms). Pre-loading masks latency.
+The server already validates all 8 directions in movement processing (DIRECTION_VECTORS covers N/S/E/W/NE/NW/SE/SW). The server's `moveDelay` rate limiting (140ms minimum) applies equally to all directions. No server changes required.
 
-### Future Optimization: Player-Modified Chunks (WRITE-ENABLED)
-
-**Pattern: Procedural baseline + sparse delta storage**
-
-```typescript
-// Generate base chunk
-const baseChunk = generator.generateChunk(chunkX, chunkY);
-
-// Check for player modifications (sparse storage)
-const delta = await db.query.chunkModifications.findFirst({
-  where: eq(chunkModifications.zoneId, zoneId)
-});
-
-// Apply delta if exists
-if (delta) {
-  applyModifications(baseChunk, delta.changes);  // Only modified tiles stored
-}
-```
-
-**Why:**
-- 99% of chunks never modified = zero storage cost
-- Modified chunks stored as deltas (only changed tiles), not full chunk copies
-- Redis cache reduces DB queries for popular zones
-- Invalidate cache on modification to ensure consistency
-
-**When needed:** Player building, terrain editing, persistent destruction.
-
-### Future Scaling: Multi-Server (1000+ Players)
-
-**Pattern: Redis Pub/Sub + shared chunk cache**
-
-```typescript
-// Server checks Redis cache before generating
-const cached = await redis.get(`chunk:${zoneId}`);
-if (cached) return JSON.parse(cached);
-
-// Generate and cache
-const chunk = generator.generateChunk(chunkX, chunkY);
-await redis.setex(`chunk:${zoneId}`, 3600, JSON.stringify(chunk));  // 1 hour TTL
-
-// Redis Pub/Sub for cross-server zone events
-redis.publish(`zone:${zoneId}`, JSON.stringify(event));
-```
-
-**Why:**
-- Multiple servers share chunk cache (reduce redundant generation)
-- Pub/Sub enables cross-server player visibility in same zone
-- Sticky sessions or consistent hashing for zone ownership (prevent split-brain)
-
-**When needed:** 1000+ concurrent players requiring horizontal scaling.
-
-## Integration Points with Existing Systems
-
-### 1. BiomeGenerator - NO CODE CHANGE NEEDED
-
-**Current capability:**
-```typescript
-// Uses WORLD coordinates (correct for infinite world)
-getBiome(worldX: number, worldY: number): BiomeType {
-  const temp = this.temperatureNoise.fbm(worldX * 0.005, worldY * 0.005, 4);
-  const moisture = this.moistureNoise.fbm(worldX * 0.007, worldY * 0.007, 4);
-  const elevation = this.elevationNoise.fbm(worldX * 0.003, worldY * 0.003, 6);
-  // ... biome rules
-}
-```
-
-**For infinite world:**
-- Already correct! Biome transitions seamless because noise uses world coords
-- Three noise layers create complex biome patterns
-- Scales (0.005, 0.007, 0.003) control biome size - larger numbers = smaller biomes
-
-**Optional enhancement (if biome edges too sharp):**
-- Decrease noise scales (0.003 → 0.002) for larger biomes
-- Add `getBiomeBlend(worldX, worldY)` for weighted multi-biome tiles at boundaries
-- Test first - sharp edges may be fine
-
-### 2. SimplexNoise Usage - ALREADY CORRECT PATTERN
-
-**Current pattern (from terrain.ts):**
-```typescript
-// GLOBAL seed for cross-chunk continuity (CORRECT)
-const heightNoise = new SimplexNoise(`${worldSeed}_height_global`);
-const heightValue = heightNoise.fbm(worldX * 0.03, worldY * 0.03, 2);  // Uses WORLD coords
-
-// PER-CHUNK seed for local variation (CORRECT)
-const terrainNoise = new SimplexNoise(`${worldSeed}_terrain_${chunkX}_${chunkY}`);
-const terrainValue = terrainNoise.fbm(worldX * 0.05, worldY * 0.05, 4);  // Still uses WORLD coords
-```
-
-**Why this works:**
-- Height noise seed is GLOBAL → seamless elevation across chunks
-- Terrain noise seed is CHUNK-SPECIFIC → prevents identical wall patterns in every chunk
-- Both use WORLD coordinates (worldX, worldY) not chunk-local (x, y)
-- Multi-octave fbm() adds detail at multiple scales
-
-**DO NOT CHANGE THIS PATTERN** - it's already optimal for infinite world.
-
-### 3. ChunkManager Pre-Loading - NO CHANGES NEEDED
-
-**Current capability:**
-```typescript
-updateChunks(playerZoneId: string): void {
-  // Calculate 3x3 grid around player
-  for (let dy = -1; dy <= 1; dy++) {
-    for (let dx = -1; dx <= 1; dx++) {
-      const zoneId = createZoneId(playerX + dx, playerY + dy);
-      requiredChunks.add(zoneId);
-    }
-  }
-  // Request missing chunks, unload distant chunks
-}
-```
-
-**For infinite world:**
-- Pattern already correct! No changes needed
-- 3x3 grid = 1-chunk buffer in all directions
-- At ZONE_SIZE=32 tiles and player speed ~4 tiles/sec, buffer provides ~8 seconds notice
-- Sufficient for WebSocket round-trip (50-200ms) + generation (5-15ms) + rendering (1-5ms)
-
-**Future enhancement (predictive pre-loading):**
-- Track player velocity direction
-- If moving east at max speed, prioritize eastern chunks (load 2-chunk buffer east, 1-chunk buffer west)
-- Deprioritize chunks behind player (moving away)
-- Only add if profiling shows pre-loading misses (player reaches edge before chunk loads)
-
-### 4. Socket.IO Room Strategy - EXTEND FOR CHUNK REQUESTS
-
-**Current pattern:**
-```typescript
-// Player joins zone room on auth (CORRECT)
-client.join(result.player.position.zoneId);
-
-// Broadcast to zone (CORRECT for gameplay events)
-client.to(result.player.position.zoneId).emit('player:joined', ...);
-```
-
-**For infinite world - ADD chunk request/response:**
-```typescript
-// CLIENT: Request chunk data (point-to-point, not broadcast)
-@SubscribeMessage('chunk:request')
-handleChunkRequest(@ConnectedSocket() client: Socket, @MessageBody() { zoneId }: { zoneId: string }) {
-  const chunkData = await this.gameService.getOrGenerateChunk(zoneId);
-  const biome = this.worldGenerator.getChunkBiome(chunkX, chunkY);
-
-  // Send to requesting client only (NOT broadcast)
-  client.emit('chunk:data', { chunkData, biome });
-}
-
-// CLIENT: Receive chunk data
-socket.on('chunk:data', ({ chunkData, biome }) => {
-  chunkManager.receiveChunk(chunkData, biome);
-});
-```
-
-**Why separation:**
-- Zone rooms for gameplay (entities, players) → broadcast needed (all players in zone see)
-- Chunk data for world rendering → point-to-point (different players need different chunks based on position)
-- Avoids bandwidth waste (broadcasting chunks to players who don't need them)
-
-### 5. WorldGenerator.generateChunk() - ADD CACHING LAYER (OPTIONAL)
-
-**Current implementation:**
-```typescript
-generateChunk(chunkX: number, chunkY: number): ChunkData {
-  const biome = this.biomeGenerator.getChunkBiome(chunkX, chunkY, ZONE_SIZE);
-  const { tiles, heights, collisions } = generateTerrain(this.worldSeed, chunkX, chunkY, biome);
-  const structures = generateStructures(this.worldSeed, chunkX, chunkY, biome, tiles, heights, collisions);
-  const spawnPoints = generateSpawnPoints(this.worldSeed, chunkX, chunkY, biome, collisions);
-  return { zoneId, tiles, heights, structures, collisions, spawnPoints };
-}
-```
-
-**Optional enhancement (add LRU cache):**
-```typescript
-private chunkCache = new Map<string, { chunk: ChunkData; timestamp: number }>();
-private MAX_CACHE_SIZE = 100;  // Keep 100 most recent chunks in memory
-
-generateChunk(chunkX: number, chunkY: number): ChunkData {
-  const zoneId = createZoneId(chunkX, chunkY);
-
-  // Check cache
-  const cached = this.chunkCache.get(zoneId);
-  if (cached) return cached.chunk;
-
-  // Generate
-  const chunk = this.generateChunkInternal(chunkX, chunkY);
-
-  // Cache with LRU eviction
-  this.addToCache(zoneId, chunk);
-
-  return chunk;
-}
-```
-
-**When to add:** Only if profiling shows generation is bottleneck (>50ms per chunk). Current 5-15ms is fast enough.
+---
 
 ## Version Compatibility
 
-| Package | Compatible With | Notes |
-|---------|-----------------|-------|
-| socket.io@4.7.0 | socket.io-client@4.7.0 | Client/server versions MUST match major.minor. Patch differences OK. Mismatch causes connection failures. |
-| phaser@3.80.0 | TypeScript 5.4.0 | Phaser types included in package, no @types/phaser needed. |
-| @nestjs/platform-socket.io@10.3.0 | socket.io@4.7.0 | NestJS adapter provides Socket.IO integration. Version compatible. |
-| drizzle-orm@0.30.0 | pg@8.11.0 | PostgreSQL driver version compatible. |
-| ioredis@5.4.0 | Redis 6.x or 7.x | Client supports Redis 6 and 7 protocol. |
+| Package | Version | Verified | Notes |
+|---------|---------|----------|-------|
+| phaser | 3.90.0 (installed) | Yes — checked types/phaser.d.ts | `startFollow(target, roundPixels, lerpX, lerpY)` confirmed at line 3671. `setLerp(x, y)` confirmed at line 62987. `Key.isDown` boolean confirmed at line 62987. |
+| @into-the-void/shared-types | workspace | Yes — checked position.ts | `Direction` type already includes 'n'\|'s'\|'e'\|'w' in addition to diagonals. |
+| @into-the-void/game-logic | workspace | Yes — checked validation.ts, pathfinding.ts | `calculateNewPosition()` and `validateMovement()` support all 8 directions. A* needs diagonal neighbors added. |
 
-**Critical:** Socket.IO client/server version mismatch is the most common deployment issue. Always upgrade both together.
+---
 
-## Performance Benchmarks (Based on Current Codebase)
+## Implementation Priority
 
-| Operation | Current Performance | Bottleneck? | Scaling Limit |
-|-----------|---------------------|-------------|---------------|
-| WorldGenerator.generateChunk() | ~5-15ms per chunk | NO | Can generate 100+ chunks/sec on single core |
-| ChunkData JSON serialization | ~1-3ms for 32x32 chunk | NO | JSON.stringify is fast for small data |
-| Socket.IO chunk transmission | ~50-200ms round-trip | YES (network) | Bandwidth, not CPU. ~3KB per chunk = minimal |
-| Phaser Container create/destroy | ~0.1ms per container | NO | 100+ containers/frame causes lag, but we create <10/sec |
-| ViewportCuller.getCullBounds() | Throttled to 100ms | NO | Can reduce to 50ms if needed |
-| BiomeGenerator.getBiome() | ~0.5ms per call | NO | Simple noise lookup, negligible |
+1. **8-directional input** — 30 lines in `handleInput()`. Highest impact/effort ratio. Unblocks all inaccessible tiles immediately.
+2. **Camera lerp** — 1 line change (`1, 1` → `0.1, 0.1`). Zero risk. Instant feel improvement.
+3. **Sprite tween on move** — Replace direct position assignment in `updateLocalPlayerSprite()`. Medium complexity (manage tween lifecycle).
+4. **A* diagonal pathfinding** — Add 4 diagonal neighbors to `findPath()` with `Math.SQRT2` cost. Required so click-to-move paths work smoothly after 8-direction input enabled.
 
-**Bottleneck analysis:**
-- Network latency (50-200ms) >> Generation (5-15ms) >> Rendering (0.1ms)
-- Pre-loading 3x3 grid MASKS network latency (chunks load before player reaches edge)
-- Generation is NOT a bottleneck (parallelizable if needed via worker threads)
-
-**NOT bottlenecks:**
-- Noise generation (runs once per chunk, results cached in memory)
-- Biome calculation (simple noise lookup, <1ms)
-- Chunk lookup (Map.get is O(1), ~0.001ms)
-- Depth sorting (throttled to 100ms, elevation adds one multiplication)
-
-**Potential future bottleneck (at scale):**
-- Socket.IO broadcasting to 1000+ players in same zone (need Redis Pub/Sub for horizontal scaling)
-- Database queries for player-modified chunks (need Redis cache layer)
+---
 
 ## Sources
 
-### High Confidence (Official Documentation & Current Codebase)
+### HIGH Confidence (Verified in Installed Codebase)
 
-- **Socket.IO Rooms** — [Official Documentation](https://socket.io/docs/v3/rooms/) — Room-based broadcasting patterns verified
-- **Socket.IO Broadcasting** — [Official Documentation](https://socket.io/docs/v3/broadcasting-events/) — Event emission to specific clients/rooms
-- **Phaser 3.80 Performance Optimization (2025)** — [Phaser Blog](https://phaser.io/news/2025/03/how-i-optimized-my-phaser-3-action-game-in-2025) — Object pooling case study: FPS 35-40 before pooling, stable 60 FPS with 3x more objects after
-- **Phaser Object Pooling Tutorial** — [The Polyglot Developer](https://www.thepolyglotdeveloper.com/2020/09/object-pooling-sprites-phaser-game-performance-gains/) — Pooling as requirement for high performance games
-- **Current Codebase** — Verified SimplexNoise (packages/world-gen/src/noise/simplex.ts), BiomeGenerator (packages/world-gen/src/generation/biome.ts), ChunkManager (apps/web/src/game/rendering/ChunkManager.ts)
+- **Phaser 3.90.0 type definitions** — `/node_modules/.pnpm/phaser@3.90.0/node_modules/phaser/types/phaser.d.ts` — `startFollow` signature at line 3671, `setLerp` at line 3671, `Key.isDown` boolean at line 62987. All camera lerp and input APIs confirmed present.
+- **WorldScene.ts** — `apps/web/src/game/scenes/WorldScene.ts` — Current camera `startFollow(target, true, 1, 1)` at line 1017. Current input handling (4-direction only) at lines 430-453.
+- **MovementController.ts** — `apps/web/src/game/systems/MovementController.ts` — `processInput(direction: Direction)` accepts all 8 directions without change.
+- **validation.ts** — `packages/game-logic/src/movement/validation.ts` — `DIRECTION_VECTORS` has all 8 directions. `calculateNewPosition()` handles all 8 at line 37.
+- **pathfinding.ts** — `packages/game-logic/src/movement/pathfinding.ts` — Current `findPath()` only explores 4 cardinal directions (lines 82-87). `PathfindingController.getDirection()` already handles all 8 results (lines 176-190).
+- **position.ts (shared-types)** — `packages/shared-types/src/core/position.ts` — `Direction` type already includes all 8 values at line 16.
 
-### Medium Confidence (Community Best Practices)
+### MEDIUM Confidence (Official Docs Verified)
 
-- **Phaser Infinite Terrain Tutorial** — [Learn @ York CS](https://learn.yorkcs.com/2019/02/25/top-down-infinite-terrain-generation-with-phaser-3/) — Chunk loading pattern: split world into chunks, only render neighboring chunks
-- **Managing Big Maps with Phaser 3** — [Dynetis Games](https://www.dynetisgames.com/2018/02/24/manage-big-maps-phaser-3/) — Chunk unloading: each chunk has boolean isLoaded, unload() removes tiles and sets false
-- **Red Blob Games: Making Maps with Noise** — [Red Blob Games](https://www.redblobgames.com/maps/terrain-from-noise/) — Multi-octave noise patterns, persistence and lacunarity explained
-- **Fast Biome Blending** — [NoisePosti.ng](https://noiseposti.ng/posts/2021-03-13-Fast-Biome-Blending-Without-Squareness.html) — Voronoi-noise-based blending to avoid grid artifacts
+- **Phaser Camera API** — [Official Cameras Documentation](https://docs.phaser.io/phaser/concepts/cameras) — `startFollow()` lerp parameters documented. roundPixels=true recommended for isometric grid to prevent sub-pixel jitter.
+- **Phaser Camera lerp property** — [newdocs.phaser.io](https://newdocs.phaser.io/docs/3.80.0/focus/Phaser.Cameras.Scene2D.Camera-lerp) — Default lerp=1 (instant snap). Reducing to 0.1 gives smooth tracking.
+- **startFollow API** — [newdocs.phaser.io](https://newdocs.phaser.io/docs/3.70.0/focus/Phaser.Cameras.Scene2D.Camera-startFollow) — Signature `startFollow(target, roundPixels, lerpX, lerpY, offsetX, offsetY)` verified.
+- **Phaser 3 WASD keyboard movement** — [Phaser discourse](https://phaser.discourse.group/t/wasd-keyboard-movement-phaser-3/8297) — Simultaneous `isDown` check for diagonal detection confirmed as standard pattern.
+- **Phaser camera lerp + velocity issue** — [GitHub Issue #5018](https://github.com/phaserjs/phaser/issues/5018) — Known quirk when combining deadzone + lerp. Avoid deadzone in first implementation.
 
-### Low Confidence (Informational, Needs Verification)
+### LOW Confidence (Informational Only)
 
-- **AutoBiomes Research** — [Springer](https://link.springer.com/article/10.1007/s00371-020-01920-7) — Academic approach to multi-biome landscapes (potentially over-engineering for 2D grid)
-- **WebSocket Chunking** — [xjavascript.com](https://www.xjavascript.com/blog/chunking-websocket-transmission/) — File transfer chunking (different use case than game chunks, but useful context)
+- **rex-plugins EightDirection** — [rexrainbow.github.io](https://rexrainbow.github.io/phaser3-rex-notes/docs/site/eightdirection/) — Requires Arcade Physics. NOT recommended for this project (confirmed via docs inspection). Provides alternative path if physics engine ever added.
 
 ---
-*Stack research for: Infinite World Chunk Streaming*
-*Researched: 2026-02-16*
-*Confidence: HIGH - All required capabilities verified in existing codebase. Zero new dependencies needed.*
+
+*Stack research for: Movement System Overhaul — Into the Void*
+*Researched: 2026-02-17*
+*Confidence: HIGH — All capabilities verified in installed Phaser 3.90.0 types and existing codebase. Zero new dependencies needed.*
