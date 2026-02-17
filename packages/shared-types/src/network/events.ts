@@ -24,6 +24,7 @@ export type ClientEventType =
   | 'inventory:use'
   | 'inventory:drop'
   | 'inventory:pickup'
+  | 'inventory:reorder'
   | 'zone:request';
 
 /**
@@ -59,6 +60,7 @@ export interface ClientEvents {
   'inventory:use': { instanceId: string };
   'inventory:drop': { instanceId: string; quantity: number };
   'inventory:pickup': { entityId: string };
+  'inventory:reorder': { fromSlot: number; toSlot: number };
   'zone:request': { zoneId: string };
 }
 
