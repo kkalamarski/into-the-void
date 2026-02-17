@@ -129,8 +129,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const now = Date.now();
       const lastMoveTime = this.playerService.getLastMoveTime(player.id);
 
-      // Rate limit: minimum 125ms between moves (150ms client delay - 25ms tolerance)
-      if (now - lastMoveTime < 125) {
+      // Rate limit: minimum 450ms between moves (500ms client delay - 50ms tolerance)
+      if (now - lastMoveTime < 450) {
         client.emit('error', {
           code: 'E-0006',
           message: 'Movement too fast',

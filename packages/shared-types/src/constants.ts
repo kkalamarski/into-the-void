@@ -5,9 +5,10 @@
 /**
  * Delay between player movement inputs in milliseconds.
  * Both keyboard (WASD) and click-to-move pathfinding use this value.
- * Server rate limit should be slightly lower (125ms) to allow network jitter.
+ * Base speed is 2 tiles/second (500ms). Players can increase speed via gear/leveling.
+ * Server rate limit should be slightly lower (450ms) to allow network jitter.
  */
-export const MOVE_DELAY_MS = 150;
+export const MOVE_DELAY_MS = 500;
 
 /**
  * Number of tiles the player must be inside a new zone before the zone transition commits.
