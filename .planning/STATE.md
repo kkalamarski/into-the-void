@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 25 of 29 (Item Data Model & Foundation)
-Plan: 1 of 4 in current phase
+Plan: 3 of 4 in current phase
 Status: In progress
-Last activity: 2026-02-17 — Phase 25 Plan 01 complete: packages/items workspace package with ItemRegistry
+Last activity: 2026-02-17 — Phase 25 Plan 03 complete: EquipmentJson exo-suit model, updateInventoryFull, player_storage schema
 
-Progress: [████████░░░░░░░░░░░░] 40% (24/29 phases complete; 1/16 v1.6 plans complete)
+Progress: [████████░░░░░░░░░░░░] 40% (24/29 phases complete; 3/16 v1.6 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 74 (Phases 1-24 complete + Phase 25 Plan 01)
+- Total plans completed: 76 (Phases 1-24 complete + Phase 25 Plans 01-03)
 - Average duration: ~3m per plan
-- Total execution time: ~3.7 hours
+- Total execution time: ~3.8 hours
 
 **By Milestone:**
 
@@ -52,6 +52,9 @@ Recent decisions affecting current work:
 - [v1.6 research]: Hotbar slot assignments persist to `localStorage` (client preference, not authoritative game state)
 - [25-01]: ItemCategory uses 6 lore-mandated types (suit|module|tool|consumable|world-item|reagent) — differs from shared-types which has 7
 - [25-01]: ItemRarity uses 5 tiers (common|rare|epic|exotic|legendary) — no 'uncommon' per lore; ilvl formula confirmed as tier*10*multiplier with 1.0/1.2/1.5/1.8/2.2
+- [25-03]: EquipmentJson migrated to exo-suit model (exosuit/modules[]/tool) — old head/chest/legs/feet fields removed
+- [25-03]: updateInventoryFull uses single .set({ items, equipment }) call — prevents two-write race window duplication exploit
+- [25-03]: Migration script casts newEquipment as any for Drizzle JSONB — appropriate for one-time data migration with legacy unknown types
 
 ### Pending Todos
 
@@ -70,10 +73,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 25-01-PLAN.md — packages/items workspace package created with ItemRegistry, ItemDefinition, computeIlvl
+Stopped at: Completed 25-03-PLAN.md — EquipmentJson exo-suit model, updateInventoryFull atomic function, player_storage schema and CRUD queries
 Resume file: None
 
-**Next action:** Execute Phase 25 Plan 02
+**Next action:** Execute Phase 25 Plan 04
 
 ---
-*Last updated: 2026-02-17 after v1.6 roadmap creation*
+*Last updated: 2026-02-17 after Phase 25 Plan 03 complete*
