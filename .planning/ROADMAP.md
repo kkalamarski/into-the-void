@@ -109,13 +109,13 @@ See: `.planning/milestones/v1.5-ROADMAP.md`
   3. The `inventories.equipment` JSONB column stores `{ exosuit, modules[], tool, accessory1, accessory2 }` — the old `head/chest/legs/feet` shape is gone
   4. A single `updateInventoryFull(characterId, { items, equipment })` DB call updates both inventory and equipment atomically — two-call pattern no longer exists
   5. Item definitions include `ilvl`, `requiredLevel`, and `maxStack` fields and pure validation functions (`validateItemUse`, `validateEquip`) exist in `game-logic`
-**Plans**: TBD
+**Plans**: 4 plans in 3 waves
 
 Plans:
-- [ ] 25-01: Create `packages/items` workspace package with `ItemRegistry` singleton and `ItemDefinition` interface
-- [ ] 25-02: Define all 100 items across 6 categories and 5 rarity tiers
-- [ ] 25-03: Migrate DB equipment schema from `head/chest/legs/feet` to exo-suit model; add `updateInventoryFull` atomic function
-- [ ] 25-04: Add pure validation functions (`validateItemUse`, `validateEquip`, `resolveEffect`) to `packages/game-logic`
+- [ ] 25-01-PLAN.md — Create packages/items workspace package with ItemRegistry and ItemDefinition
+- [ ] 25-02-PLAN.md — Define all 100 items across 6 categories and 5 rarity tiers
+- [ ] 25-03-PLAN.md — Migrate DB equipment schema to exo-suit model; add updateInventoryFull
+- [ ] 25-04-PLAN.md — Add pure validation functions to packages/game-logic
 
 #### Phase 26: Server InventoryService & WebSocket Handlers
 
@@ -217,7 +217,7 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | 22. 8-Directional Input & Pathfinding | v1.5 | 2/2 | Complete | 2026-02-17 |
 | 23. Movement Animation & Camera Polish | v1.5 | 4/4 | Complete | 2026-02-17 |
 | 24. Zone Boundary Hysteresis | v1.5 | 1/1 | Complete | 2026-02-17 |
-| 25. Item Data Model & Foundation | v1.6 | 0/4 | Not started | - |
+| 25. Item Data Model & Foundation | v1.6 | 0/4 | Planned | - |
 | 26. Server InventoryService & WebSocket Handlers | v1.6 | 0/4 | Not started | - |
 | 27. Client State & Inventory Panel UI | v1.6 | 0/3 | Not started | - |
 | 28. Equipment System | v1.6 | 0/3 | Not started | - |
@@ -226,4 +226,4 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 **Total:** 29 phases (24 complete, 5 planned)
 
 ---
-*Last updated: 2026-02-17 after v1.6 roadmap creation*
+*Last updated: 2026-02-17 after Phase 25 planning*
