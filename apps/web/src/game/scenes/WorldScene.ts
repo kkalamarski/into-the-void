@@ -1278,6 +1278,16 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /**
+   * Enable or disable keyboard input.
+   * Called by React UI panels to prevent movement while typing or browsing.
+   */
+  setKeyboardEnabled(enabled: boolean): void {
+    if (this.input?.keyboard) {
+      this.input.keyboard.enabled = enabled;
+    }
+  }
+
+  /**
    * Check if a world coordinate tile is blocked.
    * Looks up the correct chunk from ChunkManager.
    * Returns true if blocked or if chunk not loaded (conservative).

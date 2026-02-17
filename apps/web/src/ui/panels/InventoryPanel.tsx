@@ -80,6 +80,23 @@ export const InventoryPanel: React.FC = () => {
     };
   }, [contextMenu]);
 
+  // Disable Phaser keyboard when inventory is open
+  useEffect(() => {
+    const game = useGameStore.getState().game;
+    const worldScene = game?.getWorldScene();
+    if (worldScene) {
+      worldScene.setKeyboardEnabled(false);
+    }
+
+    return () => {
+      const game = useGameStore.getState().game;
+      const worldScene = game?.getWorldScene();
+      if (worldScene) {
+        worldScene.setKeyboardEnabled(true);
+      }
+    };
+  }, []);
+
   if (!inventory) return null;
 
   const sortedItems = [...inventory.items].sort((a, b) => a.slot - b.slot);
