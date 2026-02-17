@@ -30,13 +30,9 @@ export class MinimapCamera {
     this.minimapCam.setZoom(MINIMAP_ZOOM);
     this.minimapCam.setBackgroundColor(0x111122);
 
-    // Isometric world is diamond-shaped in screen coordinates:
-    // Grid (0,0) → screen (0, 0), Grid (127,0) → screen (+8128, 4064)
-    // Grid (0,127) → screen (-8128, 4064), Grid (127,127) → screen (0, 8128)
-    // Bounds must encompass the entire diamond from -worldWidth/2 to +worldWidth/2
-    const worldWidth = ZONE_SIZE * ISO_TILE_WIDTH;
-    const worldHeight = ZONE_SIZE * ISO_TILE_HEIGHT;
-    this.minimapCam.setBounds(-worldWidth / 2, 0, worldWidth, worldHeight);
+    // Infinite world - remove bounds so minimap can follow player anywhere
+    // The camera will simply show whatever tiles exist around the player
+    this.minimapCam.removeBounds();
 
     // Give minimap camera a name for identification
     this.minimapCam.setName('minimap');

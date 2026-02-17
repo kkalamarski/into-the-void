@@ -17,6 +17,9 @@ const GameContainer: React.FC = () => {
   const { connectionState, setGame, zoneState, player } = useGameStore();
   const chunksLoading = useGameStore((state) => state.chunksLoading);
 
+  // Track when WorldScene is actually active (not just Phaser booted)
+  const [worldSceneReady, setWorldSceneReady] = useState(false);
+
   // Initialize Phaser game
   useEffect(() => {
     if (gameContainerRef.current && !gameRef.current) {
@@ -24,9 +27,18 @@ const GameContainer: React.FC = () => {
       gameRef.current = game;
       setGame(game);
 
-      // Wait for Phaser to be ready
+      // Wait for Phaser to be ready, then poll for WorldScene active
       game.onReady(() => {
         setPhaserReady(true);
+        // Poll for WorldScene to become active (it starts after PreloadScene)
+        const checkWorldScene = () => {
+          if (game.isWorldSceneActive()) {
+            setWorldSceneReady(true);
+          } else {
+            setTimeout(checkWorldScene, 50);
+          }
+        };
+        checkWorldScene();
       });
     }
 
@@ -35,6 +47,7 @@ const GameContainer: React.FC = () => {
         gameRef.current.destroy();
         gameRef.current = null;
         setPhaserReady(false);
+        setWorldSceneReady(false);
       }
     };
   }, [setGame]);
@@ -88,14 +101,14 @@ const GameContainer: React.FC = () => {
     }
   }, [connectionState, player?.position?.zoneId, zoneState]);
 
-  // Load zone data into WorldScene when Phaser is ready and zoneState exists
+  // Load zone data into WorldScene when WorldScene is ready and zoneState exists
   // IMPORTANT: Only depends on zoneState.zoneId to prevent re-rendering tiles on every player movement
   const zoneId = zoneState?.zoneId;
   useEffect(() => {
-    if (!phaserReady || !gameRef.current || !zoneState) return;
+    if (!worldSceneReady || !gameRef.current || !zoneState) return;
 
     const worldScene = gameRef.current.getWorldScene();
-    if (!worldScene || !gameRef.current.isWorldSceneActive()) return;
+    if (!worldScene) return;
 
     // zoneState contains the zone:state event data with tiles
     const { chunk, biome, players } = zoneState;
@@ -157,20 +170,20 @@ const GameContainer: React.FC = () => {
       }
     }
 
-  }, [phaserReady, zoneId, player?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [worldSceneReady, zoneId, player?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initial player spawn only - position updates handled by MovementController
   const playerSpawnedRef = useRef(false);
   useEffect(() => {
-    if (!phaserReady || !gameRef.current || !player?.position) return;
+    if (!worldSceneReady || !gameRef.current || !player?.position) return;
     if (playerSpawnedRef.current) return; // Only run once
 
     const worldScene = gameRef.current.getWorldScene();
-    if (!worldScene || !gameRef.current.isWorldSceneActive()) return;
+    if (!worldScene) return;
 
     worldScene.updateLocalPlayer(player.position);
     playerSpawnedRef.current = true;
-  }, [phaserReady, player?.position?.x, player?.position?.y]);
+  }, [worldSceneReady, player?.position?.x, player?.position?.y]);
 
   return (
     <div className="app">
