@@ -560,6 +560,12 @@ export class WorldScene extends Phaser.Scene {
     console.log('[WorldScene] commitZoneTransition:', { from: this.currentZoneId, to: newZoneId });
     this.currentZoneId = newZoneId;
 
+    // Update ChunkManager's center zone - this recalculates the 3x3 grid
+    // Only called here (on commit) to avoid thrashing at boundaries
+    if (this.chunkManager) {
+      this.chunkManager.updateChunks(newZoneId);
+    }
+
     // Update current zone data from already-loaded chunk
     if (this.chunkManager) {
       const chunk = this.chunkManager.getChunk(newZoneId);
@@ -614,13 +620,6 @@ export class WorldScene extends Phaser.Scene {
   onPlayerZoneChanged(newZoneId: string, biome: BiomeType): void {
     console.log('[WorldScene] onPlayerZoneChanged:', { from: this.currentZoneId, to: newZoneId });
 
-    // ALWAYS update chunks immediately to keep the 3x3 pre-load grid current.
-    // The old zone's 3x3 grid already covers the new zone, so chunks are ready.
-    // Delaying this would cause visible pop-in when hysteresis finally commits.
-    if (this.chunkManager) {
-      this.chunkManager.updateChunks(newZoneId);
-    }
-
     // Get current player position to determine tile depth inside new zone
     const position = useGameStore.getState().player?.position;
 
@@ -637,6 +636,8 @@ export class WorldScene extends Phaser.Scene {
       this.commitZoneTransition(newZoneId, biome);
     } else {
       // Near boundary - store as pending and wait for player to go deeper
+      // NOTE: We do NOT call updateChunks here - the 3x3 grid from the current zone
+      // already includes this adjacent zone. Calling it would trigger load/unload thrashing.
       this.pendingZoneId = newZoneId;
       this.pendingBiome = biome;
       console.log('[WorldScene] Zone transition pending at depth', depth, '- awaiting', HYSTERESIS_TILES, 'tiles');
