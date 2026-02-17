@@ -20,6 +20,34 @@ export const ISO_TILE_HEIGHT = 64;
 // Visibility radius in tiles (~1.5 chunks allows seeing into adjacent chunks)
 const VISIBILITY_RADIUS = 48;
 
+type WASDKeys = { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key };
+
+/**
+ * Resolve 8-directional movement from simultaneous WASD key states.
+ * Dual-key combos (e.g. W+D) take priority for diagonal grid movement.
+ * Single keys map to cardinal directions (W=north, S=south, A=west, D=east).
+ */
+function resolveDirection(keys: WASDKeys): Direction | null {
+  const w = keys.W.isDown;
+  const a = keys.A.isDown;
+  const s = keys.S.isDown;
+  const d = keys.D.isDown;
+
+  // Dual-key combos take priority (diagonal grid movement)
+  if (w && d) return 'ne';
+  if (w && a) return 'nw';
+  if (s && d) return 'se';
+  if (s && a) return 'sw';
+
+  // Single key (cardinal grid movement)
+  if (w) return 'n';
+  if (d) return 'e';
+  if (s) return 's';
+  if (a) return 'w';
+
+  return null;
+}
+
 export class WorldScene extends Phaser.Scene {
   private tileLayer: Phaser.GameObjects.Container | null = null;
   private tileRenderer: TileRenderer | null = null;
@@ -30,7 +58,7 @@ export class WorldScene extends Phaser.Scene {
   private playerSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
   private localPlayer: Phaser.GameObjects.Sprite | null = null;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
-  private wasd: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key } | null = null;
+  private wasd: WASDKeys | null = null;
   private moveDelay = MOVE_DELAY_MS; // ms between moves
   private lastMoveTime = 0;
   private chunkManager: ChunkManager | null = null;
@@ -432,18 +460,21 @@ export class WorldScene extends Phaser.Scene {
 
     let direction: Direction | null = null;
 
-    // Screen-relative mapping for isometric view:
-    // Visual "up" (W) = Northwest in grid
-    // Visual "right" (D) = Northeast in grid
-    // Visual "down" (S) = Southeast in grid
-    // Visual "left" (A) = Southwest in grid
-    if (this.cursors?.up.isDown || this.wasd?.W.isDown) direction = 'nw';
-    else if (this.cursors?.right.isDown || this.wasd?.D.isDown) direction = 'ne';
-    else if (this.cursors?.down.isDown || this.wasd?.S.isDown) direction = 'se';
-    else if (this.cursors?.left.isDown || this.wasd?.A.isDown) direction = 'sw';
+    // WASD: 8-directional with dual-key detection
+    if (this.wasd) {
+      direction = resolveDirection(this.wasd);
+    }
+
+    // Arrow keys: 4-directional fallback using isometric visual mapping (only if no WASD direction)
+    if (!direction && this.cursors) {
+      if (this.cursors.up.isDown) direction = 'nw';
+      else if (this.cursors.right.isDown) direction = 'ne';
+      else if (this.cursors.down.isDown) direction = 'se';
+      else if (this.cursors.left.isDown) direction = 'sw';
+    }
 
     if (direction) {
-      // Cancel any active pathfinding when WASD is used
+      // Cancel any active pathfinding when keyboard is used
       if (this.pathfindingController?.isPathActive()) {
         this.pathfindingController.cancelPath();
       }
