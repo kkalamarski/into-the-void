@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 ## Current Position
 
 Phase: 20 of 20 (Testing & Polish)
-Plan: 0 of TBD
-Status: Ready to plan
-Last activity: 2026-02-17 - Completed Phase 19 (Biome Integration)
+Plan: 1 of 2
+Status: In progress
+Last activity: 2026-02-17 - Completed Phase 20 Plan 01 (Pre-Test Baseline Fixes)
 
-Progress: [███████████████████░] 95% (19/20 phases complete)
+Progress: [███████████████████░] 95% (Phase 20 in progress - 1/2 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 59 (Phases 1-19)
+- Total plans completed: 60 (Phases 1-19 + Phase 20 P01)
 - Average duration: ~3m per plan
 - Total execution time: ~3.0 hours
 
@@ -31,25 +31,22 @@ Progress: [███████████████████░] 95% (19
 | v1.1 | 4-7 | 20 | 3 days |
 | v1.2 | 8-12 | 8 | 1 day |
 | v1.3 | 13-16 | 13 | 1 day |
-| v1.4 | 17-20 | 9 | In progress |
+| v1.4 | 17-20 | 10 | In progress |
 
 **Recent Trend:**
-- Phase 14: 2 plans
-- Phase 15: 2 plans
-- Phase 16: 5 plans
 - Phase 17: 2 plans (complete)
 - Phase 18: 5 plans (complete)
 - Phase 19: 2 plans (complete)
+- Phase 20: 1/2 plans (in progress)
 - Trend: Stable, averaging 3 plans per phase
 
 **Recent Executions:**
 
 | Plan | Duration (s) | Tasks | Files |
 |------|-------------|-------|-------|
-| Phase 18 P04 | 176 | 4 tasks | 5 files |
-| Phase 18 P05 | 248 | 3 tasks | 3 files |
 | Phase 19 P01 | 159 | 4 tasks | 2 files |
 | Phase 19 P02 | 119 | 3 tasks | 3 files |
+| Phase 20 P01 | 180 | 4 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -77,6 +74,9 @@ Recent decisions affecting current work:
 - [Phase 19-02]: BIOME_DISPLAY_NAMES provides human-readable biome names for HUD
 - [Phase 19-02]: 3-frame hysteresis prevents flickering at biome boundaries
 - [Phase 19-02]: BIOME_COLORS constant enables visual encoding for future minimap
+- [Phase 20-01]: Zustand connectionState watcher used instead of raw socket 'disconnect' event for type safety with typed GameSocket class
+- [Phase 20-01]: CSS class toggle (always in DOM) instead of conditional render enables smooth opacity transitions on loading indicator
+- [Phase 20-01]: bottom: 210px positions chunk loading indicator above 180px minimap with buffer
 
 ### Pending Todos
 
@@ -93,6 +93,7 @@ None yet. Use `/gsd:add-todo` to capture ideas during v1.4 execution.
 - ✅ Phase 18: WebSocket room subscription leaks (RESOLVED - updatePlayerRooms manages leave/join)
 - ✅ Phase 18: Phaser container memory leaks (RESOLVED - despawnEntitiesForZone + container.destroy)
 - ✅ Phase 19: Biome transition artifacts (RESOLVED - per-tile sampling implemented in 19-01)
+- ✅ Phase 20: Pre-test baseline issues (RESOLVED - loading indicator, PathfindingController cleanup, disconnect handling)
 
 All pitfalls documented in research/SUMMARY.md with prevention strategies.
 
@@ -101,10 +102,10 @@ All pitfalls documented in research/SUMMARY.md with prevention strategies.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed Phase 19 (Biome Integration)
+Stopped at: Completed Phase 20 Plan 01 (Pre-Test Baseline Fixes)
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 20` (Testing & Polish)
+**Next action:** Execute Phase 20 Plan 02 (Validation Testing)
 
 ---
-*Last updated: 2026-02-17 after completing Phase 19*
+*Last updated: 2026-02-17 after completing Phase 20 Plan 01*
