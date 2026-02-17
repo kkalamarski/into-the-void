@@ -20,3 +20,4 @@ export * from './utils/zone';
 // Inventory
 export * from './inventory/validation';
 export * from './inventory/effects';
+export * from './inventory/stats';
