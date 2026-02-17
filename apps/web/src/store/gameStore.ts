@@ -149,16 +149,22 @@ gameSocket.on('zone:state', (data: ZoneState) => {
   }
 
   // Spawn initial entities and other players in world
+  // IMPORTANT: Only clear entities on initial load. On zone transitions, entities from
+  // adjacent zones (loaded via zone:chunk) must persist for cross-chunk visibility.
+  // spawnEntity already checks for duplicates and filters by visibility distance.
+  const isInitialLoad = currentZoneId === null;
   if (game) {
     const worldScene = game.getWorldScene();
     if (worldScene) {
-      // Clear old entities and players first to prevent duplicates
-      worldScene.clearEntities();
+      // Only clear on initial load - zone transitions keep adjacent zone entities
+      if (isInitialLoad) {
+        worldScene.clearEntities();
+      }
       worldScene.clearOtherPlayers();
 
-      // Spawn entities
+      // Spawn entities (spawnEntity checks for duplicates)
       for (const entity of entities) {
-        worldScene.spawnEntity(entity);
+        worldScene.spawnEntity(entity, zoneId);
       }
 
       // Spawn other players (not ourselves)
