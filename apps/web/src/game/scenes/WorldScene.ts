@@ -552,12 +552,15 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  onPlayerZoneChanged(newZoneId: string, biome: BiomeType): void {
-    console.log('[WorldScene] onPlayerZoneChanged:', { from: this.currentZoneId, to: newZoneId });
+  /**
+   * Commit a zone transition immediately: update all zone state, collision map, HUD,
+   * and clean up orphaned entities. Called once the player is HYSTERESIS_TILES deep.
+   */
+  private commitZoneTransition(newZoneId: string, biome: BiomeType): void {
+    console.log('[WorldScene] commitZoneTransition:', { from: this.currentZoneId, to: newZoneId });
     this.currentZoneId = newZoneId;
 
     // Update current zone data from already-loaded chunk
-    // This ensures getTileElevation returns correct values for the new zone
     if (this.chunkManager) {
       const chunk = this.chunkManager.getChunk(newZoneId);
       if (chunk) {
@@ -576,12 +579,68 @@ export class WorldScene extends Phaser.Scene {
           this.zoneHUD.updateZone(newZoneId, chunk.biome);
         }
       }
-
-      this.chunkManager.updateChunks(newZoneId);
     }
 
     // Clean up orphaned entities that are now out of range
     this.cleanupOrphanedEntities();
+  }
+
+  /**
+   * Check if a pending zone transition should now be committed based on tile depth.
+   * Called each time the local player's position updates.
+   */
+  private checkPendingZoneTransition(position: Position): void {
+    if (!this.pendingZoneId) return;
+
+    // Player returned to committed zone - cancel pending transition
+    if (position.zoneId === this.currentZoneId) {
+      console.log('[WorldScene] Pending zone transition cancelled - player returned to committed zone');
+      this.pendingZoneId = null;
+      this.pendingBiome = null;
+      return;
+    }
+
+    // Player still in pending zone - check tile depth
+    if (position.zoneId === this.pendingZoneId) {
+      const depth = this.getZoneBoundaryDepth(position);
+      if (depth >= HYSTERESIS_TILES) {
+        this.commitZoneTransition(this.pendingZoneId, this.pendingBiome!);
+        this.pendingZoneId = null;
+        this.pendingBiome = null;
+      }
+    }
+  }
+
+  onPlayerZoneChanged(newZoneId: string, biome: BiomeType): void {
+    console.log('[WorldScene] onPlayerZoneChanged:', { from: this.currentZoneId, to: newZoneId });
+
+    // ALWAYS update chunks immediately to keep the 3x3 pre-load grid current.
+    // The old zone's 3x3 grid already covers the new zone, so chunks are ready.
+    // Delaying this would cause visible pop-in when hysteresis finally commits.
+    if (this.chunkManager) {
+      this.chunkManager.updateChunks(newZoneId);
+    }
+
+    // Get current player position to determine tile depth inside new zone
+    const position = useGameStore.getState().player?.position;
+
+    // If no position available, fall back to immediate commit (defensive)
+    if (!position) {
+      this.commitZoneTransition(newZoneId, biome);
+      return;
+    }
+
+    const depth = this.getZoneBoundaryDepth(position);
+
+    if (depth >= HYSTERESIS_TILES) {
+      // Deep enough - commit immediately (e.g., teleport or fast movement)
+      this.commitZoneTransition(newZoneId, biome);
+    } else {
+      // Near boundary - store as pending and wait for player to go deeper
+      this.pendingZoneId = newZoneId;
+      this.pendingBiome = biome;
+      console.log('[WorldScene] Zone transition pending at depth', depth, '- awaiting', HYSTERESIS_TILES, 'tiles');
+    }
   }
 
   private parseZoneCoords(zoneId: string): { x: number; y: number } {
@@ -1114,6 +1173,9 @@ export class WorldScene extends Phaser.Scene {
     this.localPlayer.setData('elevation', elevation);
     // Set initial depth based on current visual position (onUpdate handles animation)
     updateDepthFromSpriteY();
+
+    // Check if a pending zone transition should commit now that position has updated
+    this.checkPendingZoneTransition(position);
   }
 
   updateLocalPlayer(position: Position): void {
