@@ -24,8 +24,8 @@ type WASDKeys = { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S:
 
 /**
  * Resolve 8-directional movement from simultaneous WASD key states.
- * Dual-key combos (e.g. W+D) take priority for diagonal grid movement.
- * Single keys map to cardinal directions (W=north, S=south, A=west, D=east).
+ * Uses screen-relative mapping: W=up, S=down, A=left, D=right on screen.
+ * Dual-key combos produce grid cardinals (screen diagonals).
  */
 function resolveDirection(keys: WASDKeys): Direction | null {
   const w = keys.W.isDown;
@@ -33,17 +33,17 @@ function resolveDirection(keys: WASDKeys): Direction | null {
   const s = keys.S.isDown;
   const d = keys.D.isDown;
 
-  // Dual-key combos take priority (diagonal grid movement)
-  if (w && d) return 'ne';
-  if (w && a) return 'nw';
-  if (s && d) return 'se';
-  if (s && a) return 'sw';
+  // Dual-key combos = grid cardinals (appear as screen diagonals)
+  if (w && d) return 'n';  // screen top-right diagonal
+  if (w && a) return 'w';  // screen top-left diagonal
+  if (s && d) return 'e';  // screen bottom-right diagonal
+  if (s && a) return 's';  // screen bottom-left diagonal
 
-  // Single key (cardinal grid movement)
-  if (w) return 'n';
-  if (d) return 'e';
-  if (s) return 's';
-  if (a) return 'w';
+  // Single key = screen-relative (grid diagonals)
+  if (w) return 'nw';  // screen up
+  if (s) return 'se';  // screen down
+  if (a) return 'sw';  // screen left
+  if (d) return 'ne';  // screen right
 
   return null;
 }
