@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 24 — Zone Boundary Hysteresis (COMPLETE)
+**Current focus:** v1.6 Inventory & Items — Defining requirements
 
 ## Current Position
 
-Phase: 24 of 24 (Zone Boundary Hysteresis)
-Plan: 1 of 1 in current phase
-Status: Complete
-Last activity: 2026-02-17 — Phase 24 complete, all plans executed
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-17 — Milestone v1.6 started
 
-Progress: [████████████████████] 100% (Phases 1-24 complete)
+Progress: [░░░░░░░░░░░░░░░░░░░░] 0% (v1.6 requirements phase)
 
 ## Performance Metrics
 
@@ -86,7 +86,7 @@ Last session: 2026-02-17
 Stopped at: Completed 24-zone-boundary-hysteresis/24-01-PLAN.md — v1.5 milestone complete
 Resume file: None
 
-**Next action:** v1.5 milestone complete. All 24 phases implemented.
+**Next action:** Define v1.6 requirements and create roadmap.
 
 ---
-*Last updated: 2026-02-17 after Phase 24 completion — all phases complete*
+*Last updated: 2026-02-17 after v1.6 milestone start*

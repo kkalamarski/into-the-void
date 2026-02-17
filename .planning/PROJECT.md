@@ -24,16 +24,18 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~9,120 LOC TypeScript
 
-## Current Milestone: v1.5 Movement Overhaul
+## Current Milestone: v1.6 Inventory & Items
 
-**Goal:** Fix movement accessibility issues and polish the movement feel with smooth camera scrolling.
+**Goal:** Implement item system with exo-suit equipment, tools, consumables, and inventory UI.
 
 **Target features:**
-- Research-driven movement system (tile-based vs free movement)
-- Full keyboard accessibility (all tiles reachable)
-- Smooth camera scrolling (no snap/lag)
-- Unified keyboard and click-to-move systems
-- Remove broken tile hover highlight
+- Item definition system (strategy pattern + repository, like tiles)
+- 100 items across 6 categories with 5 rarity tiers
+- Exo-suit as base equipment with module slots
+- Main/secondary tool slots with hotkey switching
+- Character equipment panel UI
+- Action bar with hotkeys
+- Personal storage UI
 
 ## Core Value
 
@@ -72,14 +74,24 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Server chunk generation and caching — v1.4
 - ✓ Seamless cross-chunk rendering — v1.4
 - ✓ Entity visibility consistency across chunks — v1.4
+- ✓ 8-directional WASD movement with chord detection — v1.5
+- ✓ Diagonal A* pathfinding with corner-cutting prevention — v1.5
+- ✓ Smooth camera following with lerp interpolation — v1.5
+- ✓ Tile-to-tile tween animation — v1.5
+- ✓ Tile movement speed modifiers — v1.5
+- ✓ Zone boundary hysteresis — v1.5
+- ✓ Unified movement timing (500ms base, 2 tiles/sec) — v1.5
 
 ### Active
 
-- [ ] Research-driven movement system for isometric MMO
-- [ ] Full keyboard accessibility (all tiles reachable)
-- [ ] Smooth camera scrolling without snapping
-- [ ] Unified keyboard and click-to-move systems
-- [ ] Remove broken tile hover highlight
+- [ ] Item definition system with strategy pattern and repository
+- [ ] 100 items across 6 categories (suits, modules, tools, consumables, world items, reagents)
+- [ ] 5 rarity tiers (Common, Rare, Epic, Exotic, Legendary)
+- [ ] Exo-suit equipment with module slots scaling by rarity
+- [ ] Main/secondary tool slots with hotkey switching
+- [ ] Character equipment panel UI
+- [ ] Action bar with hotkeys
+- [ ] Personal storage UI
 
 ### Out of Scope
 
@@ -120,4 +132,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-17 after v1.5 milestone start*
+*Last updated: 2026-02-17 after v1.6 milestone start*
