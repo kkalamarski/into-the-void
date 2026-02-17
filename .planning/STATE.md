@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 24 — Zone Boundary Hysteresis
+**Current focus:** Phase 24 — Zone Boundary Hysteresis (COMPLETE)
 
 ## Current Position
 
 Phase: 24 of 24 (Zone Boundary Hysteresis)
-Plan: 0 of 1 in current phase
-Status: Ready to plan
-Last activity: 2026-02-17 — Phase 23 complete, Phase 24 created for zone boundary fix
+Plan: 1 of 1 in current phase
+Status: Complete
+Last activity: 2026-02-17 — Phase 24 complete, all plans executed
 
-Progress: [███████████████████░] 96% (Phases 1-23 complete, 1 planned)
+Progress: [████████████████████] 100% (Phases 1-24 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 71 (Phases 1-23 complete)
+- Total plans completed: 72 (Phases 1-24 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~3.5 hours
 
@@ -32,12 +32,15 @@ Progress: [███████████████████░] 96% (Ph
 | v1.2 | 8-12 | 8 | 1 day |
 | v1.3 | 13-16 | 13 | 1 day |
 | v1.4 | 17-20 | 13 | 2 days |
-| v1.5 | 21-24 | 8 | 1 day |
+| v1.5 | 21-24 | 9 | 1 day |
 
 **Recent Trend:**
 - Phase 22: 2 plans (complete)
 - Phase 23: 4 plans (complete)
+- Phase 24: 1 plan (complete)
 - Trend: Stable, averaging 2-4 plans per phase
+
+| Phase 24-zone-boundary-hysteresis P01 | 2 min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -61,6 +64,8 @@ Recent decisions affecting current work:
 - [Phase 23-02]: Main camera lerp set to (0.1, 0.1) for smooth glide; minimap camera remains instant-follow (no lerp args)
 - [Phase 23-03]: effectiveMoveDelay = Math.round(MOVE_DELAY_MS / tileDef.movementSpeed) — divides base delay by speed multiplier for correct inverse relationship; propagated to PathfindingController via setMoveDelay()
 - [Phase 23-04]: HoverController.ts deleted — confirmed not imported anywhere in apps/web/src/ before removal
+- [Phase 24-01]: HYSTERESIS_TILES = 3: matches HUD HYSTERESIS_FRAMES = 3 pattern; 3 tiles = 450ms lag at 150ms/move, acceptable UX tradeoff for eliminating boundary thrashing
+- [Phase 24-01]: updateChunks() fires immediately (no hysteresis) to maintain 3x3 pre-load; only commitZoneTransition() is delayed until depth >= HYSTERESIS_TILES
 
 ### Pending Todos
 
@@ -72,18 +77,16 @@ None.
 - Server-side elevation validation not wired (client-side complete, server uses old validation)
 - May need addressing if server-side validation conflicts arise in future milestones
 
-**Discovered in Phase 23:**
-- Zone boundary thrashing: Walking back/forth across chunk boundaries (y=64, etc.) triggers constant chunk unloading/reloading
-- Causes "Loading terrain..." indicator flashing and movement jitter at boundaries
-- Phase 24 created to add hysteresis and fix this issue
+**Phase 24 resolved:**
+- Zone boundary thrashing: FIXED — tile-depth hysteresis prevents chunk loading/unloading thrashing at boundaries
 
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Phase 23 complete, Phase 24 created for zone boundary hysteresis
+Stopped at: Completed 24-zone-boundary-hysteresis/24-01-PLAN.md — v1.5 milestone complete
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 24`
+**Next action:** v1.5 milestone complete. All 24 phases implemented.
 
 ---
-*Last updated: 2026-02-17 after Phase 23 completion and Phase 24 creation*
+*Last updated: 2026-02-17 after Phase 24 completion — all phases complete*
