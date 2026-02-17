@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 26 of 29 (Server InventoryService & WebSocket Handlers) — IN PROGRESS
-Plan: 4 of 4 complete in Phase 26 (plan 26-04 done)
-Status: In progress — Phase 26 plans 01-04 complete
-Last activity: 2026-02-17 — Phase 26 Plan 04 complete: effectiveStats pure function and ComputedStats interface in @into-the-void/game-logic
+Plan: 2 of 4 complete in Phase 26 (plans 26-01 and 26-04 done; 26-02 and 26-03 pending)
+Status: In progress — Phase 26 plans 01 and 04 complete
+Last activity: 2026-02-17 — Phase 26 Plan 01 complete: InventoryService NestJS service with in-memory cache and shared-types Inventory aligned to EquipmentJson
 
 Progress: [████████░░░░░░░░░░░░] 40% (24/29 phases complete; 8/16 v1.6 plans complete)
 
@@ -40,6 +40,7 @@ Progress: [████████░░░░░░░░░░░░] 40% (24
 | Phase 25 P02 | 391s | 3 tasks | 8 files |
 | Phase 25 P04 | 183s | 3 tasks | 4 files |
 | Phase 26 P04 | 77s | 2 tasks | 2 files |
+| Phase 26 P01 | 129s | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,9 @@ Recent decisions affecting current work:
 - [Phase 25]: resolveEffect exhaustive never check emits console.warn for unknown types — forward compatible with new effect types
 - [26-04]: speedMultiplier stacks multiplicatively across modules so compound speed bonuses are accurate; all other stats additive
 - [26-04]: Timed stat_buff effects from consumables excluded from effectiveStats — tracked in player state, not derived from equipment
+- [26-01]: InventoryEquipment uses exosuit/modules[]/tool/accessory1/accessory2 — matches EquipmentJson DB schema; old EquipmentSlot type removed from shared-types
+- [26-01]: All equip/unequip operations use updateInventoryFull single atomic call; addItem uses updateInventoryItems (items-only write, no equip change)
+- [26-01]: removeItem returns removedItem so callers can spawn ground entities with correct itemId on drop
 
 ### Pending Todos
 
@@ -84,10 +88,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 26-04-PLAN.md — effectiveStats/ComputedStats pure function exported from @into-the-void/game-logic
+Stopped at: Completed 26-01-PLAN.md — InventoryService NestJS service, GameModule registration, shared-types Inventory aligned to exo-suit model
 Resume file: None
 
-**Next action:** Continue Phase 26 remaining plans (if any) or begin Phase 27
+**Next action:** Execute Phase 26 Plan 02 (inventory WebSocket event handlers in GameGateway)
 
 ---
-*Last updated: 2026-02-17 after Phase 26 Plan 04 complete*
+*Last updated: 2026-02-17 after Phase 26 Plan 01 complete*
