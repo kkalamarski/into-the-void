@@ -128,8 +128,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 20-01-PLAN.md — Fix known issues (indicator position, cleanup methods)
-- [ ] 20-02-PLAN.md — Execute validation test scenarios (checkpoint)
+- [x] 20-01-PLAN.md — Fix known issues (indicator position, cleanup methods)
+- [x] 20-02-PLAN.md — Execute validation test scenarios (checkpoint)
 
 ## Progress
 
@@ -157,9 +157,9 @@ Phases execute in numeric order: 17 → 18 → 19 → 20
 | 17. World Coordinate Foundation | v1.4 | 2/2 | Complete | 2026-02-16 |
 | 18. Multi-Chunk Streaming | v1.4 | 5/5 | Complete | 2026-02-16 |
 | 19. Biome Integration | v1.4 | 2/2 | Complete | 2026-02-17 |
-| 20. Testing & Polish | v1.4 | 0/2 | In Progress | - |
+| 20. Testing & Polish | v1.4 | 2/2 | Complete | 2026-02-17 |
 
-**Total:** 20 phases (19 complete, 1 pending)
+**Total:** 20 phases (20 complete)
 
 ---
-*Last updated: 2026-02-17 after Phase 20 planning*
+*Last updated: 2026-02-17 after Phase 20 completion*
