@@ -66,6 +66,8 @@ export class WorldScene extends Phaser.Scene {
   private currentZoneId: string = 'z_0_0';
   private pendingZoneId: string | null = null;
   private pendingBiome: BiomeType | null = null;
+  private lastPendingZoneCheck = 0;
+  private static readonly PENDING_ZONE_CHECK_INTERVAL = 100; // ms between checks
   private onChunkRequest: ((zoneId: string) => void) | null = null;
   private viewportCuller: ViewportCuller | null = null;
   private zoneHUD: ZoneHUD | null = null;
@@ -560,13 +562,7 @@ export class WorldScene extends Phaser.Scene {
     console.log('[WorldScene] commitZoneTransition:', { from: this.currentZoneId, to: newZoneId });
     this.currentZoneId = newZoneId;
 
-    // Update ChunkManager's center zone - this recalculates the 3x3 grid
-    // Only called here (on commit) to avoid thrashing at boundaries
-    if (this.chunkManager) {
-      this.chunkManager.updateChunks(newZoneId);
-    }
-
-    // Update current zone data from already-loaded chunk
+    // Update current zone data from already-loaded chunk (fast, sync)
     if (this.chunkManager) {
       const chunk = this.chunkManager.getChunk(newZoneId);
       if (chunk) {
@@ -587,8 +583,17 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    // Clean up orphaned entities that are now out of range
-    this.cleanupOrphanedEntities();
+    // Defer heavy operations to next idle frame to avoid blocking main thread
+    // This prevents ping spikes by allowing network I/O to proceed
+    requestIdleCallback(() => {
+      // Update ChunkManager's center zone - recalculates 3x3 grid, may trigger network
+      if (this.chunkManager) {
+        this.chunkManager.updateChunks(newZoneId);
+      }
+
+      // Clean up orphaned entities that are now out of range
+      this.cleanupOrphanedEntities();
+    }, { timeout: 100 });
   }
 
   /**
@@ -597,6 +602,13 @@ export class WorldScene extends Phaser.Scene {
    */
   private checkPendingZoneTransition(position: Position): void {
     if (!this.pendingZoneId) return;
+
+    // Throttle checks to avoid running every frame
+    const now = performance.now();
+    if (now - this.lastPendingZoneCheck < WorldScene.PENDING_ZONE_CHECK_INTERVAL) {
+      return;
+    }
+    this.lastPendingZoneCheck = now;
 
     // Player returned to committed zone - cancel pending transition
     if (position.zoneId === this.currentZoneId) {
