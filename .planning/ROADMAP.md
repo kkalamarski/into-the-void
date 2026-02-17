@@ -112,10 +112,10 @@ See: `.planning/milestones/v1.5-ROADMAP.md`
 **Plans**: 4 plans in 3 waves
 
 Plans:
-- [ ] 25-01-PLAN.md — Create packages/items workspace package with ItemRegistry and ItemDefinition
-- [ ] 25-02-PLAN.md — Define all 100 items across 6 categories and 5 rarity tiers
-- [ ] 25-03-PLAN.md — Migrate DB equipment schema to exo-suit model; add updateInventoryFull
-- [ ] 25-04-PLAN.md — Add pure validation functions to packages/game-logic
+- [x] 25-01-PLAN.md — Create packages/items workspace package with ItemRegistry and ItemDefinition
+- [x] 25-02-PLAN.md — Define all 100 items across 6 categories and 5 rarity tiers
+- [x] 25-03-PLAN.md — Migrate DB equipment schema to exo-suit model; add updateInventoryFull
+- [x] 25-04-PLAN.md — Add pure validation functions to packages/game-logic
 
 #### Phase 26: Server InventoryService & WebSocket Handlers
 
@@ -217,13 +217,13 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | 22. 8-Directional Input & Pathfinding | v1.5 | 2/2 | Complete | 2026-02-17 |
 | 23. Movement Animation & Camera Polish | v1.5 | 4/4 | Complete | 2026-02-17 |
 | 24. Zone Boundary Hysteresis | v1.5 | 1/1 | Complete | 2026-02-17 |
-| 25. Item Data Model & Foundation | v1.6 | 0/4 | Planned | - |
+| 25. Item Data Model & Foundation | v1.6 | 4/4 | Complete | 2026-02-17 |
 | 26. Server InventoryService & WebSocket Handlers | v1.6 | 0/4 | Not started | - |
 | 27. Client State & Inventory Panel UI | v1.6 | 0/3 | Not started | - |
 | 28. Equipment System | v1.6 | 0/3 | Not started | - |
 | 29. Action Bar & Personal Storage | v1.6 | 0/2 | Not started | - |
 
-**Total:** 29 phases (24 complete, 5 planned)
+**Total:** 29 phases (25 complete, 4 planned)
 
 ---
-*Last updated: 2026-02-17 after Phase 25 planning*
+*Last updated: 2026-02-17 after Phase 25 execution*
