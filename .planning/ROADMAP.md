@@ -83,19 +83,16 @@ See: `.planning/milestones/v1.4-ROADMAP.md`
 **Depth:** Quick (from config)
 **Coverage:** 8/8 requirements mapped
 
-#### Phase 21: Server Rate Limit & Speed Unification
+#### Phase 21: Server Rate Limit & Speed Unification ✓
 **Goal**: Server accepts 150ms movement cadence and both input modes run at identical speed
 **Depends on**: Phase 20 (v1.4 complete)
 **Requirements**: MOVE-02, MOVE-01
-**Success Criteria** (what must be TRUE):
-  1. Server accepts player moves at 150ms cadence without false rejections during normal gameplay
-  2. WASD movement and click-to-move pathfinding advance at visibly identical speed across tiles
-  3. A single `MOVE_DELAY_MS` constant controls timing for both input paths (no split values)
-**Plans**: 2 plans
+**Status**: Complete (2026-02-17)
+**Plans**: 2/2 complete
 
 Plans:
-- [ ] 21-01-PLAN.md — Reduce server rate limit from 140ms to 125ms
-- [ ] 21-02-PLAN.md — Extract MOVE_DELAY_MS constant for unified movement timing
+- [x] 21-01-PLAN.md — Reduce server rate limit from 140ms to 125ms
+- [x] 21-02-PLAN.md — Extract MOVE_DELAY_MS constant for unified movement timing
 
 #### Phase 22: 8-Directional Input & Pathfinding
 **Goal**: All 8 grid directions are reachable by keyboard and click-to-move paths use diagonal steps
@@ -156,11 +153,11 @@ Phases execute in numeric order: 21 → 22 → 23
 | 18. Multi-Chunk Streaming | v1.4 | 5/5 | Complete | 2026-02-16 |
 | 19. Biome Integration | v1.4 | 2/2 | Complete | 2026-02-17 |
 | 20. Testing & Polish | v1.4 | 2/2 | Complete | 2026-02-17 |
-| 21. Server Rate Limit & Speed Unification | v1.5 | 0/2 | Planned | - |
+| 21. Server Rate Limit & Speed Unification | v1.5 | 2/2 | Complete | 2026-02-17 |
 | 22. 8-Directional Input & Pathfinding | v1.5 | TBD | Not started | - |
 | 23. Movement Animation & Camera Polish | v1.5 | TBD | Not started | - |
 
-**Total:** 23 phases (20 complete, 3 not started)
+**Total:** 23 phases (21 complete, 2 not started)
 
 ---
-*Last updated: 2026-02-17 after Phase 21 planning*
+*Last updated: 2026-02-17 after Phase 21 execution*

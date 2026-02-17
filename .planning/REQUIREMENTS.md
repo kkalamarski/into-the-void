@@ -13,8 +13,8 @@ Requirements for Movement Overhaul milestone. Each maps to roadmap phases.
 
 ### Movement
 
-- [ ] **MOVE-01**: Player movement speed is unified at 150ms delay for both keyboard and click-to-move
-- [ ] **MOVE-02**: Server rate limit reduced from 140ms to 125ms to support faster client movement
+- [x] **MOVE-01**: Player movement speed is unified at 150ms delay for both keyboard and click-to-move
+- [x] **MOVE-02**: Server rate limit reduced from 140ms to 125ms to support faster client movement
 - [ ] **MOVE-03**: Player movement speed is modified by tile `movementSpeed` property (slow tiles = higher delay, fast tiles = lower delay)
 
 ### Pathfinding
@@ -58,8 +58,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | INPUT-01 | Phase 22 | Pending |
-| MOVE-01 | Phase 21 | Pending |
-| MOVE-02 | Phase 21 | Pending |
+| MOVE-01 | Phase 21 | Complete |
+| MOVE-02 | Phase 21 | Complete |
 | MOVE-03 | Phase 23 | Pending |
 | PATH-01 | Phase 22 | Pending |
 | CAM-01 | Phase 23 | Pending |
@@ -73,4 +73,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-17 after roadmap creation (all 8 requirements mapped)*
+*Last updated: 2026-02-17 after Phase 21 completion (MOVE-01, MOVE-02 complete)*

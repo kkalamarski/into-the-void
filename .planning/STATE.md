@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 21 — Server Rate Limit & Speed Unification
+**Current focus:** Phase 22 — 8-Directional Input & Pathfinding
 
 ## Current Position
 
-Phase: 21 of 23 (Server Rate Limit & Speed Unification)
-Plan: 2 of 2 in current phase (COMPLETE)
-Status: Phase 21 complete
-Last activity: 2026-02-17 — 21-02 complete (MOVE_DELAY_MS constant, WASD speed unified to 150ms)
+Phase: 22 of 23 (8-Directional Input & Pathfinding)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-17 — Phase 21 verified and complete
 
-Progress: [████████████░░░░░░░░] 87% (Phases 1-21 in progress)
+Progress: [█████████████░░░░░░░] 91% (Phases 1-21 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 63 (Phases 1-20 + Phase 21 P01-P02)
+- Total plans completed: 63 (Phases 1-21)
 - Average duration: ~3m per plan
 - Total execution time: ~3.0 hours
 
@@ -38,8 +38,6 @@ Progress: [████████████░░░░░░░░] 87% (Ph
 - Phase 20: 2 plans (complete)
 - Phase 21: 2 plans (complete)
 - Trend: Stable, averaging 2-3 plans per phase
-| Phase 21 P01 | 1 | 1 tasks | 1 files |
-| Phase 21 P02 | 2 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -68,15 +66,16 @@ None.
 - May need addressing if server-side validation conflicts arise in future milestones
 
 **v1.5 sequencing constraint:**
-- Phase 22 (walk tween) must be implemented before Phase 23 (camera lerp) for correct combined effect
+- Phase 21 (server rate limit) complete — unlocks Phase 22
+- CAM-02 (walk tween) must be implemented before CAM-01 (camera lerp) for correct combined effect
 
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 21-02-PLAN.md
+Stopped at: Phase 21 verified complete
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 22` — Walk tween implementation (tween duration = MOVE_DELAY_MS - 20ms = 130ms)
+**Next action:** `/gsd:plan-phase 22`
 
 ---
-*Last updated: 2026-02-17 after 21-02 completion*
+*Last updated: 2026-02-17 after Phase 21 completion*
