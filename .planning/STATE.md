@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 26 of 29 (Server InventoryService & WebSocket Handlers) — IN PROGRESS
-Plan: 3 of 4 complete in Phase 26 (plans 26-01, 26-02, and 26-04 done; 26-03 pending)
-Status: In progress — Phase 26 plans 01, 02, and 04 complete
-Last activity: 2026-02-17 — Phase 26 Plan 02 complete: 5 WebSocket inventory handlers in GameGateway with atomic pickup claim map
+Plan: 4 of 4 complete in Phase 26 (all plans 26-01 through 26-04 done)
+Status: In progress — Phase 26 all 4 plans complete
+Last activity: 2026-02-17 — Phase 26 Plan 03 complete: inventory lifecycle wired (loadForPlayer on auth, flushAndUnload on disconnect, item interact routes through handleItemPickup)
 
 Progress: [████████░░░░░░░░░░░░] 40% (24/29 phases complete; 9/16 v1.6 plans complete)
 
@@ -42,6 +42,7 @@ Progress: [████████░░░░░░░░░░░░] 40% (24
 | Phase 26 P04 | 77s | 2 tasks | 2 files |
 | Phase 26 P01 | 129s | 3 tasks | 3 files |
 | Phase 26 P02 | 195s | 3 tasks | 3 files |
+| Phase 26 P03 | 116s | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,9 @@ Recent decisions affecting current work:
 - [26-02]: claimEntity is synchronous — must execute before any await to prevent TOCTOU race on simultaneous pickup by two players
 - [26-02]: ItemEntity.name uses ItemDefinition.displayName (not .name) — items package field is displayName, not name
 - [26-02]: inventory:update emissions are private (client.emit); entity:spawn/despawn are zone-wide (server.to(zoneId).emit)
+- [26-03]: PlayerService injects InventoryService directly (no forwardRef needed — InventoryService has no PlayerService dependency)
+- [26-03]: case 'item' in handleInteraction delegates fully to handleItemPickup — avoids duplicating claim/write logic; single source of truth for atomic pickup
+- [26-03]: InteractionResult.inventory is optional — entity:update still broadcasts zone-wide; inventory:update only emitted when non-null
 
 ### Pending Todos
 
@@ -92,10 +96,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 26-02-PLAN.md — 5 WebSocket inventory handlers in GameGateway, atomic pickup claim map in ZonesService, GameService handler methods
+Stopped at: Completed 26-03-PLAN.md — inventory lifecycle wired: loadForPlayer on auth, flushAndUnload on disconnect, case 'item' interact routes through handleItemPickup
 Resume file: None
 
-**Next action:** Execute Phase 26 Plan 03 (remaining plan in Phase 26)
+**Next action:** Phase 26 complete — all 4 plans done; advance to Phase 27 (Inventory UI)
 
 ---
-*Last updated: 2026-02-17 after Phase 26 Plan 02 complete*
+*Last updated: 2026-02-17 after Phase 26 Plan 03 complete*
