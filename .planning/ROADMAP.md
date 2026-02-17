@@ -146,12 +146,12 @@ Plans:
   2. Player hovers an item — a tooltip appears showing name (rarity-colored), description, category, rarity, ilvl, and required level; tooltip repositions correctly at panel edges
   3. Player drags an item from one slot to another — inventory reorders after server confirms; optimistic reorder does not occur before server response
   4. Player right-clicks an item and selects "Drop" — item disappears from inventory and a ground entity appears at the player's world position
-**Plans**: 3 plans in 2 waves
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 27-01-PLAN.md — Create inventoryStore.ts with Zustand+immer; wire inventory:update; add inventory:reorder server endpoint
-- [ ] 27-02-PLAN.md — Build InventoryPanel.tsx with 20-slot dnd-kit grid, rarity colors, context menu drop
-- [ ] 27-03-PLAN.md — Build ItemTooltip with floating-ui; disable Phaser keyboard when inventory open
+- [x] 27-01-PLAN.md — Create inventoryStore.ts with Zustand+immer; wire inventory:update; add inventory:reorder server endpoint
+- [x] 27-02-PLAN.md — Build InventoryPanel.tsx with 20-slot dnd-kit grid, rarity colors, context menu drop
+- [x] 27-03-PLAN.md — Build ItemTooltip with floating-ui; disable Phaser keyboard when inventory open
 
 #### Phase 28: Equipment System
 
@@ -219,11 +219,11 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | 24. Zone Boundary Hysteresis | v1.5 | 1/1 | Complete | 2026-02-17 |
 | 25. Item Data Model & Foundation | v1.6 | 4/4 | Complete | 2026-02-17 |
 | 26. Server InventoryService & WebSocket Handlers | v1.6 | 4/4 | Complete | 2026-02-17 |
-| 27. Client State & Inventory Panel UI | v1.6 | 0/3 | Not started | - |
+| 27. Client State & Inventory Panel UI | v1.6 | 3/3 | Complete | 2026-02-17 |
 | 28. Equipment System | v1.6 | 0/3 | Not started | - |
 | 29. Action Bar & Personal Storage | v1.6 | 0/2 | Not started | - |
 
-**Total:** 29 phases (26 complete, 3 planned)
+**Total:** 29 phases (27 complete, 2 planned)
 
 ---
 *Last updated: 2026-02-17 after Phase 27 planning*
