@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, MOVE_DELAY_MS, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure } from '@into-the-void/shared-types';
+import { ZONE_SIZE, MOVE_DELAY_MS, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure } from '@into-the-void/shared-types';
 import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
 import { TileRenderer } from '../rendering/TileRenderer';
@@ -64,6 +64,8 @@ export class WorldScene extends Phaser.Scene {
   // Store tile arrays for cleanup (not containers - tiles need global depth sorting)
   private chunkTiles: Map<string, Phaser.GameObjects.Container[]> = new Map();
   private currentZoneId: string = 'z_0_0';
+  private pendingZoneId: string | null = null;
+  private pendingBiome: BiomeType | null = null;
   private onChunkRequest: ((zoneId: string) => void) | null = null;
   private viewportCuller: ViewportCuller | null = null;
   private zoneHUD: ZoneHUD | null = null;
@@ -588,6 +590,19 @@ export class WorldScene extends Phaser.Scene {
       x: parseInt(parts[1], 10),
       y: parseInt(parts[2], 10),
     };
+  }
+
+  /**
+   * Calculate how many tiles deep into a zone the position is.
+   * Returns 0 when on the zone edge, up to (ZONE_SIZE/2 - 1) at the center.
+   * Used for hysteresis: only commit zone transition when depth >= HYSTERESIS_TILES.
+   */
+  private getZoneBoundaryDepth(position: Position): number {
+    const fromLeft = position.x;
+    const fromRight = ZONE_SIZE - 1 - position.x;
+    const fromTop = position.y;
+    const fromBottom = ZONE_SIZE - 1 - position.y;
+    return Math.min(fromLeft, fromRight, fromTop, fromBottom);
   }
 
   /**
