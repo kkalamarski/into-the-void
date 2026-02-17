@@ -60,6 +60,8 @@ export class WorldScene extends Phaser.Scene {
   private wasd: WASDKeys | null = null;
   private moveDelay = MOVE_DELAY_MS; // ms between moves
   private lastMoveTime = 0;
+  private chordStartTime = 0; // When first movement key was pressed
+  private static readonly CHORD_WINDOW_MS = 50; // Time to wait for additional keys
   private chunkManager: ChunkManager | null = null;
   // Store tile arrays for cleanup (not containers - tiles need global depth sorting)
   private chunkTiles: Map<string, Phaser.GameObjects.Container[]> = new Map();
@@ -450,6 +452,32 @@ export class WorldScene extends Phaser.Scene {
   private handleInput(time: number): void {
     if (!this.localPlayer || !this.movementController || time - this.lastMoveTime < this.moveDelay) return;
 
+    // Check if any movement key is pressed
+    const anyWasdDown = this.wasd && (
+      this.wasd.W.isDown || this.wasd.A.isDown || this.wasd.S.isDown || this.wasd.D.isDown
+    );
+    const anyCursorDown = this.cursors && (
+      this.cursors.up.isDown || this.cursors.right.isDown ||
+      this.cursors.down.isDown || this.cursors.left.isDown
+    );
+
+    // Reset chord when no keys are pressed
+    if (!anyWasdDown && !anyCursorDown) {
+      this.chordStartTime = 0;
+      return;
+    }
+
+    // Start chord window on first key press
+    if (this.chordStartTime === 0) {
+      this.chordStartTime = time;
+    }
+
+    // Wait for chord window to allow additional keys to be pressed
+    // This prevents W+A being interpreted as just W if A is pressed slightly later
+    if (time - this.chordStartTime < WorldScene.CHORD_WINDOW_MS) {
+      return;
+    }
+
     let direction: Direction | null = null;
 
     // WASD: 8-directional with dual-key detection
@@ -472,6 +500,8 @@ export class WorldScene extends Phaser.Scene {
       }
 
       this.lastMoveTime = time;
+      // Reset chord for next input sequence
+      this.chordStartTime = 0;
       // processInput triggers updateLocalPlayerSprite which handles moveDelay update
       this.movementController.processInput(direction);
     }
