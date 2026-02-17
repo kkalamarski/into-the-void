@@ -131,10 +131,10 @@ Plans:
 **Plans**: 4 plans in 3 waves
 
 Plans:
-- [ ] 26-01-PLAN.md — Create InventoryService and update shared-types Inventory to exo-suit model
-- [ ] 26-02-PLAN.md — Add 5 @SubscribeMessage handlers and claim map for atomic pickup
-- [ ] 26-03-PLAN.md — Wire handleInteraction for pickup and emit inventory:update on auth
-- [ ] 26-04-PLAN.md — Add effectiveStats pure function to game-logic
+- [x] 26-01-PLAN.md — Create InventoryService and update shared-types Inventory to exo-suit model
+- [x] 26-02-PLAN.md — Add 5 @SubscribeMessage handlers and claim map for atomic pickup
+- [x] 26-03-PLAN.md — Wire handleInteraction for pickup and emit inventory:update on auth
+- [x] 26-04-PLAN.md — Add effectiveStats pure function to game-logic
 
 #### Phase 27: Client State & Inventory Panel UI
 
@@ -218,12 +218,12 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | 23. Movement Animation & Camera Polish | v1.5 | 4/4 | Complete | 2026-02-17 |
 | 24. Zone Boundary Hysteresis | v1.5 | 1/1 | Complete | 2026-02-17 |
 | 25. Item Data Model & Foundation | v1.6 | 4/4 | Complete | 2026-02-17 |
-| 26. Server InventoryService & WebSocket Handlers | v1.6 | 0/4 | Not started | - |
+| 26. Server InventoryService & WebSocket Handlers | v1.6 | 4/4 | Complete | 2026-02-17 |
 | 27. Client State & Inventory Panel UI | v1.6 | 0/3 | Not started | - |
 | 28. Equipment System | v1.6 | 0/3 | Not started | - |
 | 29. Action Bar & Personal Storage | v1.6 | 0/2 | Not started | - |
 
-**Total:** 29 phases (25 complete, 4 planned)
+**Total:** 29 phases (26 complete, 3 planned)
 
 ---
-*Last updated: 2026-02-17 after Phase 26 planning*
+*Last updated: 2026-02-17 after Phase 26 complete*

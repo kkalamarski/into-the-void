@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.6 Inventory & Items — Phase 26: Inventory WebSocket Handlers
+**Current focus:** v1.6 Inventory & Items — Phase 27: Client State & Inventory Panel UI
 
 ## Current Position
 
-Phase: 26 of 29 (Server InventoryService & WebSocket Handlers) — IN PROGRESS
-Plan: 4 of 4 complete in Phase 26 (all plans 26-01 through 26-04 done)
-Status: In progress — Phase 26 all 4 plans complete
-Last activity: 2026-02-17 — Phase 26 Plan 03 complete: inventory lifecycle wired (loadForPlayer on auth, flushAndUnload on disconnect, item interact routes through handleItemPickup)
+Phase: 26 of 29 (Server InventoryService & WebSocket Handlers) — COMPLETE
+Plan: 4 of 4 in current phase (phase complete)
+Status: Complete — ready for Phase 27
+Last activity: 2026-02-17 — Phase 26 complete: InventoryService, 5 WebSocket handlers, auth/disconnect lifecycle, effectiveStats
 
-Progress: [████████░░░░░░░░░░░░] 40% (24/29 phases complete; 9/16 v1.6 plans complete)
+Progress: [████████░░░░░░░░░░░░] 45% (26/29 phases complete; 8/16 v1.6 plans complete)
 
 ## Performance Metrics
 
@@ -96,10 +96,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 26-03-PLAN.md — inventory lifecycle wired: loadForPlayer on auth, flushAndUnload on disconnect, case 'item' interact routes through handleItemPickup
+Stopped at: Phase 26 complete — InventoryService, 5 WebSocket handlers, effectiveStats pure function
 Resume file: None
 
-**Next action:** Phase 26 complete — all 4 plans done; advance to Phase 27 (Inventory UI)
+**Next action:** Execute Phase 27 (Client State & Inventory Panel UI)
 
 ---
-*Last updated: 2026-02-17 after Phase 26 Plan 03 complete*
+*Last updated: 2026-02-17 after Phase 26 complete*
