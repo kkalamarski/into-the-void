@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 ## Current Position
 
-Phase: 26 of 29 (Server InventoryService & WebSocket Handlers) — COMPLETE
-Plan: 4 of 4 in current phase (phase complete)
-Status: Complete — ready for Phase 27
-Last activity: 2026-02-17 — Phase 26 complete: InventoryService, 5 WebSocket handlers, auth/disconnect lifecycle, effectiveStats
+Phase: 27 of 29 (Client State & Inventory Panel UI) — IN PROGRESS
+Plan: 1 of 3 complete
+Status: In progress — Plan 01 complete
+Last activity: 2026-02-17 — Phase 27 Plan 01 complete: inventoryStore, inventory:reorder event, moveSlot, GameGateway handler
 
 Progress: [████████░░░░░░░░░░░░] 45% (26/29 phases complete; 8/16 v1.6 plans complete)
 
@@ -43,6 +43,7 @@ Progress: [████████░░░░░░░░░░░░] 45% (26
 | Phase 26 P01 | 129s | 3 tasks | 3 files |
 | Phase 26 P02 | 195s | 3 tasks | 3 files |
 | Phase 26 P03 | 116s | 3 tasks | 3 files |
+| Phase 27 P01 | 127s | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,9 @@ Recent decisions affecting current work:
 - [26-03]: PlayerService injects InventoryService directly (no forwardRef needed — InventoryService has no PlayerService dependency)
 - [26-03]: case 'item' in handleInteraction delegates fully to handleItemPickup — avoids duplicating claim/write logic; single source of truth for atomic pickup
 - [26-03]: InteractionResult.inventory is optional — entity:update still broadcasts zone-wide; inventory:update only emitted when non-null
+- [27-01]: inventoryStore is separate Zustand store from gameStore — inventory updates must not trigger Phaser canvas re-renders
+- [27-01]: inventory:reorder always responds with inventory:update regardless of moveSlot outcome — ensures pendingReorder is always cleared on client
+- [27-01]: GameGateway uses player.id (not player.characterId) — Player shared-type exposes id field only
 
 ### Pending Todos
 
@@ -96,10 +100,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Phase 26 complete — InventoryService, 5 WebSocket handlers, effectiveStats pure function
+Stopped at: Phase 27 Plan 01 complete — inventoryStore, inventory:reorder event, moveSlot, GameGateway handler
 Resume file: None
 
-**Next action:** Execute Phase 27 (Client State & Inventory Panel UI)
+**Next action:** Execute Phase 27 Plan 02 (Inventory Panel UI components)
 
 ---
-*Last updated: 2026-02-17 after Phase 26 complete*
+*Last updated: 2026-02-17 after Phase 27 Plan 01 complete*
