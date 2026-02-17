@@ -37,6 +37,8 @@ Progress: [████████░░░░░░░░░░░░] 40% (24
 **Recent Trend:**
 - Trend: Stable, averaging 2-4 plans per phase
 
+| Phase 25 P02 | 391s | 3 tasks | 8 files |
+
 ## Accumulated Context
 
 ### Decisions
@@ -52,6 +54,11 @@ Recent decisions affecting current work:
 - [v1.6 research]: Hotbar slot assignments persist to `localStorage` (client preference, not authoritative game state)
 - [25-01]: ItemCategory uses 6 lore-mandated types (suit|module|tool|consumable|world-item|reagent) — differs from shared-types which has 7
 - [25-01]: ItemRarity uses 5 tiers (common|rare|epic|exotic|legendary) — no 'uncommon' per lore; ilvl formula confirmed as tier*10*multiplier with 1.0/1.2/1.5/1.8/2.2
+- [25-03]: EquipmentJson migrated to exo-suit model (exosuit/modules[]/tool) — old head/chest/legs/feet fields removed
+- [25-03]: updateInventoryFull uses single .set({ items, equipment }) call — prevents two-write race window duplication exploit
+- [25-02]: World-items carry no effects array — biome materials are plain data, not behavior-carrying items (effects field is optional in ItemDefinition)
+- [25-02]: Stim buff items use string stat names (scan_speed, endurance, combat_speed, all_performance) for forward compatibility with stat system to be designed in later phases
+- [25-02]: World-item rarity distribution deliberately uneven — anomaly zone drops are exotic, ancient fragments legendary, matching lore tier system
 - [25-03]: EquipmentJson migrated to exo-suit model (exosuit/modules[]/tool) — old head/chest/legs/feet fields removed
 - [25-03]: updateInventoryFull uses single .set({ items, equipment }) call — prevents two-write race window duplication exploit
 - [25-03]: Migration script casts newEquipment as any for Drizzle JSONB — appropriate for one-time data migration with legacy unknown types
