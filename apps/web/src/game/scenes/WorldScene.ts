@@ -1033,12 +1033,18 @@ export class WorldScene extends Phaser.Scene {
         targets: this.localPlayer,
         x: screenPos.x,
         y: targetY,
-        duration: 50,
+        duration: 80,
         ease: 'Cubic.easeOut',
       });
     } else {
-      this.localPlayer.x = screenPos.x;
-      this.localPlayer.y = targetY;
+      this.tweens.killTweensOf(this.localPlayer);
+      this.tweens.add({
+        targets: this.localPlayer,
+        x: screenPos.x,
+        y: targetY,
+        duration: 130,  // MOVE_DELAY_MS (150) - 20ms to prevent drift
+        ease: 'Linear',
+      });
     }
 
     // Update grid data and depth (use world coordinates for depth)
@@ -1055,8 +1061,8 @@ export class WorldScene extends Phaser.Scene {
     if (!this.localPlayer) {
       this.createLocalPlayer(position);
       // Set up camera to follow player
-      // Camera instantly follows player (1, 1 = no lerp), keeping player centered
-      this.cameras.main.startFollow(this.localPlayer!, true, 1, 1);
+      // Camera smoothly follows player with lerp (0.1, 0.1), creating a polished glide effect
+      this.cameras.main.startFollow(this.localPlayer!, true, 0.1, 0.1);
       // Also set minimap to follow player
       if (this.minimapCamera) {
         this.minimapCamera.startFollow(this.localPlayer!);
