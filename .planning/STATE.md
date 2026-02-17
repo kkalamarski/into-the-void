@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 22 of 23 (8-Directional Input & Pathfinding)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-17 — Plan 22-01 complete (8-directional WASD input)
+Last activity: 2026-02-17 — Plan 22-02 complete (8-directional A* pathfinding)
 
 Progress: [█████████████░░░░░░░] 91% (Phases 1-21 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 64 (Phases 1-22, plan 01)
+- Total plans completed: 65 (Phases 1-22, plans 01-02)
 - Average duration: ~3m per plan
 - Total execution time: ~3.0 hours
 
@@ -55,6 +55,8 @@ Recent decisions affecting current work:
 - [Phase 21-01]: Server rate limit set to 125ms (not 140ms): provides 25ms network tolerance for clients at 150ms cadence
 - [Phase 21-02]: MOVE_DELAY_MS = 150 placed in shared-types/constants.ts; WorldScene moveDelay changed from 500ms to 150ms
 - [Phase 22-01]: WASD single keys map to cardinal directions (W=n, S=s, A=w, D=e) enabling 8-direction via dual-key combos; arrow keys retain isometric diagonal mapping as fallback
+- [Phase 22-02]: DIAGONAL_COST = Math.SQRT2 for geometrically correct diagonal A* cost; Chebyshev heuristic replaces Manhattan for admissible 8-directional estimation
+- [Phase 22-02]: Corner-cutting prevention checks both adjacent cardinal tiles before allowing diagonal step; findPathWithElevation also checks elevation of adjacent cardinals
 
 ### Pending Todos
 
@@ -73,10 +75,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 22-01-PLAN.md (8-directional WASD input)
+Stopped at: Completed 22-02-PLAN.md (8-directional A* pathfinding)
 Resume file: None
 
-**Next action:** `/gsd:execute-phase 22` (next plan)
+**Next action:** `/gsd:execute-phase 22` (next plan, if any) or `/gsd:plan-phase 23`
 
 ---
-*Last updated: 2026-02-17 after Phase 21 completion*
+*Last updated: 2026-02-17 after Phase 22-02 completion*
