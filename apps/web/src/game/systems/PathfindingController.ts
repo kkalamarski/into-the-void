@@ -8,6 +8,19 @@ import { IsometricTransform } from '../utils/IsometricTransform';
 const DIAGONAL_COST = Math.SQRT2; // ~1.414
 const MAX_PATH_ITERATIONS = 10000; // Safety limit for cross-chunk paths
 
+/**
+ * Convert Position (local coords + zoneId) to world coordinates.
+ */
+function positionToWorld(position: Position): { x: number; y: number } {
+  const parts = position.zoneId.split('_');
+  const zoneX = parseInt(parts[1], 10);
+  const zoneY = parseInt(parts[2], 10);
+  return {
+    x: zoneX * ZONE_SIZE + position.x,
+    y: zoneY * ZONE_SIZE + position.y,
+  };
+}
+
 interface PathNode {
   x: number;
   y: number;
@@ -273,11 +286,12 @@ export class PathfindingController {
       return;
     }
 
-    const current = player.position;
+    // Convert player position to world coordinates (path uses world coords)
+    const currentWorld = positionToWorld(player.position);
     const next = this.currentPath[this.pathIndex];
 
     // Calculate direction to next tile
-    const direction = this.getDirection(current, next);
+    const direction = this.getDirection(currentWorld, next);
 
     if (direction) {
       // Use same client prediction as WASD
@@ -326,7 +340,7 @@ export class PathfindingController {
     this.isoTransform = null;
   }
 
-  private getDirection(from: Position, to: { x: number; y: number }): Direction | null {
+  private getDirection(from: { x: number; y: number }, to: { x: number; y: number }): Direction | null {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
 
