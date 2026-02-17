@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure } from '@into-the-void/shared-types';
+import { ZONE_SIZE, MOVE_DELAY_MS, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure } from '@into-the-void/shared-types';
 import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
 import { TileRenderer } from '../rendering/TileRenderer';
@@ -31,7 +31,7 @@ export class WorldScene extends Phaser.Scene {
   private localPlayer: Phaser.GameObjects.Sprite | null = null;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
   private wasd: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key } | null = null;
-  private moveDelay = 500; // ms between moves (2 tiles/sec)
+  private moveDelay = MOVE_DELAY_MS; // ms between moves
   private lastMoveTime = 0;
   private chunkManager: ChunkManager | null = null;
   // Store tile arrays for cleanup (not containers - tiles need global depth sorting)
