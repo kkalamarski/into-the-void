@@ -2,10 +2,11 @@ import React from 'react';
 import { useGameStore } from '../store/gameStore';
 import { HUD } from './hud/HUD';
 import { ChatPanel } from './panels/ChatPanel';
+import { InventoryPanel } from './panels/InventoryPanel';
 import './GameUI.css';
 
 export const GameUI: React.FC = () => {
-  const { showChat, player } = useGameStore();
+  const { showChat, showInventory, player } = useGameStore();
 
   if (!player) {
     // Show login/character select UI
@@ -23,6 +24,7 @@ export const GameUI: React.FC = () => {
     <div className="game-ui">
       <HUD />
       {showChat && <ChatPanel />}
+      {showInventory && <InventoryPanel />}
       <div className="minimap-border" />
     </div>
   );
