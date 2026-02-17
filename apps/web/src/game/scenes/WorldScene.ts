@@ -626,6 +626,7 @@ export class WorldScene extends Phaser.Scene {
 
     // Guard: Don't recreate tiles if already exists (prevents memory leak)
     if (this.chunkTiles.has(zoneId)) {
+      console.log(`[WorldScene] Chunk ${zoneId} already rendered, skipping`);
       // Still update currentTiles for the look feature
       if (zoneId === this.currentZoneId) {
         this.currentTiles = tiles;
@@ -635,6 +636,8 @@ export class WorldScene extends Phaser.Scene {
       }
       return;
     }
+
+    console.log(`[WorldScene] Rendering chunk ${zoneId}, total chunks: ${this.chunkTiles.size + 1}`);
 
     const { x: chunkX, y: chunkY } = this.parseZoneCoords(zoneId);
 
@@ -679,12 +682,11 @@ export class WorldScene extends Phaser.Scene {
   private unloadChunkContainer(zoneId: string): void {
     const tiles = this.chunkTiles.get(zoneId);
     if (tiles) {
+      console.log(`[WorldScene] Unloading chunk ${zoneId} with ${tiles.length} tiles`);
       tiles.forEach(tile => {
-        // Explicitly destroy all children (Graphics objects) first
-        // Phaser's destroy(true) may not properly clean up Graphics children
-        tile.each((child: Phaser.GameObjects.GameObject) => {
-          child.destroy();
-        });
+        // Get all children as array first (avoid modifying while iterating)
+        const children = tile.getAll();
+        children.forEach(child => child.destroy());
         tile.removeAll(true);
         tile.destroy();
       });

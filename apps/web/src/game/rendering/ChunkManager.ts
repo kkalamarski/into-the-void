@@ -101,12 +101,17 @@ export class ChunkManager {
     });
 
     // Cancel loading requests for chunks no longer needed
+    let cancelledCount = 0;
     this.chunkStates.forEach((state, zoneId) => {
       if (state === 'loading' && !requiredChunks.has(zoneId)) {
         this.chunkStates.delete(zoneId);
         this.pendingRequests.delete(zoneId);
+        cancelledCount++;
       }
     });
+    if (cancelledCount > 0) {
+      this.notifyLoadingStateChange();
+    }
 
     // Process queued requests
     this.processNextRequest();
@@ -180,9 +185,8 @@ export class ChunkManager {
       return;
     }
 
-    // Clear loading state
+    // Clear pending request tracking
     this.pendingRequests.delete(zoneId);
-    this.notifyLoadingStateChange();
 
     // Check if chunk is still needed (player may have moved while chunk was loading)
     const { x: px, y: py } = this.parseZoneId(this.currentPlayerZone);
@@ -192,6 +196,7 @@ export class ChunkManager {
     if (distance > 1) {
       // Chunk no longer needed (player moved away), discard without rendering
       this.chunkStates.delete(zoneId);
+      this.notifyLoadingStateChange(); // Notify AFTER state change
       // Process next queued request
       this.processNextRequest();
       return;
@@ -199,6 +204,7 @@ export class ChunkManager {
 
     // Update state to loaded
     this.chunkStates.set(zoneId, 'loaded');
+    this.notifyLoadingStateChange(); // Notify AFTER state change
 
     // Store chunk
     this.loadedChunks.set(zoneId, {
