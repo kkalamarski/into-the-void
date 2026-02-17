@@ -31,7 +31,7 @@ export class WorldScene extends Phaser.Scene {
   private localPlayer: Phaser.GameObjects.Sprite | null = null;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
   private wasd: { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key } | null = null;
-  private moveDelay = 150; // ms between moves
+  private moveDelay = 500; // ms between moves (2 tiles/sec)
   private lastMoveTime = 0;
   private chunkManager: ChunkManager | null = null;
   // Store tile arrays for cleanup (not containers - tiles need global depth sorting)
