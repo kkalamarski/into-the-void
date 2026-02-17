@@ -164,12 +164,12 @@ Plans:
   3. Player presses the tool swap hotkey — main and secondary tool slots swap; server validates both slots before confirming
   4. Server rejects equipping an item if the player's level is below `requiredLevel` — client reflects the rejection by greying out the item in the UI
   5. Unequipping a module when inventory is full is rejected by the server — the player sees an error and the item remains equipped
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 28-01: Build `EquipmentPanel.tsx` with exo-suit silhouette, variable module slot count, and tool slots; wire drag-from-inventory equip via `equipment:change` event
-- [ ] 28-02: Implement server equip handler with required-level check, inventory-full pre-validation, and stat recalculation on every equip/unequip
-- [ ] 28-03: Apply all 6 module type stat effects (armor, speed, life support, sensor array, power core, mobility) server-side; propagate recalculated stats to HUD via `inventory:update`
+- [ ] 28-01-PLAN.md — Build EquipmentPanel.tsx with exo-suit slot, dynamic module slots, tool slots; lift DndContext to GameUI for cross-panel drag
+- [ ] 28-02-PLAN.md — Add ComputedStats to shared-types; include stats in inventory:update; add equipment:tool_swap handler; exo-suit unequip guard
+- [ ] 28-03-PLAN.md — Add stats display to HUD; level-gating visual feedback on items; Q hotkey for tool swap
 
 #### Phase 29: Action Bar & Personal Storage
 
@@ -220,10 +220,10 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | 25. Item Data Model & Foundation | v1.6 | 4/4 | Complete | 2026-02-17 |
 | 26. Server InventoryService & WebSocket Handlers | v1.6 | 4/4 | Complete | 2026-02-17 |
 | 27. Client State & Inventory Panel UI | v1.6 | 3/3 | Complete | 2026-02-17 |
-| 28. Equipment System | v1.6 | 0/3 | Not started | - |
+| 28. Equipment System | v1.6 | 0/3 | Planned | - |
 | 29. Action Bar & Personal Storage | v1.6 | 0/2 | Not started | - |
 
 **Total:** 29 phases (27 complete, 2 planned)
 
 ---
-*Last updated: 2026-02-17 after Phase 27 planning*
+*Last updated: 2026-02-18 after Phase 28 planning*
