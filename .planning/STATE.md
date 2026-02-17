@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 ## Current Position
 
-Phase: 27 of 29 (Client State & Inventory Panel UI) — IN PROGRESS
-Plan: 2 of 3 complete
-Status: In progress — Plan 02 complete
-Last activity: 2026-02-17 — Phase 27 Plan 02 complete: InventoryPanel UI, RARITY_COLORS, dnd-kit drag-drop, context menu, GameUI wiring
+Phase: 27 of 29 (Client State & Inventory Panel UI) — COMPLETE
+Plan: 3 of 3 complete
+Status: Phase 27 complete — all 3 plans done
+Last activity: 2026-02-17 — Phase 27 Plan 03 complete: ItemTooltip component, setKeyboardEnabled, tooltip integration in InventoryPanel
 
-Progress: [████████░░░░░░░░░░░░] 45% (26/29 phases complete; 8/16 v1.6 plans complete)
+Progress: [████████░░░░░░░░░░░░] 47% (27/29 phases complete; 9/16 v1.6 plans complete)
 
 ## Performance Metrics
 
@@ -45,6 +45,7 @@ Progress: [████████░░░░░░░░░░░░] 45% (26
 | Phase 26 P03 | 116s | 3 tasks | 3 files |
 | Phase 27 P01 | 127s | 3 tasks | 4 files |
 | Phase 27 P02 | 754s | 3 tasks | 6 files |
+| Phase 27 P03 | 115 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,7 @@ Recent decisions affecting current work:
 - [27-01]: GameGateway uses player.id (not player.characterId) — Player shared-type exposes id field only
 - [Phase 27]: InventoryPanel uses non-optimistic reorder: pendingReorder blocks UI until server inventory:update clears it via setInventory
 - [Phase 27]: Slot array built from maxSlots count with slot-index lookup — empty slots render as null entries in fixed-size grid
+- [Phase 27]: @floating-ui/react installed at workspace root (single root package.json Nx monorepo); ItemTooltip wraps reference div to preserve SortableSlot drag behavior
 
 ### Pending Todos
 
@@ -94,7 +96,7 @@ None.
 
 **Design decisions needed before Phase 28 begins:**
 - Module type compatibility rules (whether module types are mutually exclusive, e.g. max 2 Speed modules per suit) — not specified in lore; needs design decision before server validation is written
-- ilvl formula (tier x rarity multiplier: 1.0/1.2/1.5/1.8/2.2) — implemented in computeIlvl (25-01); lore validation still needed before tooltip display built in Phase 27
+- ilvl formula (tier x rarity multiplier: 1.0/1.2/1.5/1.8/2.2) — implemented in computeIlvl (25-01) and displayed in ItemTooltip (Phase 27-03); lore validation still pending
 
 **Carried from v1.3:**
 - Server-side elevation validation not wired (client-side complete, server uses old validation)
@@ -103,10 +105,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Phase 27 Plan 02 complete — InventoryPanel UI, RARITY_COLORS, dnd-kit drag-drop, context menu, GameUI wiring
+Stopped at: Completed 27-03-PLAN.md — Phase 27 complete
 Resume file: None
 
-**Next action:** Execute Phase 27 Plan 03 (action bar / hotbar UI)
+**Next action:** Execute Phase 28
 
 ---
-*Last updated: 2026-02-17 after Phase 27 Plan 02 complete*
+*Last updated: 2026-02-17 after Phase 27 Plan 03 complete*
