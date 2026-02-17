@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-16)
+See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.4 Infinite World & Seamless Chunks - COMPLETE
+**Current focus:** v1.5 Movement Overhaul
 
 ## Current Position
 
-Phase: 20 of 20 (Testing & Polish)
-Plan: 2 of 2
-Status: Complete
-Last activity: 2026-02-17 - Completed Phase 20 (Testing & Polish)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-17 — Milestone v1.5 started
 
-Progress: [████████████████████] 100% (20/20 phases complete)
+Progress: [░░░░░░░░░░░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -145,10 +145,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Phase 20 Complete
+Stopped at: Defining requirements for v1.5
 Resume file: None
 
-**Next action:** `/gsd:audit-milestone` or `/gsd:complete-milestone`
+**Next action:** Complete new-milestone workflow (research → requirements → roadmap)
 
 ---
-*Last updated: 2026-02-17 after completing Phase 20 testing*
+*Last updated: 2026-02-17 after starting v1.5 milestone*

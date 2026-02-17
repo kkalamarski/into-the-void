@@ -24,18 +24,16 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~9,120 LOC TypeScript
 
-## Current Milestone: v1.4 Infinite World & Seamless Chunks
+## Current Milestone: v1.5 Movement Overhaul
 
-**Goal:** Transform the world from chunk-locked biomes to a truly infinite, seamlessly streaming world where biomes flow naturally across boundaries.
+**Goal:** Fix movement accessibility issues and polish the movement feel with smooth camera scrolling.
 
 **Target features:**
-- Biome noise layer (world-coordinate based, not chunk-based)
-- Mixed-scale biomes (large regions + micro-variation within)
-- Continuous elevation with per-biome rules and edge blending
-- Chunk streaming based on viewport + 1-chunk buffer
-- Server-side chunk generation and caching
-- Seamless rendering with no pop-in
-- Entity consistency across chunk boundaries
+- Research-driven movement system (tile-based vs free movement)
+- Full keyboard accessibility (all tiles reachable)
+- Smooth camera scrolling (no snap/lag)
+- Unified keyboard and click-to-move systems
+- Remove broken tile hover highlight
 
 ## Core Value
 
@@ -67,16 +65,21 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Elevation-aware movement and pathfinding — v1.3
 - ✓ Depth sorting with height occlusion — v1.3
 - ✓ World-gen elevation and structure placement — v1.3
+- ✓ Biome noise layer independent of chunk boundaries — v1.4
+- ✓ Mixed-scale biome distribution (macro + micro) — v1.4
+- ✓ Continuous elevation with biome-based rules — v1.4
+- ✓ Viewport-based chunk streaming with pre-loading — v1.4
+- ✓ Server chunk generation and caching — v1.4
+- ✓ Seamless cross-chunk rendering — v1.4
+- ✓ Entity visibility consistency across chunks — v1.4
 
 ### Active
 
-- [ ] Biome noise layer independent of chunk boundaries
-- [ ] Mixed-scale biome distribution (macro + micro)
-- [ ] Continuous elevation with biome-based rules
-- [ ] Viewport-based chunk streaming with pre-loading
-- [ ] Server chunk generation and caching
-- [ ] Seamless cross-chunk rendering
-- [ ] Entity visibility consistency across chunks
+- [ ] Research-driven movement system for isometric MMO
+- [ ] Full keyboard accessibility (all tiles reachable)
+- [ ] Smooth camera scrolling without snapping
+- [ ] Unified keyboard and click-to-move systems
+- [ ] Remove broken tile hover highlight
 
 ### Out of Scope
 
@@ -117,4 +120,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-16 after v1.4 milestone start*
+*Last updated: 2026-02-17 after v1.5 milestone start*
