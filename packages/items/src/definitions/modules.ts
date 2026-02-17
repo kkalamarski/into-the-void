@@ -1,0 +1,573 @@
+import type { ItemDefinition } from '../types';
+import { computeIlvl } from '../utils';
+
+// ============================================================
+// ARMOR MODULES (5) — increase suit durability
+// ============================================================
+
+export const MODULE_ARMOR_COMMON: ItemDefinition = {
+  id: 'module_armor_common',
+  displayName: 'Armor Module Mk.I',
+  description: 'Basic composite plating that reinforces the exo-suit chassis. Standard issue at Helix processing facilities.',
+  category: 'module',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.2,
+  baseValue: 200,
+  requiredLevel: 1,
+  ilvl: computeIlvl(1, 'common'),
+  textureKey: 'item_module_armor',
+  color: 0x888888,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 10 } }],
+};
+
+export const MODULE_ARMOR_RARE: ItemDefinition = {
+  id: 'module_armor_rare',
+  displayName: 'Armor Module Mk.II',
+  description: 'Reinforced layered plating with impact-distribution lattice. Noticeably reduces damage from wildlife and environmental hazards.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.5,
+  baseValue: 800,
+  requiredLevel: 5,
+  ilvl: computeIlvl(1, 'rare'),
+  textureKey: 'item_module_armor',
+  color: 0x6a6aaa,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 22 } }],
+};
+
+export const MODULE_ARMOR_EPIC: ItemDefinition = {
+  id: 'module_armor_epic',
+  displayName: 'Armor Module Mk.III',
+  description: 'High-density ceramic-composite plating developed by Helix for deep-site operations. Resists silicon-armored predator strikes.',
+  category: 'module',
+  rarity: 'epic',
+  maxStack: 1,
+  weight: 1.8,
+  baseValue: 3000,
+  requiredLevel: 15,
+  ilvl: computeIlvl(2, 'epic'),
+  textureKey: 'item_module_armor',
+  color: 0x4a4aee,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 45 } }],
+};
+
+export const MODULE_ARMOR_EXOTIC: ItemDefinition = {
+  id: 'module_armor_exotic',
+  displayName: 'Armor Module Mk.IV',
+  description: 'Adaptive reactive plating that stiffens on impact. Incorporates trace anomaly-processed alloys that improve resilience in distorted zones.',
+  category: 'module',
+  rarity: 'exotic',
+  maxStack: 1,
+  weight: 2.0,
+  baseValue: 12000,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'exotic'),
+  textureKey: 'item_module_armor',
+  color: 0x2a2aff,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 81 } }],
+};
+
+export const MODULE_ARMOR_LEGENDARY: ItemDefinition = {
+  id: 'module_armor_legendary',
+  displayName: 'Ancient Armor Weave',
+  description: 'A Prior Inhabitant armor layer, integrated into module form by Nexus researchers. The material appears to react to incoming damage before it occurs. How this is possible remains classified.',
+  category: 'module',
+  rarity: 'legendary',
+  maxStack: 1,
+  weight: 1.0,
+  baseValue: 50000,
+  requiredLevel: 35,
+  ilvl: computeIlvl(4, 'legendary'),
+  textureKey: 'item_module_armor',
+  color: 0x8888ff,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 176 } }],
+};
+
+// ============================================================
+// SPEED MODULES (5) — increase movement speed
+// ============================================================
+
+export const MODULE_SPEED_COMMON: ItemDefinition = {
+  id: 'module_speed_common',
+  displayName: 'Speed Module Mk.I',
+  description: 'Lightweight servo-assist unit that augments leg actuators. Basic model used by Nexus couriers and scouts.',
+  category: 'module',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 0.8,
+  baseValue: 200,
+  requiredLevel: 1,
+  ilvl: computeIlvl(1, 'common'),
+  textureKey: 'item_module_speed',
+  color: 0xaaaa44,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.05 } }],
+};
+
+export const MODULE_SPEED_RARE: ItemDefinition = {
+  id: 'module_speed_rare',
+  displayName: 'Speed Module Mk.II',
+  description: 'Improved servo-assist with predictive motion calculation. Makes navigating the Petrified Expanse\'s constant-movement requirement significantly easier.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 0.9,
+  baseValue: 800,
+  requiredLevel: 5,
+  ilvl: computeIlvl(1, 'rare'),
+  textureKey: 'item_module_speed',
+  color: 0xcccc44,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.12 } }],
+};
+
+export const MODULE_SPEED_EPIC: ItemDefinition = {
+  id: 'module_speed_epic',
+  displayName: 'Speed Module Mk.III',
+  description: 'High-performance actuator suite with resonant frequency optimization. Used by Nexus intelligence operatives who need to leave quickly.',
+  category: 'module',
+  rarity: 'epic',
+  maxStack: 1,
+  weight: 1.0,
+  baseValue: 3000,
+  requiredLevel: 15,
+  ilvl: computeIlvl(2, 'epic'),
+  textureKey: 'item_module_speed',
+  color: 0xeeee22,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.25 } }],
+};
+
+export const MODULE_SPEED_EXOTIC: ItemDefinition = {
+  id: 'module_speed_exotic',
+  displayName: 'Speed Module Mk.IV',
+  description: 'Prototype actuator assembly using anomaly-hardened components. Occasionally causes brief temporal displacement effects — the user arrives at destinations slightly before they decide to go.',
+  category: 'module',
+  rarity: 'exotic',
+  maxStack: 1,
+  weight: 1.1,
+  baseValue: 12000,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'exotic'),
+  textureKey: 'item_module_speed',
+  color: 0xffff00,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.44 } }],
+};
+
+export const MODULE_SPEED_LEGENDARY: ItemDefinition = {
+  id: 'module_speed_legendary',
+  displayName: 'Phase-Step Drive',
+  description: 'A Prior Inhabitant locomotion enhancement, partially reverse-engineered. The user\'s movement briefly becomes semi-translucent during rapid motion. Colonists who\'ve used it describe the sensation as "walking through time sideways."',
+  category: 'module',
+  rarity: 'legendary',
+  maxStack: 1,
+  weight: 0.5,
+  baseValue: 50000,
+  requiredLevel: 35,
+  ilvl: computeIlvl(4, 'legendary'),
+  textureKey: 'item_module_speed',
+  color: 0xffff88,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.76 } }],
+};
+
+// ============================================================
+// LIFE SUPPORT MODULES (5) — hazard resistance
+// ============================================================
+
+export const MODULE_LIFE_SUPPORT_COMMON: ItemDefinition = {
+  id: 'module_life_support_common',
+  displayName: 'Life Support Module Mk.I',
+  description: 'Basic chemical filtration and atmosphere processing unit. Extends survivability in Tier I hazard zones. Issued to all Verdant Dynamics field workers.',
+  category: 'module',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.0,
+  baseValue: 200,
+  requiredLevel: 1,
+  ilvl: computeIlvl(1, 'common'),
+  textureKey: 'item_module_life_support',
+  color: 0x44aa44,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 10 } }],
+};
+
+export const MODULE_LIFE_SUPPORT_RARE: ItemDefinition = {
+  id: 'module_life_support_rare',
+  displayName: 'Life Support Module Mk.II',
+  description: 'Multi-stage filtration with toxic compound neutralization. Required for safe operation in Miasma Marshes environments.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.2,
+  baseValue: 800,
+  requiredLevel: 5,
+  ilvl: computeIlvl(1, 'rare'),
+  textureKey: 'item_module_life_support',
+  color: 0x44cc44,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 22 } }],
+};
+
+export const MODULE_LIFE_SUPPORT_EPIC: ItemDefinition = {
+  id: 'module_life_support_epic',
+  displayName: 'Life Support Module Mk.III',
+  description: 'Verdant research-grade biological protection system. Incorporates synthesized Terminus flora enzymes for enhanced chemical processing. Recommended for Fungal Depths operations.',
+  category: 'module',
+  rarity: 'epic',
+  maxStack: 1,
+  weight: 1.4,
+  baseValue: 3000,
+  requiredLevel: 15,
+  ilvl: computeIlvl(2, 'epic'),
+  textureKey: 'item_module_life_support',
+  color: 0x22ee22,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 45 } }],
+};
+
+export const MODULE_LIFE_SUPPORT_EXOTIC: ItemDefinition = {
+  id: 'module_life_support_exotic',
+  displayName: 'Life Support Module Mk.IV',
+  description: 'Experimental bioengineered filtration using living Terminus organisms as active components. The organisms adapt in real-time to new toxins. Verdant denies it exists; their field teams all want one.',
+  category: 'module',
+  rarity: 'exotic',
+  maxStack: 1,
+  weight: 1.6,
+  baseValue: 12000,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'exotic'),
+  textureKey: 'item_module_life_support',
+  color: 0x00ff44,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 81 } }],
+};
+
+export const MODULE_LIFE_SUPPORT_LEGENDARY: ItemDefinition = {
+  id: 'module_life_support_legendary',
+  displayName: 'Terminus Bioweave System',
+  description: 'A fully integrated living filtration system grown from Terminus\'s most resilient organisms. Adapts to any environmental hazard encountered. The bioweave has been observed altering itself between expeditions — it is learning.',
+  category: 'module',
+  rarity: 'legendary',
+  maxStack: 1,
+  weight: 1.0,
+  baseValue: 50000,
+  requiredLevel: 35,
+  ilvl: computeIlvl(4, 'legendary'),
+  textureKey: 'item_module_life_support',
+  color: 0x88ff88,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 176 } }],
+};
+
+// ============================================================
+// SENSOR ARRAY MODULES (5) — detection range
+// ============================================================
+
+export const MODULE_SENSOR_COMMON: ItemDefinition = {
+  id: 'module_sensor_common',
+  displayName: 'Sensor Array Mk.I',
+  description: 'Standard proximity detection package. Alerts the wearer to nearby wildlife and anomalies. Basic model distributed to all Nexus scouts.',
+  category: 'module',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 0.6,
+  baseValue: 200,
+  requiredLevel: 1,
+  ilvl: computeIlvl(1, 'common'),
+  textureKey: 'item_module_sensor',
+  color: 0x44aaaa,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 15 } }],
+};
+
+export const MODULE_SENSOR_RARE: ItemDefinition = {
+  id: 'module_sensor_rare',
+  displayName: 'Sensor Array Mk.II',
+  description: 'Multi-spectrum detection with thermal and chemical signature analysis. Distinguishes between creature classes and identifies known species from range.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 0.7,
+  baseValue: 800,
+  requiredLevel: 5,
+  ilvl: computeIlvl(1, 'rare'),
+  textureKey: 'item_module_sensor',
+  color: 0x44cccc,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 25 } }],
+};
+
+export const MODULE_SENSOR_EPIC: ItemDefinition = {
+  id: 'module_sensor_epic',
+  displayName: 'Sensor Array Mk.III',
+  description: 'Deep-scan sensor suite used by Nexus intelligence operatives. Detects cloaked assets, hidden compartments, and "deniable" operations through standard facility walls.',
+  category: 'module',
+  rarity: 'epic',
+  maxStack: 1,
+  weight: 0.9,
+  baseValue: 3000,
+  requiredLevel: 15,
+  ilvl: computeIlvl(2, 'epic'),
+  textureKey: 'item_module_sensor',
+  color: 0x22eeee,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 40 } }],
+};
+
+export const MODULE_SENSOR_EXOTIC: ItemDefinition = {
+  id: 'module_sensor_exotic',
+  displayName: 'Sensor Array Mk.IV',
+  description: 'Experimental detection suite incorporating anomaly-tuned receivers. Detects temporal distortions, spatial tears, and — on one occasion — something that wasn\'t there.',
+  category: 'module',
+  rarity: 'exotic',
+  maxStack: 1,
+  weight: 1.0,
+  baseValue: 12000,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'exotic'),
+  textureKey: 'item_module_sensor',
+  color: 0x00ffff,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 60 } }],
+};
+
+export const MODULE_SENSOR_LEGENDARY: ItemDefinition = {
+  id: 'module_sensor_legendary',
+  displayName: 'Ancient Perception Node',
+  description: 'A Prior Inhabitant sensory device integrated into module form. Provides detection capabilities that cannot be fully characterized — users consistently report sensing things the readouts don\'t show.',
+  category: 'module',
+  rarity: 'legendary',
+  maxStack: 1,
+  weight: 0.3,
+  baseValue: 50000,
+  requiredLevel: 35,
+  ilvl: computeIlvl(4, 'legendary'),
+  textureKey: 'item_module_sensor',
+  color: 0x88ffff,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 88 } }],
+};
+
+// ============================================================
+// POWER CORE MODULES (5) — energy capacity and recharge
+// ============================================================
+
+export const MODULE_POWER_CORE_COMMON: ItemDefinition = {
+  id: 'module_power_core_common',
+  displayName: 'Power Core Mk.I',
+  description: 'Standard fuel-cell energy module. Extends suit operation time and stabilizes power draw during high-demand activities.',
+  category: 'module',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.5,
+  baseValue: 200,
+  requiredLevel: 1,
+  ilvl: computeIlvl(1, 'common'),
+  textureKey: 'item_module_power_core',
+  color: 0xaaaa44,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 100, rechargeRate: 5 } }],
+};
+
+export const MODULE_POWER_CORE_RARE: ItemDefinition = {
+  id: 'module_power_core_rare',
+  displayName: 'Power Core Mk.II',
+  description: 'High-density energy cell with improved charge cycling. Compatible with Helix geothermal rapid-charge stations.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.7,
+  baseValue: 800,
+  requiredLevel: 5,
+  ilvl: computeIlvl(1, 'rare'),
+  textureKey: 'item_module_power_core',
+  color: 0xcccc44,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 200, rechargeRate: 9 } }],
+};
+
+export const MODULE_POWER_CORE_EPIC: ItemDefinition = {
+  id: 'module_power_core_epic',
+  displayName: 'Power Core Mk.III',
+  description: 'Geothermal tap module developed by Helix for deep-site operations. Converts ambient thermal energy into suit power — highly effective in Volcanic Reaches environments.',
+  category: 'module',
+  rarity: 'epic',
+  maxStack: 1,
+  weight: 2.0,
+  baseValue: 3000,
+  requiredLevel: 15,
+  ilvl: computeIlvl(2, 'epic'),
+  textureKey: 'item_module_power_core',
+  color: 0xeeee22,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 375, rechargeRate: 18 } }],
+};
+
+export const MODULE_POWER_CORE_EXOTIC: ItemDefinition = {
+  id: 'module_power_core_exotic',
+  displayName: 'Power Core Mk.IV',
+  description: 'Zero-point energy tap — theoretically impossible, practically operational. Nexus research division refuses to explain how it works. The energy it generates appears to exceed its input.',
+  category: 'module',
+  rarity: 'exotic',
+  maxStack: 1,
+  weight: 1.8,
+  baseValue: 12000,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'exotic'),
+  textureKey: 'item_module_power_core',
+  color: 0xffff00,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 648, rechargeRate: 32 } }],
+};
+
+export const MODULE_POWER_CORE_LEGENDARY: ItemDefinition = {
+  id: 'module_power_core_legendary',
+  displayName: 'Void Resonance Core',
+  description: 'An energy system that draws power from the same anomalous source that powers the Ancients\' dormant installations. Runs indefinitely. The corporations have classified all information about its long-term effects on the wearer.',
+  category: 'module',
+  rarity: 'legendary',
+  maxStack: 1,
+  weight: 0.8,
+  baseValue: 50000,
+  requiredLevel: 35,
+  ilvl: computeIlvl(4, 'legendary'),
+  textureKey: 'item_module_power_core',
+  color: 0xffff88,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 1408, rechargeRate: 70 } }],
+};
+
+// ============================================================
+// MOBILITY MODULES (5) — jump height and traversal
+// ============================================================
+
+export const MODULE_MOBILITY_COMMON: ItemDefinition = {
+  id: 'module_mobility_common',
+  displayName: 'Mobility Module Mk.I',
+  description: 'Basic jump-assist unit with hydraulic leg augmentation. Allows traversal of terrain features impassable in standard issue equipment.',
+  category: 'module',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.0,
+  baseValue: 200,
+  requiredLevel: 1,
+  ilvl: computeIlvl(1, 'common'),
+  textureKey: 'item_module_mobility',
+  color: 0xaa44aa,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 1.2 } }],
+};
+
+export const MODULE_MOBILITY_RARE: ItemDefinition = {
+  id: 'module_mobility_rare',
+  displayName: 'Mobility Module Mk.II',
+  description: 'Improved jump-assist with powered glide capability. Useful for navigating the layered terrain of Luminous Canopy without rope equipment.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.2,
+  baseValue: 800,
+  requiredLevel: 5,
+  ilvl: computeIlvl(1, 'rare'),
+  textureKey: 'item_module_mobility',
+  color: 0xcc44cc,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 1.5 } }],
+};
+
+export const MODULE_MOBILITY_EPIC: ItemDefinition = {
+  id: 'module_mobility_epic',
+  displayName: 'Mobility Module Mk.III',
+  description: 'High-output thruster pack with terrain-adaptive landing systems. Standard equipment for Nexus trade route operators working in Tier III biomes.',
+  category: 'module',
+  rarity: 'epic',
+  maxStack: 1,
+  weight: 1.5,
+  baseValue: 3000,
+  requiredLevel: 15,
+  ilvl: computeIlvl(2, 'epic'),
+  textureKey: 'item_module_mobility',
+  color: 0xee22ee,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 2.0 } }],
+};
+
+export const MODULE_MOBILITY_EXOTIC: ItemDefinition = {
+  id: 'module_mobility_exotic',
+  displayName: 'Mobility Module Mk.IV',
+  description: 'Gravitic displacement unit that partially negates gravitational pull. On Terminus with its 0.94g, users report feeling almost weightless. On higher-g worlds, this would be even more impressive.',
+  category: 'module',
+  rarity: 'exotic',
+  maxStack: 1,
+  weight: 1.3,
+  baseValue: 12000,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'exotic'),
+  textureKey: 'item_module_mobility',
+  color: 0xff00ff,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 2.8 } }],
+};
+
+export const MODULE_MOBILITY_LEGENDARY: ItemDefinition = {
+  id: 'module_mobility_legendary',
+  displayName: 'Ancient Traverse Glyph',
+  description: 'A Prior Inhabitant mobility device that appears to manipulate local space rather than simply applying force. The Ancients moved differently than we do. This module begins to suggest how.',
+  category: 'module',
+  rarity: 'legendary',
+  maxStack: 1,
+  weight: 0.2,
+  baseValue: 50000,
+  requiredLevel: 35,
+  ilvl: computeIlvl(4, 'legendary'),
+  textureKey: 'item_module_mobility',
+  color: 0xff88ff,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 4.4 } }],
+};
+
+// ============================================================
+// ALL MODULES
+// ============================================================
+
+export const ALL_MODULES: readonly ItemDefinition[] = [
+  MODULE_ARMOR_COMMON,
+  MODULE_ARMOR_RARE,
+  MODULE_ARMOR_EPIC,
+  MODULE_ARMOR_EXOTIC,
+  MODULE_ARMOR_LEGENDARY,
+  MODULE_SPEED_COMMON,
+  MODULE_SPEED_RARE,
+  MODULE_SPEED_EPIC,
+  MODULE_SPEED_EXOTIC,
+  MODULE_SPEED_LEGENDARY,
+  MODULE_LIFE_SUPPORT_COMMON,
+  MODULE_LIFE_SUPPORT_RARE,
+  MODULE_LIFE_SUPPORT_EPIC,
+  MODULE_LIFE_SUPPORT_EXOTIC,
+  MODULE_LIFE_SUPPORT_LEGENDARY,
+  MODULE_SENSOR_COMMON,
+  MODULE_SENSOR_RARE,
+  MODULE_SENSOR_EPIC,
+  MODULE_SENSOR_EXOTIC,
+  MODULE_SENSOR_LEGENDARY,
+  MODULE_POWER_CORE_COMMON,
+  MODULE_POWER_CORE_RARE,
+  MODULE_POWER_CORE_EPIC,
+  MODULE_POWER_CORE_EXOTIC,
+  MODULE_POWER_CORE_LEGENDARY,
+  MODULE_MOBILITY_COMMON,
+  MODULE_MOBILITY_RARE,
+  MODULE_MOBILITY_EPIC,
+  MODULE_MOBILITY_EXOTIC,
+  MODULE_MOBILITY_LEGENDARY,
+];
