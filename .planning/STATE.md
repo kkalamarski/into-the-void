@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 22 of 23 (8-Directional Input & Pathfinding)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-17 — Phase 21 verified and complete
+Plan: 1 of TBD in current phase
+Status: In progress
+Last activity: 2026-02-17 — Plan 22-01 complete (8-directional WASD input)
 
 Progress: [█████████████░░░░░░░] 91% (Phases 1-21 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 63 (Phases 1-21)
+- Total plans completed: 64 (Phases 1-22, plan 01)
 - Average duration: ~3m per plan
 - Total execution time: ~3.0 hours
 
@@ -54,6 +54,7 @@ Recent decisions affecting current work:
 - [v1.5 research]: Minimap camera must NOT receive lerp — instant follow only
 - [Phase 21-01]: Server rate limit set to 125ms (not 140ms): provides 25ms network tolerance for clients at 150ms cadence
 - [Phase 21-02]: MOVE_DELAY_MS = 150 placed in shared-types/constants.ts; WorldScene moveDelay changed from 500ms to 150ms
+- [Phase 22-01]: WASD single keys map to cardinal directions (W=n, S=s, A=w, D=e) enabling 8-direction via dual-key combos; arrow keys retain isometric diagonal mapping as fallback
 
 ### Pending Todos
 
@@ -72,10 +73,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Phase 21 verified complete
+Stopped at: Completed 22-01-PLAN.md (8-directional WASD input)
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 22`
+**Next action:** `/gsd:execute-phase 22` (next plan)
 
 ---
 *Last updated: 2026-02-17 after Phase 21 completion*
