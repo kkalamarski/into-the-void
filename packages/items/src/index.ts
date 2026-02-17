@@ -16,7 +16,11 @@ export { ItemRegistry } from './registry';
 // Utils
 export { computeIlvl } from './utils';
 
-// NOTE: Auto-registration will be added in Plan 25-02 when definitions exist
-// import { ItemRegistry } from './registry';
-// import { ALL_ITEMS } from './definitions';
-// ItemRegistry.registerAll(ALL_ITEMS);
+// Definitions
+export { ALL_ITEMS, ITEM_IDS } from './definitions';
+export * from './definitions';
+
+// Register all items on module load
+import { ItemRegistry } from './registry';
+import { ALL_ITEMS } from './definitions';
+ItemRegistry.registerAll(ALL_ITEMS);
