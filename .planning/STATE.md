@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 23 complete — Movement Animation & Camera Polish DONE
+**Current focus:** Phase 24 — Zone Boundary Hysteresis
 
 ## Current Position
 
-Phase: 23 of 23 (Movement Animation & Camera Polish)
-Plan: 4 of 4 in current phase
-Status: Complete
-Last activity: 2026-02-17 — Phase 23-04 complete (HoverController dead code removal)
+Phase: 24 of 24 (Zone Boundary Hysteresis)
+Plan: 0 of 1 in current phase
+Status: Ready to plan
+Last activity: 2026-02-17 — Phase 23 complete, Phase 24 created for zone boundary fix
 
-Progress: [████████████████████] 100% (Phases 1-23 complete)
+Progress: [███████████████████░] 96% (Phases 1-23 complete, 1 planned)
 
 ## Performance Metrics
 
@@ -32,7 +32,7 @@ Progress: [████████████████████] 100% (P
 | v1.2 | 8-12 | 8 | 1 day |
 | v1.3 | 13-16 | 13 | 1 day |
 | v1.4 | 17-20 | 13 | 2 days |
-| v1.5 | 21-23 | 4 | 1 day |
+| v1.5 | 21-24 | 8 | 1 day |
 
 **Recent Trend:**
 - Phase 22: 2 plans (complete)
@@ -72,13 +72,18 @@ None.
 - Server-side elevation validation not wired (client-side complete, server uses old validation)
 - May need addressing if server-side validation conflicts arise in future milestones
 
+**Discovered in Phase 23:**
+- Zone boundary thrashing: Walking back/forth across chunk boundaries (y=64, etc.) triggers constant chunk unloading/reloading
+- Causes "Loading terrain..." indicator flashing and movement jitter at boundaries
+- Phase 24 created to add hysteresis and fix this issue
+
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 23-01-PLAN.md (prediction tween + reconciliation smoothing) — all Phase 23 plans complete
+Stopped at: Phase 23 complete, Phase 24 created for zone boundary hysteresis
 Resume file: None
 
-**Next action:** All phases complete. Project is at v1.5 milestone.
+**Next action:** `/gsd:plan-phase 24`
 
 ---
-*Last updated: 2026-02-17 after Phase 23-01 SUMMARY creation*
+*Last updated: 2026-02-17 after Phase 23 completion and Phase 24 creation*

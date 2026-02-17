@@ -7,7 +7,7 @@
 - ✅ **v1.2 Isometric View** - Phases 8-12 (shipped 2026-02-16)
 - ✅ **v1.3 Elevation & Structures** - Phases 13-16 (shipped 2026-02-16)
 - ✅ **v1.4 Infinite World & Seamless Chunks** - Phases 17-20 (shipped 2026-02-17)
-- 🚧 **v1.5 Movement Overhaul** - Phases 21-23 (in progress)
+- 🚧 **v1.5 Movement Overhaul** - Phases 21-24 (in progress)
 
 ## Phases
 
@@ -79,7 +79,7 @@ See: `.planning/milestones/v1.4-ROADMAP.md`
 
 **Milestone Goal:** Fix movement accessibility (all tiles reachable via keyboard), unify keyboard and click-to-move speed, and polish movement feel with tile-to-tile animation and smooth camera follow.
 
-**Phases:** 3 (21-23)
+**Phases:** 4 (21-24)
 **Depth:** Quick (from config)
 **Coverage:** 8/8 requirements mapped
 
@@ -105,27 +105,36 @@ Plans:
 - [x] 22-01-PLAN.md — Replace else-if input chain with resolveDirection() for 8-directional WASD detection
 - [x] 22-02-PLAN.md — Add diagonal neighbors to A* pathfinding with corner-cutting prevention
 
-#### Phase 23: Movement Animation & Camera Polish
+#### Phase 23: Movement Animation & Camera Polish ✓
 **Goal**: Movement looks and feels fluid — sprite glides between tiles, camera follows smoothly, hover artifact removed
 **Depends on**: Phase 22 (all 8 directions animate correctly from the start)
 **Requirements**: MOVE-03, CAM-02, CAM-01, CAM-03
-**Success Criteria** (what must be TRUE):
-  1. Player sprite visibly slides between tiles instead of teleporting during WASD and click-to-move
-  2. Main camera glides after the player with smooth interpolation instead of instant snap
-  3. Moving onto a slow tile (low movementSpeed) produces a noticeable delay compared to a fast tile
-  4. Tile hover highlight is absent from the screen (not present, not broken)
-**Plans**: 4 plans
+**Status**: Complete (2026-02-17)
+**Plans**: 4/4 complete
 
 Plans:
-- [ ] 23-01-PLAN.md — Add tile-to-tile tween on prediction path (130ms Linear) and increase reconciliation tween (50ms to 80ms)
-- [ ] 23-02-PLAN.md — Change camera startFollow lerp from (1, 1) to (0.1, 0.1) — main camera only
-- [ ] 23-03-PLAN.md — Apply tile movementSpeed property to compute effective moveDelay on client
-- [ ] 23-04-PLAN.md — Delete HoverController.ts dead code file
+- [x] 23-01-PLAN.md — Add tile-to-tile tween on prediction path (130ms Linear) and increase reconciliation tween (50ms to 80ms)
+- [x] 23-02-PLAN.md — Change camera startFollow lerp from (1, 1) to (0.1, 0.1) — main camera only
+- [x] 23-03-PLAN.md — Apply tile movementSpeed property to compute effective moveDelay on client
+- [x] 23-04-PLAN.md — Delete HoverController.ts dead code file
+
+#### Phase 24: Zone Boundary Hysteresis
+**Goal**: Eliminate chunk loading thrashing when player walks along zone boundaries
+**Depends on**: Phase 23 (movement polish complete)
+**Requirements**: None (discovered during Phase 23 verification)
+**Success Criteria** (what must be TRUE):
+  1. Walking back and forth across a zone boundary (e.g., y=63 to y=64) does not trigger constant chunk loading/unloading
+  2. "Loading terrain..." indicator does not flash repeatedly at zone boundaries
+  3. Movement remains smooth at zone boundaries without jitter
+**Plans**: TBD
+
+Plans:
+- [ ] 24-01-PLAN.md — Add hysteresis to zone transitions (only transition after N tiles into new zone)
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 21 → 22 → 23
+Phases execute in numeric order: 21 → 22 → 23 → 24
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -151,9 +160,10 @@ Phases execute in numeric order: 21 → 22 → 23
 | 20. Testing & Polish | v1.4 | 2/2 | Complete | 2026-02-17 |
 | 21. Server Rate Limit & Speed Unification | v1.5 | 2/2 | Complete | 2026-02-17 |
 | 22. 8-Directional Input & Pathfinding | v1.5 | 2/2 | Complete | 2026-02-17 |
-| 23. Movement Animation & Camera Polish | v1.5 | 0/4 | Planned | - |
+| 23. Movement Animation & Camera Polish | v1.5 | 4/4 | Complete | 2026-02-17 |
+| 24. Zone Boundary Hysteresis | v1.5 | 0/1 | Planned | - |
 
-**Total:** 23 phases (22 complete, 1 planned)
+**Total:** 24 phases (23 complete, 1 planned)
 
 ---
-*Last updated: 2026-02-17 after Phase 23 planning*
+*Last updated: 2026-02-17 after Phase 23 completion and Phase 24 creation*
