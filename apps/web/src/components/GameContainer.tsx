@@ -160,13 +160,11 @@ const GameContainer: React.FC = () => {
       {/* Always visible connection indicator */}
       <ConnectionIndicator />
 
-      {/* Chunk loading indicator */}
-      {chunksLoading > 0 && (
-        <div className="chunk-loading-indicator">
-          <div className="chunk-loading-spinner" />
-          <span>Loading terrain...</span>
-        </div>
-      )}
+      {/* Chunk loading indicator - always in DOM for CSS opacity transitions */}
+      <div className={`chunk-loading-indicator ${chunksLoading > 0 ? 'visible' : ''}`}>
+        <div className="chunk-loading-spinner" />
+        <span>Loading terrain...</span>
+      </div>
 
       {/* Show reconnect overlay when disconnected (but not on error) */}
       {connectionState === 'disconnected' && <ReconnectOverlay visible={true} />}
