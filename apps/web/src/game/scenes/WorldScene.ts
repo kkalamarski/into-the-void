@@ -1064,6 +1064,29 @@ export class WorldScene extends Phaser.Scene {
       this.localPlayer!.setDepth(depth);
     };
 
+    // Calculate tween duration based on destination tile's movementSpeed
+    // Default to MOVE_DELAY_MS - 20 if tile lookup fails
+    let tweenDuration = MOVE_DELAY_MS - 20;
+    if (this.chunkManager) {
+      const chunkX = Math.floor(worldX / ZONE_SIZE);
+      const chunkY = Math.floor(worldY / ZONE_SIZE);
+      const zoneId = `z_${chunkX}_${chunkY}`;
+      const chunk = this.chunkManager.getChunk(zoneId);
+      if (chunk?.data.tiles) {
+        const localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+        const localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+        const tileNumericId = chunk.data.tiles[localY]?.[localX];
+        if (tileNumericId !== undefined) {
+          const tileId = tileIdToString(tileNumericId as TileId);
+          const tileDef = TileRegistry.get(tileId);
+          if (tileDef.movementSpeed > 0) {
+            // Tween duration scales with tile speed: slow tiles = longer tween
+            tweenDuration = Math.round(MOVE_DELAY_MS / tileDef.movementSpeed) - 20;
+          }
+        }
+      }
+    }
+
     if (reconciling && (this.localPlayer.x !== screenPos.x || this.localPlayer.y !== targetY)) {
       this.tweens.killTweensOf(this.localPlayer);
       this.tweens.add({
@@ -1080,7 +1103,7 @@ export class WorldScene extends Phaser.Scene {
         targets: this.localPlayer,
         x: screenPos.x,
         y: targetY,
-        duration: 130,  // MOVE_DELAY_MS (150) - 20ms to prevent drift
+        duration: tweenDuration,
         ease: 'Linear',
         onUpdate: updateDepthFromSpriteY,
       });
