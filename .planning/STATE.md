@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.6 Inventory & Items — Phase 25: Item Data Model & Foundation
+**Current focus:** v1.6 Inventory & Items — Phase 26: Inventory WebSocket Handlers
 
 ## Current Position
 
-Phase: 25 of 29 (Item Data Model & Foundation)
-Plan: 3 of 4 in current phase
-Status: In progress
-Last activity: 2026-02-17 — Phase 25 Plan 03 complete: EquipmentJson exo-suit model, updateInventoryFull, player_storage schema
+Phase: 25 of 29 (Item Data Model & Foundation) — COMPLETE
+Plan: 4 of 4 in current phase (phase complete)
+Status: Complete — ready for Phase 26
+Last activity: 2026-02-17 — Phase 25 Plan 04 complete: validateEquip, validateItemUse, resolveEffect pure functions in game-logic
 
-Progress: [████████░░░░░░░░░░░░] 40% (24/29 phases complete; 3/16 v1.6 plans complete)
+Progress: [████████░░░░░░░░░░░░] 40% (24/29 phases complete; 4/16 v1.6 plans complete)
 
 ## Performance Metrics
 
@@ -38,6 +38,7 @@ Progress: [████████░░░░░░░░░░░░] 40% (24
 - Trend: Stable, averaging 2-4 plans per phase
 
 | Phase 25 P02 | 391s | 3 tasks | 8 files |
+| Phase 25 P04 | 183s | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,8 @@ Recent decisions affecting current work:
 - [25-03]: EquipmentJson migrated to exo-suit model (exosuit/modules[]/tool) — old head/chest/legs/feet fields removed
 - [25-03]: updateInventoryFull uses single .set({ items, equipment }) call — prevents two-write race window duplication exploit
 - [25-03]: Migration script casts newEquipment as any for Drizzle JSONB — appropriate for one-time data migration with legacy unknown types
+- [Phase 25]: validateEquip rejects non-equippable categories (consumable/world-item/reagent) explicitly — prevents misuse of equip endpoint
+- [Phase 25]: resolveEffect exhaustive never check emits console.warn for unknown types — forward compatible with new effect types
 
 ### Pending Todos
 
@@ -80,10 +83,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 25-03-PLAN.md — EquipmentJson exo-suit model, updateInventoryFull atomic function, player_storage schema and CRUD queries
+Stopped at: Completed 25-04-PLAN.md — validateEquip/validateItemUse/validateUnequip/resolveEffect/resolveEffectsForTrigger pure functions in @into-the-void/game-logic
 Resume file: None
 
-**Next action:** Execute Phase 25 Plan 04
+**Next action:** Execute Phase 26 (Inventory WebSocket Handlers on game-server)
 
 ---
-*Last updated: 2026-02-17 after Phase 25 Plan 03 complete*
+*Last updated: 2026-02-17 after Phase 25 complete (all 4 plans done)*
