@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { GameGateway } from './game.gateway';
 import { GameService } from './game.service';
 import { PlayerService } from './player.service';
+import { InventoryService } from './inventory.service';
 import { ZonesModule } from '../zones/zones.module';
 
 @Module({
@@ -18,7 +19,7 @@ import { ZonesModule } from '../zones/zones.module';
     }),
     ZonesModule,
   ],
-  providers: [GameGateway, GameService, PlayerService],
-  exports: [GameService, PlayerService],
+  providers: [GameGateway, GameService, PlayerService, InventoryService],
+  exports: [GameService, PlayerService, InventoryService],
 })
 export class GameModule {}
