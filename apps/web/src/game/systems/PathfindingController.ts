@@ -20,6 +20,9 @@ interface PathNode {
 // Collision accessor function type - returns true if tile is blocked
 export type CollisionAccessor = (worldX: number, worldY: number) => boolean;
 
+// Elevation accessor function type - returns elevation at world coordinate
+export type ElevationAccessor = (worldX: number, worldY: number) => number;
+
 /**
  * Reconstruct path from goal node back to start
  */
@@ -144,6 +147,7 @@ export class PathfindingController {
   private pathGraphics: Phaser.GameObjects.Graphics | null = null;
   private scene: Phaser.Scene | null = null;
   private isoTransform: IsometricTransform | null = null;
+  private elevationAccessor: ElevationAccessor | null = null;
 
   constructor(
     movementController: MovementController,
@@ -162,9 +166,16 @@ export class PathfindingController {
    * @param targetX World X coordinate
    * @param targetY World Y coordinate
    * @param isBlocked Collision accessor function that checks any world coordinate
+   * @param getElevation Optional elevation accessor for proper marker rendering
    */
-  startPath(targetX: number, targetY: number, isBlocked: CollisionAccessor): boolean {
+  startPath(
+    targetX: number,
+    targetY: number,
+    isBlocked: CollisionAccessor,
+    getElevation?: ElevationAccessor
+  ): boolean {
     this.cancelPath(); // Cancel any existing path
+    this.elevationAccessor = getElevation ?? null;
 
     const player = useGameStore.getState().player;
     if (!player) return false;
@@ -211,26 +222,33 @@ export class PathfindingController {
     const destination = this.currentPath[this.currentPath.length - 1];
     const destScreen = this.isoTransform.gridToScreen(destination.x, destination.y);
 
+    // Get elevation offset for destination tile
+    const elevation = this.elevationAccessor?.(destination.x, destination.y) ?? 0;
+    const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
+
+    // Apply elevation offset to Y coordinate (higher = visually higher)
+    const destY = destScreen.y - elevationOffset;
+
     // Draw isometric diamond outline at destination
     const hw = 64; // Half tile width (128/2)
     const hh = 32; // Half tile height (64/2)
 
     this.pathGraphics.lineStyle(2, 0x00ff00, 0.8);
     this.pathGraphics.beginPath();
-    this.pathGraphics.moveTo(destScreen.x, destScreen.y - hh); // Top
-    this.pathGraphics.lineTo(destScreen.x + hw, destScreen.y); // Right
-    this.pathGraphics.lineTo(destScreen.x, destScreen.y + hh); // Bottom
-    this.pathGraphics.lineTo(destScreen.x - hw, destScreen.y); // Left
+    this.pathGraphics.moveTo(destScreen.x, destY - hh); // Top
+    this.pathGraphics.lineTo(destScreen.x + hw, destY); // Right
+    this.pathGraphics.lineTo(destScreen.x, destY + hh); // Bottom
+    this.pathGraphics.lineTo(destScreen.x - hw, destY); // Left
     this.pathGraphics.closePath();
     this.pathGraphics.strokePath();
 
     // Fill with semi-transparent green
     this.pathGraphics.fillStyle(0x00ff00, 0.2);
     this.pathGraphics.fillPoints([
-      { x: destScreen.x, y: destScreen.y - hh },
-      { x: destScreen.x + hw, y: destScreen.y },
-      { x: destScreen.x, y: destScreen.y + hh },
-      { x: destScreen.x - hw, y: destScreen.y },
+      { x: destScreen.x, y: destY - hh },
+      { x: destScreen.x + hw, y: destY },
+      { x: destScreen.x, y: destY + hh },
+      { x: destScreen.x - hw, y: destY },
     ], true);
   }
 

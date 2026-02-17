@@ -208,15 +208,16 @@ export class WorldScene extends Phaser.Scene {
       const gridPos = this.isoTransform.screenToTileWithElevation(
         worldPoint.x,
         worldPoint.y,
-        (x, y) => this.getTileElevation(x, y)
+        (x, y) => this.getWorldTileElevation(x, y)
       );
 
-      // Start pathfinding with world-coordinate collision accessor
+      // Start pathfinding with world-coordinate collision and elevation accessors
       if (this.pathfindingController && this.chunkManager) {
         this.pathfindingController.startPath(
           gridPos.x,
           gridPos.y,
-          (x, y) => this.isWorldTileBlocked(x, y)
+          (x, y) => this.isWorldTileBlocked(x, y),
+          (x, y) => this.getWorldTileElevation(x, y)
         );
       }
     });
@@ -637,6 +638,29 @@ export class WorldScene extends Phaser.Scene {
     }
     // Default to current zone's heights
     return this.currentHeights?.[gridY]?.[gridX] ?? 0;
+  }
+
+  /**
+   * Get tile elevation using world coordinates.
+   * Looks up the correct chunk from ChunkManager.
+   */
+  getWorldTileElevation(worldX: number, worldY: number): number {
+    if (!this.chunkManager) return 0;
+
+    // Calculate which chunk this tile belongs to
+    const chunkX = Math.floor(worldX / ZONE_SIZE);
+    const chunkY = Math.floor(worldY / ZONE_SIZE);
+    const zoneId = `z_${chunkX}_${chunkY}`;
+
+    // Get chunk data
+    const chunk = this.chunkManager.getChunk(zoneId);
+    if (!chunk?.data.heights) return 0;
+
+    // Convert to chunk-local coordinates
+    const localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+    const localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+
+    return chunk.data.heights[localY]?.[localX] ?? 0;
   }
 
   private renderChunk(chunkData: ChunkData, biome: BiomeType): void {
