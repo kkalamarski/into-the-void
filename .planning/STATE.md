@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 26 of 29 (Server InventoryService & WebSocket Handlers) — IN PROGRESS
-Plan: 2 of 4 complete in Phase 26 (plans 26-01 and 26-04 done; 26-02 and 26-03 pending)
-Status: In progress — Phase 26 plans 01 and 04 complete
-Last activity: 2026-02-17 — Phase 26 Plan 01 complete: InventoryService NestJS service with in-memory cache and shared-types Inventory aligned to EquipmentJson
+Plan: 3 of 4 complete in Phase 26 (plans 26-01, 26-02, and 26-04 done; 26-03 pending)
+Status: In progress — Phase 26 plans 01, 02, and 04 complete
+Last activity: 2026-02-17 — Phase 26 Plan 02 complete: 5 WebSocket inventory handlers in GameGateway with atomic pickup claim map
 
-Progress: [████████░░░░░░░░░░░░] 40% (24/29 phases complete; 8/16 v1.6 plans complete)
+Progress: [████████░░░░░░░░░░░░] 40% (24/29 phases complete; 9/16 v1.6 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 80 (Phases 1-24 complete + Phase 25 Plans 01-04 + Phase 26 Plans 01-04)
+- Total plans completed: 81 (Phases 1-24 complete + Phase 25 Plans 01-04 + Phase 26 Plans 01-04 + Phase 26 Plan 02)
 - Average duration: ~3m per plan
 - Total execution time: ~4 hours
 
@@ -41,6 +41,7 @@ Progress: [████████░░░░░░░░░░░░] 40% (24
 | Phase 25 P04 | 183s | 3 tasks | 4 files |
 | Phase 26 P04 | 77s | 2 tasks | 2 files |
 | Phase 26 P01 | 129s | 3 tasks | 3 files |
+| Phase 26 P02 | 195s | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,9 @@ Recent decisions affecting current work:
 - [26-01]: InventoryEquipment uses exosuit/modules[]/tool/accessory1/accessory2 — matches EquipmentJson DB schema; old EquipmentSlot type removed from shared-types
 - [26-01]: All equip/unequip operations use updateInventoryFull single atomic call; addItem uses updateInventoryItems (items-only write, no equip change)
 - [26-01]: removeItem returns removedItem so callers can spawn ground entities with correct itemId on drop
+- [26-02]: claimEntity is synchronous — must execute before any await to prevent TOCTOU race on simultaneous pickup by two players
+- [26-02]: ItemEntity.name uses ItemDefinition.displayName (not .name) — items package field is displayName, not name
+- [26-02]: inventory:update emissions are private (client.emit); entity:spawn/despawn are zone-wide (server.to(zoneId).emit)
 
 ### Pending Todos
 
@@ -88,10 +92,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 26-01-PLAN.md — InventoryService NestJS service, GameModule registration, shared-types Inventory aligned to exo-suit model
+Stopped at: Completed 26-02-PLAN.md — 5 WebSocket inventory handlers in GameGateway, atomic pickup claim map in ZonesService, GameService handler methods
 Resume file: None
 
-**Next action:** Execute Phase 26 Plan 02 (inventory WebSocket event handlers in GameGateway)
+**Next action:** Execute Phase 26 Plan 03 (remaining plan in Phase 26)
 
 ---
-*Last updated: 2026-02-17 after Phase 26 Plan 01 complete*
+*Last updated: 2026-02-17 after Phase 26 Plan 02 complete*
