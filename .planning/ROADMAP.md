@@ -103,11 +103,11 @@ Plans:
   2. All 8 directions produce movement: single keys map to isometric diagonals, dual-key combos map to cardinals
   3. Click-to-move generates diagonal path steps when the destination is not aligned to the four isometric axes
   4. No direction flickering or missed inputs when two keys are held simultaneously
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 22-01: Replace else-if input chain with resolveDirection() supporting 8-directional detection
-- [ ] 22-02: Add diagonal neighbors to A* pathfinding in PathfindingController
+- [ ] 22-01-PLAN.md — Replace else-if input chain with resolveDirection() for 8-directional WASD detection
+- [ ] 22-02-PLAN.md — Add diagonal neighbors to A* pathfinding with corner-cutting prevention
 
 #### Phase 23: Movement Animation & Camera Polish
 **Goal**: Movement looks and feels fluid — sprite glides between tiles, camera follows smoothly, hover artifact removed
@@ -154,10 +154,10 @@ Phases execute in numeric order: 21 → 22 → 23
 | 19. Biome Integration | v1.4 | 2/2 | Complete | 2026-02-17 |
 | 20. Testing & Polish | v1.4 | 2/2 | Complete | 2026-02-17 |
 | 21. Server Rate Limit & Speed Unification | v1.5 | 2/2 | Complete | 2026-02-17 |
-| 22. 8-Directional Input & Pathfinding | v1.5 | TBD | Not started | - |
+| 22. 8-Directional Input & Pathfinding | v1.5 | 2 | Planned | - |
 | 23. Movement Animation & Camera Polish | v1.5 | TBD | Not started | - |
 
-**Total:** 23 phases (21 complete, 2 not started)
+**Total:** 23 phases (21 complete, 1 planned, 1 not started)
 
 ---
-*Last updated: 2026-02-17 after Phase 21 execution*
+*Last updated: 2026-02-17 after Phase 22 planning*
