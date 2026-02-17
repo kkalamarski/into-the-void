@@ -4,7 +4,7 @@ import { characters } from './characters';
 /**
  * Inventory item stored as JSON
  */
-interface InventoryItemJson {
+export interface InventoryItemJson {
   instanceId: string;
   itemId: string;
   quantity: number;
@@ -13,17 +13,28 @@ interface InventoryItemJson {
 }
 
 /**
- * Equipment stored as JSON
+ * Equipment stored as JSON - exo-suit model
+ *
+ * The exo-suit is the base equipment piece. Module slots scale with suit rarity:
+ * - Common: 3 slots
+ * - Rare: 4 slots
+ * - Epic: 4 slots
+ * - Exotic: 5 slots
+ * - Legendary: 6 slots
+ *
+ * Tools are held in main/secondary slots (hot-swappable).
+ * Accessories provide passive bonuses.
  */
-interface EquipmentJson {
-  head?: InventoryItemJson;
-  chest?: InventoryItemJson;
-  legs?: InventoryItemJson;
-  feet?: InventoryItemJson;
-  hands?: InventoryItemJson;
-  mainHand?: InventoryItemJson;
-  offHand?: InventoryItemJson;
+export interface EquipmentJson {
+  /** Equipped exo-suit (determines available module slots) */
+  exosuit?: InventoryItemJson;
+  /** Equipped modules (max count = suit's moduleSlots) */
+  modules: InventoryItemJson[];
+  /** Primary tool slot */
+  tool?: InventoryItemJson;
+  /** First accessory slot */
   accessory1?: InventoryItemJson;
+  /** Second accessory slot */
   accessory2?: InventoryItemJson;
 }
 
@@ -36,7 +47,7 @@ export const inventories = pgTable('inventories', {
     .references(() => characters.id, { onDelete: 'cascade' }),
   items: jsonb('items').$type<InventoryItemJson[]>().notNull().default([]),
   maxSlots: integer('max_slots').notNull().default(20),
-  equipment: jsonb('equipment').$type<EquipmentJson>().notNull().default({}),
+  equipment: jsonb('equipment').$type<EquipmentJson>().notNull().default({ modules: [] }),
 });
 
 export type Inventory = typeof inventories.$inferSelect;
