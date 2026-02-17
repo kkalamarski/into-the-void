@@ -340,6 +340,14 @@ export class PathfindingController {
     this.isoTransform = null;
   }
 
+  /**
+   * Update the move delay used for pathfinding step timing.
+   * Called by WorldScene when tile movement speed changes.
+   */
+  setMoveDelay(delay: number): void {
+    this.moveDelay = delay;
+  }
+
   private getDirection(from: { x: number; y: number }, to: { x: number; y: number }): Direction | null {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
