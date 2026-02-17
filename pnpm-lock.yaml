@@ -199,6 +199,15 @@ importers:
 
   packages/game-logic:
     dependencies:
+      '@into-the-void/items':
+        specifier: workspace:*
+        version: link:../items
+      '@into-the-void/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/items:
+    dependencies:
       '@into-the-void/shared-types':
         specifier: workspace:*
         version: link:../shared-types
