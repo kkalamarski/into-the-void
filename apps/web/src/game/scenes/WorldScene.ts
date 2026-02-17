@@ -211,9 +211,13 @@ export class WorldScene extends Phaser.Scene {
         (x, y) => this.getTileElevation(x, y)
       );
 
-      // Start pathfinding if we have collision map
-      if (this.pathfindingController && this.collisionMap) {
-        this.pathfindingController.startPath(gridPos.x, gridPos.y, this.collisionMap);
+      // Start pathfinding with world-coordinate collision accessor
+      if (this.pathfindingController && this.chunkManager) {
+        this.pathfindingController.startPath(
+          gridPos.x,
+          gridPos.y,
+          (x, y) => this.isWorldTileBlocked(x, y)
+        );
       }
     });
 
@@ -1076,6 +1080,31 @@ export class WorldScene extends Phaser.Scene {
 
   getChunkManager(): ChunkManager | null {
     return this.chunkManager;
+  }
+
+  /**
+   * Check if a world coordinate tile is blocked.
+   * Looks up the correct chunk from ChunkManager.
+   * Returns true if blocked or if chunk not loaded (conservative).
+   */
+  isWorldTileBlocked(worldX: number, worldY: number): boolean {
+    if (!this.chunkManager) return true; // No chunk manager = blocked
+
+    // Calculate which chunk this tile belongs to
+    const chunkX = Math.floor(worldX / ZONE_SIZE);
+    const chunkY = Math.floor(worldY / ZONE_SIZE);
+    const zoneId = `z_${chunkX}_${chunkY}`;
+
+    // Get chunk data
+    const chunk = this.chunkManager.getChunk(zoneId);
+    if (!chunk?.data.collisions) return true; // Chunk not loaded = blocked (conservative)
+
+    // Convert to chunk-local coordinates
+    const localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+    const localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+
+    // Check collision map
+    return chunk.data.collisions[localY]?.[localX] ?? true;
   }
 
   setCollisionMap(collisionMap: boolean[][]): void {

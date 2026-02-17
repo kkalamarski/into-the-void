@@ -1,18 +1,138 @@
 import { Direction, Position, MOVE_DELAY_MS, ZONE_SIZE } from '@into-the-void/shared-types';
-import { findPath } from '@into-the-void/game-logic';
+import { chebyshevDistance } from '@into-the-void/game-logic';
 import { useGameStore } from '../../store/gameStore';
 import { MovementController } from './MovementController';
 import Phaser from 'phaser';
 import { IsometricTransform } from '../utils/IsometricTransform';
 
-// Convert world coordinate to chunk-local coordinate (0 to ZONE_SIZE-1)
-function worldToLocal(coord: number): number {
-  return ((coord % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+const DIAGONAL_COST = Math.SQRT2; // ~1.414
+const MAX_PATH_ITERATIONS = 10000; // Safety limit for cross-chunk paths
+
+interface PathNode {
+  x: number;
+  y: number;
+  g: number;
+  h: number;
+  f: number;
+  parent: PathNode | null;
 }
 
-// Get chunk origin from world coordinate
-function getChunkOrigin(coord: number): number {
-  return Math.floor(coord / ZONE_SIZE) * ZONE_SIZE;
+// Collision accessor function type - returns true if tile is blocked
+export type CollisionAccessor = (worldX: number, worldY: number) => boolean;
+
+/**
+ * Reconstruct path from goal node back to start
+ */
+function reconstructPath(node: PathNode): Array<{ x: number; y: number }> {
+  const path: Array<{ x: number; y: number }> = [];
+  let current: PathNode | null = node;
+  while (current) {
+    path.unshift({ x: current.x, y: current.y });
+    current = current.parent;
+  }
+  return path;
+}
+
+/**
+ * World-coordinate A* pathfinding that works across chunk boundaries.
+ * Uses a collision accessor function to check tiles in any chunk.
+ */
+function findPathWorld(
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  isBlocked: CollisionAccessor
+): Array<{ x: number; y: number }> | null {
+  // Check if start or end is blocked
+  if (isBlocked(startX, startY) || isBlocked(endX, endY)) {
+    return null;
+  }
+
+  const openSet: PathNode[] = [];
+  const closedSet = new Set<string>();
+
+  const startNode: PathNode = {
+    x: startX,
+    y: startY,
+    g: 0,
+    h: chebyshevDistance(startX, startY, endX, endY),
+    f: 0,
+    parent: null,
+  };
+  startNode.f = startNode.g + startNode.h;
+  openSet.push(startNode);
+
+  const directions = [
+    { dx: 0, dy: -1, cost: 1.0 },   // N
+    { dx: 0, dy: 1, cost: 1.0 },    // S
+    { dx: 1, dy: 0, cost: 1.0 },    // E
+    { dx: -1, dy: 0, cost: 1.0 },   // W
+    { dx: 1, dy: -1, cost: DIAGONAL_COST },  // NE
+    { dx: -1, dy: -1, cost: DIAGONAL_COST }, // NW
+    { dx: 1, dy: 1, cost: DIAGONAL_COST },   // SE
+    { dx: -1, dy: 1, cost: DIAGONAL_COST },  // SW
+  ];
+
+  let iterations = 0;
+
+  while (openSet.length > 0 && iterations < MAX_PATH_ITERATIONS) {
+    iterations++;
+
+    // Get node with lowest f score
+    openSet.sort((a, b) => a.f - b.f);
+    const current = openSet.shift()!;
+
+    // Check if we reached the goal
+    if (current.x === endX && current.y === endY) {
+      return reconstructPath(current);
+    }
+
+    closedSet.add(`${current.x},${current.y}`);
+
+    // Check neighbors
+    for (const dir of directions) {
+      const nx = current.x + dir.dx;
+      const ny = current.y + dir.dy;
+      const key = `${nx},${ny}`;
+
+      // Skip if already visited
+      if (closedSet.has(key)) {
+        continue;
+      }
+
+      // Prevent corner-cutting for diagonal moves
+      if (Math.abs(dir.dx) === 1 && Math.abs(dir.dy) === 1) {
+        // Both adjacent cardinal tiles must be passable
+        if (isBlocked(current.x + dir.dx, current.y) || isBlocked(current.x, current.y + dir.dy)) {
+          continue;
+        }
+      }
+
+      // Skip if blocked
+      if (isBlocked(nx, ny)) {
+        continue;
+      }
+
+      const g = current.g + dir.cost;
+      const h = chebyshevDistance(nx, ny, endX, endY);
+      const f = g + h;
+
+      // Check if this path is better
+      const existingNode = openSet.find((n) => n.x === nx && n.y === ny);
+      if (existingNode) {
+        if (g < existingNode.g) {
+          existingNode.g = g;
+          existingNode.f = f;
+          existingNode.parent = current;
+        }
+      } else {
+        openSet.push({ x: nx, y: ny, g, h, f, parent: current });
+      }
+    }
+  }
+
+  return null; // No path found
 }
 
 export class PathfindingController {
@@ -37,7 +157,13 @@ export class PathfindingController {
     this.isoTransform = isoTransform ?? null;
   }
 
-  startPath(targetX: number, targetY: number, collisionMap: boolean[][]): boolean {
+  /**
+   * Start pathfinding to target using world coordinates.
+   * @param targetX World X coordinate
+   * @param targetY World Y coordinate
+   * @param isBlocked Collision accessor function that checks any world coordinate
+   */
+  startPath(targetX: number, targetY: number, isBlocked: CollisionAccessor): boolean {
     this.cancelPath(); // Cancel any existing path
 
     const player = useGameStore.getState().player;
@@ -49,36 +175,15 @@ export class PathfindingController {
     // Don't pathfind to current position
     if (startX === targetX && startY === targetY) return false;
 
-    // Check if start and target are in the same chunk
-    const startChunkX = getChunkOrigin(startX);
-    const startChunkY = getChunkOrigin(startY);
-    const targetChunkX = getChunkOrigin(targetX);
-    const targetChunkY = getChunkOrigin(targetY);
+    // Use world-coordinate A* that works across chunks
+    const path = findPathWorld(startX, startY, targetX, targetY, isBlocked);
 
-    if (startChunkX !== targetChunkX || startChunkY !== targetChunkY) {
-      console.warn('PathfindingController: Cross-chunk pathfinding not supported');
-      return false;
-    }
-
-    // Convert world coordinates to chunk-local for pathfinding
-    const localStartX = worldToLocal(startX);
-    const localStartY = worldToLocal(startY);
-    const localTargetX = worldToLocal(targetX);
-    const localTargetY = worldToLocal(targetY);
-
-    // Use existing A* pathfinding from game-logic (in local coordinates)
-    const localPath = findPath(localStartX, localStartY, localTargetX, localTargetY, collisionMap);
-
-    if (!localPath || localPath.length < 2) {
+    if (!path || path.length < 2) {
       console.warn('PathfindingController: No path found to target');
       return false;
     }
 
-    // Convert path back to world coordinates
-    this.currentPath = localPath.map(p => ({
-      x: p.x + startChunkX,
-      y: p.y + startChunkY,
-    }));
+    this.currentPath = path;
     this.pathIndex = 1; // Skip current position (index 0)
 
     // Draw path visualization
@@ -207,13 +312,13 @@ export class PathfindingController {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
 
-    // Cardinal directions only (A* uses cardinal neighbors)
+    // Cardinal directions
     if (dx === 0 && dy === -1) return 'n';
     if (dx === 0 && dy === 1) return 's';
     if (dx === 1 && dy === 0) return 'e';
     if (dx === -1 && dy === 0) return 'w';
 
-    // Diagonal directions (if pathfinding supports them)
+    // Diagonal directions
     if (dx === 1 && dy === -1) return 'ne';
     if (dx === -1 && dy === -1) return 'nw';
     if (dx === 1 && dy === 1) return 'se';
