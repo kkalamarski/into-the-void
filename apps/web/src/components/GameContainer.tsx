@@ -65,13 +65,28 @@ const GameContainer: React.FC = () => {
     };
   }, []); // No dependencies - set up immediately and persist
 
-  // Clear ChunkManager state on socket disconnect to prevent stale loading entries
+  // Handle disconnect and reconnection
+  const previousConnectionStateRef = useRef<string>(connectionState);
   useEffect(() => {
+    const worldScene = gameRef.current?.getWorldScene();
+    const prevState = previousConnectionStateRef.current;
+    previousConnectionStateRef.current = connectionState;
+
     if (connectionState === 'disconnected') {
-      const worldScene = gameRef.current?.getWorldScene();
+      // Clear ChunkManager state on disconnect to prevent stale loading entries
       worldScene?.getChunkManager()?.clear();
+    } else if (connectionState === 'authenticated' && prevState === 'disconnected') {
+      // Reconnected - reload chunks for current zone
+      // Socket.IO recovery skips zone:state, so we need to manually reload
+      console.log('[GameContainer] Reconnected - reloading chunks');
+      const currentZoneId = player?.position?.zoneId;
+      if (worldScene && currentZoneId && zoneState?.chunk) {
+        // Reload the current zone from cached state
+        worldScene.loadZoneFromState(zoneState.chunk, zoneState.biome);
+        // ChunkManager will request adjacent chunks automatically
+      }
     }
-  }, [connectionState]);
+  }, [connectionState, player?.position?.zoneId, zoneState]);
 
   // Load zone data into WorldScene when Phaser is ready and zoneState exists
   // IMPORTANT: Only depends on zoneState.zoneId to prevent re-rendering tiles on every player movement
