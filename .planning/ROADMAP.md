@@ -126,7 +126,7 @@ Plans:
   1. Walking back and forth across a zone boundary (e.g., y=63 to y=64) does not trigger constant chunk loading/unloading
   2. "Loading terrain..." indicator does not flash repeatedly at zone boundaries
   3. Movement remains smooth at zone boundaries without jitter
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
 - [ ] 24-01-PLAN.md — Add hysteresis to zone transitions (only transition after N tiles into new zone)
@@ -166,4 +166,4 @@ Phases execute in numeric order: 21 → 22 → 23 → 24
 **Total:** 24 phases (23 complete, 1 planned)
 
 ---
-*Last updated: 2026-02-17 after Phase 23 completion and Phase 24 creation*
+*Last updated: 2026-02-17 after Phase 24 planning*
