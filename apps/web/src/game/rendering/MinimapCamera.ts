@@ -4,7 +4,7 @@ import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../scenes/WorldScene';
 
 const MINIMAP_SIZE = 180;
 const MINIMAP_PADDING = 20;
-const MINIMAP_ZOOM = 0.1;
+const MINIMAP_ZOOM = 0.075;
 
 export class MinimapCamera {
   private scene: Phaser.Scene;
