@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 22 — 8-Directional Input & Pathfinding
+**Current focus:** Phase 23 — Movement Animation & Camera Polish
 
 ## Current Position
 
-Phase: 22 of 23 (8-Directional Input & Pathfinding)
-Plan: 2 of TBD in current phase
+Phase: 23 of 23 (Movement Animation & Camera Polish)
+Plan: 2 of 4 in current phase
 Status: In progress
-Last activity: 2026-02-17 — Plan 22-02 complete (8-directional A* pathfinding)
+Last activity: 2026-02-17 — Phase 23-02 complete (camera smooth follow lerp)
 
-Progress: [█████████████░░░░░░░] 91% (Phases 1-21 complete)
+Progress: [██████████████████░░] 95% (Phases 1-22 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 65 (Phases 1-22, plans 01-02)
+- Total plans completed: 67 (Phases 1-22 complete)
 - Average duration: ~3m per plan
-- Total execution time: ~3.0 hours
+- Total execution time: ~3.3 hours
 
 **By Milestone:**
 
@@ -57,6 +57,7 @@ Recent decisions affecting current work:
 - [Phase 22-01]: WASD single keys map to cardinal directions (W=n, S=s, A=w, D=e) enabling 8-direction via dual-key combos; arrow keys retain isometric diagonal mapping as fallback
 - [Phase 22-02]: DIAGONAL_COST = Math.SQRT2 for geometrically correct diagonal A* cost; Chebyshev heuristic replaces Manhattan for admissible 8-directional estimation
 - [Phase 22-02]: Corner-cutting prevention checks both adjacent cardinal tiles before allowing diagonal step; findPathWithElevation also checks elevation of adjacent cardinals
+- [Phase 23-02]: Main camera lerp set to (0.1, 0.1) for smooth glide; minimap camera remains instant-follow (no lerp args)
 
 ### Pending Todos
 
@@ -75,10 +76,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 22-02-PLAN.md (8-directional A* pathfinding)
+Stopped at: Completed 23-02-PLAN.md (camera smooth follow)
 Resume file: None
 
-**Next action:** `/gsd:execute-phase 22` (next plan, if any) or `/gsd:plan-phase 23`
+**Next action:** Execute Phase 23-03
 
 ---
-*Last updated: 2026-02-17 after Phase 22-02 completion*
+*Last updated: 2026-02-17 after Phase 23-02 completion*
