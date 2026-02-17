@@ -1060,6 +1060,10 @@ export class WorldScene extends Phaser.Scene {
     return this.pathfindingController;
   }
 
+  getChunkManager(): ChunkManager | null {
+    return this.chunkManager;
+  }
+
   setCollisionMap(collisionMap: boolean[][]): void {
     this.collisionMap = collisionMap;
     if (this.movementController) {
@@ -1073,7 +1077,7 @@ export class WorldScene extends Phaser.Scene {
       this.hoverController = null;
     }
     if (this.pathfindingController) {
-      this.pathfindingController.cancelPath();
+      this.pathfindingController.destroy();
       this.pathfindingController = null;
     }
     if (this.movementController) {

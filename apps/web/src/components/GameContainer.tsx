@@ -65,6 +65,14 @@ const GameContainer: React.FC = () => {
     };
   }, []); // No dependencies - set up immediately and persist
 
+  // Clear ChunkManager state on socket disconnect to prevent stale loading entries
+  useEffect(() => {
+    if (connectionState === 'disconnected') {
+      const worldScene = gameRef.current?.getWorldScene();
+      worldScene?.getChunkManager()?.clear();
+    }
+  }, [connectionState]);
+
   // Load zone data into WorldScene when Phaser is ready and zoneState exists
   // IMPORTANT: Only depends on zoneState.zoneId to prevent re-rendering tiles on every player movement
   const zoneId = zoneState?.zoneId;
