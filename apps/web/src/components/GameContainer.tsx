@@ -129,11 +129,16 @@ const GameContainer: React.FC = () => {
 
     // Spawn entities from zone state (handles race condition when zone:state
     // arrives before Phaser is ready - gameStore handler may have missed them)
+    // IMPORTANT: Only clear entities on initial load. On zone transitions, entities from
+    // adjacent zones (loaded via zone:chunk) must persist - spawnEntity already checks for
+    // duplicates and filters by visibility distance
     const { entities } = zoneState;
     if (entities && entities.length > 0) {
-      worldScene.clearEntities();
+      if (isInitialLoad) {
+        worldScene.clearEntities();
+      }
       for (const entity of entities) {
-        worldScene.spawnEntity(entity);
+        worldScene.spawnEntity(entity, zoneId);
       }
     }
 
