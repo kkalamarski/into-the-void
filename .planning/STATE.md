@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 21 of 23 (Server Rate Limit & Speed Unification)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-17 — v1.5 roadmap created (3 phases, 8 requirements mapped)
+Plan: 1 of TBD in current phase
+Status: In progress
+Last activity: 2026-02-17 — 21-01 complete (server rate limit 140ms -> 125ms)
 
 Progress: [████████████░░░░░░░░] 87% (Phases 1-20 complete)
 
@@ -38,6 +38,7 @@ Progress: [████████████░░░░░░░░] 87% (Ph
 - Phase 19: 2 plans (complete)
 - Phase 20: 2 plans (complete)
 - Trend: Stable, averaging 3 plans per phase
+| Phase 21 P01 | 1 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -52,6 +53,7 @@ Recent decisions affecting current work:
 - [v1.5 research]: Server rate limit must drop to 125ms BEFORE any client timing changes
 - [v1.5 research]: Tween duration must be moveDelay - 20ms (130ms) to prevent drift; killTweensOf before each new tween
 - [v1.5 research]: Minimap camera must NOT receive lerp — instant follow only
+- [Phase 21]: Server rate limit set to 125ms (not 140ms): provides 25ms network tolerance for clients at 150ms cadence
 
 ### Pending Todos
 
@@ -70,10 +72,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: v1.5 roadmap created — ready to plan Phase 21
+Stopped at: Completed 21-01-PLAN.md
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 21`
+**Next action:** Execute 21-02 (if planned) or `/gsd:plan-phase 21` for remaining plans
 
 ---
-*Last updated: 2026-02-17 after v1.5 roadmap creation*
+*Last updated: 2026-02-17 after 21-01 completion*
