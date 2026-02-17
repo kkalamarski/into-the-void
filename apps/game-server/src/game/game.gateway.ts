@@ -10,6 +10,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { GameService } from './game.service';
 import { PlayerService } from './player.service';
+import { InventoryService } from './inventory.service';
 import {
   ClientEvents,
   Direction,
@@ -33,7 +34,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(
     private readonly gameService: GameService,
-    private readonly playerService: PlayerService
+    private readonly playerService: PlayerService,
+    private readonly inventoryService: InventoryService,
   ) {}
 
   async handleConnection(client: Socket) {
@@ -289,6 +291,162 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.emit('error', {
         code: 'ZONE_LOAD_ERROR',
         message: `Failed to load zone ${data.zoneId}`,
+      });
+    }
+  }
+
+  @SubscribeMessage('inventory:pickup')
+  async handleInventoryPickup(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: ClientEvents['inventory:pickup']
+  ) {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const result = await this.gameService.handleItemPickup(client.id, data.entityId);
+
+      if (result.success) {
+        // Zone-wide: entity is gone for everyone
+        if (result.zoneId) {
+          this.server.to(result.zoneId).emit('entity:despawn', { entityId: data.entityId });
+        }
+        // PRIVATE: only the picking-up player receives inventory update
+        if (result.inventory) {
+          client.emit('inventory:update', result.inventory);
+        }
+      } else {
+        client.emit('error', {
+          code: 'INVALID_TARGET',
+          message: result.error || 'Cannot pick up item',
+        });
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to process pickup',
+      });
+    }
+  }
+
+  @SubscribeMessage('inventory:drop')
+  async handleInventoryDrop(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: ClientEvents['inventory:drop']
+  ) {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const result = await this.gameService.handleItemDrop(client.id, data.instanceId, data.quantity);
+
+      if (result.success) {
+        // Zone-wide: new ground item spawned
+        if (result.zoneId && result.groundItem) {
+          this.server.to(result.zoneId).emit('entity:spawn', result.groundItem);
+        }
+        // PRIVATE: updated inventory
+        if (result.inventory) {
+          client.emit('inventory:update', result.inventory);
+        }
+      } else {
+        client.emit('error', {
+          code: 'INVALID_ACTION',
+          message: result.error || 'Cannot drop item',
+        });
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to process drop',
+      });
+    }
+  }
+
+  @SubscribeMessage('inventory:use')
+  async handleInventoryUse(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: ClientEvents['inventory:use']
+  ) {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const result = await this.gameService.handleItemUse(client.id, data.instanceId);
+
+      if (result.success) {
+        // PRIVATE: updated inventory and effects
+        if (result.inventory) {
+          client.emit('inventory:update', result.inventory);
+        }
+      } else {
+        client.emit('error', {
+          code: 'INVALID_ACTION',
+          message: result.error || 'Cannot use item',
+        });
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to use item',
+      });
+    }
+  }
+
+  @SubscribeMessage('equipment:change')
+  async handleEquipmentChange(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { instanceId: string }
+  ) {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const result = await this.gameService.handleEquip(client.id, data.instanceId);
+
+      if (result.success) {
+        if (result.inventory) {
+          client.emit('inventory:update', result.inventory);
+        }
+      } else {
+        client.emit('error', {
+          code: 'INVALID_ACTION',
+          message: result.error || 'Cannot equip item',
+        });
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to equip item',
+      });
+    }
+  }
+
+  @SubscribeMessage('inventory:unequip')
+  async handleInventoryUnequip(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { instanceId: string }
+  ) {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const result = await this.gameService.handleUnequip(client.id, data.instanceId);
+
+      if (result.success) {
+        if (result.inventory) {
+          client.emit('inventory:update', result.inventory);
+        }
+      } else {
+        client.emit('error', {
+          code: 'INVALID_ACTION',
+          message: result.error || 'Cannot unequip item',
+        });
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to unequip item',
       });
     }
   }
