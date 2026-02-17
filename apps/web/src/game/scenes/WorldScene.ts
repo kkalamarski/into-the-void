@@ -1056,9 +1056,11 @@ export class WorldScene extends Phaser.Scene {
     const targetY = screenPos.y - elevationOffset;
 
     // Depth calculation closure: use current sprite Y during animation for correct sorting
-    // Formula: screenY + tiny_x_tiebreaker + elevation_offset + priority
+    // sprite.y is visual position (elevated up by elevationOffset). Add it back to get
+    // logical screen Y matching gridToScreen output for proper depth sorting.
     const updateDepthFromSpriteY = () => {
-      const depth = this.localPlayer!.y + (worldX * 0.0001) + (elevation * 0.1) + 10;
+      const depthY = this.localPlayer!.y + elevationOffset;
+      const depth = depthY + (worldX * 0.0001) + (elevation * 0.1) + 10;
       this.localPlayer!.setDepth(depth);
     };
 
