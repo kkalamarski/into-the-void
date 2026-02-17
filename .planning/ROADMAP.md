@@ -94,20 +94,16 @@ Plans:
 - [x] 21-01-PLAN.md — Reduce server rate limit from 140ms to 125ms
 - [x] 21-02-PLAN.md — Extract MOVE_DELAY_MS constant for unified movement timing
 
-#### Phase 22: 8-Directional Input & Pathfinding
+#### Phase 22: 8-Directional Input & Pathfinding ✓
 **Goal**: All 8 grid directions are reachable by keyboard and click-to-move paths use diagonal steps
 **Depends on**: Phase 21 (unified timing established)
 **Requirements**: INPUT-01, PATH-01
-**Success Criteria** (what must be TRUE):
-  1. Player can reach a tile directly north by holding W+D (or equivalent) without needing to click
-  2. All 8 directions produce movement: single keys map to isometric diagonals, dual-key combos map to cardinals
-  3. Click-to-move generates diagonal path steps when the destination is not aligned to the four isometric axes
-  4. No direction flickering or missed inputs when two keys are held simultaneously
-**Plans**: 2 plans
+**Status**: Complete (2026-02-17)
+**Plans**: 2/2 complete
 
 Plans:
-- [ ] 22-01-PLAN.md — Replace else-if input chain with resolveDirection() for 8-directional WASD detection
-- [ ] 22-02-PLAN.md — Add diagonal neighbors to A* pathfinding with corner-cutting prevention
+- [x] 22-01-PLAN.md — Replace else-if input chain with resolveDirection() for 8-directional WASD detection
+- [x] 22-02-PLAN.md — Add diagonal neighbors to A* pathfinding with corner-cutting prevention
 
 #### Phase 23: Movement Animation & Camera Polish
 **Goal**: Movement looks and feels fluid — sprite glides between tiles, camera follows smoothly, hover artifact removed
@@ -118,13 +114,13 @@ Plans:
   2. Main camera glides after the player with smooth interpolation instead of instant snap
   3. Moving onto a slow tile (low movementSpeed) produces a noticeable delay compared to a fast tile
   4. Tile hover highlight is absent from the screen (not present, not broken)
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 23-01: Add tile-to-tile tween on prediction path (130ms Linear) and increase reconciliation tween (50ms to 80ms)
-- [ ] 23-02: Change camera startFollow lerp from (1, 1) to (0.1, 0.1) — main camera only
-- [ ] 23-03: Apply tile movementSpeed property to compute effective moveDelay on client and server
-- [ ] 23-04: Remove HoverController and tile hover highlight rendering
+- [ ] 23-01-PLAN.md — Add tile-to-tile tween on prediction path (130ms Linear) and increase reconciliation tween (50ms to 80ms)
+- [ ] 23-02-PLAN.md — Change camera startFollow lerp from (1, 1) to (0.1, 0.1) — main camera only
+- [ ] 23-03-PLAN.md — Apply tile movementSpeed property to compute effective moveDelay on client
+- [ ] 23-04-PLAN.md — Delete HoverController.ts dead code file
 
 ## Progress
 
@@ -154,10 +150,10 @@ Phases execute in numeric order: 21 → 22 → 23
 | 19. Biome Integration | v1.4 | 2/2 | Complete | 2026-02-17 |
 | 20. Testing & Polish | v1.4 | 2/2 | Complete | 2026-02-17 |
 | 21. Server Rate Limit & Speed Unification | v1.5 | 2/2 | Complete | 2026-02-17 |
-| 22. 8-Directional Input & Pathfinding | v1.5 | 2 | Planned | - |
-| 23. Movement Animation & Camera Polish | v1.5 | TBD | Not started | - |
+| 22. 8-Directional Input & Pathfinding | v1.5 | 2/2 | Complete | 2026-02-17 |
+| 23. Movement Animation & Camera Polish | v1.5 | 0/4 | Planned | - |
 
-**Total:** 23 phases (21 complete, 1 planned, 1 not started)
+**Total:** 23 phases (22 complete, 1 planned)
 
 ---
-*Last updated: 2026-02-17 after Phase 22 planning*
+*Last updated: 2026-02-17 after Phase 23 planning*
