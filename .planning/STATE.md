@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 ## Current Position
 
-Phase: 25 of 29 (Item Data Model & Foundation) — COMPLETE
-Plan: 4 of 4 in current phase (phase complete)
-Status: Complete — ready for Phase 26
-Last activity: 2026-02-17 — Phase 25 Plan 04 complete: validateEquip, validateItemUse, resolveEffect pure functions in game-logic
+Phase: 26 of 29 (Server InventoryService & WebSocket Handlers) — IN PROGRESS
+Plan: 4 of 4 complete in Phase 26 (plan 26-04 done)
+Status: In progress — Phase 26 plans 01-04 complete
+Last activity: 2026-02-17 — Phase 26 Plan 04 complete: effectiveStats pure function and ComputedStats interface in @into-the-void/game-logic
 
-Progress: [████████░░░░░░░░░░░░] 40% (24/29 phases complete; 4/16 v1.6 plans complete)
+Progress: [████████░░░░░░░░░░░░] 40% (24/29 phases complete; 8/16 v1.6 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 76 (Phases 1-24 complete + Phase 25 Plans 01-03)
+- Total plans completed: 80 (Phases 1-24 complete + Phase 25 Plans 01-04 + Phase 26 Plans 01-04)
 - Average duration: ~3m per plan
-- Total execution time: ~3.8 hours
+- Total execution time: ~4 hours
 
 **By Milestone:**
 
@@ -39,6 +39,7 @@ Progress: [████████░░░░░░░░░░░░] 40% (24
 
 | Phase 25 P02 | 391s | 3 tasks | 8 files |
 | Phase 25 P04 | 183s | 3 tasks | 4 files |
+| Phase 26 P04 | 77s | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -60,11 +61,11 @@ Recent decisions affecting current work:
 - [25-02]: World-items carry no effects array — biome materials are plain data, not behavior-carrying items (effects field is optional in ItemDefinition)
 - [25-02]: Stim buff items use string stat names (scan_speed, endurance, combat_speed, all_performance) for forward compatibility with stat system to be designed in later phases
 - [25-02]: World-item rarity distribution deliberately uneven — anomaly zone drops are exotic, ancient fragments legendary, matching lore tier system
-- [25-03]: EquipmentJson migrated to exo-suit model (exosuit/modules[]/tool) — old head/chest/legs/feet fields removed
-- [25-03]: updateInventoryFull uses single .set({ items, equipment }) call — prevents two-write race window duplication exploit
 - [25-03]: Migration script casts newEquipment as any for Drizzle JSONB — appropriate for one-time data migration with legacy unknown types
 - [Phase 25]: validateEquip rejects non-equippable categories (consumable/world-item/reagent) explicitly — prevents misuse of equip endpoint
 - [Phase 25]: resolveEffect exhaustive never check emits console.warn for unknown types — forward compatible with new effect types
+- [26-04]: speedMultiplier stacks multiplicatively across modules so compound speed bonuses are accurate; all other stats additive
+- [26-04]: Timed stat_buff effects from consumables excluded from effectiveStats — tracked in player state, not derived from equipment
 
 ### Pending Todos
 
@@ -83,10 +84,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 25-04-PLAN.md — validateEquip/validateItemUse/validateUnequip/resolveEffect/resolveEffectsForTrigger pure functions in @into-the-void/game-logic
+Stopped at: Completed 26-04-PLAN.md — effectiveStats/ComputedStats pure function exported from @into-the-void/game-logic
 Resume file: None
 
-**Next action:** Execute Phase 26 (Inventory WebSocket Handlers on game-server)
+**Next action:** Continue Phase 26 remaining plans (if any) or begin Phase 27
 
 ---
-*Last updated: 2026-02-17 after Phase 25 complete (all 4 plans done)*
+*Last updated: 2026-02-17 after Phase 26 Plan 04 complete*
