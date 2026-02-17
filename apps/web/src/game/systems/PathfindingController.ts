@@ -162,6 +162,16 @@ export class PathfindingController {
     return Math.max(0, this.currentPath.length - this.pathIndex);
   }
 
+  destroy(): void {
+    this.cancelPath();
+    if (this.pathGraphics) {
+      this.pathGraphics.destroy();
+      this.pathGraphics = null;
+    }
+    this.scene = null;
+    this.isoTransform = null;
+  }
+
   private getDirection(from: Position, to: { x: number; y: number }): Direction | null {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
