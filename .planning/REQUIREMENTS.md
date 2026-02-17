@@ -1,64 +1,44 @@
 # Requirements: Into the Void
 
-**Defined:** 2026-02-16
+**Defined:** 2026-02-17
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.4 Requirements
+## v1.5 Requirements
 
-Requirements for milestone v1.4: Infinite World & Seamless Chunks.
+Requirements for Movement Overhaul milestone. Each maps to roadmap phases.
 
-### Coordinate System
+### Input
 
-- [ ] **COORD-01**: Depth sorting uses world coordinates for correct z-order across chunks
-- [ ] **COORD-02**: Entity visibility uses world coordinate distance, not zone ID matching
-- [ ] **COORD-03**: Tile rendering calculates depth from world position (chunkX * 32 + localX)
+- [ ] **INPUT-01**: Player can move in all 8 directions using WASD with dual-key detection (W=N, S=S, A=W, D=E, W+A=NW, W+D=NE, S+A=SW, S+D=SE)
 
-### Chunk Streaming
+### Movement
 
-- [ ] **CHUNK-01**: Client loads 3x3 grid of chunks around player position
-- [ ] **CHUNK-02**: Client requests chunks via WebSocket when approaching chunk boundary
-- [ ] **CHUNK-03**: Server generates chunks on demand with deterministic seed
-- [ ] **CHUNK-04**: Server caches generated chunks with LRU cleanup
-- [ ] **CHUNK-05**: Client unloads chunks when player moves beyond load radius
-- [ ] **CHUNK-06**: Loading indicator displayed while chunks are pending
-- [ ] **CHUNK-07**: Player can move seamlessly across chunk boundaries without visual breaks
+- [ ] **MOVE-01**: Player movement speed is unified at 150ms delay for both keyboard and click-to-move
+- [ ] **MOVE-02**: Server rate limit reduced from 140ms to 125ms to support faster client movement
+- [ ] **MOVE-03**: Player movement speed is modified by tile `movementSpeed` property (slow tiles = higher delay, fast tiles = lower delay)
 
-### Biome Distribution
+### Pathfinding
 
-- [ ] **BIOME-01**: Biome determined per-tile using world coordinates (not per-chunk)
-- [ ] **BIOME-02**: Biome transitions are seamless using noise layers (no hard edges)
-- [ ] **BIOME-03**: HUD displays current biome name based on player position
-- [ ] **BIOME-04**: Temperature/moisture/elevation noise creates natural climate zones
+- [ ] **PATH-01**: Click-to-move pathfinding uses 8-directional A* (diagonal neighbors) for straight isometric paths
 
-### Memory & Performance
+### Camera & Visual
 
-- [ ] **MEM-01**: Phaser containers destroyed when chunks unload (no memory leaks)
-- [ ] **MEM-02**: WebSocket room subscriptions cleaned up during chunk transitions
-- [ ] **MEM-03**: Chunk requests use priority queue (visible chunks first)
-- [ ] **MEM-04**: Server chunk cache bounded with max size limit
+- [ ] **CAM-01**: Camera follows player with smooth lerp interpolation instead of instant snap
+- [ ] **CAM-02**: Player sprite slides between tiles with tween animation instead of teleporting
+- [ ] **CAM-03**: Tile hover highlight is removed (broken with elevation, not needed)
 
 ## Future Requirements
 
-Deferred to future release. Tracked but not in v1.4 roadmap.
+Deferred to future releases. Not in current roadmap.
 
-### Optimization
+### Visual Polish
 
-- **OPT-01**: Redis-based chunk cache for multi-server scaling
-- **OPT-02**: Predictive pre-loading based on player movement direction
-- **OPT-03**: Chunk fade-in animation (smooth appearance)
+- **VIS-01**: Click-to-move path shows step dots at each waypoint, not just destination diamond
 
-### World Modification
+### Advanced Movement
 
-- **MOD-01**: Player-modified chunks persist to database
-- **MOD-02**: Delta storage for terrain edits
-- **MOD-03**: Building/construction system
-
-### Visual Polish (from v1.3)
-
-- **VPOL-01**: Visual elevation transitions (ramps/stairs between levels)
-- **VPOL-02**: Dynamic wall transparency when blocking player view
-- **VPOL-03**: Procedural side-face texture variation per biome
-- **VPOL-04**: Shadows cast by elevated terrain and structures
+- **ADV-01**: Player can face a direction without moving (Ctrl+WASD)
+- **ADV-02**: Player can toggle run/walk speed modes
 
 ## Out of Scope
 
@@ -66,11 +46,10 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Client-side chunk generation | Security risk, desync potential with multiplayer |
-| Unlimited chunk load radius | Memory explosion, server load |
-| Cross-chunk structures | Complexity - structures stay within single chunks |
-| Real-time chunk modification | Requires persistence layer, defer to building system |
-| Multi-server chunk sharing | Only needed at 1000+ players |
+| Free-movement (non-grid) WASD | Breaks client-side prediction model; grid is load-bearing |
+| Camera rotation | Sprites drawn for fixed angle; would require 4x art variants |
+| Cross-zone pathfinding | Requires multi-zone graph; complexity vs value tradeoff |
+| Scroll zoom | Breaks viewport culling; fixed 1.5x zoom is correct |
 
 ## Traceability
 
@@ -78,30 +57,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| COORD-01 | Phase 17 | Pending |
-| COORD-02 | Phase 17 | Pending |
-| COORD-03 | Phase 17 | Pending |
-| CHUNK-01 | Phase 18 | Pending |
-| CHUNK-02 | Phase 18 | Pending |
-| CHUNK-03 | Phase 18 | Pending |
-| CHUNK-04 | Phase 18 | Pending |
-| CHUNK-05 | Phase 18 | Pending |
-| CHUNK-06 | Phase 18 | Pending |
-| CHUNK-07 | Phase 18 | Pending |
-| MEM-01 | Phase 18 | Pending |
-| MEM-02 | Phase 18 | Pending |
-| MEM-03 | Phase 18 | Pending |
-| MEM-04 | Phase 18 | Pending |
-| BIOME-01 | Phase 19 | Pending |
-| BIOME-02 | Phase 19 | Pending |
-| BIOME-03 | Phase 19 | Pending |
-| BIOME-04 | Phase 19 | Pending |
+| INPUT-01 | — | Pending |
+| MOVE-01 | — | Pending |
+| MOVE-02 | — | Pending |
+| MOVE-03 | — | Pending |
+| PATH-01 | — | Pending |
+| CAM-01 | — | Pending |
+| CAM-02 | — | Pending |
+| CAM-03 | — | Pending |
 
 **Coverage:**
-- v1.4 requirements: 18 total
-- Mapped to phases: 18
-- Unmapped: 0 (100% coverage)
+- v1.5 requirements: 8 total
+- Mapped to phases: 0
+- Unmapped: 8 (pending roadmap creation)
 
 ---
-*Requirements defined: 2026-02-16*
-*Last updated: 2026-02-16 after roadmap creation*
+*Requirements defined: 2026-02-17*
+*Last updated: 2026-02-17 after initial definition*
