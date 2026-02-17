@@ -99,13 +99,35 @@ All pitfalls documented in research/SUMMARY.md with prevention strategies.
 
 **Note:** Server-side entity streaming implemented in Phase 18-05. Players can now see entities across chunk boundaries within 48-tile visibility radius.
 
+## Phase 20 Testing
+
+**Status:** In Progress
+**Started:** 2026-02-17T09:37:10Z
+
+### Test Scenarios
+
+1. [ ] Basic chunk boundary crossing (CHUNK-01 through CHUNK-07)
+2. [ ] Rapid back-and-forth boundary stress test
+3. [ ] Long-distance pathfinding (2+ chunks)
+4. [ ] Entity visibility across chunks + spawn timing
+5. [ ] Disconnection/reconnection during chunk loading
+6. [ ] 30+ chunk transition memory profiling
+
+### Findings
+
+(To be populated during testing)
+
+### Issues Found
+
+(To be populated - will be fixed immediately per decision)
+
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed Phase 20 Plan 01 (Pre-Test Baseline Fixes)
+Stopped at: Phase 20 Plan 02 Task 2 - dev servers started, awaiting manual validation at Task 3 checkpoint
 Resume file: None
 
-**Next action:** Execute Phase 20 Plan 02 (Validation Testing)
+**Next action:** User completes manual testing at http://localhost:5173, then continue Phase 20 Plan 02 from Task 4
 
 ---
-*Last updated: 2026-02-17 after completing Phase 20 Plan 01*
+*Last updated: 2026-02-17 after starting Phase 20 Plan 02 testing*
