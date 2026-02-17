@@ -57,20 +57,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INPUT-01 | — | Pending |
-| MOVE-01 | — | Pending |
-| MOVE-02 | — | Pending |
-| MOVE-03 | — | Pending |
-| PATH-01 | — | Pending |
-| CAM-01 | — | Pending |
-| CAM-02 | — | Pending |
-| CAM-03 | — | Pending |
+| INPUT-01 | Phase 22 | Pending |
+| MOVE-01 | Phase 21 | Pending |
+| MOVE-02 | Phase 21 | Pending |
+| MOVE-03 | Phase 23 | Pending |
+| PATH-01 | Phase 22 | Pending |
+| CAM-01 | Phase 23 | Pending |
+| CAM-02 | Phase 23 | Pending |
+| CAM-03 | Phase 23 | Pending |
 
 **Coverage:**
 - v1.5 requirements: 8 total
-- Mapped to phases: 0
-- Unmapped: 8 (pending roadmap creation)
+- Mapped to phases: 8
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-17 after initial definition*
+*Last updated: 2026-02-17 after roadmap creation (all 8 requirements mapped)*
