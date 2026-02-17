@@ -1,0 +1,104 @@
+.inventory-panel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.inventory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.inventory-header .close-btn {
+  background: none;
+  border: none;
+  color: var(--color-text);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.inventory-header .close-btn:hover {
+  color: var(--color-accent);
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding: 1rem;
+}
+
+.inventory-slot {
+  aspect-ratio: 1;
+  background-color: var(--color-bg-darker);
+  border: 2px solid var(--color-border);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+}
+
+.inventory-slot--empty {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.inventory-slot--filled {
+  border-width: 2px;
+}
+
+.inventory-slot--filled:hover {
+  filter: brightness(1.2);
+}
+
+.slot-icon {
+  width: 70%;
+  height: 70%;
+  border-radius: 2px;
+}
+
+.slot-quantity {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 0.75rem;
+  color: var(--color-text);
+  text-shadow: 1px 1px 0 #000;
+}
+
+.context-menu {
+  position: fixed;
+  background-color: var(--color-bg-dark);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.25rem 0;
+  min-width: 100px;
+  z-index: 1000;
+}
+
+.context-menu button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.context-menu button:hover {
+  background-color: var(--color-bg-lighter);
+}
