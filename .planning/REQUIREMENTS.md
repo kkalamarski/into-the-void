@@ -3,37 +3,94 @@
 **Defined:** 2026-02-17
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.5 Requirements
+## v1.6 Requirements
 
-Requirements for Movement Overhaul milestone. Each maps to roadmap phases.
+Requirements for Inventory & Items milestone. Each maps to roadmap phases.
 
-### Input
+### Item System
 
-- [ ] **INPUT-01**: Player can move in all 8 directions using WASD with dual-key detection (W=N, S=S, A=W, D=E, W+A=NW, W+D=NE, S+A=SW, S+D=SE)
+- [ ] **ITEM-01**: Item definition registry with strategy pattern (like TileRegistry)
+- [ ] **ITEM-02**: 100 items defined across 6 categories (suits, modules, tools, consumables, world items, reagents)
+- [ ] **ITEM-03**: 5 rarity tiers with visual distinction (Common, Rare, Epic, Exotic, Legendary)
+- [ ] **ITEM-04**: Item level (ilvl) system representing item power
+- [ ] **ITEM-05**: Required character level for equipping/using items
+- [ ] **ITEM-06**: Item stacking for materials (up to 999 per stack)
 
-### Movement
+### Equipment
 
-- [x] **MOVE-01**: Player movement speed is unified at 150ms delay for both keyboard and click-to-move
-- [x] **MOVE-02**: Server rate limit reduced from 140ms to 125ms to support faster client movement
-- [ ] **MOVE-03**: Player movement speed is modified by tile `movementSpeed` property (slow tiles = higher delay, fast tiles = lower delay)
+- [ ] **EQUIP-01**: Exo-suit as base equipment required for survival
+- [ ] **EQUIP-02**: Module slot count scales with suit rarity (Common=3, Legendary=6)
+- [ ] **EQUIP-03**: Armor module type (adds suit durability)
+- [ ] **EQUIP-04**: Speed module type (increases movement speed)
+- [ ] **EQUIP-05**: Life Support module type (oxygen/hazard resistance)
+- [ ] **EQUIP-06**: Sensor Array module type (detection range/minimap)
+- [ ] **EQUIP-07**: Power Core module type (energy capacity/recharge)
+- [ ] **EQUIP-08**: Mobility module type (jump height/terrain traversal)
+- [ ] **EQUIP-09**: Main + Secondary tool slots with hotkey swap
+- [ ] **EQUIP-10**: Tools have specialization stats (research/combat/mining)
+- [ ] **EQUIP-11**: Server-authoritative stat calculation from equipment
 
-### Pathfinding
+### Inventory
 
-- [ ] **PATH-01**: Click-to-move pathfinding uses 8-directional A* (diagonal neighbors) for straight isometric paths
+- [ ] **INV-01**: Personal inventory with slot limit
+- [ ] **INV-02**: Item pickup from world entities with claim mechanism
+- [ ] **INV-03**: Item drop to world (spawns ground item)
+- [ ] **INV-04**: Item use for consumables (repair/buff)
+- [ ] **INV-05**: Atomic DB transactions for all inventory operations
+- [ ] **INV-06**: WebSocket events: inventory:update, inventory:use, inventory:drop, inventory:pickup
 
-### Camera & Visual
+### UI
 
-- [ ] **CAM-01**: Camera follows player with smooth lerp interpolation instead of instant snap
-- [ ] **CAM-02**: Player sprite slides between tiles with tween animation instead of teleporting
-- [ ] **CAM-03**: Tile hover highlight is removed (broken with elevation, not needed)
+- [ ] **UI-01**: Inventory grid panel with drag-drop (dnd-kit)
+- [ ] **UI-02**: Equipment panel showing suit + module slots + tool slots
+- [ ] **UI-03**: Action bar with 8 slots and number key hotkeys (1-8)
+- [ ] **UI-04**: Item tooltips with rarity color, ilvl, stats, description
+- [ ] **UI-05**: Personal storage panel (separate from inventory)
+- [ ] **UI-06**: Rarity color system (Common=gray, Rare=blue, Epic=purple, Exotic=orange, Legendary=gold)
+
+### Database
+
+- [ ] **DB-01**: Migrate equipment schema from head/chest/legs/feet to exo-suit model
+- [ ] **DB-02**: Player inventory table with JSONB items column
+- [ ] **DB-03**: Player equipment stored as JSONB with suit + modules + tools
+- [ ] **DB-04**: Personal storage table for extended item storage
+
+## v1.5 Requirements (Complete)
+
+- [x] **INPUT-01**: Player can move in all 8 directions using WASD with dual-key detection
+- [x] **MOVE-01**: Player movement speed is unified at 500ms delay (2 tiles/sec base)
+- [x] **MOVE-02**: Server rate limit set to 450ms to support movement cadence
+- [x] **MOVE-03**: Player movement speed is modified by tile movementSpeed property
+- [x] **PATH-01**: Click-to-move pathfinding uses 8-directional A* with diagonal neighbors
+- [x] **CAM-01**: Camera follows player with smooth lerp interpolation
+- [x] **CAM-02**: Player sprite slides between tiles with tween animation
+- [x] **CAM-03**: Tile hover highlight removed
 
 ## Future Requirements
 
 Deferred to future releases. Not in current roadmap.
 
+### Crafting
+
+- **CRAFT-01**: Crafting recipes using reagent items
+- **CRAFT-02**: Crafting UI with recipe discovery
+- **CRAFT-03**: Workbench interaction for advanced recipes
+
+### Trading
+
+- **TRADE-01**: Player-to-player item trading
+- **TRADE-02**: Trade confirmation UI
+- **TRADE-03**: Trade history logging
+
+### Advanced Items
+
+- **ADV-ITEM-01**: Item durability and repair system
+- **ADV-ITEM-02**: Item enchantments/upgrades
+- **ADV-ITEM-03**: Set bonuses for matching equipment
+
 ### Visual Polish
 
-- **VIS-01**: Click-to-move path shows step dots at each waypoint, not just destination diamond
+- **VIS-01**: Click-to-move path shows step dots at each waypoint
 
 ### Advanced Movement
 
@@ -46,10 +103,14 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Free-movement (non-grid) WASD | Breaks client-side prediction model; grid is load-bearing |
-| Camera rotation | Sprites drawn for fixed angle; would require 4x art variants |
-| Cross-zone pathfinding | Requires multi-zone graph; complexity vs value tradeoff |
-| Scroll zoom | Breaks viewport culling; fixed 1.5x zoom is correct |
+| Weight-based inventory | Slot limits are simpler, weight is anti-feature per research |
+| Auto-equip on pickup | Breaks modular loadout agency |
+| Cross-character shared stash | Corrupts per-character progression architecture |
+| Real-time auction house | Too complex for v1.6, separate milestone |
+| Item socket/gem system | Deferred to enchantment milestone |
+| Free-movement (non-grid) WASD | Breaks client-side prediction model |
+| Camera rotation | Sprites drawn for fixed angle |
+| Cross-zone pathfinding | Requires multi-zone graph |
 
 ## Traceability
 
@@ -57,20 +118,45 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INPUT-01 | Phase 22 | Pending |
-| MOVE-01 | Phase 21 | Complete |
-| MOVE-02 | Phase 21 | Complete |
-| MOVE-03 | Phase 23 | Pending |
-| PATH-01 | Phase 22 | Pending |
-| CAM-01 | Phase 23 | Pending |
-| CAM-02 | Phase 23 | Pending |
-| CAM-03 | Phase 23 | Pending |
+| ITEM-01 | TBD | Pending |
+| ITEM-02 | TBD | Pending |
+| ITEM-03 | TBD | Pending |
+| ITEM-04 | TBD | Pending |
+| ITEM-05 | TBD | Pending |
+| ITEM-06 | TBD | Pending |
+| EQUIP-01 | TBD | Pending |
+| EQUIP-02 | TBD | Pending |
+| EQUIP-03 | TBD | Pending |
+| EQUIP-04 | TBD | Pending |
+| EQUIP-05 | TBD | Pending |
+| EQUIP-06 | TBD | Pending |
+| EQUIP-07 | TBD | Pending |
+| EQUIP-08 | TBD | Pending |
+| EQUIP-09 | TBD | Pending |
+| EQUIP-10 | TBD | Pending |
+| EQUIP-11 | TBD | Pending |
+| INV-01 | TBD | Pending |
+| INV-02 | TBD | Pending |
+| INV-03 | TBD | Pending |
+| INV-04 | TBD | Pending |
+| INV-05 | TBD | Pending |
+| INV-06 | TBD | Pending |
+| UI-01 | TBD | Pending |
+| UI-02 | TBD | Pending |
+| UI-03 | TBD | Pending |
+| UI-04 | TBD | Pending |
+| UI-05 | TBD | Pending |
+| UI-06 | TBD | Pending |
+| DB-01 | TBD | Pending |
+| DB-02 | TBD | Pending |
+| DB-03 | TBD | Pending |
+| DB-04 | TBD | Pending |
 
 **Coverage:**
-- v1.5 requirements: 8 total
-- Mapped to phases: 8
-- Unmapped: 0
+- v1.6 requirements: 28 total
+- Mapped to phases: 0
+- Unmapped: 28 (pending roadmap)
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-17 after Phase 21 completion (MOVE-01, MOVE-02 complete)*
+*Last updated: 2026-02-17 after v1.6 requirements definition*
