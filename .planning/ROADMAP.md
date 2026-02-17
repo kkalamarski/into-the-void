@@ -146,12 +146,12 @@ Plans:
   2. Player hovers an item — a tooltip appears showing name (rarity-colored), description, category, rarity, ilvl, and required level; tooltip repositions correctly at panel edges
   3. Player drags an item from one slot to another — inventory reorders after server confirms; optimistic reorder does not occur before server response
   4. Player right-clicks an item and selects "Drop" — item disappears from inventory and a ground entity appears at the player's world position
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 27-01: Create `inventoryStore.ts` Zustand store with Immer middleware; wire `inventory:update` socket event; install `dnd-kit` and `@floating-ui/react`
-- [ ] 27-02: Build `InventoryPanel.tsx` with 20-slot dnd-kit grid, rarity-colored item icons, context menu (use/drop/equip), and slot count display
-- [ ] 27-03: Build item tooltip component using `@floating-ui/react` with `FloatingPortal`; disable Phaser keyboard input when inventory is open
+- [ ] 27-01-PLAN.md — Create inventoryStore.ts with Zustand+immer; wire inventory:update; add inventory:reorder server endpoint
+- [ ] 27-02-PLAN.md — Build InventoryPanel.tsx with 20-slot dnd-kit grid, rarity colors, context menu drop
+- [ ] 27-03-PLAN.md — Build ItemTooltip with floating-ui; disable Phaser keyboard when inventory open
 
 #### Phase 28: Equipment System
 
@@ -226,4 +226,4 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 **Total:** 29 phases (26 complete, 3 planned)
 
 ---
-*Last updated: 2026-02-17 after Phase 26 complete*
+*Last updated: 2026-02-17 after Phase 27 planning*
