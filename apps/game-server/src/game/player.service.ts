@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Player, Position, PlayerPublic, FactionId } from '@into-the-void/shared-types';
 import { DatabaseService } from '../database/database.service';
 import { findCharacterById, isCharacterOwnedByAccount, updateLastPlayed } from '@into-the-void/database';
+import { InventoryService } from './inventory.service';
 
 interface ConnectedPlayer extends Player {
   socketId: string;
@@ -22,7 +23,8 @@ export class PlayerService {
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly databaseService: DatabaseService
+    private readonly databaseService: DatabaseService,
+    private readonly inventoryService: InventoryService,
   ) {}
 
   async authenticate(
@@ -82,9 +84,11 @@ export class PlayerService {
   async handleDisconnect(socketId: string): Promise<void> {
     const playerId = this.socketToPlayer.get(socketId);
     if (playerId) {
+      // Flush inventory to DB before removing player
+      await this.inventoryService.flushAndUnload(playerId);
+
       const player = this.players.get(playerId);
       if (player) {
-        // In a real implementation, save player state to database
         player.online = false;
       }
       this.players.delete(playerId);
