@@ -1,328 +1,527 @@
 # Architecture Research
 
-**Domain:** Multiplayer isometric MMO — movement system overhaul (Phaser 3 + NestJS WebSocket)
+**Domain:** Multiplayer isometric MMO — inventory & items system integration (v1.6)
 **Researched:** 2026-02-17
-**Confidence:** HIGH (direct codebase audit + official Phaser docs + verified networking patterns)
-
-## Standard Architecture
-
-### System Overview (Current State)
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        CLIENT (Phaser 3)                         │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌─────────────────┐  ┌───────────────────┐   │
-│  │  WorldScene  │  │  MovementCtrl   │  │ PathfindingCtrl   │   │
-│  │  update()    │  │  processInput() │  │  startPath()      │   │
-│  │  handleInput │  │  reconcile()    │  │  executeNextStep  │   │
-│  └──────┬───────┘  └───────┬─────────┘  └─────────┬─────────┘   │
-│         │                  │                       │             │
-│  ┌──────▼───────────────────▼───────────────────────▼─────────┐  │
-│  │                    gameStore (Zustand)                       │  │
-│  │  player.position  |  collisionMap  |  zoneState             │  │
-│  └──────────────────────────┬────────────────────────────────┘  │
-│                             │ socket.emit('player:move')         │
-├─────────────────────────────┼───────────────────────────────────┤
-│                     NETWORK LAYER                                │
-│                Socket.IO (WebSocket)                             │
-├─────────────────────────────┼───────────────────────────────────┤
-│                        SERVER (NestJS)                           │
-│  ┌──────────────────────────▼────────────────────────────────┐  │
-│  │                   GameGateway                               │  │
-│  │  handleMove() -> rate limit (140ms) -> GameService          │  │
-│  └──────────────────────────┬────────────────────────────────┘  │
-│                             │                                    │
-│  ┌──────────────────────────▼────────────────────────────────┐  │
-│  │  GameService / PlayerService                               │  │
-│  │  validateMovement() -> updatePosition() -> broadcast()     │  │
-│  └────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Component Responsibilities (Existing — Verified by Codebase Audit)
-
-| Component | Responsibility | Location |
-|-----------|----------------|----------|
-| `WorldScene.handleInput()` | Poll keyboard each frame, throttle by `moveDelay` (500ms), emit direction | `WorldScene.ts:430` |
-| `MovementController.processInput()` | Apply input locally (prediction), store pending, emit socket | `MovementController.ts:26` |
-| `MovementController.reconcile()` | Discard acked inputs, replay unacked from server position | `MovementController.ts:85` |
-| `PathfindingController` | A* click-to-move, dispatches to `MovementController.processInput()` | `PathfindingController.ts` |
-| `WorldScene.updateLocalPlayerSprite()` | Snap sprite to predicted position; 50ms tween on reconciliation | `WorldScene.ts:977` |
-| `WorldScene.movePlayer()` | Tween remote players to server position at 100ms Linear | `WorldScene.ts:944` |
-| `MinimapCamera` | Second Phaser camera at zoom 0.075, follows `localPlayer` sprite | `MinimapCamera.ts` |
-| `GameGateway.handleMove()` | Rate limit 140ms, validate, broadcast `player:moved` with sequence | `game.gateway.ts:120` |
-| `gameStore` listeners | Route `player:moved` to `MovementController.reconcile()` or tween | `gameStore.ts:185` |
-
-### Key Facts Established by Codebase Audit
-
-- **Current move delay:** 500ms client (`WorldScene.moveDelay`), 140ms server rate limit. The client throttle is the effective bottleneck — server is permissive relative to that.
-- **Current input:** 4-directional keyboard mapped to isometric diagonals (W=nw, D=ne, S=se, A=sw). An `else-if` chain breaks simultaneous key detection.
-- **8-directional already partially wired:** `PathfindingController.getDirection()` returns all 8 directions. `DIRECTION_VECTORS` defines all 8. `calculateNewPosition()` handles all 8. `Direction` type has all 8 values. The gap is `handleInput()` using sequential `else-if` instead of key combination logic.
-- **Camera:** `cameras.main.startFollow(localPlayer, true, 1, 1)` — lerp values of 1 = instant snap. No smoothing exists.
-- **Prediction movement:** Sprite snaps instantly to predicted tile. No tween on the happy path.
-- **Reconciliation tween:** 50ms `Cubic.easeOut` on mismatch, instant on correct prediction. The algorithm is correct but duration may be visually abrupt.
-- **Remote player interpolation:** 100ms Linear tween on `movePlayer()`. Appropriate for 150ms cadence.
-- **Position type:** Integer tile coordinates + `zoneId` string. No fractional sub-tile position exists anywhere.
+**Confidence:** HIGH (direct codebase audit; all integration points verified against source files)
 
 ---
 
-## Recommended Architecture for Movement Overhaul
+## Standard Architecture
 
-### What Changes vs. What Stays
-
-```
-STAYS UNCHANGED                    CHANGES
-────────────────────               ────────────────────────────────
-Socket event shape ('player:move') WorldScene.moveDelay: 500ms -> 150ms
-Direction type (all 8 exist)       handleInput: else-if -> resolveDirection()
-Reconcile algorithm                camera lerp: (1,1) -> (0.1, 0.1)
-Position type (integer tile)       prediction: snap -> 130ms Linear tween
-Server rate limit logic            reconcile tween: 50ms -> 80ms
-gameStore shape                    PathfindingController moveDelay (sync via constant)
-MinimapCamera structure            SpriteAnimationController (NEW component)
-ChunkManager / zoneId system
-A* pathfinding
-```
-
-### System Overview (Target Architecture)
+### System Overview (Current + Inventory Overlay)
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        CLIENT (Phaser 3)                         │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │  WorldScene.handleInput()  [per frame, with 150ms guard] │   │
-│  │  resolveDirection(keys) -> 8-dir                         │   │
-│  └────────────────┬──────────────────────────────┬──────────┘   │
-│                   │                              │              │
-│  ┌────────────────▼───────────┐  ┌───────────────▼──────────┐   │
-│  │  MovementController        │  │  SpriteAnimController     │   │
-│  │  processInput(dir)         │  │  setFacing(dir)           │   │
-│  │  reconcile(pos, seq)       │  │  (directional sprite anim)│   │
-│  └────────────────┬───────────┘  └──────────────────────────┘   │
-│                   │                                              │
-│  ┌────────────────▼───────────────────────────────────────────┐  │
-│  │  WorldScene.updateLocalPlayerSprite()                       │  │
-│  │  prediction: 130ms Linear tween to target tile             │  │
-│  │  reconcile:  80ms Cubic.easeOut tween on mismatch          │  │
-│  │  camera: startFollow(target, true, 0.1, 0.1)               │  │
-│  └────────────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────┤
-│                     Socket.IO (shape unchanged)                   │
-├─────────────────────────────────────────────────────────────────┤
-│                     SERVER (NestJS)                               │
-│  GameGateway.handleMove() rate limit: 140ms -> 125ms             │
-│  (adjusted for tighter client cadence tolerance)                 │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                          CLIENT (React + Phaser)                     │
+├─────────────────────────────────────────────────────────────────────┤
+│  REACT HUD LAYER (apps/web/src/ui/)                                  │
+│  ┌──────────────┐  ┌─────────────────┐  ┌──────────────────────┐    │
+│  │  HUD.tsx     │  │ InventoryPanel  │  │  EquipmentPanel      │    │
+│  │  (existing)  │  │  [NEW]          │  │  [NEW]               │    │
+│  └──────┬───────┘  └───────┬─────────┘  └──────────┬───────────┘    │
+│         │                  │ showInventory           │               │
+│  ┌──────▼──────────────────▼─────────────────────────▼───────────┐  │
+│  │                     gameStore (Zustand)                         │  │
+│  │  existing: player, zoneState, connectionState                   │  │
+│  │  NEW:      inventory, equipment, hotbar                         │  │
+│  └──────────────────────────┬──────────────────────────────────┘  │
+│                             │                                       │
+│  PHASER LAYER (apps/web/src/game/)                                  │
+│  ┌──────────────────────────▼──────────────────────────────────┐  │
+│  │  ZoneHUD.ts  [MODIFY: add hotbar slots]                      │  │
+│  │  WorldScene.ts  [MODIFY: item pickup keypress, use hotbar]   │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────────┤
+│                           Socket.IO (WebSocket)                      │
+│         inventory:use / inventory:drop / inventory:pickup            │
+│         inventory:equip / inventory:unequip (NEW events)            │
+│         <-- inventory:update (server -> client)                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                         SERVER (NestJS game-server)                  │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  GameGateway  [MODIFY: add inventory event handlers]         │  │
+│  │  handleInventoryUse() / handleInventoryDrop()                │  │
+│  │  handleInventoryPickup() / handleEquip() / handleUnequip()   │  │
+│  └──────────────────┬───────────────────────────────────────────┘  │
+│                     │                                               │
+│  ┌──────────────────▼───────────────────────────────────────────┐  │
+│  │  InventoryService  [NEW]                                      │  │
+│  │  useItem() / dropItem() / pickupItem()                        │  │
+│  │  equipItem() / unequipItem()                                  │  │
+│  │  getInventory() (loads from DB on auth)                       │  │
+│  └──────────────────┬───────────────────────────────────────────┘  │
+│                     │                                               │
+│  ┌──────────────────▼───────────────────────────────────────────┐  │
+│  │  @into-the-void/game-logic  [MODIFY: add inventory module]   │  │
+│  │  validateItemUse() / validateEquip() / resolveItemEffect()   │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────────┤
+│                     SHARED PACKAGES                                  │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  @into-the-void/items  [NEW PACKAGE — mirrors tiles package] │  │
+│  │  ItemRegistry (singleton, strategy pattern)                   │  │
+│  │  ItemDefinition (interface)                                   │  │
+│  │  ItemEffect (discriminated union)                             │  │
+│  │  definitions/suits, tools, consumables, materials...          │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  @into-the-void/shared-types  [MODIFY: extend existing]      │  │
+│  │  inventory.ts — ItemDef already exists, extend it            │  │
+│  │  events.ts   — add equipment:change ClientEvent               │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  @into-the-void/database  [MODIFY: inventories schema exists]│  │
+│  │  schema/inventories.ts — already has items + equipment JSONB │  │
+│  │  queries/inventory.ts  — CRUD already exists                 │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Component Responsibilities
+
+| Component | Responsibility | Location | Status |
+|-----------|----------------|----------|--------|
+| `ItemRegistry` | Singleton map of `itemId -> ItemDefinition`; strategy pattern identical to `TileRegistry` | `packages/items/src/registry.ts` | NEW |
+| `ItemDefinition` | Static item properties: id, category, rarity, slots, effects, weight, stackSize | `packages/items/src/types.ts` | NEW |
+| `ItemEffect` | Discriminated union: heal/buff/equip/spawn-entity — returned by item use handler | `packages/items/src/types.ts` | NEW |
+| `InventoryService` | Server-side inventory state per connected player; validates operations; persists to DB | `apps/game-server/src/inventory/inventory.service.ts` | NEW |
+| `GameGateway` | Routes inventory WebSocket events to `InventoryService`; broadcasts `inventory:update` | `apps/game-server/src/game/game.gateway.ts` | MODIFY |
+| `gameStore` | Client Zustand state: `inventory`, `equipment`, `hotbar`; receives `inventory:update` | `apps/web/src/store/gameStore.ts` | MODIFY |
+| `InventoryPanel` | React modal: grid of `InventoryItem` slots; drag-to-equip, right-click-use | `apps/web/src/ui/panels/InventoryPanel.tsx` | NEW |
+| `EquipmentPanel` | React panel: exo-suit silhouette with slot targets; shows equipped items | `apps/web/src/ui/panels/EquipmentPanel.tsx` | NEW |
+| `ActionBar` | Phaser HUD (or React overlay): 8 hotbar slots with keypress binding (1-8) | `apps/web/src/ui/hud/ActionBar.tsx` | NEW |
+| `ZoneHUD` | Existing Phaser HUD; modified to delegate hotbar rendering to `ActionBar` | `apps/web/src/game/ui/ZoneHUD.ts` | MODIFY |
+| `game-logic inventory` | Pure functions: `validateItemUse`, `canEquip`, `resolveEffect` — no side effects | `packages/game-logic/src/inventory/` | NEW |
+| `inventories schema` | PostgreSQL table: `character_id PK`, `items JSONB[]`, `equipment JSONB`, `maxSlots INT` | `packages/database/src/schema/inventories.ts` | EXISTS (extend) |
+| `EntityRegistry.items` | Existing static item catalog in shared-types — MIGRATE to `ItemRegistry` | `packages/shared-types/src/game/entity-registry.ts` | REFACTOR |
+
+---
+
+## New Package: `@into-the-void/items`
+
+The tile system (`packages/tiles`) established the project's canonical pattern for static game-data registries. The items package mirrors this pattern exactly.
+
+### Why a separate package (not extending shared-types)
+
+`shared-types` holds network contracts — lightweight types shared between client and server. An items package holds game logic (effect calculation, rarity multipliers, slot compatibility) that is **used by clients at runtime for UI rendering** and **by game-server for validation**. This dual use justifies its own package, same as `tiles`.
+
+```
+packages/items/
+├── src/
+│   ├── types.ts              # ItemDefinition, ItemEffect, EquipmentSlotDef
+│   ├── registry.ts           # ItemRegistry singleton (mirrors TileRegistry)
+│   ├── index.ts              # public exports
+│   └── definitions/
+│       ├── suits.ts          # Exo-suit base + variants
+│       ├── modules.ts        # Suit module slots (rarity-gated)
+│       ├── tools.ts          # Main/secondary tool slots
+│       ├── consumables.ts    # Health vials, energy cells, etc.
+│       ├── materials.ts      # Crafting reagents, world resources
+│       ├── misc.ts           # Quest items, keys, unique drops
+│       └── index.ts          # registerAll() — bootstraps registry
+```
+
+### ItemDefinition interface (mirrors TileDefinition)
+
+```typescript
+export interface ItemDefinition {
+  readonly id: string;               // 'health_vial_common'
+  readonly displayName: string;      // 'Health Vial'
+  readonly description: string;
+  readonly category: ItemCategory;   // 'consumable' | 'suit' | 'module' | 'tool' | 'material' | 'misc'
+  readonly rarity: ItemRarity;       // 'common' | 'rare' | 'epic' | 'exotic' | 'legendary'
+  readonly maxStack: number;
+  readonly weight: number;
+  readonly baseValue: number;
+  readonly requiredLevel: number;
+  readonly textureKey: string;       // sprite key for icon rendering
+  readonly color: number;            // fallback hex color (no sprite)
+  readonly equipSlot?: EquipmentSlot; // present if equippable
+  readonly moduleSlots?: number;     // for suits: how many modules it accepts
+  readonly effects?: ItemEffectDef[];
+}
+
+export interface ItemEffectDef {
+  trigger: 'on_use' | 'on_equip' | 'passive';
+  effect: ItemEffect;
+}
+
+export type ItemEffect =
+  | { type: 'heal'; amount: number }
+  | { type: 'restore_energy'; amount: number }
+  | { type: 'buff_stat'; stat: string; amount: number; duration: number }
+  | { type: 'spawn_entity'; entityType: string }
+  | { type: 'unlock_slot'; slot: EquipmentSlot };
+```
+
+---
+
+## Existing Architecture: What Already Exists
+
+A significant portion of the inventory system is already scaffolded. This is critical for build ordering — don't rewrite what exists.
+
+### Already Present (Verified by Codebase Audit)
+
+| Asset | Location | State |
+|-------|----------|-------|
+| `Inventory` type | `shared-types/src/game/inventory.ts` | Complete: `InventoryItem`, `EquipmentSlot`, `Inventory`, `InventoryResult` |
+| `ClientEventType` `inventory:use/drop/pickup` | `shared-types/src/network/events.ts` | Declared in type union |
+| `ServerEventType` `inventory:update` | `shared-types/src/network/events.ts` | Declared in type union |
+| `ClientEvents['inventory:use']` | `shared-types/src/network/events.ts` | `{ instanceId: string }` |
+| `ClientEvents['inventory:drop']` | `shared-types/src/network/events.ts` | `{ instanceId: string; quantity: number }` |
+| `ClientEvents['inventory:pickup']` | `shared-types/src/network/events.ts` | `{ entityId: string }` |
+| `ServerEvents['inventory:update']` | `shared-types/src/network/events.ts` | Returns `Inventory` type |
+| `gameSocket` registration | `apps/web/src/network/socket.ts:82` | `inventory:update` listed in `serverEvents` array — socket listens, no handler connected |
+| `showInventory` / `toggleInventory` | `apps/web/src/store/gameStore.ts:39,41` | UI flag exists, `InventoryPanel` not rendered anywhere yet |
+| `inventories` DB table | `packages/database/src/schema/inventories.ts` | Complete: `characterId PK`, `items JSONB`, `equipment JSONB`, `maxSlots INT` |
+| `createInventory / getInventory / updateInventory` | `packages/database/src/queries/inventory.ts` | All CRUD functions implemented |
+| `ItemConfig` / `EntityRegistry.items` | `shared-types/src/game/entity-registry.ts:44,135` | 4 items registered (health_vial, energy_cell, void_essence, ancient_key) |
+| `ErrorCode: INVENTORY_FULL` | `shared-types/src/network/messages.ts` | Error code defined |
+
+### Missing (Gaps to Fill)
+
+| Missing | What to Build |
+|---------|--------------|
+| `equipment:change` client event | Add to `ClientEvents` and `ClientEventType` in `events.ts` |
+| `InventoryService` (game-server) | NestJS service; in-memory per-player inventory; DB persistence |
+| `inventory:*` handlers in `GameGateway` | `@SubscribeMessage` handlers for use/drop/pickup/equip/unequip |
+| `packages/items` package | New NX package; ItemRegistry, definitions |
+| `InventoryPanel` React component | Grid UI; uses `gameStore.inventory` |
+| `EquipmentPanel` React component | Slot UI; uses `gameStore.equipment` |
+| `ActionBar` HUD component | Hotbar 1-8; keybindings; uses `gameStore.hotbar` |
+| `gameStore` inventory state | `inventory: Inventory | null`, `equipment`, `hotbar` slices |
+| `gameStore` `inventory:update` handler | Wire socket event to store update |
+| `game-logic/inventory/` module | Pure validation functions |
+
+---
+
+## Recommended Project Structure
+
+```
+packages/items/                              [NEW PACKAGE]
+├── package.json
+├── tsconfig.json
+├── src/
+│   ├── types.ts
+│   ├── registry.ts
+│   ├── index.ts
+│   └── definitions/
+│       ├── index.ts                         # registerAll() call
+│       ├── suits.ts
+│       ├── modules.ts
+│       ├── tools.ts
+│       ├── consumables.ts
+│       ├── materials.ts
+│       └── misc.ts
+
+packages/game-logic/src/
+├── inventory/                               [NEW MODULE]
+│   ├── validation.ts                        # validateItemUse, canEquip, hasSlot
+│   ├── effects.ts                           # resolveEffect(item, player) -> ItemEffect
+│   └── index.ts
+└── index.ts                                 [MODIFY: export inventory/*]
+
+packages/shared-types/src/
+├── game/
+│   └── inventory.ts                         [MODIFY: extend ItemDef, add hotbar type]
+└── network/
+    └── events.ts                            [MODIFY: add equipment:change ClientEvent]
+
+packages/database/src/
+└── schema/
+    └── inventories.ts                       [EXISTS — no schema changes needed]
+
+apps/game-server/src/
+├── game/
+│   ├── game.gateway.ts                      [MODIFY: add @SubscribeMessage handlers]
+│   ├── game.module.ts                       [MODIFY: import InventoryModule]
+│   └── game.service.ts                      [MODIFY: pickup adds to inventory]
+└── inventory/                               [NEW MODULE]
+    ├── inventory.module.ts
+    └── inventory.service.ts
+
+apps/web/src/
+├── store/
+│   └── gameStore.ts                         [MODIFY: inventory/equipment/hotbar state]
+├── ui/
+│   ├── GameUI.tsx                           [MODIFY: render InventoryPanel + EquipmentPanel]
+│   ├── hud/
+│   │   ├── HUD.tsx                          [MODIFY: render ActionBar]
+│   │   └── ActionBar.tsx                    [NEW]
+│   └── panels/
+│       ├── ChatPanel.tsx                    [EXISTS — reference for panel pattern]
+│       ├── InventoryPanel.tsx               [NEW]
+│       └── EquipmentPanel.tsx               [NEW]
+└── game/
+    └── ui/
+        └── ZoneHUD.ts                       [MODIFY: remove hotbar if moved to React]
 ```
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: 8-Directional Key Combination Resolution
+### Pattern 1: ItemRegistry — Singleton Strategy (mirrors TileRegistry)
 
-**What:** Read all 8 keys simultaneously and resolve to a single `Direction` by checking key pairs before single keys. The existing `else-if` chain in `handleInput()` silently prevents diagonal+diagonal combos (e.g., W+D = north).
+**What:** A singleton Map from `itemId -> ItemDefinition`. All item definitions are registered at static init time via `registerAll()`. Consumers call `ItemRegistry.get(id)` to access definitions. Unknown IDs return a fallback UNKNOWN_ITEM (magenta icon, obvious error indicator).
 
-**When to use:** When moving from 4-key to 8-key directional input in an isometric game.
+**When to use:** Any time code needs to look up static item properties by string ID. Both client (for rendering item icons in UI) and server (for validating item use) import from `@into-the-void/items`.
 
-**Trade-offs:** Slightly more code than an `else-if` chain but eliminates "stuck between diagonals" feel. Must define priority for 3+ simultaneous keys (first matching pair wins).
-
-**Example:**
+**Trade-offs:** Singleton is not injectable — fine for static data that never changes at runtime. Same trade-off accepted for TileRegistry.
 
 ```typescript
-// Replace the else-if chain in WorldScene.handleInput():
-private resolveDirection(): Direction | null {
-  const up = this.cursors?.up.isDown || this.wasd?.W.isDown;
-  const down = this.cursors?.down.isDown || this.wasd?.S.isDown;
-  const left = this.cursors?.left.isDown || this.wasd?.A.isDown;
-  const right = this.cursors?.right.isDown || this.wasd?.D.isDown;
+// packages/items/src/registry.ts
+const UNKNOWN_ITEM: ItemDefinition = {
+  id: 'unknown',
+  displayName: 'Unknown Item',
+  description: 'This item type is not registered.',
+  category: 'misc',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 0,
+  baseValue: 0,
+  requiredLevel: 0,
+  textureKey: 'item_unknown',
+  color: 0xff00ff,  // magenta — mirrors TileRegistry fallback convention
+};
 
-  // Isometric screen-space mapping (existing single-key behavior preserved):
-  // W->nw, D->ne, S->se, A->sw
-  // Combos: W+D->n (NE+NW=North), D+S->e (NE+SE=East), S+A->s, W+A->w
-  if (up && right) return 'n';
-  if (down && right) return 'e';
-  if (down && left) return 's';
-  if (up && left) return 'w';
-  if (up) return 'nw';
-  if (right) return 'ne';
-  if (down) return 'se';
-  if (left) return 'sw';
-  return null;
+class ItemRegistryImpl {
+  private readonly items: Map<string, ItemDefinition> = new Map();
+
+  register(item: ItemDefinition): void { ... }
+  registerAll(items: readonly ItemDefinition[]): void { ... }
+  get(id: string): ItemDefinition { ... } // returns UNKNOWN_ITEM on miss
+  has(id: string): boolean { ... }
+  getAllByCategory(category: ItemCategory): ItemDefinition[] { ... }
+  getAllByRarity(rarity: ItemRarity): ItemDefinition[] { ... }
+}
+
+export const ItemRegistry = new ItemRegistryImpl();
+```
+
+### Pattern 2: Server-Side In-Memory Inventory with DB Persistence
+
+**What:** `InventoryService` maintains an in-memory `Map<playerId, Inventory>` for fast access during gameplay, mirroring how `PlayerService` maintains connected players. On player auth, inventory is loaded from DB. On each mutation (use/drop/equip), state is updated in-memory immediately and flushed to DB asynchronously. On disconnect, final state is saved.
+
+**When to use:** This is the established server pattern. `PlayerService` uses the same in-memory + DB-on-auth approach. Apply it consistently.
+
+**Trade-offs:** Memory grows with connected players. At scale, a cache layer (Redis) replaces the in-memory Map. For current scale (small playerbase), in-memory is correct.
+
+```typescript
+// apps/game-server/src/inventory/inventory.service.ts
+@Injectable()
+export class InventoryService {
+  private inventories: Map<string, Inventory> = new Map(); // playerId -> Inventory
+
+  async loadForPlayer(playerId: string, db: DbClient): Promise<void> {
+    const dbInventory = await getInventory(db, playerId);
+    if (dbInventory) {
+      this.inventories.set(playerId, mapDbToInventory(dbInventory));
+    } else {
+      const fresh = createDefaultInventory(playerId);
+      this.inventories.set(playerId, fresh);
+      await createInventory(db, mapInventoryToDb(fresh));
+    }
+  }
+
+  async unloadForPlayer(playerId: string, db: DbClient): Promise<void> {
+    const inventory = this.inventories.get(playerId);
+    if (inventory) {
+      await updateInventory(db, playerId, mapInventoryToDb(inventory));
+      this.inventories.delete(playerId);
+    }
+  }
+
+  useItem(playerId: string, instanceId: string): InventoryResult { ... }
+  dropItem(playerId: string, instanceId: string, quantity: number): InventoryResult { ... }
+  pickupItem(playerId: string, item: InventoryItem): InventoryResult { ... }
+  equipItem(playerId: string, instanceId: string, slot: EquipmentSlot): InventoryResult { ... }
+  unequipItem(playerId: string, slot: EquipmentSlot): InventoryResult { ... }
 }
 ```
 
-**Important:** The existing isometric screen-space mapping is correct. W maps to 'nw' (up-left in isometric view). W+D (up-left + up-right) = 'n' (straight up in isometric). This completes the 8-direction set without changing single-key behavior.
+### Pattern 3: Inventory State in Zustand — Separate Slice
 
-### Pattern 2: Tweened Tile-to-Tile Movement (Visual Smoothing)
+**What:** Add inventory state to `gameStore` as a distinct slice alongside player, entities, and UI toggles. The `inventory:update` socket event replaces the entire `Inventory` object in store on each mutation. Clients do not maintain partial/optimistic inventory state — the server is authoritative.
 
-**What:** Tween the sprite from its current screen position to the predicted target tile position over `moveDelay - buffer` milliseconds. The logical position in gameStore updates instantly; only the visual representation tweens.
+**When to use:** The existing pattern for `zone:state` (replaces entire ZoneState object) applies here. Inventory mutations are infrequent relative to movement, so full-replacement is fine.
 
-**When to use:** Any tile-based game where move rate is fast enough that instant snap is jarring (under ~300ms/tile). At 150ms/tile, instant snap is visibly jerky.
-
-**Trade-offs:** The sprite is always slightly behind the logical tile position by `tween_duration`. At 150ms this is imperceptible. Risk: if tween duration exceeds moveDelay, tweens stack and sprite lags far behind. Must kill existing tween before starting next (`tweens.killTweensOf`).
-
-**Example:**
+**Trade-offs:** Full replacement means no partial updates — intentional for correctness. The server is the only source of truth for inventory contents.
 
 ```typescript
-// In WorldScene.updateLocalPlayerSprite() prediction branch:
-if (!reconciling) {
-  this.tweens.killTweensOf(this.localPlayer);
-  this.tweens.add({
-    targets: this.localPlayer,
-    x: screenPos.x,
-    y: targetY,
-    duration: 130,  // moveDelay (150ms) minus 20ms buffer
-    ease: 'Linear',
-  });
-} else {
-  // Reconciliation: smooth correction
-  this.tweens.killTweensOf(this.localPlayer);
-  this.tweens.add({
-    targets: this.localPlayer,
-    x: screenPos.x,
-    y: targetY,
-    duration: 80,   // increased from 50ms for less abruptness
-    ease: 'Cubic.easeOut',
-  });
+// Additions to gameStore.ts
+interface GameState {
+  // ... existing fields ...
+
+  // Inventory
+  inventory: Inventory | null;
+  setInventory: (inventory: Inventory) => void;
+
+  // Hotbar (client-only — which slots are assigned to 1-8 keys)
+  hotbar: (string | null)[];  // 8-element array of instanceIds or null
+  setHotbarSlot: (slot: number, instanceId: string | null) => void;
 }
+
+// In the store body:
+inventory: null,
+setInventory: (inventory) => set({ inventory }),
+hotbar: Array(8).fill(null),
+setHotbarSlot: (slot, instanceId) => set((state) => {
+  const hotbar = [...state.hotbar];
+  hotbar[slot] = instanceId;
+  return { hotbar };
+}),
+
+// Socket listener (add alongside existing zone:state listener):
+gameSocket.on('inventory:update', (inventory: Inventory) => {
+  useGameStore.getState().setInventory(inventory);
+});
 ```
 
-**Confidence:** HIGH. The exact same pattern is already used for remote players in `WorldScene.movePlayer()` at line 960-974. This extends it consistently to local player prediction.
+### Pattern 4: Pure Validation in game-logic (No Side Effects)
 
-### Pattern 3: Camera Lerp Smoothing
+**What:** All inventory validation logic lives in `packages/game-logic/src/inventory/`. Functions are pure: they take current state (player, inventory, item definition) and return a typed result (success + effect, or failure + reason). No DB calls, no socket calls — just pure logic.
 
-**What:** Change `startFollow` lerp values from 1 (instant snap) to ~0.1 (smooth interpolation). Each frame Phaser moves the camera a fraction of the distance to the target, producing a fluid trailing effect.
-
-**When to use:** When the player sprite tweens between tiles rather than snapping. Without camera lerp, the camera still snaps even though the sprite glides — negating the visual smoothness.
-
-**Trade-offs:** Values below 0.08 feel "floaty" and visually disconnect the camera from the player. Values above 0.15 don't add perceptible smoothing beyond what the tween achieves. Official Phaser docs cite 0.1 as the smooth-follow sweet spot.
-
-**Example:**
+**When to use:** Mirrors existing `validateMovement()`, `canInteract()`, `canHarvest()`, `canPickup()` pattern in `game-logic`. The server calls these before executing mutations.
 
 ```typescript
-// In WorldScene.updateLocalPlayer(), change:
-// this.cameras.main.startFollow(this.localPlayer!, true, 1, 1);
-// To:
-this.cameras.main.startFollow(
-  this.localPlayer!,
-  true,   // roundPixels: prevents sub-pixel jitter (Phaser docs recommendation)
-  0.1,    // lerpX
-  0.1     // lerpY
-);
+// packages/game-logic/src/inventory/validation.ts
+export function validateItemUse(
+  player: Player,
+  inventory: Inventory,
+  instanceId: string,
+  itemDef: ItemDefinition
+): { valid: boolean; reason?: string; effect?: ItemEffect } {
+  const item = inventory.items.find(i => i.instanceId === instanceId);
+  if (!item) return { valid: false, reason: 'Item not in inventory' };
+  if (player.level < itemDef.requiredLevel) {
+    return { valid: false, reason: `Requires level ${itemDef.requiredLevel}` };
+  }
+  const effect = resolveEffect(itemDef, 'on_use');
+  return { valid: true, effect };
+}
+
+export function validateEquip(
+  player: Player,
+  inventory: Inventory,
+  instanceId: string,
+  slot: EquipmentSlot,
+  itemDef: ItemDefinition
+): { valid: boolean; reason?: string } { ... }
 ```
-
-**Minimap impact:** `MinimapCamera.startFollow(target, true)` has no lerp parameter — it correctly defaults to lerp=1 (instant). The minimap is a spatial orientation tool and should track exact position. No change needed.
-
-**Source:** Phaser 3 official camera docs confirm lerp range 0-1, default 1 = instant, 0.1 = smooth. `roundPixels: true` prevents the sub-pixel jitter noted in Phaser GitHub issue #3738.
-
-### Pattern 4: Server Rate Limit Alignment with Client Cadence
-
-**What:** The server rate limit and client `moveDelay` must maintain adequate tolerance for network jitter. When the client sends moves every 150ms, the server must accept events that arrive up to ~20-25ms early due to timing variance.
-
-**When to use:** Any time client move cadence changes.
-
-**Trade-offs:** Too tight a server limit causes false rejections under normal latency (visible as position corrections every few tiles). Too loose allows speed-hack clients to move faster.
-
-**Calculation:**
-```
-Current:  client=500ms, server=140ms, tolerance=360ms (generous)
-Target:   client=150ms, server=125ms, tolerance=25ms (acceptable for typical jitter)
-Rule:     server_limit = client_delay * 0.85, floor at 100ms
-          150 * 0.85 = 127.5, rounded to 125ms
-```
-
-The current 140ms server limit is borderline adequate for 150ms client delay (10ms tolerance), but reducing to 125ms provides a safer 25ms buffer.
 
 ---
 
 ## Data Flow
 
-### Local Player Input Flow (Target)
+### Item Use Flow (client initiates, server authoritative)
 
 ```
-WorldScene.update(time)
+Player presses hotbar key (1-8)
     |
-    v
-handleInput(time)
+ActionBar.tsx (React) reads hotbar[key] -> instanceId
     |
-    +-- time - lastMoveTime < 150ms? --> return (throttle)
+gameSocket.emit('inventory:use', { instanceId })
     |
-    +-- resolveDirection(keys) --> Direction | null
-    |       W+D->'n', W->'nw', D->'ne', etc.
+GameGateway.handleInventoryUse(client, { instanceId })
     |
-    +-- pathfindingController.cancelPath() (if active)
+    +-- playerService.getPlayerBySocket(client.id) -> player
+    +-- inventoryService.useItem(player.id, instanceId)
+    |       +-- validateItemUse(player, inventory, instanceId, itemDef)
+    |       |       validation via game-logic (pure)
+    |       +-- if valid: apply effect to player (heal, buff, etc.)
+    |       |   remove/decrement item from inventory
+    |       |   flush to DB (async, non-blocking)
+    |       +-- return { success, inventory, effect }
     |
-    +-- MovementController.processInput(dir)
-    |       +-- client-side collision check
-    |       +-- calculateNewPosition(player.pos, dir) --> newPos
-    |       +-- gameStore.setPlayer({ position: newPos })
-    |       +-- onPositionUpdate(newPos, reconciling=false)
-    |       |       --> WorldScene.updateLocalPlayerSprite
-    |       |           tweens.killTweensOf(localPlayer)
-    |       |           tweens.add({ x, y, duration: 130, ease: 'Linear' })
-    |       |           camera follows sprite via lerp=0.1
-    |       +-- socket.emit('player:move', { direction, sequence })
+    +-- client.emit('inventory:update', updatedInventory)
+    +-- (if effect has world impact) server.to(zoneId).emit(...)
     |
-    +-- SpriteAnimationController.setFacing(dir)  [NEW]
+gameStore.ts on('inventory:update')
+    |
+setInventory(updatedInventory)
+    |
+InventoryPanel re-renders / ActionBar re-renders
 ```
 
-### Server Reconciliation Flow (Unchanged Algorithm, Adjusted Timing)
+### Item Pickup Flow (from world entity)
 
 ```
-server emits 'player:moved' { playerId, position, lastProcessedInput }
+Player clicks entity (type: 'item') or walks adjacent
     |
-gameStore.ts listener (line 185)
+gameSocket.emit('inventory:pickup', { entityId })
     |
-    +-- data.playerId === currentPlayer.id?
-    |       YES --> MovementController.reconcile(position, lastProcessedInput)
-    |               +-- pendingInputs = filter(seq > lastProcessedInput)
-    |               +-- reconciledPos = replay pending from serverPosition
-    |               +-- mismatch from currentClientPosition?
-    |               |       YES --> gameStore.setPlayer({ position: reconciledPos })
-    |               |               onPositionUpdate(reconciledPos, reconciling=true)
-    |               |                --> tween 80ms Cubic.easeOut  [was 50ms]
-    |               +-- NO mismatch --> no-op (prediction was correct, common case)
+GameGateway.handleInventoryPickup(client, { entityId })
     |
-    +-- other player --> WorldScene.movePlayer(playerId, position)
-            --> tween 100ms Linear [unchanged]
+    +-- zonesService.getEntity(zoneId, entityId) -> ItemEntity
+    +-- inventoryService.pickupItem(player.id, itemFromEntity)
+    |       canPickup() check via game-logic
+    |       +-- usedSlots < inventory.maxSlots?
+    |       +-- item not despawned?
+    |       +-- stack merge if same itemId already in inventory
+    |
+    +-- zonesService.removeEntity(entityId)  // despawn from world
+    +-- client.emit('inventory:update', updatedInventory)
+    +-- server.to(zoneId).emit('entity:despawn', { entityId })
 ```
 
-### PathfindingController Sync (Critical Detail)
+### Equipment Change Flow
 
-`PathfindingController` is constructed with `moveDelay` from `WorldScene`:
-
-```typescript
-// WorldScene.ts line 103:
-this.pathfindingController = new PathfindingController(
-  this.movementController,
-  this.moveDelay,   // <-- this.moveDelay is what changes (500 -> 150)
-  this,
-  this.isoTransform!
-);
+```
+Player drags item to equipment slot in EquipmentPanel
+    |
+EquipmentPanel.tsx -> gameSocket.emit('equipment:change', { instanceId, slot })
+    |
+GameGateway.handleEquip(client, { instanceId, slot })
+    |
+    +-- inventoryService.equipItem(player.id, instanceId, slot)
+    |       validateEquip() from game-logic
+    |       swap: inventory.equipment[slot] -> back to bag, item -> slot
+    |
+    +-- client.emit('inventory:update', updatedInventory)
+    // equipment is part of Inventory type, same event covers both
 ```
 
-When `WorldScene.moveDelay` changes, `PathfindingController`'s internal delay changes automatically because it uses the value at construction time. No separate change to `PathfindingController` is needed — but the constant must be defined at the `WorldScene` level and passed consistently.
+### Auth Flow (Inventory Load)
+
+```
+PlayerService.authenticate() succeeds
+    |
+InventoryService.loadForPlayer(player.id, db)  // called from GameGateway.handleAuth
+    |
+    +-- getInventory(db, characterId) -> DbRow
+    +-- inventories.set(player.id, mapDbToInventory(row))
+    |
+client.emit('auth:success', { player })
+client.emit('inventory:update', loadedInventory)  // [NEW: send inventory on login]
+```
 
 ---
 
-## New vs. Modified Components
+## New vs. Modified: Complete Inventory
 
-| Component | Status | Change |
-|-----------|--------|--------|
-| `WorldScene.handleInput()` | MODIFY | Replace `else-if` chain with `resolveDirection()` for 8-key combo support |
-| `WorldScene.moveDelay` | MODIFY | 500ms -> 150ms; extract to `MOVE_DELAY_MS` constant |
-| `WorldScene.updateLocalPlayer()` | MODIFY | `startFollow` lerp from `(1, 1)` to `(0.1, 0.1)` |
-| `WorldScene.updateLocalPlayerSprite()` | MODIFY | Prediction: snap -> 130ms Linear tween; reconcile: keep pattern, increase 50ms -> 80ms |
-| `MovementController` | NO CHANGE | Already handles all 8 directions; reconcile algorithm is correct |
-| `PathfindingController` | NO CHANGE | Already uses full 8-direction `getDirection()`; uses `moveDelay` from constructor |
-| `SpriteAnimationController` | NEW | Maps `Direction` to sprite frame/animation; stateful (tracks last facing); owned by `WorldScene` |
-| `GameGateway.handleMove()` | MODIFY | Rate limit: `< 140` -> `< 125` to match tighter client cadence |
-| `game-logic/movement/validation.ts` | NO CHANGE | All 8 directions already in `DIRECTION_VECTORS` |
-| `shared-types/position.ts` | NO CHANGE | `Direction` type already has all 8 values |
-| `MinimapCamera` | NO CHANGE | Correctly at lerp=1 (instant); should stay that way |
+| File | Status | Change Description |
+|------|--------|--------------------|
+| `packages/items/` | NEW PACKAGE | ItemRegistry, ItemDefinition, all 100 item definitions |
+| `packages/shared-types/src/game/inventory.ts` | MODIFY | Add `HotbarSlot` type; extend `ItemDef` to match `ItemDefinition` |
+| `packages/shared-types/src/network/events.ts` | MODIFY | Add `equipment:change` to `ClientEvents` and `ClientEventType` |
+| `packages/game-logic/src/inventory/` | NEW MODULE | Pure validation: `validateItemUse`, `validateEquip`, `resolveEffect` |
+| `packages/game-logic/src/index.ts` | MODIFY | Export new inventory module |
+| `packages/database/src/schema/inventories.ts` | NO CHANGE | Schema already complete |
+| `packages/database/src/queries/inventory.ts` | NO CHANGE | CRUD already implemented |
+| `apps/game-server/src/inventory/inventory.service.ts` | NEW | In-memory inventory per player; DB persistence |
+| `apps/game-server/src/inventory/inventory.module.ts` | NEW | NestJS module wrapping InventoryService |
+| `apps/game-server/src/game/game.gateway.ts` | MODIFY | Add 5 new `@SubscribeMessage` handlers |
+| `apps/game-server/src/game/game.module.ts` | MODIFY | Import InventoryModule |
+| `apps/game-server/src/game/player.service.ts` | MODIFY | Call `inventoryService.loadForPlayer` in `authenticate()` |
+| `apps/game-server/src/game/game.service.ts` | MODIFY | `handleInteraction` item pickup triggers `inventoryService.pickupItem` |
+| `apps/web/src/store/gameStore.ts` | MODIFY | Add inventory/hotbar state; wire `inventory:update` socket event |
+| `apps/web/src/ui/GameUI.tsx` | MODIFY | Render `InventoryPanel` and `EquipmentPanel` conditionally |
+| `apps/web/src/ui/hud/HUD.tsx` | MODIFY | Render `ActionBar` component |
+| `apps/web/src/ui/hud/ActionBar.tsx` | NEW | 8-slot hotbar; key 1-8 bindings; emits `inventory:use` |
+| `apps/web/src/ui/panels/InventoryPanel.tsx` | NEW | Grid inventory; item slots; context menu for use/drop/equip |
+| `apps/web/src/ui/panels/EquipmentPanel.tsx` | NEW | Equipment slots; exo-suit silhouette; drag-from-inventory |
+| `apps/web/src/game/ui/ZoneHUD.ts` | MODIFY or NO CHANGE | Only if hotbar is kept in Phaser layer (recommend React instead) |
 
 ---
 
@@ -332,44 +531,28 @@ When `WorldScene.moveDelay` changes, `PathfindingController`'s internal delay ch
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| `WorldScene` <-> `MovementController` | Direct method call + `onPositionUpdate` callback | The callback is the seam for sprite updates; reconciling=true/false flag drives tween vs snap behavior |
-| `MovementController` <-> `gameStore` | `useGameStore.getState()` called synchronously | No subscription; reads/writes state directly |
-| `gameStore` socket listeners <-> `WorldScene` | `worldScene.getMovementController()` | gameStore calls into WorldScene on `player:moved`; this coupling is existing and intentional |
-| `WorldScene` <-> `PathfindingController` | Constructor injection of `MovementController` + `moveDelay` | PathfindingController calls `movementController.processInput()` — unchanged at runtime |
-| `WorldScene` <-> `SpriteAnimationController` | Owned and called by WorldScene each frame after direction resolution | WorldScene calls `setFacing(dir)` and (eventually) `playWalkCycle()` |
-| `MovementController` <-> `gameSocket` | Direct `gameSocket.emit` inside controller | Socket is a module-level singleton; no injection needed |
+| `GameGateway` <-> `InventoryService` | Direct method call (NestJS injection) | `InventoryService` injected into `GameGateway` via `GameModule` importing `InventoryModule` |
+| `InventoryService` <-> `game-logic/inventory` | Import and call pure functions | No async; validation is sync. Server imports `@into-the-void/game-logic`. |
+| `InventoryService` <-> `database` | `DatabaseService.getClient()` (existing pattern) | Same pattern as `PlayerService.authenticate()` — inject `DatabaseService` |
+| `InventoryService` <-> `PlayerService` | `PlayerService.getPlayerById()` for player state | `InventoryService` reads player level/stats from `PlayerService` for validation |
+| `gameStore` <-> `socket` | `gameSocket.on('inventory:update', ...)` | Mirrors existing `zone:state` listener pattern in `gameStore.ts` |
+| `ActionBar` (React) <-> `gameSocket` | `gameSocket.emit('inventory:use', ...)` direct call | Same as how `HUD.tsx` calls `toggleInventory()` on `gameStore` |
+| `InventoryPanel` <-> `gameStore` | `useGameStore()` hook for `inventory` state | Same pattern as `ChatPanel.tsx` uses `useGameStore()` for `chatMessages` |
+| `ItemRegistry` <-> `InventoryPanel` | `ItemRegistry.get(item.itemId)` for display data | Client imports `@into-the-void/items` for icon color/name display |
+| `ItemRegistry` <-> `InventoryService` | `ItemRegistry.get(item.itemId)` for validation | Server imports `@into-the-void/items`; same singleton, same data |
+| `EntityRegistry.items` <-> `ItemRegistry` | MIGRATION — existing 4 items move from entity-registry to items package | `EntityRegistry.items` in `shared-types` becomes a thin wrapper or is deleted |
 
-### Critical Interaction: Prediction Tween + Camera Lerp
+### HUD Architecture Decision: React vs. Phaser for ActionBar
 
-When `startFollow` lerp=0.1 is active, Phaser's camera tracks the `localPlayer` container's **live position** (updated continuously by the active tween), not the logical tile center. This means:
+The existing HUD is split:
+- `ZoneHUD.ts` (Phaser): zone name, tier, location text — Phaser Text objects rendered in the game scene
+- `HUD.tsx` (React): health/energy/XP bars, inventory toggle button, chat button — React overlay
 
-1. Prediction fires -> tween starts moving `localPlayer` container toward target tile
-2. Camera lerps toward `localPlayer.x/y` each frame, tracking the tween's intermediate positions
-3. Result: camera appears to glide with the player organically
+**Recommendation: ActionBar as React component in `HUD.tsx`, not Phaser.**
 
-No special coordination is required between the tween and camera systems — `startFollow` uses the live position automatically.
+Rationale: The existing Inventory toggle button is already in `HUD.tsx` as a React button. ActionBar is UI, not game-world content. Keyboard binding (1-8 keys) is easier to handle in React with `useEffect`/`keydown` listeners without interfering with Phaser's input system. Phaser's input system is focused on movement keys — adding hotbar keys there creates coupling.
 
-**Timing math:** At 150ms moveDelay with 130ms tween duration, there is a 20ms idle window between tween completion and next move. If the player holds a key continuously, the next `processInput` fires after 150ms, killing the just-completed tween and starting the next one. Stack risk is minimal.
-
----
-
-## Recommended Project Structure
-
-```
-apps/web/src/game/
-├── systems/
-│   ├── MovementController.ts       [NO CHANGE]
-│   ├── PathfindingController.ts    [NO CHANGE]
-│   ├── HoverController.ts          [NO CHANGE]
-│   └── SpriteAnimationController.ts  [NEW]
-├── scenes/
-│   └── WorldScene.ts               [MODIFY: handleInput, moveDelay, lerp, tween]
-└── rendering/
-    └── MinimapCamera.ts            [NO CHANGE]
-
-apps/game-server/src/game/
-└── game.gateway.ts                 [MODIFY: rate limit 140ms -> 125ms]
-```
+Risk to watch: Phaser captures keyboard focus. Ensure the React `keydown` listener is on `document` (not a div) and check `document.activeElement` to avoid firing hotbar actions while typing in chat.
 
 ---
 
@@ -377,97 +560,129 @@ apps/game-server/src/game/
 
 | Scale | Architecture Adjustments |
 |-------|--------------------------|
-| Current (small playerbase) | Tween approach is fine; Phaser tween manager is efficient at 6-7 tweens/sec per player |
-| ~100 concurrent players/zone | moveDelay reduction (500->150ms) triples `player:moved` broadcast frequency; at 100 players: 100 * 6.67 = 667 events/sec. Well within Socket.IO capacity |
-| ~500+ concurrent players | Consider delta-compression on `player:moved`; currently sends full position each time |
-| 1000+ players/zone | Zone sharding or position update batching; outside scope of this milestone |
+| Current (small playerbase) | In-memory `Map<playerId, Inventory>` in `InventoryService` is fine |
+| ~500 concurrent players | Async DB flush queue (debounce saves by 2-5 seconds); still in-memory |
+| ~5000 concurrent players | Redis as inventory cache instead of in-memory Map; game-server can scale horizontally |
+| Crafting/trading (future) | Item transfer needs transactions; JSONB approach limits atomic multi-player operations — migrate to separate `inventory_items` rows at this point |
 
-### Performance Impact of Tween Approach
+### Database Schema Note
 
-Phaser's tween manager is designed for frequent tween creation/destruction. Killing and restarting tweens at 6.67hz per moving player is trivial. The previous remote player implementation (`movePlayer`) already does this and has not shown performance issues.
+Current schema stores all inventory items as a single JSONB array in one row per character. This is correct for the current milestone. The limitations:
+
+- Can't query "who has item X" efficiently (no indexed item search)
+- Concurrent writes to same player's inventory need application-level locking
+- Fine for single game-server instance (inventory mutations are serialized through `InventoryService`)
+
+Do not change the schema now. The application-level locking via in-memory `InventoryService` handles concurrency correctly for a single server instance.
 
 ---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Changing Position Type to Sub-Tile
+### Anti-Pattern 1: Putting Inventory Logic in GameGateway
 
-**What people do:** Add `subX: number, subY: number` to `Position` to enable fluid, pixel-level movement alongside tile-based logic.
+**What people do:** Add item use validation, effect resolution, and DB writes directly inside the `@SubscribeMessage('inventory:use')` handler in `GameGateway`.
 
-**Why it's wrong:** The entire server validation, reconciliation, pathfinding, and collision system is built on integer tile coordinates. Sub-tile position requires rewriting `validateMovement`, `calculateNewPosition`, A* pathfinding, and zone boundary detection (which relies on integer overflow). It also invalidates the existing sequence-number reconciliation model which assumes discrete tile steps.
+**Why it's wrong:** `GameGateway` already does too much (auth, movement, interaction, chat). Inventory logic grows large. Testing becomes impossible. Mirrors exactly the mistake avoided in the movement system by using `GameService` + `PlayerService`.
 
-**Do this instead:** Keep positions as integer tile coordinates. Visual smoothness is achieved by tweening the sprite between integer positions on the client. The server's authoritative model stays tile-based.
+**Do this instead:** `GameGateway` handlers are thin: authenticate the socket, delegate to `InventoryService`, emit the result. All logic lives in `InventoryService` and `game-logic/inventory`.
 
-### Anti-Pattern 2: Reducing moveDelay Without Adjusting Server Rate Limit
+### Anti-Pattern 2: Optimistic Inventory Updates on Client
 
-**What people do:** Change `WorldScene.moveDelay` to 150ms but leave server rate limit at 140ms.
+**What people do:** Update `gameStore.inventory` immediately on button press, then confirm when server responds.
 
-**Why it's wrong:** Current tolerance buffer = 500ms - 140ms = 360ms. At 150ms client delay: 150ms - 140ms = 10ms. Normal network jitter of 10-15ms will cause the server to reject valid moves as "too fast", triggering `reconcile()` every few tiles, visible as stuttering even when prediction was correct.
+**Why it's wrong:** Inventory has item IDs, quantities, and slot positions that the server may modify differently (stack merging, overflow handling). An optimistic state that differs from server state on rollback causes visual glitches (items briefly disappear/reappear). The cost of optimistic inventory updates does not match the benefit — inventory actions are not latency-sensitive.
 
-**Do this instead:** Lower server rate limit to 125ms when client `moveDelay` is 150ms. This provides a 25ms tolerance which absorbs typical jitter while detecting clients moving at under 125ms (clear speed hacking).
+**Do this instead:** Show a brief "processing" state on the item slot if needed. Wait for `inventory:update` from server. This is the same round-trip as movement — acceptable for non-movement UI.
 
-### Anti-Pattern 3: Applying Camera Lerp to the Minimap
+### Anti-Pattern 3: Duplicating ItemDefinition Between EntityRegistry and ItemRegistry
 
-**What people do:** Apply `lerp=0.1` to `MinimapCamera.startFollow()` for consistency.
+**What people do:** Keep `EntityRegistry.items` in `shared-types` and also create `ItemRegistry` in the new `items` package. Items get defined in two places and diverge.
 
-**Why it's wrong:** The minimap is a spatial orientation tool. Players use it to gauge proximity to zone edges and entities. Camera lag on the minimap creates an "I'm looking at where I was 100ms ago" disorientation and makes the position dot misleading.
+**Why it's wrong:** `EntityRegistry.items` (`ItemConfig`) already has 4 items. If `ItemRegistry` defines those same items differently, any code importing from `entity-registry` gets a different definition than code importing from `items`.
 
-**Do this instead:** Keep `MinimapCamera.startFollow(target, true)` with no lerp. Minimap = instant. Main camera = lerp 0.1.
+**Do this instead:** Migrate the 4 existing `EntityRegistry.items` entries to `ItemRegistry` as the canonical source. Delete or deprecate `EntityRegistry.items`. `EntityRegistry` continues to manage creatures and minerals — only items move.
 
-### Anti-Pattern 4: PathfindingController Using a Different moveDelay Than WorldScene
+### Anti-Pattern 4: HUD ActionBar in Phaser Instead of React
 
-**What people do:** Update `WorldScene.moveDelay` but construct `PathfindingController` with a hardcoded value or forget to update the constructor argument.
+**What people do:** Add hotbar slot rendering to `ZoneHUD.ts` as Phaser Text/Image objects, add key capture to `WorldScene.handleInput()`.
 
-**Why it's wrong:** `PathfindingController` uses `this.moveDelay` internally to schedule `setTimeout(executeNextStep, this.moveDelay)`. If this value differs from `WorldScene.moveDelay`, WASD and click-to-move operate at different speeds. One will violate the server rate limit, triggering reconciliation.
+**Why it's wrong:** Phaser input handling is designed for continuous per-frame polling (movement). Hotbar key presses are discrete events. Mixing them in `WorldScene` creates coupling between movement timing (150ms rate limit) and hotbar use (no rate limit). Phaser Text/Image objects for UI are harder to style than React+CSS.
 
-**Do this instead:** Define `const MOVE_DELAY_MS = 150` as a named constant in `WorldScene.ts` and pass it to both `this.moveDelay = MOVE_DELAY_MS` and `new PathfindingController(controller, MOVE_DELAY_MS, ...)`.
+**Do this instead:** `ActionBar.tsx` is a React component. It registers a `keydown` listener on `document` with explicit guard against chat/input focus states. Styles with CSS variables matching existing `--color-accent` scheme.
 
-### Anti-Pattern 5: Tween Duration >= moveDelay
+### Anti-Pattern 5: Loading Inventory in PlayerService Instead of InventoryService
 
-**What people do:** Set prediction tween duration to 150ms (same as moveDelay).
+**What people do:** Add `getInventory(db, characterId)` call inside `PlayerService.authenticate()` and store it on the `ConnectedPlayer` object.
 
-**Why it's wrong:** If the player holds a key and moves continuously, the new move fires exactly when the previous tween completes. Due to `setTimeout` and `requestAnimationFrame` timing imprecision, tweens may overlap by 5-10ms. `tweens.killTweensOf` handles this, but if duration equals delay exactly, the sprite may never reach the target position before being redirected — creating a "rubber band" drift toward target tiles.
+**Why it's wrong:** Inventory data is separate concern from player presence/authentication. Bloating `ConnectedPlayer` with inventory breaks the single-responsibility of `PlayerService`. Inventory will grow in complexity (slots, equipment, hotbar); this should stay in its own service.
 
-**Do this instead:** Set tween duration to `moveDelay - 20ms` (e.g., 130ms for 150ms delay). The 20ms buffer ensures each tween completes cleanly before the next begins.
+**Do this instead:** `PlayerService.authenticate()` calls `await inventoryService.loadForPlayer(player.id, db)` after creating the player. `InventoryService` handles its own loading logic independently.
 
 ---
 
-## Build Order for Movement Refactor
+## Suggested Build Order
 
-Based on dependency order and multiplayer sync risk (lowest risk first):
+Dependencies flow upward: shared-types and packages must exist before game-server and web can import them. Within each layer, pure/foundational components precede complex ones.
 
-1. **Server rate limit adjustment** — `game.gateway.ts` line 133: `< 140` -> `< 125`. No client changes. Prevents false rejections once client cadence changes.
+### Phase 1: Foundation (packages)
+1. Create `packages/items` package with `ItemRegistry`, `ItemDefinition` types, and registration bootstrap
+2. Define 100 items across 6 categories in `definitions/` — no logic, just data
+3. Migrate `EntityRegistry.items` (4 existing items) into the new registry, delete from entity-registry
+4. Extend `shared-types/game/inventory.ts` with `HotbarSlot` type
+5. Add `equipment:change` to `shared-types/network/events.ts`
+6. Add `packages/game-logic/src/inventory/` with pure validation functions
 
-2. **Extract `MOVE_DELAY_MS` constant and reduce it** — Define `const MOVE_DELAY_MS = 150` in `WorldScene.ts`. Update `this.moveDelay = MOVE_DELAY_MS`. Pass to `PathfindingController` constructor. Verify both WASD and click-to-move fire at same cadence.
+**Verification gate:** All existing tests pass. `ItemRegistry.get('health_vial')` returns correct definition.
 
-3. **8-directional input resolution** — Replace `else-if` chain in `handleInput()` with `resolveDirection()`. Manually test W+D=n, D+S=e, S+A=s, W+A=w plus all 4 single-key diagonals.
+### Phase 2: Server-side InventoryService
+7. Create `apps/game-server/src/inventory/inventory.service.ts`
+8. Create `apps/game-server/src/inventory/inventory.module.ts`
+9. Modify `GameModule` to import `InventoryModule`
+10. Modify `PlayerService.authenticate()` to trigger `inventoryService.loadForPlayer()`
+11. Add `inventory:use`, `inventory:drop`, `inventory:pickup`, `equipment:change` handlers to `GameGateway`
+12. Emit `inventory:update` after each successful mutation
+13. Emit initial `inventory:update` after successful auth
 
-4. **Prediction sprite tween** — Modify `updateLocalPlayerSprite()` prediction branch: instant snap -> 130ms Linear tween. Add `tweens.killTweensOf` before each. Verify tween completes before next move fires.
+**Verification gate:** Test via WebSocket client — auth, then inventory:use for a consumable, expect inventory:update back with decremented quantity.
 
-5. **Camera lerp** — Change `startFollow` lerp from `(1, 1)` to `(0.1, 0.1)` after confirming step 4 looks smooth. Verify minimap camera is untouched.
+### Phase 3: Client state
+14. Add `inventory`, `hotbar` state slices to `gameStore.ts`
+15. Wire `gameSocket.on('inventory:update', ...)` handler in `gameStore.ts`
+16. Wire `gameSocket.on('auth:success', ...)` to also set initial inventory from auth payload
 
-6. **Reconciliation tween tuning** — Increase reconciliation tween from 50ms -> 80ms `Cubic.easeOut`. Test by deliberately causing prediction mismatches (move into collision near boundary).
+**Verification gate:** After login, `useGameStore.getState().inventory` is populated. Confirm in browser devtools.
 
-7. **SpriteAnimationController scaffold** — Create the class, integrate call site in `handleInput()` after direction resolution. Start as a no-op stub. Implement directional frames only when sprite assets have directional variants.
+### Phase 4: React UI components
+17. Build `InventoryPanel.tsx` — grid of 20 slots, item icon + quantity, right-click context menu (use/drop/equip)
+18. Build `EquipmentPanel.tsx` — equipment slot targets, shows equipped item icons
+19. Build `ActionBar.tsx` — 8 slots, key 1-8 bindings, shows assigned hotbar items
+20. Modify `GameUI.tsx` to render `InventoryPanel` and `EquipmentPanel` based on `showInventory`
+21. Modify `HUD.tsx` to render `ActionBar`
+
+**Verification gate:** Open inventory in game, items visible, use a consumable via context menu, see inventory:update reflected.
+
+### Phase 5: Polish + game.service.ts integration
+22. Modify `game.service.ts` `handleInteraction` — pickup case now calls `inventoryService.pickupItem()` and emits both `inventory:update` and `entity:despawn`
+23. Handle `game.service.ts` `handleInteraction` — mineral harvest yields a material item into inventory
+24. Handle disconnect: `inventoryService.unloadForPlayer()` called in `PlayerService.handleDisconnect()`
 
 ---
 
 ## Sources
 
-- Phaser 3 Official Docs — Camera concepts: https://docs.phaser.io/phaser/concepts/cameras
-- Phaser 3 API — camera.startFollow: https://newdocs.phaser.io/docs/3.60.0/focus/Phaser.Cameras.Scene2D.Camera-startFollow
-- Phaser 3 API — camera.lerp: https://newdocs.phaser.io/docs/3.80.0/focus/Phaser.Cameras.Scene2D.Camera-lerp
-- Client-side prediction smoothing pattern: https://www.gamedev.net/forums/topic/658931-smoothing-corrections-to-client-side-prediction/5168001/
-- Tile-based MMO movement networking tradeoffs: https://gamedev.net/forums/topic/604243-mmomultiplayer-movement/4824164
-- Client-side prediction algorithm: https://en.wikipedia.org/wiki/Client-side_prediction
-- Colyseus + Phaser 3 interpolation tutorial: https://learn.colyseus.io/phaser/3-client-predicted-input.html
-- Codebase: `apps/web/src/game/scenes/WorldScene.ts` (direct audit)
-- Codebase: `apps/web/src/game/systems/MovementController.ts` (direct audit)
-- Codebase: `apps/web/src/game/systems/PathfindingController.ts` (direct audit)
-- Codebase: `apps/game-server/src/game/game.gateway.ts` (direct audit)
-- Codebase: `packages/game-logic/src/movement/validation.ts` (direct audit)
-- Codebase: `packages/shared-types/src/core/position.ts` (direct audit)
+- Codebase: `packages/tiles/src/registry.ts` — TileRegistry singleton pattern (direct audit)
+- Codebase: `packages/tiles/src/types.ts` — TileDefinition interface (direct audit)
+- Codebase: `packages/shared-types/src/game/inventory.ts` — existing Inventory types (direct audit)
+- Codebase: `packages/shared-types/src/network/events.ts` — existing socket events (direct audit)
+- Codebase: `packages/database/src/schema/inventories.ts` — JSONB schema (direct audit)
+- Codebase: `packages/database/src/queries/inventory.ts` — existing CRUD (direct audit)
+- Codebase: `apps/game-server/src/game/player.service.ts` — in-memory Map pattern (direct audit)
+- Codebase: `apps/game-server/src/game/game.gateway.ts` — event handler pattern (direct audit)
+- Codebase: `apps/web/src/store/gameStore.ts` — Zustand state shape + socket listener pattern (direct audit)
+- Codebase: `apps/web/src/ui/GameUI.tsx` — panel rendering pattern (direct audit)
+- Codebase: `apps/web/src/network/socket.ts` — `inventory:update` already listed in serverEvents (direct audit)
 
 ---
-*Architecture research for: Into the Void — movement system overhaul (smooth movement, 8-directional input, camera interpolation)*
+*Architecture research for: Into the Void — inventory & items system (v1.6)*
 *Researched: 2026-02-17*

@@ -1,25 +1,29 @@
-# Feature Research: Movement System Overhaul
+# Feature Research: Inventory & Item System
 
-**Domain:** Isometric grid-based MMO movement (Into the Void)
+**Domain:** Survival MMO inventory, equipment, and item management (Into the Void)
 **Researched:** 2026-02-17
-**Confidence:** HIGH (codebase direct inspection + Tibia official docs + Phaser API docs; MEDIUM for competitor behavior patterns via community sources)
+**Confidence:** HIGH (codebase direct inspection + lore alignment + reference game analysis; MEDIUM for competitor UX patterns via community sources)
 
 ---
 
 ## Existing System Baseline
 
-What already exists — research does not re-propose these.
+What is already built — research does not re-propose these.
 
-| Component | Current State | Problem |
-|-----------|---------------|---------|
-| WASD keyboard | W→NW, A→SW, S→SE, D→NE (4 diagonal-only) | Tiles directly N/S/E/W of player are unreachable via keyboard |
-| Click-to-move | A* pathfinding, cardinal-only neighbors, 150ms step delay | Works correctly; path visualization at destination diamond only |
-| Client-side prediction | Sequence-replay reconciliation in `MovementController.ts` | Correct; architecture must not break |
-| Camera follow | `startFollow(player, true, 1, 1)` — lerp = 1,1 = instant snap | Camera jumps on each tile step; visible jitter |
-| Tile hover highlight | `HoverController` calls `isoTransform.screenToTile()` | Ignores elevation; highlight is visually offset on raised tiles |
-| Sprite movement | Normal movement snaps sprite directly; reconciliation uses 50ms tween | No visible sliding between tiles during normal movement |
-| Movement speed | WASD `moveDelay = 500ms`, pathfinding `moveDelay = 150ms` | Inconsistent — character speed differs depending on input method |
-| Tile speed multiplier | `movementSpeed` field exists on tile definitions, shown in tile info popup | Field is never applied to movement delay |
+| Component | Current State | Notes |
+|-----------|---------------|-------|
+| `ItemDef` type | `inventory.ts`: id, name, description, category, rarity, maxStack, baseValue, weight, requiredLevel | Foundation exists |
+| `InventoryItem` type | instanceId, itemId, quantity, slot, properties (open Record) | Slot-based, generic properties bag |
+| `Inventory` type | items[], maxSlots (default 20), equipment (Partial<Record<EquipmentSlot, InventoryItem>>) | DB schema mirrors this |
+| `EquipmentSlot` type | head, chest, legs, feet, hands, mainHand, offHand, accessory1, accessory2 | Classic MMO slots; does NOT map to exo-suit concept yet |
+| DB schema | `inventories` table: items (jsonb), maxSlots (integer), equipment (jsonb) | Functional; stores state |
+| DB queries | createInventory, getInventory, updateInventoryItems, updateEquipment, updateInventory | Full CRUD exists |
+| Socket events | `inventory:use`, `inventory:drop`, `inventory:pickup` (client); `inventory:update` (server) | Wire layer declared; not yet implemented |
+| `ItemCategory` type | weapon, armor, tool, consumable, material, quest, misc | Does NOT match the project's exo-suit category model yet |
+| Entity ground items | `ItemEntity` type with despawnAt timestamp | Declared; despawn logic not confirmed implemented |
+| `EntityRegistry` items | health_vial, energy_cell, void_essence, ancient_key | Placeholder stubs only |
+
+**Gap summary:** The data model scaffolding exists but uses generic MMO archetypes (head/chest/legs/feet armor). The lore specifies exo-suits with module slots, tools with specialization stats, and faction-specific equipment — none of which maps to the current schema. The socket wire layer is declared but unimplemented. The item registry is stub data.
 
 ---
 
@@ -27,110 +31,157 @@ What already exists — research does not re-propose these.
 
 ### Table Stakes (Users Expect These)
 
-Features players in this genre (Tibia, Albion Online, PoE2, Minecraft Dungeons) assume exist.
-Missing these makes the game feel broken or unfinished.
+Features players in this genre (No Man's Sky, Tibia, WoW, Albion Online, ARK) assume exist.
+Missing these makes inventory feel broken or unfinished.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Full 8-direction WASD (cardinal + diagonal) | Tibia supports 8 directions (numpad 7/9/1/3 for diagonals, hotkey-bindable). PoE2 full WASD has 8 directions. Any isometric grid game needs all 8 to reach every tile without click-to-move. Current 4-diagonal WASD fails to reach N/S/E/W tiles. | LOW | Map W→N, S→S, A→W, D→E as cardinal. Add dual-key pairs: WA→NW, WD→NE, SA→SW, SD→SE. Requires detecting two keys simultaneously in same `handleInput()` frame. `Direction` type already supports all 8. `DIRECTION_VECTORS` already has correct dx/dy for all 8. No type or logic changes needed in shared packages. |
-| Consistent movement speed (WASD = click-to-move) | Players who switch input modes expect the same character speed. 500ms vs 150ms delay is jarring — character visibly moves 3x slower on keyboard vs mouse. | LOW | Unify `moveDelay` to a single constant. Both `WorldScene.handleInput()` and `PathfindingController` constructor must use the same value. Recommend 150ms (current pathfinding rate) as the unified baseline — fast enough to feel responsive without overwhelming server at sustained input. |
-| Smooth camera follow (lerp, not snap) | Every reference game has smooth camera tracking. Snap makes the game look low-quality. Tibia has a snap-follow (notoriously criticized), but even Tibia's successor Open Tibia clients implement smooth follow. | LOW | Phaser `startFollow` already called with `(player, true, 1, 1)`. Change lerp from `1` to `0.08–0.12`. Value 0.1 is a safe starting point — camera lags slightly behind player, reducing jitter. No structural change; only parameter values change. |
-| Accurate tile hover with elevation | Players expect the cursor highlight to match the tile visually under the mouse, not a flat projection behind a raised surface. Already partially solved: click-to-move uses `screenToTileWithElevation()`. Hover uses flat `screenToTile()`. | LOW | `HoverController.update()` calls `isoTransform.screenToTile()`. Replace this one call with `isoTransform.screenToTileWithElevation()` using the elevation callback pattern from `WorldScene`. The method already exists and is correct. This is a bug fix, not a new feature. |
-| Tile-to-tile movement animation (walk tween) | Smooth sprite sliding between tiles is standard. Tibia slides sprites between grid positions. Minecraft Dungeons lerps movement. Without it, the character teleports each step, which looks broken and makes grid-movement feel worse than it is. | MEDIUM | Add a tween in `updateLocalPlayerSprite()` for normal (non-reconciliation) movement: tween from current sprite position to new tile screen position over `moveDelay` duration. Currently the reconciliation path uses a 50ms tween; the normal path snaps directly (line 997-999 in WorldScene). Tween duration should equal `moveDelay`. Key risk: tween must complete before next input is processed, or queue must be managed. |
+| **Bag inventory with fixed grid slots** | Every MMO has a fixed-slot inventory UI. Players expect to see their carried items in a grid, drag items to rearrange, and know exactly how many slots remain. Current schema has maxSlots=20, data exists — just no UI. | MEDIUM | Grid UI in React HUD. The slot-indexed data model already matches. Drag-and-drop via mouse. Keyboard-accessible alternative (click to select, click slot to move). Min 20 slots; rarity system implies expansion later. |
+| **Equipment panel with dedicated slots** | Players expect to see what their character has equipped, separate from carried inventory. In a sci-fi survival MMO, this maps to the exo-suit body. Current schema has equipment as a flat slot map — must be reshaped to exo-suit model. | MEDIUM | Equipment panel shows the equipped exo-suit + module slots + active tool. The existing `EquipmentSlot` type (head/chest/legs/feet) conflicts with lore exo-suit model. Needs new slot taxonomy: `exosuit`, `module_1..N` (count = rarity-driven), `tool`, `accessory1`, `accessory2`. |
+| **Pick up items from ground** | Players expect to walk over a world item and collect it. `inventory:pickup` event is already declared on the client. ItemEntity exists with `despawnAt`. Ground items must flow into inventory slots. | MEDIUM | Server handles `inventory:pickup`: validates player proximity, checks inventory space, removes ItemEntity from zone, adds InventoryItem to player inventory, broadcasts `entity:despawn` + `inventory:update`. |
+| **Use / consume consumables** | Consumables (suit repair kits, buffs) must be usable from inventory. `inventory:use` event declared. | LOW | Server handles `inventory:use`: validates item is consumable, applies effect (health restore, buff duration), removes from inventory. Client needs visual feedback (consume animation, stat bar update). |
+| **Drop items to ground** | Players expect to drop unwanted items. `inventory:drop` declared. Ground item spawns as ItemEntity. | LOW | Server handles `inventory:drop`: removes from inventory, spawns ItemEntity at player position with 5-minute despawn timer. ItemEntity is broadcast to zone. |
+| **Item tooltips** | Hovering an item shows name, description, rarity color, stats, required level, weight. Standard in every MMO. | LOW | React tooltip component. Data comes from item definition (fetched by itemId from registry). Rarity colors: Common=grey, Uncommon=green, Rare=blue, Epic=purple, Legendary=orange. |
+| **Rarity color coding** | Color-coded rarity is universal language (WoW set this standard). Players recognize green=uncommon, blue=rare without reading labels. | LOW | Apply rarity color to item name in tooltip, item border in grid slot. No gameplay change — pure visual signal. |
+| **Required level gate** | Items with `requiredLevel > player.level` must show as unusable (greyed out) and rejected on equip attempt. Standard in all MMOs. | LOW | Client greys out item. Server rejects equip with error. Uses existing `requiredLevel` field on `ItemDef`. |
+| **Inventory weight or slot limit** | Players need to understand capacity. Two models: slot count (Tibia/WoW) or weight (ARK/survival games). For this game, slot count is recommended (simpler UX, already in schema). | LOW | Display `{used}/{maxSlots}` in inventory UI. Server rejects pickup when at capacity. Weight field exists on ItemDef but using it as primary constraint adds friction for a sci-fi game (exo-suits don't "weigh" items the same way). |
+| **Stackable materials** | Crafting reagents must stack (e.g., 200x Void Stone in one slot) or inventory fills instantly after 30 minutes of mining. WoW moved to 1000-stack sizes for materials in Dragonflight for this reason. | LOW | `maxStack` field already exists on `ItemDef`. Materials/reagents: maxStack=999. Consumables: maxStack=20. Equipment: maxStack=1. Logic: when picking up, merge into existing stack if same itemId and under maxStack, else new slot. |
+| **Action bar / hotbar** | A quick-access bar for consumables, tools, and deployable items. Standard in MMOs and survival games. BitCraft added this in 2025 explicitly because players expected it. Allows using items without opening inventory. | MEDIUM | 8-slot hotbar in HUD (persistent, not hidden in inventory panel). Player drags items from inventory to hotbar slots. Number keys 1-8 activate. Relevant for consumables and deployables. Equipment (exo-suit) does not go in hotbar — it goes in equipment panel. |
+
+---
 
 ### Differentiators (Competitive Advantage)
 
-Features that set Into the Void apart. Build after table stakes are solid.
+Features that fit Into the Void's specific sci-fi survival + corporate faction identity. Build after table stakes are solid.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Terrain-speed movement (tile movementSpeed) | Slow tiles (swamp, debris, sand) feel tactically meaningful. Fast tiles reward exploration. `movementSpeed` field already exists on tile definitions and displays in the tile info popup — it just is not applied to movement. | MEDIUM | Apply `tileDef.movementSpeed` multiplier to `moveDelay` when stepping onto a tile: `effectiveDelay = moveDelay / movementSpeed`. A tile with `movementSpeed: 0.5` doubles the delay (slower); `movementSpeed: 2.0` halves it (faster). Client applies on prediction; server must apply same multiplier in game-logic or prediction diverges. Requires server-side change. |
-| Path visualization with step dots | Showing the full route (not just destination diamond) helps players understand navigation around obstacles. Currently only the destination tile is highlighted in green. | LOW | In `PathfindingController.drawPath()`, iterate `currentPath` and draw a small dot at each waypoint using `isoTransform.gridToScreen()`. All infrastructure is in place. Pure client-side visual; no server changes. |
-| Keyboard facing-without-moving (Ctrl+direction) | Tibia supports "face direction without moving" via Ctrl+arrow. Useful when directional combat or emotes are added. Adds tactical depth without movement complexity. | LOW | Intercept Ctrl+WASD in `handleInput()`. Send a `player:face` event instead of `player:move`. No position change. Server updates facing field. Only worthwhile once the roadmap adds directional combat or emotes — defer until then. |
-| Run/walk toggle (sprint mode) | A second speed tier adds tactical texture and is common in survival MMOs. | HIGH | Requires stamina system, server-side dual-rate validation, and different animation frames. Do not build in this milestone. High coupling across systems not yet built. |
+| **Exo-suit with module slots (rarity-driven slot count)** | The lore explicitly defines exo-suits as the core equipment layer. Common exo-suit = 2 module slots. Legendary = 5+ module slots. This creates meaningful rarity progression: a Legendary suit is not just "better stats" — it enables fundamentally different loadouts (e.g., 5 Speed modules vs 2). No Man's Sky's exosuit tech slot system validated this model — players expand capability by unlocking slots, not just upgrading numbers. | HIGH | New `ExoSuit` item subtype. Properties include: `moduleSlots: number` (derived from rarity: Common=2, Uncommon=3, Rare=3, Epic=4, Legendary=5). Equipment schema change: replace `chest` slot with `exosuit` slot. Add `modules: InventoryItem[]` array (up to moduleSlots length). Module items are their own item type: `ArmorModule`, `SpeedModule`, `LifeSupportModule`, `SensorArrayModule`, `PowerCoreModule`, `MobilityModule`. Each module provides a stat bonus that stacks (within cap). Server must validate module count does not exceed suit's `moduleSlots`. |
+| **Tool specialization stats (Research / Combat / Mining)** | Tools are not generic. A Mining Tool increases mineral yield. A Research Tool increases discovery XP. A Combat Tool affects damage. This binds gear choices to playstyle and makes tools feel meaningful beyond just "tier unlocks new nodes." | MEDIUM | New `Tool` item subtype. Properties include: `toolType: 'mining' | 'combat' | 'research'` and `specializationStats: { miningYield?: number, combatDamage?: number, researchXP?: number }`. Tool goes in `tool` equipment slot. Stats applied server-side when relevant action is performed. Tool tier (1-4) controls which minerals/interactions are accessible (already modeled via `requiredTier` on `MineralConfig`). |
+| **Item level (ilvl) system** | ilvl gives players a single number to compare item power across categories. WoW established this as the universal "is this an upgrade?" signal. Survival MMOs like Albion use item tier equivalents. Provides clear progression gates: Tier II zones require ilvl 20+ exo-suit, etc. | MEDIUM | `ilvl: number` field on `ItemDef`. Derived from: base tier (1-4) × rarity multiplier (1.0/1.2/1.5/1.8/2.2 for Common→Legendary). Display in item tooltip. Server uses player's equipped exo-suit ilvl as one factor for zone access recommendations. Does not hard-block zones (lore says corporations don't recover bodies — freedom to enter) but shown as recommended level. |
+| **Faction-specific item variants** | Verdant Dynamics, Helix Extraction, Nexus Frontiers each have distinct aesthetics and lore (green bioengineering, industrial brutalism, corporate modular). Faction-locked gear creates identity and drives inter-player trading (Nexus traders selling Helix gear to Verdant players). | HIGH | `factionId?: FactionId` field on `ItemDef`. Faction items: equipped only by that faction (or cost faction standing to cross-equip). Visual tinting applied to item icon by faction color. Do NOT build in the first inventory milestone — gate behind faction standing system. Flag as v2+. |
+| **Deployables as inventory items** | World items: explosives, seeds, deployable structures (as per project context). These are carried in inventory and placed in the world, creating an ItemEntity → Structure conversion. Ties into the base-building / farming progression the lore hints at. | HIGH | `WorldItem` item subtype with `deployable: true` and `structureTypeId: string`. Using a deployable item from action bar emits `player:deploy` event. Server removes from inventory, creates Structure entity at player position. Do NOT build in first inventory milestone — requires structure placement system. Flag as v2+. |
+| **Discovery-triggered item unlocks** | The lore heavily emphasizes exploration and discovery as core verbs. When a player finds a new species/mineral, they should unlock the ability to craft reagents from it. Links inventory to the `discoveries` DB table that already exists. | MEDIUM | `discoveryRequired?: string` field on `ItemDef` (references a discoveryId). Server blocks crafting/equipping this item until discovery is logged. The `discoveries` schema already exists — this is an integration, not new infrastructure. Flag for the crafting milestone, not the first inventory milestone. |
+
+---
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Free-movement (non-grid) WASD | Players from Diablo/PoE want analog feel | Breaks the client-side prediction model. Server validates per-tile steps using discrete positions. Free movement requires physics-based position sync (continuous coordinates), fundamentally changing the networking architecture. The grid is load-bearing for this game. | Tile-to-tile tweens give the visual feel of free movement while keeping grid positions authoritative. This is the correct answer. |
-| Camera rotation (rotating isometric view) | Players may want to see behind structures | Sprites are drawn for one fixed angle (isometric oblique projection). Rotating the camera would show wrong sprite faces. All 96x96 sprites would need 4 rotations. Structure tiles would need side-face variants for each direction. Art budget is prohibitive. | Fixed camera is correct for this game. Tibia and Minecraft Dungeons both use fixed isometric angle — it is part of visual identity. |
-| Pathfinding across zone boundaries | Players expect click-to-move to work across zone borders | Zone transitions require a server-side zone handoff and loading the adjacent zone's collision map client-side before pathfinding. A* runs within a single `ZONE_SIZE` grid. Cross-zone pathfinding needs a multi-zone graph with high network and memory cost for a feature players rarely need. | Cancel pathfinding at zone edge (current behavior). Add a "cannot path across zones" cursor or message. This is Tibia's model — click in adjacent zone, character walks to border and stops. |
-| Diagonal A* pathfinding (8-neighbor A*) | Shorter, more natural-looking paths | The current A* uses cardinal-only neighbors (4-directional). Adding diagonals produces mixed cardinal+diagonal step paths. Server validation and reconciliation treat diagonal steps (NE/NW/SE/SW) differently — a diagonal move is still one tile per step but diagonal. Mixing diagonal steps into pathfinding requires server validation to accept diagonal moves mid-path, which is untested. Do not combine with the WASD diagonal fix in the same phase — the WASD fix adds diagonal steps for keyboard only; pathfinding is a separate system. | Keep pathfinding cardinal-only for now. Investigate diagonal A* as a separate tracked item after movement overhaul is stable. |
-| Scroll zoom | Players may want to zoom in/out | Already commented out in WorldScene (scroll wheel zoom was disabled). Zoom changes break the viewport culler bounds and tile visibility calculations. Isometric tile alignment at non-1.5x zoom creates visual glitches. | Fixed 1.5x zoom is correct. If zoom is needed, it is a separate milestone that requires auditing viewport culling. |
+| **Weight-based inventory limit** | "Realistic" — heavy armor should slow you down. ARK uses weight. | Weight adds cognitive overhead without meaningful choice in a sci-fi game where exo-suits are the body. Players optimize by min-maxing carry weight, not making interesting decisions. Adds server load (recalculate weight on every pickup). The `weight` field exists on `ItemDef` — preserve it for future use but do NOT use it as the primary inventory constraint at launch. | Slot-based limit (already in schema). Weight field kept for future encumbrance penalty system (slow movement, not hard block) if it fits the survival mechanics milestone. |
+| **Durability degradation on all equipment** | Common in survival games (ARK, DayZ). Creates a resource sink. | In a sci-fi MMO with exo-suits and modules, durability on every item creates constant maintenance friction that drives away casual players. It works in ARK because crafting replacement gear is fast. Here, Legendary exo-suits require significant effort to obtain — making them degrade destroys the reward loop. | Durability for consumable-tier items only (suit repair kits confirm this pattern from project context: consumable = repair, not constant upkeep). Exo-suits degrade only in specific high-damage scenarios (future combat milestone decision). |
+| **Loot auto-equip (equip if better)** | Reduces inventory micromanagement. Convenient. | In a module-slot system, "better" is not a single number — a Common suit with a specific module might be more valuable than an Epic suit in a different build. Auto-equip breaks player agency over modular loadout choices. Also unsafe in PvP/PvE contexts (auto-equipping mid-combat). | Show a "This item is better than equipped" indicator in tooltip. Player decides. |
+| **Unlimited inventory via bags** | Players hate running out of inventory. Common request. | Unlimited inventory trivializes the survival tension of "do I mine more or go back to base?" which is a core loop in survival MMOs. Also creates unbounded server-side state size (a player with 10,000 items creates memory/query problems). | Expand maxSlots via gameplay progression (unlock more storage through crafting/building, e.g., personal storage crate at base). This is the correct model for survival games. |
+| **Real-time inventory sync (broadcast all changes to zone)** | Players want to see what others are carrying. Creates social dynamics. | Broadcasting every pickup/drop/equip event to all zone occupants is O(players × events) traffic. In a zone with 50 players actively mining, this creates significant WebSocket noise. Also raises privacy concerns (players can track rival faction member inventories). | Sync only what matters to others: equipment appearance changes (exo-suit tier visible on player sprite), ground items entering/leaving zone. Inventory contents remain private. |
+| **Cross-character shared stash** | Account-wide storage pool for crafting materials. Convenient. | Encourages alt-character farming (players create multiple characters purely for extra storage), which inflates player counts without adding real engagement. Also requires API-level account stash access, complicating the current per-character architecture significantly. | Per-character storage. Consider faction warehouse as a community shared storage at a hub location — this has lore justification (corporations store resources centrally) and adds social gameplay without corrupting the per-character model. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Full 8-direction WASD]
-    └──requires──> [Consistent movement speed]
-                   (cannot unify delays if WASD is still wrong; fix mapping first, then unify)
+[Bag Inventory UI]
+    └──requires──> [Item Tooltip]
+                   (tooltip appears on hover; needed for usability)
+    └──requires──> [Ground Pickup]
+                   (nothing to show in inventory unless pickup works)
 
-[Tile-to-tile movement animation]
-    └──requires──> [Consistent movement speed]
-                   (tween duration = moveDelay; must be unified or tween duration is ambiguous)
-    └──enhances──> [Smooth camera follow]
-                   (sprite tween + camera lerp work together; without tween, camera lerp alone looks odd)
+[Equipment Panel]
+    └──requires──> [Bag Inventory UI]
+                   (equip is drag from bag to equipment slot)
+    └──requires──> [Exo-Suit item type]
+                   (panel shows nothing meaningful without exo-suit items)
 
-[Accurate tile hover with elevation]
-    └──uses──> [IsometricTransform.screenToTileWithElevation]
-               (already built and tested in click-to-move; hover just needs to call it)
+[Exo-Suit Module Slots]
+    └──requires──> [Equipment Panel]
+                   (module slots are sub-panel of equipment panel)
+    └──requires──> [Module item definitions]
+                   (ItemDef entries for ArmorModule, SpeedModule, etc.)
 
-[Terrain-speed movement]
-    └──requires──> [Consistent movement speed]
-                   (baseline moveDelay must be unified before applying multipliers)
-    └──requires──> [Server-side tile speed validation]
-                   (client prediction and server must apply same multiplier or diverge)
+[Action Bar / Hotbar]
+    └──requires──> [Bag Inventory UI]
+                   (player drags from inventory to hotbar)
+    └──enhances──> [Consumable Use]
+                   (consumables become useful when hotbar gives quick access)
 
-[Path visualization with step dots]
-    └──requires──> nothing new
-                   (PathfindingController.drawPath() is the right place; isoTransform already available)
+[Consumable Use]
+    └──requires──> [Ground Pickup]
+                   (must be able to obtain consumables first)
 
-[Keyboard facing-without-moving]
-    └──requires──> [Directional facing field on player entity]
-                   (facing is not currently tracked separately from movement direction)
-    └──requires──> [Directional combat or emotes in roadmap]
-                   (feature has no value without a consumer)
+[Tool Specialization Stats]
+    └──requires──> [Equipment Panel: tool slot]
+    └──requires──> [Mining/interaction system to apply stats to]
+                   (stats are meaningless without actions that consume them)
 
-[Run/walk toggle]
-    └──requires──> [Terrain-speed movement]
-                   (shares delay modification infrastructure)
-    └──requires──> [Stamina system] (not yet built)
+[Item Level (ilvl)]
+    └──requires──> [Rarity system]
+                   (ilvl is derived from tier × rarity multiplier)
+    └──enhances──> [Equipment Panel]
+                   (ilvl displayed per-slot in equipment panel)
+
+[Deployables]
+    └──requires──> [Action Bar]
+                   (deployed from hotbar, not inventory grid)
+    └──requires──> [Structure placement system]
+                   (not yet built — defer to structure milestone)
+
+[Faction-specific items]
+    └──requires──> [Faction standing system]
+                   (not yet built — defer)
+
+[Discovery-triggered unlocks]
+    └──requires──> [discoveries DB table]
+                   (already exists — integration possible in crafting milestone)
+    └──requires──> [Crafting system]
+                   (not yet built)
+
+[Stack merge on pickup]
+    └──requires──> [Ground Pickup]
+                   (merge logic runs during pickup handling)
 ```
 
 ### Dependency Notes
 
-- **8-direction WASD requires consistent speed first:** Adding NE/NW/SE/SW keys via dual-key detection is trivial, but the unification of moveDelay is a prerequisite so the player doesn't experience different speeds on diagonal vs cardinal WASD keys (if the server throttles differently).
-- **Tile animation requires unified moveDelay:** The tween `duration` must equal `moveDelay`. If the two systems have different delays, one of them will show the sprite arriving before the next input is accepted (visual stutter) or after (sprite overshoots).
-- **Camera lerp + sprite tween are complementary:** Camera lerp alone causes noticeable lag between logical position and camera center. Sprite tween alone with snap camera creates a "rubber band" effect. Both together create the smooth feel seen in reference games.
-- **Terrain speed requires server changes:** This is the only table-stakes-adjacent feature that touches the server. All other P1 features are pure client changes.
+- **Equipment panel requires exo-suit items to be meaningful:** Building the panel with only the current head/chest/legs/feet schema gives players empty slots that don't match lore. Define the exo-suit item type before building the equipment UI or the UI will need a rewrite.
+- **Action bar is not a prerequisite for inventory:** Inventory grid and equipment panel can ship first. Action bar is a second pass that wires consumables and deployables to keyboard shortcuts.
+- **Ground item despawn timer already in schema:** `ItemEntity.despawnAt` exists. 5 minutes is the conventional timeout (validated by OSRS 3-minute model; survival games typically 5-15 minutes depending on item value). Implement server-side cleanup via zone tick.
+- **Module slots are a schema migration:** The current `equipment` jsonb stores a flat slot map. Adding `modules` as an array requires a schema change. Do this before any UI is built — schema migrations are the highest-risk operation for the existing data.
 
 ---
 
 ## MVP Definition
 
-This is a movement system overhaul milestone. Scope is narrow — five P1 features, all client-side.
+### Launch With (first inventory milestone — v1 of the system)
 
-### Launch With (this milestone)
+These features establish the complete basic loop: pick up → manage → equip → use.
 
-- [ ] **Full 8-direction WASD** — The stated problem is unsolved without this. Keyboard players cannot reach all tiles.
-- [ ] **Consistent movement speed** — Required alongside the WASD fix. 500ms vs 150ms is perceptibly broken.
-- [ ] **Smooth camera follow** — One parameter change. High visual impact, zero risk.
-- [ ] **Accurate tile hover with elevation** — Bug fix. Hover is visually wrong today on elevated terrain.
-- [ ] **Tile-to-tile movement animation** — The highest-impact "feel" improvement. Makes movement look intentional.
+- [ ] **Ground pickup** — `inventory:pickup` handler on server. Proximity check, inventory space check, ItemEntity despawn, `inventory:update` broadcast.
+- [ ] **Item drop** — `inventory:drop` handler. Create ItemEntity at player position with 5-minute `despawnAt`.
+- [ ] **Consumable use** — `inventory:use` handler. Apply health/energy effect. Remove from inventory.
+- [ ] **Stack merge logic** — On pickup, merge stackable items into existing slots up to maxStack before opening new slots.
+- [ ] **Bag inventory UI** — Grid panel (20 slots). Show item icon/color by rarity. Drag to rearrange. Show slot count.
+- [ ] **Item tooltip** — Name (rarity color), description, category, rarity, ilvl, requiredLevel, weight.
+- [ ] **Exo-suit schema definition** — New ItemDef subtypes: ExoSuit (with moduleSlots), Module types (6 variants), Tools (3 types). Migrate `equipment` schema from head/chest/legs/feet to exosuit/modules[]/tool/accessory1/accessory2.
+- [ ] **Equipment panel UI** — Show equipped exo-suit, module slots (count matches suit rarity), tool slot, 2 accessory slots. Equip by dragging from bag.
+- [ ] **Required level enforcement** — Server rejects equip if `player.level < item.requiredLevel`. Client greys out item.
+- [ ] **Action bar (8 slots)** — HUD hotbar below health/energy bars. Number keys 1-8. Drag consumables/deployables from inventory. Consumable use from hotbar fires `inventory:use`.
 
-### Add After Validation (v1.x, same milestone if time permits)
+### Add After Validation (v1.x — second inventory milestone)
 
-- [ ] **Terrain-speed movement** — Add when server team can coordinate. Client-side: read `movementSpeed` from tile. Server-side: apply same multiplier in game-logic.
-- [ ] **Path visualization with step dots** — Pure visual polish. Improves pathfinding UX with no risk.
+- [ ] **Tool specialization stats** — Apply `specializationStats` from equipped tool during mining/research/combat interactions. Requires coordination with the first phase of each of those systems.
+- [ ] **Item level display** — Compute and display ilvl in tooltip and equipment panel. Requires ilvl formula to be agreed on.
+- [ ] **Seed entity in item registry** — Populate EntityRegistry with actual item definitions for all 6 module types, 3 tool types, consumables (suit repair, 2 buff types). Replace placeholder stubs.
+- [ ] **Ground item expiry UI** — Show despawn countdown on ItemEntity hover. Prevents "why did my item disappear?" confusion.
 
-### Future Consideration (v2+)
+### Future Consideration (v2+ — defer)
 
-- [ ] **Keyboard facing-without-moving** — Only useful once directional combat or emotes exist in the roadmap.
-- [ ] **Run/walk toggle** — Requires stamina system. Defer until survival mechanics milestone.
-- [ ] **Diagonal A* pathfinding** — Requires server validation changes. Coordinate separately after movement milestone is stable.
+- [ ] **Faction-specific item variants** — Gate behind faction standing system (not yet designed).
+- [ ] **Deployables** — Gate behind structure placement system (not yet designed).
+- [ ] **Discovery-triggered unlocks** — Gate behind crafting system (not yet designed).
+- [ ] **Faction warehouse (shared storage)** — Social feature. Gate behind guild/faction progression milestone.
+- [ ] **Weight-based encumbrance (not hard limit)** — Optional future survival mechanic; `weight` field preserved for this.
+- [ ] **Inventory slot expansion via crafting** — Player builds storage infrastructure at base to expand personal capacity.
 
 ---
 
@@ -138,68 +189,95 @@ This is a movement system overhaul milestone. Scope is narrow — five P1 featur
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Full 8-direction WASD | HIGH | LOW | P1 |
-| Consistent movement speed | HIGH | LOW | P1 |
-| Smooth camera follow | HIGH | LOW (one param change) | P1 |
-| Accurate tile hover with elevation | MEDIUM (bug fix) | LOW (one method swap) | P1 |
-| Tile-to-tile movement animation | HIGH | MEDIUM | P1 |
-| Terrain-speed movement | MEDIUM | MEDIUM + server | P2 |
-| Path visualization with step dots | LOW | LOW | P2 |
-| Keyboard facing-without-moving | LOW | LOW | P3 |
-| Diagonal A* pathfinding | MEDIUM | MEDIUM + server | P3 |
-| Run/walk toggle | MEDIUM | HIGH + new systems | P3 |
+| Ground pickup | HIGH | MEDIUM | P1 |
+| Item drop | HIGH | LOW | P1 |
+| Consumable use | HIGH | LOW | P1 |
+| Stack merge logic | HIGH | LOW | P1 |
+| Bag inventory UI | HIGH | MEDIUM | P1 |
+| Item tooltip | HIGH | LOW | P1 |
+| Exo-suit schema definition | HIGH (foundational) | MEDIUM | P1 |
+| Equipment panel UI | HIGH | MEDIUM | P1 |
+| Required level enforcement | MEDIUM | LOW | P1 |
+| Action bar / hotbar | HIGH | MEDIUM | P1 |
+| Tool specialization stats | MEDIUM | MEDIUM | P2 |
+| Item level (ilvl) | MEDIUM | LOW | P2 |
+| Item registry population | HIGH | LOW | P2 |
+| Ground item expiry UI | LOW | LOW | P2 |
+| Faction-specific items | MEDIUM | HIGH | P3 |
+| Deployables | HIGH | HIGH | P3 |
+| Discovery-triggered unlocks | MEDIUM | MEDIUM | P3 |
+| Faction warehouse | MEDIUM | HIGH | P3 |
 
 **Priority key:**
-- P1: Must have for this milestone — the stated movement problem is not solved without them
-- P2: Should add if time permits within this milestone
+- P1: Must have — inventory system is non-functional without these
+- P2: Should have — adds meaningful quality and completeness
 - P3: Future milestone — do not start in this sprint
 
 ---
 
 ## Competitor Feature Analysis
 
-| Feature | Tibia | Albion Online | Path of Exile 2 | Our Current | Our Target |
-|---------|-------|---------------|-----------------|-------------|------------|
-| WASD directions | 8-direction (rebindable to WASD); diagonals via dual-key or numpad | No native WASD; 8-way key binding "not smooth" per community | Full 8-direction WASD natively | 4 diagonal-only | 8-direction dual-key WASD |
-| Click-to-move | Yes, auto-routes obstacles | Yes, primary input | Yes (also WASD) | Yes (A*, 150ms) | Keep as-is |
-| Camera follow | Snap (historically criticized) | Smooth follow | Smooth follow | Snap (lerp=1) | Lerp ~0.1 |
-| Walk animation | Sprite slides between tiles | Smooth sprite animation | Smooth animation | Snap (no tween) | Tween over moveDelay |
-| Movement speed consistency | Keyboard = click speed | Keyboard = click speed | Keyboard = click speed | 500ms vs 150ms inconsistent | Unified 150ms |
-| Terrain speed modifiers | Yes (mud, floors slow) | Yes (terrain effects speed) | Yes (ground effects) | Field exists, unused | Apply movementSpeed field |
-| Hover highlight | Shows tile/item name | Cursor changes | Cursor changes | Diamond, elevation-wrong | Elevation-corrected diamond |
-| Path visualization | No path shown | No path shown | Subtle dotted for some skills | Destination diamond | Destination diamond + step dots (P2) |
+| Feature | No Man's Sky | Tibia | Albion Online | Our Approach |
+|---------|--------------|-------|---------------|--------------|
+| Equipment concept | Exosuit (cargo + tech inventory, expandable slots) | Backpack-based slots, separate equipment slots (armor, weapon) | Destiny board (5 slots by tier) | Exo-suit (1 slot) + module slots (2-5 by rarity) + tool slot — lore-driven hybrid |
+| Rarity system | C/B/A/S/X class modules | Rarity colors (Common→Legendary) | Item tier (1-8) | Common→Legendary 5 tiers, color-coded per WoW standard |
+| Module/upgrade model | Upgrade modules in tech slots (adjacent bonus in NMS) | No module system | No explicit module system | Module items in exo-suit slots; no adjacency bonus (complexity avoidance) |
+| Item level | Class letter (C=lowest, X=highest) | Item level by creature drop zone | Item tier number | ilvl numeric (computed from tier × rarity) |
+| Hotbar | Quickslots (multi-tool, consumables) | Hotkeys assignable to items | 4 ability slots + quick-use | 8-slot hotbar (consumables + deployables) |
+| Ground items | Immediate pickup via proximity | Floor items visible, step-to-pickup | Auto-pickup option | Manual pickup via `inventory:pickup` event; ground items visible as ItemEntity |
+| Stack sizes | 9,999 units for resources, 1 for tech | 100 for most, varies by item | Stack to 999 for raw resources | 999 for materials, 20 for consumables, 1 for equipment |
+| Inventory limit | Expandable (buy slots at stations or repair drop pods) | Fixed backpack slots (expandable with bigger backpack items) | Fixed slots by bag type | Fixed 20 slots; expansion deferred (v2+) |
+| Weight | None for exosuit inventory | Weight exists, manageable | No weight, slot-based | Slot-based (launch); weight as encumbrance modifier deferred |
 
 ---
 
-## Existing System Integration Constraints
+## Lore Alignment Notes
 
-These existing systems constrain what can change without breaking reconciliation or networking.
+The lore imposes specific constraints on item design that must be respected.
 
-| System | File | Constraint |
-|--------|------|------------|
-| Client-side prediction | `MovementController.ts` | All input must go through `processInput(direction: Direction)`. Do not bypass. Sequence numbers must stay intact. |
-| Server reconciliation | `MovementController.reconcile()` | `lastProcessedInput` sequence replay must not break. Do not add new input pathways outside this flow. |
-| PathfindingController | `PathfindingController.ts` | `moveDelay` is passed in constructor from WorldScene. Changing the constant means updating the WorldScene constructor call, not the class. |
-| IsometricTransform | `IsometricTransform.ts` | `screenToTileWithElevation()` is correct and tested by click-to-move. HoverController just needs to call it. |
-| Camera API | `WorldScene.ts` line 1017 | `startFollow(player, true, 1, 1)` — change the trailing `1, 1` (lerpX, lerpY) only. |
-| Direction type | `shared-types/position.ts` | Already: `'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'`. No type changes needed. |
-| DIRECTION_VECTORS | `game-logic/validation.ts` | All 8 directions already have correct dx/dy vectors. No game-logic changes for WASD fix. |
-| A* pathfinding | `game-logic/pathfinding.ts` | Cardinal-only neighbors for pathfinding. Do not change in this milestone — WASD diagonal fix is independent of pathfinding diagonal support. |
+| Lore Element | Item System Implication |
+|--------------|------------------------|
+| Exo-suits are described as "base equipment with module slots, rarity affects slot count" | ExoSuit item type is non-negotiable. The current schema (head/chest/legs) must be replaced. |
+| Terminus has 4 biome tiers (Frontier/Hazardous/Hostile/Extreme) | Tools and exo-suits should have 4 tiers matching biome tiers. Tier I gear is adequate for Frontier biomes; Tier IV gear is required for Extreme biomes. |
+| Modules: Armor, Speed, Life Support, Sensor Array, Power Core, Mobility | These are the 6 module item types. Each grants a specific stat bonus. Life Support is thematically critical (atmosphere requires filtration). |
+| Tools: Research / Combat / Mining with specialization stats | Tools are not generic weapons. They are professional instruments. Tool stats should reflect corporate work categories. |
+| Consumables: Suit repair, buffs | Suit repair = exo-suit durability restore (if durability is added). Buffs = temporary stat enhancement. These are the only consumable types defined in lore. Do not invent additional consumable categories without lore consultation. |
+| World items: Explosives, seeds, deployables | Deployables are in-world items carried and placed. Seeds link to farming/growing progression. Explosives are single-use world-interaction items. None of these should auto-equip. |
+| Crafting reagents | Raw materials dropped from mining/creature kills. These are the highest-volume inventory items. Must stack to 999. |
+| Factions have distinct aesthetics | Eventually, faction items should look different. Defer cosmetic differentiation until faction standing system exists. |
+| Zones have survival tiers (I-IV) | Required level gate for equipment should map to zone tier. Tier II zones recommend ilvl appropriate for Tier II. This gives the required level system lore grounding. |
+
+---
+
+## Existing System Integration Points
+
+These systems interact with the inventory and constrain what can change.
+
+| System | File / Location | Integration Note |
+|--------|-----------------|-----------------|
+| Character data | `packages/database/src/schema/characters.ts` | `level` field used for required level checks. `stats` jsonb — module stats will need to be applied at runtime (add to base stats), not stored in character table. |
+| Inventory DB schema | `packages/database/src/schema/inventories.ts` | `equipment` jsonb needs migration from flat slot map to `{ exosuit, modules[], tool, accessory1, accessory2 }`. Do this migration before UI work. |
+| Inventory queries | `packages/database/src/queries/inventory.ts` | Full CRUD exists. `updateEquipment` must accept new schema shape. No structural changes needed in query layer; jsonb is flexible. |
+| Entity system | `packages/shared-types/src/core/entity.ts` | `ItemEntity` has `despawnAt`. Zone tick must check despawnAt and broadcast `entity:despawn` when expired. |
+| Socket events | `packages/shared-types/src/network/events.ts` | `inventory:use`, `inventory:drop`, `inventory:pickup` declared client-side. `inventory:update` declared server-side. All need handler implementations in game-server. |
+| EntityRegistry | `packages/shared-types/src/game/entity-registry.ts` | `ItemConfig` type needs expansion (add category, rarity, requiredLevel, weight, ilvl fields). Stub item entries must be replaced with real item definitions for all 6 module types, 3 tool types, consumable types. |
+| HUD | `apps/web/src/` | Action bar goes in HUD layer (React component, same layer as health/energy bars, minimap). Inventory panel and equipment panel are toggle-able overlays above the canvas. |
+| Player stats | `packages/shared-types/src/core/player.ts` | `PlayerStats` (strength, agility, endurance, intelligence, perception) must be augmented at runtime by equipped modules. Server computes effective stats = base stats + sum(module stats). Do not persist effective stats to DB — compute from equipment each session load. |
 
 ---
 
 ## Sources
 
-- Tibia official controls documentation (8-direction movement, all directions): https://www.tibia.com/gameguides/?subtopic=manual&section=controls
-- Phaser 3 Camera API — setLerp, startFollow, setDeadzone: https://rexrainbow.github.io/phaser3-rex-notes/docs/site/camera/
-- "Fix Your Isometric Controls" — 45-degree rotation pattern for WASD in isometric: https://www.tumblr.com/blubberquark/621835025877499904/this-is-a-pet-peeve-of-mine-i-push-the-right
-- Handling height in isometric tilemaps (elevation correction in tile picking): https://erikonarheim.com/posts/handling-height-in-isometric/
-- WASD + Isometric diagonal problem (gamedev.net community thread): https://www.gamedev.net/forums/topic/446061-wasd-isometric-2-keys-to-move-forward/
-- Albion Online WASD community debate (click-to-move vs WASD for isometric): https://steamcommunity.com/app/761890/discussions/0/3046104336680783318/
-- Path of Exile 2 WASD implementation feedback: https://steamcommunity.com/app/2694490/discussions/0/594008890765478462/
-- Direct codebase inspection: `apps/web/src/game/scenes/WorldScene.ts`, `systems/MovementController.ts`, `systems/PathfindingController.ts`, `systems/HoverController.ts`, `utils/IsometricTransform.ts`, `packages/game-logic/src/movement/validation.ts`, `packages/game-logic/src/movement/pathfinding.ts`
+- No Man's Sky exosuit system (slot expansion, technology slots, module tier system): https://nomanssky.miraheze.org/wiki/Exosuit
+- WoW Dragonflight stack size increases for profession materials (1000-stack precedent): https://www.wowhead.com/news/bigger-stack-size-for-profession-items-in-dragonflight-1000-materials-200-327688
+- BitCraft action bar addition (2025) — hotbar is expected in survival MMOs: https://massivelyop.com/2025/11/29/bitcraft-finally-adds-a-hotbar-to-pave-the-way-for-new-types-of-gameplay/
+- OSRS loot despawn timer model (3-minute public, 1-minute private drop): https://oldschool.runescape.wiki/w/Drop
+- MMO weight vs slot limit community analysis: https://forums.mmorpg.com/discussion/444404/weight-limits-and-stack-limits-yes-no-and-your-thoughts-on-them-both
+- MMORPG.com equipment and inventory design journal: https://www.mmorpg.com/developer-journals/equipment-and-inventory-2000104947
+- Into the Void world-bible.md (biome tiers, faction aesthetics, item categories, exo-suit lore)
+- Direct codebase inspection: `packages/shared-types/src/game/inventory.ts`, `packages/database/src/schema/inventories.ts`, `packages/database/src/queries/inventory.ts`, `packages/shared-types/src/core/entity.ts`, `packages/shared-types/src/game/entity-registry.ts`, `packages/shared-types/src/network/events.ts`, `packages/shared-types/src/core/player.ts`
 
 ---
-*Feature research for: Isometric MMO movement system overhaul*
+*Feature research for: Inventory & Item System — Into the Void survival MMO*
 *Researched: 2026-02-17*
-*Confidence: HIGH for P1 features (codebase-confirmed); MEDIUM for P2/P3 features (competitor patterns)*
+*Confidence: HIGH for schema/architecture (codebase-confirmed + lore-grounded); MEDIUM for UX patterns (competitor analysis); LOW for faction item cross-equip pricing (no comparable reference found)*

@@ -1,211 +1,237 @@
 # Project Research Summary
 
-**Project:** Into the Void — Movement System Overhaul
-**Domain:** Multiplayer isometric MMO — smooth movement, 8-directional input, camera interpolation
+**Project:** Into the Void — Inventory & Item System
+**Domain:** Multiplayer 2D sci-fi survival MMO — item definitions, inventory UI, equipment slots, drag-drop, action bar
 **Researched:** 2026-02-17
 **Confidence:** HIGH
 
 ## Executive Summary
 
-The movement system overhaul is a focused, low-risk milestone. All required capabilities already exist in the installed stack (Phaser 3.90.0, shared-types, game-logic) — this is a code-change-only effort with zero new dependencies. The core problem is architectural: the client input handler uses a sequential `else-if` chain that only maps 4 isometric diagonals (W=NW, D=NE, S=SE, A=SW), leaving cardinal directions N/S/E/W unreachable via keyboard. The Direction type, DIRECTION_VECTORS, MovementController, and server-side validation already support all 8 directions fully. The fix is approximately 30 lines in `WorldScene.handleInput()`, one parameter change for camera lerp, and a tween added to prediction sprite updates.
+The inventory and item system for Into the Void sits on a well-scaffolded foundation. Approximately 80% of the required infrastructure is already in place: the database schema (`inventories` table with JSONB), shared types (`ItemDef`, `Inventory`, `InventoryItem`, `EquipmentSlot`), WebSocket event declarations (`inventory:use`, `inventory:drop`, `inventory:pickup`, `inventory:update`), and Zustand UI toggle state (`showInventory`) all exist. The critical gap is that the wire layer is declared but completely unimplemented — event handlers in `GameGateway` do not exist, the client `gameStore` has no inventory data slice, and the `handleInteraction` pickup path actively loses items to the void without inserting them into inventory.
 
-The recommended approach is an incremental, dependency-ordered build: adjust the server rate limit first (prevents false rejections once client cadence tightens), extract a unified `MOVE_DELAY_MS = 150` constant (eliminates the 500ms vs 150ms inconsistency that makes WASD feel 3x slower than click-to-move), add 8-directional input resolution, add tile-to-tile sprite tweening, then smooth camera follow. Each step is independently testable and does not touch the prediction/reconciliation architecture, which is correct and must not be modified. Only the visual layer changes (sprite position, camera follow parameters).
+The recommended approach is a strict 5-phase build: data model and item registry first (shared packages), then server-side `InventoryService` with atomic DB operations, then client state and React UI components, then equipment with server-authoritative stat calculation, and finally the action bar with instance-ID-based hotkey references. The schema requires one significant migration before any UI is built: replacing the current generic `head/chest/legs/feet` equipment slot model with the lore-mandated `exosuit/modules[]/tool/accessory1/accessory2` structure. This migration is the highest-risk operation and must happen first, before any server handlers or UI components are written against the equipment schema.
 
-The primary risks are timing-related rather than architectural. Tween duration must be 20ms shorter than moveDelay to prevent visual drift during sustained input. The server rate limit must be reduced from 140ms to 125ms before the client delay is reduced, or normal network jitter will trigger false rejections. The minimap camera must retain instant-follow (lerp=1) while only the main camera receives smooth follow. The pitfalls research also documents a second body of knowledge on infinite world chunk streaming — that material applies to a future milestone, not this sprint.
-
----
+The highest-stakes risks are not UI complexity but data integrity. Non-atomic equip operations enable item duplication — the exact exploit that shipped in Arc Raiders in February 2026. Simultaneous pickup race conditions allow two players to receive the same world item. Inventory updates accidentally broadcast zone-wide instead of to the owning player's socket expose every player's inventory to the entire zone. All three are preventable with approximately 10 lines of correct code each, but are catastrophic if discovered post-launch. Every phase must be verified against the "Looks Done But Isn't" checklist from PITFALLS.md before proceeding to the next.
 
 ## Key Findings
 
 ### Recommended Stack
 
-No new packages are needed. Phaser 3.90.0 provides all required primitives: `camera.startFollow()` with lerpX/lerpY for smooth camera interpolation, `Key.isDown` boolean checks readable simultaneously for 8-directional input, and `this.tweens.add()` for sprite interpolation. The `Direction` type in `@into-the-void/shared-types` already includes all 8 values. `DIRECTION_VECTORS` in `@into-the-void/game-logic` already has correct dx/dy for all 8 directions. The full stack is present and verified against installed Phaser 3.90.0 type definitions.
+The existing stack handles all core requirements. No new packages are needed for the server or shared package layers. Three new frontend libraries are justified: `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities` for drag-drop in the inventory grid (the project has no existing drag capability and the dnd-kit suite avoids the HTML5 backend ghost image issues that `react-dnd` has on Retina displays), `@floating-ui/react` for item tooltip positioning that correctly handles viewport edge cases, and `immer` for nested Zustand state mutations at inventory-item-slot depth. One new NX workspace package is required: `packages/items` — a static item definition registry mirroring the existing `packages/tiles` pattern exactly. Item definitions are static game data and must not be stored in PostgreSQL.
 
 **Core technologies:**
-- **Phaser 3.90.0** (camera lerp) — `camera.startFollow(target, true, 0.1, 0.1)` confirmed at line 3671 of installed phaser.d.ts; `roundPixels: true` prevents sub-pixel jitter on isometric grid
-- **Phaser 3.90.0** (keyboard input) — Simultaneous `Key.isDown` checks per frame; replaces sequential `else-if` chain with combination detection; no plugin required
-- **Phaser 3.90.0** (tweens) — `this.tweens.add({ duration: 130, ease: 'Linear' })` for prediction path; same pattern already used for remote players in `movePlayer()`
-- **@into-the-void/shared-types** — `Direction` type already has all 8 values at `packages/shared-types/src/core/position.ts` line 16; no type changes needed
-- **@into-the-void/game-logic** — `calculateNewPosition()` and `validateMovement()` already handle all 8 directions; A* pathfinding is the only component needing later diagonal support (P3, future milestone)
+- Phaser 3.90.0: game canvas only — inventory UI is React overlay, consistent with `ChatPanel.tsx` panel pattern; Phaser handles world ItemEntity sprites
+- React 18.2.0: inventory panel, equipment panel, action bar — all rendered in the React HUD layer above the canvas
+- Zustand 4.5.0: inventory state as a separate `inventoryStore.ts` with Immer middleware to handle nested slot mutations without 4-level spread syntax
+- Socket.IO 4.7.0: inventory sync — all 5 event types already typed in `shared-types`; wire layer is declared, not implemented
+- Drizzle ORM 0.30.0: existing `inventories` table is sufficient; no column additions needed, only a JSONB shape change for the equipment slot structure
+- `@into-the-void/items` (NEW package): ItemRegistry singleton, 100 item definitions across 6 categories, mirrors `packages/tiles` pattern
+
+**New packages to install:**
+- `@dnd-kit/core` ^6.3.1 — drag engine; modular, no physics dependency; `useDroppable` per slot for positional grid (not list-ordering)
+- `@dnd-kit/sortable` ^8.0.0 — sortable preset; `rectSortingStrategy` for fixed-size grids
+- `@dnd-kit/utilities` ^3.2.2 — CSS transform math for `DragOverlay` ghost item rendering
+- `@floating-ui/react` ^0.27.17 — tooltip positioning with `flip`/`shift`; renders via `FloatingPortal` to avoid z-index conflicts with Phaser canvas
+- `immer` ^11.1.4 — draft mutations for Zustand; apply only to `inventoryStore`, not entire `gameStore`
 
 ### Expected Features
 
-Research cross-referenced against Tibia (official docs), Albion Online (community), and Path of Exile 2 movement conventions. All P1 features are pure client-side changes. Only terrain-speed movement (P2) requires server-side coordination.
+**Must have (table stakes — v1 milestone):**
+- Ground pickup — `inventory:pickup` server handler; proximity check, inventory space check, ItemEntity despawn, stack merge on same itemId, `inventory:update` emitted to owning client only
+- Item drop — `inventory:drop` handler; spawn ItemEntity at player position with 5-minute despawn timer broadcast zone-wide
+- Consumable use — `inventory:use` handler; apply health/energy effect server-side, remove from inventory, emit updated state
+- Exo-suit schema migration — replace `head/chest/legs/feet` with `exosuit/modules[]/tool/accessory1/accessory2`; must complete before any server handlers or UI are built
+- Bag inventory UI — 20-slot React grid panel; item icon colored by rarity; dnd-kit drag to rearrange; used/total slot count display
+- Item tooltip — name (rarity color), description, category, rarity, ilvl, requiredLevel; rendered via `@floating-ui/react` in `FloatingPortal`
+- Equipment panel — exo-suit silhouette with module slots (count derived from suit rarity: Common=2 to Legendary=5), tool slot, 2 accessory slots; drag-from-inventory equip
+- Required level enforcement — server rejects equip if `player.level < item.requiredLevel`; client greys out item in UI
+- Action bar — 8-slot hotbar in HUD; keys 1-8; instance-ID references (not slot-position references); drag consumables from inventory to assign
+- Stack merge logic — on pickup, merge stackable items into existing slots up to maxStack before opening new slot
 
-**Must have (table stakes):**
-- **Full 8-direction WASD** — tiles directly N/S/E/W are currently unreachable; this is the stated problem. Map single keys to isometric diagonals (existing behavior preserved), dual-key combos to cardinals (W+D=N, D+S=E, S+A=S, W+A=W)
-- **Consistent movement speed** — 500ms WASD vs 150ms click-to-move is perceptibly broken; character visibly moves 3x slower on keyboard vs mouse. Unify to 150ms via `MOVE_DELAY_MS` constant passed to both `WorldScene.moveDelay` and `PathfindingController` constructor
-- **Smooth camera follow** — Change `startFollow` lerp from `(1, 1)` to `(0.1, 0.1)`. One parameter change. Every reference game has smooth camera tracking.
-- **Accurate tile hover with elevation** — `HoverController.update()` calls flat `screenToTile()`; replace with `screenToTileWithElevation()` which is already implemented and tested by click-to-move. Pure bug fix.
-- **Tile-to-tile movement animation** — Tween local player sprite over 130ms (Linear ease) during prediction. Currently only the reconciliation path tweens (50ms); the normal prediction path snaps directly.
+**Should have (differentiators — v1.x milestone):**
+- Tool specialization stats — `specializationStats: { miningYield, combatDamage, researchXP }` applied server-side during relevant interactions; tools have `toolType: 'mining' | 'combat' | 'research'`
+- Item level (ilvl) — computed from `tier x rarity multiplier` (1.0/1.2/1.5/1.8/2.2); displayed in tooltip and equipment panel
+- Item registry population — replace 4 placeholder EntityRegistry stubs with full definitions for 6 module types, 3 tool types, all consumable types defined in lore
+- Ground item expiry UI — despawn countdown on ItemEntity hover; prevents "why did my item disappear?" confusion
+- EntityRegistry items migration — move 4 existing items from `entity-registry.ts` to `ItemRegistry` as the single authoritative source; delete duplicates
 
-**Should have (competitive):**
-- **Terrain-speed movement** — `movementSpeed` field already exists on tile definitions and displays in the UI but is never applied. `effectiveDelay = moveDelay / tile.movementSpeed`. Requires server-side coordination; client and server must apply the same multiplier or prediction diverges.
-- **Path visualization with step dots** — Draw waypoint dots along full click-to-move path in `PathfindingController.drawPath()`. Pure client-side visual; no server changes.
+**Defer to v2+ (not this milestone):**
+- Faction-specific item variants — requires faction standing system (not yet designed); `factionId` field preserved on `ItemDef` for this
+- Deployables — requires structure placement system (not yet designed); `deployable: true` flag deferred
+- Discovery-triggered crafting unlocks — requires crafting system (not yet designed); `discoveries` DB table already exists for integration
+- Faction warehouse (shared storage) — requires guild/faction progression milestone; lore-justified as corporate resource hub
+- Weight-based encumbrance — `weight` field preserved on `ItemDef`; not primary constraint at launch (slot count is simpler and already in schema)
 
-**Defer (v2+):**
-- **Keyboard facing-without-moving** — Only useful once directional combat or emotes exist in the roadmap
-- **Diagonal A* pathfinding** — Requires server validation changes; separate investigation after movement milestone is stable
-- **Run/walk toggle** — Requires stamina system not yet designed; high coupling across systems not yet built
+**Explicit anti-features (do not build):**
+- Weight-based inventory hard limit — adds cognitive friction without meaningful choice in an exo-suit game; weight as soft encumbrance penalty deferred
+- Auto-equip on pickup — breaks player agency over modular loadout choices; dangerous mid-combat
+- Unlimited inventory — trivializes survival tension; creates unbounded server state size
+- Cross-character shared stash — encourages alt-farming; complicates per-character architecture
 
 ### Architecture Approach
 
-The architecture stays almost entirely unchanged. The client prediction/reconciliation loop in `MovementController` is correct and already handles all 8 directions. The server WebSocket protocol shape (`{ direction: Direction; sequence?: number }`) does not change. What changes is confined to five narrow locations: `WorldScene.handleInput()` (key resolution logic), `WorldScene.moveDelay` (constant value 500 to 150), `WorldScene.updateLocalPlayer()` (camera lerp parameters), `WorldScene.updateLocalPlayerSprite()` (prediction path adds tween; reconciliation tween increases from 50ms to 80ms), and `GameGateway.handleMove()` (rate limit tolerance 140ms to 125ms). A new `SpriteAnimationController` is scaffolded as a no-op stub, establishing the correct integration point for future directional sprite animations.
+The system follows a strict layered architecture: static item definitions live in a new `packages/items` package (mirrors `packages/tiles`), pure validation logic lives in `packages/game-logic/src/inventory/` (mirrors existing `validateMovement` pattern), server-side state management lives in a new `InventoryService` with in-memory per-player Map plus async DB persistence (mirrors `PlayerService`), and client state lives in a separate `inventoryStore.ts` Zustand store with Immer middleware to isolate inventory re-renders from game canvas renders. The critical architectural rule: inventory updates are ALWAYS emitted via `client.emit('inventory:update', ...)` — never `server.to(zoneId).emit(...)`. Inventory is private; entity despawn is zone-wide. These are two separate events with two separate emit targets.
 
 **Major components:**
-
-1. **WorldScene** (MODIFY) — Replace `else-if` input chain with `resolveDirection()`, extract `MOVE_DELAY_MS = 150`, change camera lerp to `(0.1, 0.1)`, add prediction tween
-2. **MovementController** (NO CHANGE) — Prediction and reconciliation algorithm is correct; accepts all 8 directions; sequence replay logic is unaffected
-3. **PathfindingController** (NO CHANGE) — Uses `moveDelay` from constructor injection; automatically syncs when `WorldScene.moveDelay` changes; `getDirection()` already returns all 8 directions
-4. **GameGateway** (MODIFY) — Rate limit `< 140` to `< 125`; provides 25ms jitter tolerance at 150ms client cadence
-5. **SpriteAnimationController** (NEW STUB) — Maps Direction to sprite frames; starts as no-op; owned and called by WorldScene; does not change any game logic
+1. `packages/items` (NEW) — `ItemRegistry` singleton, `ItemDefinition` interface, `ItemEffect` discriminated union, all 100 item definitions; imported by both client and server
+2. `packages/game-logic/src/inventory/` (NEW) — pure functions: `validateItemUse`, `validateEquip`, `resolveEffect`; no DB calls, no socket calls; mirrors existing `validateMovement` pattern
+3. `apps/game-server/src/inventory/InventoryService` (NEW) — in-memory `Map<playerId, Inventory>`, loaded from DB on auth, async flush to DB on each mutation, unloaded and flushed on disconnect
+4. `apps/game-server/src/game/GameGateway` (MODIFY) — thin handlers only: authenticate socket, delegate to `InventoryService`, emit result; 5 new `@SubscribeMessage` handlers; zero inventory logic inside gateway
+5. `apps/web/src/store/inventoryStore.ts` (NEW) — Zustand with Immer middleware; `inventory`, `hotbar` slices; wires `inventory:update` socket event; separated from `gameStore` so inventory changes do not re-render the game canvas
+6. `apps/web/src/ui/panels/InventoryPanel.tsx` (NEW) — 20-slot grid; dnd-kit drag-drop with `closestCenter` collision; context menu for use/drop/equip
+7. `apps/web/src/ui/panels/EquipmentPanel.tsx` (NEW) — exo-suit silhouette; variable module slot count by rarity; drag-from-inventory equip
+8. `apps/web/src/ui/hud/ActionBar.tsx` (NEW) — 8 slots; document-level `keydown` listener with chat focus guard; instance-ID references; auto-invalidated on `inventory:update`
 
 ### Critical Pitfalls
 
-1. **Server rate limit becomes incompatible the moment client cadence tightens** — At 150ms client delay against 140ms server limit, only 10ms tolerance remains. Normal network jitter of 10-15ms triggers false rejections every few tiles, causing `reconcile()` to fire on correct predictions. Prevention: adjust server limit to 125ms first, as a standalone change, before any client work begins.
+The PITFALLS.md covers three milestone areas. The inventory-specific pitfalls (Part 3) are the most immediately relevant and the most severe.
 
-2. **Tween duration at or above moveDelay causes visual drift** — At 150ms delay, a 150ms tween completes exactly when the next move fires. Due to `setTimeout`/`requestAnimationFrame` timing imprecision, tweens overlap by 5-10ms and sprite never fully reaches target before being redirected. Prevention: set tween duration to `moveDelay - 20ms` (130ms); always call `tweens.killTweensOf(target)` before starting each new tween.
+1. **Non-atomic equip duplication** — `updateInventoryItems` and `updateEquipment` are separate DB calls today; a crash between them leaves the item in both columns simultaneously. Prevention: single `UPDATE inventories SET items = $1, equipment = $2 WHERE character_id = $3` call, never two sequential awaits. Verify by killing the server mid-equip and checking reconnect state. This is exactly how Arc Raiders shipped a duplication exploit in February 2026.
 
-3. **PathfindingController and WorldScene using different moveDelay values** — `PathfindingController` receives `moveDelay` at construction time. If a hardcoded value is used in either location, WASD and click-to-move operate at different speeds. One will violate the server rate limit, triggering reconciliation on every third step. Prevention: define `const MOVE_DELAY_MS = 150` in WorldScene and pass it to both `this.moveDelay` and the `PathfindingController` constructor.
+2. **Simultaneous pickup race condition** — Two players send `inventory:pickup` for the same `entityId` within the same event loop tick. Node's `await` yields between the entity active-check and the DB write, allowing both handlers to see `active=true` and succeed. Prevention: synchronous in-memory claim map in `ZonesService` — set `claimedItems.set(entityId, playerId)` before any `await`. The sync check+set cannot be interleaved in Node's single-threaded event loop.
 
-4. **Camera lerp applied to minimap** — Minimap is a spatial orientation tool. Lerp on minimap creates "looking at where I was 100ms ago" disorientation and makes the position dot misleading. `MinimapCamera.startFollow(target, true)` already has no lerp parameter — do not add one.
+3. **Inventory broadcast to zone** — Copy-pasting existing entity event patterns (`server.to(zoneId).emit(...)`) will broadcast every player's full inventory to the entire zone. Prevention: `client.emit(...)` exclusively for `inventory:update`. Verify with a two-client test: pick up item on client A, confirm client B receives zero `inventory:update` events.
 
-5. **Diagonal speed advantage if diagonal A* is added in a future phase** — In the tile-step model, diagonal moves cover sqrt(2) more world distance at the same rate limit as cardinal moves, producing a 41% speed advantage in PvP. For this milestone (visual improvement only), equal rate limits are acceptable. Must be addressed before any PvP distance-based mechanic: server applies `cardinalDelay = 140ms`, `diagonalDelay = round(140 * sqrt(2)) = 197ms`.
+4. **Client-side equipment stat calculation** — If the client computes `effectiveStats = baseStats + equipmentBonuses` and the server trusts those values, any stat can be forged. Prevention: all effective stat derivation runs server-side from `InventoryService` authoritative state. `PlayerStats` stores base values only; `effectiveStats(player, equipment)` is a pure function in `game-logic`.
 
----
+5. **Action bar stale references** — Player assigns item to hotkey, drops the item; action bar still references the dead `instanceId`. Pressing the hotkey in combat sends `inventory:use` for a non-existent item. Prevention: action bar invalidates all references on every `inventory:update` by checking each `instanceId` against current inventory. Client greys out orphaned slots immediately.
 
 ## Implications for Roadmap
 
-Build order is dictated by dependency chains and multiplayer sync risk. Server changes land first (lowest risk, no user-visible change). Constant extraction second (structural prerequisite). User-visible changes last, in order of visual dependency.
+Build order is dictated by dependency chains and data integrity requirements. Shared packages must exist before any application layer can import them. The exo-suit schema migration is the highest-risk operation and must complete first. Server validation must be proven before client UI is built against it. Equipment stat calculation must be established server-side before the first stat-affecting item can be equipped.
 
-### Phase 1: Server Rate Limit Alignment
+### Phase 1: Item Data Model & Foundation Packages
 
-**Rationale:** Any reduction in client `moveDelay` will immediately cause false rejections against the existing 140ms server rate limit. This change is isolated to one line in `game.gateway.ts` with no client impact. It must land before Phase 2, and it can be deployed and verified independently.
-**Delivers:** Server accepts moves at 150ms cadence with 25ms jitter tolerance (down from 360ms tolerance at 500ms cadence).
-**Addresses:** PITFALLS.md Pitfall 2 (rate limit incompatible with smooth movement)
-**Avoids:** Reconciliation thrashing that would appear immediately in Phase 2 if this is skipped
-**Research flag:** SKIP — exact values calculated and verified in ARCHITECTURE.md (Pattern 4, rate limit calculation).
+**Rationale:** All subsequent phases depend on the item registry and correct DB schema. The exo-suit schema migration is the highest-risk operation — rebuilding the equipment panel after it is built against the wrong schema is expensive. Two critical data integrity requirements (atomic writes, JSONB size discipline) must be established here and cannot be retrofitted after a production incident.
 
-### Phase 2: Movement Speed Unification
+**Delivers:** `packages/items` with all 100 item definitions and `ItemRegistry` singleton; `packages/game-logic/src/inventory/` with pure `validateItemUse`, `validateEquip`, `resolveEffect` functions; exo-suit equipment slot schema migration in `inventories.equipment` JSONB from `{head,chest,legs,feet}` to `{exosuit, modules[], tool, accessory1, accessory2}`; atomic `updateInventoryFull(characterId, { items, equipment })` DB function replacing the existing two-call pattern; `equipment:change` added to `ClientEvents`; `HotbarSlot` type added to `shared-types`; 4 existing EntityRegistry items migrated to `ItemRegistry`, deleted from entity-registry
 
-**Rationale:** A single `MOVE_DELAY_MS` constant must be established before any other changes, because tween duration, pathfinding step interval, and input throttle all depend on it. Doing this before input changes means speed is unified even before diagonals are added.
-**Delivers:** WASD and click-to-move run at identical 150ms cadence. `const MOVE_DELAY_MS = 150` defined and passed to both systems. First observable improvement: click-to-move is unchanged, WASD is visibly faster.
-**Addresses:** FEATURES.md "Consistent movement speed" (table stakes); PITFALLS.md Anti-Pattern 4 (split moveDelay)
-**Avoids:** Speed divergence that would appear under sustained input once tweens are added in Phase 4
-**Research flag:** SKIP — confirmed in ARCHITECTURE.md (PathfindingController sync detail).
+**Addresses:** Exo-suit schema definition, item registry population, stack merge logic (as pure function), required level enforcement (as pure function)
 
-### Phase 3: 8-Directional Input Resolution
+**Avoids pitfalls:** Non-atomic equip duplication (Pitfall 1 — atomic write function established before any server uses it); JSONB TOAST threshold (Pitfall 5 — lean properties discipline enforced at definition time, target <1.5KB per character inventory row); EntityRegistry item duplication (Anti-Pattern 3 in ARCHITECTURE.md — single registry source)
 
-**Rationale:** The stated core problem. Safe to implement after server rate limit and client delay are aligned. The `resolveDirection()` function replaces the `else-if` chain. Single-key behavior is preserved (W still maps to 'nw', matching existing isometric screen convention). Dual-key combos add cardinal directions (W+D=N, meaning up-left + up-right = straight up in isometric view).
-**Delivers:** All 8 directions reachable via keyboard. N/S/E/W tiles accessible without click-to-move. No type or game-logic changes required anywhere.
-**Addresses:** FEATURES.md "Full 8-direction WASD" (P1 table stakes)
-**Avoids:** PITFALLS.md Pitfall 6 (isometric keyboard mapping confusion) — diagonal-first check order ensures no flickering when two keys are held
-**Research flag:** SKIP — exact implementation specified in STACK.md (8-directional input section) and ARCHITECTURE.md (Pattern 1).
+**Research flag:** Standard patterns well-documented. Mirrors `packages/tiles` exactly. TileRegistry is the reference implementation. Skip research-phase.
 
-### Phase 4: Tile-to-Tile Movement Animation
+### Phase 2: Server-Side InventoryService & WebSocket Handlers
 
-**Rationale:** Requires unified moveDelay (Phase 2) to set tween duration correctly. Sprite tweening transforms the visual quality of all movement — both WASD and click-to-move benefit. This is the highest user-impact change in the milestone, and it follows 8-directional input so all 8 directions animate correctly from the start.
-**Delivers:** Sprite glides smoothly between tiles (130ms Linear tween on prediction path). Reconciliation tween increased from 50ms to 80ms `Cubic.easeOut` for less abrupt corrections. Remote player interpolation (100ms Linear) unchanged.
-**Addresses:** FEATURES.md "Tile-to-tile movement animation" (table stakes); improves feel across all 8 directions simultaneously
-**Avoids:** PITFALLS.md Anti-Pattern 5 (tween duration >= moveDelay) — 130ms < 150ms with 20ms buffer; PITFALLS.md Integration Gotcha (tweens + prediction) — `killTweensOf` called before each tween
-**Research flag:** SKIP — exact implementation mirrors existing `movePlayer()` for remote players at `WorldScene.ts:944`. Pattern is proven in the codebase.
+**Rationale:** The server is the authoritative layer. No client work should begin until server validation, persistence, and event emission are proven correct via WebSocket client testing. The simultaneous pickup race condition and inventory privacy pitfalls must be solved here — they cannot be patched from the client side after the fact.
 
-### Phase 5: Smooth Camera Follow
+**Delivers:** `InventoryService` NestJS service (in-memory per-player cache via `Map<playerId, Inventory>`, DB load on auth, async flush on each mutation, final flush and unload on disconnect); `InventoryModule` NestJS module; 5 `@SubscribeMessage` handlers in `GameGateway` (`inventory:use`, `inventory:drop`, `inventory:pickup`, `equipment:change`, `inventory:unequip`); in-memory claim map in `ZonesService` for simultaneous pickup prevention; `getInventory` loaded and emitted as `inventory:update` on auth success; `handleInteraction` in `game.service.ts` writes to inventory first, broadcasts `entity:despawn` zone-wide only after DB confirms item was added
 
-**Rationale:** Camera lerp interacts with sprite tweening — both together produce the organic follow feel. Camera lerp alone (without sprite tween) creates a "rubber band" look where the camera moves but the sprite snaps. Phase 5 after Phase 4 ensures the full combined effect is visible and testable.
-**Delivers:** Main camera lerp `(0.1, 0.1)`. Minimap camera unchanged at instant-follow. Camera glides with the sprite tween organically — no special coordination between tween and camera is needed because `startFollow` tracks live sprite position.
-**Addresses:** FEATURES.md "Smooth camera follow" (table stakes)
-**Avoids:** PITFALLS.md Anti-Pattern 3 (applying lerp to minimap); Phaser Issue #5018 interaction (deadzone + lerp quirk) by omitting deadzone from this phase
-**Research flag:** SKIP — one parameter change verified in STACK.md and ARCHITECTURE.md (Pattern 3). Phaser docs confirm 0.1 is the documented smooth-follow value.
+**Addresses:** Ground pickup, item drop, consumable use, pickup-then-despawn ordering
 
-### Phase 6: Hover Elevation Bug Fix
+**Avoids pitfalls:** Simultaneous pickup race condition (Pitfall 2 — synchronous claim map check before any `await`); inventory broadcast to zone (Pitfall 3 — `client.emit` only, verified with two-client automated test); inventory logic inside GameGateway (Anti-Pattern 1 in ARCHITECTURE.md — all logic in `InventoryService`); entity despawn before inventory write (Integration Gotcha in ARCHITECTURE.md)
 
-**Rationale:** Isolated change that does not interact with movement timing or tweens. Placed after all movement changes are validated to keep test surface clean. This is a pure bug fix — `screenToTileWithElevation()` already exists and is confirmed correct by click-to-move usage.
-**Delivers:** Tile hover highlight correctly tracks elevated tiles. The green hover diamond no longer appears behind raised surfaces.
-**Addresses:** FEATURES.md "Accurate tile hover with elevation" (table stakes, bug fix)
-**Avoids:** Visual mismatch between hover diamond and actual tile under cursor on elevated terrain
-**Research flag:** SKIP — method already exists, tested, and used by click-to-move. One method call swap in `HoverController.update()`.
+**Research flag:** Standard NestJS service and module patterns. `PlayerService` is the direct reference implementation for the in-memory Map + DB persistence pattern. Skip research-phase.
 
-### Phase 7: SpriteAnimationController Scaffold
+### Phase 3: Client State & Inventory Panel UI
 
-**Rationale:** Establishes the integration point for future directional sprite animations without requiring sprite art to exist. Creates the class as a no-op, wires the call site into `WorldScene.handleInput()` after direction resolution. Future directional animation frames plug in without touching WorldScene.
-**Delivers:** `SpriteAnimationController` class stub, call site integrated, no visible game change. Directional facing state tracked internally but not yet applied.
-**Addresses:** ARCHITECTURE.md "SpriteAnimationController (NEW)" component; future-proofs for directional combat without premature implementation
-**Avoids:** PITFALLS.md Pitfall 7 (animation tracks wrong direction) — establishes input-driven direction tracking from the start rather than deriving from position delta later
-**Research flag:** SKIP for stub. Research needed when directional sprite assets are created (how isometric screen directions map to 96x96 sprite frame indices).
+**Rationale:** Client UI can only be built after server state is stable and `inventory:update` events flow correctly. The Zustand store separation (inventory vs game store) must be established before any React components are written — adding inventory to `gameStore` causes the Phaser canvas to re-render on every item change via Zustand subscription propagation.
+
+**Delivers:** `inventoryStore.ts` (Zustand + Immer middleware; `inventory: Inventory | null`, `hotbar: (string | null)[]`; wires `gameSocket.on('inventory:update', ...)`); `InventoryPanel.tsx` (20-slot grid, dnd-kit drag-drop with `useDroppable` per slot and `DragOverlay`, item rarity border colors, context menu for use/drop/equip); item tooltip via `@floating-ui/react` with `flip`, `shift`, `FloatingPortal`; `GameUI.tsx` modified to render `InventoryPanel` conditionally on `showInventory`; Phaser canvas keyboard disabled when inventory open (`scene.input.keyboard.enabled = false`)
+
+**Addresses:** Bag inventory UI, item tooltip, rarity color coding, drag to rearrange, slot count display
+
+**Avoids pitfalls:** Optimistic inventory UI desync (Pitfall 4 — no optimistic updates; all inventory mutations wait for server `inventory:update` confirmation); inventory store re-renders Phaser canvas (Integration Gotcha — separate `inventoryStore` not subscribed to by canvas components); hotkey conflicts with chat input (UX Pitfall — chat captures keydown before action bar listener)
+
+**Research flag:** dnd-kit and floating-ui are well-documented with official docs. ChatPanel is the existing panel pattern reference in the codebase. Skip research-phase.
+
+### Phase 4: Equipment System
+
+**Rationale:** Equipment panel requires the exo-suit schema (Phase 1) and server-side stat calculation — which must be locked in before the first stat-affecting item can be equipped. Building the panel before the stat calculation pattern is established means adding stat items will require a server refactor.
+
+**Delivers:** `EquipmentPanel.tsx` (exo-suit silhouette with variable module slots, tool slot, 2 accessory slots, drag-from-bag equip via `equipment:change` event); server-side `effectiveStats(player, equipment): ComputedStats` pure function in `game-logic` — called on every combat and interaction validation, never stored in DB; `inventory:update` response includes recalculated effective stats for HUD display; required level enforcement in server equip handler; pre-validation that inventory has space for currently equipped item before processing any new equip (equipment unequip + inventory full guard)
+
+**Addresses:** Equipment panel UI, exo-suit module slots (rarity-driven count), required level enforcement, server-authoritative stat bonuses
+
+**Avoids pitfalls:** Client-side stat calculation exploit surface (Pitfall 6 — `effectiveStats` derives entirely from server's authoritative `InventoryService` state, never trusts client-provided values); equipment unequip + inventory full silent failure (Integration Gotcha in ARCHITECTURE.md — pre-validate capacity before any equip write); stat display in HUD not updating after equip (UX Pitfall — `inventory:update` response includes recalculated stats)
+
+**Research flag:** Module type compatibility rules (which modules are mutually exclusive, if any) and the ilvl formula need a design decision before server validation is written. Recommend a 30-minute design session, not a full research-phase.
+
+### Phase 5: Action Bar & Polish
+
+**Rationale:** Action bar is the final layer — it depends on inventory UI (Phase 3), server validation (Phase 2), and the instance-ID reference model established in Phase 1. Stale reference invalidation requires the `inventory:update` listener from Phase 3 to already be wired.
+
+**Delivers:** `ActionBar.tsx` (8 slots, document-level `keydown` listener on `document` not a div, chat focus guard via `document.activeElement` check, instance-ID references, grey-out for orphaned slots when referenced `instanceId` not found in current inventory); `HUD.tsx` modified to render `ActionBar`; keys 1-8 emit `inventory:use` with the slot's `instanceId` via `gameSocket`; hotbar slot assignments persisted to `localStorage` (client-only preference, not authoritative game state); server validates `instanceId` exists in player's inventory before processing `inventory:use` regardless of action bar state
+
+**Addresses:** Action bar / hotbar, consumable use from hotbar, keyboard shortcuts 1-8, action bar stale reference handling
+
+**Avoids pitfalls:** Action bar stale references (Pitfall 7 — instance-ID tracking, automatic invalidation on every `inventory:update`); hotkey fires while typing in chat (UX Pitfall — `document.activeElement` check before processing); HUD ActionBar placed in Phaser instead of React (Anti-Pattern 4 in ARCHITECTURE.md — React component avoids coupling with Phaser input rate limiting)
+
+**Research flag:** Standard HUD component patterns. Follows existing `HUD.tsx` with `toggleInventory`. Skip research-phase.
 
 ### Phase Ordering Rationale
 
-- Phases 1-2 are purely backend/constant changes with zero user-visible impact — they de-risk the remaining phases completely
-- Phases 3-5 are ordered by visual dependency: input must work across all 8 directions before animation is meaningful; animation must exist before camera lerp shows its full effect
-- Phase 6 is isolated and cannot affect movement timing — placed after all movement-related work is validated
-- Phase 7 is infrastructure scaffolding with no visible change — placed last so it does not interfere with visual QA of Phases 4-6
-- Terrain-speed movement (P2 feature) and path visualization (P2 feature) are excluded from this milestone. Terrain speed requires server-side coordination; path step dots are polish. Neither blocks the core movement feel improvement.
+- Shared packages before applications: `packages/items` and `packages/game-logic/src/inventory/` must exist before either `game-server` or `web` can import them; this is a hard dependency, not a preference
+- Schema migration before all UI: the exo-suit slot model is a breaking JSONB structure change; any UI built against the old `{head, chest, legs, feet}` shape requires a full rewrite after migration
+- Server before client: client UI depends on `inventory:update` events flowing correctly and the server contract being stable; building UI before server is proven wastes integration time and masks bugs
+- Equipment after basic inventory: equipment panel is a specialized view requiring the base inventory grid to exist and be proven; module slot logic is more complex than basic grid CRUD
+- Action bar last: depends on inventory being stable, requires instance-ID reference model from Phase 1, requires `inventory:update` listener from Phase 3 for stale reference invalidation
 
 ### Research Flags
 
-All phases in this milestone use standard, well-verified patterns. No phase requires `/gsd:research-phase`.
+Phases needing design decisions before implementation:
+- **Phase 4 (Equipment):** Module type compatibility rules, the exact rarity-to-slot-count formula, and whether ilvl is computed at read time or stored need a design decision document. Low-stakes (formula is tunable without schema changes) but must be decided before server validation code is written.
 
-**Future milestones that will need research before starting:**
-- **Diagonal A* pathfinding** — Server validation changes, rate-limit split for cardinal vs diagonal (197ms vs 140ms), interaction with reconciliation. Research needed before starting; do not combine with any movement polish sprint.
-- **Terrain-speed movement** — Server-side tick validation, client/server multiplier parity, edge cases for near-zero movementSpeed tiles. Research needed when server team is available to coordinate.
-- **Infinite world chunk streaming** — Extensive pitfalls documented in PITFALLS.md Part 2 (Pitfalls 1-10 for chunk streaming). That entire section forms the research base for the next major milestone.
-
----
+Phases with standard patterns (skip research-phase):
+- **Phase 1 (Data Model):** Mirrors `packages/tiles` pattern. `TileRegistry` at `packages/tiles/src/registry.ts` is the direct reference.
+- **Phase 2 (Server):** Mirrors `PlayerService` in-memory Map + DB persistence pattern. Standard NestJS module injection.
+- **Phase 3 (Client UI):** dnd-kit and floating-ui have comprehensive official docs. `ChatPanel.tsx` is the existing React panel reference.
+- **Phase 5 (Action Bar):** Standard HUD component. `HUD.tsx` with `toggleInventory` is the reference pattern.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All APIs verified in installed Phaser 3.90.0 type definitions at specific line numbers. Zero version unknowns. Zero new packages. |
-| Features | HIGH | P1 features confirmed via direct codebase inspection. P2/P3 features via competitor analysis (Tibia official docs, PoE2 community, Albion Online discussions). |
-| Architecture | HIGH | All components, file locations, and line numbers verified by direct codebase audit. Target architecture derived from patterns already proven in remote player handling (`movePlayer()`). |
-| Pitfalls | HIGH | Movement pitfalls confirmed against Gabriel Gambetta's authoritative prediction/reconciliation model and Valve networking docs. Codebase-specific pitfalls confirmed by direct inspection of `game.gateway.ts`, `MovementController.ts`, `WorldScene.ts`. |
+| Stack | HIGH | All existing packages verified in installed codebase at specific file locations. New packages verified via official docs with explicit version compatibility checked. |
+| Features | HIGH | Schema and architecture grounded in direct codebase audit. Feature prioritization grounded in lore (world-bible.md consulted; exo-suit model, module types, tool categories are non-negotiable). UX patterns MEDIUM — competitor analysis via community sources (No Man's Sky, Tibia, Albion Online). Faction item cross-equip pricing has no comparable reference — deferred to v2. |
+| Architecture | HIGH | All integration points verified against source files. TileRegistry and PlayerService reference implementations exist in the codebase and are the confirmed templates. All file paths and existing patterns confirmed by direct audit. |
+| Pitfalls | HIGH | Inventory-specific pitfalls verified against actual codebase bugs (non-atomic write confirmed as real issue in `queries/inventory.ts`). External validation: Arc Raiders duplication exploit (February 2026) confirmed exactly the non-atomic write pattern. PostgreSQL TOAST threshold confirmed by pganalyze 2025 analysis. Movement and chunk streaming pitfalls from prior research retained for completeness. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Diagonal move speed fairness in tile-step model:** All 8 directions use the same 150ms rate limit. Diagonal moves cover sqrt(2) more world distance, producing a 41% speed advantage. For this milestone (visual smoothness improvement), equal rate limits are acceptable. Document as a known tradeoff to address before any PvP distance-based mechanic.
-
-- **Reconciliation tween tuning:** The increase from 50ms to 80ms is a recommended value based on movement feel analysis, not a hard threshold. The correct value depends on server round-trip time in production. This is a low-stakes calibration tunable after deployment without architectural changes.
-
-- **SpriteAnimationController direction semantics:** The stub is straightforward, but when directional sprite frames are created for the 96x96 sprites, the mapping of isometric screen directions to frame indices requires art/lore team alignment. Not a blocker for this milestone; flag for when directional sprites are commissioned.
-
----
+- **ilvl formula validation:** The tier x rarity multiplier formula (1.0/1.2/1.5/1.8/2.2) is proposed but not validated against lore. Needs design confirmation before Phase 4 tooltip display is built. Low risk — formula can be tuned without schema changes.
+- **Module type compatibility rules:** Whether module types are mutually exclusive (e.g., max 2 Speed modules per exo-suit) is not specified in lore or codebase. Needs a design decision before Phase 4 server validation is written.
+- **Hotbar persistence strategy:** Whether hotbar slot assignments persist server-side (requires DB schema addition) or client-side (localStorage) is unresolved. Recommendation: localStorage for v1 since hotbar is preference data, not authoritative game state. Confirm before Phase 5 begins.
+- **Despawn timer persistence across server restart:** `ItemEntity.despawnAt` field exists but it is unknown whether ground items survive a server restart. The PITFALLS.md "Looks Done But Isn't" checklist flags this. Needs verification during Phase 2 implementation before marking ground items as complete.
+- **Faction item cross-equip pricing:** No comparable reference found for the cost/standing mechanic of faction-locked items equipped across factions. Deferred to v2 — does not block current milestone.
 
 ## Sources
 
 ### Primary (HIGH confidence — verified in installed codebase)
 
-- `apps/web/src/game/scenes/WorldScene.ts` — Camera `startFollow(target, true, 1, 1)` at line 1017; input handling (4-direction only) at lines 430-453; `moveDelay = 500`; remote player `movePlayer()` tween at lines 944-974
-- `apps/web/src/game/systems/MovementController.ts` — `processInput(direction: Direction)` accepts all 8 directions; reconciliation algorithm correct and unchanged
-- `apps/web/src/game/systems/PathfindingController.ts` — `moveDelay` injected via constructor at `WorldScene.ts:103`; `getDirection()` returns all 8 directions at lines 176-190
-- `apps/game-server/src/game/game.gateway.ts` — Rate limit `< 140ms` at line 133
-- `packages/game-logic/src/movement/validation.ts` — `DIRECTION_VECTORS` has all 8 directions; `calculateNewPosition()` and `validateMovement()` handle all 8
-- `packages/game-logic/src/movement/pathfinding.ts` — Cardinal-only A* neighbors at lines 82-87; `getDirection()` handles all 8 results at lines 176-190
-- `packages/shared-types/src/core/position.ts` — `Direction` type includes all 8 values at line 16
-- `node_modules/.pnpm/phaser@3.90.0/.../phaser.d.ts` — `startFollow` signature confirmed at line 3671; `setLerp` confirmed at line 3671; `Key.isDown` boolean confirmed at line 62987
+- `packages/shared-types/src/game/inventory.ts` — `ItemDef`, `InventoryItem`, `Inventory`, `EquipmentSlot`, `ItemRarity`, `ItemCategory` types confirmed
+- `packages/shared-types/src/network/events.ts` — all 5 inventory socket events confirmed declared; handlers confirmed absent in gateway
+- `packages/database/src/schema/inventories.ts` — `inventories` table with `items JSONB`, `equipment JSONB`, `maxSlots INT` confirmed
+- `packages/database/src/queries/inventory.ts` — full CRUD confirmed present; non-atomic separate `updateInventoryItems` + `updateEquipment` confirmed as real bug pattern
+- `apps/web/src/store/gameStore.ts` — `showInventory` toggle confirmed; no inventory data slice confirmed
+- `packages/tiles/src/registry.ts` — TileRegistry singleton Map pattern confirmed as template for ItemRegistry
+- `apps/game-server/src/game/game.gateway.ts` — inventory `@SubscribeMessage` handlers confirmed absent
+- `apps/game-server/src/game/player.service.ts` — in-memory `Map<socketId, ConnectedPlayer>` pattern confirmed as template for InventoryService
+- `apps/game-server/src/game/game.service.ts` — `handleInteraction` confirmed: sets entity inactive but does not add to inventory (item loss bug)
+- `packages/shared-types/src/core/entity.ts` — `ItemEntity` with `despawnAt` confirmed; no claim/lock mechanism confirmed
+- `apps/web/src/network/socket.ts` — `inventory:update` listed in `serverEvents` array confirmed; no handler wired confirmed
 
-### Secondary (MEDIUM confidence — official documentation)
+### Secondary (MEDIUM confidence — official docs and community sources)
 
-- Phaser 3 Official Camera Docs — `startFollow()` lerp parameters; `roundPixels: true` recommendation: https://docs.phaser.io/phaser/concepts/cameras
-- Phaser 3 API camera.lerp — Default 1 (instant snap), 0.1 = smooth: https://newdocs.phaser.io/docs/3.80.0/focus/Phaser.Cameras.Scene2D.Camera-lerp
-- Phaser 3 API startFollow — Signature `startFollow(target, roundPixels, lerpX, lerpY, offsetX, offsetY)`: https://newdocs.phaser.io/docs/3.70.0/focus/Phaser.Cameras.Scene2D.Camera-startFollow
-- Tibia official controls documentation — 8-direction movement confirmation: https://www.tibia.com/gameguides/?subtopic=manual&section=controls
-- Client-side prediction / server reconciliation — Gabriel Gambetta (canonical source): https://www.gabrielgambetta.com/client-side-prediction-live-demo.html
-- Source Multiplayer Networking — Valve Developer Community: https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking
-- Handling height in isometric tilemaps (elevation correction): https://erikonarheim.com/posts/handling-height-in-isometric/
+- dndkit.com + docs.dndkit.com — `@dnd-kit/core` 6.3.1; `useDraggable`, `useDroppable`, `closestCenter`, `DragOverlay` API confirmed
+- floating-ui.com/docs/react — `@floating-ui/react` 0.27.17; `useFloating`, `flip`, `shift`, `FloatingPortal` API confirmed
+- immerjs.github.io + zustand.docs.pmnd.rs — Immer 11.1.4; Zustand native `immer` middleware adapter confirmed
+- No Man's Sky exosuit wiki — slot expansion model, tech slot rarity system (validated exo-suit + module approach)
+- WoW Dragonflight stack size increases — 1000-stack precedent for profession materials (validated 999 stack for materials)
+- BitCraft action bar addition (2025) — hotbar is expected feature in survival MMOs
+- OSRS loot despawn timer model — 3-minute public drop baseline; 5-minute timer chosen for this game
 
-### Tertiary (MEDIUM confidence — community consensus)
+### Tertiary (HIGH confidence — canonical external references)
 
-- Phaser 3 WASD simultaneous `isDown` pattern: https://phaser.discourse.group/t/wasd-keyboard-movement-phaser-3/8297
-- Path of Exile 2 WASD 8-direction implementation feedback: https://steamcommunity.com/app/2694490/discussions/0/594008890765478462/
-- Albion Online WASD vs click-to-move community discussion: https://steamcommunity.com/app/761890/discussions/0/3046104336680783318/
-- Phaser Camera lerp + deadzone interaction Issue #5018 (avoid deadzone in initial implementation): https://github.com/phaserjs/phaser/issues/5018
-- Diagonal movement fix in 2D top-down games: https://jslegenddev.substack.com/p/how-to-fix-diagonal-movement-in-2d
+- Arc Raiders duplication glitch hotfix (February 2026) — real shipped incident validating non-atomic equip as critical production risk
+- pganalyze 2025 — PostgreSQL JSONB TOAST performance analysis; 2KB threshold confirmed as performance cliff
+- PostgreSQL Official Docs — `FOR UPDATE NOWAIT` explicit row locking for simultaneous pickup alternative to in-memory claim map
+- Gabriel Gambetta — Client-Side Prediction and Server Reconciliation (movement pitfalls section context)
+- Valve Developer Community — Source Multiplayer Networking (movement pitfalls section context)
 
 ---
-
 *Research completed: 2026-02-17*
 *Ready for roadmap: yes*

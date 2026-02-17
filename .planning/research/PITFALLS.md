@@ -6,7 +6,7 @@
 
 ---
 
-> This file covers two milestone areas: (1) Movement System Overhaul pitfalls (new section), and (2) Infinite World Chunk Streaming pitfalls (existing research, 2026-02-16). Both are relevant to Into the Void's active development.
+> This file covers three milestone areas: (1) Movement System Overhaul pitfalls, (2) Infinite World Chunk Streaming pitfalls, and (3) Inventory & Items System pitfalls (added 2026-02-17). All are relevant to Into the Void's active development.
 
 ---
 
@@ -772,5 +772,377 @@ Phase 2 (Multi-Chunk Streaming) — When implementing server-side chunk manageme
 - [Rooms | Socket.IO](https://socket.io/docs/v3/rooms/)
 
 ---
-*Pitfalls research for: Movement System Overhaul + Infinite World Chunk Streaming (Multiplayer 2D Isometric MMO)*
+
+# Part 3: Inventory & Items System Pitfalls
+
+**Domain:** Multiplayer 2D Isometric MMO — Inventory & Items System
+**Researched:** 2026-02-17
+**Confidence:** HIGH
+
+**Scope:** Adding 100 items, inventory management, equipment slots, and action bar hotkeys to an existing multiplayer game with client-side prediction, WebSocket real-time sync, PostgreSQL persistence, and React/Phaser UI.
+
+**Current system (from codebase analysis):**
+- Schema: `inventories` table with single character as PK, `items` stored as JSONB array, `equipment` as JSONB object — no row-level locking on inventory operations
+- Query pattern: `updateInventoryItems` and `updateEquipment` are separate functions — two DB writes for equip operations, not atomic
+- Network: `inventory:update` event sends full `Inventory` object to client; `inventory:use`, `inventory:drop`, `inventory:pickup` are defined in `ClientEvents` but not yet implemented in `game.gateway.ts`
+- State: `gameStore.ts` has no inventory state; `showInventory` toggle exists but no inventory data in store
+- Item pickup: `handleInteraction` in `game.service.ts` sets `entity.active = false` with no actual inventory insertion — item is lost to the void
+- Entity: `ItemEntity` type exists with `itemId`, `quantity`, `despawnAt` but no claim/lock mechanism
+
+---
+
+## Critical Pitfalls
+
+### Pitfall 1: Item Duplication via Non-Atomic Equip Operation
+
+**What goes wrong:**
+The current `updateInventoryItems` and `updateEquipment` are separate database calls, not wrapped in a transaction. When a player equips an item, the operation should atomically: (1) remove item from inventory slots, (2) add item to equipment slot, (3) move previously equipped item to inventory. If the server crashes or the connection drops between these two DB writes, the item exists in both the inventory array AND the equipment slot simultaneously. On reconnect, the client receives the full inventory state with the duplicated item.
+
+This is the most common class of MMO duplication exploit — the "pack then cancel" pattern documented across many shipped MMOs. Arc Raiders shipped with exactly this bug in February 2026.
+
+**Why it happens:**
+JSONB storage stores inventory and equipment as separate columns on the same row. Drizzle ORM's `update` calls are not automatically transactional. Developers write `await updateInventoryItems(...)` followed by `await updateEquipment(...)` assuming Node.js single-thread protects against interleaving — it does not, because `await` yields to the event loop between writes.
+
+**How to avoid:**
+- Wrap ALL inventory mutation operations in a single PostgreSQL transaction using Drizzle's `db.transaction(async (tx) => { ... })` API.
+- Equip operations must update BOTH `items` and `equipment` columns in a single `UPDATE inventories SET items = $1, equipment = $2 WHERE character_id = $3` call.
+- Never call `updateInventoryItems` and `updateEquipment` as separate awaited operations. Create a single `updateInventoryFull(characterId, { items, equipment })` function that performs one atomic DB write.
+- Verify: after equip, `SELECT items, equipment FROM inventories WHERE character_id = $1` — the item must appear in exactly one of the two columns, never both.
+
+**Warning signs:**
+- Player reports having the same item in both inventory and equipment simultaneously
+- Item count in inventory row doesn't match expected count after equip operation
+- Console shows two sequential `UPDATE inventories` queries for a single equip action
+- On reconnect after crash, inventory has items that should have been consumed
+
+**Phase to address:**
+Phase 1: Item Data Model & Basic Inventory — Atomic writes must be established before any inventory operations are implemented.
+
+---
+
+### Pitfall 2: Simultaneous Pickup Race Condition Duplicates World Items
+
+**What goes wrong:**
+Two players stand adjacent to a ground item (an `ItemEntity` in the zone). Both press interact at the same time. Both clients send `inventory:pickup { entityId }` to the server within the same event loop tick. The server processes both messages: the first player picks up the item (sets `entity.active = false`, inserts into inventory). The second player's message arrives, checks `entity.active` — but the check and the update are not in a transaction. The entity was set inactive in the first player's handler, but the second player's handler already read the entity before the first write committed. Both players receive the item.
+
+**Why it happens:**
+Node.js event loop is single-threaded but `await` yields. The sequence is: (1) Player A sends pickup, (2) Player B sends pickup, (3) Handler A reads entity (active=true), (4) Handler A `await`s DB update, (5) Handler B reads entity (still active=true, A's write hasn't committed), (6) Handler A DB write completes, (7) Handler B DB write completes. Both handlers saw `active=true`.
+
+**How to avoid:**
+- Use PostgreSQL `FOR UPDATE` row locking on the entity row: `SELECT * FROM entities WHERE id = $1 FOR UPDATE NOWAIT`.
+- Or use an in-memory claim map in `ZonesService`: `Map<entityId, playerId>` that is set synchronously (not async) before awaiting the DB write. Check the claim map before the DB lock.
+- The claim map approach works because Node.js is single-threaded — the synchronous check+set cannot be interleaved. Pattern: `if (this.claimedItems.has(entityId)) return { success: false, error: 'Already taken' }; this.claimedItems.set(entityId, playerId); await db.update(...)`.
+- Remove the claim after DB write completes (success or failure).
+- Verify: simulate two simultaneous pickup requests in a test — only one player should receive the item.
+
+**Warning signs:**
+- Two players both receive "item picked up" notification for the same entity
+- Item entity count in zone doesn't match expected (entity active=false but item in two inventories)
+- DB logs show two `UPDATE entities SET active = false` for the same entity ID within the same millisecond
+- Players report "item appeared in my inventory and also in my party member's inventory"
+
+**Phase to address:**
+Phase 2: Item Pickup & World Items — The claim mechanism must be designed before world item entities are implemented.
+
+---
+
+### Pitfall 3: Full Inventory State Broadcast Leaks Other Players' Inventories
+
+**What goes wrong:**
+The `inventory:update` server event sends the full `Inventory` object. If a developer accidentally broadcasts this to the zone room instead of emitting to only the owning player's socket, every player in the zone sees every other player's complete inventory. This is a privacy/security breach and an information exploit (knowing enemy equipment before a fight).
+
+The current `ClientEvents` has `inventory:pickup` which triggers `player:interact`, which calls `this.server.to(result.zoneId).emit('entity:update', ...)` — a zone-wide broadcast. If inventory update gets attached to this broadcast path by mistake, it goes to everyone.
+
+**Why it happens:**
+The `game.gateway.ts` uses both `this.server.to(zoneId).emit(...)` (zone broadcast) and `client.emit(...)` (private). All existing non-inventory events use zone broadcast. When a developer adds inventory handling by copy-pasting existing patterns, they will reach for `this.server.to(zoneId).emit('inventory:update', ...)` — which sends to everyone.
+
+**How to avoid:**
+- Inventory events MUST only use `client.emit('inventory:update', inventory)` — never `server.to(room).emit`.
+- Add a lint rule or code review checklist: "inventory:update must only appear in `client.emit` calls."
+- Separate the entity update (zone-wide: entity despawned) from the inventory update (private: item added to your bag). These are two different events: `server.to(zoneId).emit('entity:despawn', { entityId })` AND `client.emit('inventory:update', newInventory)`.
+- In testing, connect two clients to the same zone. Perform a pickup on client A. Verify client B receives `entity:despawn` but does NOT receive `inventory:update`.
+
+**Warning signs:**
+- Other players' inventory UI populates when you pick up an item
+- Network tab on client B shows `inventory:update` events that originated from client A's actions
+- Console logs show inventory data for characters other than the logged-in character
+- Players report knowing enemy equipment they shouldn't have visibility of
+
+**Phase to address:**
+Phase 2: Item Pickup & World Items — This pattern must be correct from the first inventory event implementation.
+
+---
+
+### Pitfall 4: Optimistic Inventory UI Desync Without Rollback
+
+**What goes wrong:**
+The client immediately updates the inventory UI when a player drags an item to a new slot (optimistic update), before the server confirms the operation. The server rejects the move (inventory full, item quest-locked, server validation fails). The client has already shown the item in the new slot. Without a rollback mechanism, the UI remains in the "optimistic" state — showing the item in the wrong slot — while the server has the item in the original slot. The next server `inventory:update` event snaps the UI back, causing a visible flash and confusion.
+
+**Why it happens:**
+The `gameStore.ts` currently has no inventory state. When inventory state is added, the temptation is to update the Zustand store immediately on user action (for responsiveness) and trust that the server will confirm. Without explicit rollback handling for the rejection case, the state remains wrong until the next full sync.
+
+**How to avoid:**
+- Use a two-state pattern: `pendingInventory` (optimistic) and `confirmedInventory` (server-confirmed). UI renders from `pendingInventory`; server `inventory:update` updates `confirmedInventory` and resolves or rejects the pending state.
+- On server rejection (`error` event with inventory-related code), revert `pendingInventory` to `confirmedInventory`.
+- Alternatively: don't optimistically update inventory UI for slow operations (equip, drop, move). Only optimistically update for fast operations where server rejection is extremely rare (consuming a consumable in combat).
+- Never optimistically remove a unique/rare item from inventory — always wait for server confirmation before removing from UI.
+- Test: simulate 300ms latency, drag item to new slot, immediately receive rejection. Verify item visually returns to original slot without flash.
+
+**Warning signs:**
+- Item appears in two slots simultaneously for a brief moment
+- Item briefly disappears then reappears during lag spikes
+- Player reports "I used my health kit but it came back" (pending state not resolved)
+- Inventory count shows wrong number of items after rapid operations during lag
+
+**Phase to address:**
+Phase 3: Inventory UI & HUD — The state management pattern must be defined before any inventory UI is built.
+
+---
+
+### Pitfall 5: JSONB Inventory Array Grows Beyond TOAST Threshold
+
+**What goes wrong:**
+The `items` column is `jsonb` storing an array of `InventoryItem` objects. At 20 items with `properties: Record<string, unknown>` (potentially large for enchants, stats, history), the JSONB value easily exceeds PostgreSQL's TOAST threshold of ~2KB. Once a row's variable-length data exceeds this threshold, PostgreSQL silently moves it to the TOAST table. Every inventory read then requires an additional I/O operation to fetch the TOAST data. At high concurrency (many players saving inventory simultaneously), this causes a 2-10x query slowdown that is invisible until production load.
+
+With 100 items defined and players collecting multiple copies of stackable materials, a full 20-slot inventory with per-item properties can easily reach 4-8KB — well above the TOAST cliff.
+
+**Why it happens:**
+JSONB's TOAST behavior is invisible during development (single developer, small data). The performance cliff only appears under production conditions: many concurrent reads/writes to the `inventories` table, all hitting the TOAST table for secondary lookups. pganalyze's 2025 analysis confirms the 2KB threshold is the critical breakpoint.
+
+**How to avoid:**
+- Keep `properties` objects minimal — store only deltas from item definition, not the full item data. An item with full durability needs no `durability` property at all; only record `properties: { durability: 45 }` if durability is below max.
+- Consider normalizing frequently-updated fields: add `max_slots integer` as a direct column (already done) — extend this pattern to any inventory-level stats.
+- Set a practical JSON size budget: target < 1.5KB total for the `items` column. At 20 slots x 75 bytes/item = 1.5KB.
+- Monitor TOAST hits in production: `SELECT * FROM pg_stat_user_tables WHERE relname = 'inventories'` and watch `n_tup_fetch` vs `heap_blks_read`.
+- For items with large variable properties (fully customizable weapons): consider a separate `item_instances` table with foreign key instead of embedding in JSONB.
+
+**Warning signs:**
+- Inventory load time increases disproportionately as players acquire more items
+- `pg_stat_user_tables` shows high `heap_blks_read` ratio on `inventories` table
+- Query time for `SELECT items FROM inventories WHERE character_id = $1` exceeds 5ms under load
+- Server memory usage spikes when many players log in simultaneously (TOAST cache pressure)
+
+**Phase to address:**
+Phase 1: Item Data Model & Basic Inventory — JSONB size discipline must be enforced in the schema design, not retrofitted after data accumulates.
+
+---
+
+### Pitfall 6: Equipment Stat Calculation Applied on Client Causes Exploit Surface
+
+**What goes wrong:**
+When a player equips armor, their defense stat should increase. If the defense calculation (base stats + equipment bonuses) runs on the client and the result is sent to the server, a malicious client can claim arbitrary stat values. In an MMO with 100 items and equipment slots, the attack surface is every equippable item's stat bonus.
+
+Even a "soft" exploit is possible: the client calculates stats correctly but delays reporting the unequip, so the server continues applying bonuses from a no-longer-equipped item.
+
+**Why it happens:**
+The `PlayerStats` interface exists in `shared-types/src/core/player.ts` but stats are stored on the player, not recalculated from equipment on demand. If stats are cached on the player object and the client sends stat updates, the server must trust them. The path of least resistance is "client calculates stats, sends to server" — which looks correct in single-player testing.
+
+**How to avoid:**
+- ALL stat calculations must run server-side, derived from the server's authoritative inventory state. Never trust client-provided stat values.
+- The server calculates `effectiveStats(player, equipment)` on every relevant action (combat, interaction, movement speed). Never store derived stats — always derive them from source data.
+- `PlayerStats` in the player object should be base stats only, unaffected by equipment. A separate `effectiveStats` function in `game-logic` computes the combined value.
+- When `inventory:update` fires after equip, the server broadcasts updated `player` object with recalculated effective stats (or a separate `stats:update` event).
+- Test: equip an item that grants +50 defense, verify server's combat resolution uses +50, not whatever the client claimed.
+
+**Warning signs:**
+- Players report dealing or receiving incorrect damage amounts after equipment changes
+- Server-side combat results don't match client-side predictions by more than equipment delta
+- Suspicious players with damage output exceeding max possible for their level/gear
+- Stats don't change when equipment is swapped (server never recalculates)
+
+**Phase to address:**
+Phase 4: Equipment System — Before any stat-affecting equipment is implemented. Must establish the calculation pattern before the first stat item is added.
+
+---
+
+### Pitfall 7: Action Bar Hotkey State Diverges from Inventory State
+
+**What goes wrong:**
+A player assigns item slot 3 (a health kit) to hotkey 1 on the action bar. They then drop the health kit from slot 3. The action bar still shows hotkey 1 → slot 3. The player presses hotkey 1 in combat, the action bar sends `inventory:use { instanceId: 'kit-123' }`. The server rejects: item not found in inventory. The action bar UI still shows the item as if available. Player dies thinking they had a health kit.
+
+**Why it happens:**
+Action bar state is derived from inventory state but not synchronized when inventory changes. If the action bar tracks `{ hotkey: 1, slot: 3 }` (position-based) and inventory operations shift slot numbers or remove items, the mapping becomes stale. If the action bar tracks `{ hotkey: 1, instanceId: 'kit-123' }` (instance-based) and the instance is dropped, the action bar has a dangling reference.
+
+**How to avoid:**
+- Action bar should store `instanceId` references, not slot positions. Slot positions can change during rearrange operations; instance IDs are stable until item destruction.
+- Inventory mutations must invalidate action bar references: when `inventory:update` fires with new inventory state, recompute which action bar slots are valid by checking if their referenced `instanceId` exists in the new inventory.
+- Server-side: validate that the `instanceId` in `inventory:use` exists in the player's current inventory before processing. Never trust the action bar's reference as proof of ownership.
+- Client-side: show action bar slots as "empty" (greyed out) when their `instanceId` is not found in current inventory state.
+- Test: assign item to hotkey, drop item, press hotkey. Verify: server rejects use, client shows slot as empty, no crash.
+
+**Warning signs:**
+- Player presses hotkey and nothing happens but no error shown (action bar has stale reference)
+- Server logs show `inventory:use` for instanceIds that don't exist in inventory
+- Action bar shows items that the inventory panel doesn't show
+- Using an item via hotkey succeeds but inventory count doesn't decrease (item lookup bug)
+
+**Phase to address:**
+Phase 5: Action Bar & Hotkeys — The instanceId-based reference model must be established in Phase 3's data model before the action bar is built.
+
+---
+
+### Pitfall 8: Inventory Update Event Flooding on Rapid Operations
+
+**What goes wrong:**
+Each inventory operation (use, drop, pickup, equip) emits a full `Inventory` object via `inventory:update`. At 20 slots with JSONB properties, a full inventory is ~2-4KB per message. In fast-paced play — a player rapidly consuming materials during crafting, or an action bar that triggers multiple items per second — the server emits a 3KB WebSocket message for each operation. At 10 operations/second, this is 30KB/s of inventory data to a single client, on top of all other game events.
+
+The problem compounds if developers debounce on the client side but the server still generates full-state events for each operation — wasted server serialization work.
+
+**Why it happens:**
+Full-state sync (`inventory:update` sends entire inventory) is the simplest correct approach and works fine at low operation frequency. The pathological case is high-frequency inventory operations (crafting loops, auto-harvest systems) that developers add later without revisiting the sync strategy.
+
+**How to avoid:**
+- For high-frequency operations, use delta updates: `inventory:delta { added: [...], removed: [...instanceIds], modified: [...] }` instead of full state.
+- Server-side: debounce inventory updates with a 100ms window. Multiple operations within 100ms are batched into a single `inventory:update` emit.
+- Or use optimistic client updates for the happy path: client updates state locally, server sends `inventory:update` only on reject or as periodic re-sync (every 5s).
+- Rate-limit `inventory:use` events server-side: maximum 5 inventory operations per second per player.
+- Measure: log inventory event payload sizes in development. Alert if any single `inventory:update` exceeds 5KB.
+
+**Warning signs:**
+- Network tab shows repeated `inventory:update` messages within milliseconds of each other
+- Server CPU spikes during crafting operations (JSON serialization of full inventory on each operation)
+- Client inventory UI flickers rapidly during fast operations (re-render on each event)
+- WebSocket backpressure warning in Socket.IO logs during bulk operations
+
+**Phase to address:**
+Phase 3: Inventory UI & HUD — The sync strategy must be chosen before the first inventory event is implemented.
+
+---
+
+## Technical Debt Patterns (Inventory-Specific)
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Separate `updateInventoryItems` and `updateEquipment` calls | Simple code, easy to test individually | Item duplication on crash between calls; not atomic | Never — always use a single transaction |
+| Full inventory state on every event | Simple to implement, always consistent | 30KB/s at high operation frequency, client re-render thrashing | MVP only, replace with delta events before crafting systems |
+| Client calculates equipment stat bonuses | Responsive UI, easy to preview | Exploit surface for stat manipulation; every new item adds attack surface | Never in multiplayer — always server-authoritative |
+| Position-based action bar references | Simple slot tracking | Breaks on inventory sort/rearrange operations | Never — use instanceId references from day one |
+| No claim mechanism for world items | Simpler pickup handler | Duplicate item exploits when two players pick up simultaneously | Never for multiplayer — claim map costs ~5 lines of code |
+| Store full item definition in inventory | No item registry lookup on read | JSONB bloat, TOAST threshold exceeded, slow inventory loads | Never — store only instanceId + quantity + properties delta |
+| Broadcast inventory updates to zone room | Reuse existing broadcast pattern | Every player sees every other player's inventory (privacy/exploit) | Never — inventory is always private |
+
+---
+
+## Integration Gotchas (Inventory-Specific)
+
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| Socket.IO + inventory events | Using `server.to(zoneId).emit('inventory:update', ...)` (copy-paste from entity events) | Always use `client.emit('inventory:update', ...)` — inventory is per-player private |
+| Phaser + React inventory UI | Phaser canvas captures keyboard input; pressing I to open inventory also fires in-game | Use `scene.input.keyboard.enabled = false` when inventory is open; re-enable on close |
+| Zustand + inventory state | Adding `inventory` to gameStore alongside `player` and `entities` causes full re-render of game canvas on every item change | Separate inventory into `useInventoryStore` — game canvas doesn't subscribe to inventory changes |
+| PostgreSQL JSONB + Drizzle | Drizzle `update` with JSONB requires `JSON.stringify` in some versions; omitting causes silent null writes | Always test actual DB values after write, not just the response from Drizzle ORM |
+| Item definition lookup | Looking up item definition (`ItemDef`) inside the hot path of every inventory render | Cache item registry as a `Map<itemId, ItemDef>` at module load, never fetch inside render |
+| Entity despawn + inventory pickup | Calling `entity:despawn` before inventory write succeeds — entity gone but item never added | Write inventory first, broadcast `entity:despawn` only after DB confirms item was added |
+| Equipment unequip + inventory full | Equipping a new item tries to move old item to inventory — fails silently if inventory is full | Pre-validate inventory capacity before any equip operation; return explicit "inventory full" error |
+
+---
+
+## Performance Traps (Inventory-Specific)
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Full inventory read on every operation | Latency spikes during crafting loops | Cache inventory in memory per-character in game-server; persist async | >5 inventory ops/second per player |
+| JSONB items array exceeds 2KB TOAST threshold | Inventory load 2-10x slower under load | Keep items lean: only store delta properties, not full item data | >8 items with complex properties |
+| No DB transaction on equip operations | Occasional item duplication after server restart | Always use `db.transaction()` for multi-step inventory mutations | Any crash between the two separate DB writes |
+| Inventory re-render on every WebSocket event | React renders the full 20-slot grid on every entity update | Separate inventory Zustand store; only subscribe to `inventory:update` events | First entity update after inventory opens |
+| Item registry lookup in render loop | Frame drops when inventory opens or refreshes | Pre-build `Map<itemId, ItemDef>` at startup; O(1) lookup in render | >50 item definitions, any re-render |
+| Unbounded despawn timer queue | Memory leak if players never return to claim world items | Clear despawn queue on server restart; persist despawn times to DB | >1000 active world items across all zones |
+
+---
+
+## Security Mistakes (Inventory-Specific)
+
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Trusting client-provided `instanceId` ownership | Player sends another character's instanceId, steals item | Server validates `instanceId` exists in the requesting player's inventory before processing |
+| No rate limit on `inventory:use` | Rapid-fire health kit spam exploits timing windows | Rate limit: max 5 inventory events per second per player |
+| Client-side stat calculation accepted by server | Players modify client to claim impossible stats | All effective stats derived server-side from authoritative inventory state |
+| No server validation of item level requirements | Client equips level 50 weapon on level 1 character | Server checks `item.requiredLevel <= player.level` before allowing equip |
+| Allowing negative quantity in `inventory:drop` | Client sends `{ instanceId, quantity: -99 }`, duplicates item | Validate `quantity > 0` and `quantity <= stack.quantity` server-side |
+| No duplicate instanceId check on pickup | Client sends pickup for already-owned item | Validate instanceId is not already in player inventory before inserting |
+| World item accessible from any zone | Client requests pickup for item in zone they're not in | Server validates player is in the same zone as the ItemEntity being picked up |
+
+---
+
+## UX Pitfalls (Inventory-Specific)
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Inventory opens during combat (Phaser input not blocked) | Player opens inventory mid-fight, game canvas stops receiving WASD input, character freezes | Disable inventory open keybind during combat; or pause input to game canvas when inventory open |
+| No feedback when inventory is full | Player picks up item, item disappears from world, nothing in inventory — confusing | Show "Inventory Full" toast notification before pickup attempt; grey out ground items if inventory full |
+| Hotkey activates item when typing in chat | Pressing 1 in chat sends message but also uses action bar item 1 | Chat input captures keydown, prevents propagation to game input system |
+| Item tooltip shows stat diffs against currently equipped | Missing comparison info — player doesn't know if upgrade | Show green/red delta values against currently equipped item in same slot |
+| Drag-drop from inventory to action bar loses item if drop target invalid | Item being dragged disappears during lag (optimistic removal) | Never remove item from inventory display during drag — only show "ghost" being dragged |
+| Equipment stat change not reflected immediately in player HUD | Player equips armor, health bar doesn't update — looks broken | `inventory:update` response must include recalculated stats, update HUD immediately |
+
+---
+
+## "Looks Done But Isn't" Checklist (Inventory-Specific)
+
+- [ ] **Item pickup works**: But are two simultaneous pickups handled? Simulate two clients picking up the same item at the same time — only one should succeed.
+- [ ] **Equip works**: But is it atomic? Kill the server between `updateInventoryItems` and `updateEquipment` calls — verify no duplication on reconnect.
+- [ ] **Action bar hotkeys activate items**: But do they handle stale references? Drop an item, press its hotkey — server should reject, UI should show slot as empty.
+- [ ] **Inventory UI renders correctly**: But does it re-render on unrelated events (entity spawn, player moved)? Check React DevTools profiler — inventory component should not render on movement events.
+- [ ] **Equipment grants stat bonuses**: But are stats calculated server-side? Verify by manually sending an `inventory:use` event via WebSocket inspector — the server must not trust client-provided stat claims.
+- [ ] **Items drop to world correctly**: But are they persisted across server restart? Restart the game-server and verify world items are still present.
+- [ ] **Inventory update is private**: Connect two clients to the same zone. Pick up an item on client A. Verify client B receives `entity:despawn` but NOT `inventory:update`.
+- [ ] **Full inventory prevents pickup**: With 20/20 items, attempt pickup — verify server rejects, entity remains active, clear error shown to player.
+- [ ] **Item properties persist**: Store an item with custom `properties` (e.g., `{ durability: 45 }`), relog — verify properties survived the round-trip through JSONB serialization.
+- [ ] **Faction-restricted items are enforced server-side**: Attempt to equip a faction-locked item on a character of the wrong faction via WebSocket inspector — server must reject.
+
+---
+
+## Recovery Strategies (Inventory-Specific)
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Item duplication discovered in production | HIGH | Roll back item quantities using item history logs; issue server ban for egregious exploiters; hotfix equip to use single atomic UPDATE |
+| Simultaneous pickup duplication | MEDIUM | Add in-memory claim map to ZonesService; retroactively audit item count discrepancies via item logs |
+| Inventory update broadcast to zone (privacy breach) | LOW | Hotfix: change `server.to(zoneId).emit` to `client.emit`; no data migration needed |
+| Optimistic UI desync | LOW | Add `confirmedInventory` state and rollback handler; no server changes needed |
+| JSONB TOAST performance cliff | MEDIUM | Normalize large property objects to separate table; requires DB migration and query updates |
+| Action bar stale references | LOW | Add inventory-change listener that clears dangling action bar slots; deploy without DB changes |
+| Client-authoritative stats shipped | HIGH | Server-side stat recalculation on every equip/unequip; audit all combat results for the window where client stats were trusted |
+
+---
+
+## Pitfall-to-Phase Mapping (Inventory-Specific)
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Non-atomic equip duplication | Phase 1: Item Data Model | Kill server between equip writes; no duplication on reconnect |
+| Simultaneous pickup race condition | Phase 2: Item Pickup & World Items | Two clients pick same item simultaneously; exactly one receives it |
+| Inventory broadcast to zone | Phase 2: Item Pickup & World Items | Two clients in zone; client B receives zero `inventory:update` events for client A's actions |
+| Optimistic UI desync | Phase 3: Inventory UI & HUD | 300ms simulated latency, server rejects move; item returns to original slot without flash |
+| JSONB TOAST threshold | Phase 1: Item Data Model | 20 items with full properties; `items` column < 2KB; no TOAST in `pg_stat_user_tables` |
+| Equipment stat exploit surface | Phase 4: Equipment System | WebSocket inspector equip with forged stats; server ignores client stats, uses own calculation |
+| Action bar stale references | Phase 5: Action Bar & Hotkeys | Drop action bar item, press hotkey; server rejects, UI shows empty slot |
+| Inventory flooding | Phase 3: Inventory UI & HUD | Rapid 10 ops/second; verify batching, no client flicker, server CPU stable |
+
+---
+
+## Sources (Inventory Research)
+
+- [On item duplication exploits and how to prevent them - munique.net](https://munique.net/item-duplication-exploits/) — MEDIUM confidence, practitioner analysis of real MMO duplication patterns
+- [Arc Raiders Hotfix Slams Duplication Glitch - February 2026](https://www.rosenberryrooms.com/arc-raiders-hotfix-slams-duplication-glitch/) — HIGH confidence, real shipped incident demonstrating inventory slot validation failure
+- [MMO Architecture: Source of truth, Dataflows, I/O bottlenecks - PRDeving](https://prdeving.wordpress.com/2023/09/29/mmo-architecture-source-of-truth-dataflows-i-o-bottlenecks-and-how-to-solve-them/) — MEDIUM confidence, practitioner MMO architecture discussion
+- [PostgreSQL JSONB Toast Performance - pganalyze 2025](https://pganalyze.com/blog/5mins-postgres-jsonb-toast) — HIGH confidence, official analysis of TOAST threshold and performance impact
+- [PostgreSQL Explicit Locking: FOR UPDATE - Official Docs](https://www.postgresql.org/docs/current/explicit-locking.html) — HIGH confidence, official PostgreSQL documentation
+- [WebSocket Race Condition PoC - GitHub](https://github.com/redrays-io/WS_RaceCondition_PoC) — MEDIUM confidence, demonstrates WebSocket concurrent operation race conditions
+- [What to Sync for Multiplayer Inventory - Unity Forums](https://forum.unity.com/threads/what-to-sync-for-multiplayer-inventory.424511/) — MEDIUM confidence, community practitioner discussion
+- [Optimistic Updates - TanStack Query Docs](https://tanstack.com/query/v4/docs/framework/react/guides/optimistic-updates) — HIGH confidence, official documentation on optimistic update rollback patterns
+
+**Codebase analysis (HIGH confidence — direct inspection):**
+- `packages/database/src/schema/inventories.ts` — JSONB storage model, separate items/equipment columns
+- `packages/database/src/queries/inventory.ts` — non-atomic `updateInventoryItems` + `updateEquipment`
+- `packages/shared-types/src/game/inventory.ts` — `Inventory`, `InventoryItem`, `ItemDef` interfaces
+- `packages/shared-types/src/network/events.ts` — `inventory:update`, `inventory:pickup`, `inventory:use`, `inventory:drop` events
+- `apps/game-server/src/game/game.service.ts` — `handleInteraction` sets entity inactive but doesn't add to inventory
+- `apps/game-server/src/game/game.gateway.ts` — zone broadcast vs client emit patterns
+- `apps/web/src/store/gameStore.ts` — no current inventory state, `showInventory` toggle only
+- `packages/shared-types/src/core/entity.ts` — `ItemEntity` with `despawnAt` but no claim/lock mechanism
+
+---
+
+*Pitfalls research for: Movement System Overhaul + Infinite World Chunk Streaming + Inventory & Items System (Multiplayer 2D Isometric MMO)*
 *Updated: 2026-02-17*
