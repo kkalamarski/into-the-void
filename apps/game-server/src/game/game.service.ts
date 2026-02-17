@@ -39,6 +39,7 @@ interface InteractionResult {
   error?: string;
   zoneId?: string;
   entityChanges?: Partial<Entity>;
+  inventory?: Inventory;
 }
 
 interface PickupResult {
@@ -181,13 +182,20 @@ export class GameService {
           entityChanges: { active: false },
         };
 
-      case 'item':
-        // Handle pickup
-        return {
-          success: true,
-          zoneId: player.position.zoneId,
-          entityChanges: { active: false },
-        };
+      case 'item': {
+        // Route to proper pickup handler (writes to inventory before despawn)
+        const pickupResult = await this.handleItemPickup(socketId, targetId);
+        if (pickupResult.success) {
+          return {
+            success: true,
+            zoneId: player.position.zoneId,
+            entityChanges: { active: false },
+            inventory: pickupResult.inventory,
+          };
+        } else {
+          return { success: false, error: pickupResult.error };
+        }
+      }
 
       case 'creature':
         // Initiate combat (simplified)
