@@ -454,7 +454,10 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private updateVisibleTiles(): void {
-    if (!this.viewportCuller || this.tileSprites.length === 0) return;
+    if (!this.viewportCuller) return;
+
+    // Skip if no chunks loaded
+    if (this.chunkTiles.size === 0) return;
 
     const bounds = this.viewportCuller.getCullBounds(this.cameras.main);
 
@@ -469,18 +472,17 @@ export class WorldScene extends Phaser.Scene {
 
     this.lastCullBounds = bounds;
 
-    // Update tile visibility
-    for (let y = 0; y < this.tileSprites.length; y++) {
-      for (let x = 0; x < this.tileSprites[y].length; x++) {
-        const tile = this.tileSprites[y][x] as Phaser.GameObjects.GameObject & { visible: boolean; setVisible: (value: boolean) => void };
-        if (tile && 'visible' in tile && 'setVisible' in tile) {
-          const isVisible = this.viewportCuller.isTileVisible(x, y, bounds);
-          if (tile.visible !== isVisible) {
-            tile.setVisible(isVisible);
-          }
+    // Update chunk tile visibility using world coordinates stored in container data
+    this.chunkTiles.forEach(tiles => {
+      for (const tile of tiles) {
+        const gridX = tile.getData('gridX') as number;
+        const gridY = tile.getData('gridY') as number;
+        const isVisible = this.viewportCuller!.isTileVisible(gridX, gridY, bounds);
+        if (tile.visible !== isVisible) {
+          tile.setVisible(isVisible);
         }
       }
-    }
+    });
   }
 
   /**
