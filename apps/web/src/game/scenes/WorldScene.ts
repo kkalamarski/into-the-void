@@ -61,7 +61,7 @@ export class WorldScene extends Phaser.Scene {
   private moveDelay = MOVE_DELAY_MS; // ms between moves
   private lastMoveTime = 0;
   private chordStartTime = 0; // When first movement key was pressed
-  private static readonly CHORD_WINDOW_MS = 25; // Time to wait for additional keys
+  private static readonly CHORD_WINDOW_MS = 5; // Time to wait for additional keys
   private chunkManager: ChunkManager | null = null;
   // Store tile arrays for cleanup (not containers - tiles need global depth sorting)
   private chunkTiles: Map<string, Phaser.GameObjects.Container[]> = new Map();
