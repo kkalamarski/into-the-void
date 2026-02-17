@@ -1065,17 +1065,23 @@ export class WorldScene extends Phaser.Scene {
     this.moveDelay = effectiveMoveDelay;
     this.pathfindingController?.setMoveDelay(effectiveMoveDelay);
 
-    if (reconciling && (this.localPlayer.x !== screenPos.x || this.localPlayer.y !== targetY)) {
-      this.tweens.killTweensOf(this.localPlayer);
-      this.tweens.add({
-        targets: this.localPlayer,
-        x: screenPos.x,
-        y: targetY,
-        duration: 80,
-        ease: 'Cubic.easeOut',
-        onUpdate: updateDepthFromSpriteY,
-      });
+    if (reconciling) {
+      // Reconciliation: only tween if server position differs from current visual position
+      // If positions match, let the existing prediction tween continue uninterrupted
+      if (this.localPlayer.x !== screenPos.x || this.localPlayer.y !== targetY) {
+        this.tweens.killTweensOf(this.localPlayer);
+        this.tweens.add({
+          targets: this.localPlayer,
+          x: screenPos.x,
+          y: targetY,
+          duration: 80,
+          ease: 'Cubic.easeOut',
+          onUpdate: updateDepthFromSpriteY,
+        });
+      }
+      // If positions match, do nothing - prediction was correct
     } else {
+      // Prediction: start tween to new position
       this.tweens.killTweensOf(this.localPlayer);
       this.tweens.add({
         targets: this.localPlayer,
