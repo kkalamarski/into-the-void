@@ -13,6 +13,8 @@ interface ZoneState {
 export class ZonesService implements OnModuleInit {
   private zones: LRUCache<string, ZoneState>;
   private worldSeed: string;
+  // Claim map: entityId -> playerId who claimed it (prevents simultaneous pickup)
+  private claimedEntities: Map<string, string> = new Map();
 
   constructor(private readonly configService: ConfigService) {
     this.worldSeed = configService.get<string>('WORLD_SEED', 'into-the-void-alpha-1');
@@ -87,6 +89,28 @@ export class ZonesService implements OnModuleInit {
     return zoneState.chunk;
   }
 
+  /**
+   * Attempt to claim an entity for pickup.
+   * Returns true if claim was successful (entity was unclaimed).
+   * Returns false if entity is already claimed by another player.
+   *
+   * SYNCHRONOUS - must be called BEFORE any async operation in pickup handler.
+   */
+  claimEntity(entityId: string, playerId: string): boolean {
+    if (this.claimedEntities.has(entityId)) {
+      return false; // Already claimed
+    }
+    this.claimedEntities.set(entityId, playerId);
+    return true;
+  }
+
+  /**
+   * Release a claim (called after pickup completes or fails).
+   */
+  releaseClaim(entityId: string): void {
+    this.claimedEntities.delete(entityId);
+  }
+
   async getZoneEntities(zoneId: string): Promise<Entity[]> {
     let zoneState = this.zones.get(zoneId);
 
@@ -94,7 +118,10 @@ export class ZonesService implements OnModuleInit {
       zoneState = this.loadZone(zoneId);
     }
 
-    return Array.from(zoneState.entities.values()).filter((e) => e.active);
+    const now = Date.now();
+    return Array.from(zoneState.entities.values()).filter(
+      (e) => e.active && (!('despawnAt' in e) || (e as any).despawnAt > now)
+    );
   }
 
   async getEntity(zoneId: string, entityId: string): Promise<Entity | undefined> {
