@@ -304,7 +304,7 @@ export function findPathWithElevation(
     x: startX,
     y: startY,
     g: 0,
-    h: manhattanDistance(startX, startY, endX, endY),
+    h: chebyshevDistance(startX, startY, endX, endY),
     f: 0,
     parent: null,
   };
@@ -312,10 +312,14 @@ export function findPathWithElevation(
   openSet.push(startNode);
 
   const directions = [
-    { dx: 0, dy: -1 }, // N
-    { dx: 0, dy: 1 }, // S
-    { dx: 1, dy: 0 }, // E
-    { dx: -1, dy: 0 }, // W
+    { dx: 0, dy: -1, cost: 1.0 },   // N
+    { dx: 0, dy: 1, cost: 1.0 },    // S
+    { dx: 1, dy: 0, cost: 1.0 },    // E
+    { dx: -1, dy: 0, cost: 1.0 },   // W
+    { dx: 1, dy: -1, cost: DIAGONAL_COST },  // NE
+    { dx: -1, dy: -1, cost: DIAGONAL_COST }, // NW
+    { dx: 1, dy: 1, cost: DIAGONAL_COST },   // SE
+    { dx: -1, dy: 1, cost: DIAGONAL_COST },  // SW
   ];
 
   let iterations = 0;
@@ -348,6 +352,22 @@ export function findPathWithElevation(
         continue;
       }
 
+      // Prevent corner-cutting for diagonal moves
+      if (Math.abs(dir.dx) === 1 && Math.abs(dir.dy) === 1) {
+        const cardinalX = current.x + dir.dx;
+        const cardinalY = current.y + dir.dy;
+        // Check collision
+        if (collisionMap[current.y]?.[cardinalX] || collisionMap[cardinalY]?.[current.x]) {
+          continue;
+        }
+        // Check elevation for adjacent cardinals
+        const heightCardinalX = heights[current.y]?.[cardinalX] ?? 0;
+        const heightCardinalY = heights[cardinalY]?.[current.x] ?? 0;
+        if (Math.abs(heightCardinalX - currentHeight) > 1 || Math.abs(heightCardinalY - currentHeight) > 1) {
+          continue;
+        }
+      }
+
       // Skip if blocked or already visited
       if (collisionMap[ny]?.[nx] || closedSet.has(key)) {
         continue;
@@ -362,14 +382,14 @@ export function findPathWithElevation(
         continue; // Skip this neighbor
       }
 
-      // Base cost = 1 for flat/downhill, add penalty for uphill
-      let moveCost = 1.0;
+      // Base cost from direction (1.0 for cardinal, DIAGONAL_COST for diagonal)
+      let moveCost = dir.cost;
       if (elevationDelta > 0) {
         moveCost += elevationDelta * ELEVATION_CLIMB_COST;
       }
 
       const g = current.g + moveCost;
-      const h = manhattanDistance(nx, ny, endX, endY);
+      const h = chebyshevDistance(nx, ny, endX, endY);
       const f = g + h;
 
       // Check if this path is better
