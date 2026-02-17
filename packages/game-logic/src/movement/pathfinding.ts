@@ -1,6 +1,7 @@
 import { ZONE_SIZE } from '@into-the-void/shared-types';
 
 const ELEVATION_CLIMB_COST = 0.5; // Additional cost per elevation level climbed
+const DIAGONAL_COST = Math.SQRT2; // ~1.414
 
 interface PathNode {
   x: number;
@@ -72,7 +73,7 @@ export function findPath(
     x: startX,
     y: startY,
     g: 0,
-    h: manhattanDistance(startX, startY, endX, endY),
+    h: chebyshevDistance(startX, startY, endX, endY),
     f: 0,
     parent: null,
   };
@@ -80,10 +81,14 @@ export function findPath(
   openSet.push(startNode);
 
   const directions = [
-    { dx: 0, dy: -1 }, // N
-    { dx: 0, dy: 1 }, // S
-    { dx: 1, dy: 0 }, // E
-    { dx: -1, dy: 0 }, // W
+    { dx: 0, dy: -1, cost: 1.0 },   // N
+    { dx: 0, dy: 1, cost: 1.0 },    // S
+    { dx: 1, dy: 0, cost: 1.0 },    // E
+    { dx: -1, dy: 0, cost: 1.0 },   // W
+    { dx: 1, dy: -1, cost: DIAGONAL_COST },  // NE
+    { dx: -1, dy: -1, cost: DIAGONAL_COST }, // NW
+    { dx: 1, dy: 1, cost: DIAGONAL_COST },   // SE
+    { dx: -1, dy: 1, cost: DIAGONAL_COST },  // SW
   ];
 
   let iterations = 0;
@@ -113,13 +118,23 @@ export function findPath(
         continue;
       }
 
+      // Prevent corner-cutting for diagonal moves
+      if (Math.abs(dir.dx) === 1 && Math.abs(dir.dy) === 1) {
+        // Both adjacent cardinal tiles must be passable
+        const cardinalX = current.x + dir.dx;
+        const cardinalY = current.y + dir.dy;
+        if (collisionMap[current.y]?.[cardinalX] || collisionMap[cardinalY]?.[current.x]) {
+          continue; // Skip this diagonal - would cut through corner
+        }
+      }
+
       // Skip if blocked or already visited
       if (collisionMap[ny]?.[nx] || closedSet.has(key)) {
         continue;
       }
 
-      const g = current.g + 1;
-      const h = manhattanDistance(nx, ny, endX, endY);
+      const g = current.g + dir.cost;
+      const h = chebyshevDistance(nx, ny, endX, endY);
       const f = g + h;
 
       // Check if this path is better
