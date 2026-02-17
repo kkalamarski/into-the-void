@@ -10,7 +10,6 @@ import { ZoneHUD } from '../ui/ZoneHUD';
 import { MinimapCamera } from '../rendering/MinimapCamera';
 import { MovementController } from '../systems/MovementController';
 import { PathfindingController } from '../systems/PathfindingController';
-import { HoverController } from '../systems/HoverController';
 import { IsometricTransform } from '../utils/IsometricTransform';
 import { DepthSorter } from '../rendering/DepthSorter';
 import { useGameStore } from '../../store/gameStore';
@@ -72,7 +71,6 @@ export class WorldScene extends Phaser.Scene {
   private lastCullBounds: { minTileX: number; maxTileX: number; minTileY: number; maxTileY: number } | null = null;
   private movementController: MovementController | null = null;
   private pathfindingController: PathfindingController | null = null;
-  private hoverController: HoverController | null = null;
   private collisionMap: boolean[][] | null = null;
   private minimapCamera: MinimapCamera | null = null;
   private isoTransform: IsometricTransform | null = null;
@@ -135,10 +133,6 @@ export class WorldScene extends Phaser.Scene {
       this.isoTransform!
     );
 
-    // Initialize HoverController for visual polish
-    this.hoverController = new HoverController(this, this.isoTransform!, this.entitySprites);
-    this.hoverController.setPathfindingActiveCallback(() => this.pathfindingController?.isPathActive() ?? false);
-
     // Initialize ChunkManager
     this.chunkManager = new ChunkManager(
       // onChunkNeeded
@@ -182,7 +176,6 @@ export class WorldScene extends Phaser.Scene {
       if (this.pathfindingController?.isPathActive()) {
         this.pathfindingController.cancelPath();
       }
-      this.hoverController?.clearHighlights();
     });
 
     // Set fixed zoom to show ~15x11 tiles viewport
@@ -217,11 +210,6 @@ export class WorldScene extends Phaser.Scene {
         worldPoint.y,
         (x, y) => this.getTileElevation(x, y)
       );
-
-      // Show click marker for visual feedback
-      if (this.hoverController) {
-        this.hoverController.showClickMarker(gridPos.x, gridPos.y);
-      }
 
       // Start pathfinding if we have collision map
       if (this.pathfindingController && this.collisionMap) {
@@ -447,11 +435,6 @@ export class WorldScene extends Phaser.Scene {
     if (time - this.lastOcclusionTime >= this.occlusionInterval) {
       this.lastOcclusionTime = time;
       this.updateEntityOcclusion();
-    }
-
-    // Update hover detection
-    if (this.hoverController) {
-      this.hoverController.update();
     }
   }
 
@@ -1103,10 +1086,6 @@ export class WorldScene extends Phaser.Scene {
   }
 
   shutdown(): void {
-    if (this.hoverController) {
-      this.hoverController.destroy();
-      this.hoverController = null;
-    }
     if (this.pathfindingController) {
       this.pathfindingController.destroy();
       this.pathfindingController = null;
