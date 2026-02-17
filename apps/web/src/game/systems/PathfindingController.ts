@@ -1,4 +1,4 @@
-import { Direction, Position } from '@into-the-void/shared-types';
+import { Direction, Position, MOVE_DELAY_MS } from '@into-the-void/shared-types';
 import { findPath } from '@into-the-void/game-logic';
 import { useGameStore } from '../../store/gameStore';
 import { MovementController } from './MovementController';
@@ -17,7 +17,7 @@ export class PathfindingController {
 
   constructor(
     movementController: MovementController,
-    moveDelay = 150,
+    moveDelay = MOVE_DELAY_MS,
     scene?: Phaser.Scene,
     isoTransform?: IsometricTransform
   ) {
