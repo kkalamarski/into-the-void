@@ -1,4 +1,4 @@
-import { BiomeType } from '@into-the-void/shared-types';
+import { BiomeType, ZONE_SIZE } from '@into-the-void/shared-types';
 import { SimplexNoise } from '../noise/simplex';
 
 /**
@@ -17,7 +17,7 @@ const DEFAULT_BIOME_PARAMS: BiomeParams = {
   moistureScale: 0.0015,
   elevationScale: 0.0006,
   minBiomeChunks: 20, // Minimum 20 chunks per biome region
-  chunkSize: 32, // ZONE_SIZE
+  chunkSize: ZONE_SIZE,
 };
 
 /**
