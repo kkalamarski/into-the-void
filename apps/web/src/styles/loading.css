@@ -216,7 +216,7 @@
 /* Chunk Loading Indicator */
 .chunk-loading-indicator {
   position: fixed;
-  bottom: 20px;
+  bottom: 210px;
   right: 20px;
   display: flex;
   align-items: center;
@@ -227,6 +227,14 @@
   font-size: 12px;
   color: #aaa;
   z-index: 100;
+  opacity: 0;
+  transition: opacity 0.3s ease 0.2s;
+  pointer-events: none;
+}
+
+.chunk-loading-indicator.visible {
+  opacity: 1;
+  transition-delay: 0s;
 }
 
 .chunk-loading-spinner {
