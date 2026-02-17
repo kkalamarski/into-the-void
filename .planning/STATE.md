@@ -58,6 +58,7 @@ Recent decisions affecting current work:
 - [Phase 22-02]: DIAGONAL_COST = Math.SQRT2 for geometrically correct diagonal A* cost; Chebyshev heuristic replaces Manhattan for admissible 8-directional estimation
 - [Phase 22-02]: Corner-cutting prevention checks both adjacent cardinal tiles before allowing diagonal step; findPathWithElevation also checks elevation of adjacent cardinals
 - [Phase 23-02]: Main camera lerp set to (0.1, 0.1) for smooth glide; minimap camera remains instant-follow (no lerp args)
+- [Phase 23-03]: effectiveMoveDelay = Math.round(MOVE_DELAY_MS / tileDef.movementSpeed) — divides base delay by speed multiplier for correct inverse relationship; propagated to PathfindingController via setMoveDelay()
 - [Phase 23-04]: HoverController.ts deleted — confirmed not imported anywhere in apps/web/src/ before removal
 
 ### Pending Todos
@@ -73,10 +74,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 23-04-PLAN.md (HoverController dead code removal) — Phase 23 COMPLETE
+Stopped at: Completed 23-03-PLAN.md (tile movementSpeed → moveDelay on client)
 Resume file: None
 
 **Next action:** All phases complete. Project is at v1.5 milestone.
 
 ---
-*Last updated: 2026-02-17 after Phase 23-04 completion*
+*Last updated: 2026-02-17 after Phase 23-03 completion*
