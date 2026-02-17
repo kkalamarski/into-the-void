@@ -1055,6 +1055,13 @@ export class WorldScene extends Phaser.Scene {
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
     const targetY = screenPos.y - elevationOffset;
 
+    // Depth calculation closure: use current sprite Y during animation for correct sorting
+    // Formula: screenY + tiny_x_tiebreaker + elevation_offset + priority
+    const updateDepthFromSpriteY = () => {
+      const depth = this.localPlayer!.y + (worldX * 0.0001) + (elevation * 0.1) + 10;
+      this.localPlayer!.setDepth(depth);
+    };
+
     if (reconciling && (this.localPlayer.x !== screenPos.x || this.localPlayer.y !== targetY)) {
       this.tweens.killTweensOf(this.localPlayer);
       this.tweens.add({
@@ -1063,6 +1070,7 @@ export class WorldScene extends Phaser.Scene {
         y: targetY,
         duration: 80,
         ease: 'Cubic.easeOut',
+        onUpdate: updateDepthFromSpriteY,
       });
     } else {
       this.tweens.killTweensOf(this.localPlayer);
@@ -1072,16 +1080,16 @@ export class WorldScene extends Phaser.Scene {
         y: targetY,
         duration: 130,  // MOVE_DELAY_MS (150) - 20ms to prevent drift
         ease: 'Linear',
+        onUpdate: updateDepthFromSpriteY,
       });
     }
 
-    // Update grid data and depth (use world coordinates for depth)
+    // Update grid data (immediate - these are logical position, not visual)
     this.localPlayer.setData('gridX', worldX);
     this.localPlayer.setData('gridY', worldY);
     this.localPlayer.setData('elevation', elevation);
-    // Use priorityBoost to ensure player renders above terrain at same position
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 10);
-    this.localPlayer.setDepth(depth);
+    // Set initial depth based on current visual position (onUpdate handles animation)
+    updateDepthFromSpriteY();
   }
 
   updateLocalPlayer(position: Position): void {
