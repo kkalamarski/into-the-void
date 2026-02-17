@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.6 Inventory & Items — Defining requirements
+**Current focus:** v1.6 Inventory & Items — Phase 25: Item Data Model & Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-17 — Milestone v1.6 started
+Phase: 25 of 29 (Item Data Model & Foundation)
+Plan: 0 of 4 in current phase
+Status: Ready to plan
+Last activity: 2026-02-17 — v1.6 roadmap created; phases 25-29 defined
 
-Progress: [░░░░░░░░░░░░░░░░░░░░] 0% (v1.6 requirements phase)
+Progress: [████████░░░░░░░░░░░░] 40% (24/29 phases complete; 0/16 v1.6 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 72 (Phases 1-24 complete)
+- Total plans completed: 73 (Phases 1-24 complete, including Phase 24)
 - Average duration: ~3m per plan
-- Total execution time: ~3.5 hours
+- Total execution time: ~3.7 hours
 
 **By Milestone:**
 
@@ -35,12 +35,7 @@ Progress: [░░░░░░░░░░░░░░░░░░░░] 0% (v1.
 | v1.5 | 21-24 | 9 | 1 day |
 
 **Recent Trend:**
-- Phase 22: 2 plans (complete)
-- Phase 23: 4 plans (complete)
-- Phase 24: 1 plan (complete)
 - Trend: Stable, averaging 2-4 plans per phase
-
-| Phase 24-zone-boundary-hysteresis P01 | 2 min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -49,23 +44,12 @@ Progress: [░░░░░░░░░░░░░░░░░░░░] 0% (v1.
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Phase 20-02]: ZONE_SIZE increased from 32 to 64 tiles for better visual continuity
-- [Phase 20-02]: Minimap uses removeBounds() for infinite world + zoom 0.075
-- [Phase 20-02]: Track WorldScene readiness separately from Phaser boot to fix race condition
-- [v1.5 research]: Server rate limit must drop to 125ms BEFORE any client timing changes
-- [v1.5 research]: Tween duration must be moveDelay - 20ms (130ms) to prevent drift; killTweensOf before each new tween
-- [v1.5 research]: Minimap camera must NOT receive lerp — instant follow only
-- [Phase 21-01]: Server rate limit set to 125ms (not 140ms): provides 25ms network tolerance for clients at 150ms cadence
-- [Phase 21-02]: MOVE_DELAY_MS = 150 placed in shared-types/constants.ts; WorldScene moveDelay changed from 500ms to 150ms
-- [Phase 22-01]: WASD single keys map to cardinal directions (W=n, S=s, A=w, D=e) enabling 8-direction via dual-key combos; arrow keys retain isometric diagonal mapping as fallback
-- [Phase 22-02]: DIAGONAL_COST = Math.SQRT2 for geometrically correct diagonal A* cost; Chebyshev heuristic replaces Manhattan for admissible 8-directional estimation
-- [Phase 22-02]: Corner-cutting prevention checks both adjacent cardinal tiles before allowing diagonal step; findPathWithElevation also checks elevation of adjacent cardinals
-- [Phase 23-01]: Prediction tween 130ms Linear + reconciliation tween 80ms Cubic.easeOut; killTweensOf guard in both branches prevents stacking
-- [Phase 23-02]: Main camera lerp set to (0.1, 0.1) for smooth glide; minimap camera remains instant-follow (no lerp args)
-- [Phase 23-03]: effectiveMoveDelay = Math.round(MOVE_DELAY_MS / tileDef.movementSpeed) — divides base delay by speed multiplier for correct inverse relationship; propagated to PathfindingController via setMoveDelay()
-- [Phase 23-04]: HoverController.ts deleted — confirmed not imported anywhere in apps/web/src/ before removal
-- [Phase 24-01]: HYSTERESIS_TILES = 3: matches HUD HYSTERESIS_FRAMES = 3 pattern; 3 tiles = 450ms lag at 150ms/move, acceptable UX tradeoff for eliminating boundary thrashing
-- [Phase 24-01]: updateChunks() fires immediately (no hysteresis) to maintain 3x3 pre-load; only commitZoneTransition() is delayed until depth >= HYSTERESIS_TILES
+- [v1.6 research]: Equipment JSONB must migrate from `head/chest/legs/feet` to `{ exosuit, modules[], tool, accessory1, accessory2 }` before any server handlers or UI are written
+- [v1.6 research]: `updateInventoryFull` single atomic DB call required — two-call pattern is a confirmed duplication exploit vector (Arc Raiders Feb 2026)
+- [v1.6 research]: `inventory:update` must use `client.emit()` exclusively — never `server.to(zoneId).emit()`; entity despawn is zone-wide, inventory update is private
+- [v1.6 research]: `inventoryStore.ts` must be a separate Zustand store from `gameStore` — inventory changes must not trigger Phaser canvas re-renders
+- [v1.6 research]: Action bar uses instance-ID references, not slot-position references; stale references auto-invalidate on every `inventory:update`
+- [v1.6 research]: Hotbar slot assignments persist to `localStorage` (client preference, not authoritative game state)
 
 ### Pending Todos
 
@@ -73,20 +57,21 @@ None.
 
 ### Blockers/Concerns
 
+**Design decisions needed before Phase 28 begins:**
+- Module type compatibility rules (whether module types are mutually exclusive, e.g. max 2 Speed modules per suit) — not specified in lore; needs design decision before server validation is written
+- ilvl formula (tier x rarity multiplier: 1.0/1.2/1.5/1.8/2.2) — proposed but not lore-validated; needs confirmation before tooltip display is built
+
 **Carried from v1.3:**
 - Server-side elevation validation not wired (client-side complete, server uses old validation)
-- May need addressing if server-side validation conflicts arise in future milestones
-
-**Phase 24 resolved:**
-- Zone boundary thrashing: FIXED — tile-depth hysteresis prevents chunk loading/unloading thrashing at boundaries
+- Low priority — only relevant if elevation interacts with item pickup range
 
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 24-zone-boundary-hysteresis/24-01-PLAN.md — v1.5 milestone complete
+Stopped at: v1.6 roadmap created — ROADMAP.md phases 25-29 written, STATE.md initialized, REQUIREMENTS.md traceability updated
 Resume file: None
 
-**Next action:** Define v1.6 requirements and create roadmap.
+**Next action:** `/gsd:plan-phase 25`
 
 ---
-*Last updated: 2026-02-17 after v1.6 milestone start*
+*Last updated: 2026-02-17 after v1.6 roadmap creation*

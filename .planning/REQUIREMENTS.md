@@ -118,45 +118,45 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ITEM-01 | TBD | Pending |
-| ITEM-02 | TBD | Pending |
-| ITEM-03 | TBD | Pending |
-| ITEM-04 | TBD | Pending |
-| ITEM-05 | TBD | Pending |
-| ITEM-06 | TBD | Pending |
-| EQUIP-01 | TBD | Pending |
-| EQUIP-02 | TBD | Pending |
-| EQUIP-03 | TBD | Pending |
-| EQUIP-04 | TBD | Pending |
-| EQUIP-05 | TBD | Pending |
-| EQUIP-06 | TBD | Pending |
-| EQUIP-07 | TBD | Pending |
-| EQUIP-08 | TBD | Pending |
-| EQUIP-09 | TBD | Pending |
-| EQUIP-10 | TBD | Pending |
-| EQUIP-11 | TBD | Pending |
-| INV-01 | TBD | Pending |
-| INV-02 | TBD | Pending |
-| INV-03 | TBD | Pending |
-| INV-04 | TBD | Pending |
-| INV-05 | TBD | Pending |
-| INV-06 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| UI-04 | TBD | Pending |
-| UI-05 | TBD | Pending |
-| UI-06 | TBD | Pending |
-| DB-01 | TBD | Pending |
-| DB-02 | TBD | Pending |
-| DB-03 | TBD | Pending |
-| DB-04 | TBD | Pending |
+| ITEM-01 | Phase 25 | Pending |
+| ITEM-02 | Phase 25 | Pending |
+| ITEM-03 | Phase 25 | Pending |
+| ITEM-04 | Phase 25 | Pending |
+| ITEM-05 | Phase 25 | Pending |
+| ITEM-06 | Phase 25 | Pending |
+| DB-01 | Phase 25 | Pending |
+| DB-02 | Phase 25 | Pending |
+| DB-03 | Phase 25 | Pending |
+| DB-04 | Phase 25 | Pending |
+| INV-01 | Phase 26 | Pending |
+| INV-02 | Phase 26 | Pending |
+| INV-03 | Phase 26 | Pending |
+| INV-04 | Phase 26 | Pending |
+| INV-05 | Phase 26 | Pending |
+| INV-06 | Phase 26 | Pending |
+| EQUIP-11 | Phase 26 | Pending |
+| UI-01 | Phase 27 | Pending |
+| UI-04 | Phase 27 | Pending |
+| UI-06 | Phase 27 | Pending |
+| EQUIP-01 | Phase 28 | Pending |
+| EQUIP-02 | Phase 28 | Pending |
+| EQUIP-03 | Phase 28 | Pending |
+| EQUIP-04 | Phase 28 | Pending |
+| EQUIP-05 | Phase 28 | Pending |
+| EQUIP-06 | Phase 28 | Pending |
+| EQUIP-07 | Phase 28 | Pending |
+| EQUIP-08 | Phase 28 | Pending |
+| EQUIP-09 | Phase 28 | Pending |
+| EQUIP-10 | Phase 28 | Pending |
+| UI-02 | Phase 28 | Pending |
+| UI-03 | Phase 29 | Pending |
+| UI-05 | Phase 29 | Pending |
 
 **Coverage:**
-- v1.6 requirements: 28 total
-- Mapped to phases: 0
-- Unmapped: 28 (pending roadmap)
+- v1.6 requirements: 33 total (note: REQUIREMENTS.md previously stated 28; actual count is 33)
+- Mapped to phases: 33
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-17 after v1.6 requirements definition*
+*Last updated: 2026-02-17 after v1.6 roadmap creation — traceability complete*
