@@ -1,19 +1,20 @@
 /**
  * Item rarity levels
+ * Matches lore-mandated 5 tiers: no 'uncommon' (confirmed 25-01 decision)
  */
-export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+export type ItemRarity = 'common' | 'rare' | 'epic' | 'exotic' | 'legendary';
 
 /**
  * Item categories
+ * Matches game-logic 6 lore-mandated types (confirmed 25-01 decision)
  */
 export type ItemCategory =
-  | 'weapon'
-  | 'armor'
+  | 'suit'
+  | 'module'
   | 'tool'
   | 'consumable'
-  | 'material'
-  | 'quest'
-  | 'misc';
+  | 'world-item'
+  | 'reagent';
 
 /**
  * Base item definition
@@ -41,6 +42,7 @@ export interface ItemDef {
 
 /**
  * Item instance in inventory
+ * Matches InventoryItemJson from database schema
  */
 export interface InventoryItem {
   /** Instance ID */
@@ -56,18 +58,28 @@ export interface InventoryItem {
 }
 
 /**
- * Equipment slots
+ * Exo-suit equipment model
+ * Matches EquipmentJson from database schema (confirmed 25-03 migration)
+ *
+ * The exo-suit is the base equipment piece. Module slots scale with suit rarity:
+ * - Common: 3 slots
+ * - Rare: 4 slots
+ * - Epic: 4 slots
+ * - Exotic: 5 slots
+ * - Legendary: 6 slots
  */
-export type EquipmentSlot =
-  | 'head'
-  | 'chest'
-  | 'legs'
-  | 'feet'
-  | 'hands'
-  | 'mainHand'
-  | 'offHand'
-  | 'accessory1'
-  | 'accessory2';
+export interface InventoryEquipment {
+  /** Equipped exo-suit (determines available module slots) */
+  exosuit?: InventoryItem;
+  /** Equipped modules (max count = suit's moduleSlots) */
+  modules: InventoryItem[];
+  /** Primary tool slot */
+  tool?: InventoryItem;
+  /** First accessory slot */
+  accessory1?: InventoryItem;
+  /** Second accessory slot */
+  accessory2?: InventoryItem;
+}
 
 /**
  * Player inventory
@@ -79,8 +91,8 @@ export interface Inventory {
   items: InventoryItem[];
   /** Maximum inventory slots */
   maxSlots: number;
-  /** Equipped items by slot */
-  equipment: Partial<Record<EquipmentSlot, InventoryItem>>;
+  /** Equipped items using exo-suit model */
+  equipment: InventoryEquipment;
 }
 
 /**
