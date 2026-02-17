@@ -8,3 +8,4 @@ export * from './client';
 export * from './queries/accounts';
 export * from './queries/characters';
 export * from './queries/inventory';
+export * from './queries/storage';

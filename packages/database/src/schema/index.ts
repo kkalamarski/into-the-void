@@ -14,3 +14,6 @@ export * from './species';
 export * from './world';
 export * from './structures';
 export * from './discoveries';
+
+// Player storage
+export * from './storage';
