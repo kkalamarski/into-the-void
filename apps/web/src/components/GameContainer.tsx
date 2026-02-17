@@ -131,14 +131,17 @@ const GameContainer: React.FC = () => {
 
   }, [phaserReady, zoneId, player?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update player position in scene separately (runs on position changes)
+  // Initial player spawn only - position updates handled by MovementController
+  const playerSpawnedRef = useRef(false);
   useEffect(() => {
     if (!phaserReady || !gameRef.current || !player?.position) return;
+    if (playerSpawnedRef.current) return; // Only run once
 
     const worldScene = gameRef.current.getWorldScene();
     if (!worldScene || !gameRef.current.isWorldSceneActive()) return;
 
     worldScene.updateLocalPlayer(player.position);
+    playerSpawnedRef.current = true;
   }, [phaserReady, player?.position?.x, player?.position?.y]);
 
   return (

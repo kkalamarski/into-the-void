@@ -980,7 +980,6 @@ export class WorldScene extends Phaser.Scene {
     const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
     // Use world coordinates for screen position so player aligns with chunk positions
     const { worldX, worldY } = this.positionToWorldCoords(position);
-    console.log(`[WorldScene] updateLocalPlayerSprite: local(${position.x},${position.y}) zone=${position.zoneId} → world(${worldX},${worldY}) elev=${elevation}`);
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
     const targetY = screenPos.y - elevationOffset;
 
