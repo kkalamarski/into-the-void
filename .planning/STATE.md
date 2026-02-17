@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 25 of 29 (Item Data Model & Foundation)
-Plan: 0 of 4 in current phase
-Status: Ready to plan
-Last activity: 2026-02-17 — v1.6 roadmap created; phases 25-29 defined
+Plan: 1 of 4 in current phase
+Status: In progress
+Last activity: 2026-02-17 — Phase 25 Plan 01 complete: packages/items workspace package with ItemRegistry
 
-Progress: [████████░░░░░░░░░░░░] 40% (24/29 phases complete; 0/16 v1.6 plans complete)
+Progress: [████████░░░░░░░░░░░░] 40% (24/29 phases complete; 1/16 v1.6 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 73 (Phases 1-24 complete, including Phase 24)
+- Total plans completed: 74 (Phases 1-24 complete + Phase 25 Plan 01)
 - Average duration: ~3m per plan
 - Total execution time: ~3.7 hours
 
@@ -50,6 +50,8 @@ Recent decisions affecting current work:
 - [v1.6 research]: `inventoryStore.ts` must be a separate Zustand store from `gameStore` — inventory changes must not trigger Phaser canvas re-renders
 - [v1.6 research]: Action bar uses instance-ID references, not slot-position references; stale references auto-invalidate on every `inventory:update`
 - [v1.6 research]: Hotbar slot assignments persist to `localStorage` (client preference, not authoritative game state)
+- [25-01]: ItemCategory uses 6 lore-mandated types (suit|module|tool|consumable|world-item|reagent) — differs from shared-types which has 7
+- [25-01]: ItemRarity uses 5 tiers (common|rare|epic|exotic|legendary) — no 'uncommon' per lore; ilvl formula confirmed as tier*10*multiplier with 1.0/1.2/1.5/1.8/2.2
 
 ### Pending Todos
 
@@ -59,7 +61,7 @@ None.
 
 **Design decisions needed before Phase 28 begins:**
 - Module type compatibility rules (whether module types are mutually exclusive, e.g. max 2 Speed modules per suit) — not specified in lore; needs design decision before server validation is written
-- ilvl formula (tier x rarity multiplier: 1.0/1.2/1.5/1.8/2.2) — proposed but not lore-validated; needs confirmation before tooltip display is built
+- ilvl formula (tier x rarity multiplier: 1.0/1.2/1.5/1.8/2.2) — implemented in computeIlvl (25-01); lore validation still needed before tooltip display built in Phase 27
 
 **Carried from v1.3:**
 - Server-side elevation validation not wired (client-side complete, server uses old validation)
@@ -68,10 +70,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: v1.6 roadmap created — ROADMAP.md phases 25-29 written, STATE.md initialized, REQUIREMENTS.md traceability updated
+Stopped at: Completed 25-01-PLAN.md — packages/items workspace package created with ItemRegistry, ItemDefinition, computeIlvl
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 25`
+**Next action:** Execute Phase 25 Plan 02
 
 ---
 *Last updated: 2026-02-17 after v1.6 roadmap creation*
