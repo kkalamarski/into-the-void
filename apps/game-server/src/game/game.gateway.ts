@@ -88,8 +88,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           result.player.position.zoneId
         );
 
+        // Load inventory for this session
+        const inventory = await this.inventoryService.loadForPlayer(result.player.id);
+
         client.emit('auth:success', { player: result.player });
         client.emit('zone:state', zoneState);
+        // Send initial inventory state (PRIVATE - only to this client)
+        client.emit('inventory:update', inventory);
 
         // Notify other players
         client.to(result.player.position.zoneId).emit('player:joined', {
@@ -203,6 +208,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             entityId: data.targetId,
             changes: result.entityChanges,
           });
+        }
+        // If interaction returned inventory (e.g., item pickup), emit private update
+        if (result.inventory) {
+          client.emit('inventory:update', result.inventory);
         }
       } else {
         client.emit('error', {
