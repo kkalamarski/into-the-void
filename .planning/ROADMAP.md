@@ -125,10 +125,11 @@ Plans:
   2. Memory profiling confirms no leaks after 30+ chunk transitions
   3. Loading indicators display during chunk requests with smooth fade-in on chunk arrival
   4. Chunk request patterns optimized with debouncing and priority queue (visible chunks first)
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 20-01: [TBD during planning]
+- [ ] 20-01-PLAN.md — Fix known issues (indicator position, cleanup methods)
+- [ ] 20-02-PLAN.md — Execute validation test scenarios (checkpoint)
 
 ## Progress
 
@@ -156,9 +157,9 @@ Phases execute in numeric order: 17 → 18 → 19 → 20
 | 17. World Coordinate Foundation | v1.4 | 2/2 | Complete | 2026-02-16 |
 | 18. Multi-Chunk Streaming | v1.4 | 5/5 | Complete | 2026-02-16 |
 | 19. Biome Integration | v1.4 | 2/2 | Complete | 2026-02-17 |
-| 20. Testing & Polish | v1.4 | 0/TBD | Not started | - |
+| 20. Testing & Polish | v1.4 | 0/2 | In Progress | - |
 
 **Total:** 20 phases (19 complete, 1 pending)
 
 ---
-*Last updated: 2026-02-17 after Phase 19 execution*
+*Last updated: 2026-02-17 after Phase 20 planning*
