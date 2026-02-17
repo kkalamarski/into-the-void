@@ -679,7 +679,15 @@ export class WorldScene extends Phaser.Scene {
   private unloadChunkContainer(zoneId: string): void {
     const tiles = this.chunkTiles.get(zoneId);
     if (tiles) {
-      tiles.forEach(tile => tile.destroy(true));
+      tiles.forEach(tile => {
+        // Explicitly destroy all children (Graphics objects) first
+        // Phaser's destroy(true) may not properly clean up Graphics children
+        tile.each((child: Phaser.GameObjects.GameObject) => {
+          child.destroy();
+        });
+        tile.removeAll(true);
+        tile.destroy();
+      });
       this.chunkTiles.delete(zoneId);
     }
 
@@ -739,7 +747,12 @@ export class WorldScene extends Phaser.Scene {
   despawnEntity(entityId: string): void {
     const container = this.entitySprites.get(entityId);
     if (container) {
-      container.destroy(true); // Destroy children too
+      // Explicitly destroy all children first
+      container.each((child: Phaser.GameObjects.GameObject) => {
+        child.destroy();
+      });
+      container.removeAll(true);
+      container.destroy();
       this.entitySprites.delete(entityId);
 
       // Remove from orphaned tracking if present
@@ -811,7 +824,13 @@ export class WorldScene extends Phaser.Scene {
    * Clear all entities (for zone transitions)
    */
   clearEntities(): void {
-    this.entitySprites.forEach((container) => container.destroy(true));
+    this.entitySprites.forEach((container) => {
+      container.each((child: Phaser.GameObjects.GameObject) => {
+        child.destroy();
+      });
+      container.removeAll(true);
+      container.destroy();
+    });
     this.entitySprites.clear();
     this.entityZoneMap.clear(); // Also clear zone tracking
   }
