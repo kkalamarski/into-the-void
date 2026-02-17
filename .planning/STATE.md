@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 21 of 23 (Server Rate Limit & Speed Unification)
-Plan: 1 of TBD in current phase
-Status: In progress
-Last activity: 2026-02-17 — 21-01 complete (server rate limit 140ms -> 125ms)
+Plan: 2 of 2 in current phase (COMPLETE)
+Status: Phase 21 complete
+Last activity: 2026-02-17 — 21-02 complete (MOVE_DELAY_MS constant, WASD speed unified to 150ms)
 
-Progress: [████████████░░░░░░░░] 87% (Phases 1-20 complete)
+Progress: [████████████░░░░░░░░] 87% (Phases 1-21 in progress)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 61 (Phases 1-20)
+- Total plans completed: 63 (Phases 1-20 + Phase 21 P01-P02)
 - Average duration: ~3m per plan
 - Total execution time: ~3.0 hours
 
@@ -35,10 +35,11 @@ Progress: [████████████░░░░░░░░] 87% (Ph
 | v1.5 | 21-23 | TBD | - |
 
 **Recent Trend:**
-- Phase 19: 2 plans (complete)
 - Phase 20: 2 plans (complete)
-- Trend: Stable, averaging 3 plans per phase
+- Phase 21: 2 plans (complete)
+- Trend: Stable, averaging 2-3 plans per phase
 | Phase 21 P01 | 1 | 1 tasks | 1 files |
+| Phase 21 P02 | 2 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -53,7 +54,8 @@ Recent decisions affecting current work:
 - [v1.5 research]: Server rate limit must drop to 125ms BEFORE any client timing changes
 - [v1.5 research]: Tween duration must be moveDelay - 20ms (130ms) to prevent drift; killTweensOf before each new tween
 - [v1.5 research]: Minimap camera must NOT receive lerp — instant follow only
-- [Phase 21]: Server rate limit set to 125ms (not 140ms): provides 25ms network tolerance for clients at 150ms cadence
+- [Phase 21-01]: Server rate limit set to 125ms (not 140ms): provides 25ms network tolerance for clients at 150ms cadence
+- [Phase 21-02]: MOVE_DELAY_MS = 150 placed in shared-types/constants.ts; WorldScene moveDelay changed from 500ms to 150ms
 
 ### Pending Todos
 
@@ -66,16 +68,15 @@ None.
 - May need addressing if server-side validation conflicts arise in future milestones
 
 **v1.5 sequencing constraint:**
-- Phase 21 (server rate limit) must complete before Phase 22 (client timing changes)
-- CAM-02 (walk tween) must be implemented before CAM-01 (camera lerp) for correct combined effect
+- Phase 22 (walk tween) must be implemented before Phase 23 (camera lerp) for correct combined effect
 
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 21-01-PLAN.md
+Stopped at: Completed 21-02-PLAN.md
 Resume file: None
 
-**Next action:** Execute 21-02 (if planned) or `/gsd:plan-phase 21` for remaining plans
+**Next action:** `/gsd:plan-phase 22` — Walk tween implementation (tween duration = MOVE_DELAY_MS - 20ms = 130ms)
 
 ---
-*Last updated: 2026-02-17 after 21-01 completion*
+*Last updated: 2026-02-17 after 21-02 completion*
