@@ -57,6 +57,7 @@ Recent decisions affecting current work:
 - [Phase 22-01]: WASD single keys map to cardinal directions (W=n, S=s, A=w, D=e) enabling 8-direction via dual-key combos; arrow keys retain isometric diagonal mapping as fallback
 - [Phase 22-02]: DIAGONAL_COST = Math.SQRT2 for geometrically correct diagonal A* cost; Chebyshev heuristic replaces Manhattan for admissible 8-directional estimation
 - [Phase 22-02]: Corner-cutting prevention checks both adjacent cardinal tiles before allowing diagonal step; findPathWithElevation also checks elevation of adjacent cardinals
+- [Phase 23-01]: Prediction tween 130ms Linear + reconciliation tween 80ms Cubic.easeOut; killTweensOf guard in both branches prevents stacking
 - [Phase 23-02]: Main camera lerp set to (0.1, 0.1) for smooth glide; minimap camera remains instant-follow (no lerp args)
 - [Phase 23-03]: effectiveMoveDelay = Math.round(MOVE_DELAY_MS / tileDef.movementSpeed) — divides base delay by speed multiplier for correct inverse relationship; propagated to PathfindingController via setMoveDelay()
 - [Phase 23-04]: HoverController.ts deleted — confirmed not imported anywhere in apps/web/src/ before removal
@@ -74,10 +75,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 23-03-PLAN.md (tile movementSpeed → moveDelay on client)
+Stopped at: Completed 23-01-PLAN.md (prediction tween + reconciliation smoothing) — all Phase 23 plans complete
 Resume file: None
 
 **Next action:** All phases complete. Project is at v1.5 milestone.
 
 ---
-*Last updated: 2026-02-17 after Phase 23-03 completion*
+*Last updated: 2026-02-17 after Phase 23-01 SUMMARY creation*
