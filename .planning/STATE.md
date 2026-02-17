@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 27 of 29 (Client State & Inventory Panel UI) — IN PROGRESS
-Plan: 1 of 3 complete
-Status: In progress — Plan 01 complete
-Last activity: 2026-02-17 — Phase 27 Plan 01 complete: inventoryStore, inventory:reorder event, moveSlot, GameGateway handler
+Plan: 2 of 3 complete
+Status: In progress — Plan 02 complete
+Last activity: 2026-02-17 — Phase 27 Plan 02 complete: InventoryPanel UI, RARITY_COLORS, dnd-kit drag-drop, context menu, GameUI wiring
 
 Progress: [████████░░░░░░░░░░░░] 45% (26/29 phases complete; 8/16 v1.6 plans complete)
 
@@ -44,6 +44,7 @@ Progress: [████████░░░░░░░░░░░░] 45% (26
 | Phase 26 P02 | 195s | 3 tasks | 3 files |
 | Phase 26 P03 | 116s | 3 tasks | 3 files |
 | Phase 27 P01 | 127s | 3 tasks | 4 files |
+| Phase 27 P02 | 754s | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,8 @@ Recent decisions affecting current work:
 - [27-01]: inventoryStore is separate Zustand store from gameStore — inventory updates must not trigger Phaser canvas re-renders
 - [27-01]: inventory:reorder always responds with inventory:update regardless of moveSlot outcome — ensures pendingReorder is always cleared on client
 - [27-01]: GameGateway uses player.id (not player.characterId) — Player shared-type exposes id field only
+- [Phase 27]: InventoryPanel uses non-optimistic reorder: pendingReorder blocks UI until server inventory:update clears it via setInventory
+- [Phase 27]: Slot array built from maxSlots count with slot-index lookup — empty slots render as null entries in fixed-size grid
 
 ### Pending Todos
 
@@ -100,10 +103,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Phase 27 Plan 01 complete — inventoryStore, inventory:reorder event, moveSlot, GameGateway handler
+Stopped at: Phase 27 Plan 02 complete — InventoryPanel UI, RARITY_COLORS, dnd-kit drag-drop, context menu, GameUI wiring
 Resume file: None
 
-**Next action:** Execute Phase 27 Plan 02 (Inventory Panel UI components)
+**Next action:** Execute Phase 27 Plan 03 (action bar / hotbar UI)
 
 ---
-*Last updated: 2026-02-17 after Phase 27 Plan 01 complete*
+*Last updated: 2026-02-17 after Phase 27 Plan 02 complete*
