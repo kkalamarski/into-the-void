@@ -128,13 +128,13 @@ Plans:
   3. Player uses a consumable via `inventory:use` — effect is applied server-side, item is removed from inventory, and updated inventory state is sent back to the player
   4. Player drops an item via `inventory:drop` — a ground item entity spawns at the player's position with a 5-minute despawn timer broadcast zone-wide
   5. Server stat calculation (`effectiveStats`) derives all stats from `InventoryService` authoritative state — client-provided stat values are never trusted
-**Plans**: TBD
+**Plans**: 4 plans in 3 waves
 
 Plans:
-- [ ] 26-01: Create `InventoryService` NestJS service with in-memory `Map<playerId, Inventory>`, DB load on auth, flush on mutation, flush on disconnect
-- [ ] 26-02: Add 5 `@SubscribeMessage` handlers to `GameGateway` (`inventory:pickup`, `inventory:drop`, `inventory:use`, `equipment:change`, `inventory:unequip`); add in-memory claim map to `ZonesService`
-- [ ] 26-03: Wire `handleInteraction` in `game.service.ts` to write to inventory before broadcasting `entity:despawn`; emit `inventory:update` on auth success
-- [ ] 26-04: Add `effectiveStats(player, equipment): ComputedStats` pure function to `game-logic`; call it from all combat and interaction validations
+- [ ] 26-01-PLAN.md — Create InventoryService and update shared-types Inventory to exo-suit model
+- [ ] 26-02-PLAN.md — Add 5 @SubscribeMessage handlers and claim map for atomic pickup
+- [ ] 26-03-PLAN.md — Wire handleInteraction for pickup and emit inventory:update on auth
+- [ ] 26-04-PLAN.md — Add effectiveStats pure function to game-logic
 
 #### Phase 27: Client State & Inventory Panel UI
 
@@ -226,4 +226,4 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 **Total:** 29 phases (25 complete, 4 planned)
 
 ---
-*Last updated: 2026-02-17 after Phase 25 execution*
+*Last updated: 2026-02-17 after Phase 26 planning*
