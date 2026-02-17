@@ -16,3 +16,7 @@ export * from './visibility/range';
 
 // Utility
 export * from './utils/zone';
+
+// Inventory
+export * from './inventory/validation';
+export * from './inventory/effects';
