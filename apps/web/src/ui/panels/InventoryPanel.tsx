@@ -18,6 +18,7 @@ import { useGameStore } from '../../store/gameStore';
 import { gameSocket } from '../../network/socket';
 import { ItemRegistry } from '@into-the-void/items';
 import { RARITY_COLORS } from '../constants';
+import { ItemTooltip } from '../../components/ItemTooltip';
 import './InventoryPanel.css';
 
 interface SortableSlotProps {
@@ -40,20 +41,22 @@ function SortableSlot({ instanceId, itemId, quantity, onContextMenu }: SortableS
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      className="inventory-slot inventory-slot--filled"
-      style={style}
-      {...attributes}
-      {...listeners}
-      onContextMenu={(e) => onContextMenu(e, instanceId)}
-    >
+    <ItemTooltip item={itemDef} disabled={isDragging}>
       <div
-        className="slot-icon"
-        style={{ backgroundColor: `#${itemDef.color.toString(16).padStart(6, '0')}` }}
-      />
-      {quantity > 1 && <span className="slot-quantity">{quantity}</span>}
-    </div>
+        ref={setNodeRef}
+        className="inventory-slot inventory-slot--filled"
+        style={style}
+        {...attributes}
+        {...listeners}
+        onContextMenu={(e) => onContextMenu(e, instanceId)}
+      >
+        <div
+          className="slot-icon"
+          style={{ backgroundColor: `#${itemDef.color.toString(16).padStart(6, '0')}` }}
+        />
+        {quantity > 1 && <span className="slot-quantity">{quantity}</span>}
+      </div>
+    </ItemTooltip>
   );
 }
 
