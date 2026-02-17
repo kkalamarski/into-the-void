@@ -1,3 +1,6 @@
+// Constants
+export * from './constants';
+
 // Core types
 export * from './core/position';
 export * from './core/entity';
