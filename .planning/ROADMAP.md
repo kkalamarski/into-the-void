@@ -295,10 +295,10 @@ Plans:
 **Plans**: 4 plans in 2 waves
 
 Plans:
-- [ ] 34-01-PLAN.md — Create entity_lifecycle DB table; enrich createEntityFromSpawn() with EntityRegistry data
-- [ ] 34-02-PLAN.md — Create entityStore.ts Zustand store with socket event wiring
-- [ ] 34-03-PLAN.md — Update EntityRenderer: always-visible health/yield bars for all entity types
-- [ ] 34-04-PLAN.md — Add entity blocking to pathfinding and server movement validation
+- [x] 34-01-PLAN.md — Create entity_lifecycle DB table; enrich createEntityFromSpawn() with EntityRegistry data
+- [x] 34-02-PLAN.md — Create entityStore.ts Zustand store with socket event wiring
+- [x] 34-03-PLAN.md — Update EntityRenderer: always-visible health/yield bars for all entity types
+- [x] 34-04-PLAN.md — Add entity blocking to pathfinding and server movement validation
 
 #### Phase 35: Loot Tables, Tool Interaction, and Respawn
 
@@ -413,13 +413,13 @@ Phases execute in numeric order: 33 -> 34 -> 35 -> 36 -> 37 -> 38
 | 31. Server Wiring & Socket Delivery | v1.7 | 3/3 | Complete | 2026-02-18 |
 | 32. Client Display | v1.7 | 3/3 | Complete | 2026-02-18 |
 | 33. Foundation Types and Entity Definitions | v1.8 | 3/3 | Complete | 2026-02-18 |
-| 34. Entity Lifecycle Persistence and Enriched Spawning | v1.8 | 0/4 | In progress | - |
+| 34. Entity Lifecycle Persistence and Enriched Spawning | v1.8 | 4/4 | Complete | 2026-02-18 |
 | 35. Loot Tables, Tool Interaction, and Respawn | v1.8 | TBD | Not started | - |
 | 36. Creature AI Wander and Behavior Tick | v1.8 | TBD | Not started | - |
 | 37. Fertility Noise and Biome Spawn Quality | v1.8 | TBD | Not started | - |
 | 38. Perception Gating and Client Polish | v1.8 | TBD | Not started | - |
 
-**Total:** 38 phases (33 complete, 5 in progress)
+**Total:** 38 phases (34 complete, 4 remaining)
 
 ---
-*Last updated: 2026-02-18 after Phase 34 planning*
+*Last updated: 2026-02-18 after Phase 34 complete*
