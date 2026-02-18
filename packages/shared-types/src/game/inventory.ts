@@ -82,6 +82,21 @@ export interface InventoryEquipment {
 }
 
 /**
+ * Computed effective stats derived from equipment.
+ * Server-authoritative; client uses for display only.
+ */
+export interface ComputedStats {
+  armor: number;
+  speedMultiplier: number;
+  hazardResistance: number;
+  detectionRange: number;
+  energyCapacity: number;
+  rechargeRate: number;
+  jumpHeight: number;
+  bonuses: Record<string, number>;
+}
+
+/**
  * Player inventory
  */
 export interface Inventory {
@@ -93,6 +108,8 @@ export interface Inventory {
   maxSlots: number;
   /** Equipped items using exo-suit model */
   equipment: InventoryEquipment;
+  /** Computed stats from equipment (populated by server on equip operations) */
+  stats?: ComputedStats;
 }
 
 /**

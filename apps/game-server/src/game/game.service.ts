@@ -18,9 +18,11 @@ import {
   resolveEffectsForTrigger,
   validateEquip,
   validateUnequip,
+  effectiveStats,
+  type ComputedStats,
 } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
-import type { Inventory, InventoryItemJson } from '@into-the-void/database';
+import type { Inventory, InventoryItemJson, EquipmentJson } from '@into-the-void/database';
 import { getBiome } from '@into-the-void/world-gen';
 
 interface MoveResult {
@@ -67,7 +69,7 @@ interface UseResult {
 interface EquipResult {
   success: boolean;
   error?: string;
-  inventory?: Inventory;
+  inventory?: Inventory & { stats?: ComputedStats };
 }
 
 @Injectable()
@@ -379,9 +381,12 @@ export class GameService {
       return { success: false, error: result.reason };
     }
 
+    const updatedInventory = this.inventoryService.getInventory(player.id);
+    if (!updatedInventory) return { success: false, error: 'Failed to get inventory' };
+    const stats = effectiveStats(updatedInventory.equipment as EquipmentJson);
     return {
       success: true,
-      inventory: this.inventoryService.getInventory(player.id),
+      inventory: { ...updatedInventory, stats },
     };
   }
 
@@ -422,9 +427,12 @@ export class GameService {
       }
     }
 
+    const updatedInventory = this.inventoryService.getInventory(player.id);
+    if (!updatedInventory) return { success: false, error: 'Failed to get inventory' };
+    const stats = effectiveStats(updatedInventory.equipment as EquipmentJson);
     return {
       success: true,
-      inventory: this.inventoryService.getInventory(player.id),
+      inventory: { ...updatedInventory, stats },
     };
   }
 }
