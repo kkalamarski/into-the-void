@@ -90,7 +90,10 @@ export const HUD: React.FC = () => {
               className="biome-dot"
               style={{ backgroundColor: BIOME_COLORS[displayedBiome] }}
             />
-            <span className="biome-name">{BIOME_DISPLAY_NAMES[displayedBiome]}</span>
+            <span className="biome-name">
+              {BIOME_DISPLAY_NAMES[displayedBiome]}
+              {zoneState?.fertilityType && ` (${zoneState.fertilityType})`}
+            </span>
           </div>
         )}
         <div className="stats-section">
