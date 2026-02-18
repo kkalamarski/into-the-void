@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 34 of 38 (Entity Lifecycle Persistence and Enriched Spawning)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-18 — Phase 33 complete (3/3 plans, verified)
+Plan: 2 of TBD in current phase
+Status: In progress
+Last activity: 2026-02-18 — Plan 34-02 complete (entityStore with socket wiring)
 
 Progress: [██░░░░░░░░] 17% (v1.8 milestone — 1/6 phases complete)
 
@@ -63,6 +63,8 @@ Recent decisions affecting current work:
 - [33-03]: BIOME_SPAWN_CONFIGS reduced to one primary entry per biome — old hardcoded IDs (void_stalker, etc.) had no registry entries; only ENTITY_IDS-backed entries kept to satisfy must-have truth "references only IDs present in registry"
 - [33-03]: CREATURE_VOID_HORROR spans ancient_ruins + starfall_crater — single maniac-class creature covers both Tier IV biomes per lore
 - [33-03]: Auto-registration on module import — EntityRegistry.registerAll(ALL_ENTITIES) in index.ts side-effect runs at load time
+- [34-02]: GameSocket.on() upgraded to array-based multi-handler dispatch — both gameStore (Phaser) and entityStore (React/pathfinding) can independently handle entity events without silent handler replacement
+- [34-02]: enableMapSet() from immer called at module top in entityStore.ts — required for immer v11 Map mutation support in draft producers
 
 ### Pending Todos
 
@@ -84,10 +86,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 33 complete — all 3 plans executed and verified
+Stopped at: Phase 34, Plan 02 complete — entityStore created with socket wiring
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 34`
+**Next action:** Continue Phase 34 plans (34-03+)
 
 ---
-*Last updated: 2026-02-18 after Phase 33 complete (foundation types and entity definitions)*
+*Last updated: 2026-02-18 after Phase 34 Plan 02 complete (entityStore client store)*
