@@ -210,10 +210,11 @@ See: `.planning/milestones/v1.6-ROADMAP.md`
   2. `computeCharStats(level, equipment)` called with a level-10 character and no equipment returns base stats that are higher than the same call at level 1 — linear scaling is verifiable by unit test
   3. `computeCharStats(level, equipment)` called with a module that adds a Durability bonus returns a final Durability value greater than the base alone — equipment bonuses aggregate correctly
   4. `computeCharStats(level, equipment, 'creature')` returns stats using creature-specific scaling constants — same function, different scale factor, no separate code path
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 30-01-PLAN.md — TBD
+- [ ] 30-01-PLAN.md — Replace PlayerStats with CharacterStats in shared-types; update combat files and StatsJson
+- [ ] 30-02-PLAN.md — Create computeCharStats pure function with unit tests
 
 #### Phase 31: Server Wiring & Socket Delivery
 
@@ -281,11 +282,11 @@ Phases execute in numeric order: 30 → 31 → 32
 | 27. Client State & Inventory Panel UI | v1.6 | 3/3 | Complete | 2026-02-17 |
 | 28. Equipment System | v1.6 | 3/3 | Complete | 2026-02-18 |
 | 29. Action Bar & Personal Storage | v1.6 | 2/2 | Complete | 2026-02-18 |
-| 30. Type Foundation & Pure Computation | v1.7 | TBD | Not started | - |
+| 30. Type Foundation & Pure Computation | v1.7 | 0/2 | Planned | - |
 | 31. Server Wiring & Socket Delivery | v1.7 | TBD | Not started | - |
 | 32. Client Display | v1.7 | TBD | Not started | - |
 
 **Total:** 32 phases (29 complete, 3 planned)
 
 ---
-*Last updated: 2026-02-18 after v1.7 roadmap created*
+*Last updated: 2026-02-18 after Phase 30 planning*
