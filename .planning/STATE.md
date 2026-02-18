@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 30 of 32 (Type Foundation & Pure Computation)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-18 — v1.7 roadmap created (phases 30-32)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-18 — 30-01 executed (CharacterStats type foundation)
 
-Progress: [░░░░░░░░░░] 0% (v1.7 milestone)
+Progress: [█░░░░░░░░░] 10% (v1.7 milestone)
 
 ## Performance Metrics
 
@@ -51,6 +51,9 @@ Recent decisions affecting current work:
 - [v1.7 research]: Existing character rows need a one-time JSONB migration script — old 5-stat shape produces silent wrong behavior, not compile errors
 - [v1.7 research]: Client never calls `computeCharStats()` locally — server emits authoritative `CharStatsPayload`; client only renders it
 - [v1.7 research]: Check `combat/damage.ts` and `combat/turn-order.ts` for old stat names (`strength`, `endurance`, `agility`) — TypeScript Partial<> will not catch silent renames
+- [30-01]: PlayerStats entirely deleted — no aliasing; CharacterStats is canonical 8-stat type for players and creatures
+- [30-01]: strength->power, agility->haste, endurance->toughness rename applied to damage.ts and turn-order.ts
+- [30-01]: StatsJson defaults set to level-1 base stats; existing DB rows need Phase 31 migration script
 
 ### Pending Todos
 
@@ -69,10 +72,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: v1.7 roadmap created — phases 30, 31, 32 defined
+Stopped at: Completed 30-01-PLAN.md (CharacterStats type foundation)
 Resume file: None
 
-**Next action:** Plan Phase 30 — `/gsd:plan-phase 30`
+**Next action:** Execute Phase 30 Plan 02 — `/gsd:execute-phase 30-type-foundation-pure-computation`
 
 ---
-*Last updated: 2026-02-18 after v1.7 roadmap created*
+*Last updated: 2026-02-18 after 30-01 CharacterStats type foundation complete*
