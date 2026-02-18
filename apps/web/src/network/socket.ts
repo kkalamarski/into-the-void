@@ -7,8 +7,10 @@ import {
 } from '@into-the-void/shared-types';
 import { useGameStore } from '../store/gameStore';
 
+type ServerEventHandler<K extends keyof ServerEvents> = (data: ServerEvents[K]) => void;
+
 type ServerEventHandlers = {
-  [K in keyof ServerEvents]?: (data: ServerEvents[K]) => void;
+  [K in keyof ServerEvents]?: ServerEventHandler<K>[];
 };
 
 class GameSocket {
@@ -56,7 +58,7 @@ class GameSocket {
     // Register event handlers
     this.socket.on('auth:success', (data) => {
       this.setConnectionState('authenticated');
-      this.handlers['zone:state']?.(data);
+      this.dispatch('zone:state', data);
     });
 
     this.socket.on('auth:error', (data) => {
@@ -87,10 +89,7 @@ class GameSocket {
 
     for (const event of serverEvents) {
       this.socket.on(event, (data: unknown) => {
-        const handler = this.handlers[event];
-        if (handler) {
-          (handler as (data: unknown) => void)(data);
-        }
+        this.dispatch(event, data as ServerEvents[typeof event]);
       });
     }
   }
@@ -139,13 +138,32 @@ class GameSocket {
 
   on<K extends keyof ServerEvents>(
     event: K,
-    handler: (data: ServerEvents[K]) => void
+    handler: ServerEventHandler<K>
   ): void {
-    this.handlers[event] = handler as ServerEventHandlers[K];
+    if (!this.handlers[event]) {
+      this.handlers[event] = [] as ServerEventHandlers[K];
+    }
+    (this.handlers[event] as ServerEventHandler<K>[]).push(handler);
   }
 
-  off<K extends keyof ServerEvents>(event: K): void {
-    delete this.handlers[event];
+  off<K extends keyof ServerEvents>(event: K, handler?: ServerEventHandler<K>): void {
+    if (!handler) {
+      delete this.handlers[event];
+    } else {
+      const list = this.handlers[event] as ServerEventHandler<K>[] | undefined;
+      if (list) {
+        this.handlers[event] = list.filter(h => h !== handler) as ServerEventHandlers[K];
+      }
+    }
+  }
+
+  private dispatch<K extends keyof ServerEvents>(event: K, data: ServerEvents[K]): void {
+    const list = this.handlers[event] as ServerEventHandler<K>[] | undefined;
+    if (list) {
+      for (const handler of list) {
+        handler(data);
+      }
+    }
   }
 
   onConnectionStateChange(callback: (state: ConnectionState) => void): void {
