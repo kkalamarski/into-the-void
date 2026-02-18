@@ -124,6 +124,16 @@ export class GameService {
       return { success: false, error: validation.reason };
     }
 
+    // Entity blocking check (EBLK-01)
+    const entitiesAtDest = await this.zonesService.getEntitiesAtPosition(
+      newPosition.zoneId,
+      newPosition.x,
+      newPosition.y
+    );
+    if (entitiesAtDest.length > 0) {
+      return { success: false, error: 'Path blocked by entity' };
+    }
+
     // Check for zone transition
     const zoneChanged = isZoneTransition(player.position, newPosition);
 
