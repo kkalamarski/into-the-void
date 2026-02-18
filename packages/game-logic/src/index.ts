@@ -28,3 +28,6 @@ export * from './stats/char-stats';
 // Loot
 export * from './loot/loot-table';
 export * from './loot/creature-loot';
+
+// AI
+export * from './ai/creature-ai';
