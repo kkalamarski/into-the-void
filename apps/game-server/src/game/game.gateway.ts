@@ -4,6 +4,7 @@ import {
   SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   ConnectedSocket,
   MessageBody,
 } from '@nestjs/websockets';
@@ -12,6 +13,7 @@ import { GameService } from './game.service';
 import { PlayerService } from './player.service';
 import { InventoryService } from './inventory.service';
 import { StorageService } from './storage.service';
+import { ZonesService } from '../zones/zones.service';
 import {
   ClientEvents,
   Direction,
@@ -33,7 +35,7 @@ import { EquipmentJson } from '@into-the-void/database';
     skipMiddlewares: true,
   },
 })
-export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
 
@@ -42,7 +44,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly playerService: PlayerService,
     private readonly inventoryService: InventoryService,
     private readonly storageService: StorageService,
+    private readonly zonesService: ZonesService,
   ) {}
+
+  afterInit(server: Server) {
+    this.zonesService.setServer(server);
+    console.log('[GameGateway] WebSocket server initialized, ZonesService connected');
+  }
 
   async handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
