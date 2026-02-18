@@ -161,6 +161,7 @@ export class PathfindingController {
   private scene: Phaser.Scene | null = null;
   private isoTransform: IsometricTransform | null = null;
   private elevationAccessor: ElevationAccessor | null = null;
+  private isBlocked: CollisionAccessor | null = null;
 
   constructor(
     movementController: MovementController,
@@ -189,6 +190,7 @@ export class PathfindingController {
   ): boolean {
     this.cancelPath(); // Cancel any existing path
     this.elevationAccessor = getElevation ?? null;
+    this.isBlocked = isBlocked;
 
     const player = useGameStore.getState().player;
     if (!player) return false;
@@ -290,6 +292,13 @@ export class PathfindingController {
     const currentWorld = positionToWorld(player.position);
     const next = this.currentPath[this.pathIndex];
 
+    // EBLK-03: Re-check if next tile is now blocked (entity may have moved into it)
+    if (this.isBlocked && this.isBlocked(next.x, next.y)) {
+      console.log('[PathfindingController] Path blocked by entity at', next.x, next.y);
+      this.cancelPath();
+      return;
+    }
+
     // Calculate direction to next tile
     const direction = this.getDirection(currentWorld, next);
 
@@ -317,6 +326,7 @@ export class PathfindingController {
     }
     this.currentPath = [];
     this.pathIndex = 0;
+    this.isBlocked = null;
 
     // Clear path visualization
     this.clearPathGraphics();
