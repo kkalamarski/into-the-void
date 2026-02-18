@@ -351,9 +351,9 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 37-01-PLAN.md — Add getFertilityAt() to BiomeGenerator; update generateSpawnPoints signature to accept BiomeGenerator
-- [ ] 37-02-PLAN.md — Implement fertility multiplier, per-tile biome sampling, and density caps in spawn.ts
-- [ ] 37-03-PLAN.md — Add fertilityType to ZoneState; display "Biome (Fertility)" in HUD
+- [x] 37-01-PLAN.md — Add getFertilityAt() to BiomeGenerator; update generateSpawnPoints signature to accept BiomeGenerator
+- [x] 37-02-PLAN.md — Implement fertility multiplier, per-tile biome sampling, and density caps in spawn.ts
+- [x] 37-03-PLAN.md — Add fertilityType to ZoneState; display "Biome (Fertility)" in HUD
 
 #### Phase 38: Perception Gating and Client Polish
 
@@ -416,10 +416,10 @@ Phases execute in numeric order: 33 -> 34 -> 35 -> 36 -> 37 -> 38
 | 34. Entity Lifecycle Persistence and Enriched Spawning | v1.8 | 4/4 | Complete | 2026-02-18 |
 | 35. Loot Tables, Tool Interaction, and Respawn | v1.8 | 4/4 | Complete | 2026-02-18 |
 | 36. Creature AI Wander and Behavior Tick | v1.8 | 4/4 | Complete | 2026-02-18 |
-| 37. Fertility Noise and Biome Spawn Quality | v1.8 | 0/3 | Planned | - |
+| 37. Fertility Noise and Biome Spawn Quality | v1.8 | 3/3 | Complete | 2026-02-18 |
 | 38. Perception Gating and Client Polish | v1.8 | TBD | Not started | - |
 
-**Total:** 38 phases (36 complete, 2 remaining)
+**Total:** 38 phases (37 complete, 1 remaining)
 
 ---
-*Last updated: 2026-02-18 after Phase 37 planning complete*
+*Last updated: 2026-02-18 after Phase 37 execution complete*

@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.8 Entity System — Phase 37: Fertility Noise and Biome Spawn Quality
+**Current focus:** v1.8 Entity System — Phase 38: Perception Gating and Client Polish
 
 ## Current Position
 
-Phase: 37 of 38 (Fertility Noise and Biome Spawn Quality)
-Plan: 1 of TBD in current phase
-Status: In progress
-Last activity: 2026-02-18 — Plan 37-03 complete (ZoneState.fertilityType + getZoneState BiomeGenerator + HUD "Biome (Fertility)" display)
+Phase: 38 of 38 (Perception Gating and Client Polish)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-18 — Phase 37 complete (3/3 plans, verified)
 
-Progress: [██████░░░░] 67% (v1.8 milestone — 4/6 phases complete)
+Progress: [████████░░] 83% (v1.8 milestone — 5/6 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 119 (Phases 1-36 complete)
+- Total plans completed: 122 (Phases 1-37 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~4.5 hours
 
@@ -35,10 +35,9 @@ Progress: [██████░░░░] 67% (v1.8 milestone — 4/6 phases co
 | v1.5 | 21-24 | 9 | 1 day |
 | v1.6 | 25-29 | 16 | 2 days |
 | v1.7 | 30-32 | 9 | 1 day |
-| v1.8 | 33-36 | 15 | (in progress) |
+| v1.8 | 33-37 | 18 | (in progress) |
 
 **Recent Trend:** Stable, averaging 2-4 plans per phase
-| Phase 37 P02 | 8 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -121,10 +120,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Plan 37-03 complete — ZoneState.fertilityType field + getZoneState() BiomeGenerator computation + HUD "Biome (Fertility)" display
+Stopped at: Phase 37 complete — fertility noise and biome spawn quality
 Resume file: None
 
-**Next action:** Phase 37 complete. Proceed to Phase 38 (client polish / sprites).
+**Next action:** `/gsd:plan-phase 38`
 
 ---
-*Last updated: 2026-02-18 after Plan 37-03 complete (ZoneState.fertilityType + getZoneState BiomeGenerator + HUD Biome/Fertility display)*
+*Last updated: 2026-02-18 after Phase 37 complete (fertility noise, spawn density modulation, HUD fertility display)*
