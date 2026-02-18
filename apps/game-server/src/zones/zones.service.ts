@@ -1,13 +1,38 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ChunkData, Entity, SpawnPoint } from '@into-the-void/shared-types';
+import {
+  Artifact,
+  ChunkData,
+  Creature,
+  Entity,
+  ItemEntity,
+  Mineral,
+  Plant,
+  SpawnPoint,
+} from '@into-the-void/shared-types';
 import { generateChunk } from '@into-the-void/world-gen';
+import { EntityRegistry } from '@into-the-void/entities';
+import type {
+  ArtifactDefinition,
+  CreatureDefinition,
+  MineralDefinition,
+  PlantDefinition,
+} from '@into-the-void/entities';
+import { DatabaseService } from '../database/database.service';
+import { entityLifecycle } from '@into-the-void/database';
+import { eq } from 'drizzle-orm';
 import { LRUCache } from 'lru-cache';
 
 interface ZoneState {
   chunk: ChunkData;
   entities: Map<string, Entity>;
 }
+
+/**
+ * Far-future date used as respawnAt for artifacts (they never respawn).
+ * Using 2100-01-01 as a sentinel value.
+ */
+const FAR_FUTURE = new Date('2100-01-01T00:00:00.000Z');
 
 @Injectable()
 export class ZonesService implements OnModuleInit {
@@ -16,7 +41,10 @@ export class ZonesService implements OnModuleInit {
   // Claim map: entityId -> playerId who claimed it (prevents simultaneous pickup)
   private claimedEntities: Map<string, string> = new Map();
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly databaseService: DatabaseService,
+  ) {
     this.worldSeed = configService.get<string>('WORLD_SEED', 'into-the-void-alpha-1');
     this.zones = new LRUCache<string, ZoneState>({
       max: 500, // Max chunks in memory (supports ~250 concurrent players)
@@ -29,21 +57,41 @@ export class ZonesService implements OnModuleInit {
     });
   }
 
-  onModuleInit() {
+  async onModuleInit() {
     // Preload spawn zone
-    this.loadZone('z_0_0');
+    await this.loadZone('z_0_0');
   }
 
-  private loadZone(zoneId: string): ZoneState {
+  private async loadZone(zoneId: string): Promise<ZoneState> {
     // Parse zone coordinates
     const [, x, y] = zoneId.split('_').map(Number);
 
     // Generate chunk
     const chunk = generateChunk(this.worldSeed, x, y);
 
-    // Create entities from spawn points
+    // Query entity lifecycle records for this zone to find suppressed entities
+    const db = this.databaseService.getClient();
+    const lifecycleRecords = await db
+      .select()
+      .from(entityLifecycle)
+      .where(eq(entityLifecycle.zoneId, zoneId));
+
+    // Build suppressed set: entityIds where respawnAt is still in the future
+    const now = new Date();
+    const suppressed = new Set<string>(
+      lifecycleRecords
+        .filter((r) => r.respawnAt > now)
+        .map((r) => r.entityId),
+    );
+
+    // Create entities from spawn points, skipping suppressed ones
     const entities = new Map<string, Entity>();
     for (const spawn of chunk.spawnPoints) {
+      const entityId = `${zoneId}_${spawn.spawnId}_${spawn.x}_${spawn.y}`;
+      if (suppressed.has(entityId)) {
+        // Entity is dead and has not yet respawned — skip
+        continue;
+      }
       const entity = this.createEntityFromSpawn(spawn, zoneId);
       entities.set(entity.id, entity);
     }
@@ -59,31 +107,162 @@ export class ZonesService implements OnModuleInit {
 
   private createEntityFromSpawn(spawn: SpawnPoint, zoneId: string): Entity {
     const id = `${zoneId}_${spawn.spawnId}_${spawn.x}_${spawn.y}`;
+    const def = EntityRegistry.get(spawn.spawnId);
 
-    if (spawn.entityType === 'creature') {
-      return {
+    // ---- Creature ----
+    if (spawn.entityType === 'creature' && def.entityClass === 'creature') {
+      const creatureDef = def as CreatureDefinition;
+
+      // Deterministic level from seed: hash worldSeed + entityId into level range
+      const level = this.deriveLevel(id, creatureDef.levelRange);
+
+      const creature: Creature = {
         id,
         type: 'creature',
-        name: spawn.spawnId,
+        name: creatureDef.displayName,
         position: { x: spawn.x, y: spawn.y, zoneId },
         active: true,
+        speciesId: creatureDef.id,
+        health: creatureDef.baseHealth,
+        maxHealth: creatureDef.baseHealth,
+        level,
+        behavior: creatureDef.behavior,
       };
+      return creature;
     }
 
+    // ---- Mineral ----
+    if (spawn.entityType === 'mineral' && def.entityClass === 'mineral') {
+      const mineralDef = def as MineralDefinition;
+
+      const mineral: Mineral = {
+        id,
+        type: 'mineral',
+        name: mineralDef.displayName,
+        position: { x: spawn.x, y: spawn.y, zoneId },
+        active: true,
+        resourceId: mineralDef.id,
+        yield: 5,
+        maxYield: 5,
+        requiredTier: mineralDef.requiredTier,
+      };
+      return mineral;
+    }
+
+    // ---- Plant (forward-compatibility stub) ----
+    // world-gen does not yet produce 'plant' entityType, but the branch is ready
+    if (def.entityClass === 'plant') {
+      const plantDef = def as PlantDefinition;
+
+      const plant: Plant = {
+        id,
+        type: 'plant',
+        name: plantDef.displayName,
+        position: { x: spawn.x, y: spawn.y, zoneId },
+        active: true,
+        speciesId: plantDef.id,
+        yield: 5,
+        maxYield: 5,
+      };
+      return plant;
+    }
+
+    // ---- Artifact (forward-compatibility stub) ----
+    // world-gen does not yet produce 'artifact' entityType, but the branch is ready
+    if (def.entityClass === 'artifact') {
+      const artifactDef = def as ArtifactDefinition;
+
+      const artifact: Artifact = {
+        id,
+        type: 'artifact',
+        name: artifactDef.displayName,
+        position: { x: spawn.x, y: spawn.y, zoneId },
+        active: true,
+        artifactId: artifactDef.id,
+        rarity: artifactDef.rarity,
+      };
+      return artifact;
+    }
+
+    // ---- Default fallback ----
     return {
       id,
       type: 'mineral',
       name: spawn.spawnId,
       position: { x: spawn.x, y: spawn.y, zoneId },
       active: true,
-    };
+    } as Entity;
+  }
+
+  /**
+   * Deterministically derive a level within levelRange from seed + entityId.
+   * Uses a simple numeric hash to avoid external dependencies.
+   */
+  private deriveLevel(entityId: string, levelRange: readonly [number, number]): number {
+    const seed = this.worldSeed + entityId;
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+    }
+    const [min, max] = levelRange;
+    return min + (hash % (max - min + 1));
+  }
+
+  /**
+   * Record an entity kill in the database so the respawn timer survives zone eviction
+   * and server restarts.
+   *
+   * For artifacts, respawnSeconds is ignored and FAR_FUTURE is used instead (they never respawn).
+   */
+  async recordEntityKill(
+    entityId: string,
+    zoneId: string,
+    respawnSeconds: number,
+    isArtifact = false,
+  ): Promise<void> {
+    const db = this.databaseService.getClient();
+    const now = new Date();
+    const respawnAt = isArtifact
+      ? FAR_FUTURE
+      : new Date(now.getTime() + respawnSeconds * 1000);
+
+    await db
+      .insert(entityLifecycle)
+      .values({
+        entityId,
+        zoneId,
+        killedAt: now,
+        respawnAt,
+      })
+      .onConflictDoUpdate({
+        target: entityLifecycle.entityId,
+        set: {
+          killedAt: now,
+          respawnAt,
+        },
+      });
+  }
+
+  /**
+   * Get all entities at a given tile position in a zone.
+   * Useful for entity blocking and collision checks.
+   */
+  async getEntitiesAtPosition(zoneId: string, x: number, y: number): Promise<Entity[]> {
+    let zoneState = this.zones.get(zoneId);
+    if (!zoneState) {
+      zoneState = await this.loadZone(zoneId);
+    }
+
+    return Array.from(zoneState.entities.values()).filter(
+      (e) => e.active && e.position.x === x && e.position.y === y,
+    );
   }
 
   async getChunk(zoneId: string): Promise<ChunkData> {
     let zoneState = this.zones.get(zoneId);
 
     if (!zoneState) {
-      zoneState = this.loadZone(zoneId);
+      zoneState = await this.loadZone(zoneId);
     }
 
     return zoneState.chunk;
@@ -115,12 +294,12 @@ export class ZonesService implements OnModuleInit {
     let zoneState = this.zones.get(zoneId);
 
     if (!zoneState) {
-      zoneState = this.loadZone(zoneId);
+      zoneState = await this.loadZone(zoneId);
     }
 
     const now = Date.now();
     return Array.from(zoneState.entities.values()).filter(
-      (e) => e.active && (!('despawnAt' in e) || (e as any).despawnAt > now)
+      (e) => e.active && (!('despawnAt' in e) || (e as ItemEntity).despawnAt > now)
     );
   }
 
@@ -149,7 +328,7 @@ export class ZonesService implements OnModuleInit {
     let zoneState = this.zones.get(zoneId);
 
     if (!zoneState) {
-      zoneState = this.loadZone(zoneId);
+      zoneState = await this.loadZone(zoneId);
     }
 
     zoneState.entities.set(entity.id, entity);

@@ -17,3 +17,6 @@ export * from './discoveries';
 
 // Player storage
 export * from './storage';
+
+// Entity lifecycle persistence
+export * from './entity-lifecycle';
