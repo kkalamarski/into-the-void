@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 Phase: 37 of 38 (Fertility Noise and Biome Spawn Quality)
 Plan: 1 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-18 — Plan 37-01 complete (FertilityType + getFertilityAt + generateSpawnPoints refactor)
+Last activity: 2026-02-18 — Plan 37-03 complete (ZoneState.fertilityType + getZoneState BiomeGenerator + HUD "Biome (Fertility)" display)
 
 Progress: [██████░░░░] 67% (v1.8 milestone — 4/6 phases complete)
 
@@ -38,6 +38,7 @@ Progress: [██████░░░░] 67% (v1.8 milestone — 4/6 phases co
 | v1.8 | 33-36 | 15 | (in progress) |
 
 **Recent Trend:** Stable, averaging 2-4 plans per phase
+| Phase 37 P02 | 8 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,9 @@ Recent decisions affecting current work:
 - [37-01]: 3 octaves for fertility fbm — balances variation against tiny-patch noise artifacts
 - [37-01]: Equal-thirds thresholds (Barren <0.33, Normal 0.33-0.66, Lush >=0.66) for balanced distribution
 - [37-01]: BiomeGenerator passed to generateSpawnPoints instead of BiomeType — enables Plan 37-02 per-spawn-point fertility sampling without another signature change
+- [37-03]: BiomeGenerator instantiated per getZoneState() call (not cached) — acceptable since getZoneState is called once per zone transition, not per frame
+- [37-03]: Fertility displayed inline without separate hysteresis — biome hysteresis gate is sufficient; fertility changes less frequently than biome at boundaries
+- [37-03]: ZoneState.fertilityType is required (not optional) — enforces correctness at the type level; all ZoneState consumers must provide it
 
 ### Pending Todos
 
@@ -115,10 +119,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Plan 37-01 complete — FertilityType type + BiomeGenerator.getFertilityAt + generateSpawnPoints BiomeGenerator signature
+Stopped at: Plan 37-03 complete — ZoneState.fertilityType field + getZoneState() BiomeGenerator computation + HUD "Biome (Fertility)" display
 Resume file: None
 
-**Next action:** Execute Plan 37-02 (spawn density modulation using fertility)
+**Next action:** Phase 37 complete. Proceed to Phase 38 (client polish / sprites).
 
 ---
-*Last updated: 2026-02-18 after Plan 37-01 complete (FertilityType + getFertilityAt + generateSpawnPoints refactor)*
+*Last updated: 2026-02-18 after Plan 37-03 complete (ZoneState.fertilityType + getZoneState BiomeGenerator + HUD Biome/Fertility display)*
