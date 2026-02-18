@@ -231,7 +231,7 @@ Plans:
 Plans:
 - [x] 31-01-PLAN.md — Wire CharStatsPayload type and emitStats helper into GameGateway
 - [x] 31-02-PLAN.md — Create statsStore.ts client store and migration script for characters.stats
-- [ ] 31-03-PLAN.md — Gap closure: Wire statsStore.ts import into GameUI.tsx
+- [x] 31-03-PLAN.md — Gap closure: Wire statsStore.ts import into GameUI.tsx
 
 #### Phase 32: Client Display
 
@@ -285,10 +285,10 @@ Phases execute in numeric order: 30 → 31 → 32
 | 28. Equipment System | v1.6 | 3/3 | Complete | 2026-02-18 |
 | 29. Action Bar & Personal Storage | v1.6 | 2/2 | Complete | 2026-02-18 |
 | 30. Type Foundation & Pure Computation | v1.7 | 2/2 | Complete | 2026-02-18 |
-| 31. Server Wiring & Socket Delivery | v1.7 | 3/3 | In Progress | - |
+| 31. Server Wiring & Socket Delivery | v1.7 | 3/3 | Complete | 2026-02-18 |
 | 32. Client Display | v1.7 | TBD | Not started | - |
 
-**Total:** 32 phases (30 complete, 2 in progress/planned)
+**Total:** 32 phases (31 complete, 1 planned)
 
 ---
-*Last updated: 2026-02-18 after Phase 31 gap closure plan created*
+*Last updated: 2026-02-18 after Phase 31 execution complete*
