@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { BIOME_DISPLAY_NAMES, BIOME_COLORS, BiomeType } from '@into-the-void/shared-types';
+import { ActionBar } from './ActionBar';
 import './HUD.css';
 
 export const HUD: React.FC = () => {
@@ -122,6 +123,7 @@ export const HUD: React.FC = () => {
             <label>Chat</label>
           </button>
         </div>
+        <ActionBar />
       </div>
 
       <div className="hud-minimap" aria-label="Minimap" />

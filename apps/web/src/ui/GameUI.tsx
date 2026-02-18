@@ -9,6 +9,7 @@ import {
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useGameStore } from '../store/gameStore';
 import { useInventoryStore } from '../store/inventoryStore';
+import { useActionBarStore } from '../store/actionBarStore';
 import { gameSocket } from '../network/socket';
 import { HUD } from './hud/HUD';
 import { ChatPanel } from './panels/ChatPanel';
@@ -35,6 +36,15 @@ export const GameUI: React.FC = () => {
 
     const overId = String(over.id);
     const activeId = String(active.id);
+
+    // Dropped on hotbar slot — assign to action bar
+    if (overId.startsWith('hotbar-')) {
+      const slotIndex = parseInt(overId.replace('hotbar-', ''), 10);
+      if (!isNaN(slotIndex) && slotIndex >= 0 && slotIndex < 8) {
+        useActionBarStore.getState().assign(slotIndex, activeId);
+      }
+      return;
+    }
 
     // Dropped on equipment slot — emit equip
     if (overId.startsWith('equip-')) {
