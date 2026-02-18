@@ -80,6 +80,7 @@ class GameSocket {
       'combat:end',
       'chat:message',
       'inventory:update',
+      'storage:update',
       'error',
     ];
 

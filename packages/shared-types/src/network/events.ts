@@ -28,7 +28,8 @@ export type ClientEventType =
   | 'zone:request'
   | 'equipment:change'
   | 'inventory:unequip'
-  | 'equipment:tool_swap';
+  | 'equipment:tool_swap'
+  | 'storage:open';
 
 /**
  * Server-to-client event types
@@ -48,6 +49,7 @@ export type ServerEventType =
   | 'combat:end'
   | 'chat:message'
   | 'inventory:update'
+  | 'storage:update'
   | 'error';
 
 /**
@@ -68,6 +70,7 @@ export interface ClientEvents {
   'equipment:change': { instanceId: string };
   'inventory:unequip': { instanceId: string };
   'equipment:tool_swap': Record<string, never>;
+  'storage:open': Record<string, never>;
 }
 
 /**
@@ -88,6 +91,7 @@ export interface ServerEvents {
   'combat:end': { combatId: string; winner: string };
   'chat:message': ChatMessage;
   'inventory:update': import('../game/inventory').Inventory;
+  'storage:update': import('../game/storage').PersonalStorage;
   'error': { code: string; message: string };
 }
 

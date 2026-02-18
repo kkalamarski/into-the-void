@@ -12,6 +12,7 @@ export * from './game/faction';
 export * from './game/biome';
 export * from './game/combat';
 export * from './game/inventory';
+export * from './game/storage';
 export * from './game/entity-registry';
 
 // Network types
