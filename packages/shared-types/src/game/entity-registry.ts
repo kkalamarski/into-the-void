@@ -56,6 +56,8 @@ export interface ItemConfig {
 
 /**
  * Entity registry - static game data
+ * @deprecated This legacy registry will be replaced by @into-the-void/entities in Phase 33.
+ * Use EntityRegistry from @into-the-void/entities for new code.
  */
 export const EntityRegistry = {
   creatures: {
@@ -64,7 +66,7 @@ export const EntityRegistry = {
       name: 'Void Crawler',
       baseHealth: 50,
       levelRange: [1, 5] as [number, number],
-      behavior: 'passive' as CreatureBehavior,
+      behavior: 'herbivore' as CreatureBehavior,
       textureKey: 'creature',
       biomes: ['void_plains'],
     },
@@ -73,7 +75,7 @@ export const EntityRegistry = {
       name: 'Crystal Hound',
       baseHealth: 80,
       levelRange: [3, 8] as [number, number],
-      behavior: 'neutral' as CreatureBehavior,
+      behavior: 'omnivore' as CreatureBehavior,
       textureKey: 'creature',
       biomes: ['crystal_caves'],
     },
@@ -82,7 +84,7 @@ export const EntityRegistry = {
       name: 'Acid Stalker',
       baseHealth: 120,
       levelRange: [5, 12] as [number, number],
-      behavior: 'aggressive' as CreatureBehavior,
+      behavior: 'predator' as CreatureBehavior,
       textureKey: 'creature',
       biomes: ['toxic_wastes'],
     },
@@ -91,7 +93,7 @@ export const EntityRegistry = {
       name: 'Ancient Guardian',
       baseHealth: 200,
       levelRange: [10, 20] as [number, number],
-      behavior: 'defensive' as CreatureBehavior,
+      behavior: 'maniac' as CreatureBehavior,
       textureKey: 'creature',
       biomes: ['ancient_ruins'],
     },

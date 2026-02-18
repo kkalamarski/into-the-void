@@ -108,6 +108,30 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     creatureDensity: 2,
     mineralDensity: 3,
   },
+  miasma_marshes: {
+    creatures: [
+      { id: 'marsh_lurker', weight: 7, minLevel: 5, maxLevel: 15 },
+      { id: 'chemical_grazer', weight: 5, minLevel: 4, maxLevel: 10 },
+    ],
+    minerals: [
+      { id: 'chemical_sump', weight: 8, rarity: 2 },
+      { id: 'biogas_vent', weight: 4, rarity: 3 },
+    ],
+    creatureDensity: 5,
+    mineralDensity: 4,
+  },
+  petrified_expanse: {
+    creatures: [
+      { id: 'dart_runner', weight: 8, minLevel: 6, maxLevel: 16 },
+      { id: 'shard_ambusher', weight: 4, minLevel: 8, maxLevel: 18 },
+    ],
+    minerals: [
+      { id: 'mineralized_log', weight: 6, rarity: 2 },
+      { id: 'crystallized_compound', weight: 3, rarity: 4 },
+    ],
+    creatureDensity: 3,
+    mineralDensity: 6,
+  },
 };
 
 /**

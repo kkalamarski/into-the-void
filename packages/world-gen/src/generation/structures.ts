@@ -22,6 +22,8 @@ const BIOME_FEATURE_TILE_IDS: Record<BiomeType, TileId> = {
   volcanic_ridge: TileId.LAVA,
   fungal_forest: TileId.FUNGAL_GROWTH,
   starfall_crater: TileId.CRATER_DEBRIS,
+  miasma_marshes: TileId.TOXIC_POOL,
+  petrified_expanse: TileId.VOID_WALL,
 };
 
 /**
@@ -116,7 +118,9 @@ function getFeatureTileIdForBiome(biome: BiomeType): string {
     frozen_expanse: TILE_IDS.ICE_WALL,
     volcanic_ridge: TILE_IDS.LAVA,
     fungal_forest: TILE_IDS.FUNGAL_GROWTH,
-    starfall_crater: TILE_IDS.CRATER_DEBRIS
+    starfall_crater: TILE_IDS.CRATER_DEBRIS,
+    miasma_marshes: TILE_IDS.TOXIC_POOL,
+    petrified_expanse: TILE_IDS.VOID_WALL,
   };
   return featureTiles[biome];
 }

@@ -152,20 +152,20 @@ export class EntityRenderer {
     let color: string;
 
     switch (behavior) {
-      case 'passive':
-        letter = 'H'; // Herbivore
+      case 'herbivore':
+        letter = 'H';
         color = '#44cc44'; // green
         break;
-      case 'neutral':
-        letter = 'O'; // Omnivore
+      case 'omnivore':
+        letter = 'O';
         color = '#ffcc00'; // yellow
         break;
-      case 'aggressive':
-        letter = 'P'; // Predator
+      case 'predator':
+        letter = 'P';
         color = '#ff6b35'; // orange
         break;
-      case 'defensive':
-        letter = 'M'; // Maniac
+      case 'maniac':
+        letter = 'M';
         color = '#ff4444'; // red
         break;
     }

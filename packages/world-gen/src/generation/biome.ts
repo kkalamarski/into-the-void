@@ -141,6 +141,16 @@ export class BiomeGenerator {
       return 'toxic_wastes';
     }
 
+    // Mid-elevation with high moisture and moderate temp = marshes
+    if (moisture > 0.7 && temp > 0.3 && temp < 0.6 && elevation > 0.3 && elevation < 0.6) {
+      return 'miasma_marshes';
+    }
+
+    // Low moisture + moderate elevation + moderate temp = petrified
+    if (moisture < 0.4 && elevation > 0.4 && elevation < 0.7 && temp > 0.4 && temp < 0.7) {
+      return 'petrified_expanse';
+    }
+
     // Temperate zones
     if (moisture > 0.6) {
       return 'crystal_caves';
@@ -177,6 +187,8 @@ export function getBiomeDangerLevel(biome: BiomeType): number {
     volcanic_ridge: 7,
     fungal_forest: 3,
     starfall_crater: 8,
+    miasma_marshes: 4,      // Tier II hazardous
+    petrified_expanse: 4,   // Tier II hazardous
   };
   return dangerLevels[biome];
 }
@@ -194,6 +206,8 @@ export function getBiomeColor(biome: BiomeType): number {
     volcanic_ridge: 0xff4500,
     fungal_forest: 0x9370db,
     starfall_crater: 0x191970,
+    miasma_marshes: 0x6b8e23,
+    petrified_expanse: 0xa9a9a9,
   };
   return colors[biome];
 }

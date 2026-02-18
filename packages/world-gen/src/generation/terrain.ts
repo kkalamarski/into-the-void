@@ -77,6 +77,8 @@ const BIOME_TILES: Record<BiomeType, { floor: TileId; wall: TileId; feature: Til
     wall: TileId.CRATER_DEBRIS,
     feature: TileId.CRATER_DEBRIS,
   },
+  miasma_marshes: { floor: TileId.FUNGAL_FLOOR, wall: TileId.TOXIC_POOL, feature: TileId.TOXIC_POOL },
+  petrified_expanse: { floor: TileId.VOID_FLOOR, wall: TileId.VOID_WALL, feature: TileId.VOID_WALL },
 };
 
 /**
@@ -91,6 +93,8 @@ const BIOME_TILE_IDS: Record<BiomeType, { floor: string; wall: string; feature: 
   volcanic_ridge: { floor: TILE_IDS.VOLCANIC_FLOOR, wall: TILE_IDS.LAVA, feature: TILE_IDS.LAVA },
   fungal_forest: { floor: TILE_IDS.FUNGAL_FLOOR, wall: TILE_IDS.FUNGAL_GROWTH, feature: TILE_IDS.FUNGAL_GROWTH },
   starfall_crater: { floor: TILE_IDS.CRATER_FLOOR, wall: TILE_IDS.CRATER_DEBRIS, feature: TILE_IDS.CRATER_DEBRIS },
+  miasma_marshes: { floor: TILE_IDS.FUNGAL_FLOOR, wall: TILE_IDS.TOXIC_POOL, feature: TILE_IDS.TOXIC_POOL },
+  petrified_expanse: { floor: TILE_IDS.VOID_FLOOR, wall: TILE_IDS.VOID_WALL, feature: TILE_IDS.VOID_WALL },
 };
 
 /**
@@ -106,6 +110,8 @@ const BIOME_ELEVATION_RANGES: Record<BiomeType, { min: number; max: number }> = 
   toxic_wastes: { min: 0, max: 2 }, // Low-lying pools and waste
   fungal_forest: { min: 0, max: 3 }, // Organic growth canopy
   void_plains: { min: 0, max: 3 }, // Standard terrain variation
+  miasma_marshes: { min: 0, max: 2 },      // Low-lying marsh
+  petrified_expanse: { min: 1, max: 4 },   // Moderate elevation stone forest
 };
 
 /**
@@ -209,6 +215,8 @@ function getWallThreshold(biome: BiomeType): number {
     volcanic_ridge: 0.5,
     fungal_forest: 0.35,
     starfall_crater: 0.5,
+    miasma_marshes: 0.45,      // Moderate wall density
+    petrified_expanse: 0.5,    // Standard wall density
   };
   return thresholds[biome];
 }
@@ -226,6 +234,8 @@ function isFeatureBlocking(biome: BiomeType): boolean {
     volcanic_ridge: true, // Lava blocks
     fungal_forest: false,
     starfall_crater: true,
+    miasma_marshes: false,     // Toxic pools damage but don't block
+    petrified_expanse: true,   // Stone formations block
   };
   return blocking[biome];
 }
