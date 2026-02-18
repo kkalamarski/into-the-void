@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.7 Character Stats — Phase 30: Type Foundation & Pure Computation
+**Current focus:** v1.7 Character Stats — Phase 31: Server Wiring & Socket Delivery
 
 ## Current Position
 
-Phase: 30 of 32 (Type Foundation & Pure Computation)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-02-18 — 30-02 executed (computeCharStats pure function)
+Phase: 31 of 32 (Server Wiring & Socket Delivery)
+Plan: 1 of 1 in current phase
+Status: Plan 01 complete
+Last activity: 2026-02-18 — 31-01 executed (CharStatsPayload + stats:update emission)
 
-Progress: [██░░░░░░░░] 20% (v1.7 milestone)
+Progress: [███░░░░░░░] 30% (v1.7 milestone)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 86 (Phases 1-29 complete)
+- Total plans completed: 89 (Phases 1-31 plan 01 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~4 hours
 
@@ -40,6 +40,7 @@ Progress: [██░░░░░░░░] 20% (v1.7 milestone)
 
 | Phase 30 P01 | 2 | 3 tasks | 4 files |
 | Phase 30 P02 | 3 | 3 tasks | 5 files |
+| Phase 31 P01 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -59,6 +60,9 @@ Recent decisions affecting current work:
 - [30-01]: StatsJson defaults set to level-1 base stats; existing DB rows need Phase 31 migration script
 - [Phase 30]: computeCharStats uses SCALE_CONSTANTS[StatScaleTarget] record — new targets require only adding a key
 - [Phase 30]: vitest.config.ts added to game-logic to enable @nx/vite:test executor
+- [31-01]: stats:update is private (client.emit not server.to(room).emit) — only the requesting client receives their own stats
+- [31-01]: Base stats computed with emptyEquipment = { modules: [] } for clean delta between level scaling and equipment bonuses
+- [31-01]: emitStats helper pattern — always call after inventory:update when equipment could change
 
 ### Pending Todos
 
@@ -77,10 +81,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 30-02-PLAN.md (computeCharStats pure function)
+Stopped at: Completed 31-01-PLAN.md (CharStatsPayload + stats:update emission wired)
 Resume file: None
 
-**Next action:** Plan Phase 31 — `/gsd:plan-phase 31`
+**Next action:** Execute Phase 31 Plan 02 — `/gsd:execute-phase 31`
 
 ---
-*Last updated: 2026-02-18 after 30-02 computeCharStats pure function complete*
+*Last updated: 2026-02-18 after 31-01 CharStatsPayload and stats:update emission complete*
