@@ -9,6 +9,7 @@ import {
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useGameStore } from '../store/gameStore';
 import { useInventoryStore } from '../store/inventoryStore';
+import '../store/statsStore'; // Side-effect: registers stats:update socket handler
 import { useActionBarStore } from '../store/actionBarStore';
 import { gameSocket } from '../network/socket';
 import { HUD } from './hud/HUD';
