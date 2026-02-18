@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 36 of 38 (Creature AI Wander and Behavior Tick)
-Plan: 1 of 4 in current phase
+Plan: 4 of 4 in current phase
 Status: In progress
-Last activity: 2026-02-18 — Phase 36 Plan 01 complete (AiService zone-scoped tick loop)
+Last activity: 2026-02-18 — Phase 36 Plan 03 complete (AiService integration + entity:batch broadcast)
 
 Progress: [█████░░░░░] 50% (v1.8 milestone — 3/6 phases complete)
 
@@ -39,6 +39,7 @@ Progress: [█████░░░░░] 50% (v1.8 milestone — 3/6 phases co
 
 **Recent Trend:** Stable, averaging 2-4 plans per phase
 | Phase 36 P01 | 5 | 2 tasks | 2 files |
+| Phase 36 P03 | 3 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,9 @@ Recent decisions affecting current work:
 - [Phase 36-02]: Flee fallback chain: diagonal -> cardinal-x -> cardinal-y -> partial backtrack — prevents herbivores cornering
 - [Phase 36-02]: Creature bounds check uses ZONE_SIZE directly — creatures do not trigger zone transitions
 - [36-04]: isBlocked accessor stored as class field in PathfindingController — re-evaluated per step via closure over entityStore; cleared to null in cancelPath() for cleanup
+- [36-03]: entity:batch emitted once per zone per tick (not N individual entity:update events) — relaxed zone-room broadcast per v1.8 research decision
+- [36-03]: activateZone safe to call multiple times due to idempotency guard — calling on every player join and zone-transition is correct pattern
+- [36-03]: deactivateZone called after playerService.handleDisconnect() so getPlayersInZone returns accurate post-disconnect count
 
 ### Pending Todos
 
@@ -112,10 +116,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 36 Plan 02 complete — tickCreatureAI pure FSM in game-logic
+Stopped at: Phase 36 Plan 03 complete — AiService integration + entity:batch broadcast wired
 Resume file: None
 
-**Next action:** Continue Phase 36 Plan 03 (game-server AiService integration of tickCreatureAI)
+**Next action:** Continue Phase 36 Plan 04 (client pathfinding interruption on creature proximity)
 
 ---
-*Last updated: 2026-02-18 after Phase 36 Plan 02 complete (tickCreatureAI pure FSM + game-logic export)*
+*Last updated: 2026-02-18 after Phase 36 Plan 03 complete (AiService integration + entity:batch broadcast)*
