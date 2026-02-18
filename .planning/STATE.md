@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 37 of 38 (Fertility Noise and Biome Spawn Quality)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-18 — Phase 36 complete (4/4 plans, verified)
+Plan: 1 of TBD in current phase
+Status: In progress
+Last activity: 2026-02-18 — Plan 37-01 complete (FertilityType + getFertilityAt + generateSpawnPoints refactor)
 
 Progress: [██████░░░░] 67% (v1.8 milestone — 4/6 phases complete)
 
@@ -93,6 +93,10 @@ Recent decisions affecting current work:
 - [36-03]: entity:batch emitted once per zone per tick (not N individual entity:update events) — relaxed zone-room broadcast per v1.8 research decision
 - [36-03]: activateZone safe to call multiple times due to idempotency guard — calling on every player join and zone-transition is correct pattern
 - [36-03]: deactivateZone called after playerService.handleDisconnect() so getPlayersInZone returns accurate post-disconnect count
+- [37-01]: FERTILITY_SCALE = 0.0012 as private readonly class property (between temperatureScale 0.001 and moistureScale 0.0015) for medium-scale fertility blobs
+- [37-01]: 3 octaves for fertility fbm — balances variation against tiny-patch noise artifacts
+- [37-01]: Equal-thirds thresholds (Barren <0.33, Normal 0.33-0.66, Lush >=0.66) for balanced distribution
+- [37-01]: BiomeGenerator passed to generateSpawnPoints instead of BiomeType — enables Plan 37-02 per-spawn-point fertility sampling without another signature change
 
 ### Pending Todos
 
@@ -111,10 +115,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 36 complete — creature AI wander and behavior tick
+Stopped at: Plan 37-01 complete — FertilityType type + BiomeGenerator.getFertilityAt + generateSpawnPoints BiomeGenerator signature
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 37`
+**Next action:** Execute Plan 37-02 (spawn density modulation using fertility)
 
 ---
-*Last updated: 2026-02-18 after Phase 36 complete (creature AI wander and behavior tick)*
+*Last updated: 2026-02-18 after Plan 37-01 complete (FertilityType + getFertilityAt + generateSpawnPoints refactor)*
