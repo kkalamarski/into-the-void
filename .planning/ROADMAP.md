@@ -167,9 +167,9 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 28-01-PLAN.md — Build EquipmentPanel.tsx with exo-suit slot, dynamic module slots, tool slots; lift DndContext to GameUI for cross-panel drag
-- [ ] 28-02-PLAN.md — Add ComputedStats to shared-types; include stats in inventory:update; add equipment:tool_swap handler; exo-suit unequip guard
-- [ ] 28-03-PLAN.md — Add stats display to HUD; level-gating visual feedback on items; Q hotkey for tool swap
+- [x] 28-01-PLAN.md — Build EquipmentPanel.tsx with exo-suit slot, dynamic module slots, tool slots; lift DndContext to GameUI for cross-panel drag
+- [x] 28-02-PLAN.md — Add ComputedStats to shared-types; include stats in inventory:update; add equipment:tool_swap handler; exo-suit unequip guard
+- [x] 28-03-PLAN.md — Add stats display to HUD; level-gating visual feedback on items; Q hotkey for tool swap
 
 #### Phase 29: Action Bar & Personal Storage
 
@@ -220,10 +220,10 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | 25. Item Data Model & Foundation | v1.6 | 4/4 | Complete | 2026-02-17 |
 | 26. Server InventoryService & WebSocket Handlers | v1.6 | 4/4 | Complete | 2026-02-17 |
 | 27. Client State & Inventory Panel UI | v1.6 | 3/3 | Complete | 2026-02-17 |
-| 28. Equipment System | v1.6 | 0/3 | Planned | - |
+| 28. Equipment System | v1.6 | 3/3 | Complete | 2026-02-18 |
 | 29. Action Bar & Personal Storage | v1.6 | 0/2 | Not started | - |
 
-**Total:** 29 phases (27 complete, 2 planned)
+**Total:** 29 phases (28 complete, 1 planned)
 
 ---
-*Last updated: 2026-02-18 after Phase 28 planning*
+*Last updated: 2026-02-18 after Phase 28 execution*
