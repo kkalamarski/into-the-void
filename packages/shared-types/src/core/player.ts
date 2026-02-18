@@ -48,20 +48,33 @@ export interface PlayerPublic {
 }
 
 /**
- * Player stats
+ * Canonical 8-stat character stats used by players and creatures.
+ * Replaces the legacy 5-stat PlayerStats type.
  */
-export interface PlayerStats {
-  /** Strength - affects melee damage */
-  strength: number;
-  /** Agility - affects dodge chance and movement */
-  agility: number;
-  /** Endurance - affects max health and stamina */
-  endurance: number;
-  /** Intelligence - affects ability power */
-  intelligence: number;
+export interface CharacterStats {
+  /** Durability - affects max health and suit HP */
+  durability: number;
+  /** Toughness - affects damage reduction / armor */
+  toughness: number;
+  /** Power - affects damage output (replaces legacy strength) */
+  power: number;
+  /** Haste - affects turn order / action speed (replaces legacy agility) */
+  haste: number;
+  /** Vigor - affects energy pool and stamina */
+  vigor: number;
+  /** Recovery - affects regeneration rate */
+  recovery: number;
   /** Perception - affects detection range */
   perception: number;
+  /** Resilience - affects status-effect resistance */
+  resilience: number;
 }
+
+/**
+ * Determines whether stat scaling targets a player or a creature.
+ * Used by computeCharStats() in game-logic.
+ */
+export type StatScaleTarget = 'player' | 'creature';
 
 /**
  * Player account (can have multiple characters)
