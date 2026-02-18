@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 32 of 32 (Client Display)
-Plan: 1 of 3 in current phase
-Status: Plan 01 complete — state foundations wired
-Last activity: 2026-02-18 — 32-01 executed (stats panel toggle and level-up detection foundations)
+Plan: 3 of 3 in current phase
+Status: Plan 03 complete — stat comparison tooltip wired into InventoryPanel
+Last activity: 2026-02-18 — 32-03 executed (ItemTooltip stat comparison display + InventoryPanel equippedItem wiring)
 
 Progress: [████░░░░░░] 40% (v1.7 milestone)
 
@@ -44,6 +44,7 @@ Progress: [████░░░░░░] 40% (v1.7 milestone)
 | Phase 31 P02 | 2 | 2 tasks | 3 files |
 | Phase 31 P03 | 2 | 1 task | 1 file |
 | Phase 32 P01 | 2 | 2 tasks | 4 files |
+| Phase 32 P03 | 3 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,9 @@ Recent decisions affecting current work:
 - [32-01]: Compare base stats only (not total) for level-up detection — equipment changes affect total, level gains affect base
 - [32-01]: P key toggles stats panel following same keyboard-enabled guard pattern as I/E/C keys
 - [32-01]: levelUpDeltas accumulates delta amount (next - prev) per stat, not the new absolute value
+- [32-03]: equippedItem prop is optional — tooltip degrades gracefully when no item equipped in slot
+- [32-03]: Module comparison uses modules[0]; accessory comparison uses accessory1 (v1 limitation)
+- [32-03]: Stat names shown are legacy ComputedStats keys (armor, speedMultiplier, etc.) — auto-upgrades when CharacterStats effects added
 
 ### Pending Todos
 
@@ -90,10 +94,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 32-01-PLAN.md (stats panel toggle and level-up detection foundations)
+Stopped at: Completed 32-03-PLAN.md (stat comparison tooltip + InventoryPanel equippedItem wiring)
 Resume file: None
 
-**Next action:** Execute Phase 32 Plan 02 — `/gsd:execute-phase 32`
+**Next action:** Execute Phase 32 Plan 04 (if exists) or advance to next phase — `/gsd:execute-phase 32`
 
 ---
-*Last updated: 2026-02-18 after 32-01 stats panel toggle and level-up detection foundations complete*
+*Last updated: 2026-02-18 after 32-03 stat comparison tooltip wired into InventoryPanel complete*
