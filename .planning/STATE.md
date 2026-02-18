@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.7 Character Stats — MILESTONE COMPLETE
+**Current focus:** v1.8 Entity System
 
 ## Current Position
 
-Phase: 32 of 32 (Client Display) — COMPLETE
-Plan: 3 of 3 in current phase — COMPLETE
-Status: Phase 32 verified, v1.7 milestone shipped
-Last activity: 2026-02-18 — Phase 32 execution complete, all 3 plans verified
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-18 — Milestone v1.8 started
 
-Progress: [██████████] 100% (v1.7 milestone)
+Progress: [░░░░░░░░░░] 0% (v1.8 milestone)
 
 ## Performance Metrics
 
@@ -99,10 +99,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: v1.7 Milestone complete — all 32 phases executed and verified
+Stopped at: Defining v1.8 requirements
 Resume file: None
 
-**Next action:** `/gsd:complete-milestone` or `/gsd:new-milestone` to define v1.8
+**Next action:** Research → requirements → roadmap
 
 ---
-*Last updated: 2026-02-18 after v1.7 Character Stats milestone complete*
+*Last updated: 2026-02-18 after v1.8 Entity System milestone start*

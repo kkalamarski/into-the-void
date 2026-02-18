@@ -24,16 +24,24 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~9,120 LOC TypeScript
 
-## Current Milestone: v1.7 Character Stats
+## Current Milestone: v1.8 Entity System
 
-**Goal:** Implement character stats system with base stats scaling by level plus equipment bonuses, displayed with breakdown UI.
+**Goal:** Implement entity definition system with spawning, interaction, and loot. Entities include creatures (idle wander), plants, minerals, and artifacts — all interactable via tools with range-based interaction.
 
 **Target features:**
-- 8 primary stats: Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience
-- Base stats with per-stat tuning and linear level scaling
-- Equipment stat bonuses aggregated from equipped items
-- Stats UI showing breakdown: "Durability 100 (20 + 80)"
-- Stats system designed for reuse with creatures in future combat milestone
+- Entity definition system (strategy pattern, repository) matching items/tiles pattern
+- 4 entity types: Creatures, Plants, Minerals, Artifacts with type hierarchy
+- ~35 entity definitions (~10 creatures, ~10 plants, ~10 minerals, ~5 artifacts)
+- Fertility noise layer determining spawn density (Barren/Normal/Lush)
+- Biome-specific entity spawning with 0-5 entities per chunk
+- Entity stats (level-based, reusing CharacterStats)
+- Health bars for all entities
+- Weighted random loot drop tables
+- Tool interaction with range stat (1-10 tiles)
+- Perception/level gating (shows "???" if insufficient)
+- Creature idle wander behavior
+- Entity respawn with random timer ranges
+- Zone HUD shows fertility: "Biome Name (Fertility)"
 
 ## Core Value
 
@@ -87,22 +95,35 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Character equipment panel UI — v1.6
 - ✓ Action bar with hotkeys — v1.6
 - ✓ Personal storage UI — v1.6
+- ✓ 8 primary stats with per-stat tuning and level scaling — v1.7
+- ✓ Equipment stat bonuses aggregated from equipped items — v1.7
+- ✓ Stats UI with breakdown display — v1.7
+- ✓ Level-up notification with stat deltas — v1.7
 
 ### Active
 
-- [ ] 8 primary stats (Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience)
-- [ ] Base stats with per-stat tuning and linear level scaling
-- [ ] Equipment stat bonuses aggregated from equipped items
-- [ ] Stats UI with breakdown display
+- [ ] Entity definition system with strategy pattern and repository
+- [ ] 4 entity types with type hierarchy (Creatures, Plants, Minerals, Artifacts)
+- [ ] Fertility noise layer (Barren/Normal/Lush spawn density)
+- [ ] Biome-specific entity spawning (0-5 per chunk)
+- [ ] Entity stats and health bars
+- [ ] Weighted random loot drop tables
+- [ ] Tool interaction with range stat
+- [ ] Perception/level gating for entities
+- [ ] Creature idle wander behavior
+- [ ] Entity respawn system
+- [ ] Zone HUD fertility display
 
 ### Out of Scope
 
 - OAuth/social login — email/password sufficient
 - Sprite-based rendering — color tiles only until art pipeline ready
-- Combat system — separate milestone (will use stats system from v1.7)
+- Combat system — separate milestone (creatures attack, damage dealing)
 - Chat system — separate milestone
 - Sound/music — polish phase
 - Mobile controls — web-first
+- Tool abilities on action bar — future expansion
+- Tool durability/consumption — future milestone
 
 ## Constraints
 
@@ -133,4 +154,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-18 after v1.7 milestone start*
+*Last updated: 2026-02-18 after v1.8 milestone start*
