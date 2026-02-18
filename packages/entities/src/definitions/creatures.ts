@@ -13,6 +13,7 @@ export const CREATURE_VOID_CRAWLER: CreatureDefinition = {
   baseHealth: 50,
   levelRange: [1, 5],
   baseXp: 15,
+  respawnSeconds: 180,
 };
 
 export const CREATURE_CANOPY_GRAZER: CreatureDefinition = {
@@ -28,6 +29,7 @@ export const CREATURE_CANOPY_GRAZER: CreatureDefinition = {
   baseHealth: 80,
   levelRange: [1, 6],
   baseXp: 20,
+  respawnSeconds: 240,
 };
 
 export const CREATURE_SPORE_CARRIER: CreatureDefinition = {
@@ -43,6 +45,7 @@ export const CREATURE_SPORE_CARRIER: CreatureDefinition = {
   baseHealth: 60,
   levelRange: [4, 12],
   baseXp: 25,
+  respawnSeconds: 300,
 };
 
 export const CREATURE_CRYSTAL_HUNTER: CreatureDefinition = {
@@ -58,6 +61,7 @@ export const CREATURE_CRYSTAL_HUNTER: CreatureDefinition = {
   baseHealth: 120,
   levelRange: [8, 18],
   baseXp: 45,
+  respawnSeconds: 420,
 };
 
 export const CREATURE_MARSH_LURKER: CreatureDefinition = {
@@ -73,6 +77,7 @@ export const CREATURE_MARSH_LURKER: CreatureDefinition = {
   baseHealth: 100,
   levelRange: [5, 15],
   baseXp: 40,
+  respawnSeconds: 360,
 };
 
 export const CREATURE_DART_RUNNER: CreatureDefinition = {
@@ -88,6 +93,7 @@ export const CREATURE_DART_RUNNER: CreatureDefinition = {
   baseHealth: 90,
   levelRange: [6, 16],
   baseXp: 38,
+  respawnSeconds: 360,
 };
 
 export const CREATURE_FROST_STALKER: CreatureDefinition = {
@@ -103,6 +109,7 @@ export const CREATURE_FROST_STALKER: CreatureDefinition = {
   baseHealth: 140,
   levelRange: [10, 22],
   baseXp: 55,
+  respawnSeconds: 480,
 };
 
 export const CREATURE_MAGMA_BEAST: CreatureDefinition = {
@@ -118,6 +125,7 @@ export const CREATURE_MAGMA_BEAST: CreatureDefinition = {
   baseHealth: 180,
   levelRange: [12, 28],
   baseXp: 70,
+  respawnSeconds: 600,
 };
 
 export const CREATURE_TOXIC_LURKER: CreatureDefinition = {
@@ -133,6 +141,7 @@ export const CREATURE_TOXIC_LURKER: CreatureDefinition = {
   baseHealth: 130,
   levelRange: [8, 20],
   baseXp: 50,
+  respawnSeconds: 420,
 };
 
 export const CREATURE_VOID_HORROR: CreatureDefinition = {
@@ -148,6 +157,7 @@ export const CREATURE_VOID_HORROR: CreatureDefinition = {
   baseHealth: 250,
   levelRange: [20, 35],
   baseXp: 120,
+  respawnSeconds: 900,
 };
 
 export const ALL_CREATURES: readonly CreatureDefinition[] = [

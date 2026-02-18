@@ -29,7 +29,8 @@ export type ClientEventType =
   | 'equipment:change'
   | 'inventory:unequip'
   | 'equipment:tool_swap'
-  | 'storage:open';
+  | 'storage:open'
+  | 'entity:tool_use';
 
 /**
  * Server-to-client event types
@@ -72,6 +73,7 @@ export interface ClientEvents {
   'inventory:unequip': { instanceId: string };
   'equipment:tool_swap': Record<string, never>;
   'storage:open': Record<string, never>;
+  'entity:tool_use': { targetEntityId: string };
 }
 
 /**

@@ -17,6 +17,7 @@ const UNKNOWN_ENTITY: EntityDefinition = {
   baseHealth: 1,
   levelRange: [1, 1],
   baseXp: 0,
+  respawnSeconds: 60,
 };
 
 /**

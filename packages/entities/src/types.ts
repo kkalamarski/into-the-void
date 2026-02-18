@@ -28,6 +28,7 @@ export interface CreatureDefinition extends BaseEntityDefinition {
   readonly baseHealth: number;
   readonly levelRange: readonly [number, number];
   readonly baseXp: number;
+  readonly respawnSeconds: number;
 }
 
 /** Harvest yield entry for plants and minerals */
