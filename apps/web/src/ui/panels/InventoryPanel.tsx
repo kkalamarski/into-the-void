@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import type { DragEndEvent } from '@dnd-kit/core';
-import {
   SortableContext,
   rectSortingStrategy,
   useSortable,
@@ -69,10 +61,6 @@ export const InventoryPanel: React.FC = () => {
     instanceId: string;
   } | null>(null);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
-  );
-
   useEffect(() => {
     const handleClickOutside = () => setContextMenu(null);
     if (contextMenu) {
@@ -111,19 +99,6 @@ export const InventoryPanel: React.FC = () => {
 
   const sortableIds = sortedItems.map((i) => i.instanceId);
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    if (pendingReorder) return;
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const fromItem = sortedItems.find((i) => i.instanceId === active.id);
-    const toItem = sortedItems.find((i) => i.instanceId === over.id);
-    if (!fromItem || !toItem) return;
-
-    useInventoryStore.getState().setPendingReorder(true);
-    gameSocket.emit('inventory:reorder', { fromSlot: fromItem.slot, toSlot: toItem.slot });
-  };
-
   const handleContextMenu = (e: React.MouseEvent, instanceId: string) => {
     e.preventDefault();
     setContextMenu({ x: e.clientX, y: e.clientY, instanceId });
@@ -147,25 +122,23 @@ export const InventoryPanel: React.FC = () => {
         <span>Inventory ({inventory.items.length}/{inventory.maxSlots})</span>
         <button className="close-btn" onClick={toggleInventory}>&times;</button>
       </div>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={sortableIds} strategy={rectSortingStrategy}>
-          <div className="inventory-grid" style={{ pointerEvents: pendingReorder ? 'none' : 'auto' }}>
-            {slots.map((item, i) =>
-              item ? (
-                <SortableSlot
-                  key={item.instanceId}
-                  instanceId={item.instanceId}
-                  itemId={item.itemId}
-                  quantity={item.quantity}
-                  onContextMenu={handleContextMenu}
-                />
-              ) : (
-                <div key={`empty-${i}`} className="inventory-slot inventory-slot--empty" />
-              )
-            )}
-          </div>
-        </SortableContext>
-      </DndContext>
+      <SortableContext items={sortableIds} strategy={rectSortingStrategy}>
+        <div className="inventory-grid" style={{ pointerEvents: pendingReorder ? 'none' : 'auto' }}>
+          {slots.map((item, i) =>
+            item ? (
+              <SortableSlot
+                key={item.instanceId}
+                instanceId={item.instanceId}
+                itemId={item.itemId}
+                quantity={item.quantity}
+                onContextMenu={handleContextMenu}
+              />
+            ) : (
+              <div key={`empty-${i}`} className="inventory-slot inventory-slot--empty" />
+            )
+          )}
+        </div>
+      </SortableContext>
       {contextMenu && (
         <div className="context-menu" style={{ left: contextMenu.x, top: contextMenu.y }}>
           <button onClick={handleUse}>Use</button>
