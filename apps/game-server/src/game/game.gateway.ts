@@ -13,6 +13,7 @@ import { GameService } from './game.service';
 import { PlayerService } from './player.service';
 import { InventoryService } from './inventory.service';
 import { StorageService } from './storage.service';
+import { EntityService } from './entity.service';
 import { ZonesService } from '../zones/zones.service';
 import {
   ClientEvents,
@@ -44,6 +45,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly playerService: PlayerService,
     private readonly inventoryService: InventoryService,
     private readonly storageService: StorageService,
+    private readonly entityService: EntityService,
     private readonly zonesService: ZonesService,
   ) {}
 
@@ -542,6 +544,43 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     const storage = await this.storageService.loadForPlayer(player.id);
     client.emit('storage:update', storage);
+  }
+
+  @SubscribeMessage('entity:tool_use')
+  async handleToolUse(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { targetEntityId: string },
+  ): Promise<void> {
+    try {
+      const result = await this.entityService.handleToolUse(client.id, payload.targetEntityId);
+      if (!result.success) {
+        client.emit('error', { code: 'TOOL_USE_FAILED', message: result.error });
+        return;
+      }
+
+      // Emit entity update to zone
+      if (result.entityChanges && result.zoneId) {
+        const player = this.playerService.getPlayerBySocket(client.id);
+        if (player) {
+          this.server.to(result.zoneId).emit('entity:update', {
+            entityId: payload.targetEntityId,
+            changes: result.entityChanges,
+          });
+        }
+      }
+
+      // Emit ground item spawns to zone
+      if (result.groundItems && result.zoneId) {
+        for (const item of result.groundItems) {
+          this.server.to(result.zoneId).emit('entity:spawn', item);
+        }
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to process tool use',
+      });
+    }
   }
 
   /**

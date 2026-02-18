@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PlayerService } from './player.service';
 import { ZonesService } from '../zones/zones.service';
 import { InventoryService } from './inventory.service';
+import { EntityService } from './entity.service';
 import {
   Direction,
   Position,
@@ -78,6 +79,7 @@ export class GameService {
     private readonly playerService: PlayerService,
     private readonly zonesService: ZonesService,
     private readonly inventoryService: InventoryService,
+    private readonly entityService: EntityService,
   ) {}
 
   async getZoneState(zoneId: string): Promise<ZoneState> {
@@ -257,6 +259,10 @@ export class GameService {
 
       // Mark entity inactive AFTER inventory write succeeds
       await this.zonesService.despawnEntity(player.position.zoneId, entityId);
+
+      // Remove from ground_items DB
+      await this.entityService.removeGroundItem(entityId);
+
       this.zonesService.releaseClaim(entityId);
 
       return {
@@ -299,6 +305,9 @@ export class GameService {
     };
 
     await this.zonesService.spawnEntity(player.position.zoneId, groundItem);
+
+    // Persist to ground_items DB for survival across zone eviction/restart
+    await this.entityService.persistGroundItem(groundItem);
 
     return {
       success: true,
