@@ -13,6 +13,7 @@ import {
   FloatingPortal,
 } from '@floating-ui/react';
 import type { ItemDefinition } from '@into-the-void/items';
+import { resolveEffectsForTrigger } from '@into-the-void/game-logic';
 import { RARITY_COLORS } from '../ui/constants';
 import './ItemTooltip.css';
 
@@ -20,9 +21,52 @@ interface ItemTooltipProps {
   children: React.ReactNode;
   item: ItemDefinition;
   disabled?: boolean;
+  equippedItem?: ItemDefinition; // Item currently equipped in same slot for comparison
 }
 
-export const ItemTooltip: React.FC<ItemTooltipProps> = ({ children, item, disabled = false }) => {
+function extractStatBonuses(item: ItemDefinition): Record<string, number> {
+  const equipEffects = resolveEffectsForTrigger(item.effects, 'on_equip');
+  const passiveEffects = resolveEffectsForTrigger(item.effects, 'passive');
+  const bonuses: Record<string, number> = {};
+
+  for (const result of [...equipEffects, ...passiveEffects]) {
+    for (const [key, value] of Object.entries(result.applied)) {
+      if (typeof value === 'number') {
+        bonuses[key] = (bonuses[key] ?? 0) + value;
+      }
+    }
+  }
+  return bonuses;
+}
+
+function computeStatDeltas(
+  hoveredItem: ItemDefinition,
+  equippedItem: ItemDefinition | undefined
+): Array<{ stat: string; delta: number }> {
+  const hoveredBonuses = extractStatBonuses(hoveredItem);
+  const equippedBonuses = equippedItem ? extractStatBonuses(equippedItem) : {};
+
+  const allStats = new Set([...Object.keys(hoveredBonuses), ...Object.keys(equippedBonuses)]);
+  const deltas: Array<{ stat: string; delta: number }> = [];
+
+  for (const stat of allStats) {
+    const hoveredVal = hoveredBonuses[stat] ?? 0;
+    const equippedVal = equippedBonuses[stat] ?? 0;
+    const delta = hoveredVal - equippedVal;
+    if (delta !== 0) {
+      deltas.push({ stat, delta });
+    }
+  }
+
+  return deltas;
+}
+
+export const ItemTooltip: React.FC<ItemTooltipProps> = ({
+  children,
+  item,
+  disabled = false,
+  equippedItem,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const { refs, floatingStyles, context } = useFloating({
@@ -39,6 +83,9 @@ export const ItemTooltip: React.FC<ItemTooltipProps> = ({ children, item, disabl
   const { getReferenceProps, getFloatingProps } = useInteractions([hover, focus, dismiss, role]);
 
   const rarityColor = RARITY_COLORS[item.rarity];
+
+  // Compute deltas only when hovering an equippable item
+  const statDeltas = item.equipSlot ? computeStatDeltas(item, equippedItem) : [];
 
   return (
     <>
@@ -67,6 +114,19 @@ export const ItemTooltip: React.FC<ItemTooltipProps> = ({ children, item, disabl
                 <span>Requires Level {item.requiredLevel}</span>
               )}
             </div>
+            {statDeltas.length > 0 && (
+              <div className="tooltip-comparison">
+                <div className="tooltip-comparison-header">vs Equipped</div>
+                {statDeltas.map(({ stat, delta }) => (
+                  <div
+                    key={stat}
+                    className={`tooltip-delta ${delta > 0 ? 'tooltip-delta--positive' : 'tooltip-delta--negative'}`}
+                  >
+                    {delta > 0 ? '+' : ''}{delta} {stat}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </FloatingPortal>
       )}
