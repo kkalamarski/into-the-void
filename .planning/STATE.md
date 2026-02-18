@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 33 of 38 (Foundation Types and Entity Definitions)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-18 — v1.8 roadmap created (phases 33-38)
+Plan: 1 of TBD in current phase
+Status: In progress
+Last activity: 2026-02-18 — completed 33-01 (foundation types and entity definitions)
 
-Progress: [░░░░░░░░░░] 0% (v1.8 milestone)
+Progress: [█░░░░░░░░░] 10% (v1.8 milestone — 1 of ~10 plans complete)
 
 ## Performance Metrics
 
@@ -52,6 +52,10 @@ Recent decisions affecting current work:
 - [v1.8 research]: `ground_items` DB table in Phase 35 — loot in memory only is never acceptable; items must survive zone eviction
 - [v1.8 research]: Fertility model is static (baked at world-gen time, deterministic per seed) — dynamic fertility deferred; decision is irreversible without data migration
 - [v1.8 research]: Perception gating model: relaxed zone-room broadcast with field stripping (simpler) rather than strict per-player filtering — finalize before Phase 36 AI broadcast implementation
+- [33-01]: CreatureBehavior renamed from passive|neutral|aggressive|defensive to herbivore|omnivore|predator|maniac — lore mandate applied as first change in Phase 33
+- [33-01]: miasma_marshes and petrified_expanse added as Tier II biomes — uses existing tile visuals (fungal/void/toxic) without new sprites
+- [33-01]: Plant and Artifact EntityType variants added with full interfaces — foundation for entity lifecycle system in Phase 34+
+- [33-01]: Legacy EntityRegistry in shared-types marked @deprecated — to be replaced by @into-the-void/entities package
 
 ### Pending Todos
 
@@ -73,10 +77,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: v1.8 roadmap created — phases 33-38 defined, ready to plan Phase 33
+Stopped at: Completed 33-01-PLAN.md — foundation types (CreatureBehavior, BiomeType, EntityType) updated across 9 files
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 33`
+**Next action:** Execute Phase 33 next plan (33-02 or beyond)
 
 ---
-*Last updated: 2026-02-18 after v1.8 Entity System roadmap created*
+*Last updated: 2026-02-18 after completing 33-01 foundation types and entity definitions*
