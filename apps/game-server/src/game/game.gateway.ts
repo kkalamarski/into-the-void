@@ -11,6 +11,7 @@ import { Server, Socket } from 'socket.io';
 import { GameService } from './game.service';
 import { PlayerService } from './player.service';
 import { InventoryService } from './inventory.service';
+import { StorageService } from './storage.service';
 import {
   ClientEvents,
   Direction,
@@ -36,6 +37,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly gameService: GameService,
     private readonly playerService: PlayerService,
     private readonly inventoryService: InventoryService,
+    private readonly storageService: StorageService,
   ) {}
 
   async handleConnection(client: Socket) {
@@ -505,6 +507,17 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (inventory) {
       client.emit('inventory:update', inventory);
     }
+  }
+
+  @SubscribeMessage('storage:open')
+  async handleStorageOpen(
+    @ConnectedSocket() client: Socket
+  ): Promise<void> {
+    const player = this.playerService.getPlayerBySocket(client.id);
+    if (!player) return;
+
+    const storage = await this.storageService.loadForPlayer(player.id);
+    client.emit('storage:update', storage);
   }
 
   /**
