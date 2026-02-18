@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 34 of 38 (Entity Lifecycle Persistence and Enriched Spawning)
-Plan: 2 of TBD in current phase
+Plan: 4 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-18 — Plan 34-02 complete (entityStore with socket wiring)
+Last activity: 2026-02-18 — Plan 34-04 complete (entity blocking for pathfinding and server movement)
 
 Progress: [██░░░░░░░░] 17% (v1.8 milestone — 1/6 phases complete)
 
@@ -69,6 +69,8 @@ Recent decisions affecting current work:
 - [34-01]: Plant and Artifact branches in createEntityFromSpawn() are forward-compatibility stubs — world-gen not yet producing those entityTypes
 - [34-02]: GameSocket.on() upgraded to array-based multi-handler dispatch — both gameStore (Phaser) and entityStore (React/pathfinding) can independently handle entity events without silent handler replacement
 - [34-02]: enableMapSet() from immer called at module top in entityStore.ts — required for immer v11 Map mutation support in draft producers
+- [34-03]: createHealthBar() reused for mineral/plant yield bars — parameter semantics (current/max) are identical; no new visual component needed
+- [34-03]: getEntityTexture() now accepts Entity not EntityType — enables species-specific texture lookup; missing textures handled gracefully by Phaser until Phase 38 adds sprites
 
 ### Pending Todos
 
@@ -90,10 +92,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 34, Plan 01 complete — entity_lifecycle DB table, enriched createEntityFromSpawn(), async lifecycle-aware loadZone()
+Stopped at: Phase 34, Plan 03 complete — EntityRenderer with always-visible health/yield bars and species-specific texture lookup
 Resume file: None
 
-**Next action:** Continue Phase 34 plans (34-02+)
+**Next action:** Continue Phase 34 plans (34-04+)
 
 ---
-*Last updated: 2026-02-18 after Phase 34 Plan 01 complete (entity lifecycle persistence and enriched spawning)*
+*Last updated: 2026-02-18 after Phase 34 Plan 03 complete (EntityRenderer always-visible health/yield bars)*
