@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 38 of 38 (Perception Gating and Client Polish)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-18 — Phase 37 complete (3/3 plans, verified)
+Plan: 1 of TBD in current phase
+Status: In progress
+Last activity: 2026-02-18 — Phase 38 Plan 01 complete (AI broadcast whitelist + entity:batch WorldScene wiring)
 
-Progress: [████████░░] 83% (v1.8 milestone — 5/6 phases complete)
+Progress: [████████░░] 85% (v1.8 milestone — Phase 38 in progress, plan 1 done)
 
 ## Performance Metrics
 
@@ -102,6 +102,8 @@ Recent decisions affecting current work:
 - [37-03]: BiomeGenerator instantiated per getZoneState() call (not cached) — acceptable since getZoneState is called once per zone transition, not per frame
 - [37-03]: Fertility displayed inline without separate hysteresis — biome hysteresis gate is sufficient; fertility changes less frequently than biome at boundaries
 - [37-03]: ZoneState.fertilityType is required (not optional) — enforces correctness at the type level; all ZoneState consumers must provide it
+- [38-01]: PublicCreatureUpdate interface at module level enforces CRAI-09 — named type on movedCreatures[] array makes TypeScript reject AI internal state fields at compile time
+- [38-01]: entity:batch handler in gameStore.ts does not update Zustand entities array — entityStore already handles React/pathfinding; gameStore handler is Phaser-rendering-only, matching the dual-handler pattern from Phase 34-02
 
 ### Pending Todos
 
@@ -120,10 +122,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 37 complete — fertility noise and biome spawn quality
+Stopped at: Phase 38 Plan 01 complete — AI broadcast whitelist (CRAI-09) and entity:batch WorldScene wiring
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 38`
+**Next action:** Execute Phase 38 Plan 02
 
 ---
-*Last updated: 2026-02-18 after Phase 37 complete (fertility noise, spawn density modulation, HUD fertility display)*
+*Last updated: 2026-02-18 after Phase 38 Plan 01 complete (PublicCreatureUpdate whitelist, entity:batch visual wiring)*
