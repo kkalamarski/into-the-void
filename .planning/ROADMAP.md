@@ -314,10 +314,10 @@ Plans:
 **Plans**: 4 plans in 2 waves
 
 Plans:
-- [ ] 35-01-PLAN.md — Create ground_items DB table; add rollLootTable() pure function to game-logic
-- [ ] 35-02-PLAN.md — Add tool range property to ItemDefinition; update existing tools with range values
-- [ ] 35-03-PLAN.md — Create EntityService with handleToolUse(), resolveLoot(), entity:tool_use event handler
-- [ ] 35-04-PLAN.md — Implement respawn tick loop processing entity_lifecycle records; artifact permanent removal
+- [x] 35-01-PLAN.md — Create ground_items DB table; add rollLootTable() pure function to game-logic
+- [x] 35-02-PLAN.md — Add tool range property to ItemDefinition; update existing tools with range values
+- [x] 35-03-PLAN.md — Create EntityService with handleToolUse(), resolveLoot(), entity:tool_use event handler
+- [x] 35-04-PLAN.md — Implement respawn tick loop processing entity_lifecycle records; artifact permanent removal
 
 #### Phase 36: Creature AI Wander and Behavior Tick
 
@@ -414,12 +414,12 @@ Phases execute in numeric order: 33 -> 34 -> 35 -> 36 -> 37 -> 38
 | 32. Client Display | v1.7 | 3/3 | Complete | 2026-02-18 |
 | 33. Foundation Types and Entity Definitions | v1.8 | 3/3 | Complete | 2026-02-18 |
 | 34. Entity Lifecycle Persistence and Enriched Spawning | v1.8 | 4/4 | Complete | 2026-02-18 |
-| 35. Loot Tables, Tool Interaction, and Respawn | v1.8 | 4 | Ready | - |
-| 36. Creature AI Wander and Behavior Tick | v1.8 | TBD | Not started | - |
+| 35. Loot Tables, Tool Interaction, and Respawn | v1.8 | 4/4 | Complete | 2026-02-18 |
+| 36. Creature AI Wander and Behavior Tick | v1.8 | TBD | Ready | - |
 | 37. Fertility Noise and Biome Spawn Quality | v1.8 | TBD | Not started | - |
 | 38. Perception Gating and Client Polish | v1.8 | TBD | Not started | - |
 
-**Total:** 38 phases (34 complete, 4 remaining)
+**Total:** 38 phases (35 complete, 3 remaining)
 
 ---
-*Last updated: 2026-02-18 after Phase 35 planning complete*
+*Last updated: 2026-02-18 after Phase 35 complete*

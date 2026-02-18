@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 ## Current Position
 
-Phase: 35 of 38 (Loot Tables, Tool Interaction, and Respawn)
-Plan: 4 of 4 in current phase
-Status: Phase complete
-Last activity: 2026-02-18 — Plan 35-04 complete (respawn tick loop, ground item loading, setServer() wiring)
+Phase: 36 of 38 (Creature AI Wander and Behavior Tick)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-18 — Phase 35 complete (4/4 plans, verified)
 
-Progress: [███░░░░░░░] 33% (v1.8 milestone — 2/6 phases complete)
+Progress: [█████░░░░░] 50% (v1.8 milestone — 3/6 phases complete)
 
 ## Performance Metrics
 
@@ -35,10 +35,9 @@ Progress: [███░░░░░░░] 33% (v1.8 milestone — 2/6 phases co
 | v1.5 | 21-24 | 9 | 1 day |
 | v1.6 | 25-29 | 16 | 2 days |
 | v1.7 | 30-32 | 9 | 1 day |
-| v1.8 | 33-34 | 7 | (in progress) |
+| v1.8 | 33-35 | 11 | (in progress) |
 
 **Recent Trend:** Stable, averaging 2-4 plans per phase
-| Phase 35-loot-tables-tool-interaction-respawn P04 | 2 | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -106,10 +105,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 35-04-PLAN.md — respawn tick loop, ground item loading, setServer() gateway wiring
+Stopped at: Phase 35 complete — loot tables, tool interaction, respawn tick loop
 Resume file: None
 
-**Next action:** Execute Phase 36 (AI tick implementation)
+**Next action:** `/gsd:plan-phase 36`
 
 ---
 *Last updated: 2026-02-18 after Phase 35 Plan 04 complete (respawn tick loop and ground item persistence)*
