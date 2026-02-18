@@ -13,6 +13,7 @@ import { PathfindingController } from '../systems/PathfindingController';
 import { IsometricTransform } from '../utils/IsometricTransform';
 import { DepthSorter } from '../rendering/DepthSorter';
 import { useGameStore } from '../../store/gameStore';
+import { useEntityStore } from '../../store/entityStore';
 import { gameSocket } from '../../network/socket';
 
 export const ISO_TILE_WIDTH = 128;
@@ -1342,8 +1343,15 @@ export class WorldScene extends Phaser.Scene {
     const localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
     const localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
 
-    // Check collision map
-    return chunk.data.collisions[localY]?.[localX] ?? true;
+    // 1. Terrain collision (existing logic)
+    const terrainBlocked = chunk.data.collisions[localY]?.[localX] ?? true;
+    if (terrainBlocked) return true;
+
+    // 2. Entity blocking (EBLK-02)
+    const entityAtTile = useEntityStore.getState().getEntityAtPosition(localX, localY, zoneId);
+    if (entityAtTile) return true;
+
+    return false;
   }
 
   setCollisionMap(collisionMap: boolean[][]): void {
