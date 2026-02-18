@@ -1146,3 +1146,304 @@ Phase 3: Inventory UI & HUD — The sync strategy must be chosen before the firs
 
 *Pitfalls research for: Movement System Overhaul + Infinite World Chunk Streaming + Inventory & Items System (Multiplayer 2D Isometric MMO)*
 *Updated: 2026-02-17*
+
+---
+
+# Part 4: Character Stats System Pitfalls
+
+**Scope:** Adding an 8-stat character progression system (Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience) to an existing multiplayer game that already has `ComputedStats` (armor, speedMultiplier, hazardResistance) driven by equipment effects.
+
+**Added:** 2026-02-18
+**Confidence:** HIGH
+
+**Current system state (from codebase analysis):**
+- `Player` type in `shared-types/core/player.ts` has `health`, `maxHealth`, `energy`, `maxEnergy`, `level` — all stored as flat values
+- `ComputedStats` in `game-logic/inventory/stats.ts` — derived from equipment only, no character base stats contribution
+- `StatsJson` in `database/schema/characters.ts` — currently stores `{ strength, agility, endurance, intelligence, perception }` (5 old stats; must be replaced with 8 new stats)
+- `calculateDamage()` in `game-logic/combat/damage.ts` — references `attackerStats.strength`, `defenderStats.agility`, `defenderStats.endurance` from old stat names
+- `PlayerService` in `game-server` — hardcodes `energy: 100, maxEnergy: 100` with comment "Default energy until database schema is updated"
+- `effectiveStats()` in `game-logic/inventory/stats.ts` — pure function, additive armor, multiplicative speedMultiplier, additive for others
+- No event type for stat changes currently exists in `ServerEvents`
+
+---
+
+## Critical Pitfalls
+
+### Pitfall 1: Stat Computation Runs in Multiple Places, Producing Inconsistent Results
+
+**What goes wrong:**
+Stats get computed differently in different places. `effectiveStats()` runs on equip/unequip in `game.service.ts` (lines 386, 436, 457). Damage calculation in `calculateDamage()` reads `attackerStats.strength` inline. `PlayerService.authenticate()` initializes `maxHealth` from `character.maxHealth` (the DB column) rather than deriving it from base stats. Result: three separate code paths use different "effective stats" with no guarantee they're consistent. A player who levels up gets a new base stat from the DB but the in-memory `ConnectedPlayer` still has the old `maxHealth` until reconnect.
+
+**Why it happens:**
+The existing system was designed incrementally — `ComputedStats` was added to capture equipment bonuses, but it never fed back into `Player.maxHealth` or `Player.maxEnergy`. These remain stored DB columns rather than derived values. Developers naturally write `player.maxHealth` instead of `deriveMaxHealth(player.level, player.baseStats, player.computedStats)`.
+
+**How to avoid:**
+- Define a single `derivePlayerStats(baseStats, level, computedStats)` pure function in `@into-the-void/game-logic` that is the ONE place final effective stats are computed.
+- `Player.maxHealth` and `Player.maxEnergy` must NEVER be stored as independent values — they must always be output of the derivation function.
+- The derivation function must be called: (a) on login/auth, (b) after any equip/unequip, (c) after any level-up. These are the only three triggers.
+- `effectiveStats()` (equipment bonuses) becomes an input to `derivePlayerStats()`, not a standalone output.
+
+**Warning signs:**
+- A player equips armor-boosting gear, health bar doesn't change but combat takes less damage (server and UI disagree)
+- `player.maxHealth` in `ConnectedPlayer` doesn't match the value a fresh login would produce
+- Grep for `player.maxHealth =` finds direct assignments outside `derivePlayerStats` call sites
+- Combat logs show armor value different from what equipment panel displays
+
+**Phase to address:**
+Character Stats Foundation phase — the derivation pipeline must be defined before any stat UI, combat integration, or level-up system is built.
+
+---
+
+### Pitfall 2: Old `StatsJson` Schema Conflicts with New 8-Stat Model Without Data Migration
+
+**What goes wrong:**
+The `characters` table `stats` column currently stores `{ strength, agility, endurance, intelligence, perception }` as JSONB (audited in `database/schema/characters.ts`). The new system needs `{ durability, toughness, power, haste, vigor, recovery, perception, resilience }`. TypeScript types change, but existing DB rows still contain the old keys. At runtime, `character.stats.durability` is `undefined`. Since Drizzle's `.$type<T>()` is compile-time only, the compiler shows no error.
+
+**Why it happens:**
+JSONB schema changes are invisible to both Drizzle migrations and the TypeScript compiler. This is the same class of bug documented in the Phase 25 research (inventory equipment JSONB shape change). Developers update the TypeScript interface, run the app, and it "works" in test environments that have freshly seeded characters but breaks for any existing character row.
+
+**How to avoid:**
+- Write a one-time data migration script that reads all `characters` rows, maps old stat keys to new ones (`strength → power`, `agility → haste`, `endurance → durability`, `intelligence → vigor`, `perception → perception`), and fills in missing keys (`toughness → 10`, `recovery → 10`, `resilience → 10`) with base defaults.
+- Run the migration as part of `pnpm db:migrate` before deploying any server code that reads the new stat names.
+- Add a runtime validation guard: when loading a character, verify `typeof character.stats.durability === 'number'`. If not, reject with a recoverable error and trigger a stat reset to defaults. This prevents silent `NaN` propagation.
+- After migration, drop the old `StatsJson` interface from `database/schema/characters.ts` entirely so it cannot be re-imported accidentally.
+
+**Warning signs:**
+- `character.stats.durability` is `undefined` in server logs immediately after deploy
+- `maxHealth` derived value is `NaN` (because `undefined * coefficient` is `NaN` in JavaScript)
+- New characters created after the deploy work correctly; existing characters are broken (time-of-create correlation)
+- `derivePlayerStats()` returns `NaN` for health values
+
+**Phase to address:**
+Character Stats Foundation phase (first wave) — must run before any server code reads new stat names. Migration script is a hard prerequisite.
+
+---
+
+### Pitfall 3: `maxHealth` and `maxEnergy` Stored as DB Columns Will Permanently Drift from Derived Values
+
+**What goes wrong:**
+`characters.maxHealth` is currently a DB column (`integer('max_health').notNull().default(100)`). Once stats make `maxHealth` a derived value (`base + durability * coefficient + level * coefficient`), the stored column becomes a cache. If a level-up is applied but the cache update fails (crash, network error), the stored `maxHealth` is wrong permanently. The next login restores the stale cached value. Over time, maxHealth values diverge from what the formula would compute.
+
+**Why it happens:**
+The column was useful when `maxHealth` was a fixed property. Once it becomes derived, storing it creates two sources of truth. `PlayerService.authenticate()` currently reads `character.maxHealth` from the DB — it trusts the stored value, not the formula.
+
+**How to avoid:**
+- Do not store `maxHealth` and `maxEnergy` as persistent DB columns once they become derived values.
+- Change strategy: store only `currentHealth` and `currentEnergy` in the DB (capped to computed max on login). `maxHealth` is always computed at runtime.
+- If keeping the columns for performance reasons (avoid re-computing on every query), treat them as write-through caches that are always recomputed from scratch on character load, with the formula result overwriting the cached value. Never trust the cached value without recomputing.
+- Audit `authenticate()` in `PlayerService` — it must call `derivePlayerStats()` immediately after loading the character and use the derived `maxHealth`, not `character.maxHealth`.
+
+**Warning signs:**
+- Players report "my health bar is wrong after I leveled up"
+- DB contains `max_health = 100` for a level 10 character (should be ~300 from formula)
+- Level-up event broadcasts new level but health bar max doesn't visually update
+- Disconnecting and reconnecting changes displayed maxHealth (because auth recomputes but equip events did not update the DB column)
+
+**Phase to address:**
+Character Stats Foundation phase — must decide the caching strategy before any level-up or equip code writes to (or reads from) `maxHealth` as a persistent column.
+
+---
+
+### Pitfall 4: Equipment Bonus Stacking Order Breaks When Base Stats Feed the Same Stats
+
+**What goes wrong:**
+`effectiveStats()` currently accumulates equipment bonuses on top of a zero base (e.g., `armor: 0`, then adds item armor values). Once base stats exist (Toughness → armor), the question becomes: does Toughness armor stack additively with equipment armor? Does Power multiply with weapon damage or add to it? The `speedMultiplier` in `effectiveStats()` is already multiplicative (`stats.speedMultiplier *= value`), while armor is additive. If a new Haste stat also affects speed, and it's applied additively, while equipment applies multiplicatively, the total speed becomes inconsistent with the formula.
+
+**Concretely:** if Haste gives `+0.2 speedMultiplier` additively and two speed modules give `1.2x` each multiplicatively, the ordering is:
+- `(1.0 + 0.2) * 1.2 * 1.2 = 1.728` (base + additive Haste, then multiplicative equipment)
+- `1.0 * 1.2 * 1.2 + 0.2 = 1.664` (multiplicative equipment first, then additive Haste)
+
+These differ by 3.8%, enough to cause observable speed differences at level cap.
+
+**Why it happens:**
+The current `effectiveStats()` was designed only for equipment — it didn't need to worry about ordering because all equipment modifiers of the same type were summed. Adding base-stat contributions creates a two-layer system (base stat layer + equipment layer) where ordering now matters.
+
+**How to avoid:**
+- Define the formula order explicitly and document it: `finalStat = (baseStat * levelScaling + flatEquipmentBonus) * percentageEquipmentMultiplier`
+- `derivePlayerStats()` must apply layers in a fixed documented order: (1) base stats × level formula, (2) flat equipment additive bonuses, (3) multiplicative equipment modifiers.
+- Never mix additive and multiplicative sources in the same accumulation pass.
+- Add unit tests that verify specific stacking scenarios: `Toughness=20 + Armor Module Mk.I (10 flat)` = expected armor, not formula-dependent guess.
+
+**Warning signs:**
+- Same item shows different stat contribution depending on what other items are equipped
+- Speed with "Haste 20 + Speed Module" differs from predicted total by >5%
+- Players discover that equipping items in a different order produces different final stats
+- Combat damage doesn't match the displayed "Total Armor" value in the stats panel
+
+**Phase to address:**
+Character Stats Foundation phase — formula must be locked before any UI displays stat values or any combat code reads them.
+
+---
+
+### Pitfall 5: Client/Server Stat Desync — Client Derives Stats Locally Without Server Confirmation
+
+**What goes wrong:**
+The HUD displays stats (health bar, energy bar, armor value). If the client derives displayed stats locally from its own stat formula while the server uses a slightly different formula, the displayed values diverge from the authoritative values. Player sees "Max Health: 350" on the HUD; server's combat system uses `maxHealth = 330`. Combat kills player when health bar still shows 20 remaining.
+
+This is compounded by the existing exploit surface: `game.service.ts` explicitly comments that `ComputedStats` are server-calculated and "client-provided stat values are NEVER trusted." If the client derives its own stats for display purposes, and the display formula diverges from server formula even slightly (floating point rounding, coefficient typo), the disconnect becomes visible and exploitable.
+
+**Why it happens:**
+Display code naturally pulls from local state (`useGameStore.getState().player.maxHealth`) for performance — recalculating on every render would be wasteful. But if the local state is stale (not yet synced from server after equip), the HUD shows wrong values. The server never explicitly broadcasts "your new maxHealth is 350" as a distinct event after equip.
+
+**How to avoid:**
+- The server must send derived stat values as part of the response to any stat-changing event (equip, unequip, level-up). Specifically: after equipment change, the `inventory:update` response must include the new effective `maxHealth`, `maxEnergy`, and computed stat total.
+- Add a `player:stats_updated` server event (or augment existing events) that broadcasts final derived stats after any change. Client MUST update its display from this authoritative value, not from local re-derivation.
+- The client may run local derivation for immediate preview (showing tentative values before equipping), but MUST reconcile to server values on response.
+- All HUD stats must read from `player.computedMaxHealth` (server-confirmed) not from a locally-derived value.
+
+**Warning signs:**
+- HUD health bar max changes to wrong value after equip then corrects itself (brief flash of wrong value)
+- Disconnect/reconnect changes displayed maxHealth (because auth sends correct value but equip events didn't update it)
+- Players report "I died but my health bar wasn't at zero"
+- Server combat log shows different maxHealth from client HUD display
+
+**Phase to address:**
+Stats Sync phase — the server event contract for stat updates must be defined before any stats HUD is implemented.
+
+---
+
+### Pitfall 6: Level Scaling Formula Produces Non-Linear Progression That Breaks at Level Cap
+
+**What goes wrong:**
+Simple linear formulas (`maxHealth = 100 + durability * 10 + level * 20`) produce unbounded growth. At level 50, a maxHealth of 100 + 500 + 1000 = 1600. If enemy damage is also scaled (e.g., `damage = 50 + power * 5 + level * 10`), level 50 combat becomes `600 damage vs 1600 health` — a very different ratio than level 1 (`100 damage vs 100 health`). PvP balance collapses: high-level players are unkillable by low-level players regardless of gear.
+
+The current `calculateDamage()` already has a level-difference modifier that caps at ±50% (`Math.max(-0.5, Math.min(0.5, levelDiff * 0.05))`). Adding raw stat contributions on top of this modifier can break the cap's intention.
+
+**Why it happens:**
+Stat systems are balanced at low levels during development. Level cap behavior is only discovered during extended playtesting. With 8 stats all contributing to different derived stats, the combinatorial space is large and hard to reason about without a spreadsheet model of every level 1-50 combination.
+
+**How to avoid:**
+- Use diminishing returns formulas rather than linear: `maxHealth = 100 + durability * 10 * (1 / (1 + durability * 0.01))` (soft cap). At Durability 10 → +99hp; at Durability 100 → +500hp (not +1000hp).
+- Build a spreadsheet model of stat values across all 50 levels with min/max equipment before writing a single line of server code.
+- Define target combat time-to-kill at each tier: level 1 vs same-level = 5 hits; level 50 vs same-level = 5 hits. Tune formulas backward from these targets.
+- Hard cap all stats: if `Durability > 200` is impossible through normal gameplay, `derivePlayerStats` should assert `stat <= MAX_STAT_VALUE` and log a warning, not silently compute an extreme value.
+
+**Warning signs:**
+- Level 10 player is functionally immortal to level 1 creatures regardless of gear
+- Max-level players one-shot anything in the game
+- Adding 1 point of Power at high levels increases damage by more than adding an epic weapon at low levels
+- Spreadsheet model shows health-to-damage ratio changes by more than 3x across the level range
+
+**Phase to address:**
+Balance Design phase — must be defined before any stat formula is committed to code. Formulas should be locked in a game-design doc and reviewed at level cap before Phase 1 of stats implementation.
+
+---
+
+## Technical Debt Patterns
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Store `maxHealth` as DB column | Simple auth reads | Permanent drift from derived value; two sources of truth | Never — use computed-at-load approach once stats become derived |
+| Derive stats client-side for display | No extra server events needed | Displayed values diverge from authoritative; potential exploit surface | Only for optimistic preview; must reconcile to server value |
+| Reuse old `PlayerStats` interface (`strength`, `agility`...) | No migration needed | Old stat names survive in combat code; combat uses strength while HUD shows Power | Never — migrate all references atomically |
+| Linear scaling formulas | Easy to understand and implement | Breaks balance at level cap; requires emergency rebalance | Acceptable as starting point if level cap is ≤ 10 for MVP; never for full range |
+| Apply all stat bonuses in a single additive pass | Simple implementation | Addition order creates different results for mixed additive/multiplicative bonuses | Never — always apply flat bonuses before percentage multipliers |
+
+---
+
+## Integration Gotchas
+
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| `effectiveStats()` + base stats | Extend `effectiveStats()` to take base stats directly | Keep `effectiveStats()` pure equipment-only; create `derivePlayerStats()` that calls `effectiveStats()` as one input |
+| `calculateDamage()` + new stat names | Update `attackerStats.strength` references in place | Replace `Partial<PlayerStats>` param with new derived-stats interface; old `PlayerStats` interface must not survive |
+| `inventory:update` event | Reuse existing event without adding stat fields | Add `computedStats` field to `inventory:update` payload OR emit a separate `player:stats_updated` event |
+| `PlayerService.authenticate()` | Trust `character.maxHealth` from DB | Always call `derivePlayerStats()` after loading character; overwrite in-memory `maxHealth` from derivation |
+| Zustand `player` store | Store all stats flat in `Player` object | Add `computedStats` field to `Player` or a separate `playerStats` store slice; update only from server events, never from local derivation |
+
+---
+
+## Performance Traps
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Recomputing stats on every WebSocket message | Server CPU spikes during combat (high message rate); `effectiveStats()` called 20x/second per player | Call `derivePlayerStats()` only on stat-changing events (equip, level-up, buff apply/expire); cache result on `ConnectedPlayer` | With 100+ concurrent players each in combat |
+| Re-rendering HUD on every `player:moved` event | React profiler shows `HUD` component re-rendering 10-20x/second | Use Zustand selector that only re-renders on stat changes, not position changes: `useGameStore(s => s.player?.maxHealth)` rather than `useGameStore(s => s.player)` | Immediately — 60fps position updates trigger HUD re-renders at 60fps |
+| Deriving stats in React render function | Stuttering UI; derivation formula runs 60fps | Move derivation to Zustand store update on stat change event; components read from store | At any scale — derivation in render is always wrong |
+| Broadcasting full player object on every equip | Network bandwidth spikes; clients receive unnecessary data | Send delta update: only the changed stat fields and new derived maxHealth/maxEnergy | With 10+ players in same zone all equipping simultaneously |
+
+---
+
+## Security Mistakes
+
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Accepting `computedStats` from client in any WebSocket event | Client inflates armor/damage stats; combat outcomes are manipulated | Server recomputes all stats from authoritative DB data on every stat-changing operation; never read any stat value from client payload |
+| Sending all base stats to other clients | Information disclosure — enemy can see exact build before combat | `PlayerPublic` must never include base stats; send only derived combat-relevant values (level, inCombat) |
+| Not validating stat point allocation on server | Client allocates 99 points to Power via crafted WebSocket message | Server must track `pointsSpent` per character and validate total against `level * pointsPerLevel`; reject any allocation that exceeds earned points |
+| Trusting `level` from client | Client sends inflated level to unlock higher-tier equipment | Level is authoritative from DB only; `character.level` is the source; never accept level from client payload |
+
+---
+
+## UX Pitfalls
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Stat names (Durability, Toughness...) displayed raw without explanation | Players don't know what stats to level — "what does Vigor do?" confusion | Tooltip on every stat name; show derived value ("+20 max health from Durability") in the allocation UI |
+| Showing base stat value without showing contribution to derived stats | Player allocates 5 points to Resilience and sees no visible change in any displayed number | Always show "Resilience: 15 → hazard resistance: 0.45 (-45% hazard damage)" as inline derivation feedback |
+| Health bar doesn't immediately reflect stat change after equip | Player equips a Toughness ring; health bar stays at old max | Health bar must update within one server round-trip (optimistically show derived value, reconcile to server confirmation) |
+| Stat panel requires leaving the game world to access | Players ignore stat allocation because it's buried | Stats accessible from HUD without scene transition; consider expandable panel, not separate screen |
+
+---
+
+## "Looks Done But Isn't" Checklist
+
+- [ ] **Stat migration:** Old `StatsJson` columns (`strength`, `agility`...) have been migrated to new names in all existing character rows — verify by querying the DB, not by checking TypeScript types
+- [ ] **Derivation called on all triggers:** `derivePlayerStats()` is called after equip, unequip, level-up, and login — verify each code path independently
+- [ ] **Server events carry derived stats:** `inventory:update`, `player:level_up` (or equivalent) include `computedMaxHealth` and `computedMaxEnergy` — verify via WebSocket inspector that the payload contains these fields
+- [ ] **HUD reads server-confirmed values:** HUD health bar max uses `player.serverConfirmedMaxHealth`, not local derivation — verify by equipping gear with server latency simulation (300ms) and checking health bar updates after server response, not before
+- [ ] **Old stat names fully purged:** Grep `strength|agility|endurance|intelligence` across `game-logic` and `game-server`; zero hits after migration
+- [ ] **Level cap tested:** Simulate level 50 character with all Legendary gear; verify health/damage/speed ratios are within design target range
+- [ ] **No client stat trust:** WebSocket inspector: send equip event with forged `computedStats` field in payload; server ignores it and recomputes from DB
+- [ ] **Energy column added to DB:** `characters` table has `energy` and `maxEnergy` columns (currently missing per `player.service.ts` line 64 comment); verify schema migration ran
+
+---
+
+## Recovery Strategies
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Old stat names survive in combat code | MEDIUM | Audit all references to `strength/agility/endurance/intelligence` across game-logic and game-server; replace with new stat names in a single atomic PR; run full test suite |
+| `maxHealth` DB column drifted from formula | MEDIUM | Write one-time script that recomputes `maxHealth` for all characters using current formula and writes back; run in maintenance window |
+| JSONB stat keys mismatch (undefined durability) | HIGH | Script reads all character rows; migrates old keys to new; runs in a single transaction; requires maintenance window with server offline |
+| Level scaling formula imbalanced at cap | HIGH | Cannot be fixed without rebalancing all item ilvl values simultaneously; requires coordinated balance patch with player communication |
+| Client derives stats locally (exploit surface) | LOW | Remove client derivation; add `player:stats_updated` server event; update HUD to wait for server response |
+
+---
+
+## Pitfall-to-Phase Mapping (Character Stats-Specific)
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Multiple stat computation sites | Stats Foundation: define `derivePlayerStats()` as sole computation point | Grep `maxHealth =` finds only derivation function body and DB-column assignments |
+| JSONB schema mismatch | Stats Foundation (first migration script) | Query all characters post-migration; zero rows with `stats->>'strength'` key present |
+| `maxHealth` column drift | Stats Foundation: change auth to always derive | Equip Toughness ring, disconnect, reconnect — health max unchanged if formula is idempotent |
+| Equipment + base stat stacking order | Stats Foundation: lock formula in `derivePlayerStats()` | Unit test: known Toughness value + known armor module = expected total armor |
+| Client/server stat desync | Stats Sync phase: add server events for derived stats | With 300ms latency, equip gear — HUD updates only after server response arrives |
+| Level scaling balance | Balance Design (pre-implementation) | Level 50 sim spreadsheet reviewed and approved before any formula is coded |
+| Old PlayerStats interface (`strength`...) surviving | Stats Foundation (atomic rename) | Zero TypeScript errors after rename; zero runtime `undefined` stat reads in server logs |
+| Energy not persisted in DB | Stats Foundation: add `energy`/`maxEnergy` columns | Characters retain correct energy level after server restart |
+
+---
+
+## Sources
+
+**Codebase analysis (HIGH confidence — direct inspection, 2026-02-18):**
+- `packages/database/src/schema/characters.ts` — `StatsJson` interface with old stat names; `maxHealth`/`maxEnergy` as DB columns
+- `packages/game-logic/src/inventory/stats.ts` — `ComputedStats`, `effectiveStats()` equipment-only derivation
+- `packages/game-logic/src/combat/damage.ts` — `calculateDamage()` references `attackerStats.strength`, `defenderStats.agility`, `defenderStats.endurance`
+- `packages/shared-types/src/core/player.ts` — `Player` with `maxHealth`, `maxEnergy` as flat values; `PlayerStats` with old 5 stats
+- `apps/game-server/src/game/player.service.ts` — `energy: 100, maxEnergy: 100` hardcoded; `character.maxHealth` trusted from DB without re-derivation
+- `apps/game-server/src/game/game.service.ts` — `effectiveStats()` called on equip at lines 386, 436, 457; not integrated with base stats
+- `apps/web/src/store/gameStore.ts` — `player: Player | null`; no separate computed stats slice
+
+**External research (MEDIUM confidence — practitioner sources):**
+- [RPG Programming Pitfalls #1: Stat System — Random Potion (2023)](https://randompotion.com/2023/08/14/rpg-programming-pitfalls-1-stat-system/) — Conflicting stat modifications when buff ends; variable proliferation pitfall; string key typo risks
+- [How to Comfortably Deal with Modifiable Stats — RefresherTowel Games (2024)](https://refreshertowelgames.wordpress.com/2024/02/17/how-to-comfortably-deal-with-modifiable-stats/) — Computation order problem with stale derived values; modifier arrays vs. base-value mutation
+- [RPG Stats: Implementing Character Stats — HowToMakeAnRPG](https://howtomakeanrpg.com/r/a/how-to-make-an-rpg-stats.html) — Derived stats from base stats pattern; dictionary-based vs. field-based approaches
+- [Ask a Game Dev — How to balance an RPG](https://askagamedev.tumblr.com/post/634419522804334592/how-do-you-balance-an-rpg-seems-impossible-to-go) — Level scaling breaking at cap; "same combat ratio" design target
+
+---
+
+*Pitfalls research for: Movement System Overhaul + Infinite World Chunk Streaming + Inventory & Items System + Character Stats System (Multiplayer 2D Isometric MMO)*
+*Last updated: 2026-02-18*

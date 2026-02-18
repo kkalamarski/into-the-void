@@ -1,29 +1,27 @@
-# Feature Research: Inventory & Item System
+# Feature Research: Character Stats System
 
-**Domain:** Survival MMO inventory, equipment, and item management (Into the Void)
-**Researched:** 2026-02-17
-**Confidence:** HIGH (codebase direct inspection + lore alignment + reference game analysis; MEDIUM for competitor UX patterns via community sources)
+**Domain:** Character stat system — RPG/survival MMO (Into the Void)
+**Researched:** 2026-02-18
+**Confidence:** HIGH (codebase direct inspection + lore alignment); MEDIUM (competitor UX patterns via web research)
 
 ---
 
-## Existing System Baseline
+## Context: What Already Exists
 
-What is already built — research does not re-propose these.
+Before listing features, the codebase baseline establishes what the new stat system is ADDING TO, not replacing.
 
-| Component | Current State | Notes |
-|-----------|---------------|-------|
-| `ItemDef` type | `inventory.ts`: id, name, description, category, rarity, maxStack, baseValue, weight, requiredLevel | Foundation exists |
-| `InventoryItem` type | instanceId, itemId, quantity, slot, properties (open Record) | Slot-based, generic properties bag |
-| `Inventory` type | items[], maxSlots (default 20), equipment (Partial<Record<EquipmentSlot, InventoryItem>>) | DB schema mirrors this |
-| `EquipmentSlot` type | head, chest, legs, feet, hands, mainHand, offHand, accessory1, accessory2 | Classic MMO slots; does NOT map to exo-suit concept yet |
-| DB schema | `inventories` table: items (jsonb), maxSlots (integer), equipment (jsonb) | Functional; stores state |
-| DB queries | createInventory, getInventory, updateInventoryItems, updateEquipment, updateInventory | Full CRUD exists |
-| Socket events | `inventory:use`, `inventory:drop`, `inventory:pickup` (client); `inventory:update` (server) | Wire layer declared; not yet implemented |
-| `ItemCategory` type | weapon, armor, tool, consumable, material, quest, misc | Does NOT match the project's exo-suit category model yet |
-| Entity ground items | `ItemEntity` type with despawnAt timestamp | Declared; despawn logic not confirmed implemented |
-| `EntityRegistry` items | health_vial, energy_cell, void_essence, ancient_key | Placeholder stubs only |
+| Component | Current State | Relevance to Stat System |
+|-----------|---------------|--------------------------|
+| `Player.health / maxHealth` | Numeric fields in `player.ts` | Durability stat drives `maxHealth` |
+| `Player.energy / maxEnergy` | Numeric fields in `player.ts` | Vigor stat drives `maxEnergy` |
+| `Player.level` | Integer in `player.ts` | Base stats scale linearly per level |
+| `PlayerStats` (shared-types) | `strength, agility, endurance, intelligence, perception` — legacy pre-design type | REPLACE with new 8-stat model: Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience |
+| `ComputedStats` (game-logic) | `armor, speedMultiplier, hazardResistance, detectionRange, energyCapacity, rechargeRate, jumpHeight, bonuses` | Already maps equipment effects to derived values — the stat system provides the BASE layer; equipment provides BONUS layer on top |
+| `effectiveStats()` in `inventory/stats.ts` | Pure function: sums equipment effects into ComputedStats | Must be extended: final stats = base (from character stats) + equipment bonuses |
+| `calculateDamage()` in `combat/damage.ts` | Uses `attackerStats.strength` and `defenderStats.endurance` (old PlayerStats) | Must be updated to use new stat model (Power → damage, Toughness → armor reduction) |
+| HUD (health + energy bars) | Already rendered in React HUD | Stat system does not change existing HUD bars — adds stat panel overlay |
 
-**Gap summary:** The data model scaffolding exists but uses generic MMO archetypes (head/chest/legs/feet armor). The lore specifies exo-suits with module slots, tools with specialization stats, and faction-specific equipment — none of which maps to the current schema. The socket wire layer is declared but unimplemented. The item registry is stub data.
+**Key insight:** The new stat system introduces a BASE STATS layer that feeds into the existing COMPUTED STATS layer. It does not replace ComputedStats — it extends it. The formula becomes: `finalStat = baseStat(level) + equipmentBonus`.
 
 ---
 
@@ -31,37 +29,31 @@ What is already built — research does not re-propose these.
 
 ### Table Stakes (Users Expect These)
 
-Features players in this genre (No Man's Sky, Tibia, WoW, Albion Online, ARK) assume exist.
-Missing these makes inventory feel broken or unfinished.
+Features that RPG/survival MMO players universally assume exist. Missing these makes the progression system feel hollow or broken.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| **Bag inventory with fixed grid slots** | Every MMO has a fixed-slot inventory UI. Players expect to see their carried items in a grid, drag items to rearrange, and know exactly how many slots remain. Current schema has maxSlots=20, data exists — just no UI. | MEDIUM | Grid UI in React HUD. The slot-indexed data model already matches. Drag-and-drop via mouse. Keyboard-accessible alternative (click to select, click slot to move). Min 20 slots; rarity system implies expansion later. |
-| **Equipment panel with dedicated slots** | Players expect to see what their character has equipped, separate from carried inventory. In a sci-fi survival MMO, this maps to the exo-suit body. Current schema has equipment as a flat slot map — must be reshaped to exo-suit model. | MEDIUM | Equipment panel shows the equipped exo-suit + module slots + active tool. The existing `EquipmentSlot` type (head/chest/legs/feet) conflicts with lore exo-suit model. Needs new slot taxonomy: `exosuit`, `module_1..N` (count = rarity-driven), `tool`, `accessory1`, `accessory2`. |
-| **Pick up items from ground** | Players expect to walk over a world item and collect it. `inventory:pickup` event is already declared on the client. ItemEntity exists with `despawnAt`. Ground items must flow into inventory slots. | MEDIUM | Server handles `inventory:pickup`: validates player proximity, checks inventory space, removes ItemEntity from zone, adds InventoryItem to player inventory, broadcasts `entity:despawn` + `inventory:update`. |
-| **Use / consume consumables** | Consumables (suit repair kits, buffs) must be usable from inventory. `inventory:use` event declared. | LOW | Server handles `inventory:use`: validates item is consumable, applies effect (health restore, buff duration), removes from inventory. Client needs visual feedback (consume animation, stat bar update). |
-| **Drop items to ground** | Players expect to drop unwanted items. `inventory:drop` declared. Ground item spawns as ItemEntity. | LOW | Server handles `inventory:drop`: removes from inventory, spawns ItemEntity at player position with 5-minute despawn timer. ItemEntity is broadcast to zone. |
-| **Item tooltips** | Hovering an item shows name, description, rarity color, stats, required level, weight. Standard in every MMO. | LOW | React tooltip component. Data comes from item definition (fetched by itemId from registry). Rarity colors: Common=grey, Uncommon=green, Rare=blue, Epic=purple, Legendary=orange. |
-| **Rarity color coding** | Color-coded rarity is universal language (WoW set this standard). Players recognize green=uncommon, blue=rare without reading labels. | LOW | Apply rarity color to item name in tooltip, item border in grid slot. No gameplay change — pure visual signal. |
-| **Required level gate** | Items with `requiredLevel > player.level` must show as unusable (greyed out) and rejected on equip attempt. Standard in all MMOs. | LOW | Client greys out item. Server rejects equip with error. Uses existing `requiredLevel` field on `ItemDef`. |
-| **Inventory weight or slot limit** | Players need to understand capacity. Two models: slot count (Tibia/WoW) or weight (ARK/survival games). For this game, slot count is recommended (simpler UX, already in schema). | LOW | Display `{used}/{maxSlots}` in inventory UI. Server rejects pickup when at capacity. Weight field exists on ItemDef but using it as primary constraint adds friction for a sci-fi game (exo-suits don't "weigh" items the same way). |
-| **Stackable materials** | Crafting reagents must stack (e.g., 200x Void Stone in one slot) or inventory fills instantly after 30 minutes of mining. WoW moved to 1000-stack sizes for materials in Dragonflight for this reason. | LOW | `maxStack` field already exists on `ItemDef`. Materials/reagents: maxStack=999. Consumables: maxStack=20. Equipment: maxStack=1. Logic: when picking up, merge into existing stack if same itemId and under maxStack, else new slot. |
-| **Action bar / hotbar** | A quick-access bar for consumables, tools, and deployable items. Standard in MMOs and survival games. BitCraft added this in 2025 explicitly because players expected it. Allows using items without opening inventory. | MEDIUM | 8-slot hotbar in HUD (persistent, not hidden in inventory panel). Player drags items from inventory to hotbar slots. Number keys 1-8 activate. Relevant for consumables and deployables. Equipment (exo-suit) does not go in hotbar — it goes in equipment panel. |
+| **Base stats scaling with level** | Every RPG player expects that leveling up makes their character measurably stronger. If killing a level 5 enemy gives the same result at level 10 as level 1, the level system feels meaningless. Linear scaling (constant per-level gain) is the standard for balanceable MMOs — Fire Emblem and WoW Classic both use linear HP growth because it keeps enemy design tractable across the level range. | LOW | Each of the 8 stats grows by a fixed amount per level (e.g., Durability = 10 + (level × 5) yielding maxHealth directly). Formula is pure math in `game-logic`, no DB write per level-up required. Stat values recomputed from `player.level` on every session load — not stored per stat in DB. |
+| **Equipment bonuses layered on base stats** | Players expect equipped items to provide meaningful numerical improvements. In the existing system, equipment already produces ComputedStats. The new system means those bonuses stack ON TOP of base stats from level. This pattern is universal — every RPG from Diablo to WoW to No Man's Sky uses base + item bonus = final value. | LOW | Already partially implemented: `effectiveStats()` returns equipment contribution. New: `computeBaseStats(level)` returns base from level. Final: `finalStats = computeBaseStats(level) + effectiveStats(equipment)`. Both are pure functions in `game-logic`, no new architecture needed. |
+| **Stat effects actually influence gameplay** | If stats exist but combat/movement/hazards ignore them, players feel cheated. The 8 designed stats MUST each have a clear, observable gameplay effect: Durability = health pool, Toughness = damage reduction, Power = damage output, Haste = movement speed, Vigor = energy pool, Recovery = energy regen rate, Perception = detection range, Resilience = hazard resistance. | MEDIUM | Each stat effect maps to an existing game system. Toughness feeds into `calculateDamage()` armor reduction. Haste feeds into movement speed in `MovementController`. Perception feeds into `visibility/range.ts`. Resilience feeds into biome hazard tick damage. These hooks exist — they need stat parameters plumbed in. |
+| **Stat panel UI accessible from HUD** | Players need a place to see their stats. Every MMO has a character sheet (WoW: 'C' key, Diablo III: Details panel, Path of Exile: character sheet). Without it, players cannot see whether leveling up or equipping an item made them stronger. | MEDIUM | New HUD overlay panel (React component). Shows all 8 stats with: base value (from level), equipment bonus (+X from modules), final value (total). Toggled via keyboard shortcut (e.g., 'C' or 'Tab'). Does not replace existing health/energy bars — those stay in persistent HUD. |
+| **Level-up notification with stat increase display** | When a character levels up, players expect immediate visual feedback showing WHAT improved. "Level 10!" with no indication of what changed makes leveling feel empty. WoW's classic level-up panel showed delta (+10 Stamina) — players remember this as satisfying. | LOW | On level-up server event: client shows overlay or HUD notification listing each stat that increased by X. Stat deltas computed server-side (`newStats - oldStats`), sent with the level-up event payload. No complex animation required — text display is sufficient. |
+| **Creature stats reusing the same model** | Lore states this stat system will be reused for creatures. Players expect enemies to have comparable stats — a level 5 creature should feel like fighting a level 5 character in terms of health/damage. If creatures use a completely different system, difficulty scaling feels arbitrary. | MEDIUM | `CreatureStats` interface mirrors `CharacterStats` (same 8 stats). Creature stat values defined in creature definitions (already have `level` field in `Creature` type). `calculateDamage()` already accepts both player and creature stat parameters — just needs the new stat names substituted. |
+| **Stat values visible on item tooltips (bonus preview)** | When hovering an equippable item, players expect to see: (a) what stat it affects, (b) by how much, and (c) optionally whether this is an increase or decrease versus currently equipped item. This is the standard "compare" pattern in every loot-based game (Diablo III's green/red delta arrows, WoW's tooltip comparison). | MEDIUM | Item tooltip (already exists as `ItemTooltip.tsx` component) needs: stat bonus rows derived from item effects array. Delta comparison (green +5 if better, red -3 if worse) requires knowing current ComputedStats — server sends these on inventory load, client stores in Zustand. |
 
 ---
 
 ### Differentiators (Competitive Advantage)
 
-Features that fit Into the Void's specific sci-fi survival + corporate faction identity. Build after table stakes are solid.
+Features that fit Into the Void's specific sci-fi survival identity. Not expected by all players, but provide meaningful depth once table stakes are solid.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Exo-suit with module slots (rarity-driven slot count)** | The lore explicitly defines exo-suits as the core equipment layer. Common exo-suit = 2 module slots. Legendary = 5+ module slots. This creates meaningful rarity progression: a Legendary suit is not just "better stats" — it enables fundamentally different loadouts (e.g., 5 Speed modules vs 2). No Man's Sky's exosuit tech slot system validated this model — players expand capability by unlocking slots, not just upgrading numbers. | HIGH | New `ExoSuit` item subtype. Properties include: `moduleSlots: number` (derived from rarity: Common=2, Uncommon=3, Rare=3, Epic=4, Legendary=5). Equipment schema change: replace `chest` slot with `exosuit` slot. Add `modules: InventoryItem[]` array (up to moduleSlots length). Module items are their own item type: `ArmorModule`, `SpeedModule`, `LifeSupportModule`, `SensorArrayModule`, `PowerCoreModule`, `MobilityModule`. Each module provides a stat bonus that stacks (within cap). Server must validate module count does not exceed suit's `moduleSlots`. |
-| **Tool specialization stats (Research / Combat / Mining)** | Tools are not generic. A Mining Tool increases mineral yield. A Research Tool increases discovery XP. A Combat Tool affects damage. This binds gear choices to playstyle and makes tools feel meaningful beyond just "tier unlocks new nodes." | MEDIUM | New `Tool` item subtype. Properties include: `toolType: 'mining' | 'combat' | 'research'` and `specializationStats: { miningYield?: number, combatDamage?: number, researchXP?: number }`. Tool goes in `tool` equipment slot. Stats applied server-side when relevant action is performed. Tool tier (1-4) controls which minerals/interactions are accessible (already modeled via `requiredTier` on `MineralConfig`). |
-| **Item level (ilvl) system** | ilvl gives players a single number to compare item power across categories. WoW established this as the universal "is this an upgrade?" signal. Survival MMOs like Albion use item tier equivalents. Provides clear progression gates: Tier II zones require ilvl 20+ exo-suit, etc. | MEDIUM | `ilvl: number` field on `ItemDef`. Derived from: base tier (1-4) × rarity multiplier (1.0/1.2/1.5/1.8/2.2 for Common→Legendary). Display in item tooltip. Server uses player's equipped exo-suit ilvl as one factor for zone access recommendations. Does not hard-block zones (lore says corporations don't recover bodies — freedom to enter) but shown as recommended level. |
-| **Faction-specific item variants** | Verdant Dynamics, Helix Extraction, Nexus Frontiers each have distinct aesthetics and lore (green bioengineering, industrial brutalism, corporate modular). Faction-locked gear creates identity and drives inter-player trading (Nexus traders selling Helix gear to Verdant players). | HIGH | `factionId?: FactionId` field on `ItemDef`. Faction items: equipped only by that faction (or cost faction standing to cross-equip). Visual tinting applied to item icon by faction color. Do NOT build in the first inventory milestone — gate behind faction standing system. Flag as v2+. |
-| **Deployables as inventory items** | World items: explosives, seeds, deployable structures (as per project context). These are carried in inventory and placed in the world, creating an ItemEntity → Structure conversion. Ties into the base-building / farming progression the lore hints at. | HIGH | `WorldItem` item subtype with `deployable: true` and `structureTypeId: string`. Using a deployable item from action bar emits `player:deploy` event. Server removes from inventory, creates Structure entity at player position. Do NOT build in first inventory milestone — requires structure placement system. Flag as v2+. |
-| **Discovery-triggered item unlocks** | The lore heavily emphasizes exploration and discovery as core verbs. When a player finds a new species/mineral, they should unlock the ability to craft reagents from it. Links inventory to the `discoveries` DB table that already exists. | MEDIUM | `discoveryRequired?: string` field on `ItemDef` (references a discoveryId). Server blocks crafting/equipping this item until discovery is logged. The `discoveries` schema already exists — this is an integration, not new infrastructure. Flag for the crafting milestone, not the first inventory milestone. |
+| **Stat breakdown showing base vs equipment contribution** | Most games show only the final stat value. Showing `Toughness: 45 (30 base + 15 from Armor Module Mk.II)` teaches players HOW the system works and makes module choices feel meaningful. Path of Exile players specifically requested this for PoE2 — the community feedback shows players want to understand their numbers, not just see totals. Albion Online and WoW's DejaCharacterStats addon both address this player need. | MEDIUM | Stat panel shows three columns: Base (from level), Bonus (from equipment), Total. Computed server-side from `computeBaseStats(level)` + `effectiveStats(equipment)`. No additional data fetching — both sources already available on character load. The breakdown makes module upgrades legible ("this module gave me +15 Toughness") and validates that the item system and stat system are connected. |
+| **Lore-named stats (not generic Strength/Dexterity)** | The 8 designed stat names — Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience — are thematically appropriate for sci-fi survival equipment. "Durability" fits an exo-suit body better than "Constitution." This naming creates setting immersion that generic RPG stat names cannot. Naming choices like these are validated by games like Dead Cells and Hades that use setting-appropriate stat naming to enhance tone. | LOW | Pure naming choice. No implementation complexity. Critical: the HUD panel must also include short tooltips explaining what each stat DOES ("Toughness: reduces incoming damage by X per point"). Players unfamiliar with the system need this education inline. |
+| **Separate Recovery stat with observable regen rate** | Many RPGs bundle energy/stamina regen into a single invisible stat. Making Recovery an explicit named stat with a visible effect (energy recharges faster as you watch the bar) makes the Vigor/Recovery pair feel like a meaningful sub-system. This directly supports the exo-suit theme — suits have power cores that recharge at different rates. | LOW | Recovery stat → `energyRegenRate` in final computed stats. Already exists as `rechargeRate` in `ComputedStats`. Just needs to be driven by `baseStats.recovery + equipmentBonus` instead of a hardcoded value. The existing energy bar already shows the regen visually — no new UI needed. |
+| **Perception stat with visible detection range indicator** | Perception controls how far the player can detect enemies/items/hazards. Making this visible — e.g., a subtle circle radius in the game world when the stat panel is open — gives players immediate feedback that the stat matters. Survival games like DayZ and The Long Dark use visible detection mechanics; players value them when they're transparent. | HIGH | Requires Phaser canvas rendering of a detection radius circle (configurable opacity, only shown when stat panel open). Uses existing `visibility/range.ts`. This is a differentiator not a prerequisite — defer if timeline is tight. |
+| **Stat soft-caps (no hard ceiling, diminishing returns above threshold)** | Linear scaling is simple and predictable at low levels but can create extreme power gaps at high levels if uncapped. Soft-caps (e.g., armor reduction is capped at 75% regardless of Toughness value) prevent the system from breaking balance in higher-tier zones while preserving the value of stacking stats up to the cap. WoW Classic used armor cap, PoE uses diminishing returns on resistance — both validated by large player bases. | MEDIUM | Each of the 8 stats needs a derived-value cap defined as a constant. Example: Toughness provides damage reduction = `min(75%, toughness * 0.5%)`. The cap is on the DERIVED effect, not the stat value itself — players can still see their Toughness keep growing, but the diminishing returns are visible in the tooltip. This must be documented in the stat panel ("Max 75% reduction"). |
 
 ---
 
@@ -69,119 +61,95 @@ Features that fit Into the Void's specific sci-fi survival + corporate faction i
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| **Weight-based inventory limit** | "Realistic" — heavy armor should slow you down. ARK uses weight. | Weight adds cognitive overhead without meaningful choice in a sci-fi game where exo-suits are the body. Players optimize by min-maxing carry weight, not making interesting decisions. Adds server load (recalculate weight on every pickup). The `weight` field exists on `ItemDef` — preserve it for future use but do NOT use it as the primary inventory constraint at launch. | Slot-based limit (already in schema). Weight field kept for future encumbrance penalty system (slow movement, not hard block) if it fits the survival mechanics milestone. |
-| **Durability degradation on all equipment** | Common in survival games (ARK, DayZ). Creates a resource sink. | In a sci-fi MMO with exo-suits and modules, durability on every item creates constant maintenance friction that drives away casual players. It works in ARK because crafting replacement gear is fast. Here, Legendary exo-suits require significant effort to obtain — making them degrade destroys the reward loop. | Durability for consumable-tier items only (suit repair kits confirm this pattern from project context: consumable = repair, not constant upkeep). Exo-suits degrade only in specific high-damage scenarios (future combat milestone decision). |
-| **Loot auto-equip (equip if better)** | Reduces inventory micromanagement. Convenient. | In a module-slot system, "better" is not a single number — a Common suit with a specific module might be more valuable than an Epic suit in a different build. Auto-equip breaks player agency over modular loadout choices. Also unsafe in PvP/PvE contexts (auto-equipping mid-combat). | Show a "This item is better than equipped" indicator in tooltip. Player decides. |
-| **Unlimited inventory via bags** | Players hate running out of inventory. Common request. | Unlimited inventory trivializes the survival tension of "do I mine more or go back to base?" which is a core loop in survival MMOs. Also creates unbounded server-side state size (a player with 10,000 items creates memory/query problems). | Expand maxSlots via gameplay progression (unlock more storage through crafting/building, e.g., personal storage crate at base). This is the correct model for survival games. |
-| **Real-time inventory sync (broadcast all changes to zone)** | Players want to see what others are carrying. Creates social dynamics. | Broadcasting every pickup/drop/equip event to all zone occupants is O(players × events) traffic. In a zone with 50 players actively mining, this creates significant WebSocket noise. Also raises privacy concerns (players can track rival faction member inventories). | Sync only what matters to others: equipment appearance changes (exo-suit tier visible on player sprite), ground items entering/leaving zone. Inventory contents remain private. |
-| **Cross-character shared stash** | Account-wide storage pool for crafting materials. Convenient. | Encourages alt-character farming (players create multiple characters purely for extra storage), which inflates player counts without adding real engagement. Also requires API-level account stash access, complicating the current per-character architecture significantly. | Per-character storage. Consider faction warehouse as a community shared storage at a hub location — this has lore justification (corporations store resources centrally) and adds social gameplay without corrupting the per-character model. |
+| **Stat point allocation on level-up** | Gives players agency — "I want to be a tanky build, so I put all points in Toughness." Feels very RPG. Classic approach in games like Path of Exile and Diablo II. | In a multiplayer survival MMO where players interact with the same creatures and environments, unequal stat distributions create extreme balance problems. A player who dumps all points into Haste moves across the map faster than the game's zone system can handle (teleport exploits, server-side position validation failures). More importantly: the project brief specifies LINEAR SCALING — adding player choice to that linear model requires a full rebalance pass. This is a different game. | Equipment-driven differentiation. Exo-suit module choices already provide the "build variety" that stat points would give — a player who equips 4 Haste modules is the "speed build." This is the right model: stats scale predictably from level (balance is maintainable), equipment provides build expression. |
+| **Persistent stat buffs from consumables stored in character DB** | Players request this to "bank" buffs before difficult content. "Let me pre-buff and log off" is a common request. | Buff state persisting across sessions creates complex expiry logic, timezone-aware calculation of remaining time, and exploitable behavior (stack 20 buffs on Thursday, use them all in Friday's raid). Also inflates the `characters` DB row with time-indexed buff state. | Time-bounded session buffs only. Buff applied when consumable used, tracked in server memory (game session state), lost on disconnect or zone change. Simple to implement, no DB complexity. Buffs that matter happen when you play. |
+| **Negative stats / debuffs that permanently reduce base stats** | "Hardcore" survival flavor — starving reduces Vigor, taking acid damage reduces Toughness permanently. Very survival-game. | Permanent negative modification to base stats (which scale from level) creates a compounding tracking problem: the stat formula `baseStat(level)` must now account for `- permanentDebuffs`. This is a separate system (debuff tracking) with its own persistence requirements, UI complexity, and exploit vectors (players might intentionally debuff others' base stats). | Use existing `CombatEffect` system for time-limited debuffs. Biome hazard ticks reduce current health/energy (already modeled). Permanent base stat reduction is a feature for a future "hardcore mode" milestone, not the foundational stat system. |
+| **Multiplier stacking between stat bonuses** | Equipment bonuses multiply together instead of adding: `(1 + armor1%) × (1 + armor2%)`. Creates more interesting build choices. PoE uses this model. | Multiplicative stacking with linear base stats creates exponential power curves that are invisible to players and extremely difficult to balance. Example: 4 Armor modules each providing 20% multiplicative armor reduction = `(1.2)^4 = 2.07x` multiplier, not 1.8x additive. Players cannot intuit this. In a multiplayer context where server has to validate combat results, unpredictable damage values create client-server sync problems. | Additive stacking for all equipment bonuses. Consistent, predictable, easier to balance. The module slot limit on exo-suits (3-6 slots by rarity) naturally caps stacking without needing multiplicative diminishing returns. |
+| **Stat window showing all computed internals (derived values, hidden multipliers)** | Power users want full transparency. PoE players notoriously demand complete stat breakdowns including hidden modifiers. | The current game design uses clean stat names with observable effects (Toughness → damage reduction, Haste → speed). Exposing internal derived values (0.0034 damage reduction per Toughness point, capped at 0.75 total) trains players to interact with numbers rather than gameplay. At this stage of development, a full internals dump would expose balance decisions that aren't finalized. | Show final derived effect, not intermediate formula: "Toughness 45 → 22% damage reduction." This is enough information for meaningful decisions without revealing implementation details. A full breakdown mode can be added in a polish pass once balance is locked. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Bag Inventory UI]
-    └──requires──> [Item Tooltip]
-                   (tooltip appears on hover; needed for usability)
-    └──requires──> [Ground Pickup]
-                   (nothing to show in inventory unless pickup works)
+[computeBaseStats(level)] — pure function in game-logic
+    └──feeds──> [ComputedStats (armor, speed, etc.)]
+                    └──feeds──> [Combat damage calculation]
+                    └──feeds──> [Movement speed (Haste)]
+                    └──feeds──> [Energy regen (Recovery)]
+                    └──feeds──> [Detection range (Perception)]
+                    └──feeds──> [Hazard resistance (Resilience)]
 
-[Equipment Panel]
-    └──requires──> [Bag Inventory UI]
-                   (equip is drag from bag to equipment slot)
-    └──requires──> [Exo-Suit item type]
-                   (panel shows nothing meaningful without exo-suit items)
+[Stat Panel UI]
+    └──requires──> [computeBaseStats(level)] (base column data)
+    └──requires──> [effectiveStats(equipment)] (bonus column data)
+    └──requires──> [Inventory system Phase 25+] (equipment must be loadable)
 
-[Exo-Suit Module Slots]
-    └──requires──> [Equipment Panel]
-                   (module slots are sub-panel of equipment panel)
-    └──requires──> [Module item definitions]
-                   (ItemDef entries for ArmorModule, SpeedModule, etc.)
+[Level-up notification]
+    └──requires──> [computeBaseStats(level)] (to compute deltas)
+    └──requires──> [XP system] (already in player.ts: level, xp, xpToNextLevel)
 
-[Action Bar / Hotbar]
-    └──requires──> [Bag Inventory UI]
-                   (player drags from inventory to hotbar)
-    └──enhances──> [Consumable Use]
-                   (consumables become useful when hotbar gives quick access)
+[Item tooltip stat bonus display]
+    └──requires──> [Item effects system in packages/items] (already built, Phase 25)
+    └──requires──> [Current ComputedStats from server] (available via inventory:update)
+    └──requires──> [ItemTooltip.tsx] (already exists)
 
-[Consumable Use]
-    └──requires──> [Ground Pickup]
-                   (must be able to obtain consumables first)
+[Creature stat reuse]
+    └──requires──> [computeBaseStats(level)] (shared formula, parameterized)
+    └──requires──> [Creature definitions with level field] (already in Creature type)
 
-[Tool Specialization Stats]
-    └──requires──> [Equipment Panel: tool slot]
-    └──requires──> [Mining/interaction system to apply stats to]
-                   (stats are meaningless without actions that consume them)
+[Soft caps]
+    └──requires──> [computeBaseStats(level)] (caps applied at derived value stage)
+    └──enhances──> [Stat Panel UI] (cap shown inline: "45 Toughness → 22% (cap: 75%)")
 
-[Item Level (ilvl)]
-    └──requires──> [Rarity system]
-                   (ilvl is derived from tier × rarity multiplier)
-    └──enhances──> [Equipment Panel]
-                   (ilvl displayed per-slot in equipment panel)
+[Stat breakdown (base vs bonus)]
+    └──requires──> [Stat Panel UI] (breakdown is a feature of the panel)
+    └──requires──> [computeBaseStats(level)] (base value)
+    └──requires──> [effectiveStats(equipment)] (bonus value, already returns per-stat)
 
-[Deployables]
-    └──requires──> [Action Bar]
-                   (deployed from hotbar, not inventory grid)
-    └──requires──> [Structure placement system]
-                   (not yet built — defer to structure milestone)
-
-[Faction-specific items]
-    └──requires──> [Faction standing system]
-                   (not yet built — defer)
-
-[Discovery-triggered unlocks]
-    └──requires──> [discoveries DB table]
-                   (already exists — integration possible in crafting milestone)
-    └──requires──> [Crafting system]
-                   (not yet built)
-
-[Stack merge on pickup]
-    └──requires──> [Ground Pickup]
-                   (merge logic runs during pickup handling)
+[Perception visual indicator]
+    └──requires──> [Stat Panel UI] (only visible when panel is open)
+    └──requires──> [Phaser canvas access] (circle rendering in WorldScene)
+    └──requires──> [visibility/range.ts] (already exists)
 ```
 
 ### Dependency Notes
 
-- **Equipment panel requires exo-suit items to be meaningful:** Building the panel with only the current head/chest/legs/feet schema gives players empty slots that don't match lore. Define the exo-suit item type before building the equipment UI or the UI will need a rewrite.
-- **Action bar is not a prerequisite for inventory:** Inventory grid and equipment panel can ship first. Action bar is a second pass that wires consumables and deployables to keyboard shortcuts.
-- **Ground item despawn timer already in schema:** `ItemEntity.despawnAt` exists. 5 minutes is the conventional timeout (validated by OSRS 3-minute model; survival games typically 5-15 minutes depending on item value). Implement server-side cleanup via zone tick.
-- **Module slots are a schema migration:** The current `equipment` jsonb stores a flat slot map. Adding `modules` as an array requires a schema change. Do this before any UI is built — schema migrations are the highest-risk operation for the existing data.
+- **Base stat computation is the critical path:** Every other feature depends on `computeBaseStats(level)` existing as a pure function in `game-logic`. This is the first deliverable.
+- **ComputedStats already exists and must not be replaced:** The existing `effectiveStats()` function in `inventory/stats.ts` already handles equipment bonuses. The new system adds a `computeBaseStats()` function that produces the base layer. Final stats = base + equipment. Do not rebuild what already works.
+- **Old `PlayerStats` type must be replaced, not extended:** The existing `PlayerStats` in `shared-types/core/player.ts` uses `strength, agility, endurance, intelligence, perception` — a legacy design. These names conflict with the new 8-stat model. Replace the type definition; audit `damage.ts` which references `attackerStats.strength` and `defenderStats.endurance`.
+- **Stat panel is independent of combat implementation:** The UI can be built and tested before all 8 stat effects are fully wired into gameplay. Show the numbers; wire the effects in the same milestone.
+- **Creature stats reuse the same function, parameterized:** `computeBaseStats(level, entityType)` where `entityType` controls scaling constants. Player and creature can have different per-level gains from the same function signature.
 
 ---
 
 ## MVP Definition
 
-### Launch With (first inventory milestone — v1 of the system)
+### Launch With (character stats milestone — v1 of the system)
 
-These features establish the complete basic loop: pick up → manage → equip → use.
+Minimum to make the stat system real and observable to players.
 
-- [ ] **Ground pickup** — `inventory:pickup` handler on server. Proximity check, inventory space check, ItemEntity despawn, `inventory:update` broadcast.
-- [ ] **Item drop** — `inventory:drop` handler. Create ItemEntity at player position with 5-minute `despawnAt`.
-- [ ] **Consumable use** — `inventory:use` handler. Apply health/energy effect. Remove from inventory.
-- [ ] **Stack merge logic** — On pickup, merge stackable items into existing slots up to maxStack before opening new slots.
-- [ ] **Bag inventory UI** — Grid panel (20 slots). Show item icon/color by rarity. Drag to rearrange. Show slot count.
-- [ ] **Item tooltip** — Name (rarity color), description, category, rarity, ilvl, requiredLevel, weight.
-- [ ] **Exo-suit schema definition** — New ItemDef subtypes: ExoSuit (with moduleSlots), Module types (6 variants), Tools (3 types). Migrate `equipment` schema from head/chest/legs/feet to exosuit/modules[]/tool/accessory1/accessory2.
-- [ ] **Equipment panel UI** — Show equipped exo-suit, module slots (count matches suit rarity), tool slot, 2 accessory slots. Equip by dragging from bag.
-- [ ] **Required level enforcement** — Server rejects equip if `player.level < item.requiredLevel`. Client greys out item.
-- [ ] **Action bar (8 slots)** — HUD hotbar below health/energy bars. Number keys 1-8. Drag consumables/deployables from inventory. Consumable use from hotbar fires `inventory:use`.
+- [ ] **`computeBaseStats(level)` pure function** — Returns the 8 base stats from `player.level`. Linear formula per stat. Lives in `packages/game-logic/src/stats/base.ts`. Unit-tested.
+- [ ] **`CharacterStats` type definition** — Replaces old `PlayerStats` in `shared-types`. 8 fields: durability, toughness, power, haste, vigor, recovery, perception, resilience.
+- [ ] **Final stat computation** — `computeFinalStats(level, equipment)` = `computeBaseStats(level)` + `effectiveStats(equipment)`. Returns unified stat object. Replaces the ComputedStats type or extends it cleanly.
+- [ ] **Wire stats into existing gameplay systems** — Toughness → armor reduction in `calculateDamage()`. Haste → speed in movement. Vigor → maxEnergy. Recovery → rechargeRate. Durability → maxHealth. Perception → detectionRange. Resilience → hazardResistance. Power → baseDamage contribution.
+- [ ] **Stat panel UI** — HUD overlay panel (toggle with 'C'). Shows all 8 stats in three columns: Base (from level), Bonus (from equipment), Total. Stat name + inline description of what it does.
+- [ ] **Level-up stat delta notification** — Server sends stat deltas with level-up event. Client displays "+5 Durability, +3 Power" overlay for 3 seconds.
+- [ ] **Creature stats via same formula** — `CreatureStats` computed from `computeBaseStats(creatureLevel, 'creature')`. Creature level already in `Creature.level`. `calculateDamage()` accepts creature stats.
+- [ ] **Stat tooltip on stat panel entries** — Clicking/hovering a stat name shows "Resilience: Reduces hazard tick damage from biome environmental effects."
 
-### Add After Validation (v1.x — second inventory milestone)
+### Add After Validation (v1.x — refinement pass)
 
-- [ ] **Tool specialization stats** — Apply `specializationStats` from equipped tool during mining/research/combat interactions. Requires coordination with the first phase of each of those systems.
-- [ ] **Item level display** — Compute and display ilvl in tooltip and equipment panel. Requires ilvl formula to be agreed on.
-- [ ] **Seed entity in item registry** — Populate EntityRegistry with actual item definitions for all 6 module types, 3 tool types, consumables (suit repair, 2 buff types). Replace placeholder stubs.
-- [ ] **Ground item expiry UI** — Show despawn countdown on ItemEntity hover. Prevents "why did my item disappear?" confusion.
+- [ ] **Soft-caps with display in stat panel** — Show "22% damage reduction (cap: 75%)" derived from Toughness.
+- [ ] **Item tooltip delta comparison** — Green/red +/- delta when comparing item to equipped item, derived from stat bonus difference.
+- [ ] **Stat breakdown in item tooltips** — "This module grants +15 Toughness" with clear label per effect type.
+- [ ] **Stat history on level-up** — "Previous level stats" vs "current" comparison in a level-up summary panel (nice to have, not critical).
 
 ### Future Consideration (v2+ — defer)
 
-- [ ] **Faction-specific item variants** — Gate behind faction standing system (not yet designed).
-- [ ] **Deployables** — Gate behind structure placement system (not yet designed).
-- [ ] **Discovery-triggered unlocks** — Gate behind crafting system (not yet designed).
-- [ ] **Faction warehouse (shared storage)** — Social feature. Gate behind guild/faction progression milestone.
-- [ ] **Weight-based encumbrance (not hard limit)** — Optional future survival mechanic; `weight` field preserved for this.
-- [ ] **Inventory slot expansion via crafting** — Player builds storage infrastructure at base to expand personal capacity.
+- [ ] **Perception visual detection circle** — Phaser circle overlay when stat panel open. High complexity, medium value. Defer to polish milestone.
+- [ ] **Faction-specific stat bonuses** — Verdant characters gain bonus Resilience (adapted to biome hazards), Helix gain bonus Power (mining and combat culture), Nexus gain bonus Perception (intelligence/scouting). Requires faction standing system.
+- [ ] **Soft stat allocation via faction advancement** — As a future progression layer, faction rank grants small additional stat allocations. Not stat points per level — faction-progression-locked bonuses. This preserves linear level scaling while adding late-game differentiation.
 
 ---
 
@@ -189,95 +157,88 @@ These features establish the complete basic loop: pick up → manage → equip �
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Ground pickup | HIGH | MEDIUM | P1 |
-| Item drop | HIGH | LOW | P1 |
-| Consumable use | HIGH | LOW | P1 |
-| Stack merge logic | HIGH | LOW | P1 |
-| Bag inventory UI | HIGH | MEDIUM | P1 |
-| Item tooltip | HIGH | LOW | P1 |
-| Exo-suit schema definition | HIGH (foundational) | MEDIUM | P1 |
-| Equipment panel UI | HIGH | MEDIUM | P1 |
-| Required level enforcement | MEDIUM | LOW | P1 |
-| Action bar / hotbar | HIGH | MEDIUM | P1 |
-| Tool specialization stats | MEDIUM | MEDIUM | P2 |
-| Item level (ilvl) | MEDIUM | LOW | P2 |
-| Item registry population | HIGH | LOW | P2 |
-| Ground item expiry UI | LOW | LOW | P2 |
-| Faction-specific items | MEDIUM | HIGH | P3 |
-| Deployables | HIGH | HIGH | P3 |
-| Discovery-triggered unlocks | MEDIUM | MEDIUM | P3 |
-| Faction warehouse | MEDIUM | HIGH | P3 |
-
-**Priority key:**
-- P1: Must have — inventory system is non-functional without these
-- P2: Should have — adds meaningful quality and completeness
-- P3: Future milestone — do not start in this sprint
+| `computeBaseStats(level)` pure function | HIGH (foundation) | LOW | P1 |
+| `CharacterStats` type (replaces old PlayerStats) | HIGH (type safety) | LOW | P1 |
+| Final stat computation (base + equipment) | HIGH (foundation) | LOW | P1 |
+| Wire stats into gameplay (damage, speed, energy, detection) | HIGH (makes stats real) | MEDIUM | P1 |
+| Stat panel UI (8 stats, 3 columns) | HIGH (player visibility) | MEDIUM | P1 |
+| Level-up delta notification | MEDIUM (reward feel) | LOW | P1 |
+| Creature stats via same formula | HIGH (combat balance) | LOW | P1 |
+| Stat name tooltips (inline descriptions) | MEDIUM (UX clarity) | LOW | P1 |
+| Soft-caps with display | MEDIUM (balance safety) | MEDIUM | P2 |
+| Item tooltip delta comparison | MEDIUM (gear clarity) | MEDIUM | P2 |
+| Stat breakdown in item tooltips | LOW (advanced users) | LOW | P2 |
+| Perception visual circle | LOW (visual delight) | HIGH | P3 |
+| Faction-specific stat bonuses | MEDIUM (identity) | HIGH | P3 |
 
 ---
 
 ## Competitor Feature Analysis
 
-| Feature | No Man's Sky | Tibia | Albion Online | Our Approach |
-|---------|--------------|-------|---------------|--------------|
-| Equipment concept | Exosuit (cargo + tech inventory, expandable slots) | Backpack-based slots, separate equipment slots (armor, weapon) | Destiny board (5 slots by tier) | Exo-suit (1 slot) + module slots (2-5 by rarity) + tool slot — lore-driven hybrid |
-| Rarity system | C/B/A/S/X class modules | Rarity colors (Common→Legendary) | Item tier (1-8) | Common→Legendary 5 tiers, color-coded per WoW standard |
-| Module/upgrade model | Upgrade modules in tech slots (adjacent bonus in NMS) | No module system | No explicit module system | Module items in exo-suit slots; no adjacency bonus (complexity avoidance) |
-| Item level | Class letter (C=lowest, X=highest) | Item level by creature drop zone | Item tier number | ilvl numeric (computed from tier × rarity) |
-| Hotbar | Quickslots (multi-tool, consumables) | Hotkeys assignable to items | 4 ability slots + quick-use | 8-slot hotbar (consumables + deployables) |
-| Ground items | Immediate pickup via proximity | Floor items visible, step-to-pickup | Auto-pickup option | Manual pickup via `inventory:pickup` event; ground items visible as ItemEntity |
-| Stack sizes | 9,999 units for resources, 1 for tech | 100 for most, varies by item | Stack to 999 for raw resources | 999 for materials, 20 for consumables, 1 for equipment |
-| Inventory limit | Expandable (buy slots at stations or repair drop pods) | Fixed backpack slots (expandable with bigger backpack items) | Fixed slots by bag type | Fixed 20 slots; expansion deferred (v2+) |
-| Weight | None for exosuit inventory | Weight exists, manageable | No weight, slot-based | Slot-based (launch); weight as encumbrance modifier deferred |
+| Feature | WoW (Classic) | Diablo III | Path of Exile | Our Approach |
+|---------|--------------|------------|---------------|--------------|
+| Stat scaling model | Linear per level (stamina, strength, etc.) | Automatic per level, no player choice | Per-level passive tree points | Linear per level, no player allocation — consistent with Fire Emblem / WoW Classic balance model |
+| Number of primary stats | 5 (Strength, Agility, Stamina, Intellect, Spirit) | 4 (Strength, Dexterity, Intelligence, Vitality) | 4 (Strength, Dexterity, Intelligence, Life) + passive tree | 8 (Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience) — more than genre standard, justified by 8 distinct gameplay systems each stat governs |
+| Equipment bonus model | Flat additions to primary stats, then derived secondaries | Equipment adds to primary stats and secondary stats directly | Complex layered modifiers with additive/multiplicative categories | Additive only — flat bonus per equipped item sums onto base. Simpler than PoE, comparable to WoW Classic |
+| Stat panel | Character sheet (C key), shows all primary + derived | Details panel shows offense/defense/life categories | Character sheet with full derived value chains | HUD overlay (C key), shows 8 stats with base/bonus/total columns |
+| Level-up notification | Dialog showing stat gains | Automatic with animated effects | Text message only | Server event + client overlay showing per-stat delta |
+| Creature parity with player stats | Creatures have equivalent stat values on loot tables | Creature stats are opaque (difficulty scaling only) | Creature stats shown in Path of Building (third party) | Same function, same formula — creature and player stats use identical model |
+| Soft caps | Yes (armor cap, resistance cap, hit cap) | Yes (toughness, cooldown reduction capped) | Yes, diminishing returns on most stats | Yes — derived-effect caps (e.g., max 75% damage reduction from Toughness) |
+
+---
+
+## Existing Code Integration Map
+
+This maps every stat to its existing code hook — no new systems needed, only new parameters.
+
+| Stat | Effect | Existing Hook | Change Required |
+|------|--------|---------------|-----------------|
+| Durability | maxHealth | `player.maxHealth` field | Set from `finalStats.durability` on character load / level-up |
+| Toughness | armor / damage reduction | `calculateDamage()`: `armorReduction` param | Pass `finalStats.toughness` as `armorReduction` |
+| Power | base damage output | `calculateDamage()`: `baseDamage` param | `baseDamage += finalStats.power * POWER_FACTOR` |
+| Haste | movement speed multiplier | `MovementController` speed param | `speed = BASE_SPEED * finalStats.speedMultiplier` where `speedMultiplier = 1 + (haste * 0.01)` |
+| Vigor | maxEnergy | `player.maxEnergy` field | Set from `finalStats.vigor` on character load / level-up |
+| Recovery | energy regen rate | `ComputedStats.rechargeRate` | Set from `finalStats.recovery` (base) + equipment rechargeRate bonus |
+| Perception | detection range | `visibility/range.ts` | Pass `finalStats.detectionRange` to range computation |
+| Resilience | hazard damage reduction | Biome hazard tick (in game-server zone tick) | Read `finalStats.hazardResistance` when applying biome damage tick |
+
+All hooks exist. The work is: (1) build `computeBaseStats(level)` + `computeFinalStats()`, (2) plumb the result into these 8 call sites.
 
 ---
 
 ## Lore Alignment Notes
 
-The lore imposes specific constraints on item design that must be respected.
+The 8 stat names were designed for this project. Confirming alignment with world-bible:
 
-| Lore Element | Item System Implication |
-|--------------|------------------------|
-| Exo-suits are described as "base equipment with module slots, rarity affects slot count" | ExoSuit item type is non-negotiable. The current schema (head/chest/legs) must be replaced. |
-| Terminus has 4 biome tiers (Frontier/Hazardous/Hostile/Extreme) | Tools and exo-suits should have 4 tiers matching biome tiers. Tier I gear is adequate for Frontier biomes; Tier IV gear is required for Extreme biomes. |
-| Modules: Armor, Speed, Life Support, Sensor Array, Power Core, Mobility | These are the 6 module item types. Each grants a specific stat bonus. Life Support is thematically critical (atmosphere requires filtration). |
-| Tools: Research / Combat / Mining with specialization stats | Tools are not generic weapons. They are professional instruments. Tool stats should reflect corporate work categories. |
-| Consumables: Suit repair, buffs | Suit repair = exo-suit durability restore (if durability is added). Buffs = temporary stat enhancement. These are the only consumable types defined in lore. Do not invent additional consumable categories without lore consultation. |
-| World items: Explosives, seeds, deployables | Deployables are in-world items carried and placed. Seeds link to farming/growing progression. Explosives are single-use world-interaction items. None of these should auto-equip. |
-| Crafting reagents | Raw materials dropped from mining/creature kills. These are the highest-volume inventory items. Must stack to 999. |
-| Factions have distinct aesthetics | Eventually, faction items should look different. Defer cosmetic differentiation until faction standing system exists. |
-| Zones have survival tiers (I-IV) | Required level gate for equipment should map to zone tier. Tier II zones recommend ilvl appropriate for Tier II. This gives the required level system lore grounding. |
+| Stat | Lore Grounding |
+|------|----------------|
+| Durability | Exo-suits take physical damage in Terminus. "How much punishment the suit and wearer can absorb" — aligns with Tier I-IV zone survivability requirements. |
+| Toughness | Corporate workers in hostile zones (Volcanic Reaches, Tier III) need armor protection against silicon-armored predators and geological hazards. |
+| Power | Helix Extraction's identity is industrial output — damage (mining yield, combat output) maps to their culture. All factions fight creatures. |
+| Haste | Petrified Expanse lore explicitly states "everything that survives here has adapted to constant movement." Haste is survival in calcification-risk zones. |
+| Vigor | Exo-suit power cores are mentioned repeatedly in lore. Vigor = the power reserve a suit can hold. |
+| Recovery | "Energy" recharge connects to exo-suit power core recharge rate — Verdant's bioengineered suits might have better Recovery as faction bonus. |
+| Perception | Nexus Frontiers are defined by intelligence gathering. Perception ("detecting vital clues, hiding enemies") fits their corporate identity. |
+| Resilience | Miasma Marshes require "chemical filtration systems, sealed gear, decontamination protocols" — Resilience = hazard resistance to the planet's hostile environments. |
 
----
-
-## Existing System Integration Points
-
-These systems interact with the inventory and constrain what can change.
-
-| System | File / Location | Integration Note |
-|--------|-----------------|-----------------|
-| Character data | `packages/database/src/schema/characters.ts` | `level` field used for required level checks. `stats` jsonb — module stats will need to be applied at runtime (add to base stats), not stored in character table. |
-| Inventory DB schema | `packages/database/src/schema/inventories.ts` | `equipment` jsonb needs migration from flat slot map to `{ exosuit, modules[], tool, accessory1, accessory2 }`. Do this migration before UI work. |
-| Inventory queries | `packages/database/src/queries/inventory.ts` | Full CRUD exists. `updateEquipment` must accept new schema shape. No structural changes needed in query layer; jsonb is flexible. |
-| Entity system | `packages/shared-types/src/core/entity.ts` | `ItemEntity` has `despawnAt`. Zone tick must check despawnAt and broadcast `entity:despawn` when expired. |
-| Socket events | `packages/shared-types/src/network/events.ts` | `inventory:use`, `inventory:drop`, `inventory:pickup` declared client-side. `inventory:update` declared server-side. All need handler implementations in game-server. |
-| EntityRegistry | `packages/shared-types/src/game/entity-registry.ts` | `ItemConfig` type needs expansion (add category, rarity, requiredLevel, weight, ilvl fields). Stub item entries must be replaced with real item definitions for all 6 module types, 3 tool types, consumable types. |
-| HUD | `apps/web/src/` | Action bar goes in HUD layer (React component, same layer as health/energy bars, minimap). Inventory panel and equipment panel are toggle-able overlays above the canvas. |
-| Player stats | `packages/shared-types/src/core/player.ts` | `PlayerStats` (strength, agility, endurance, intelligence, perception) must be augmented at runtime by equipped modules. Server computes effective stats = base stats + sum(module stats). Do not persist effective stats to DB — compute from equipment each session load. |
+All 8 stats have clear lore grounding. Confirm with project owner before finalizing: do Resilience and Toughness need different names to avoid confusion? (Resilience = environmental hazard resistance; Toughness = physical damage armor — they are distinct but both sound defensive.)
 
 ---
 
 ## Sources
 
-- No Man's Sky exosuit system (slot expansion, technology slots, module tier system): https://nomanssky.miraheze.org/wiki/Exosuit
-- WoW Dragonflight stack size increases for profession materials (1000-stack precedent): https://www.wowhead.com/news/bigger-stack-size-for-profession-items-in-dragonflight-1000-materials-200-327688
-- BitCraft action bar addition (2025) — hotbar is expected in survival MMOs: https://massivelyop.com/2025/11/29/bitcraft-finally-adds-a-hotbar-to-pave-the-way-for-new-types-of-gameplay/
-- OSRS loot despawn timer model (3-minute public, 1-minute private drop): https://oldschool.runescape.wiki/w/Drop
-- MMO weight vs slot limit community analysis: https://forums.mmorpg.com/discussion/444404/weight-limits-and-stack-limits-yes-no-and-your-thoughts-on-them-both
-- MMORPG.com equipment and inventory design journal: https://www.mmorpg.com/developer-journals/equipment-and-inventory-2000104947
-- Into the Void world-bible.md (biome tiers, faction aesthetics, item categories, exo-suit lore)
-- Direct codebase inspection: `packages/shared-types/src/game/inventory.ts`, `packages/database/src/schema/inventories.ts`, `packages/database/src/queries/inventory.ts`, `packages/shared-types/src/core/entity.ts`, `packages/shared-types/src/game/entity-registry.ts`, `packages/shared-types/src/network/events.ts`, `packages/shared-types/src/core/player.ts`
+- Direct codebase inspection: `packages/shared-types/src/core/player.ts` (`PlayerStats` legacy type), `packages/game-logic/src/inventory/stats.ts` (`ComputedStats`, `effectiveStats()`), `packages/game-logic/src/combat/damage.ts` (`calculateDamage()`), `packages/game-logic/src/visibility/range.ts`
+- WoW Classic linear level scaling model and armor cap: https://pavcreations.com/level-systems-and-character-growth-in-rpg-games/
+- Path of Exile stat breakdown player demand: https://www.pathofexile.com/forum/view-thread/2713434/page/1
+- Linear vs multiplicative progression balance: https://sinisterdesign.net/designing-rpg-mechanics-for-scalability/
+- RPG stat design taxonomy (primary, secondary, derived): https://blog.writtenrealms.com/stats/
+- Linear scaling for MMO balancability: https://www.davideaversa.it/blog/gamedesign-math-rpg-level-based-progression/
+- Diablo III character screen breakdown approach: https://diablo.fandom.com/wiki/Character_Screen
+- Into the Void world-bible.md (biome tiers, faction identity, environmental hazards, exo-suit lore)
+- Into the Void Phase 25 research: `.planning/phases/25-item-data-model-foundation/25-RESEARCH.md`
 
 ---
-*Feature research for: Inventory & Item System — Into the Void survival MMO*
-*Researched: 2026-02-17*
-*Confidence: HIGH for schema/architecture (codebase-confirmed + lore-grounded); MEDIUM for UX patterns (competitor analysis); LOW for faction item cross-equip pricing (no comparable reference found)*
+
+*Feature research for: Character Stats System — Into the Void survival MMO*
+*Researched: 2026-02-18*
+*Confidence: HIGH for code integration map (codebase-confirmed); HIGH for stat-to-gameplay mapping (existing hooks verified); MEDIUM for competitor UX patterns (web research); MEDIUM for soft-cap values (placeholder constants, require balance testing)*

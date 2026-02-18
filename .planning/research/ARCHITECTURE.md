@@ -1,558 +1,325 @@
-# Architecture Research
+# Architecture Research — Character Stats System
 
-**Domain:** Multiplayer isometric MMO — inventory & items system integration (v1.6)
-**Researched:** 2026-02-17
-**Confidence:** HIGH (direct codebase audit; all integration points verified against source files)
+**Domain:** Character stat system integration in existing multiplayer 2D sci-fi survival MMO
+**Researched:** 2026-02-18
+**Confidence:** HIGH (entire codebase read directly; no external sources needed)
 
 ---
 
 ## Standard Architecture
 
-### System Overview (Current + Inventory Overlay)
+### System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                          CLIENT (React + Phaser)                     │
-├─────────────────────────────────────────────────────────────────────┤
-│  REACT HUD LAYER (apps/web/src/ui/)                                  │
-│  ┌──────────────┐  ┌─────────────────┐  ┌──────────────────────┐    │
-│  │  HUD.tsx     │  │ InventoryPanel  │  │  EquipmentPanel      │    │
-│  │  (existing)  │  │  [NEW]          │  │  [NEW]               │    │
-│  └──────┬───────┘  └───────┬─────────┘  └──────────┬───────────┘    │
-│         │                  │ showInventory           │               │
-│  ┌──────▼──────────────────▼─────────────────────────▼───────────┐  │
-│  │                     gameStore (Zustand)                         │  │
-│  │  existing: player, zoneState, connectionState                   │  │
-│  │  NEW:      inventory, equipment, hotbar                         │  │
-│  └──────────────────────────┬──────────────────────────────────┘  │
-│                             │                                       │
-│  PHASER LAYER (apps/web/src/game/)                                  │
-│  ┌──────────────────────────▼──────────────────────────────────┐  │
-│  │  ZoneHUD.ts  [MODIFY: add hotbar slots]                      │  │
-│  │  WorldScene.ts  [MODIFY: item pickup keypress, use hotbar]   │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────────┤
-│                           Socket.IO (WebSocket)                      │
-│         inventory:use / inventory:drop / inventory:pickup            │
-│         inventory:equip / inventory:unequip (NEW events)            │
-│         <-- inventory:update (server -> client)                      │
-├─────────────────────────────────────────────────────────────────────┤
-│                         SERVER (NestJS game-server)                  │
+┌──────────────────────────────────────────────────────────────────┐
+│  CLIENT (apps/web)                                               │
+│  ┌─────────────────────┐   ┌──────────────────────────────────┐  │
+│  │  statsStore.ts       │   │  StatsPanel.tsx (HUD component)  │  │
+│  │  (Zustand + immer)   │   │  shows base / level / equip      │  │
+│  │  stats: CharStats    │   │  breakdown per stat              │  │
+│  │  setStats(payload)   │   └──────────────────────────────────┘  │
+│  └──────────┬───────────┘                                         │
+│             │ subscribes                                           │
+│  ┌──────────▼─────────────────────────────────────────────────┐   │
+│  │  gameSocket  <--  'stats:update'  (server push)            │   │
+│  └────────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────┘
+                              Socket.IO
+┌──────────────────────────────────────────────────────────────────┐
+│  GAME SERVER (apps/game-server)                                   │
 │  ┌──────────────────────────────────────────────────────────────┐  │
-│  │  GameGateway  [MODIFY: add inventory event handlers]         │  │
-│  │  handleInventoryUse() / handleInventoryDrop()                │  │
-│  │  handleInventoryPickup() / handleEquip() / handleUnequip()   │  │
-│  └──────────────────┬───────────────────────────────────────────┘  │
-│                     │                                               │
-│  ┌──────────────────▼───────────────────────────────────────────┐  │
-│  │  InventoryService  [NEW]                                      │  │
-│  │  useItem() / dropItem() / pickupItem()                        │  │
-│  │  equipItem() / unequipItem()                                  │  │
-│  │  getInventory() (loads from DB on auth)                       │  │
-│  └──────────────────┬───────────────────────────────────────────┘  │
-│                     │                                               │
-│  ┌──────────────────▼───────────────────────────────────────────┐  │
-│  │  @into-the-void/game-logic  [MODIFY: add inventory module]   │  │
-│  │  validateItemUse() / validateEquip() / resolveItemEffect()   │  │
+│  │  StatsService (NEW)                                           │  │
+│  │  — computeAndEmit(playerId, character, inventory): void       │  │
+│  │  — delegates pure math to game-logic                          │  │
+│  │  — called on auth + after any equip/unequip event             │  │
+│  └────────────────┬─────────────────────────────────────────────┘  │
+│                   │ calls                                           │
+│  ┌────────────────▼─────────────────────────────────────────────┐  │
+│  │  GameGateway (MODIFIED)                                        │  │
+│  │  — injects StatsService                                        │  │
+│  │  — calls computeAndEmit after handleAuth + equip events        │  │
 │  └──────────────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────────┤
-│                     SHARED PACKAGES                                  │
+└──────────────────────────────────────────────────────────────────┘
+                           Shared packages
+┌──────────────────────────────────────────────────────────────────┐
+│  packages/game-logic/src/stats/   (NEW MODULE)                    │
 │  ┌──────────────────────────────────────────────────────────────┐  │
-│  │  @into-the-void/items  [NEW PACKAGE — mirrors tiles package] │  │
-│  │  ItemRegistry (singleton, strategy pattern)                   │  │
-│  │  ItemDefinition (interface)                                   │  │
-│  │  ItemEffect (discriminated union)                             │  │
-│  │  definitions/suits, tools, consumables, materials...          │  │
+│  │  definitions.ts  — STAT_DEFINITIONS: StatDefinition[]        │  │
+│  │  computation.ts  — computeCharStats(): pure function          │  │
+│  │  index.ts        — re-exports                                  │  │
 │  └──────────────────────────────────────────────────────────────┘  │
+│  packages/shared-types/src/core/stats.ts  (NEW)                   │
 │  ┌──────────────────────────────────────────────────────────────┐  │
-│  │  @into-the-void/shared-types  [MODIFY: extend existing]      │  │
-│  │  inventory.ts — ItemDef already exists, extend it            │  │
-│  │  events.ts   — add equipment:change ClientEvent               │  │
+│  │  PrimaryStatId, BaseStats, StatBreakdown, CharStatsPayload    │  │
 │  └──────────────────────────────────────────────────────────────┘  │
+│  packages/database/src/schema/characters.ts  (MODIFIED)           │
 │  ┌──────────────────────────────────────────────────────────────┐  │
-│  │  @into-the-void/database  [MODIFY: inventories schema exists]│  │
-│  │  schema/inventories.ts — already has items + equipment JSONB │  │
-│  │  queries/inventory.ts  — CRUD already exists                 │  │
+│  │  StatsJson -> BaseStats: 8 fields with new names (jsonb)     │  │
 │  └──────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
-| Component | Responsibility | Location | Status |
-|-----------|----------------|----------|--------|
-| `ItemRegistry` | Singleton map of `itemId -> ItemDefinition`; strategy pattern identical to `TileRegistry` | `packages/items/src/registry.ts` | NEW |
-| `ItemDefinition` | Static item properties: id, category, rarity, slots, effects, weight, stackSize | `packages/items/src/types.ts` | NEW |
-| `ItemEffect` | Discriminated union: heal/buff/equip/spawn-entity — returned by item use handler | `packages/items/src/types.ts` | NEW |
-| `InventoryService` | Server-side inventory state per connected player; validates operations; persists to DB | `apps/game-server/src/inventory/inventory.service.ts` | NEW |
-| `GameGateway` | Routes inventory WebSocket events to `InventoryService`; broadcasts `inventory:update` | `apps/game-server/src/game/game.gateway.ts` | MODIFY |
-| `gameStore` | Client Zustand state: `inventory`, `equipment`, `hotbar`; receives `inventory:update` | `apps/web/src/store/gameStore.ts` | MODIFY |
-| `InventoryPanel` | React modal: grid of `InventoryItem` slots; drag-to-equip, right-click-use | `apps/web/src/ui/panels/InventoryPanel.tsx` | NEW |
-| `EquipmentPanel` | React panel: exo-suit silhouette with slot targets; shows equipped items | `apps/web/src/ui/panels/EquipmentPanel.tsx` | NEW |
-| `ActionBar` | Phaser HUD (or React overlay): 8 hotbar slots with keypress binding (1-8) | `apps/web/src/ui/hud/ActionBar.tsx` | NEW |
-| `ZoneHUD` | Existing Phaser HUD; modified to delegate hotbar rendering to `ActionBar` | `apps/web/src/game/ui/ZoneHUD.ts` | MODIFY |
-| `game-logic inventory` | Pure functions: `validateItemUse`, `canEquip`, `resolveEffect` — no side effects | `packages/game-logic/src/inventory/` | NEW |
-| `inventories schema` | PostgreSQL table: `character_id PK`, `items JSONB[]`, `equipment JSONB`, `maxSlots INT` | `packages/database/src/schema/inventories.ts` | EXISTS (extend) |
-| `EntityRegistry.items` | Existing static item catalog in shared-types — MIGRATE to `ItemRegistry` | `packages/shared-types/src/game/entity-registry.ts` | REFACTOR |
+| Component | Responsibility | Status |
+|-----------|---------------|--------|
+| `packages/shared-types/src/core/stats.ts` | Canonical type definitions: `PrimaryStatId`, `BaseStats`, `StatBreakdown`, `CharStatsPayload` | NEW |
+| `packages/game-logic/src/stats/definitions.ts` | `STAT_DEFINITIONS` array — base values and perLevelBonus for all 8 stats | NEW |
+| `packages/game-logic/src/stats/computation.ts` | Pure `computeCharStats()` function; no DB, no side effects | NEW |
+| `packages/database/src/schema/characters.ts` | Replace `StatsJson` type with 8 new stat fields | MODIFIED |
+| `apps/game-server/src/game/stats.service.ts` | Loads character + equipment, calls `computeCharStats`, emits `stats:update` | NEW |
+| `apps/game-server/src/game/game.gateway.ts` | Injects `StatsService`; calls `computeAndEmit` after auth + equip events | MODIFIED |
+| `apps/game-server/src/game/player.service.ts` | Passes character `baseStats` into `Player` object on authenticate | MODIFIED |
+| `apps/web/src/store/statsStore.ts` | Zustand store holding `CharStatsPayload`; wired to `stats:update` socket event | NEW |
+| `packages/shared-types/src/network/events.ts` | Add `'stats:update': CharStatsPayload` to `ServerEvents` | MODIFIED |
 
 ---
 
-## New Package: `@into-the-void/items`
+## Existing Architecture — Ground Truth
 
-The tile system (`packages/tiles`) established the project's canonical pattern for static game-data registries. The items package mirrors this pattern exactly.
+Before integration recommendations, this is what the codebase contains today regarding stats.
 
-### Why a separate package (not extending shared-types)
+### Current Stat Shape (Must Be Replaced)
 
-`shared-types` holds network contracts — lightweight types shared between client and server. An items package holds game logic (effect calculation, rarity multipliers, slot compatibility) that is **used by clients at runtime for UI rendering** and **by game-server for validation**. This dual use justifies its own package, same as `tiles`.
+There are two conflicting stat shapes that need to converge:
 
-```
-packages/items/
-├── src/
-│   ├── types.ts              # ItemDefinition, ItemEffect, EquipmentSlotDef
-│   ├── registry.ts           # ItemRegistry singleton (mirrors TileRegistry)
-│   ├── index.ts              # public exports
-│   └── definitions/
-│       ├── suits.ts          # Exo-suit base + variants
-│       ├── modules.ts        # Suit module slots (rarity-gated)
-│       ├── tools.ts          # Main/secondary tool slots
-│       ├── consumables.ts    # Health vials, energy cells, etc.
-│       ├── materials.ts      # Crafting reagents, world resources
-│       ├── misc.ts           # Quest items, keys, unique drops
-│       └── index.ts          # registerAll() — bootstraps registry
-```
+| Location | Current Shape | Current Stat Names |
+|----------|-------------|-------------------|
+| `packages/database/src/schema/characters.ts` `StatsJson` | jsonb column on `characters` table | `strength`, `agility`, `endurance`, `intelligence`, `perception` |
+| `packages/shared-types/src/core/player.ts` `PlayerStats` | TypeScript interface | `strength`, `agility`, `endurance`, `intelligence`, `perception` |
+| `packages/game-logic/src/inventory/stats.ts` `ComputedStats` | Equipment-derived overlay (separate concern, unchanged) | `armor`, `speedMultiplier`, `hazardResistance`, etc. |
 
-### ItemDefinition interface (mirrors TileDefinition)
+The milestone requires replacing `StatsJson` and `PlayerStats` with 8 named primary stats: `Durability`, `Toughness`, `Power`, `Haste`, `Vigor`, `Recovery`, `Perception`, `Resilience`.
 
-```typescript
-export interface ItemDefinition {
-  readonly id: string;               // 'health_vial_common'
-  readonly displayName: string;      // 'Health Vial'
-  readonly description: string;
-  readonly category: ItemCategory;   // 'consumable' | 'suit' | 'module' | 'tool' | 'material' | 'misc'
-  readonly rarity: ItemRarity;       // 'common' | 'rare' | 'epic' | 'exotic' | 'legendary'
-  readonly maxStack: number;
-  readonly weight: number;
-  readonly baseValue: number;
-  readonly requiredLevel: number;
-  readonly textureKey: string;       // sprite key for icon rendering
-  readonly color: number;            // fallback hex color (no sprite)
-  readonly equipSlot?: EquipmentSlot; // present if equippable
-  readonly moduleSlots?: number;     // for suits: how many modules it accepts
-  readonly effects?: ItemEffectDef[];
-}
+`Perception` is the only name shared between old and new. All others need migration.
 
-export interface ItemEffectDef {
-  trigger: 'on_use' | 'on_equip' | 'passive';
-  effect: ItemEffect;
-}
+### What Exists That the Stats System Can Leverage
 
-export type ItemEffect =
-  | { type: 'heal'; amount: number }
-  | { type: 'restore_energy'; amount: number }
-  | { type: 'buff_stat'; stat: string; amount: number; duration: number }
-  | { type: 'spawn_entity'; entityType: string }
-  | { type: 'unlock_slot'; slot: EquipmentSlot };
-```
-
----
-
-## Existing Architecture: What Already Exists
-
-A significant portion of the inventory system is already scaffolded. This is critical for build ordering — don't rewrite what exists.
-
-### Already Present (Verified by Codebase Audit)
-
-| Asset | Location | State |
-|-------|----------|-------|
-| `Inventory` type | `shared-types/src/game/inventory.ts` | Complete: `InventoryItem`, `EquipmentSlot`, `Inventory`, `InventoryResult` |
-| `ClientEventType` `inventory:use/drop/pickup` | `shared-types/src/network/events.ts` | Declared in type union |
-| `ServerEventType` `inventory:update` | `shared-types/src/network/events.ts` | Declared in type union |
-| `ClientEvents['inventory:use']` | `shared-types/src/network/events.ts` | `{ instanceId: string }` |
-| `ClientEvents['inventory:drop']` | `shared-types/src/network/events.ts` | `{ instanceId: string; quantity: number }` |
-| `ClientEvents['inventory:pickup']` | `shared-types/src/network/events.ts` | `{ entityId: string }` |
-| `ServerEvents['inventory:update']` | `shared-types/src/network/events.ts` | Returns `Inventory` type |
-| `gameSocket` registration | `apps/web/src/network/socket.ts:82` | `inventory:update` listed in `serverEvents` array — socket listens, no handler connected |
-| `showInventory` / `toggleInventory` | `apps/web/src/store/gameStore.ts:39,41` | UI flag exists, `InventoryPanel` not rendered anywhere yet |
-| `inventories` DB table | `packages/database/src/schema/inventories.ts` | Complete: `characterId PK`, `items JSONB`, `equipment JSONB`, `maxSlots INT` |
-| `createInventory / getInventory / updateInventory` | `packages/database/src/queries/inventory.ts` | All CRUD functions implemented |
-| `ItemConfig` / `EntityRegistry.items` | `shared-types/src/game/entity-registry.ts:44,135` | 4 items registered (health_vial, energy_cell, void_essence, ancient_key) |
-| `ErrorCode: INVENTORY_FULL` | `shared-types/src/network/messages.ts` | Error code defined |
-
-### Missing (Gaps to Fill)
-
-| Missing | What to Build |
-|---------|--------------|
-| `equipment:change` client event | Add to `ClientEvents` and `ClientEventType` in `events.ts` |
-| `InventoryService` (game-server) | NestJS service; in-memory per-player inventory; DB persistence |
-| `inventory:*` handlers in `GameGateway` | `@SubscribeMessage` handlers for use/drop/pickup/equip/unequip |
-| `packages/items` package | New NX package; ItemRegistry, definitions |
-| `InventoryPanel` React component | Grid UI; uses `gameStore.inventory` |
-| `EquipmentPanel` React component | Slot UI; uses `gameStore.equipment` |
-| `ActionBar` HUD component | Hotbar 1-8; keybindings; uses `gameStore.hotbar` |
-| `gameStore` inventory state | `inventory: Inventory | null`, `equipment`, `hotbar` slices |
-| `gameStore` `inventory:update` handler | Wire socket event to store update |
-| `game-logic/inventory/` module | Pure validation functions |
+| Asset | File | Relevance |
+|-------|------|-----------|
+| `effectiveStats(equipment)` | `game-logic/src/inventory/stats.ts` | Already routes unknown `stat_buff` effects to `ComputedStats.bonuses` — the equipment bonus path for primary stats flows through here without code changes |
+| `stat_buff` ItemEffect | `packages/items/src/types.ts` | Already has `{ type: 'stat_buff', stat: string, amount: number }`. Equipment granting primary stat bonuses just sets `stat` to the `PrimaryStatId` string |
+| `DamageParams.attackerStats` | `game-logic/src/combat/damage.ts` | Uses `Partial<PlayerStats>` — must be updated to `Partial<BaseStats>` |
+| In-memory player Map | `game-server/src/game/player.service.ts` | `ConnectedPlayer` can hold `baseStats` — same as it already holds `health`, `level`, `xp` |
+| `InventoryService` loaded on auth | `game-server/src/game/inventory.service.ts` | Equipment is already available at auth time — `StatsService` can immediately compute stats on first connect |
 
 ---
 
 ## Recommended Project Structure
 
+### New Files
+
 ```
-packages/items/                              [NEW PACKAGE]
-├── package.json
-├── tsconfig.json
-├── src/
-│   ├── types.ts
-│   ├── registry.ts
-│   ├── index.ts
-│   └── definitions/
-│       ├── index.ts                         # registerAll() call
-│       ├── suits.ts
-│       ├── modules.ts
-│       ├── tools.ts
-│       ├── consumables.ts
-│       ├── materials.ts
-│       └── misc.ts
+packages/
+  shared-types/src/core/
+    stats.ts                       # PrimaryStatId, BaseStats, CharStatsPayload
 
-packages/game-logic/src/
-├── inventory/                               [NEW MODULE]
-│   ├── validation.ts                        # validateItemUse, canEquip, hasSlot
-│   ├── effects.ts                           # resolveEffect(item, player) -> ItemEffect
-│   └── index.ts
-└── index.ts                                 [MODIFY: export inventory/*]
+  game-logic/src/stats/
+    definitions.ts                 # STAT_DEFINITIONS constant
+    computation.ts                 # computeCharStats() pure function
+    index.ts                       # re-exports
 
-packages/shared-types/src/
-├── game/
-│   └── inventory.ts                         [MODIFY: extend ItemDef, add hotbar type]
-└── network/
-    └── events.ts                            [MODIFY: add equipment:change ClientEvent]
+apps/
+  game-server/src/game/
+    stats.service.ts               # orchestrator NestJS service
 
-packages/database/src/
-└── schema/
-    └── inventories.ts                       [EXISTS — no schema changes needed]
+  web/src/store/
+    statsStore.ts                  # Zustand store for CharStatsPayload
 
-apps/game-server/src/
-├── game/
-│   ├── game.gateway.ts                      [MODIFY: add @SubscribeMessage handlers]
-│   ├── game.module.ts                       [MODIFY: import InventoryModule]
-│   └── game.service.ts                      [MODIFY: pickup adds to inventory]
-└── inventory/                               [NEW MODULE]
-    ├── inventory.module.ts
-    └── inventory.service.ts
+  web/src/components/
+    StatsPanel.tsx                 # HUD panel displaying stat breakdown
+```
 
-apps/web/src/
-├── store/
-│   └── gameStore.ts                         [MODIFY: inventory/equipment/hotbar state]
-├── ui/
-│   ├── GameUI.tsx                           [MODIFY: render InventoryPanel + EquipmentPanel]
-│   ├── hud/
-│   │   ├── HUD.tsx                          [MODIFY: render ActionBar]
-│   │   └── ActionBar.tsx                    [NEW]
-│   └── panels/
-│       ├── ChatPanel.tsx                    [EXISTS — reference for panel pattern]
-│       ├── InventoryPanel.tsx               [NEW]
-│       └── EquipmentPanel.tsx               [NEW]
-└── game/
-    └── ui/
-        └── ZoneHUD.ts                       [MODIFY: remove hotbar if moved to React]
+### Modified Files
+
+```
+packages/
+  shared-types/src/core/player.ts           # Remove PlayerStats; import from stats.ts
+  shared-types/src/network/events.ts        # Add 'stats:update' to ServerEvents
+  database/src/schema/characters.ts         # Replace StatsJson type + default values
+  game-logic/src/combat/damage.ts           # DamageParams uses Partial<BaseStats>
+  game-logic/src/index.ts                   # Export stats/ module
+
+apps/
+  game-server/src/game/game.gateway.ts      # Inject StatsService; emit after auth + equip
+  game-server/src/game/game.module.ts       # Register StatsService as provider
+  game-server/src/game/player.service.ts    # Add baseStats field to ConnectedPlayer
 ```
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: ItemRegistry — Singleton Strategy (mirrors TileRegistry)
+### Pattern 1: Stats as a Separate Zustand Store
 
-**What:** A singleton Map from `itemId -> ItemDefinition`. All item definitions are registered at static init time via `registerAll()`. Consumers call `ItemRegistry.get(id)` to access definitions. Unknown IDs return a fallback UNKNOWN_ITEM (magenta icon, obvious error indicator).
+**What:** `statsStore.ts` is a dedicated Zustand store with immer middleware. It does not live in `gameStore`.
 
-**When to use:** Any time code needs to look up static item properties by string ID. Both client (for rendering item icons in UI) and server (for validating item use) import from `@into-the-void/items`.
+**When to use:** Any time the stats panel or other HUD components need access to computed stat values.
 
-**Trade-offs:** Singleton is not injectable — fine for static data that never changes at runtime. Same trade-off accepted for TileRegistry.
+**Trade-offs:** One more store file, but isolation is worth it. The existing `inventoryStore.ts` demonstrates this split is intentional — adding stats to `gameStore` would cause Phaser to re-render on every stat change because `gameStore` is subscribed to by the Phaser game instance.
 
+**Example:**
 ```typescript
-// packages/items/src/registry.ts
-const UNKNOWN_ITEM: ItemDefinition = {
-  id: 'unknown',
-  displayName: 'Unknown Item',
-  description: 'This item type is not registered.',
-  category: 'misc',
-  rarity: 'common',
-  maxStack: 1,
-  weight: 0,
-  baseValue: 0,
-  requiredLevel: 0,
-  textureKey: 'item_unknown',
-  color: 0xff00ff,  // magenta — mirrors TileRegistry fallback convention
-};
+// apps/web/src/store/statsStore.ts
+import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
+import { CharStatsPayload } from '@into-the-void/shared-types';
+import { gameSocket } from '../network/socket';
 
-class ItemRegistryImpl {
-  private readonly items: Map<string, ItemDefinition> = new Map();
-
-  register(item: ItemDefinition): void { ... }
-  registerAll(items: readonly ItemDefinition[]): void { ... }
-  get(id: string): ItemDefinition { ... } // returns UNKNOWN_ITEM on miss
-  has(id: string): boolean { ... }
-  getAllByCategory(category: ItemCategory): ItemDefinition[] { ... }
-  getAllByRarity(rarity: ItemRarity): ItemDefinition[] { ... }
+interface StatsState {
+  stats: CharStatsPayload | null;
+  setStats: (payload: CharStatsPayload) => void;
 }
 
-export const ItemRegistry = new ItemRegistryImpl();
-```
+export const useStatsStore = create<StatsState>()(
+  immer((set) => ({
+    stats: null,
+    setStats: (payload) => set((s) => { s.stats = payload; }),
+  }))
+);
 
-### Pattern 2: Server-Side In-Memory Inventory with DB Persistence
-
-**What:** `InventoryService` maintains an in-memory `Map<playerId, Inventory>` for fast access during gameplay, mirroring how `PlayerService` maintains connected players. On player auth, inventory is loaded from DB. On each mutation (use/drop/equip), state is updated in-memory immediately and flushed to DB asynchronously. On disconnect, final state is saved.
-
-**When to use:** This is the established server pattern. `PlayerService` uses the same in-memory + DB-on-auth approach. Apply it consistently.
-
-**Trade-offs:** Memory grows with connected players. At scale, a cache layer (Redis) replaces the in-memory Map. For current scale (small playerbase), in-memory is correct.
-
-```typescript
-// apps/game-server/src/inventory/inventory.service.ts
-@Injectable()
-export class InventoryService {
-  private inventories: Map<string, Inventory> = new Map(); // playerId -> Inventory
-
-  async loadForPlayer(playerId: string, db: DbClient): Promise<void> {
-    const dbInventory = await getInventory(db, playerId);
-    if (dbInventory) {
-      this.inventories.set(playerId, mapDbToInventory(dbInventory));
-    } else {
-      const fresh = createDefaultInventory(playerId);
-      this.inventories.set(playerId, fresh);
-      await createInventory(db, mapInventoryToDb(fresh));
-    }
-  }
-
-  async unloadForPlayer(playerId: string, db: DbClient): Promise<void> {
-    const inventory = this.inventories.get(playerId);
-    if (inventory) {
-      await updateInventory(db, playerId, mapInventoryToDb(inventory));
-      this.inventories.delete(playerId);
-    }
-  }
-
-  useItem(playerId: string, instanceId: string): InventoryResult { ... }
-  dropItem(playerId: string, instanceId: string, quantity: number): InventoryResult { ... }
-  pickupItem(playerId: string, item: InventoryItem): InventoryResult { ... }
-  equipItem(playerId: string, instanceId: string, slot: EquipmentSlot): InventoryResult { ... }
-  unequipItem(playerId: string, slot: EquipmentSlot): InventoryResult { ... }
-}
-```
-
-### Pattern 3: Inventory State in Zustand — Separate Slice
-
-**What:** Add inventory state to `gameStore` as a distinct slice alongside player, entities, and UI toggles. The `inventory:update` socket event replaces the entire `Inventory` object in store on each mutation. Clients do not maintain partial/optimistic inventory state — the server is authoritative.
-
-**When to use:** The existing pattern for `zone:state` (replaces entire ZoneState object) applies here. Inventory mutations are infrequent relative to movement, so full-replacement is fine.
-
-**Trade-offs:** Full replacement means no partial updates — intentional for correctness. The server is the only source of truth for inventory contents.
-
-```typescript
-// Additions to gameStore.ts
-interface GameState {
-  // ... existing fields ...
-
-  // Inventory
-  inventory: Inventory | null;
-  setInventory: (inventory: Inventory) => void;
-
-  // Hotbar (client-only — which slots are assigned to 1-8 keys)
-  hotbar: (string | null)[];  // 8-element array of instanceIds or null
-  setHotbarSlot: (slot: number, instanceId: string | null) => void;
-}
-
-// In the store body:
-inventory: null,
-setInventory: (inventory) => set({ inventory }),
-hotbar: Array(8).fill(null),
-setHotbarSlot: (slot, instanceId) => set((state) => {
-  const hotbar = [...state.hotbar];
-  hotbar[slot] = instanceId;
-  return { hotbar };
-}),
-
-// Socket listener (add alongside existing zone:state listener):
-gameSocket.on('inventory:update', (inventory: Inventory) => {
-  useGameStore.getState().setInventory(inventory);
+// Wire socket event — identical pattern to inventoryStore.ts
+gameSocket.on('stats:update', (payload: CharStatsPayload) => {
+  useStatsStore.getState().setStats(payload);
 });
 ```
 
-### Pattern 4: Pure Validation in game-logic (No Side Effects)
+### Pattern 2: Pure Computation in game-logic, Orchestration in game-server
 
-**What:** All inventory validation logic lives in `packages/game-logic/src/inventory/`. Functions are pure: they take current state (player, inventory, item definition) and return a typed result (success + effect, or failure + reason). No DB calls, no socket calls — just pure logic.
+**What:** `computeCharStats()` lives in `packages/game-logic` (pure function, zero dependency on NestJS or DB). `StatsService` in game-server orchestrates: fetches character from PlayerService, gets equipment from InventoryService, calls the pure function, emits the result over the socket.
 
-**When to use:** Mirrors existing `validateMovement()`, `canInteract()`, `canHarvest()`, `canPickup()` pattern in `game-logic`. The server calls these before executing mutations.
+**When to use:** Stat computation is needed. Always go through this path.
 
+**Trade-offs:** One more indirection, but the pure function is trivially testable and the same function serves both players and creatures in the combat phase.
+
+**Example:**
 ```typescript
-// packages/game-logic/src/inventory/validation.ts
-export function validateItemUse(
-  player: Player,
-  inventory: Inventory,
-  instanceId: string,
-  itemDef: ItemDefinition
-): { valid: boolean; reason?: string; effect?: ItemEffect } {
-  const item = inventory.items.find(i => i.instanceId === instanceId);
-  if (!item) return { valid: false, reason: 'Item not in inventory' };
-  if (player.level < itemDef.requiredLevel) {
-    return { valid: false, reason: `Requires level ${itemDef.requiredLevel}` };
-  }
-  const effect = resolveEffect(itemDef, 'on_use');
-  return { valid: true, effect };
-}
+// packages/game-logic/src/stats/computation.ts
+export function computeCharStats(
+  baseStats: BaseStats,
+  level: number,
+  equipment: EquipmentJson
+): CharStatsPayload {
+  const computed = effectiveStats(equipment); // existing function, unchanged
 
-export function validateEquip(
-  player: Player,
-  inventory: Inventory,
-  instanceId: string,
-  slot: EquipmentSlot,
-  itemDef: ItemDefinition
-): { valid: boolean; reason?: string } { ... }
+  const breakdown = {} as Record<PrimaryStatId, StatBreakdown>;
+  for (const def of STAT_DEFINITIONS) {
+    const base = baseStats[def.id] ?? def.baseValue;
+    const levelBonus = level * def.perLevelBonus;
+    const equipmentBonus = computed.bonuses[def.id] ?? 0; // flows through existing bonuses map
+    breakdown[def.id] = {
+      base,
+      levelBonus,
+      equipmentBonus,
+      total: base + levelBonus + equipmentBonus,
+    };
+  }
+  return { breakdown, characterLevel: level };
+}
 ```
+
+### Pattern 3: Equipment Bonuses Flow Through Existing bonuses Map
+
+**What:** The existing `effectiveStats()` function already routes any stat with an unknown key into `ComputedStats.bonuses[stat]`. An item module with a `stat_buff` effect where `stat: 'power'` already lands in `computed.bonuses['power']` without any code change. `computeCharStats()` reads from this map.
+
+**When to use:** Any equipment item granting a bonus to a primary stat. No new switch-case branches needed in `effectiveStats()`.
+
+**Trade-offs:** The stat IDs used in item definitions must exactly match the `PrimaryStatId` union values (lowercase: `'power'`, not `'Power'`). This is a convention the team must follow when writing item definitions.
 
 ---
 
 ## Data Flow
 
-### Item Use Flow (client initiates, server authoritative)
+### Request Flow — Auth (Stats Initialization)
 
 ```
-Player presses hotbar key (1-8)
+Client connects -> sends 'auth' with JWT + characterId
     |
-ActionBar.tsx (React) reads hotbar[key] -> instanceId
+GameGateway.handleAuth()
     |
-gameSocket.emit('inventory:use', { instanceId })
+PlayerService.authenticate() -> loads character from DB (includes BaseStats)
     |
-GameGateway.handleInventoryUse(client, { instanceId })
+InventoryService.loadForPlayer() -> loads equipment (already called at auth)
     |
-    +-- playerService.getPlayerBySocket(client.id) -> player
-    +-- inventoryService.useItem(player.id, instanceId)
-    |       +-- validateItemUse(player, inventory, instanceId, itemDef)
-    |       |       validation via game-logic (pure)
-    |       +-- if valid: apply effect to player (heal, buff, etc.)
-    |       |   remove/decrement item from inventory
-    |       |   flush to DB (async, non-blocking)
-    |       +-- return { success, inventory, effect }
+StatsService.computeAndEmit(playerId, character, inventory)
+    | calls computeCharStats() from game-logic (pure, <1ms)
     |
-    +-- client.emit('inventory:update', updatedInventory)
-    +-- (if effect has world impact) server.to(zoneId).emit(...)
+client.emit('stats:update', CharStatsPayload)
     |
-gameStore.ts on('inventory:update')
+statsStore.setStats(payload) in React
     |
-setInventory(updatedInventory)
-    |
-InventoryPanel re-renders / ActionBar re-renders
+StatsPanel renders breakdown table
 ```
 
-### Item Pickup Flow (from world entity)
+### Request Flow — Equip/Unequip (Stats Recalculation)
 
 ```
-Player clicks entity (type: 'item') or walks adjacent
+Client sends 'equipment:change' or 'inventory:unequip'
     |
-gameSocket.emit('inventory:pickup', { entityId })
+GameGateway.handleEquipmentChange() or handleInventoryUnequip()
     |
-GameGateway.handleInventoryPickup(client, { entityId })
+InventoryService.equipItem() or unequipItem() -> persists to DB, emits inventory:update
     |
-    +-- zonesService.getEntity(zoneId, entityId) -> ItemEntity
-    +-- inventoryService.pickupItem(player.id, itemFromEntity)
-    |       canPickup() check via game-logic
-    |       +-- usedSlots < inventory.maxSlots?
-    |       +-- item not despawned?
-    |       +-- stack merge if same itemId already in inventory
+StatsService.computeAndEmit(playerId) -- reads from PlayerService + InventoryService in-memory
     |
-    +-- zonesService.removeEntity(entityId)  // despawn from world
-    +-- client.emit('inventory:update', updatedInventory)
-    +-- server.to(zoneId).emit('entity:despawn', { entityId })
+client.emit('stats:update', CharStatsPayload)
+    |
+statsStore.setStats(payload) -> StatsPanel re-renders
 ```
 
-### Equipment Change Flow
+### State Management
 
 ```
-Player drags item to equipment slot in EquipmentPanel
+server emits 'stats:update'
     |
-EquipmentPanel.tsx -> gameSocket.emit('equipment:change', { instanceId, slot })
+statsStore.setStats()
     |
-GameGateway.handleEquip(client, { instanceId, slot })
+useStatsStore() hook in StatsPanel (subscribes)
     |
-    +-- inventoryService.equipItem(player.id, instanceId, slot)
-    |       validateEquip() from game-logic
-    |       swap: inventory.equipment[slot] -> back to bag, item -> slot
-    |
-    +-- client.emit('inventory:update', updatedInventory)
-    // equipment is part of Inventory type, same event covers both
+StatsPanel renders: for each stat, shows base / levelBonus / equipmentBonus / total
 ```
 
-### Auth Flow (Inventory Load)
+### Key Data Flows
 
-```
-PlayerService.authenticate() succeeds
-    |
-InventoryService.loadForPlayer(player.id, db)  // called from GameGateway.handleAuth
-    |
-    +-- getInventory(db, characterId) -> DbRow
-    +-- inventories.set(player.id, mapDbToInventory(row))
-    |
-client.emit('auth:success', { player })
-client.emit('inventory:update', loadedInventory)  // [NEW: send inventory on login]
-```
+1. **Stats read by combat:** `StatsService.computeCharStats(character, equipment)` called inline in game-server combat handler. The client's `statsStore` is display-only and never read by the server.
 
----
-
-## New vs. Modified: Complete Inventory
-
-| File | Status | Change Description |
-|------|--------|--------------------|
-| `packages/items/` | NEW PACKAGE | ItemRegistry, ItemDefinition, all 100 item definitions |
-| `packages/shared-types/src/game/inventory.ts` | MODIFY | Add `HotbarSlot` type; extend `ItemDef` to match `ItemDefinition` |
-| `packages/shared-types/src/network/events.ts` | MODIFY | Add `equipment:change` to `ClientEvents` and `ClientEventType` |
-| `packages/game-logic/src/inventory/` | NEW MODULE | Pure validation: `validateItemUse`, `validateEquip`, `resolveEffect` |
-| `packages/game-logic/src/index.ts` | MODIFY | Export new inventory module |
-| `packages/database/src/schema/inventories.ts` | NO CHANGE | Schema already complete |
-| `packages/database/src/queries/inventory.ts` | NO CHANGE | CRUD already implemented |
-| `apps/game-server/src/inventory/inventory.service.ts` | NEW | In-memory inventory per player; DB persistence |
-| `apps/game-server/src/inventory/inventory.module.ts` | NEW | NestJS module wrapping InventoryService |
-| `apps/game-server/src/game/game.gateway.ts` | MODIFY | Add 5 new `@SubscribeMessage` handlers |
-| `apps/game-server/src/game/game.module.ts` | MODIFY | Import InventoryModule |
-| `apps/game-server/src/game/player.service.ts` | MODIFY | Call `inventoryService.loadForPlayer` in `authenticate()` |
-| `apps/game-server/src/game/game.service.ts` | MODIFY | `handleInteraction` item pickup triggers `inventoryService.pickupItem` |
-| `apps/web/src/store/gameStore.ts` | MODIFY | Add inventory/hotbar state; wire `inventory:update` socket event |
-| `apps/web/src/ui/GameUI.tsx` | MODIFY | Render `InventoryPanel` and `EquipmentPanel` conditionally |
-| `apps/web/src/ui/hud/HUD.tsx` | MODIFY | Render `ActionBar` component |
-| `apps/web/src/ui/hud/ActionBar.tsx` | NEW | 8-slot hotbar; key 1-8 bindings; emits `inventory:use` |
-| `apps/web/src/ui/panels/InventoryPanel.tsx` | NEW | Grid inventory; item slots; context menu for use/drop/equip |
-| `apps/web/src/ui/panels/EquipmentPanel.tsx` | NEW | Equipment slots; exo-suit silhouette; drag-from-inventory |
-| `apps/web/src/game/ui/ZoneHUD.ts` | MODIFY or NO CHANGE | Only if hotbar is kept in Phaser layer (recommend React instead) |
+2. **Creatures in combat phase:** Creatures carry their own `BaseStats` and level. The same `computeCharStats()` pure function applies. No new abstraction or duplicate code needed.
 
 ---
 
 ## Integration Points
 
+### New vs. Modified — Complete Inventory
+
+| File | Status | Change |
+|------|--------|--------|
+| `packages/shared-types/src/core/stats.ts` | NEW | `PrimaryStatId`, `BaseStats`, `StatBreakdown`, `CharStatsPayload` |
+| `packages/shared-types/src/network/events.ts` | MODIFIED | Add `'stats:update': CharStatsPayload` to `ServerEvents` |
+| `packages/shared-types/src/core/player.ts` | MODIFIED | Remove `PlayerStats`; replace with import from `stats.ts` |
+| `packages/database/src/schema/characters.ts` | MODIFIED | Replace `StatsJson` with `BaseStats` (8 new field names + new defaults) |
+| `packages/game-logic/src/stats/definitions.ts` | NEW | `STAT_DEFINITIONS` constant (base values + perLevelBonus per stat) |
+| `packages/game-logic/src/stats/computation.ts` | NEW | `computeCharStats()` pure function |
+| `packages/game-logic/src/stats/index.ts` | NEW | Re-exports |
+| `packages/game-logic/src/index.ts` | MODIFIED | Add `export * from './stats'` |
+| `packages/game-logic/src/combat/damage.ts` | MODIFIED | `DamageParams.attackerStats` / `defenderStats` -> `Partial<BaseStats>` |
+| `packages/game-logic/src/inventory/stats.ts` | NOT MODIFIED | `effectiveStats()` works unchanged; bonuses map already accepts any string key |
+| `apps/game-server/src/game/stats.service.ts` | NEW | Orchestrates computation + socket emission |
+| `apps/game-server/src/game/game.gateway.ts` | MODIFIED | Inject `StatsService`; call `computeAndEmit` after auth and equip/unequip |
+| `apps/game-server/src/game/game.module.ts` | MODIFIED | Register `StatsService` as provider |
+| `apps/game-server/src/game/player.service.ts` | MODIFIED | Add `baseStats: BaseStats` to `ConnectedPlayer`; populate on authenticate |
+| `apps/web/src/store/statsStore.ts` | NEW | Zustand + immer store; wired to `stats:update` socket event |
+| `apps/web/src/components/StatsPanel.tsx` | NEW | HUD component rendering stat breakdown table |
+
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| `GameGateway` <-> `InventoryService` | Direct method call (NestJS injection) | `InventoryService` injected into `GameGateway` via `GameModule` importing `InventoryModule` |
-| `InventoryService` <-> `game-logic/inventory` | Import and call pure functions | No async; validation is sync. Server imports `@into-the-void/game-logic`. |
-| `InventoryService` <-> `database` | `DatabaseService.getClient()` (existing pattern) | Same pattern as `PlayerService.authenticate()` — inject `DatabaseService` |
-| `InventoryService` <-> `PlayerService` | `PlayerService.getPlayerById()` for player state | `InventoryService` reads player level/stats from `PlayerService` for validation |
-| `gameStore` <-> `socket` | `gameSocket.on('inventory:update', ...)` | Mirrors existing `zone:state` listener pattern in `gameStore.ts` |
-| `ActionBar` (React) <-> `gameSocket` | `gameSocket.emit('inventory:use', ...)` direct call | Same as how `HUD.tsx` calls `toggleInventory()` on `gameStore` |
-| `InventoryPanel` <-> `gameStore` | `useGameStore()` hook for `inventory` state | Same pattern as `ChatPanel.tsx` uses `useGameStore()` for `chatMessages` |
-| `ItemRegistry` <-> `InventoryPanel` | `ItemRegistry.get(item.itemId)` for display data | Client imports `@into-the-void/items` for icon color/name display |
-| `ItemRegistry` <-> `InventoryService` | `ItemRegistry.get(item.itemId)` for validation | Server imports `@into-the-void/items`; same singleton, same data |
-| `EntityRegistry.items` <-> `ItemRegistry` | MIGRATION — existing 4 items move from entity-registry to items package | `EntityRegistry.items` in `shared-types` becomes a thin wrapper or is deleted |
-
-### HUD Architecture Decision: React vs. Phaser for ActionBar
-
-The existing HUD is split:
-- `ZoneHUD.ts` (Phaser): zone name, tier, location text — Phaser Text objects rendered in the game scene
-- `HUD.tsx` (React): health/energy/XP bars, inventory toggle button, chat button — React overlay
-
-**Recommendation: ActionBar as React component in `HUD.tsx`, not Phaser.**
-
-Rationale: The existing Inventory toggle button is already in `HUD.tsx` as a React button. ActionBar is UI, not game-world content. Keyboard binding (1-8 keys) is easier to handle in React with `useEffect`/`keydown` listeners without interfering with Phaser's input system. Phaser's input system is focused on movement keys — adding hotbar keys there creates coupling.
-
-Risk to watch: Phaser captures keyboard focus. Ensure the React `keydown` listener is on `document` (not a div) and check `document.activeElement` to avoid firing hotbar actions while typing in chat.
+| `GameGateway` <-> `StatsService` | Direct method call (NestJS injection) | `StatsService` injected into `GameGateway` via `GameModule` |
+| `StatsService` <-> `PlayerService` | `playerService.getPlayerById(playerId)` | Reads `baseStats` and `level` from in-memory player |
+| `StatsService` <-> `InventoryService` | `inventoryService.getInventory(playerId)` | Reads `equipment` from in-memory inventory |
+| `StatsService` <-> `game-logic/stats` | Import and call `computeCharStats()` | Pure function, synchronous, no async |
+| `statsStore` <-> `gameSocket` | `gameSocket.on('stats:update', ...)` | Same pattern as `inventoryStore.ts` |
+| `StatsPanel` <-> `statsStore` | `useStatsStore()` hook | Standard Zustand subscribe |
 
 ---
 
@@ -560,129 +327,88 @@ Risk to watch: Phaser captures keyboard focus. Ensure the React `keydown` listen
 
 | Scale | Architecture Adjustments |
 |-------|--------------------------|
-| Current (small playerbase) | In-memory `Map<playerId, Inventory>` in `InventoryService` is fine |
-| ~500 concurrent players | Async DB flush queue (debounce saves by 2-5 seconds); still in-memory |
-| ~5000 concurrent players | Redis as inventory cache instead of in-memory Map; game-server can scale horizontally |
-| Crafting/trading (future) | Item transfer needs transactions; JSONB approach limits atomic multi-player operations — migrate to separate `inventory_items` rows at this point |
-
-### Database Schema Note
-
-Current schema stores all inventory items as a single JSONB array in one row per character. This is correct for the current milestone. The limitations:
-
-- Can't query "who has item X" efficiently (no indexed item search)
-- Concurrent writes to same player's inventory need application-level locking
-- Fine for single game-server instance (inventory mutations are serialized through `InventoryService`)
-
-Do not change the schema now. The application-level locking via in-memory `InventoryService` handles concurrency correctly for a single server instance.
+| 0-1k players | `computeCharStats()` is pure, synchronous, <1ms. Emit on every equip event. No concern. |
+| 1k-10k players | If equip event frequency spikes, debounce `stats:update` emissions by 50ms per player. |
+| 10k+ players | Cache `CharStatsPayload` in-memory per player in `StatsService`; invalidate on equip event. Avoids recomputing if multiple reads happen before next equip. |
 
 ---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Putting Inventory Logic in GameGateway
+### Anti-Pattern 1: Computing Stats on the Client
 
-**What people do:** Add item use validation, effect resolution, and DB writes directly inside the `@SubscribeMessage('inventory:use')` handler in `GameGateway`.
+**What people do:** Client derives stat totals from level + equipment locally. Skips `stats:update` event.
 
-**Why it's wrong:** `GameGateway` already does too much (auth, movement, interaction, chat). Inventory logic grows large. Testing becomes impossible. Mirrors exactly the mistake avoided in the movement system by using `GameService` + `PlayerService`.
+**Why it's wrong:** Server is authoritative. Client-computed stats can be exploited. Combat calculations on the server must use server-computed values. Client is display-only.
 
-**Do this instead:** `GameGateway` handlers are thin: authenticate the socket, delegate to `InventoryService`, emit the result. All logic lives in `InventoryService` and `game-logic/inventory`.
+**Do this instead:** Client receives `CharStatsPayload` from server via `stats:update`. It renders what it receives. The `statsStore` holds server truth, not a local derivation.
 
-### Anti-Pattern 2: Optimistic Inventory Updates on Client
+### Anti-Pattern 2: Adding Stats to gameStore
 
-**What people do:** Update `gameStore.inventory` immediately on button press, then confirm when server responds.
+**What people do:** Attach `CharStatsPayload` to the main `gameStore` for convenience.
 
-**Why it's wrong:** Inventory has item IDs, quantities, and slot positions that the server may modify differently (stack merging, overflow handling). An optimistic state that differs from server state on rollback causes visual glitches (items briefly disappear/reappear). The cost of optimistic inventory updates does not match the benefit — inventory actions are not latency-sensitive.
+**Why it's wrong:** `gameStore` is subscribed to by the Phaser game instance. Stat updates on every equip event trigger unnecessary Phaser render cycles. The `inventoryStore` separation exists precisely to prevent this — apply the same lesson.
 
-**Do this instead:** Show a brief "processing" state on the item slot if needed. Wait for `inventory:update` from server. This is the same round-trip as movement — acceptable for non-movement UI.
+**Do this instead:** Create `statsStore.ts` as a dedicated Zustand store with immer, identical in structure to `inventoryStore.ts`.
 
-### Anti-Pattern 3: Duplicating ItemDefinition Between EntityRegistry and ItemRegistry
+### Anti-Pattern 3: Storing Computed Stats in the Database
 
-**What people do:** Keep `EntityRegistry.items` in `shared-types` and also create `ItemRegistry` in the new `items` package. Items get defined in two places and diverge.
+**What people do:** Persist total stat values to the `characters` table after each equip change.
 
-**Why it's wrong:** `EntityRegistry.items` (`ItemConfig`) already has 4 items. If `ItemRegistry` defines those same items differently, any code importing from `entity-registry` gets a different definition than code importing from `items`.
+**Why it's wrong:** Computed stats are derived data. Storing derived data creates a synchronization problem: the cached totals in DB may not match the current equipment state. Any equipment change requires updating both the equipment and the stat cache atomically.
 
-**Do this instead:** Migrate the 4 existing `EntityRegistry.items` entries to `ItemRegistry` as the canonical source. Delete or deprecate `EntityRegistry.items`. `EntityRegistry` continues to manage creatures and minerals — only items move.
+**Do this instead:** DB stores only `BaseStats` (the raw inputs). Computed totals are derived fresh on demand by `computeCharStats()`. This is fast enough to not require caching.
 
-### Anti-Pattern 4: HUD ActionBar in Phaser Instead of React
+### Anti-Pattern 4: Separate Stat Definitions for Players and Creatures
 
-**What people do:** Add hotbar slot rendering to `ZoneHUD.ts` as Phaser Text/Image objects, add key capture to `WorldScene.handleInput()`.
+**What people do:** Create a separate `CreatureStats` type or duplicate `STAT_DEFINITIONS` for the creature system in the combat phase.
 
-**Why it's wrong:** Phaser input handling is designed for continuous per-frame polling (movement). Hotbar key presses are discrete events. Mixing them in `WorldScene` creates coupling between movement timing (150ms rate limit) and hotbar use (no rate limit). Phaser Text/Image objects for UI are harder to style than React+CSS.
+**Why it's wrong:** The milestone explicitly states stats will be reused for creatures. A parallel definition means two lists to maintain in sync, and two code paths for the same calculation.
 
-**Do this instead:** `ActionBar.tsx` is a React component. It registers a `keydown` listener on `document` with explicit guard against chat/input focus states. Styles with CSS variables matching existing `--color-accent` scheme.
-
-### Anti-Pattern 5: Loading Inventory in PlayerService Instead of InventoryService
-
-**What people do:** Add `getInventory(db, characterId)` call inside `PlayerService.authenticate()` and store it on the `ConnectedPlayer` object.
-
-**Why it's wrong:** Inventory data is separate concern from player presence/authentication. Bloating `ConnectedPlayer` with inventory breaks the single-responsibility of `PlayerService`. Inventory will grow in complexity (slots, equipment, hotbar); this should stay in its own service.
-
-**Do this instead:** `PlayerService.authenticate()` calls `await inventoryService.loadForPlayer(player.id, db)` after creating the player. `InventoryService` handles its own loading logic independently.
+**Do this instead:** `BaseStats` and `computeCharStats()` are generic. Creature definitions provide their own numeric values for the same 8 stat IDs. Same pure function, different inputs.
 
 ---
 
-## Suggested Build Order
+## Suggested Build Order (Within Milestone)
 
-Dependencies flow upward: shared-types and packages must exist before game-server and web can import them. Within each layer, pure/foundational components precede complex ones.
+Dependencies flow upward: shared-types must exist before game-logic can import types, which must exist before game-server can import functions, which must exist before web can wire events.
 
-### Phase 1: Foundation (packages)
-1. Create `packages/items` package with `ItemRegistry`, `ItemDefinition` types, and registration bootstrap
-2. Define 100 items across 6 categories in `definitions/` — no logic, just data
-3. Migrate `EntityRegistry.items` (4 existing items) into the new registry, delete from entity-registry
-4. Extend `shared-types/game/inventory.ts` with `HotbarSlot` type
-5. Add `equipment:change` to `shared-types/network/events.ts`
-6. Add `packages/game-logic/src/inventory/` with pure validation functions
+1. **`packages/shared-types/src/core/stats.ts`** — Defines all types. Nothing else can compile without this. Also add `'stats:update'` to `ServerEvents` here.
 
-**Verification gate:** All existing tests pass. `ItemRegistry.get('health_vial')` returns correct definition.
+2. **`packages/database/src/schema/characters.ts`** — Replace `StatsJson` with new 8-field type. Run `pnpm db:push` (dev) to apply schema change. Existing character rows will have old field names in JSON — provide a one-time migration script to rename keys.
 
-### Phase 2: Server-side InventoryService
-7. Create `apps/game-server/src/inventory/inventory.service.ts`
-8. Create `apps/game-server/src/inventory/inventory.module.ts`
-9. Modify `GameModule` to import `InventoryModule`
-10. Modify `PlayerService.authenticate()` to trigger `inventoryService.loadForPlayer()`
-11. Add `inventory:use`, `inventory:drop`, `inventory:pickup`, `equipment:change` handlers to `GameGateway`
-12. Emit `inventory:update` after each successful mutation
-13. Emit initial `inventory:update` after successful auth
+3. **`packages/shared-types/src/core/player.ts`** — Remove `PlayerStats`; add `baseStats: BaseStats` field to `Player` interface.
 
-**Verification gate:** Test via WebSocket client — auth, then inventory:use for a consumable, expect inventory:update back with decremented quantity.
+4. **`packages/game-logic/src/stats/`** — `definitions.ts` + `computation.ts` + `index.ts`. Update `game-logic/src/index.ts` to export the new module.
 
-### Phase 3: Client state
-14. Add `inventory`, `hotbar` state slices to `gameStore.ts`
-15. Wire `gameSocket.on('inventory:update', ...)` handler in `gameStore.ts`
-16. Wire `gameSocket.on('auth:success', ...)` to also set initial inventory from auth payload
+5. **`packages/game-logic/src/combat/damage.ts`** — Update `DamageParams` type (rename stats fields to new names).
 
-**Verification gate:** After login, `useGameStore.getState().inventory` is populated. Confirm in browser devtools.
+6. **`apps/game-server/src/game/stats.service.ts`** — Depends on game-logic computation + PlayerService + InventoryService.
 
-### Phase 4: React UI components
-17. Build `InventoryPanel.tsx` — grid of 20 slots, item icon + quantity, right-click context menu (use/drop/equip)
-18. Build `EquipmentPanel.tsx` — equipment slot targets, shows equipped item icons
-19. Build `ActionBar.tsx` — 8 slots, key 1-8 bindings, shows assigned hotbar items
-20. Modify `GameUI.tsx` to render `InventoryPanel` and `EquipmentPanel` based on `showInventory`
-21. Modify `HUD.tsx` to render `ActionBar`
+7. **`apps/game-server/src/game/game.module.ts`** + **`game.gateway.ts`** — Register and inject StatsService; add `computeAndEmit` calls after auth and all equip/unequip events.
 
-**Verification gate:** Open inventory in game, items visible, use a consumable via context menu, see inventory:update reflected.
+8. **`apps/web/src/store/statsStore.ts`** — Depends on shared-types `CharStatsPayload` and gameSocket.
 
-### Phase 5: Polish + game.service.ts integration
-22. Modify `game.service.ts` `handleInteraction` — pickup case now calls `inventoryService.pickupItem()` and emits both `inventory:update` and `entity:despawn`
-23. Handle `game.service.ts` `handleInteraction` — mineral harvest yields a material item into inventory
-24. Handle disconnect: `inventoryService.unloadForPlayer()` called in `PlayerService.handleDisconnect()`
+9. **`apps/web/src/components/StatsPanel.tsx`** — Depends only on `statsStore`. HUD component built last.
 
 ---
 
 ## Sources
 
-- Codebase: `packages/tiles/src/registry.ts` — TileRegistry singleton pattern (direct audit)
-- Codebase: `packages/tiles/src/types.ts` — TileDefinition interface (direct audit)
-- Codebase: `packages/shared-types/src/game/inventory.ts` — existing Inventory types (direct audit)
-- Codebase: `packages/shared-types/src/network/events.ts` — existing socket events (direct audit)
-- Codebase: `packages/database/src/schema/inventories.ts` — JSONB schema (direct audit)
-- Codebase: `packages/database/src/queries/inventory.ts` — existing CRUD (direct audit)
-- Codebase: `apps/game-server/src/game/player.service.ts` — in-memory Map pattern (direct audit)
-- Codebase: `apps/game-server/src/game/game.gateway.ts` — event handler pattern (direct audit)
-- Codebase: `apps/web/src/store/gameStore.ts` — Zustand state shape + socket listener pattern (direct audit)
-- Codebase: `apps/web/src/ui/GameUI.tsx` — panel rendering pattern (direct audit)
-- Codebase: `apps/web/src/network/socket.ts` — `inventory:update` already listed in serverEvents (direct audit)
+- Codebase (direct read, 2026-02-18): `packages/database/src/schema/characters.ts` — `StatsJson` shape
+- Codebase (direct read, 2026-02-18): `packages/shared-types/src/core/player.ts` — `PlayerStats` shape
+- Codebase (direct read, 2026-02-18): `packages/game-logic/src/inventory/stats.ts` — `effectiveStats()` and `ComputedStats`
+- Codebase (direct read, 2026-02-18): `packages/game-logic/src/inventory/effects.ts` — `stat_buff` routing via `bonuses`
+- Codebase (direct read, 2026-02-18): `packages/game-logic/src/combat/damage.ts` — `DamageParams` using `PlayerStats`
+- Codebase (direct read, 2026-02-18): `packages/items/src/types.ts` — `stat_buff` ItemEffect interface
+- Codebase (direct read, 2026-02-18): `apps/game-server/src/game/player.service.ts` — ConnectedPlayer shape + in-memory map pattern
+- Codebase (direct read, 2026-02-18): `apps/game-server/src/game/inventory.service.ts` — InventoryService in-memory pattern
+- Codebase (direct read, 2026-02-18): `apps/game-server/src/game/game.gateway.ts` — event handler injection pattern
+- Codebase (direct read, 2026-02-18): `apps/web/src/store/inventoryStore.ts` — separate Zustand store pattern (rationale for statsStore)
+- Codebase (direct read, 2026-02-18): `apps/web/src/store/gameStore.ts` — Phaser Game instance in store (reason NOT to add stats here)
+- Confidence: HIGH — all claims verified against actual source files
 
 ---
-*Architecture research for: Into the Void — inventory & items system (v1.6)*
-*Researched: 2026-02-17*
+
+*Architecture research for: Character stats system — Into the Void MMO*
+*Researched: 2026-02-18*
