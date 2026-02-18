@@ -24,7 +24,7 @@ import {
 } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
 import type { Inventory, InventoryItemJson, EquipmentJson } from '@into-the-void/database';
-import { getBiome } from '@into-the-void/world-gen';
+import { getBiome, BiomeGenerator } from '@into-the-void/world-gen';
 
 interface MoveResult {
   success: boolean;
@@ -93,6 +93,12 @@ export class GameService {
     const y = parseInt(parts[2], 10);
     const biome = getBiome(this.zonesService.getWorldSeed(), x, y);
 
+    // Compute fertility at chunk center
+    const biomeGenerator = new BiomeGenerator(this.zonesService.getWorldSeed());
+    const centerX = x * 64 + 32; // ZONE_SIZE = 64, center = ZONE_SIZE/2
+    const centerY = y * 64 + 32;
+    const fertilityType = biomeGenerator.getFertilityAt(centerX, centerY);
+
     return {
       zoneId,
       entities,
@@ -100,6 +106,7 @@ export class GameService {
       lastUpdate: Date.now(),
       chunk,
       biome,
+      fertilityType,
     };
   }
 
