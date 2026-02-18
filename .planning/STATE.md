@@ -46,6 +46,7 @@ Progress: [████████░░░░░░░░░░░░] 47% (27
 | Phase 27 P01 | 127s | 3 tasks | 4 files |
 | Phase 27 P02 | 754s | 3 tasks | 6 files |
 | Phase 27 P03 | 115 | 3 tasks | 4 files |
+| Phase 28 P01 | 159s | 3 tasks | 7 files |
 | Phase 28-equipment-system P02 | 164 | 3 tasks | 4 files |
 
 ## Accumulated Context
@@ -88,6 +89,9 @@ Recent decisions affecting current work:
 - [Phase 27]: InventoryPanel uses non-optimistic reorder: pendingReorder blocks UI until server inventory:update clears it via setInventory
 - [Phase 27]: Slot array built from maxSlots count with slot-index lookup — empty slots render as null entries in fixed-size grid
 - [Phase 27]: @floating-ui/react installed at workspace root (single root package.json Nx monorepo); ItemTooltip wraps reference div to preserve SortableSlot drag behavior
+- [28-01]: DndContext lifted to GameUI.tsx — shared across InventoryPanel and EquipmentPanel; equip- prefix on slot IDs routes drag drops to equipment:change event
+- [28-01]: accessory1 labeled Tool (Secondary) in EquipmentPanel; treated as secondary tool slot for EQUIP-09 swap without adding new DB field
+- [28-01]: Module slot count derived reactively from inventory.equipment.exosuit via ItemRegistry.get().moduleSlots — updates on every inventory:update roundtrip
 - [28-02]: ComputedStats defined in shared-types (mirrors game-logic) so client can import without depending on server-side game-logic package
 - [28-02]: EquipResult.inventory typed as Inventory & { stats?: ComputedStats } — type-safe intersection preserving Drizzle DB type while allowing stats attachment
 - [28-02]: swapToolSlots uses single updateInventoryFull for atomic tool<->accessory1 swap — consistent with two-write exploit prevention pattern
@@ -110,10 +114,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 28-02-PLAN.md — equipment:tool_swap handler, ComputedStats, exo-suit guard
+Stopped at: Completed 28-01-PLAN.md — EquipmentPanel UI, DndContext lift, cross-panel drag-to-equip (28-02 also complete)
 Resume file: None
 
 **Next action:** Execute Phase 28 Plan 03
 
 ---
-*Last updated: 2026-02-18 after Phase 28 Plan 02 complete*
+*Last updated: 2026-02-18 after Phase 28 Plan 01 complete*
