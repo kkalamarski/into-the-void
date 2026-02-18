@@ -90,6 +90,9 @@ export class EntityRenderer {
       const yieldBar = this.createHealthBar(entity.yield, entity.maxYield);
       yieldBar.y = -this.elevationOffset - 24;
       container.add(yieldBar);
+      // Store for direct lookup in updateEntity (avoids fragile Y-position search)
+      container.setData('maxYield', entity.maxYield);
+      container.setData('yieldBar', yieldBar);
     }
 
     // Yield bar for plants (same visual as health bar)
@@ -97,6 +100,9 @@ export class EntityRenderer {
       const yieldBar = this.createHealthBar(entity.yield, entity.maxYield);
       yieldBar.y = -this.elevationOffset - 24;
       container.add(yieldBar);
+      // Store for direct lookup in updateEntity (avoids fragile Y-position search)
+      container.setData('maxYield', entity.maxYield);
+      container.setData('yieldBar', yieldBar);
     }
 
     // Behavior icon for creatures (above health bar) — show '?' if perception gated
@@ -118,6 +124,9 @@ export class EntityRenderer {
         container.add(behaviorIcon);
       }
     }
+
+    // Store data for update handlers (yield bar update, fade-in offset)
+    container.setData('elevationOffset', this.elevationOffset);
 
     // Initial depth: Y-position with X-tiebreaker and elevation (use world coordinates)
     const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation);
