@@ -24,3 +24,7 @@ export * from './inventory/stats';
 
 // Stats
 export * from './stats/char-stats';
+
+// Loot
+export * from './loot/loot-table';
+export * from './loot/creature-loot';
