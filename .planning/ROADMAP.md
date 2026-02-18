@@ -292,13 +292,13 @@ Plans:
   3. After a server restart, killed entities that have not yet reached their `respawnAt` time remain absent from the zone — respawn timers survive process death
   4. The client `entityStore.ts` Zustand store updates correctly on `entity:spawn`, `entity:update`, and `entity:despawn` socket events — entity state does not require a page reload to refresh
   5. Player cannot move onto a tile occupied by an entity — server rejects the move and pathfinding routes around entities
-**Plans**: TBD
+**Plans**: 4 plans in 2 waves
 
 Plans:
-- [ ] 34-01: Create entity_lifecycle DB table; enrich createEntityFromSpawn() with EntityRegistry data
-- [ ] 34-02: Apply lifecycle records on zone load; create entityStore.ts Zustand store
-- [ ] 34-03: Update EntityRenderer to resolve per-species texture key; display health bars for all entity types
-- [ ] 34-04: Add entity blocking to pathfinding and server movement validation
+- [ ] 34-01-PLAN.md — Create entity_lifecycle DB table; enrich createEntityFromSpawn() with EntityRegistry data
+- [ ] 34-02-PLAN.md — Create entityStore.ts Zustand store with socket event wiring
+- [ ] 34-03-PLAN.md — Update EntityRenderer: always-visible health/yield bars for all entity types
+- [ ] 34-04-PLAN.md — Add entity blocking to pathfinding and server movement validation
 
 #### Phase 35: Loot Tables, Tool Interaction, and Respawn
 
@@ -413,13 +413,13 @@ Phases execute in numeric order: 33 -> 34 -> 35 -> 36 -> 37 -> 38
 | 31. Server Wiring & Socket Delivery | v1.7 | 3/3 | Complete | 2026-02-18 |
 | 32. Client Display | v1.7 | 3/3 | Complete | 2026-02-18 |
 | 33. Foundation Types and Entity Definitions | v1.8 | 3/3 | Complete | 2026-02-18 |
-| 34. Entity Lifecycle Persistence and Enriched Spawning | v1.8 | TBD | Not started | - |
+| 34. Entity Lifecycle Persistence and Enriched Spawning | v1.8 | 0/4 | In progress | - |
 | 35. Loot Tables, Tool Interaction, and Respawn | v1.8 | TBD | Not started | - |
 | 36. Creature AI Wander and Behavior Tick | v1.8 | TBD | Not started | - |
 | 37. Fertility Noise and Biome Spawn Quality | v1.8 | TBD | Not started | - |
 | 38. Perception Gating and Client Polish | v1.8 | TBD | Not started | - |
 
-**Total:** 38 phases (32 complete, 6 in progress)
+**Total:** 38 phases (33 complete, 5 in progress)
 
 ---
-*Last updated: 2026-02-18 after Phase 33 planning*
+*Last updated: 2026-02-18 after Phase 34 planning*
