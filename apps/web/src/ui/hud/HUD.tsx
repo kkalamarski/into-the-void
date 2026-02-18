@@ -1,12 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from '../../store/gameStore';
+import { useInventoryStore } from '../../store/inventoryStore';
 import { BIOME_DISPLAY_NAMES, BIOME_COLORS, BiomeType } from '@into-the-void/shared-types';
 import './HUD.css';
 
 export const HUD: React.FC = () => {
   const { player, zoneState, toggleInventory, toggleEquipment, toggleChat } = useGameStore();
+  const { inventory } = useInventoryStore();
 
   if (!player) return null;
+
+  const stats = inventory?.stats ?? {
+    armor: 0,
+    speedMultiplier: 1.0,
+    hazardResistance: 0,
+    detectionRange: 0,
+    energyCapacity: 100,
+    rechargeRate: 1.0,
+    jumpHeight: 1.0,
+    bonuses: {},
+  };
 
   const healthPercent = (player.health / player.maxHealth) * 100;
   const energy = player.energy ?? 100;
@@ -78,6 +91,20 @@ export const HUD: React.FC = () => {
             <span className="biome-name">{BIOME_DISPLAY_NAMES[displayedBiome]}</span>
           </div>
         )}
+        <div className="stats-section">
+          <div className="stat-row">
+            <span className="stat-icon" title="Armor">&#x1F6E1;</span>
+            <span className="stat-value">{stats.armor}</span>
+          </div>
+          <div className="stat-row">
+            <span className="stat-icon" title="Speed">&#x26A1;</span>
+            <span className="stat-value">{(stats.speedMultiplier * 100).toFixed(0)}%</span>
+          </div>
+          <div className="stat-row">
+            <span className="stat-icon" title="Hazard Resistance">&#x2623;</span>
+            <span className="stat-value">{stats.hazardResistance}</span>
+          </div>
+        </div>
       </div>
 
       <div className="hud-bottom">
