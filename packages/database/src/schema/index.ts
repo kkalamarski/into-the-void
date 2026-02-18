@@ -23,3 +23,6 @@ export * from './entity-lifecycle';
 
 // Ground items (loot dropped in zones)
 export * from './ground-items';
+
+// Loot tables (LOOT-01)
+export * from './loot-tables';
