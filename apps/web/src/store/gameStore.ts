@@ -260,6 +260,18 @@ gameSocket.on('entity:update', ({ entityId, changes }: { entityId: string; chang
   );
 });
 
+// Handle entity batch updates (AI creature movement)
+// Forward to WorldScene for visual rendering — entityStore already handles its own batch wiring
+gameSocket.on('entity:batch', ({ updates }: { updates: Array<{ entityId: string; changes: Partial<Entity> }> }) => {
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+  if (worldScene) {
+    for (const { entityId, changes } of updates) {
+      worldScene.updateEntity(entityId, changes);
+    }
+  }
+});
+
 // Handle player joined
 gameSocket.on('player:joined', (player: PlayerPublic) => {
   const game = useGameStore.getState().game;
