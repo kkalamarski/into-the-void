@@ -256,7 +256,7 @@ See: `.planning/milestones/v1.7-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.8 Entity System (In Progress)
+### v1.8 Entity System (In Progress)
 
 **Milestone Goal:** Implement entity definition system with spawning, interaction, and loot. Entities include creatures (idle wander), plants, minerals, and artifacts — all interactable via tools with range-based interaction, perception gating, and a respawn system. The world gains a fertility noise layer that shapes spawn density by tile.
 
@@ -274,12 +274,12 @@ See: `.planning/milestones/v1.7-ROADMAP.md`
   2. `CreatureBehavior` type is `herbivore | omnivore | predator | maniac` — the old `passive | neutral | aggressive | defensive` shape no longer compiles anywhere in the codebase
   3. `BiomeType` enum includes all 10 lore biomes including `miasma_marshes` and `petrified_expanse` — entity definitions reference only valid biome keys
   4. Every entity definition carries a `lootTableId` reference and `BIOME_SPAWN_CONFIGS` references only entity IDs present in the registry — no ID mismatch at startup
-**Plans**: TBD
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 33-01: Create packages/entities workspace package mirroring packages/items pattern with EntityRegistryImpl
-- [ ] 33-02: Define ~35 entity definitions (creatures, plants, minerals, artifacts) with loot table references
-- [ ] 33-03: Update shared-types BiomeType, CreatureBehavior, Plant and Artifact interfaces; update BIOME_SPAWN_CONFIGS
+- [ ] 33-01-PLAN.md — Update shared-types: BiomeType to 10 entries, CreatureBehavior to lore values, EntityType with plant/artifact; fix downstream compilation errors
+- [ ] 33-02-PLAN.md — Create packages/entities workspace package with EntityRegistry and type definitions
+- [ ] 33-03-PLAN.md — Define ~35 entity definitions (creatures, plants, minerals, artifacts); update BIOME_SPAWN_CONFIGS to use ENTITY_IDS
 
 #### Phase 34: Entity Lifecycle Persistence and Enriched Spawning
 
@@ -376,7 +376,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 33 → 34 → 35 → 36 → 37 → 38
+Phases execute in numeric order: 33 -> 34 -> 35 -> 36 -> 37 -> 38
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -412,7 +412,7 @@ Phases execute in numeric order: 33 → 34 → 35 → 36 → 37 → 38
 | 30. Type Foundation & Pure Computation | v1.7 | 2/2 | Complete | 2026-02-18 |
 | 31. Server Wiring & Socket Delivery | v1.7 | 3/3 | Complete | 2026-02-18 |
 | 32. Client Display | v1.7 | 3/3 | Complete | 2026-02-18 |
-| 33. Foundation Types and Entity Definitions | v1.8 | TBD | Not started | - |
+| 33. Foundation Types and Entity Definitions | v1.8 | 0/3 | In Progress | - |
 | 34. Entity Lifecycle Persistence and Enriched Spawning | v1.8 | TBD | Not started | - |
 | 35. Loot Tables, Tool Interaction, and Respawn | v1.8 | TBD | Not started | - |
 | 36. Creature AI Wander and Behavior Tick | v1.8 | TBD | Not started | - |
@@ -422,4 +422,4 @@ Phases execute in numeric order: 33 → 34 → 35 → 36 → 37 → 38
 **Total:** 38 phases (32 complete, 6 in progress)
 
 ---
-*Last updated: 2026-02-18 after v1.8 Entity System roadmap created*
+*Last updated: 2026-02-18 after Phase 33 planning*
