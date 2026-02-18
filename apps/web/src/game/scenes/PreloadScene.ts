@@ -57,8 +57,9 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private loadFloorTileSprites(): void {
-    // Load all 8 biome floor tiles from sprite-generator output
-    const floorTiles = [
+    // Load all 16 tile sprites from sprite-generator output (8 biomes x 2 types)
+    const tileSprites = [
+      // Floor tiles
       'tile_void_floor',
       'tile_crystal_floor',
       'tile_toxic_floor',
@@ -67,9 +68,18 @@ export class PreloadScene extends Phaser.Scene {
       'tile_volcanic_floor',
       'tile_fungal_floor',
       'tile_crater_floor',
+      // Feature tiles (walls, pools, formations, etc.)
+      'tile_void_wall',
+      'tile_crystal_formation',
+      'tile_toxic_pool',
+      'tile_ruins_wall',
+      'tile_ice_wall',
+      'tile_lava',
+      'tile_fungal_growth',
+      'tile_crater_debris',
     ];
 
-    for (const key of floorTiles) {
+    for (const key of tileSprites) {
       this.load.image(key, `sprites/${key}.png`);
     }
   }
@@ -78,35 +88,7 @@ export class PreloadScene extends Phaser.Scene {
     const TILE_SIZE = 96;
     const graphics = this.make.graphics({ x: 0, y: 0 });
 
-    // Generate wall/formation textures (floor tiles now loaded from PNG)
-    const tileTextures = [
-      // Void Plains
-      { key: 'tile_void_wall', color: 0x1a1a2a, border: 0x0a0a1a },
-      // Crystal Caves
-      { key: 'tile_crystal_formation', color: 0x7b68ee, border: 0x6b58de },
-      // Toxic Wastes
-      { key: 'tile_toxic_pool', color: 0x9acd32, border: 0x8abd22 },
-      // Ancient Ruins
-      { key: 'tile_ruins_wall', color: 0x8b7355, border: 0x7b6345 },
-      // Frozen Expanse
-      { key: 'tile_ice_wall', color: 0xb0e0e6, border: 0xa0d0d6 },
-      // Volcanic Ridge
-      { key: 'tile_lava', color: 0xff4500, border: 0xef3500 },
-      // Fungal Forest
-      { key: 'tile_fungal_growth', color: 0x9370db, border: 0x8360cb },
-      // Starfall Crater
-      { key: 'tile_crater_debris', color: 0x191970, border: 0x090960 },
-    ];
-
-    // Generate each tile texture
-    for (const tile of tileTextures) {
-      graphics.fillStyle(tile.color);
-      graphics.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
-      graphics.lineStyle(1, tile.border);
-      graphics.strokeRect(0, 0, TILE_SIZE, TILE_SIZE);
-      graphics.generateTexture(tile.key, TILE_SIZE, TILE_SIZE);
-      graphics.clear();
-    }
+    // All tile textures now loaded from PNG - only generate entity textures
 
     // Player sphere - higher resolution with shading for 3D effect
     const PLAYER_SIZE = 192; // 2x resolution for crisp rendering

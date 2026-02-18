@@ -265,49 +265,30 @@ export class TileRenderer {
   }
 
   /**
-   * Create top face using sprite texture if available, otherwise fallback to colored diamond.
+   * Create top face using sprite texture. All 16 tile types now have isometric sprites.
    */
   private createTopFace(tileId: TileId): Phaser.GameObjects.GameObject {
     const textureKey = this.getTextureKey(tileId);
-    const halfWidth = this.isoTransform.tileWidth / 2;
-    const halfHeight = this.isoTransform.tileHeight / 2;
 
-    // Check if we have a loaded sprite texture (vs procedurally generated)
-    // Floor tiles are loaded from PNG, others are procedurally generated
-    const isFloorTile = textureKey.endsWith('_floor');
-
-    if (isFloorTile && this.scene.textures.exists(textureKey)) {
-      // Use sprite image for floor tiles
-      // Scale 96x96 sprite to fit isometric diamond (128x64)
+    // All tiles now use sprite images (128x64 isometric diamonds)
+    if (this.scene.textures.exists(textureKey)) {
       const sprite = this.scene.add.image(0, 0, textureKey);
-      sprite.setScale(this.isoTransform.tileWidth / 96, this.isoTransform.tileHeight / 96);
       return sprite;
     }
 
-    // Fallback: draw colored diamond for walls/formations
+    // Fallback: draw colored diamond if texture somehow missing
+    const halfWidth = this.isoTransform.tileWidth / 2;
+    const halfHeight = this.isoTransform.tileHeight / 2;
     const color = this.getTileColor(tileId);
     const graphics = this.scene.add.graphics();
     graphics.fillStyle(color, 1);
-
-    // Draw diamond relative to (0, 0)
-    graphics.beginPath();
-    graphics.moveTo(0, -halfHeight);      // Top
-    graphics.lineTo(halfWidth, 0);        // Right
-    graphics.lineTo(0, halfHeight);       // Bottom
-    graphics.lineTo(-halfWidth, 0);       // Left
-    graphics.closePath();
-    graphics.fillPath();
-
-    // Add subtle border
-    graphics.lineStyle(1, 0x000000, 0.2);
     graphics.beginPath();
     graphics.moveTo(0, -halfHeight);
     graphics.lineTo(halfWidth, 0);
     graphics.lineTo(0, halfHeight);
     graphics.lineTo(-halfWidth, 0);
     graphics.closePath();
-    graphics.strokePath();
-
+    graphics.fillPath();
     return graphics;
   }
 }
