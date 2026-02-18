@@ -42,6 +42,7 @@ export type ServerEventType =
   | 'entity:spawn'
   | 'entity:despawn'
   | 'entity:update'
+  | 'entity:batch'
   | 'player:joined'
   | 'player:left'
   | 'player:moved'
@@ -86,6 +87,7 @@ export interface ServerEvents {
   'entity:spawn': import('../core/entity').Entity;
   'entity:despawn': { entityId: string };
   'entity:update': { entityId: string; changes: Partial<import('../core/entity').Entity> };
+  'entity:batch': { updates: Array<{ entityId: string; changes: Partial<import('../core/entity').Entity> }> };
   'player:joined': import('../core/player').PlayerPublic;
   'player:left': { playerId: string };
   'player:moved': { playerId: string; position: import('../core/position').Position; lastProcessedInput?: number };

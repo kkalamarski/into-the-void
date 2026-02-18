@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Creature } from '@into-the-void/shared-types';
+import { tickCreatureAI } from '@into-the-void/game-logic';
 import { Server } from 'socket.io';
 import { ZonesService } from '../zones/zones.service';
 import { PlayerService } from './player.service';
@@ -89,19 +90,51 @@ export class AiService implements OnModuleInit {
 
   /**
    * Run one AI tick for a zone.
-   * Stub implementation — Plan 36-02 adds FSM wander logic.
+   * Processes all active creatures through the tickCreatureAI FSM and emits a
+   * single entity:batch event with all position changes for the tick.
    */
   private async runZoneTick(zoneId: string): Promise<void> {
+    // Get all entities in the zone
     const entities = await this.zonesService.getZoneEntities(zoneId);
 
+    // Filter to active creatures with health
     const creatures = entities.filter(
       (e): e is Creature => e.type === 'creature' && e.active && (e as Creature).health > 0,
     );
 
-    if (creatures.length === 0) {
-      return;
+    if (creatures.length === 0) return;
+
+    // Get players in zone for flee calculations
+    const players = this.playerService.getPlayersInZone(zoneId);
+
+    // Get collision map from chunk
+    const chunk = await this.zonesService.getChunk(zoneId);
+    const collisions = chunk.collisions;
+
+    // Collect all movements in a batch
+    const movedCreatures: Array<{ entityId: string; changes: { position: { x: number; y: number; zoneId: string } } }> = [];
+
+    // Process each creature through FSM
+    for (const creature of creatures) {
+      const result = tickCreatureAI(creature, players, collisions);
+
+      if (result.newPosition) {
+        // Update in-memory state via ZonesService
+        await this.zonesService.updateEntity(zoneId, creature.id, {
+          position: result.newPosition,
+        });
+
+        // Add to batch
+        movedCreatures.push({
+          entityId: creature.id,
+          changes: { position: result.newPosition },
+        });
+      }
     }
 
-    console.log(`[AiService] Tick zone ${zoneId}: ${creatures.length} creatures`);
+    // Emit single batched event if any creatures moved
+    if (movedCreatures.length > 0) {
+      this.server?.to(zoneId).emit('entity:batch', { updates: movedCreatures });
+    }
   }
 }
