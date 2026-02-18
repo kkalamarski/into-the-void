@@ -82,6 +82,9 @@ Recent decisions affecting current work:
 - [35-02]: Rarity-to-range mapping: common=1, rare=2, epic=3, exotic=4, legendary=5 — linear scale, consistent across all three tool types (mining, combat, research)
 - [Phase 35-04]: Error handling wraps entire processRespawnTick() body — tick loop never crashes the server on DB errors
 - [Phase 35-04]: ZonesService injected into GameGateway for setServer() wiring — server reference flows gateway -> zones, avoids circular injection
+- [35-03]: ToolUseResult.entityChanges typed as Record<string,unknown> — Partial<Entity> excludes subtype fields (health, yield) needed for gateway broadcast
+- [35-03]: EntityService injected directly into GameService (no forwardRef) — no circular dependency exists between them
+- [35-03]: UNKNOWN_ENTITY fallback given respawnSeconds: 60 — satisfies new required property on CreatureDefinition without semantic impact
 
 ### Pending Todos
 
