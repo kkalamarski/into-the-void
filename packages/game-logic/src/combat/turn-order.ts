@@ -1,7 +1,7 @@
 import {
   CombatParticipant,
   CombatState,
-  PlayerStats,
+  CharacterStats,
 } from '@into-the-void/shared-types';
 
 /**
@@ -9,13 +9,13 @@ import {
  */
 export function calculateInitiative(
   level: number,
-  stats?: Partial<PlayerStats>
+  stats?: Partial<CharacterStats>
 ): number {
   const baseInitiative = level * 2;
-  const agilityBonus = (stats?.agility ?? 10) * 0.5;
+  const hasteBonus = (stats?.haste ?? 10) * 0.5;
   const randomBonus = Math.random() * 10;
 
-  return baseInitiative + agilityBonus + randomBonus;
+  return baseInitiative + hasteBonus + randomBonus;
 }
 
 /**
@@ -55,7 +55,7 @@ export function createCombatState(
     health: number;
     maxHealth: number;
     level: number;
-    stats?: Partial<PlayerStats>;
+    stats?: Partial<CharacterStats>;
   }>
 ): CombatState {
   const combatParticipants: CombatParticipant[] = participants.map((p) => ({

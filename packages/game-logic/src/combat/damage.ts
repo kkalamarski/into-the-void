@@ -1,7 +1,7 @@
 import {
   CombatResult,
   CombatEffect,
-  PlayerStats,
+  CharacterStats,
 } from '@into-the-void/shared-types';
 
 /**
@@ -11,8 +11,8 @@ export interface DamageParams {
   baseDamage: number;
   attackerLevel: number;
   defenderLevel: number;
-  attackerStats?: Partial<PlayerStats>;
-  defenderStats?: Partial<PlayerStats>;
+  attackerStats?: Partial<CharacterStats>;
+  defenderStats?: Partial<CharacterStats>;
   weaponDamage?: number;
   armorReduction?: number;
   critChance?: number;
@@ -38,9 +38,9 @@ export function calculateDamage(params: DamageParams): {
     critMultiplier = 2.0,
   } = params;
 
-  // Base damage from weapon + strength
+  // Base damage from weapon + power
   let damage = baseDamage + weaponDamage;
-  damage += (attackerStats.strength ?? 10) * 0.5;
+  damage += (attackerStats.power ?? 10) * 0.5;
 
   // Level difference modifier (-10% to +10% per level)
   const levelDiff = attackerLevel - defenderLevel;
@@ -49,7 +49,7 @@ export function calculateDamage(params: DamageParams): {
 
   // Critical hit check
   const critRoll = Math.random();
-  const actualCritChance = critChance + (attackerStats.agility ?? 10) * 0.005;
+  const actualCritChance = critChance + (attackerStats.haste ?? 10) * 0.005;
   const critical = critRoll < actualCritChance;
 
   if (critical) {
@@ -57,7 +57,7 @@ export function calculateDamage(params: DamageParams): {
   }
 
   // Apply armor reduction
-  const effectiveArmor = armorReduction * (1 + (defenderStats.endurance ?? 10) * 0.02);
+  const effectiveArmor = armorReduction * (1 + (defenderStats.toughness ?? 10) * 0.02);
   damage = Math.max(1, damage - effectiveArmor);
 
   // Add some randomness (±10%)
@@ -75,22 +75,22 @@ export function calculateDamage(params: DamageParams): {
 export function calculateHitChance(
   attackerLevel: number,
   defenderLevel: number,
-  attackerStats?: Partial<PlayerStats>,
-  defenderStats?: Partial<PlayerStats>
+  attackerStats?: Partial<CharacterStats>,
+  defenderStats?: Partial<CharacterStats>
 ): number {
   const baseHitChance = 0.85;
 
-  // Agility affects dodge
-  const attackerAgility = attackerStats?.agility ?? 10;
-  const defenderAgility = defenderStats?.agility ?? 10;
+  // Haste affects dodge
+  const attackerHaste = attackerStats?.haste ?? 10;
+  const defenderHaste = defenderStats?.haste ?? 10;
 
-  const agilityMod = (attackerAgility - defenderAgility) * 0.01;
+  const hasteMod = (attackerHaste - defenderHaste) * 0.01;
 
   // Level difference affects hit chance
   const levelDiff = attackerLevel - defenderLevel;
   const levelMod = levelDiff * 0.02;
 
-  return Math.max(0.1, Math.min(0.99, baseHitChance + agilityMod + levelMod));
+  return Math.max(0.1, Math.min(0.99, baseHitChance + hasteMod + levelMod));
 }
 
 /**
