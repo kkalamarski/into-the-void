@@ -930,6 +930,21 @@ export class WorldScene extends Phaser.Scene {
 
     this.entitySprites.set(entity.id, container);
 
+    // Fade-in animation for entity:spawn events only (not initial zone load)
+    // Convention: zoneId is passed for zone:state entities (initial load),
+    // undefined for entity:spawn events (respawns/new spawns).
+    // This convention distinguishes initial zone population from runtime spawns.
+    const isRespawnEvent = !zoneId;
+    if (isRespawnEvent) {
+      container.setAlpha(0);
+      this.tweens.add({
+        targets: container,
+        alpha: 1,
+        duration: 400,
+        ease: 'Linear',
+      });
+    }
+
     // Track zone ownership for cleanup on chunk unload
     if (zoneId) {
       if (!this.entityZoneMap.has(zoneId)) {
