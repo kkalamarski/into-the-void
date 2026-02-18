@@ -17,7 +17,11 @@ import {
   Direction,
   AuthRequest,
   getErrorInfo,
+  CharStatsPayload,
+  CharacterStats,
 } from '@into-the-void/shared-types';
+import { computeCharStats } from '@into-the-void/game-logic';
+import { EquipmentJson } from '@into-the-void/database';
 
 @WebSocketGateway({
   cors: {
@@ -97,6 +101,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.emit('zone:state', zoneState);
         // Send initial inventory state (PRIVATE - only to this client)
         client.emit('inventory:update', inventory);
+        // Send initial stats (PRIVATE - only to this client)
+        this.emitStats(client, result.player.id);
 
         // Notify other players
         client.to(result.player.position.zoneId).emit('player:joined', {
@@ -214,6 +220,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // If interaction returned inventory (e.g., item pickup), emit private update
         if (result.inventory) {
           client.emit('inventory:update', result.inventory);
+          // If interaction was an item pickup, stats may have changed
+          const interactPlayer = this.playerService.getPlayerBySocket(client.id);
+          if (interactPlayer) {
+            this.emitStats(client, interactPlayer.id);
+          }
         }
       } else {
         client.emit('error', {
@@ -418,6 +429,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (result.success) {
         if (result.inventory) {
           client.emit('inventory:update', result.inventory);
+          this.emitStats(client, player.id);
         }
       } else {
         client.emit('error', {
@@ -447,6 +459,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (result.success) {
         if (result.inventory) {
           client.emit('inventory:update', result.inventory);
+          this.emitStats(client, player.id);
         }
       } else {
         client.emit('error', {
@@ -473,6 +486,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (result.success) {
         if (result.inventory) {
           client.emit('inventory:update', result.inventory);
+          this.emitStats(client, player.id);
         }
       } else {
         client.emit('error', {
@@ -518,6 +532,38 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const storage = await this.storageService.loadForPlayer(player.id);
     client.emit('storage:update', storage);
+  }
+
+  /**
+   * Compute and emit character stats to the requesting client.
+   * Called after auth and after every equipment mutation.
+   */
+  private emitStats(client: Socket, playerId: string): void {
+    const inventory = this.inventoryService.getInventory(playerId);
+    const player = this.playerService.getPlayerById(playerId);
+    if (!inventory || !player) return;
+
+    // Base stats: level-scaled with empty equipment
+    const emptyEquipment: EquipmentJson = { modules: [] };
+    const base = computeCharStats(player.level, emptyEquipment, 'player');
+
+    // Total stats: level-scaled + equipment bonuses
+    const total = computeCharStats(player.level, inventory.equipment as EquipmentJson, 'player');
+
+    // Equipment contribution: delta between total and base
+    const equipment: CharacterStats = {
+      durability: total.durability - base.durability,
+      toughness: total.toughness - base.toughness,
+      power: total.power - base.power,
+      haste: total.haste - base.haste,
+      vigor: total.vigor - base.vigor,
+      recovery: total.recovery - base.recovery,
+      perception: total.perception - base.perception,
+      resilience: total.resilience - base.resilience,
+    };
+
+    const payload: CharStatsPayload = { total, base, equipment };
+    client.emit('stats:update', payload);
   }
 
   /**
