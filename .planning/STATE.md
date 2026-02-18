@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 38 of 38 (Perception Gating and Client Polish)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-18 — Phase 38 Plan 01 complete (AI broadcast whitelist + entity:batch WorldScene wiring)
+Last activity: 2026-02-18 — Phase 38 Plan 02 complete (perception gating INTR-06 + level gating INTR-07)
 
 Progress: [████████░░] 85% (v1.8 milestone — Phase 38 in progress, plan 1 done)
 
@@ -104,6 +104,10 @@ Recent decisions affecting current work:
 - [37-03]: ZoneState.fertilityType is required (not optional) — enforces correctness at the type level; all ZoneState consumers must provide it
 - [38-01]: PublicCreatureUpdate interface at module level enforces CRAI-09 — named type on movedCreatures[] array makes TypeScript reject AI internal state fields at compile time
 - [38-01]: entity:batch handler in gameStore.ts does not update Zustand entities array — entityStore already handles React/pathfinding; gameStore handler is Phaser-rendering-only, matching the dual-handler pattern from Phase 34-02
+- [38-02]: canInteractLevel uses entityLevel <= playerLevel + 5 — exclusive boundary, consistent with INTR-07 "more than 5 levels higher" spec
+- [38-02]: Perception gate fails open (shows real name) when stats not yet loaded — prevents all-'???' state during WebSocket connection establishment
+- [38-02]: gated variable hoisted from applyPerceptionGate() drives both nameplate and behavior icon — single call prevents split-brain display state
+- [38-02]: Creature level is not rendered in client UI — level portion of INTR-06 vacuously satisfied; only name and behavior icon are gated
 
 ### Pending Todos
 
@@ -122,10 +126,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 38 Plan 01 complete — AI broadcast whitelist (CRAI-09) and entity:batch WorldScene wiring
+Stopped at: Phase 38 Plan 02 complete — perception gating (INTR-06) client display + level gating (INTR-07) server enforcement
 Resume file: None
 
-**Next action:** Execute Phase 38 Plan 02
+**Next action:** Execute Phase 38 Plan 03 (if any) or finalize v1.8 milestone
 
 ---
-*Last updated: 2026-02-18 after Phase 38 Plan 01 complete (PublicCreatureUpdate whitelist, entity:batch visual wiring)*
+*Last updated: 2026-02-18 after Phase 38 Plan 02 complete (perception gating INTR-06, level gating INTR-07)*
