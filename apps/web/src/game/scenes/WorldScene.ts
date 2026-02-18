@@ -13,6 +13,7 @@ import { PathfindingController } from '../systems/PathfindingController';
 import { IsometricTransform } from '../utils/IsometricTransform';
 import { DepthSorter } from '../rendering/DepthSorter';
 import { useGameStore } from '../../store/gameStore';
+import { gameSocket } from '../../network/socket';
 
 export const ISO_TILE_WIDTH = 128;
 export const ISO_TILE_HEIGHT = 64;
@@ -173,6 +174,13 @@ export class WorldScene extends Phaser.Scene {
         S: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
         D: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
       };
+
+      // Tool swap hotkey: Q swaps main and secondary tool slots
+      this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q).on('down', () => {
+        if (this.input.keyboard?.enabled) {
+          gameSocket.emit('equipment:tool_swap', {});
+        }
+      });
     }
 
     // Tiles and player will be loaded via loadZoneFromState() when zone:state event arrives
