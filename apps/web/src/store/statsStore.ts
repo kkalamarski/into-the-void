@@ -1,26 +1,49 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import type { CharStatsPayload } from '@into-the-void/shared-types';
+import type { CharStatsPayload, CharacterStats } from '@into-the-void/shared-types';
 import { gameSocket } from '../network/socket';
+import { STAT_DISPLAY_ORDER } from '../ui/constants';
 
 interface StatsState {
   stats: CharStatsPayload | null;
+  levelUpDeltas: Partial<CharacterStats> | null;
   setStats: (payload: CharStatsPayload) => void;
   clearStats: () => void;
+  clearLevelUpDeltas: () => void;
 }
 
 export const useStatsStore = create<StatsState>()(
   immer((set) => ({
     stats: null,
+    levelUpDeltas: null,
 
     setStats: (payload: CharStatsPayload) =>
       set((state) => {
+        // Detect level-up by comparing incoming base stats to previous base stats
+        if (state.stats !== null) {
+          const deltas: Partial<CharacterStats> = {};
+          for (const { key } of STAT_DISPLAY_ORDER) {
+            const prev = state.stats.base[key];
+            const next = payload.base[key];
+            if (next > prev) {
+              deltas[key] = next - prev;
+            }
+          }
+          if (Object.keys(deltas).length > 0) {
+            state.levelUpDeltas = deltas;
+          }
+        }
         state.stats = payload;
       }),
 
     clearStats: () =>
       set((state) => {
         state.stats = null;
+      }),
+
+    clearLevelUpDeltas: () =>
+      set((state) => {
+        state.levelUpDeltas = null;
       }),
   }))
 );
