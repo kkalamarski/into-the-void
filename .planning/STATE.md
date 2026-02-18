@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 33 of 38 (Foundation Types and Entity Definitions)
-Plan: 2 of TBD in current phase
+Plan: 3 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-18 — completed 33-02 (entities workspace package)
+Last activity: 2026-02-18 — completed 33-03 (entity definitions: 35 entities, ENTITY_IDS, auto-registration)
 
-Progress: [██░░░░░░░░] 20% (v1.8 milestone — 2 of ~10 plans complete)
+Progress: [███░░░░░░░] 30% (v1.8 milestone — 3 of ~10 plans complete)
 
 ## Performance Metrics
 
@@ -59,6 +59,9 @@ Recent decisions affecting current work:
 - [33-02]: packages/entities mirrors packages/items exactly — same package.json shape, project.json executor, tsconfig.lib.json, and registry singleton pattern
 - [33-02]: ArtifactDefinition.respawns typed as literal false (not boolean) — type-level enforcement of one-time discovery rule
 - [33-02]: src/definitions/ directory created empty — definitions population deferred to Plan 33-03
+- [33-03]: BIOME_SPAWN_CONFIGS reduced to one primary entry per biome — old hardcoded IDs (void_stalker, etc.) had no registry entries; only ENTITY_IDS-backed entries kept to satisfy must-have truth "references only IDs present in registry"
+- [33-03]: CREATURE_VOID_HORROR spans ancient_ruins + starfall_crater — single maniac-class creature covers both Tier IV biomes per lore
+- [33-03]: Auto-registration on module import — EntityRegistry.registerAll(ALL_ENTITIES) in index.ts side-effect runs at load time
 
 ### Pending Todos
 
@@ -80,10 +83,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 33-02-PLAN.md — @into-the-void/entities package with EntityRegistry singleton and EntityDefinition discriminated union
+Stopped at: Completed 33-03-PLAN.md — 35 entity definitions, ENTITY_IDS const, auto-registration, BIOME_SPAWN_CONFIGS updated
 Resume file: None
 
-**Next action:** Execute Phase 33 next plan (33-03 — entity definitions)
+**Next action:** Execute Phase 33 next plan (33-04 or next phase)
 
 ---
 *Last updated: 2026-02-18 after completing 33-02 entities workspace package*
