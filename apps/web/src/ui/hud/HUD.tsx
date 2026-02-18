@@ -6,7 +6,7 @@ import { ActionBar } from './ActionBar';
 import './HUD.css';
 
 export const HUD: React.FC = () => {
-  const { player, zoneState, toggleInventory, toggleEquipment, toggleChat } = useGameStore();
+  const { player, zoneState, toggleInventory, toggleEquipment, toggleStorage, toggleChat } = useGameStore();
   const { inventory } = useInventoryStore();
 
   if (!player) return null;
@@ -117,6 +117,10 @@ export const HUD: React.FC = () => {
           <button className="action-btn" onClick={toggleEquipment}>
             <span>E</span>
             <label>Equipment</label>
+          </button>
+          <button className="action-btn" onClick={toggleStorage}>
+            <span>S</span>
+            <label>Storage</label>
           </button>
           <button className="action-btn" onClick={toggleChat}>
             <span>C</span>
