@@ -272,6 +272,30 @@ export class InventoryService {
   }
 
   /**
+   * Swap main tool and secondary tool (accessory1) positions.
+   * Used for Q hotkey tool swap functionality.
+   */
+  async swapToolSlots(playerId: string): Promise<{ success: boolean; error?: string }> {
+    const inventory = this.inventories.get(playerId);
+    if (!inventory) return { success: false, error: 'Inventory not loaded' };
+
+    // Swap tool <-> accessory1 in memory
+    const mainTool = inventory.equipment.tool;
+    const secondaryTool = inventory.equipment.accessory1;
+    inventory.equipment.tool = secondaryTool;
+    inventory.equipment.accessory1 = mainTool;
+
+    // Persist to database
+    const db = this.databaseService.getClient();
+    await updateInventoryFull(db, playerId, {
+      items: inventory.items,
+      equipment: inventory.equipment,
+    });
+
+    return { success: true };
+  }
+
+  /**
    * Unequip a specific module by instanceId from the modules array back to inventory.
    * Checks that inventory has room before moving.
    */

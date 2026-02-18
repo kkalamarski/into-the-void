@@ -435,4 +435,26 @@ export class GameService {
       inventory: { ...updatedInventory, stats },
     };
   }
+
+  async handleToolSwap(socketId: string): Promise<EquipResult> {
+    const player = this.playerService.getPlayerBySocket(socketId);
+    if (!player) return { success: false, error: 'Player not found' };
+
+    const inventory = this.inventoryService.getInventory(player.id);
+    if (!inventory) return { success: false, error: 'Inventory not loaded' };
+
+    // Delegate swap to InventoryService (which has DatabaseService)
+    const result = await this.inventoryService.swapToolSlots(player.id);
+    if (!result.success) return { success: false, error: result.error };
+
+    // Get updated inventory and compute stats
+    const updatedInventory = this.inventoryService.getInventory(player.id);
+    if (!updatedInventory) return { success: false, error: 'Failed to get inventory' };
+    const stats = effectiveStats(updatedInventory.equipment as EquipmentJson);
+
+    return {
+      success: true,
+      inventory: { ...updatedInventory, stats },
+    };
+  }
 }

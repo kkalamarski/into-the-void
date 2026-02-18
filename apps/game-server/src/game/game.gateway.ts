@@ -460,6 +460,32 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('equipment:tool_swap')
+  async handleToolSwap(@ConnectedSocket() client: Socket) {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const result = await this.gameService.handleToolSwap(client.id);
+
+      if (result.success) {
+        if (result.inventory) {
+          client.emit('inventory:update', result.inventory);
+        }
+      } else {
+        client.emit('error', {
+          code: 'INVALID_ACTION',
+          message: result.error || 'Cannot swap tools',
+        });
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to swap tools',
+      });
+    }
+  }
+
   @SubscribeMessage('inventory:reorder')
   async handleInventoryReorder(
     @ConnectedSocket() client: Socket,
