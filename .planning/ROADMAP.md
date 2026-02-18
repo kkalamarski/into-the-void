@@ -213,8 +213,8 @@ See: `.planning/milestones/v1.6-ROADMAP.md`
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 30-01-PLAN.md — Replace PlayerStats with CharacterStats in shared-types; update combat files and StatsJson
-- [ ] 30-02-PLAN.md — Create computeCharStats pure function with unit tests
+- [x] 30-01-PLAN.md — Replace PlayerStats with CharacterStats in shared-types; update combat files and StatsJson
+- [x] 30-02-PLAN.md — Create computeCharStats pure function with unit tests
 
 #### Phase 31: Server Wiring & Socket Delivery
 
@@ -282,11 +282,11 @@ Phases execute in numeric order: 30 → 31 → 32
 | 27. Client State & Inventory Panel UI | v1.6 | 3/3 | Complete | 2026-02-17 |
 | 28. Equipment System | v1.6 | 3/3 | Complete | 2026-02-18 |
 | 29. Action Bar & Personal Storage | v1.6 | 2/2 | Complete | 2026-02-18 |
-| 30. Type Foundation & Pure Computation | v1.7 | 0/2 | Planned | - |
+| 30. Type Foundation & Pure Computation | v1.7 | 2/2 | Complete | 2026-02-18 |
 | 31. Server Wiring & Socket Delivery | v1.7 | TBD | Not started | - |
 | 32. Client Display | v1.7 | TBD | Not started | - |
 
-**Total:** 32 phases (29 complete, 3 planned)
+**Total:** 32 phases (30 complete, 2 planned)
 
 ---
-*Last updated: 2026-02-18 after Phase 30 planning*
+*Last updated: 2026-02-18 after Phase 30 execution complete*

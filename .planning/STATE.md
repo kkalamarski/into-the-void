@@ -80,7 +80,7 @@ Last session: 2026-02-18
 Stopped at: Completed 30-02-PLAN.md (computeCharStats pure function)
 Resume file: None
 
-**Next action:** Execute Phase 31 — `/gsd:execute-phase 31-character-stats-server`
+**Next action:** Plan Phase 31 — `/gsd:plan-phase 31`
 
 ---
 *Last updated: 2026-02-18 after 30-02 computeCharStats pure function complete*
