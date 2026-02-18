@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 35 of 38 (Loot Tables, Tool Interaction, and Respawn)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-18 — Phase 34 complete (4/4 plans, verified)
+Plan: 2 of 4 in current phase
+Status: In progress
+Last activity: 2026-02-18 — Plan 35-02 complete (tool interaction range property)
 
 Progress: [███░░░░░░░] 33% (v1.8 milestone — 2/6 phases complete)
 
@@ -74,6 +74,8 @@ Recent decisions affecting current work:
 - [34-04]: Server entity blocking placed between validateMovement and isZoneTransition in movePlayer — logically correct layering
 - [34-03]: createHealthBar() reused for mineral/plant yield bars — parameter semantics (current/max) are identical; no new visual component needed
 - [34-03]: getEntityTexture() now accepts Entity not EntityType — enables species-specific texture lookup; missing textures handled gracefully by Phaser until Phase 38 adds sprites
+- [35-02]: range placed after effects in ItemDefinition — tool-only optional property, undefined for non-tools
+- [35-02]: Rarity-to-range mapping: common=1, rare=2, epic=3, exotic=4, legendary=5 — linear scale, consistent across all three tool types (mining, combat, research)
 
 ### Pending Todos
 
@@ -95,10 +97,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 34 complete — entity lifecycle persistence, enriched spawning, entity blocking
+Stopped at: Completed 35-02-PLAN.md — ItemDefinition.range property and all 15 tool range values
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 35`
+**Next action:** Execute plan 35-03 (EntityService.handleToolUse tool interaction)
 
 ---
-*Last updated: 2026-02-18 after Phase 34 complete (entity lifecycle persistence and enriched spawning)*
+*Last updated: 2026-02-18 after Phase 35 Plan 02 complete (tool interaction range property)*
