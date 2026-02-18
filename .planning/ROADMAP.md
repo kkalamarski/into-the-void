@@ -180,7 +180,7 @@ Plans:
   1. Player drags a consumable from inventory to an action bar slot — pressing the corresponding number key (1-8) uses the item via the server without typing in chat input
   2. Action bar slot auto-greys when the referenced item is no longer in inventory (used, dropped, or moved) — confirmed after every `inventory:update`
   3. Player opens the personal storage panel — items stored there are separate from inventory and persist across sessions
-**Plans**: 2 plans in 1 wave
+**Plans**: 2 plans in 2 waves
 
 Plans:
 - [ ] 29-01-PLAN.md — Build ActionBar.tsx with 8 slots, document keydown listener with chat-focus guard, localStorage persistence, orphan invalidation on inventory:update
