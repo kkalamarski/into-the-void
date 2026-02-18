@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { Entity, Creature, Mineral, Plant, CreatureBehavior, Position, ZONE_SIZE } from '@into-the-void/shared-types';
 import { IsometricTransform } from '../utils/IsometricTransform';
+import { useStatsStore } from '../../store/statsStore';
 
 const ELEVATION_HEIGHT_STEP = 16; // Pixels per elevation level
 const OCCLUSION_DEPTH_THRESHOLD = 10.0;  // Structures this far "in front" occlude entities
@@ -71,8 +72,9 @@ export class EntityRenderer {
     sprite.setOrigin(0.5, 1.0); // Bottom-center origin for ground alignment
     container.add(sprite);
 
-    // Nameplate above sprite (always visible for entity identification)
-    const nameplate = this.createNameplate(entity.name);
+    // Nameplate above sprite — perception gated for creatures (INTR-06)
+    const { name: displayName, gated } = this.applyPerceptionGate(entity);
+    const nameplate = this.createNameplate(displayName);
     nameplate.y = -this.elevationOffset - 60; // Above sprite, health bar, and behavior icon
     container.add(nameplate);
 
@@ -97,11 +99,24 @@ export class EntityRenderer {
       container.add(yieldBar);
     }
 
-    // Behavior icon for creatures (above health bar)
+    // Behavior icon for creatures (above health bar) — show '?' if perception gated
     if (this.isCreature(entity)) {
-      const behaviorIcon = this.createBehaviorIcon(entity.behavior);
-      behaviorIcon.y = -this.elevationOffset - 34; // Above health bar
-      container.add(behaviorIcon);
+      if (gated) {
+        // Gated creature — show unknown indicator
+        const unknownIcon = this.scene.add.text(0, 0, '?', {
+          fontSize: '12px',
+          color: '#888888',
+          backgroundColor: '#000000',
+          padding: { x: 4, y: 2 },
+        });
+        unknownIcon.setOrigin(0.5, 0.5);
+        unknownIcon.y = -this.elevationOffset - 34;
+        container.add(unknownIcon);
+      } else {
+        const behaviorIcon = this.createBehaviorIcon(entity.behavior);
+        behaviorIcon.y = -this.elevationOffset - 34; // Above health bar
+        container.add(behaviorIcon);
+      }
     }
 
     // Initial depth: Y-position with X-tiebreaker and elevation (use world coordinates)
@@ -249,6 +264,34 @@ export class EntityRenderer {
    */
   private isPlant(entity: Entity): entity is Plant {
     return entity.type === 'plant';
+  }
+
+  /**
+   * INTR-06: Perception gating — hide entity info if level exceeds perception * 3.
+   * Returns '???' if gated, otherwise the original name.
+   * Fails open (shows real name) if stats not yet loaded.
+   *
+   * NOTE: The "name and level" criterion in INTR-06 references perception gating.
+   * Creature level is NOT displayed in the client UI — only name and behavior icon.
+   * Therefore the level portion of INTR-06 is vacuously satisfied (nothing to hide).
+   * INTR-07 is the level-based interaction gating (server-side, handled in Task 2).
+   * If level display is added in the future, extend this to also return a gated level.
+   */
+  private applyPerceptionGate(entity: Entity): { name: string; gated: boolean } {
+    if (!this.isCreature(entity)) {
+      return { name: entity.name, gated: false };
+    }
+    const creature = entity as Creature;
+    const stats = useStatsStore.getState().stats;
+    if (!stats) {
+      // Fail open — stats not loaded yet, show real name
+      return { name: entity.name, gated: false };
+    }
+    const threshold = stats.total.perception * 3;
+    if (creature.level > threshold) {
+      return { name: '???', gated: true };
+    }
+    return { name: entity.name, gated: false };
   }
 
   /**
