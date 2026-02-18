@@ -9,6 +9,7 @@
 - ✅ **v1.4 Infinite World & Seamless Chunks** - Phases 17-20 (shipped 2026-02-17)
 - ✅ **v1.5 Movement Overhaul** - Phases 21-24 (shipped 2026-02-17)
 - ✅ **v1.6 Inventory & Items** - Phases 25-29 (shipped 2026-02-18)
+- 🚧 **v1.7 Character Stats** - Phases 30-32 (in progress)
 
 ## Phases
 
@@ -191,10 +192,63 @@ See: `.planning/milestones/v1.6-ROADMAP.md`
 
 </details>
 
+### 🚧 v1.7 Character Stats (In Progress)
+
+**Milestone Goal:** Implement the 8-stat character stats system (Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience) with linear level scaling, equipment bonuses, server-authoritative computation, and a stat panel HUD with breakdown display. Stats system is designed for reuse by the future combat milestone.
+
+**Phases:** 3 (30-32)
+**Depth:** Quick (from config)
+**Coverage:** 18/18 requirements mapped
+
+#### Phase 30: Type Foundation & Pure Computation
+
+**Goal**: The canonical `CharacterStats` type and `computeCharStats()` pure function exist in shared packages so every downstream layer can import them — no server or UI code is written until these compile and pass unit tests
+**Depends on**: Phase 29 (v1.6 complete)
+**Requirements**: STAT-01, STAT-02, STAT-03, STAT-04
+**Success Criteria** (what must be TRUE):
+  1. `CharacterStats` type is importable from `@into-the-void/shared-types` with all 8 primary stats; `PlayerStats` is replaced and the old 5-stat shape no longer compiles anywhere in the codebase
+  2. `computeCharStats(level, equipment)` called with a level-10 character and no equipment returns base stats that are higher than the same call at level 1 — linear scaling is verifiable by unit test
+  3. `computeCharStats(level, equipment)` called with a module that adds a Durability bonus returns a final Durability value greater than the base alone — equipment bonuses aggregate correctly
+  4. `computeCharStats(level, equipment, 'creature')` returns stats using creature-specific scaling constants — same function, different scale factor, no separate code path
+**Plans**: TBD
+
+Plans:
+- [ ] 30-01-PLAN.md — TBD
+
+#### Phase 31: Server Wiring & Socket Delivery
+
+**Goal**: The server computes authoritative character stats after auth and every equip change, wires all 8 stats into existing gameplay systems, and emits them to the client via `stats:update`
+**Depends on**: Phase 30 (CharacterStats type and computeCharStats() exist)
+**Requirements**: STAT-05, STAT-06, STAT-07, STAT-08, STAT-09, STAT-10, STAT-11, STAT-12, STAT-13, STAT-14
+**Success Criteria** (what must be TRUE):
+  1. After login, the client receives a `stats:update` event containing all 8 computed stats including the breakdown of base vs equipment contribution — server never waits for client to request stats
+  2. After equipping or unequipping any item, a new `stats:update` event is emitted within the same round trip as `inventory:update` — stats are never stale relative to equipment
+  3. Existing character rows in the database carry the new 8-stat shape after the migration script runs — no character returns `undefined` for any of the 8 stat fields
+  4. `calculateDamage()` in game-logic uses `power` and `toughness` stat names; `turn-order` uses `haste` — the old `strength`, `endurance`, `agility` references are gone and the codebase compiles cleanly
+**Plans**: TBD
+
+Plans:
+- [ ] 31-01-PLAN.md — TBD
+
+#### Phase 32: Client Display
+
+**Goal**: Players can open a stats panel showing all 8 stats with a base vs equipment breakdown, receive a level-up notification with stat deltas, and see item tooltips compare stats against their currently equipped item
+**Depends on**: Phase 31 (stats:update socket event delivers CharStatsPayload)
+**Requirements**: STAT-15, STAT-16, STAT-17, STAT-18
+**Success Criteria** (what must be TRUE):
+  1. Player presses the stats toggle key — a panel opens showing all 8 stats by lore name (Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience) with current values
+  2. Each stat row in the panel shows the breakdown: base value, equipment bonus, and total — for example "Durability 115 (100 base + 15 from modules)"
+  3. When a character levels up, an overlay notification appears for 3 seconds listing the stat deltas — for example "+5 Durability, +3 Power" — and then dismisses automatically
+  4. Player hovers an unequipped item — the tooltip shows each stat bonus with a green or red delta indicator comparing it to the currently equipped item in the same slot
+**Plans**: TBD
+
+Plans:
+- [ ] 32-01-PLAN.md — TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
+Phases execute in numeric order: 30 → 31 → 32
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -227,8 +281,11 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | 27. Client State & Inventory Panel UI | v1.6 | 3/3 | Complete | 2026-02-17 |
 | 28. Equipment System | v1.6 | 3/3 | Complete | 2026-02-18 |
 | 29. Action Bar & Personal Storage | v1.6 | 2/2 | Complete | 2026-02-18 |
+| 30. Type Foundation & Pure Computation | v1.7 | TBD | Not started | - |
+| 31. Server Wiring & Socket Delivery | v1.7 | TBD | Not started | - |
+| 32. Client Display | v1.7 | TBD | Not started | - |
 
-**Total:** 29 phases (29 complete, 0 planned)
+**Total:** 32 phases (29 complete, 3 planned)
 
 ---
-*Last updated: 2026-02-18 after Phase 29 complete*
+*Last updated: 2026-02-18 after v1.7 roadmap created*
