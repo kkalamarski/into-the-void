@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.7 Character Stats — Phase 31: Server Wiring & Socket Delivery
+**Current focus:** v1.7 Character Stats — Phase 31 complete, ready for Phase 32
 
 ## Current Position
 
-Phase: 31 of 32 (Server Wiring & Socket Delivery)
-Plan: 2 of 2 in current phase
-Status: Plan 02 complete
-Last activity: 2026-02-18 — 31-02 executed (statsStore + migrate-stats-schema)
+Phase: 31 of 32 (Server Wiring & Socket Delivery) — COMPLETE
+Plan: 3 of 3 in current phase
+Status: Plan 03 complete — Phase 31 fully done
+Last activity: 2026-02-18 — 31-03 executed (statsStore module graph wiring)
 
-Progress: [███░░░░░░░] 30% (v1.7 milestone)
+Progress: [████░░░░░░] 40% (v1.7 milestone)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 89 (Phases 1-31 plan 01 complete)
+- Total plans completed: 92 (Phases 1-31 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~4 hours
 
@@ -42,6 +42,7 @@ Progress: [███░░░░░░░] 30% (v1.7 milestone)
 | Phase 30 P02 | 3 | 3 tasks | 5 files |
 | Phase 31 P01 | 2 | 2 tasks | 4 files |
 | Phase 31 P02 | 2 | 2 tasks | 3 files |
+| Phase 31 P03 | 2 | 1 task | 1 file |
 
 ## Accumulated Context
 
@@ -66,6 +67,7 @@ Recent decisions affecting current work:
 - [31-01]: emitStats helper pattern — always call after inventory:update when equipment could change
 - [31-02]: statsStore follows inventoryStore pattern exactly - same Zustand+immer structure, module-level socket wiring
 - [31-02]: migrate-stats-schema.ts targets characters table; hasOldShape() detects old 5-stat keys (strength/agility/endurance/intelligence); NEW_STATS_DEFAULT matches StatsJson level-1 defaults
+- [31-03]: statsStore activated via side-effect import in GameUI.tsx — no useStatsStore hook yet (rendering deferred to Phase 32)
 
 ### Pending Todos
 
@@ -84,10 +86,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 31-02-PLAN.md (statsStore + migrate-stats-schema)
+Stopped at: Completed 31-03-PLAN.md (statsStore module graph wiring — Phase 31 complete)
 Resume file: None
 
 **Next action:** Execute Phase 32 — `/gsd:execute-phase 32`
 
 ---
-*Last updated: 2026-02-18 after 31-02 statsStore and migrate-stats-schema complete*
+*Last updated: 2026-02-18 after 31-03 statsStore module graph wiring complete (Phase 31 done)*
