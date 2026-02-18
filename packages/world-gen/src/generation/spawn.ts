@@ -1,6 +1,7 @@
 import { BiomeType, SpawnPoint, ZONE_SIZE } from '@into-the-void/shared-types';
 import { ENTITY_IDS } from '@into-the-void/entities';
 import { SeededRandom } from '../random/seeded-random';
+import { BiomeGenerator } from './biome';
 
 /**
  * Spawn configuration per biome
@@ -123,10 +124,11 @@ export function generateSpawnPoints(
   worldSeed: string,
   chunkX: number,
   chunkY: number,
-  biome: BiomeType,
+  biomeGenerator: BiomeGenerator,
   collisionMap: boolean[][]
 ): SpawnPoint[] {
   const random = new SeededRandom(`${worldSeed}_spawns_${chunkX}_${chunkY}`);
+  const biome = biomeGenerator.getChunkBiome(chunkX, chunkY, ZONE_SIZE);
   const config = BIOME_SPAWN_CONFIGS[biome];
   const spawnPoints: SpawnPoint[] = [];
 
