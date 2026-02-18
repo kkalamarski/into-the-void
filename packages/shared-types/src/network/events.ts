@@ -25,7 +25,10 @@ export type ClientEventType =
   | 'inventory:drop'
   | 'inventory:pickup'
   | 'inventory:reorder'
-  | 'zone:request';
+  | 'zone:request'
+  | 'equipment:change'
+  | 'inventory:unequip'
+  | 'equipment:tool_swap';
 
 /**
  * Server-to-client event types
@@ -62,6 +65,9 @@ export interface ClientEvents {
   'inventory:pickup': { entityId: string };
   'inventory:reorder': { fromSlot: number; toSlot: number };
   'zone:request': { zoneId: string };
+  'equipment:change': { instanceId: string };
+  'inventory:unequip': { instanceId: string };
+  'equipment:tool_swap': Record<string, never>;
 }
 
 /**

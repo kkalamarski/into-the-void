@@ -4,7 +4,7 @@ import { BIOME_DISPLAY_NAMES, BIOME_COLORS, BiomeType } from '@into-the-void/sha
 import './HUD.css';
 
 export const HUD: React.FC = () => {
-  const { player, zoneState, toggleInventory, toggleChat } = useGameStore();
+  const { player, zoneState, toggleInventory, toggleEquipment, toggleChat } = useGameStore();
 
   if (!player) return null;
 
@@ -85,6 +85,10 @@ export const HUD: React.FC = () => {
           <button className="action-btn" onClick={toggleInventory}>
             <span>I</span>
             <label>Inventory</label>
+          </button>
+          <button className="action-btn" onClick={toggleEquipment}>
+            <span>E</span>
+            <label>Equipment</label>
           </button>
           <button className="action-btn" onClick={toggleChat}>
             <span>C</span>

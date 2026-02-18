@@ -39,6 +39,9 @@ interface GameState {
   showInventory: boolean;
   toggleInventory: () => void;
 
+  showEquipment: boolean;
+  toggleEquipment: () => void;
+
   showChat: boolean;
   toggleChat: () => void;
 
@@ -83,6 +86,9 @@ export const useGameStore = create<GameState>((set) => ({
   // UI State
   showInventory: false,
   toggleInventory: () => set((state) => ({ showInventory: !state.showInventory })),
+
+  showEquipment: false,
+  toggleEquipment: () => set((state) => ({ showEquipment: !state.showEquipment })),
 
   showChat: false,
   toggleChat: () => set((state) => ({ showChat: !state.showChat })),
