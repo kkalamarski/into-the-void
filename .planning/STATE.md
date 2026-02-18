@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 33 of 38 (Foundation Types and Entity Definitions)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-18 — completed 33-01 (foundation types and entity definitions)
+Last activity: 2026-02-18 — completed 33-02 (entities workspace package)
 
-Progress: [█░░░░░░░░░] 10% (v1.8 milestone — 1 of ~10 plans complete)
+Progress: [██░░░░░░░░] 20% (v1.8 milestone — 2 of ~10 plans complete)
 
 ## Performance Metrics
 
@@ -56,6 +56,9 @@ Recent decisions affecting current work:
 - [33-01]: miasma_marshes and petrified_expanse added as Tier II biomes — uses existing tile visuals (fungal/void/toxic) without new sprites
 - [33-01]: Plant and Artifact EntityType variants added with full interfaces — foundation for entity lifecycle system in Phase 34+
 - [33-01]: Legacy EntityRegistry in shared-types marked @deprecated — to be replaced by @into-the-void/entities package
+- [33-02]: packages/entities mirrors packages/items exactly — same package.json shape, project.json executor, tsconfig.lib.json, and registry singleton pattern
+- [33-02]: ArtifactDefinition.respawns typed as literal false (not boolean) — type-level enforcement of one-time discovery rule
+- [33-02]: src/definitions/ directory created empty — definitions population deferred to Plan 33-03
 
 ### Pending Todos
 
@@ -77,10 +80,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 33-01-PLAN.md — foundation types (CreatureBehavior, BiomeType, EntityType) updated across 9 files
+Stopped at: Completed 33-02-PLAN.md — @into-the-void/entities package with EntityRegistry singleton and EntityDefinition discriminated union
 Resume file: None
 
-**Next action:** Execute Phase 33 next plan (33-02 or beyond)
+**Next action:** Execute Phase 33 next plan (33-03 — entity definitions)
 
 ---
-*Last updated: 2026-02-18 after completing 33-01 foundation types and entity definitions*
+*Last updated: 2026-02-18 after completing 33-02 entities workspace package*
