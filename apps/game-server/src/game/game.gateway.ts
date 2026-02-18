@@ -15,6 +15,7 @@ import { InventoryService } from './inventory.service';
 import { StorageService } from './storage.service';
 import { EntityService } from './entity.service';
 import { ZonesService } from '../zones/zones.service';
+import { AiService } from './ai.service';
 import {
   ClientEvents,
   Direction,
@@ -47,11 +48,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly storageService: StorageService,
     private readonly entityService: EntityService,
     private readonly zonesService: ZonesService,
+    private readonly aiService: AiService,
   ) {}
 
   afterInit(server: Server) {
     this.zonesService.setServer(server);
-    console.log('[GameGateway] WebSocket server initialized, ZonesService connected');
+    this.aiService.setServer(server);
+    console.log('[GameGateway] WebSocket server initialized, ZonesService and AiService connected');
   }
 
   async handleConnection(client: Socket) {
@@ -74,7 +77,17 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   async handleDisconnect(client: Socket) {
     console.log(`Client disconnected: ${client.id}`);
+
+    // Get player's zone BEFORE disconnect removes them from the service
+    const player = this.playerService.getPlayerBySocket(client.id);
+    const zoneId = player?.position.zoneId;
+
     await this.playerService.handleDisconnect(client.id);
+
+    // Deactivate zone if no players remain
+    if (zoneId && this.playerService.getPlayersInZone(zoneId).length === 0) {
+      this.aiService.deactivateZone(zoneId);
+    }
   }
 
   @SubscribeMessage('auth')
@@ -98,6 +111,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       if (result.success && result.player) {
         // Join player to 3x3 grid of zone rooms (current + 8 adjacent)
         this.updatePlayerRooms(client, result.player.position.zoneId);
+
+        // Activate AI tick loop for the zone the player just joined
+        this.aiService.activateZone(result.player.position.zoneId);
 
         // Send initial zone state
         const zoneState = await this.gameService.getZoneState(
@@ -180,6 +196,12 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
           this.server.to(result.oldZoneId).emit('player:left', {
             playerId: result.playerId,
           });
+
+          // Deactivate old zone if no players remain; activate new zone
+          if (this.playerService.getPlayersInZone(result.oldZoneId).length === 0) {
+            this.aiService.deactivateZone(result.oldZoneId);
+          }
+          this.aiService.activateZone(result.newZoneId);
 
           // Send new zone state to player
           const zoneState = await this.gameService.getZoneState(result.newZoneId);
