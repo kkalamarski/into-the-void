@@ -9,7 +9,9 @@ export type BiomeType =
   | 'frozen_expanse'
   | 'volcanic_ridge'
   | 'fungal_forest'
-  | 'starfall_crater';
+  | 'starfall_crater'
+  | 'miasma_marshes'     // Tier II - toxic swamp biome
+  | 'petrified_expanse'; // Tier II - stone forest biome
 
 /**
  * Biome data
@@ -83,6 +85,8 @@ export const BIOME_DISPLAY_NAMES: Record<BiomeType, string> = {
   volcanic_ridge: 'Volcanic Ridge',
   fungal_forest: 'Fungal Forest',
   starfall_crater: 'Starfall Crater',
+  miasma_marshes: 'Miasma Marshes',
+  petrified_expanse: 'Petrified Expanse',
 };
 
 /**
@@ -97,4 +101,6 @@ export const BIOME_COLORS: Record<BiomeType, string> = {
   volcanic_ridge: '#ff4500',
   fungal_forest: '#9370db',
   starfall_crater: '#191970',
+  miasma_marshes: '#6b8e23',      // Olive drab (toxic swamp)
+  petrified_expanse: '#a9a9a9',   // Dark gray (stone forest)
 };

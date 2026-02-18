@@ -7,6 +7,8 @@ export type EntityType =
   | 'player'
   | 'creature'
   | 'mineral'
+  | 'plant'      // NEW - harvestable flora
+  | 'artifact'   // NEW - one-time discoverable
   | 'structure'
   | 'item'
   | 'npc';
@@ -45,9 +47,9 @@ export interface Creature extends Entity {
 }
 
 /**
- * Creature behavior patterns
+ * Creature behavior patterns (lore-correct classifications)
  */
-export type CreatureBehavior = 'passive' | 'neutral' | 'aggressive' | 'defensive';
+export type CreatureBehavior = 'herbivore' | 'omnivore' | 'predator' | 'maniac';
 
 /**
  * Mineral/resource node entity
@@ -62,6 +64,30 @@ export interface Mineral extends Entity {
   maxYield: number;
   /** Required tool tier to harvest */
   requiredTier: number;
+}
+
+/**
+ * Plant entity (harvestable flora)
+ */
+export interface Plant extends Entity {
+  type: 'plant';
+  /** Plant species identifier */
+  speciesId: string;
+  /** Current yield remaining */
+  yield: number;
+  /** Maximum yield */
+  maxYield: number;
+}
+
+/**
+ * Artifact entity (one-time discoverable)
+ */
+export interface Artifact extends Entity {
+  type: 'artifact';
+  /** Artifact identifier */
+  artifactId: string;
+  /** Rarity tier */
+  rarity: 'rare' | 'epic' | 'exotic' | 'legendary';
 }
 
 /**
