@@ -8,7 +8,7 @@
 - ✅ **v1.3 Elevation & Structures** - Phases 13-16 (shipped 2026-02-16)
 - ✅ **v1.4 Infinite World & Seamless Chunks** - Phases 17-20 (shipped 2026-02-17)
 - ✅ **v1.5 Movement Overhaul** - Phases 21-24 (shipped 2026-02-17)
-- 🚧 **v1.6 Inventory & Items** - Phases 25-29 (in progress)
+- ✅ **v1.6 Inventory & Items** - Phases 25-29 (shipped 2026-02-18)
 
 ## Phases
 
@@ -90,7 +90,8 @@ See: `.planning/milestones/v1.5-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.6 Inventory & Items (In Progress)
+<details>
+<summary>✅ v1.6 Inventory & Items (Phases 25-29) - SHIPPED 2026-02-18</summary>
 
 **Milestone Goal:** Implement the item system with a strategy-pattern registry, 100 lore-accurate items across 6 categories, exo-suit equipment with module slots, server-authoritative stat calculation, a drag-drop inventory UI, and an action bar with hotkeys.
 
@@ -183,8 +184,12 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 29-01-PLAN.md — Build ActionBar.tsx with 8 slots, document keydown listener with chat-focus guard, localStorage persistence, orphan invalidation on inventory:update
-- [ ] 29-02-PLAN.md — Build PersonalStoragePanel.tsx with storage:open/update events, StorageService on server, grid view backed by player_storage DB table
+- [x] 29-01-PLAN.md — Build ActionBar.tsx with 8 slots, document keydown listener with chat-focus guard, localStorage persistence, orphan invalidation on inventory:update
+- [x] 29-02-PLAN.md — Build PersonalStoragePanel.tsx with storage:open/update events, StorageService on server, grid view backed by player_storage DB table
+
+See: `.planning/milestones/v1.6-ROADMAP.md`
+
+</details>
 
 ## Progress
 
@@ -221,9 +226,9 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | 26. Server InventoryService & WebSocket Handlers | v1.6 | 4/4 | Complete | 2026-02-17 |
 | 27. Client State & Inventory Panel UI | v1.6 | 3/3 | Complete | 2026-02-17 |
 | 28. Equipment System | v1.6 | 3/3 | Complete | 2026-02-18 |
-| 29. Action Bar & Personal Storage | v1.6 | 0/2 | Planned | - |
+| 29. Action Bar & Personal Storage | v1.6 | 2/2 | Complete | 2026-02-18 |
 
-**Total:** 29 phases (28 complete, 1 planned)
+**Total:** 29 phases (29 complete, 0 planned)
 
 ---
-*Last updated: 2026-02-18 after Phase 29 planning*
+*Last updated: 2026-02-18 after Phase 29 complete*
