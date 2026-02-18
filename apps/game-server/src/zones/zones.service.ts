@@ -18,10 +18,12 @@ import type {
   MineralDefinition,
   PlantDefinition,
 } from '@into-the-void/entities';
+import { ItemRegistry } from '@into-the-void/items';
 import { DatabaseService } from '../database/database.service';
-import { entityLifecycle } from '@into-the-void/database';
-import { eq } from 'drizzle-orm';
+import { entityLifecycle, groundItems } from '@into-the-void/database';
+import { eq, lte, lt, and, gt } from 'drizzle-orm';
 import { LRUCache } from 'lru-cache';
+import { Server } from 'socket.io';
 
 interface ZoneState {
   chunk: ChunkData;
@@ -40,6 +42,8 @@ export class ZonesService implements OnModuleInit {
   private worldSeed: string;
   // Claim map: entityId -> playerId who claimed it (prevents simultaneous pickup)
   private claimedEntities: Map<string, string> = new Map();
+  // Socket.IO server reference for respawn broadcasts
+  private server: Server | null = null;
 
   constructor(
     private readonly configService: ConfigService,
@@ -60,6 +64,17 @@ export class ZonesService implements OnModuleInit {
   async onModuleInit() {
     // Preload spawn zone
     await this.loadZone('z_0_0');
+    // Start respawn tick loop (10 second interval)
+    setInterval(() => this.processRespawnTick(), 10_000);
+    console.log('[ZonesService] Respawn tick loop started (10s interval)');
+  }
+
+  /**
+   * Set the Socket.IO server reference for respawn broadcasts.
+   * Called by GameGateway.afterInit().
+   */
+  setServer(server: Server): void {
+    this.server = server;
   }
 
   private async loadZone(zoneId: string): Promise<ZoneState> {
@@ -94,6 +109,32 @@ export class ZonesService implements OnModuleInit {
       }
       const entity = this.createEntityFromSpawn(spawn, zoneId);
       entities.set(entity.id, entity);
+    }
+
+    // Load persisted ground items from DB (non-expired only)
+    const groundItemRows = await db
+      .select()
+      .from(groundItems)
+      .where(
+        and(
+          eq(groundItems.zoneId, zoneId),
+          gt(groundItems.despawnAt, now),
+        ),
+      );
+
+    for (const row of groundItemRows) {
+      const itemDef = ItemRegistry.get(row.itemId);
+      const itemEntity: ItemEntity = {
+        id: row.id,
+        type: 'item',
+        name: itemDef?.displayName || row.itemId,
+        position: { x: row.x, y: row.y, zoneId },
+        active: true,
+        itemId: row.itemId,
+        quantity: row.quantity,
+        despawnAt: row.despawnAt.getTime(),
+      };
+      entities.set(itemEntity.id, itemEntity);
     }
 
     const zoneState: ZoneState = {
@@ -360,5 +401,78 @@ export class ZonesService implements OnModuleInit {
 
   getWorldSeed(): string {
     return this.worldSeed;
+  }
+
+  /**
+   * Respawn tick loop — runs every 10 seconds.
+   *
+   * 1. Queries entity_lifecycle records where respawnAt <= now.
+   * 2. For non-artifact records: re-materializes the entity in its zone,
+   *    loading the zone from DB if it was evicted from the LRU cache.
+   * 3. Broadcasts entity:spawn to the zone room (reaches any players present).
+   * 4. Deletes the processed lifecycle record.
+   * 5. Deletes expired ground_items rows from the DB.
+   */
+  private async processRespawnTick(): Promise<void> {
+    try {
+      const db = this.databaseService.getClient();
+      const now = new Date();
+
+      // Query entity_lifecycle records ready to respawn
+      const ready = await db
+        .select()
+        .from(entityLifecycle)
+        .where(lte(entityLifecycle.respawnAt, now));
+
+      for (const record of ready) {
+        // FAR_FUTURE check: year >= 2099 means artifact (never respawn)
+        if (record.respawnAt.getFullYear() >= 2099) {
+          continue;
+        }
+
+        // Get zone state, loading if evicted from LRU cache
+        let zoneState = this.zones.get(record.zoneId);
+        if (!zoneState) {
+          // Zone was evicted from LRU cache — load it to process respawn
+          await this.loadZone(record.zoneId);
+          zoneState = this.zones.get(record.zoneId);
+        }
+
+        if (zoneState) {
+          // Find the original SpawnPoint and re-materialize entity
+          const spawn = this.findSpawnPointFromEntityId(record.entityId, zoneState.chunk);
+          if (spawn) {
+            const entity = this.createEntityFromSpawn(spawn, record.zoneId);
+            zoneState.entities.set(entity.id, entity);
+
+            // Broadcast entity:spawn to zone (players in zone will see respawn)
+            if (this.server) {
+              this.server.to(record.zoneId).emit('entity:spawn', entity);
+            }
+          }
+        }
+
+        // Delete lifecycle record (entity is now alive)
+        await db.delete(entityLifecycle).where(eq(entityLifecycle.entityId, record.entityId));
+      }
+
+      // Clean up expired ground items from DB
+      await db.delete(groundItems).where(lt(groundItems.despawnAt, now));
+    } catch (error) {
+      console.error('[ZonesService] processRespawnTick error:', error);
+    }
+  }
+
+  /**
+   * Find the original SpawnPoint matching an entityId.
+   * EntityId format: zoneId_spawnId_x_y — we match by suffix _spawnId_x_y.
+   */
+  private findSpawnPointFromEntityId(entityId: string, chunk: ChunkData): SpawnPoint | undefined {
+    for (const spawn of chunk.spawnPoints) {
+      if (entityId.endsWith(`_${spawn.spawnId}_${spawn.x}_${spawn.y}`)) {
+        return spawn;
+      }
+    }
+    return undefined;
   }
 }
