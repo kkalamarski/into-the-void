@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 38 of 38 (Perception Gating and Client Polish)
-Plan: 2 of TBD in current phase
-Status: In progress
-Last activity: 2026-02-18 — Phase 38 Plan 02 complete (perception gating INTR-06 + level gating INTR-07)
+Plan: 3 of 3 in current phase
+Status: Complete
+Last activity: 2026-02-18 — Phase 38 Plan 03 complete (entity spawn fade-in UIHD-02 + yield bar depletion UIHD-03)
 
-Progress: [████████░░] 85% (v1.8 milestone — Phase 38 in progress, plan 1 done)
+Progress: [██████████] 100% (v1.8 milestone — Phase 38 complete, all plans done)
 
 ## Performance Metrics
 
@@ -38,6 +38,10 @@ Progress: [████████░░] 85% (v1.8 milestone — Phase 38 in p
 | v1.8 | 33-37 | 18 | (in progress) |
 
 **Recent Trend:** Stable, averaging 2-4 plans per phase
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 38 | 03 | 2min | 3 | 2 |
 
 ## Accumulated Context
 
@@ -108,6 +112,9 @@ Recent decisions affecting current work:
 - [38-02]: Perception gate fails open (shows real name) when stats not yet loaded — prevents all-'???' state during WebSocket connection establishment
 - [38-02]: gated variable hoisted from applyPerceptionGate() drives both nameplate and behavior icon — single call prevents split-brain display state
 - [38-02]: Creature level is not rendered in client UI — level portion of INTR-06 vacuously satisfied; only name and behavior icon are gated
+- [38-03]: container.setData('yieldBar') stores Graphics reference directly — avoids fragile Y-position instanceof search that could fail on floating-point or layout changes
+- [38-03]: zoneId presence on spawnEntity() distinguishes zone:state (initial load, no fade) from entity:spawn (runtime respawn, 400ms Linear fade)
+- [38-03]: this.elevationOffset (12px hover constant) stored as 'elevationOffset' data key — yield bar Y uses hover offset, not terrain height offset
 
 ### Pending Todos
 
@@ -126,10 +133,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 38 Plan 02 complete — perception gating (INTR-06) client display + level gating (INTR-07) server enforcement
+Stopped at: Phase 38 Plan 03 complete — entity spawn fade-in (UIHD-02) + yield bar depletion (UIHD-03)
 Resume file: None
 
-**Next action:** Execute Phase 38 Plan 03 (if any) or finalize v1.8 milestone
+**Next action:** v1.8 milestone complete — all Phase 38 plans done
 
 ---
-*Last updated: 2026-02-18 after Phase 38 Plan 02 complete (perception gating INTR-06, level gating INTR-07)*
+*Last updated: 2026-02-18 after Phase 38 Plan 03 complete (entity spawn fade-in UIHD-02, yield bar depletion UIHD-03)*
