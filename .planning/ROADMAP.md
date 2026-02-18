@@ -10,6 +10,7 @@
 - ✅ **v1.5 Movement Overhaul** - Phases 21-24 (shipped 2026-02-17)
 - ✅ **v1.6 Inventory & Items** - Phases 25-29 (shipped 2026-02-18)
 - ✅ **v1.7 Character Stats** - Phases 30-32 (shipped 2026-02-18)
+- 🚧 **v1.8 Entity System** - Phases 33-38 (in progress)
 
 ## Phases
 
@@ -255,10 +256,127 @@ See: `.planning/milestones/v1.7-ROADMAP.md`
 
 </details>
 
+### 🚧 v1.8 Entity System (In Progress)
+
+**Milestone Goal:** Implement entity definition system with spawning, interaction, and loot. Entities include creatures (idle wander), plants, minerals, and artifacts — all interactable via tools with range-based interaction, perception gating, and a respawn system. The world gains a fertility noise layer that shapes spawn density by tile.
+
+**Phases:** 6 (33-38)
+**Depth:** Quick (from config)
+**Coverage:** 50/50 requirements mapped
+
+#### Phase 33: Foundation Types and Entity Definitions
+
+**Goal**: Lore-correct entity types and the `packages/entities` registry exist as the single source of truth — all downstream phases build against these definitions; no server or client logic is written until the type contract is locked and compiles cleanly
+**Depends on**: Phase 32 (v1.7 complete)
+**Requirements**: ENTD-01, ENTD-02, ENTD-03, ENTD-04, ENTD-05, ENTD-06, ENTD-07, ENTD-08, ENTD-09, ENTD-10, ENTD-11
+**Success Criteria** (what must be TRUE):
+  1. `EntityRegistry.get(entityId)` returns a fully typed `EntityDefinition` for all ~35 entities (creatures, plants, minerals, artifacts) without error
+  2. `CreatureBehavior` type is `herbivore | omnivore | predator | maniac` — the old `passive | neutral | aggressive | defensive` shape no longer compiles anywhere in the codebase
+  3. `BiomeType` enum includes all 10 lore biomes including `miasma_marshes` and `petrified_expanse` — entity definitions reference only valid biome keys
+  4. Every entity definition carries a `lootTableId` reference and `BIOME_SPAWN_CONFIGS` references only entity IDs present in the registry — no ID mismatch at startup
+**Plans**: TBD
+
+Plans:
+- [ ] 33-01: Create packages/entities workspace package mirroring packages/items pattern with EntityRegistryImpl
+- [ ] 33-02: Define ~35 entity definitions (creatures, plants, minerals, artifacts) with loot table references
+- [ ] 33-03: Update shared-types BiomeType, CreatureBehavior, Plant and Artifact interfaces; update BIOME_SPAWN_CONFIGS
+
+#### Phase 34: Entity Lifecycle Persistence and Enriched Spawning
+
+**Goal**: Entities spawning in the world carry complete registry data (health, speciesId, behavior), block player movement, and their death/respawn state survives zone eviction and server restarts via the `entity_lifecycle` database table
+**Depends on**: Phase 33 (entity registry and type definitions exist)
+**Requirements**: SPWN-04, PERS-01, PERS-02, PERS-05, INTR-08, EBLK-01, EBLK-02
+**Success Criteria** (what must be TRUE):
+  1. Entities that spawn in a zone display health bars with correct max health derived from their entity definition — not a hardcoded default
+  2. A killed entity does not reappear when the zone is re-entered — the `entity_lifecycle` record suppresses its materialization until `respawnAt` elapses
+  3. After a server restart, killed entities that have not yet reached their `respawnAt` time remain absent from the zone — respawn timers survive process death
+  4. The client `entityStore.ts` Zustand store updates correctly on `entity:spawn`, `entity:update`, and `entity:despawn` socket events — entity state does not require a page reload to refresh
+  5. Player cannot move onto a tile occupied by an entity — server rejects the move and pathfinding routes around entities
+**Plans**: TBD
+
+Plans:
+- [ ] 34-01: Create entity_lifecycle DB table; enrich createEntityFromSpawn() with EntityRegistry data
+- [ ] 34-02: Apply lifecycle records on zone load; create entityStore.ts Zustand store
+- [ ] 34-03: Update EntityRenderer to resolve per-species texture key; display health bars for all entity types
+- [ ] 34-04: Add entity blocking to pathfinding and server movement validation
+
+#### Phase 35: Loot Tables, Tool Interaction, and Respawn
+
+**Goal**: Players can use tools on entities in range to harvest resources and trigger loot drops that persist on the ground; a respawn tick loop reactivates depleted entities at their original spawn points after a randomized delay
+**Depends on**: Phase 34 (entity lifecycle persistence in place; enriched entities exist in zones)
+**Requirements**: LOOT-01, LOOT-02, LOOT-03, LOOT-04, LOOT-05, INTR-01, INTR-02, INTR-03, INTR-04, INTR-05, RESP-01, RESP-02, RESP-03, RESP-04, PERS-03, PERS-04
+**Success Criteria** (what must be TRUE):
+  1. Player equips a tool and sends `entity:tool_use` — the server validates range via `canInteract()` before processing; interaction from beyond the tool's range stat is silently rejected
+  2. Creature death or mineral/plant depletion spawns ground items at the entity's position matching the entity's weighted loot table — items are visible to all players in the zone
+  3. Ground items persist across zone evictions and server restarts — a player who logs out and returns finds loot still on the ground until it despawns or is picked up
+  4. Depleted minerals and plants reappear at their original spawn point after a randomized delay — the respawn tick loop fires correctly even after server restart
+  5. Artifacts do not respawn after being collected — their spawn point is permanently marked with `respawnTime: -1` and never re-materializes
+**Plans**: TBD
+
+Plans:
+- [ ] 35-01: Create ground_items DB table; add rollLootTable() pure function to game-logic
+- [ ] 35-02: Add tool range property to ItemDefinition; update existing tools with range values
+- [ ] 35-03: Create EntityService with handleToolUse(), resolveLoot(), entity:tool_use event handler
+- [ ] 35-04: Implement respawn tick loop processing entity_lifecycle records; artifact permanent removal
+
+#### Phase 36: Creature AI Wander and Behavior Tick
+
+**Goal**: Creatures move autonomously through the world based on their behavior type — herbivores flee nearby players while all types wander idly — with AI updates broadcast efficiently per zone and never stalling the server event loop
+**Depends on**: Phase 35 (loot and interaction proven correct; entity state is stable)
+**Requirements**: CRAI-01, CRAI-02, CRAI-03, CRAI-04, CRAI-05, CRAI-06, CRAI-07, CRAI-08, EBLK-03
+**Success Criteria** (what must be TRUE):
+  1. Creatures in a zone with active players visibly wander to adjacent tiles — movement updates arrive via `entity:update` socket events and the client interpolates creatures to new positions
+  2. A herbivore creature within 5 tiles of a player moves away from the player rather than wandering randomly — flee behavior is observable and consistent
+  3. Zones with no active players have no AI tick running — the server does not process creature movement for empty zones
+  4. The AI tick does not produce observable lag or stutter — tick duration is logged and a warning fires if processing exceeds the configured threshold
+  5. If a creature moves into a tile on the player's click-to-move path, the path stops at that point — player does not walk through creatures
+**Plans**: TBD
+
+Plans:
+- [ ] 36-01: Add AiService with self-rescheduling setTimeout pattern scoped to activePlayerZones
+- [ ] 36-02: Implement tickCreatureAI() pure FSM in game-logic with herbivore/omnivore/predator/maniac states
+- [ ] 36-03: Wire batched entity:update broadcasts per zone per tick; client Phaser interpolation to new positions
+- [ ] 36-04: Client path interruption when creature moves into path; update blocked tiles on entity:update
+
+#### Phase 37: Fertility Noise and Biome Spawn Quality
+
+**Goal**: Spawn density across the world varies by a fertility noise layer — Lush tiles spawn more entities than Barren tiles — and the zone HUD shows the player what fertility tier they are standing in
+**Depends on**: Phase 35 (spawning pipeline proven correct with enriched entities)
+**Requirements**: SPWN-01, SPWN-02, SPWN-03, SPWN-05, UIHD-01
+**Success Criteria** (what must be TRUE):
+  1. The zone HUD displays fertility type as "Biome Name (Fertility)" — for example "Crystal Flats (Lush)" — and updates when the player crosses into a different fertility zone
+  2. Lush areas visibly contain more entities per chunk than Barren areas — the density difference is observable by moving between fertility zones
+  3. Entities spawning at biome-edge tiles come from the correct biome's spawn table — a creature appropriate to a Crystal Flats tile does not spawn on an adjacent Miasma Marshes tile
+  4. No zone exceeds spawn density caps (15 creatures, 10 minerals, 5 plants, 2 artifacts per chunk) regardless of fertility tier
+**Plans**: TBD
+
+Plans:
+- [ ] 37-01: Add getFertilityAt() to world-gen using second SimplexNoise instance; fertility multiplier per spawn position
+- [ ] 37-02: Replace chunk-center biome sampling with per-tile sampling in generateSpawnPoints(); apply density caps
+- [ ] 37-03: Add fertility type to zone state payload; update ZoneHUD to display "Biome (Fertility)" format
+
+#### Phase 38: Perception Gating and Client Polish
+
+**Goal**: Players cannot read entity information beyond their perception stat threshold, AI state is never exposed in server broadcasts, and spawning/depletion events have visual feedback that makes the world feel alive
+**Depends on**: Phase 36 (AI broadcasts established) and Phase 37 (fertility and spawning complete)
+**Requirements**: INTR-06, INTR-07, CRAI-09, UIHD-02, UIHD-03
+**Success Criteria** (what must be TRUE):
+  1. An entity whose level exceeds `player.perception * 3` displays as "???" for name and level in the client — the real values are in the payload but the renderer suppresses them
+  2. A player whose level is more than 5 below an entity's level cannot interact with it — the server rejects the `entity:tool_use` event and the client shows a gating message
+  3. AI internal state (FSM state, wander target, aggro flag) is absent from `entity:update` broadcasts — a client inspecting socket payloads sees only position and health
+  4. Entities fade in smoothly when spawned or respawned — the spawn event triggers a client-side fade-in animation rather than instant appearance
+  5. Minerals and plants show proportional visual depletion as yield decreases — a half-depleted mineral looks visually different from a full one
+**Plans**: TBD
+
+Plans:
+- [ ] 38-01: Strip AI state from entity:update broadcasts in AiService before emission
+- [ ] 38-02: Add perception gating and level gating rendering logic to EntityRenderer; level gating server-side check in EntityService
+- [ ] 38-03: Entity fade-in animation on spawn/respawn; harvest depletion visual on minerals/plants
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 30 → 31 → 32
+Phases execute in numeric order: 33 → 34 → 35 → 36 → 37 → 38
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -294,8 +412,14 @@ Phases execute in numeric order: 30 → 31 → 32
 | 30. Type Foundation & Pure Computation | v1.7 | 2/2 | Complete | 2026-02-18 |
 | 31. Server Wiring & Socket Delivery | v1.7 | 3/3 | Complete | 2026-02-18 |
 | 32. Client Display | v1.7 | 3/3 | Complete | 2026-02-18 |
+| 33. Foundation Types and Entity Definitions | v1.8 | TBD | Not started | - |
+| 34. Entity Lifecycle Persistence and Enriched Spawning | v1.8 | TBD | Not started | - |
+| 35. Loot Tables, Tool Interaction, and Respawn | v1.8 | TBD | Not started | - |
+| 36. Creature AI Wander and Behavior Tick | v1.8 | TBD | Not started | - |
+| 37. Fertility Noise and Biome Spawn Quality | v1.8 | TBD | Not started | - |
+| 38. Perception Gating and Client Polish | v1.8 | TBD | Not started | - |
 
-**Total:** 32 phases (32 complete)
+**Total:** 38 phases (32 complete, 6 in progress)
 
 ---
-*Last updated: 2026-02-18 after v1.7 milestone complete*
+*Last updated: 2026-02-18 after v1.8 Entity System roadmap created*

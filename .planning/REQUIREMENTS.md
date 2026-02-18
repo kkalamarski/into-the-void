@@ -81,6 +81,12 @@ Requirements for Entity System milestone. Each maps to roadmap phases.
 - [ ] **UIHD-02**: Entity fade-in animation on spawn/respawn
 - [ ] **UIHD-03**: Harvest depletion visual on minerals/plants (proportional to remaining yield)
 
+### Entity Blocking
+
+- [ ] **EBLK-01**: Entities block player movement (player cannot step on entity tile)
+- [ ] **EBLK-02**: Pathfinding considers entity positions when calculating routes
+- [ ] **EBLK-03**: Click-to-move path stops if entity moves into path mid-execution
+
 ## v1.7 Requirements (Complete)
 
 Requirements for Character Stats milestone.
@@ -316,12 +322,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UIHD-01 | Phase 37 | Pending |
 | UIHD-02 | Phase 38 | Pending |
 | UIHD-03 | Phase 38 | Pending |
+| EBLK-01 | Phase 34 | Pending |
+| EBLK-02 | Phase 34 | Pending |
+| EBLK-03 | Phase 36 | Pending |
 
 **Coverage:**
-- v1.8 requirements: 47 total
-- Mapped to phases: 47
-- Unmapped: 0 ✓
+- v1.8 requirements: 50 total
+- Mapped to phases: 50
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-18 after v1.8 requirements definition*
+*Last updated: 2026-02-18 after v1.8 roadmap created (phases 33-38)*
