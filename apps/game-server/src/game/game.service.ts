@@ -405,6 +405,10 @@ export class GameService {
 
     // Find which slot has this instanceId
     if (inventory.equipment.exosuit?.instanceId === instanceId) {
+      // Guard: Cannot unequip suit while modules are equipped
+      if (inventory.equipment.modules.length > 0) {
+        return { success: false, error: 'Remove all modules before unequipping suit' };
+      }
       const result = await this.inventoryService.unequipItem(player.id, 'exosuit', inventory.items.length, inventory.maxSlots);
       if (!result.success) return { success: false, error: result.reason };
     } else if (inventory.equipment.tool?.instanceId === instanceId) {
