@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.8 Entity System — Phase 36: Creature AI Wander and Behavior Tick
+**Current focus:** v1.8 Entity System — Phase 37: Fertility Noise and Biome Spawn Quality
 
 ## Current Position
 
-Phase: 36 of 38 (Creature AI Wander and Behavior Tick)
-Plan: 4 of 4 in current phase
-Status: In progress
-Last activity: 2026-02-18 — Phase 36 Plan 03 complete (AiService integration + entity:batch broadcast)
+Phase: 37 of 38 (Fertility Noise and Biome Spawn Quality)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-18 — Phase 36 complete (4/4 plans, verified)
 
-Progress: [█████░░░░░] 50% (v1.8 milestone — 3/6 phases complete)
+Progress: [██████░░░░] 67% (v1.8 milestone — 4/6 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 102 (Phases 1-34 complete)
+- Total plans completed: 119 (Phases 1-36 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~4.5 hours
 
@@ -35,11 +35,9 @@ Progress: [█████░░░░░] 50% (v1.8 milestone — 3/6 phases co
 | v1.5 | 21-24 | 9 | 1 day |
 | v1.6 | 25-29 | 16 | 2 days |
 | v1.7 | 30-32 | 9 | 1 day |
-| v1.8 | 33-35 | 11 | (in progress) |
+| v1.8 | 33-36 | 15 | (in progress) |
 
 **Recent Trend:** Stable, averaging 2-4 plans per phase
-| Phase 36 P01 | 5 | 2 tasks | 2 files |
-| Phase 36 P03 | 3 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -110,16 +108,13 @@ None.
 - Server-side elevation validation not wired (client-side complete, server uses old validation)
 - Low priority — only relevant if elevation interacts with item pickup range
 
-**For Phase 36 planning:**
-- Decide perception gating model (strict per-player vs relaxed zone broadcast) before AI tick broadcast is implemented — retroactively changing broadcast architecture is expensive
-
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 36 Plan 03 complete — AiService integration + entity:batch broadcast wired
+Stopped at: Phase 36 complete — creature AI wander and behavior tick
 Resume file: None
 
-**Next action:** Continue Phase 36 Plan 04 (client pathfinding interruption on creature proximity)
+**Next action:** `/gsd:plan-phase 37`
 
 ---
-*Last updated: 2026-02-18 after Phase 36 Plan 03 complete (AiService integration + entity:batch broadcast)*
+*Last updated: 2026-02-18 after Phase 36 complete (creature AI wander and behavior tick)*

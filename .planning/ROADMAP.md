@@ -333,10 +333,10 @@ Plans:
 **Plans**: 4 plans in 2 waves
 
 Plans:
-- [ ] 36-01-PLAN.md — Create AiService with self-rescheduling setTimeout pattern scoped to activePlayerZones
-- [ ] 36-02-PLAN.md — Implement tickCreatureAI() pure FSM in game-logic with herbivore/omnivore/predator/maniac states
-- [ ] 36-03-PLAN.md — Wire batched entity:update broadcasts per zone per tick; integrate AiService with GameGateway lifecycle
-- [ ] 36-04-PLAN.md — Client path interruption when creature moves into path; update blocked tiles on entity:update
+- [x] 36-01-PLAN.md — Create AiService with self-rescheduling setTimeout pattern scoped to activePlayerZones
+- [x] 36-02-PLAN.md — Implement tickCreatureAI() pure FSM in game-logic with herbivore/omnivore/predator/maniac states
+- [x] 36-03-PLAN.md — Wire batched entity:batch broadcasts per zone per tick; integrate AiService with GameGateway lifecycle
+- [x] 36-04-PLAN.md — Client path interruption when creature moves into path; update blocked tiles on entity:update
 
 #### Phase 37: Fertility Noise and Biome Spawn Quality
 
@@ -415,11 +415,11 @@ Phases execute in numeric order: 33 -> 34 -> 35 -> 36 -> 37 -> 38
 | 33. Foundation Types and Entity Definitions | v1.8 | 3/3 | Complete | 2026-02-18 |
 | 34. Entity Lifecycle Persistence and Enriched Spawning | v1.8 | 4/4 | Complete | 2026-02-18 |
 | 35. Loot Tables, Tool Interaction, and Respawn | v1.8 | 4/4 | Complete | 2026-02-18 |
-| 36. Creature AI Wander and Behavior Tick | v1.8 | 0/4 | Planned | - |
+| 36. Creature AI Wander and Behavior Tick | v1.8 | 4/4 | Complete | 2026-02-18 |
 | 37. Fertility Noise and Biome Spawn Quality | v1.8 | TBD | Not started | - |
 | 38. Perception Gating and Client Polish | v1.8 | TBD | Not started | - |
 
-**Total:** 38 phases (35 complete, 3 remaining)
+**Total:** 38 phases (36 complete, 2 remaining)
 
 ---
-*Last updated: 2026-02-18 after Phase 36 planned*
+*Last updated: 2026-02-18 after Phase 36 complete*
