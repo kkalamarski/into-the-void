@@ -74,6 +74,9 @@ Recent decisions affecting current work:
 - [34-04]: Server entity blocking placed between validateMovement and isZoneTransition in movePlayer — logically correct layering
 - [34-03]: createHealthBar() reused for mineral/plant yield bars — parameter semantics (current/max) are identical; no new visual component needed
 - [34-03]: getEntityTexture() now accepts Entity not EntityType — enables species-specific texture lookup; missing textures handled gracefully by Phaser until Phase 38 adds sprites
+- [35-01]: Seed script accepts Map parameter instead of importing CREATURE_LOOT_TABLES directly — avoids circular dependency: database -> game-logic -> database
+- [35-01]: CREATURE_LOOT_TABLES is runtime source of truth (in-memory); DB tables (loot_tables, loot_table_entries) exist for admin tooling and future dynamic config
+- [35-01]: rollLootTable is a pure function — each HarvestYield entry evaluated independently, multiple items can drop per roll
 - [35-02]: range placed after effects in ItemDefinition — tool-only optional property, undefined for non-tools
 - [35-02]: Rarity-to-range mapping: common=1, rare=2, epic=3, exotic=4, legendary=5 — linear scale, consistent across all three tool types (mining, combat, research)
 
