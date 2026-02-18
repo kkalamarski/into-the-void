@@ -69,6 +69,9 @@ Recent decisions affecting current work:
 - [34-01]: Plant and Artifact branches in createEntityFromSpawn() are forward-compatibility stubs — world-gen not yet producing those entityTypes
 - [34-02]: GameSocket.on() upgraded to array-based multi-handler dispatch — both gameStore (Phaser) and entityStore (React/pathfinding) can independently handle entity events without silent handler replacement
 - [34-02]: enableMapSet() from immer called at module top in entityStore.ts — required for immer v11 Map mutation support in draft producers
+- [34-04]: Entity check in isWorldTileBlocked uses local tile coords — same space as terrain collision, no remapping needed
+- [34-04]: Terrain checked first in isWorldTileBlocked, entity scan only if passable — short-circuit avoids O(n) scan for walls
+- [34-04]: Server entity blocking placed between validateMovement and isZoneTransition in movePlayer — logically correct layering
 - [34-03]: createHealthBar() reused for mineral/plant yield bars — parameter semantics (current/max) are identical; no new visual component needed
 - [34-03]: getEntityTexture() now accepts Entity not EntityType — enables species-specific texture lookup; missing textures handled gracefully by Phaser until Phase 38 adds sprites
 
