@@ -215,6 +215,12 @@ importers:
         specifier: ^0.21.0
         version: 0.21.4
 
+  packages/entities:
+    dependencies:
+      '@into-the-void/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
   packages/game-logic:
     dependencies:
       '@into-the-void/items':
