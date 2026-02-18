@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.6 Inventory & Items — Phase 27: Client State & Inventory Panel UI
+**Current focus:** v1.6 Inventory & Items — Phase 28: Equipment System
 
 ## Current Position
 
-Phase: 27 of 29 (Client State & Inventory Panel UI) — COMPLETE
-Plan: 3 of 3 complete
-Status: Phase 27 complete — all 3 plans done
-Last activity: 2026-02-17 — Phase 27 Plan 03 complete: ItemTooltip component, setKeyboardEnabled, tooltip integration in InventoryPanel
+Phase: 28 of 29 (Equipment System) — IN PROGRESS
+Plan: 2 of 3 complete
+Status: Phase 28 Plan 02 complete — tool swap handler, computed stats, exo-suit unequip guard
+Last activity: 2026-02-18 — Phase 28 Plan 02 complete: equipment:tool_swap handler, ComputedStats in shared-types, effectiveStats in equip/unequip responses, exo-suit guard
 
-Progress: [████████░░░░░░░░░░░░] 47% (27/29 phases complete; 9/16 v1.6 plans complete)
+Progress: [████████░░░░░░░░░░░░] 47% (27/29 phases complete; 11/16 v1.6 plans complete)
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Progress: [████████░░░░░░░░░░░░] 47% (27
 | Phase 27 P01 | 127s | 3 tasks | 4 files |
 | Phase 27 P02 | 754s | 3 tasks | 6 files |
 | Phase 27 P03 | 115 | 3 tasks | 4 files |
+| Phase 28-equipment-system P02 | 164 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,10 @@ Recent decisions affecting current work:
 - [Phase 27]: InventoryPanel uses non-optimistic reorder: pendingReorder blocks UI until server inventory:update clears it via setInventory
 - [Phase 27]: Slot array built from maxSlots count with slot-index lookup — empty slots render as null entries in fixed-size grid
 - [Phase 27]: @floating-ui/react installed at workspace root (single root package.json Nx monorepo); ItemTooltip wraps reference div to preserve SortableSlot drag behavior
+- [28-02]: ComputedStats defined in shared-types (mirrors game-logic) so client can import without depending on server-side game-logic package
+- [28-02]: EquipResult.inventory typed as Inventory & { stats?: ComputedStats } — type-safe intersection preserving Drizzle DB type while allowing stats attachment
+- [28-02]: swapToolSlots uses single updateInventoryFull for atomic tool<->accessory1 swap — consistent with two-write exploit prevention pattern
+- [28-02]: Exo-suit unequip guard checked before any DB call; returns clear error 'Remove all modules before unequipping suit'
 
 ### Pending Todos
 
@@ -104,11 +109,11 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-17
-Stopped at: Completed 27-03-PLAN.md — Phase 27 complete
+Last session: 2026-02-18
+Stopped at: Completed 28-02-PLAN.md — equipment:tool_swap handler, ComputedStats, exo-suit guard
 Resume file: None
 
-**Next action:** Execute Phase 28
+**Next action:** Execute Phase 28 Plan 03
 
 ---
-*Last updated: 2026-02-17 after Phase 27 Plan 03 complete*
+*Last updated: 2026-02-18 after Phase 28 Plan 02 complete*
