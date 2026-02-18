@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.6 Inventory & Items — Phase 28: Equipment System COMPLETE
+**Current focus:** v1.6 Inventory & Items — Phase 29: Action Bar & Personal Storage COMPLETE
 
 ## Current Position
 
-Phase: 29 of 29 (Action Bar & Personal Storage) — IN PROGRESS
-Plan: 1 of 2 complete
-Status: Phase 29 Plan 01 complete — action bar hotbar with 1-8 shortcuts, drag-to-assign, localStorage persistence
-Last activity: 2026-02-18 — Phase 29 Plan 01 complete: actionBarStore, ActionBar component, HUD integration
+Phase: 29 of 29 (Action Bar & Personal Storage) — COMPLETE
+Plan: 2 of 2 complete
+Status: Phase 29 complete — action bar hotbar (Plan 01) and personal storage panel (Plan 02) both complete
+Last activity: 2026-02-18 — Phase 29 Plan 02 complete: storageStore, StorageService, PersonalStoragePanel, HUD Storage button
 
-Progress: [█████████░░░░░░░░░░░] 52% (28/29 phases complete; 13/16 v1.6 plans complete)
+Progress: [████████████████████] 100% (29/29 phases complete; 16/16 v1.6 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 84 (Phases 1-28 complete)
+- Total plans completed: 86 (Phases 1-29 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~4 hours
 
@@ -50,6 +50,7 @@ Progress: [█████████░░░░░░░░░░░] 52% (28
 | Phase 28 P02 | 164s | 3 tasks | 4 files |
 | Phase 28 P03 | 201s | 3 tasks | 7 files |
 | Phase 29 P01 | 163s | 3 tasks | 6 files |
+| Phase 29 P02 | 213s | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,9 @@ Recent decisions affecting current work:
 - [29-01]: actionBarStore uses module-level useInventoryStore.subscribe for orphan invalidation — ensures stale references clear regardless of ActionBar component mount state
 - [29-01]: hotbar- prefix routing in GameUI handleDragEnd checked before equip- prefix — explicit ordering for future extensibility
 - [29-01]: e.repeat guard in keydown handler prevents held-key item spam
+- [29-02]: PersonalStoragePanel is view-only (no drag-and-drop) — item manipulation deferred to future phase per plan scope
+- [29-02]: Storage panel positioned offset from inventory panel (left: calc(50% + 220px)) to avoid overlap when both open simultaneously
+- [29-02]: storageStore uses module-level gameSocket.on wiring — consistent with inventoryStore pattern, decoupled from component lifecycle
 
 ### Pending Todos
 
@@ -122,10 +126,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 29-01-PLAN.md — Phase 29 Plan 01 action bar hotbar complete
+Stopped at: Completed 29-02-PLAN.md — Phase 29 Plan 02 personal storage panel complete. ALL PHASES COMPLETE.
 Resume file: None
 
-**Next action:** Execute Phase 29 Plan 02 (Personal Storage)
+**Next action:** All 29 phases complete. v1.6 milestone achieved.
 
 ---
-*Last updated: 2026-02-18 after Phase 29 Plan 01 complete*
+*Last updated: 2026-02-18 after Phase 29 Plan 02 complete*
