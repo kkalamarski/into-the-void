@@ -24,18 +24,16 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~9,120 LOC TypeScript
 
-## Current Milestone: v1.6 Inventory & Items
+## Current Milestone: v1.7 Character Stats
 
-**Goal:** Implement item system with exo-suit equipment, tools, consumables, and inventory UI.
+**Goal:** Implement character stats system with base stats scaling by level plus equipment bonuses, displayed with breakdown UI.
 
 **Target features:**
-- Item definition system (strategy pattern + repository, like tiles)
-- 100 items across 6 categories with 5 rarity tiers
-- Exo-suit as base equipment with module slots
-- Main/secondary tool slots with hotkey switching
-- Character equipment panel UI
-- Action bar with hotkeys
-- Personal storage UI
+- 8 primary stats: Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience
+- Base stats with per-stat tuning and linear level scaling
+- Equipment stat bonuses aggregated from equipped items
+- Stats UI showing breakdown: "Durability 100 (20 + 80)"
+- Stats system designed for reuse with creatures in future combat milestone
 
 ## Core Value
 
@@ -81,24 +79,27 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Tile movement speed modifiers — v1.5
 - ✓ Zone boundary hysteresis — v1.5
 - ✓ Unified movement timing (500ms base, 2 tiles/sec) — v1.5
+- ✓ Item definition system with strategy pattern and repository — v1.6
+- ✓ 100 items across 6 categories (suits, modules, tools, consumables, world items, reagents) — v1.6
+- ✓ 5 rarity tiers (Common, Rare, Epic, Exotic, Legendary) — v1.6
+- ✓ Exo-suit equipment with module slots scaling by rarity — v1.6
+- ✓ Main/secondary tool slots with hotkey switching — v1.6
+- ✓ Character equipment panel UI — v1.6
+- ✓ Action bar with hotkeys — v1.6
+- ✓ Personal storage UI — v1.6
 
 ### Active
 
-- [ ] Item definition system with strategy pattern and repository
-- [ ] 100 items across 6 categories (suits, modules, tools, consumables, world items, reagents)
-- [ ] 5 rarity tiers (Common, Rare, Epic, Exotic, Legendary)
-- [ ] Exo-suit equipment with module slots scaling by rarity
-- [ ] Main/secondary tool slots with hotkey switching
-- [ ] Character equipment panel UI
-- [ ] Action bar with hotkeys
-- [ ] Personal storage UI
+- [ ] 8 primary stats (Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience)
+- [ ] Base stats with per-stat tuning and linear level scaling
+- [ ] Equipment stat bonuses aggregated from equipped items
+- [ ] Stats UI with breakdown display
 
 ### Out of Scope
 
 - OAuth/social login — email/password sufficient
 - Sprite-based rendering — color tiles only until art pipeline ready
-- Combat system — separate milestone
-- Inventory UI — separate milestone
+- Combat system — separate milestone (will use stats system from v1.7)
 - Chat system — separate milestone
 - Sound/music — polish phase
 - Mobile controls — web-first
@@ -132,4 +133,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-17 after v1.6 milestone start*
+*Last updated: 2026-02-18 after v1.7 milestone start*
