@@ -50,6 +50,7 @@ export type ServerEventType =
   | 'chat:message'
   | 'inventory:update'
   | 'storage:update'
+  | 'stats:update'
   | 'error';
 
 /**
@@ -92,6 +93,7 @@ export interface ServerEvents {
   'chat:message': ChatMessage;
   'inventory:update': import('../game/inventory').Inventory;
   'storage:update': import('../game/storage').PersonalStorage;
+  'stats:update': import('../game/stats').CharStatsPayload;
   'error': { code: string; message: string };
 }
 
