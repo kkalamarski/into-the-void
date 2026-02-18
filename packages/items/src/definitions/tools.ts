@@ -22,6 +22,7 @@ export const TOOL_MINING_COMMON: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'mining',
   effects: [],
+  range: 1,
 };
 
 export const TOOL_MINING_RARE: ItemDefinition = {
@@ -41,6 +42,7 @@ export const TOOL_MINING_RARE: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'mining',
   effects: [],
+  range: 2,
 };
 
 export const TOOL_MINING_EPIC: ItemDefinition = {
@@ -60,6 +62,7 @@ export const TOOL_MINING_EPIC: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'mining',
   effects: [],
+  range: 3,
 };
 
 export const TOOL_MINING_EXOTIC: ItemDefinition = {
@@ -79,6 +82,7 @@ export const TOOL_MINING_EXOTIC: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'mining',
   effects: [],
+  range: 4,
 };
 
 export const TOOL_MINING_LEGENDARY: ItemDefinition = {
@@ -98,6 +102,7 @@ export const TOOL_MINING_LEGENDARY: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'mining',
   effects: [],
+  range: 5,
 };
 
 // ============================================================
@@ -121,6 +126,7 @@ export const TOOL_COMBAT_COMMON: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'combat',
   effects: [],
+  range: 1,
 };
 
 export const TOOL_COMBAT_RARE: ItemDefinition = {
@@ -140,6 +146,7 @@ export const TOOL_COMBAT_RARE: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'combat',
   effects: [],
+  range: 2,
 };
 
 export const TOOL_COMBAT_EPIC: ItemDefinition = {
@@ -159,6 +166,7 @@ export const TOOL_COMBAT_EPIC: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'combat',
   effects: [],
+  range: 3,
 };
 
 export const TOOL_COMBAT_EXOTIC: ItemDefinition = {
@@ -178,6 +186,7 @@ export const TOOL_COMBAT_EXOTIC: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'combat',
   effects: [],
+  range: 4,
 };
 
 export const TOOL_COMBAT_LEGENDARY: ItemDefinition = {
@@ -197,6 +206,7 @@ export const TOOL_COMBAT_LEGENDARY: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'combat',
   effects: [],
+  range: 5,
 };
 
 // ============================================================
@@ -220,6 +230,7 @@ export const TOOL_RESEARCH_COMMON: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'research',
   effects: [],
+  range: 1,
 };
 
 export const TOOL_RESEARCH_RARE: ItemDefinition = {
@@ -239,6 +250,7 @@ export const TOOL_RESEARCH_RARE: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'research',
   effects: [],
+  range: 2,
 };
 
 export const TOOL_RESEARCH_EPIC: ItemDefinition = {
@@ -258,6 +270,7 @@ export const TOOL_RESEARCH_EPIC: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'research',
   effects: [],
+  range: 3,
 };
 
 export const TOOL_RESEARCH_EXOTIC: ItemDefinition = {
@@ -277,6 +290,7 @@ export const TOOL_RESEARCH_EXOTIC: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'research',
   effects: [],
+  range: 4,
 };
 
 export const TOOL_RESEARCH_LEGENDARY: ItemDefinition = {
@@ -296,6 +310,7 @@ export const TOOL_RESEARCH_LEGENDARY: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'research',
   effects: [],
+  range: 5,
 };
 
 // ============================================================
