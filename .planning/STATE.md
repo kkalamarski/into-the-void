@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.8 Entity System — Phase 35: Loot Tables, Tool Interaction, and Respawn
+**Current focus:** v1.8 Entity System — Phase 36: Creature AI Wander and Behavior Tick
 
 ## Current Position
 
 Phase: 36 of 38 (Creature AI Wander and Behavior Tick)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-18 — Phase 35 complete (4/4 plans, verified)
+Plan: 1 of 4 in current phase
+Status: In progress
+Last activity: 2026-02-18 — Phase 36 Plan 01 complete (AiService zone-scoped tick loop)
 
 Progress: [█████░░░░░] 50% (v1.8 milestone — 3/6 phases complete)
 
@@ -38,6 +38,7 @@ Progress: [█████░░░░░] 50% (v1.8 milestone — 3/6 phases co
 | v1.8 | 33-35 | 11 | (in progress) |
 
 **Recent Trend:** Stable, averaging 2-4 plans per phase
+| Phase 36 P01 | 5 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,11 @@ Recent decisions affecting current work:
 - [35-03]: ToolUseResult.entityChanges typed as Record<string,unknown> — Partial<Entity> excludes subtype fields (health, yield) needed for gateway broadcast
 - [35-03]: EntityService injected directly into GameService (no forwardRef) — no circular dependency exists between them
 - [35-03]: UNKNOWN_ENTITY fallback given respawnSeconds: 60 — satisfies new required property on CreatureDefinition without semantic impact
+- [Phase 36]: AiService uses self-rescheduling setTimeout (not setInterval) — prevents event loop stalls when tick exceeds interval
+- [Phase 36]: AI_TICK_INTERVAL_MS=1000 for creature speed; AI_TICK_WARN_MS=200 performance monitoring threshold
+- [Phase 36-02]: tickCreatureAI is pure function — callers apply result; no mutations inside FSM
+- [Phase 36-02]: Flee fallback chain: diagonal -> cardinal-x -> cardinal-y -> partial backtrack — prevents herbivores cornering
+- [Phase 36-02]: Creature bounds check uses ZONE_SIZE directly — creatures do not trigger zone transitions
 
 ### Pending Todos
 
@@ -105,10 +111,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 35 complete — loot tables, tool interaction, respawn tick loop
+Stopped at: Phase 36 Plan 02 complete — tickCreatureAI pure FSM in game-logic
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 36`
+**Next action:** Continue Phase 36 Plan 03 (game-server AiService integration of tickCreatureAI)
 
 ---
-*Last updated: 2026-02-18 after Phase 35 Plan 04 complete (respawn tick loop and ground item persistence)*
+*Last updated: 2026-02-18 after Phase 36 Plan 02 complete (tickCreatureAI pure FSM + game-logic export)*
