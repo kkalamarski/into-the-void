@@ -3,7 +3,7 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 400px;
+  width: 320px;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
@@ -13,59 +13,72 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-bg-tertiary);
+  margin-bottom: 10px;
+}
+
+.inventory-header span {
+  font-weight: 600;
+  color: var(--color-text-primary);
 }
 
 .inventory-header .close-btn {
   background: none;
   border: none;
-  color: var(--color-text);
-  font-size: 1.5rem;
+  color: var(--color-text-secondary);
+  font-size: 20px;
   cursor: pointer;
-  padding: 0;
-  line-height: 1;
+  padding: 0 5px;
 }
 
 .inventory-header .close-btn:hover {
-  color: var(--color-accent);
+  color: var(--color-text-primary);
 }
 
 .inventory-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  padding: 1rem;
+  gap: 6px;
 }
 
 .inventory-slot {
   aspect-ratio: 1;
-  background-color: var(--color-bg-darker);
-  border: 2px solid var(--color-border);
+  background-color: var(--color-bg-tertiary);
+  border: 2px solid var(--color-bg-tertiary);
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.inventory-slot:hover {
+  border-color: var(--color-accent);
 }
 
 .inventory-slot--empty {
   opacity: 0.5;
   cursor: default;
+  border-style: dashed;
+  border-color: var(--color-text-secondary);
+}
+
+.inventory-slot--empty:hover {
+  border-color: var(--color-text-secondary);
 }
 
 .inventory-slot--filled {
   border-width: 2px;
-}
-
-.inventory-slot--filled:hover {
-  filter: brightness(1.2);
+  border-style: solid;
 }
 
 .inventory-slot--locked {
   cursor: not-allowed;
   filter: grayscale(50%);
+  opacity: 0.6;
 }
 
 .inventory-slot--locked::after {
@@ -87,17 +100,18 @@
   position: absolute;
   bottom: 2px;
   right: 4px;
-  font-size: 0.75rem;
-  color: var(--color-text);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-primary);
   text-shadow: 1px 1px 0 #000;
 }
 
 .context-menu {
   position: fixed;
-  background-color: var(--color-bg-dark);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
   border-radius: 4px;
-  padding: 0.25rem 0;
+  padding: 4px 0;
   min-width: 100px;
   z-index: 1000;
 }
@@ -105,14 +119,15 @@
 .context-menu button {
   display: block;
   width: 100%;
-  padding: 0.5rem 1rem;
+  padding: 8px 16px;
   text-align: left;
   background: none;
   border: none;
-  color: var(--color-text);
+  color: var(--color-text-primary);
+  font-size: 13px;
   cursor: pointer;
 }
 
 .context-menu button:hover {
-  background-color: var(--color-bg-lighter);
+  background-color: var(--color-bg-tertiary);
 }

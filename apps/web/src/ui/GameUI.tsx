@@ -15,11 +15,10 @@ import { HUD } from './hud/HUD';
 import { ChatPanel } from './panels/ChatPanel';
 import { InventoryPanel } from './panels/InventoryPanel';
 import { EquipmentPanel } from './panels/EquipmentPanel';
-import { PersonalStoragePanel } from './panels/PersonalStoragePanel';
 import './GameUI.css';
 
 export const GameUI: React.FC = () => {
-  const { showChat, showInventory, showEquipment, showStorage, player } = useGameStore();
+  const { showChat, showInventory, showEquipment, player } = useGameStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -83,7 +82,6 @@ export const GameUI: React.FC = () => {
         {showChat && <ChatPanel />}
         {showInventory && <InventoryPanel />}
         {showEquipment && <EquipmentPanel />}
-        {showStorage && <PersonalStoragePanel />}
         <div className="minimap-border" />
       </div>
     </DndContext>

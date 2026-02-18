@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { gameSocket } from '../../network/socket';
+import { useDraggablePanel } from '../../hooks/useDraggablePanel';
 import './ChatPanel.css';
 
 export const ChatPanel: React.FC = () => {
   const { chatMessages, toggleChat } = useGameStore();
   const [message, setMessage] = useState('');
+  const { position, isDragging, handleMouseDown } = useDraggablePanel();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,8 +26,15 @@ export const ChatPanel: React.FC = () => {
   };
 
   return (
-    <div className="chat-panel ui-panel">
-      <div className="chat-header">
+    <div
+      className="chat-panel ui-panel"
+      style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
+    >
+      <div
+        className="chat-header"
+        onMouseDown={handleMouseDown}
+        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+      >
         <span>Chat</span>
         <button className="close-btn" onClick={toggleChat}>
           &times;

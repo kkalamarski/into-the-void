@@ -5,11 +5,13 @@ import { gameSocket } from '../../network/socket';
 import { ItemRegistry } from '@into-the-void/items';
 import { RARITY_COLORS } from '../constants';
 import { ItemTooltip } from '../../components/ItemTooltip';
+import { useDraggablePanel } from '../../hooks/useDraggablePanel';
 import './PersonalStoragePanel.css';
 
 export const PersonalStoragePanel: React.FC = () => {
   const { storage } = useStorageStore();
   const { toggleStorage } = useGameStore();
+  const { position, isDragging, handleMouseDown } = useDraggablePanel();
 
   // Disable Phaser keyboard when storage panel is open
   useEffect(() => {
@@ -35,8 +37,15 @@ export const PersonalStoragePanel: React.FC = () => {
 
   if (!storage) {
     return (
-      <div className="storage-panel ui-panel">
-        <div className="storage-header">
+      <div
+        className="storage-panel ui-panel"
+        style={{ transform: `translateY(-50%) translate(${position.x}px, ${position.y}px)` }}
+      >
+        <div
+          className="storage-header"
+          onMouseDown={handleMouseDown}
+          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        >
           <span>Storage</span>
           <button className="close-btn" onClick={toggleStorage}>&times;</button>
         </div>
@@ -51,8 +60,15 @@ export const PersonalStoragePanel: React.FC = () => {
   );
 
   return (
-    <div className="storage-panel ui-panel">
-      <div className="storage-header">
+    <div
+      className="storage-panel ui-panel"
+      style={{ transform: `translateY(-50%) translate(${position.x}px, ${position.y}px)` }}
+    >
+      <div
+        className="storage-header"
+        onMouseDown={handleMouseDown}
+        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+      >
         <span>Storage ({storage.items.length}/{storage.maxSlots})</span>
         <button className="close-btn" onClick={toggleStorage}>&times;</button>
       </div>

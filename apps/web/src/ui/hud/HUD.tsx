@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { BIOME_DISPLAY_NAMES, BIOME_COLORS, BiomeType } from '@into-the-void/shared-types';
+import { GiShield, GiLightningFrequency, GiPoisonGas } from 'react-icons/gi';
 import { ActionBar } from './ActionBar';
 import './HUD.css';
 
 export const HUD: React.FC = () => {
-  const { player, zoneState, toggleInventory, toggleEquipment, toggleStorage, toggleChat } = useGameStore();
+  const { player, zoneState, toggleInventory, toggleEquipment, toggleChat } = useGameStore();
   const { inventory } = useInventoryStore();
 
   if (!player) return null;
@@ -94,15 +95,15 @@ export const HUD: React.FC = () => {
         )}
         <div className="stats-section">
           <div className="stat-row">
-            <span className="stat-icon" title="Armor">&#x1F6E1;</span>
+            <GiShield className="stat-icon" title="Armor" />
             <span className="stat-value">{stats.armor}</span>
           </div>
           <div className="stat-row">
-            <span className="stat-icon" title="Speed">&#x26A1;</span>
+            <GiLightningFrequency className="stat-icon" title="Speed" />
             <span className="stat-value">{(stats.speedMultiplier * 100).toFixed(0)}%</span>
           </div>
           <div className="stat-row">
-            <span className="stat-icon" title="Hazard Resistance">&#x2623;</span>
+            <GiPoisonGas className="stat-icon" title="Hazard Resistance" />
             <span className="stat-value">{stats.hazardResistance}</span>
           </div>
         </div>
@@ -117,10 +118,6 @@ export const HUD: React.FC = () => {
           <button className="action-btn" onClick={toggleEquipment}>
             <span>E</span>
             <label>Equipment</label>
-          </button>
-          <button className="action-btn" onClick={toggleStorage}>
-            <span>S</span>
-            <label>Storage</label>
           </button>
           <button className="action-btn" onClick={toggleChat}>
             <span>C</span>

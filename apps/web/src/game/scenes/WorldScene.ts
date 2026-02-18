@@ -181,6 +181,25 @@ export class WorldScene extends Phaser.Scene {
           gameSocket.emit('equipment:tool_swap', {});
         }
       });
+
+      // UI toggle hotkeys: I=Inventory, E=Equipment, Tab=Storage, C=Chat
+      this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I).on('down', () => {
+        if (this.input.keyboard?.enabled) {
+          useGameStore.getState().toggleInventory();
+        }
+      });
+
+      this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E).on('down', () => {
+        if (this.input.keyboard?.enabled) {
+          useGameStore.getState().toggleEquipment();
+        }
+      });
+
+      this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C).on('down', () => {
+        if (this.input.keyboard?.enabled) {
+          useGameStore.getState().toggleChat();
+        }
+      });
     }
 
     // Tiles and player will be loaded via loadZoneFromState() when zone:state event arrives

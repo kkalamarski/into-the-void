@@ -11,6 +11,7 @@ import { gameSocket } from '../../network/socket';
 import { ItemRegistry } from '@into-the-void/items';
 import { RARITY_COLORS } from '../constants';
 import { ItemTooltip } from '../../components/ItemTooltip';
+import { useDraggablePanel } from '../../hooks/useDraggablePanel';
 import './InventoryPanel.css';
 
 interface SortableSlotProps {
@@ -57,6 +58,7 @@ function SortableSlot({ instanceId, itemId, quantity, onContextMenu }: SortableS
 export const InventoryPanel: React.FC = () => {
   const { inventory, pendingReorder } = useInventoryStore();
   const { toggleInventory } = useGameStore();
+  const { position, isDragging, handleMouseDown } = useDraggablePanel();
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -92,10 +94,11 @@ export const InventoryPanel: React.FC = () => {
 
   if (!inventory) return null;
 
+  const maxSlots = inventory.maxSlots || 20; // Default to 20 slots
   const sortedItems = [...inventory.items].sort((a, b) => a.slot - b.slot);
 
   const slots: (typeof sortedItems[number] | null)[] = Array.from(
-    { length: inventory.maxSlots },
+    { length: maxSlots },
     (_, i) => sortedItems.find((item) => item.slot === i) ?? null
   );
 
@@ -119,9 +122,16 @@ export const InventoryPanel: React.FC = () => {
   };
 
   return (
-    <div className="inventory-panel ui-panel">
-      <div className="inventory-header">
-        <span>Inventory ({inventory.items.length}/{inventory.maxSlots})</span>
+    <div
+      className="inventory-panel ui-panel"
+      style={{ transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))` }}
+    >
+      <div
+        className={`inventory-header ${isDragging ? 'dragging' : ''}`}
+        onMouseDown={handleMouseDown}
+        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+      >
+        <span>Inventory ({inventory.items.length}/{maxSlots})</span>
         <button className="close-btn" onClick={toggleInventory}>&times;</button>
       </div>
       <SortableContext items={sortableIds} strategy={rectSortingStrategy}>
