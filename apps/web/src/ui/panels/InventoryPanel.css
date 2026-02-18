@@ -63,6 +63,20 @@
   filter: brightness(1.2);
 }
 
+.inventory-slot--locked {
+  cursor: not-allowed;
+  filter: grayscale(50%);
+}
+
+.inventory-slot--locked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
 .slot-icon {
   width: 70%;
   height: 70%;

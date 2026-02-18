@@ -25,10 +25,12 @@ function SortableSlot({ instanceId, itemId, quantity, onContextMenu }: SortableS
     id: instanceId,
   });
   const itemDef = ItemRegistry.get(itemId);
+  const playerLevel = useGameStore(state => state.player?.level ?? 1);
+  const isLevelLocked = itemDef.requiredLevel > playerLevel;
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.5 : isLevelLocked ? 0.5 : 1,
     borderColor: RARITY_COLORS[itemDef.rarity],
   };
 
@@ -36,7 +38,7 @@ function SortableSlot({ instanceId, itemId, quantity, onContextMenu }: SortableS
     <ItemTooltip item={itemDef} disabled={isDragging}>
       <div
         ref={setNodeRef}
-        className="inventory-slot inventory-slot--filled"
+        className={`inventory-slot inventory-slot--filled ${isLevelLocked ? 'inventory-slot--locked' : ''}`}
         style={style}
         {...attributes}
         {...listeners}

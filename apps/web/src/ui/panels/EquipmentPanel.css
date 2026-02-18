@@ -118,6 +118,11 @@
   cursor: not-allowed;
 }
 
+.equip-slot--locked {
+  filter: grayscale(50%);
+  opacity: 0.6;
+}
+
 /* Modules grid - 3 columns */
 .modules-grid {
   display: grid;

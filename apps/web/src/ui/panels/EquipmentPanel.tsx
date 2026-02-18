@@ -20,12 +20,15 @@ interface EquipSlotProps {
 function EquipSlot({ slotId, label, item, disabled, onUnequip }: EquipSlotProps) {
   const { setNodeRef, isOver } = useDroppable({ id: `equip-${slotId}`, disabled });
   const itemDef = item ? ItemRegistry.get(item.itemId) : null;
+  const playerLevel = useGameStore(state => state.player?.level ?? 1);
+  const isLevelLocked = itemDef != null && itemDef.requiredLevel > playerLevel;
 
   const slotClasses = [
     'equip-slot',
     isOver ? 'equip-slot--over' : '',
     item ? 'equip-slot--filled' : '',
     disabled ? 'equip-slot--disabled' : '',
+    isLevelLocked ? 'equip-slot--locked' : '',
   ]
     .filter(Boolean)
     .join(' ');
