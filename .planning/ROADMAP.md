@@ -348,12 +348,12 @@ Plans:
   2. Lush areas visibly contain more entities per chunk than Barren areas — the density difference is observable by moving between fertility zones
   3. Entities spawning at biome-edge tiles come from the correct biome's spawn table — a creature appropriate to a Crystal Flats tile does not spawn on an adjacent Miasma Marshes tile
   4. No zone exceeds spawn density caps (15 creatures, 10 minerals, 5 plants, 2 artifacts per chunk) regardless of fertility tier
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 37-01: Add getFertilityAt() to world-gen using second SimplexNoise instance; fertility multiplier per spawn position
-- [ ] 37-02: Replace chunk-center biome sampling with per-tile sampling in generateSpawnPoints(); apply density caps
-- [ ] 37-03: Add fertility type to zone state payload; update ZoneHUD to display "Biome (Fertility)" format
+- [ ] 37-01-PLAN.md — Add getFertilityAt() to BiomeGenerator; update generateSpawnPoints signature to accept BiomeGenerator
+- [ ] 37-02-PLAN.md — Implement fertility multiplier, per-tile biome sampling, and density caps in spawn.ts
+- [ ] 37-03-PLAN.md — Add fertilityType to ZoneState; display "Biome (Fertility)" in HUD
 
 #### Phase 38: Perception Gating and Client Polish
 
@@ -416,10 +416,10 @@ Phases execute in numeric order: 33 -> 34 -> 35 -> 36 -> 37 -> 38
 | 34. Entity Lifecycle Persistence and Enriched Spawning | v1.8 | 4/4 | Complete | 2026-02-18 |
 | 35. Loot Tables, Tool Interaction, and Respawn | v1.8 | 4/4 | Complete | 2026-02-18 |
 | 36. Creature AI Wander and Behavior Tick | v1.8 | 4/4 | Complete | 2026-02-18 |
-| 37. Fertility Noise and Biome Spawn Quality | v1.8 | TBD | Not started | - |
+| 37. Fertility Noise and Biome Spawn Quality | v1.8 | 0/3 | Planned | - |
 | 38. Perception Gating and Client Polish | v1.8 | TBD | Not started | - |
 
 **Total:** 38 phases (36 complete, 2 remaining)
 
 ---
-*Last updated: 2026-02-18 after Phase 36 complete*
+*Last updated: 2026-02-18 after Phase 37 planning complete*
