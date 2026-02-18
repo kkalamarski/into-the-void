@@ -81,6 +81,7 @@ class GameSocket {
       'chat:message',
       'inventory:update',
       'storage:update',
+      'stats:update',
       'error',
     ];
 
