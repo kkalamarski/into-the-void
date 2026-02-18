@@ -63,6 +63,10 @@ Recent decisions affecting current work:
 - [33-03]: BIOME_SPAWN_CONFIGS reduced to one primary entry per biome — old hardcoded IDs (void_stalker, etc.) had no registry entries; only ENTITY_IDS-backed entries kept to satisfy must-have truth "references only IDs present in registry"
 - [33-03]: CREATURE_VOID_HORROR spans ancient_ruins + starfall_crater — single maniac-class creature covers both Tier IV biomes per lore
 - [33-03]: Auto-registration on module import — EntityRegistry.registerAll(ALL_ENTITIES) in index.ts side-effect runs at load time
+- [34-01]: entity_lifecycle uses entityId (zoneId_spawnId_x_y format) as PK — globally unique, eliminates composite key
+- [34-01]: FAR_FUTURE (2100-01-01) used as artifact respawnAt sentinel rather than nullable column — simpler queries
+- [34-01]: Deterministic level from hash(worldSeed + entityId) — no RNG state needed, reproducible per seed
+- [34-01]: Plant and Artifact branches in createEntityFromSpawn() are forward-compatibility stubs — world-gen not yet producing those entityTypes
 - [34-02]: GameSocket.on() upgraded to array-based multi-handler dispatch — both gameStore (Phaser) and entityStore (React/pathfinding) can independently handle entity events without silent handler replacement
 - [34-02]: enableMapSet() from immer called at module top in entityStore.ts — required for immer v11 Map mutation support in draft producers
 
@@ -86,10 +90,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 34, Plan 02 complete — entityStore created with socket wiring
+Stopped at: Phase 34, Plan 01 complete — entity_lifecycle DB table, enriched createEntityFromSpawn(), async lifecycle-aware loadZone()
 Resume file: None
 
-**Next action:** Continue Phase 34 plans (34-03+)
+**Next action:** Continue Phase 34 plans (34-02+)
 
 ---
-*Last updated: 2026-02-18 after Phase 34 Plan 02 complete (entityStore client store)*
+*Last updated: 2026-02-18 after Phase 34 Plan 01 complete (entity lifecycle persistence and enriched spawning)*
