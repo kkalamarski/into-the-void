@@ -13,6 +13,7 @@ import {
 } from '@into-the-void/shared-types';
 import {
   canInteract,
+  canInteractLevel,
   rollLootTable,
   getCreatureLoot,
   DEFAULT_INTERACTION_RANGE,
@@ -72,6 +73,17 @@ export class EntityService {
     const check = canInteract(player, entity, toolRange);
     if (!check.canInteract) {
       return { success: false, error: check.reason };
+    }
+
+    // INTR-07: Level gating — player cannot interact with creatures more than 5 levels higher
+    if (entity.type === 'creature') {
+      const creature = entity as Creature;
+      if (!canInteractLevel(player.level, creature.level)) {
+        return {
+          success: false,
+          error: `Cannot interact — creature level ${creature.level} exceeds your level by more than 5`,
+        };
+      }
     }
 
     // Route by entity type
