@@ -180,11 +180,11 @@ Plans:
   1. Player drags a consumable from inventory to an action bar slot — pressing the corresponding number key (1-8) uses the item via the server without typing in chat input
   2. Action bar slot auto-greys when the referenced item is no longer in inventory (used, dropped, or moved) — confirmed after every `inventory:update`
   3. Player opens the personal storage panel — items stored there are separate from inventory and persist across sessions
-**Plans**: TBD
+**Plans**: 2 plans in 1 wave
 
 Plans:
-- [ ] 29-01: Build `ActionBar.tsx` in the React HUD layer with 8 slots, `document`-level keydown listener with chat-focus guard, instance-ID references, and orphan invalidation on `inventory:update`
-- [ ] 29-02: Build `PersonalStoragePanel.tsx` with its own grid view backed by the `player_storage` DB table
+- [ ] 29-01-PLAN.md — Build ActionBar.tsx with 8 slots, document keydown listener with chat-focus guard, localStorage persistence, orphan invalidation on inventory:update
+- [ ] 29-02-PLAN.md — Build PersonalStoragePanel.tsx with storage:open/update events, StorageService on server, grid view backed by player_storage DB table
 
 ## Progress
 
@@ -221,9 +221,9 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | 26. Server InventoryService & WebSocket Handlers | v1.6 | 4/4 | Complete | 2026-02-17 |
 | 27. Client State & Inventory Panel UI | v1.6 | 3/3 | Complete | 2026-02-17 |
 | 28. Equipment System | v1.6 | 3/3 | Complete | 2026-02-18 |
-| 29. Action Bar & Personal Storage | v1.6 | 0/2 | Not started | - |
+| 29. Action Bar & Personal Storage | v1.6 | 0/2 | Planned | - |
 
 **Total:** 29 phases (28 complete, 1 planned)
 
 ---
-*Last updated: 2026-02-18 after Phase 28 execution*
+*Last updated: 2026-02-18 after Phase 29 planning*
