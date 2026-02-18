@@ -1,7 +1,20 @@
-import { BiomeType, SpawnPoint, ZONE_SIZE } from '@into-the-void/shared-types';
+import { BiomeType, FertilityType, SpawnPoint, ZONE_SIZE } from '@into-the-void/shared-types';
 import { ENTITY_IDS } from '@into-the-void/entities';
 import { SeededRandom } from '../random/seeded-random';
 import { BiomeGenerator } from './biome';
+
+const FERTILITY_MULTIPLIERS: Record<FertilityType, number> = {
+  Barren: 0.5,
+  Normal: 1.0,
+  Lush: 1.5,
+};
+
+const SPAWN_CAPS = {
+  creatures: 15,
+  minerals: 10,
+  plants: 5,
+  artifacts: 2,
+} as const;
 
 /**
  * Spawn configuration per biome
@@ -132,14 +145,27 @@ export function generateSpawnPoints(
   const config = BIOME_SPAWN_CONFIGS[biome];
   const spawnPoints: SpawnPoint[] = [];
 
+  // Sample fertility at chunk center (density is chunk-level decision)
+  const centerX = chunkX * ZONE_SIZE + ZONE_SIZE / 2;
+  const centerY = chunkY * ZONE_SIZE + ZONE_SIZE / 2;
+  const fertilityType = biomeGenerator.getFertilityAt(centerX, centerY);
+  const multiplier = FERTILITY_MULTIPLIERS[fertilityType];
+
   // Generate creature spawns
-  const creatureCount = Math.round(
-    config.creatureDensity * (0.5 + random.next())
-  );
+  const rawCreatureCount = Math.round(config.creatureDensity * multiplier * (0.5 + random.next()));
+  const creatureCount = Math.min(rawCreatureCount, SPAWN_CAPS.creatures);
   for (let i = 0; i < creatureCount; i++) {
-    const creature = weightedPick(random, config.creatures);
     const position = findValidSpawnPosition(random, collisionMap);
-    if (position && creature) {
+    if (!position) continue;
+
+    // Per-tile biome sampling for spawn table (SPWN-03)
+    const worldX = chunkX * ZONE_SIZE + position.x;
+    const worldY = chunkY * ZONE_SIZE + position.y;
+    const tileBiome = biomeGenerator.getBiome(worldX, worldY);
+    const tileConfig = BIOME_SPAWN_CONFIGS[tileBiome];
+
+    const creature = weightedPick(random, tileConfig.creatures);
+    if (creature) {
       spawnPoints.push({
         x: position.x,
         y: position.y,
@@ -151,11 +177,20 @@ export function generateSpawnPoints(
   }
 
   // Generate mineral spawns
-  const mineralCount = Math.round(config.mineralDensity * (0.5 + random.next()));
+  const rawMineralCount = Math.round(config.mineralDensity * multiplier * (0.5 + random.next()));
+  const mineralCount = Math.min(rawMineralCount, SPAWN_CAPS.minerals);
   for (let i = 0; i < mineralCount; i++) {
-    const mineral = weightedPick(random, config.minerals);
     const position = findValidSpawnPosition(random, collisionMap);
-    if (position && mineral) {
+    if (!position) continue;
+
+    // Per-tile biome sampling for spawn table (SPWN-03)
+    const worldX = chunkX * ZONE_SIZE + position.x;
+    const worldY = chunkY * ZONE_SIZE + position.y;
+    const tileBiome = biomeGenerator.getBiome(worldX, worldY);
+    const tileConfig = BIOME_SPAWN_CONFIGS[tileBiome];
+
+    const mineral = weightedPick(random, tileConfig.minerals);
+    if (mineral) {
       spawnPoints.push({
         x: position.x,
         y: position.y,
