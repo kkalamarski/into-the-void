@@ -366,12 +366,12 @@ Plans:
   3. AI internal state (FSM state, wander target, aggro flag) is absent from `entity:update` broadcasts — a client inspecting socket payloads sees only position and health
   4. Entities fade in smoothly when spawned or respawned — the spawn event triggers a client-side fade-in animation rather than instant appearance
   5. Minerals and plants show proportional visual depletion as yield decreases — a half-depleted mineral looks visually different from a full one
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 38-01: Strip AI state from entity:update broadcasts in AiService before emission
-- [ ] 38-02: Add perception gating and level gating rendering logic to EntityRenderer; level gating server-side check in EntityService
-- [ ] 38-03: Entity fade-in animation on spawn/respawn; harvest depletion visual on minerals/plants
+- [ ] 38-01-PLAN.md — Strip AI state from entity:batch broadcasts; wire entity:batch to WorldScene
+- [ ] 38-02-PLAN.md — Add perception gating to EntityRenderer; level gating server-side check in EntityService
+- [ ] 38-03-PLAN.md — Entity fade-in animation on spawn/respawn; yield bar depletion visual update
 
 ## Progress
 
@@ -417,9 +417,9 @@ Phases execute in numeric order: 33 -> 34 -> 35 -> 36 -> 37 -> 38
 | 35. Loot Tables, Tool Interaction, and Respawn | v1.8 | 4/4 | Complete | 2026-02-18 |
 | 36. Creature AI Wander and Behavior Tick | v1.8 | 4/4 | Complete | 2026-02-18 |
 | 37. Fertility Noise and Biome Spawn Quality | v1.8 | 3/3 | Complete | 2026-02-18 |
-| 38. Perception Gating and Client Polish | v1.8 | TBD | Not started | - |
+| 38. Perception Gating and Client Polish | v1.8 | 3/3 | Not started | - |
 
 **Total:** 38 phases (37 complete, 1 remaining)
 
 ---
-*Last updated: 2026-02-18 after Phase 37 execution complete*
+*Last updated: 2026-02-18 after Phase 38 planning complete*
