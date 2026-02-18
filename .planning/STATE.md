@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 ## Current Position
 
-Phase: 28 of 29 (Equipment System) — COMPLETE
-Plan: 3 of 3 complete
-Status: Phase 28 complete — HUD stats display, level-gated items, Q hotkey tool swap
-Last activity: 2026-02-18 — Phase 28 Plan 03 complete: HUD stats section, level-locked item styling, Q hotkey for equipment:tool_swap
+Phase: 29 of 29 (Action Bar & Personal Storage) — IN PROGRESS
+Plan: 1 of 2 complete
+Status: Phase 29 Plan 01 complete — action bar hotbar with 1-8 shortcuts, drag-to-assign, localStorage persistence
+Last activity: 2026-02-18 — Phase 29 Plan 01 complete: actionBarStore, ActionBar component, HUD integration
 
-Progress: [█████████░░░░░░░░░░░] 50% (28/29 phases complete; 12/16 v1.6 plans complete)
+Progress: [█████████░░░░░░░░░░░] 52% (28/29 phases complete; 13/16 v1.6 plans complete)
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Progress: [█████████░░░░░░░░░░░] 50% (28
 | Phase 28 P01 | 159s | 3 tasks | 7 files |
 | Phase 28 P02 | 164s | 3 tasks | 4 files |
 | Phase 28 P03 | 201s | 3 tasks | 7 files |
+| Phase 29 P01 | 163s | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,9 @@ Recent decisions affecting current work:
 - [28-03]: HUD reads inventory.stats via useInventoryStore — consistent with separation of inventoryStore from gameStore per 27-01 decision
 - [28-03]: stats defaults (armor:0, speedMultiplier:1.0) ensure HUD renders correctly before any equip operation populates stats
 - [28-03]: Q key handler placed inside if (this.input.keyboard) guard matching existing WASD setup pattern; respects keyboard.enabled gate
+- [29-01]: actionBarStore uses module-level useInventoryStore.subscribe for orphan invalidation — ensures stale references clear regardless of ActionBar component mount state
+- [29-01]: hotbar- prefix routing in GameUI handleDragEnd checked before equip- prefix — explicit ordering for future extensibility
+- [29-01]: e.repeat guard in keydown handler prevents held-key item spam
 
 ### Pending Todos
 
@@ -118,10 +122,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 28-03-PLAN.md — Phase 28 Equipment System complete
+Stopped at: Completed 29-01-PLAN.md — Phase 29 Plan 01 action bar hotbar complete
 Resume file: None
 
-**Next action:** Execute Phase 29
+**Next action:** Execute Phase 29 Plan 02 (Personal Storage)
 
 ---
-*Last updated: 2026-02-18 after Phase 28 Plan 03 complete*
+*Last updated: 2026-02-18 after Phase 29 Plan 01 complete*
