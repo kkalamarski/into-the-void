@@ -67,3 +67,10 @@ gameSocket.on('entity:update', ({ entityId, changes }: { entityId: string; chang
 gameSocket.on('entity:despawn', ({ entityId }: { entityId: string }) => {
   useEntityStore.getState().despawnEntity(entityId);
 });
+
+gameSocket.on('entity:batch', ({ updates }: { updates: Array<{ entityId: string; changes: Partial<Entity> }> }) => {
+  const store = useEntityStore.getState();
+  for (const { entityId, changes } of updates) {
+    store.updateEntity(entityId, changes);
+  }
+});
