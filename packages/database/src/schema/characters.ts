@@ -12,14 +12,18 @@ export interface PositionJson {
 }
 
 /**
- * Player stats stored as JSON
+ * Player stats stored as JSON — matches CharacterStats 8-stat shape.
+ * NOTE: Existing DB rows still have the old 5-stat shape; Phase 31 handles the migration script.
  */
 export interface StatsJson {
-  strength: number;
-  agility: number;
-  endurance: number;
-  intelligence: number;
+  durability: number;
+  toughness: number;
+  power: number;
+  haste: number;
+  vigor: number;
+  recovery: number;
   perception: number;
+  resilience: number;
 }
 
 /**
@@ -44,11 +48,14 @@ export const characters = pgTable('characters', {
     zoneId: 'z_0_0',
   }),
   stats: jsonb('stats').$type<StatsJson>().notNull().default({
-    strength: 10,
-    agility: 10,
-    endurance: 10,
-    intelligence: 10,
-    perception: 10,
+    durability: 100,
+    toughness: 50,
+    power: 50,
+    haste: 50,
+    vigor: 80,
+    recovery: 30,
+    perception: 40,
+    resilience: 30,
   }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   lastPlayedAt: timestamp('last_played_at', { withTimezone: true }),
