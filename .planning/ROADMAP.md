@@ -226,10 +226,11 @@ Plans:
   2. After equipping or unequipping any item, a new `stats:update` event is emitted within the same round trip as `inventory:update` — stats are never stale relative to equipment
   3. Existing character rows in the database carry the new 8-stat shape after the migration script runs — no character returns `undefined` for any of the 8 stat fields
   4. `calculateDamage()` in game-logic uses `power` and `toughness` stat names; `turn-order` uses `haste` — the old `strength`, `endurance`, `agility` references are gone and the codebase compiles cleanly
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 31-01-PLAN.md — TBD
+- [ ] 31-01-PLAN.md — Wire CharStatsPayload type and emitStats helper into GameGateway
+- [ ] 31-02-PLAN.md — Create statsStore.ts client store and migration script for characters.stats
 
 #### Phase 32: Client Display
 
@@ -283,10 +284,10 @@ Phases execute in numeric order: 30 → 31 → 32
 | 28. Equipment System | v1.6 | 3/3 | Complete | 2026-02-18 |
 | 29. Action Bar & Personal Storage | v1.6 | 2/2 | Complete | 2026-02-18 |
 | 30. Type Foundation & Pure Computation | v1.7 | 2/2 | Complete | 2026-02-18 |
-| 31. Server Wiring & Socket Delivery | v1.7 | TBD | Not started | - |
+| 31. Server Wiring & Socket Delivery | v1.7 | 2/2 | Planned | - |
 | 32. Client Display | v1.7 | TBD | Not started | - |
 
 **Total:** 32 phases (30 complete, 2 planned)
 
 ---
-*Last updated: 2026-02-18 after Phase 30 execution complete*
+*Last updated: 2026-02-18 after Phase 31 planning complete*
