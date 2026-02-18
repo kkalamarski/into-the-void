@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { Entity, Creature, CreatureBehavior, EntityType, Position, ZONE_SIZE } from '@into-the-void/shared-types';
+import { Entity, Creature, Mineral, Plant, CreatureBehavior, Position, ZONE_SIZE } from '@into-the-void/shared-types';
 import { IsometricTransform } from '../utils/IsometricTransform';
 
 const ELEVATION_HEIGHT_STEP = 16; // Pixels per elevation level
@@ -67,7 +67,7 @@ export class EntityRenderer {
     container.add(shadow);
 
     // Entity sprite elevated above ground
-    const sprite = this.scene.add.sprite(0, -this.elevationOffset, this.getEntityTexture(entity.type));
+    const sprite = this.scene.add.sprite(0, -this.elevationOffset, this.getEntityTexture(entity));
     sprite.setOrigin(0.5, 1.0); // Bottom-center origin for ground alignment
     container.add(sprite);
 
@@ -76,11 +76,25 @@ export class EntityRenderer {
     nameplate.y = -this.elevationOffset - 60; // Above sprite, health bar, and behavior icon
     container.add(nameplate);
 
-    // Health bar for damaged creatures (positioned above elevated sprite)
-    if (this.isCreature(entity) && entity.health < entity.maxHealth) {
+    // Health bar for creatures (always visible per INTR-08)
+    if (this.isCreature(entity)) {
       const healthBar = this.createHealthBar(entity.health, entity.maxHealth);
       healthBar.y = -this.elevationOffset - 24; // Above sprite
       container.add(healthBar);
+    }
+
+    // Yield bar for minerals (same visual as health bar)
+    if (this.isMineral(entity)) {
+      const yieldBar = this.createHealthBar(entity.yield, entity.maxYield);
+      yieldBar.y = -this.elevationOffset - 24;
+      container.add(yieldBar);
+    }
+
+    // Yield bar for plants (same visual as health bar)
+    if (this.isPlant(entity)) {
+      const yieldBar = this.createHealthBar(entity.yield, entity.maxYield);
+      yieldBar.y = -this.elevationOffset - 24;
+      container.add(yieldBar);
     }
 
     // Behavior icon for creatures (above health bar)
@@ -182,14 +196,33 @@ export class EntityRenderer {
   }
 
   /**
-   * Maps entity type to texture key.
+   * Maps entity to texture key.
+   * Uses species-specific or resource-specific texture for enriched entities,
+   * falling back to type-based texture if unavailable.
    */
-  private getEntityTexture(type: EntityType): string {
-    switch (type) {
+  private getEntityTexture(entity: Entity): string {
+    // Use species-specific texture if available (enriched entities)
+    if (this.isCreature(entity) && entity.speciesId) {
+      // Try species-specific texture, fall back to generic 'creature'
+      return entity.speciesId;
+    }
+    if (this.isMineral(entity) && entity.resourceId) {
+      return entity.resourceId;
+    }
+    if (this.isPlant(entity) && entity.speciesId) {
+      return entity.speciesId;
+    }
+
+    // Fall back to type-based texture
+    switch (entity.type) {
       case 'creature':
         return 'creature';
       case 'mineral':
         return 'mineral';
+      case 'plant':
+        return 'plant';
+      case 'artifact':
+        return 'artifact';
       case 'item':
         return 'item';
       default:
@@ -202,6 +235,20 @@ export class EntityRenderer {
    */
   private isCreature(entity: Entity): entity is Creature {
     return entity.type === 'creature';
+  }
+
+  /**
+   * Type guard to check if entity is a Mineral.
+   */
+  private isMineral(entity: Entity): entity is Mineral {
+    return entity.type === 'mineral';
+  }
+
+  /**
+   * Type guard to check if entity is a Plant.
+   */
+  private isPlant(entity: Entity): entity is Plant {
+    return entity.type === 'plant';
   }
 
   /**
