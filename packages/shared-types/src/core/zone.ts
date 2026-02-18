@@ -94,6 +94,8 @@ export interface ZoneState {
   chunk: ChunkData;
   /** Primary biome of this zone */
   biome: BiomeType;
+  /** Fertility tier of this zone (Barren/Normal/Lush) */
+  fertilityType: FertilityType;
 }
 
 /**
