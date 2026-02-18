@@ -98,6 +98,8 @@ Recent decisions affecting current work:
 - [37-01]: 3 octaves for fertility fbm — balances variation against tiny-patch noise artifacts
 - [37-01]: Equal-thirds thresholds (Barren <0.33, Normal 0.33-0.66, Lush >=0.66) for balanced distribution
 - [37-01]: BiomeGenerator passed to generateSpawnPoints instead of BiomeType — enables Plan 37-02 per-spawn-point fertility sampling without another signature change
+- [37-02]: Density decision uses chunk-center fertility; spawn table uses per-tile biome — intentional split per SPWN-03 and research pitfall 4
+- [37-02]: Plants and artifacts omitted from spawn caps enforcement for now — forward-compatibility stubs noted; will activate in Phase 38
 - [37-03]: BiomeGenerator instantiated per getZoneState() call (not cached) — acceptable since getZoneState is called once per zone transition, not per frame
 - [37-03]: Fertility displayed inline without separate hysteresis — biome hysteresis gate is sufficient; fertility changes less frequently than biome at boundaries
 - [37-03]: ZoneState.fertilityType is required (not optional) — enforces correctness at the type level; all ZoneState consumers must provide it
