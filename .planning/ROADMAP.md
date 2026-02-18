@@ -9,7 +9,7 @@
 - ✅ **v1.4 Infinite World & Seamless Chunks** - Phases 17-20 (shipped 2026-02-17)
 - ✅ **v1.5 Movement Overhaul** - Phases 21-24 (shipped 2026-02-17)
 - ✅ **v1.6 Inventory & Items** - Phases 25-29 (shipped 2026-02-18)
-- 🚧 **v1.7 Character Stats** - Phases 30-32 (in progress)
+- ✅ **v1.7 Character Stats** - Phases 30-32 (shipped 2026-02-18)
 
 ## Phases
 
@@ -192,7 +192,8 @@ See: `.planning/milestones/v1.6-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.7 Character Stats (In Progress)
+<details>
+<summary>✅ v1.7 Character Stats (Phases 30-32) - SHIPPED 2026-02-18</summary>
 
 **Milestone Goal:** Implement the 8-stat character stats system (Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience) with linear level scaling, equipment bonuses, server-authoritative computation, and a stat panel HUD with breakdown display. Stats system is designed for reuse by the future combat milestone.
 
@@ -246,9 +247,13 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 32-01-PLAN.md — Wire state foundations: statsStore level-up detection, gameStore stats toggle, P key handler, STAT_DISPLAY_ORDER constant
-- [ ] 32-02-PLAN.md — Build StatsPanel.tsx with draggable panel and stat breakdown; LevelUpNotification.tsx with auto-dismiss
-- [ ] 32-03-PLAN.md — Extend ItemTooltip with equippedItem prop for stat comparison; wire in InventoryPanel
+- [x] 32-01-PLAN.md — Wire state foundations: statsStore level-up detection, gameStore stats toggle, P key handler, STAT_DISPLAY_ORDER constant
+- [x] 32-02-PLAN.md — Build StatsPanel.tsx with draggable panel and stat breakdown; LevelUpNotification.tsx with auto-dismiss
+- [x] 32-03-PLAN.md — Extend ItemTooltip with equippedItem prop for stat comparison; wire in InventoryPanel
+
+See: `.planning/milestones/v1.7-ROADMAP.md`
+
+</details>
 
 ## Progress
 
@@ -288,9 +293,9 @@ Phases execute in numeric order: 30 → 31 → 32
 | 29. Action Bar & Personal Storage | v1.6 | 2/2 | Complete | 2026-02-18 |
 | 30. Type Foundation & Pure Computation | v1.7 | 2/2 | Complete | 2026-02-18 |
 | 31. Server Wiring & Socket Delivery | v1.7 | 3/3 | Complete | 2026-02-18 |
-| 32. Client Display | v1.7 | 3 | Planned | - |
+| 32. Client Display | v1.7 | 3/3 | Complete | 2026-02-18 |
 
-**Total:** 32 phases (31 complete, 1 planned)
+**Total:** 32 phases (32 complete)
 
 ---
-*Last updated: 2026-02-18 after Phase 32 planning complete*
+*Last updated: 2026-02-18 after v1.7 milestone complete*
