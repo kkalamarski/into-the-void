@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 Phase: 32 of 32 (Client Display)
 Plan: 3 of 3 in current phase
-Status: Plan 03 complete — stat comparison tooltip wired into InventoryPanel
-Last activity: 2026-02-18 — 32-03 executed (ItemTooltip stat comparison display + InventoryPanel equippedItem wiring)
+Status: Plan 02 complete — StatsPanel UI and LevelUpNotification overlay built and wired into GameUI
+Last activity: 2026-02-18 — 32-02 executed (StatsPanel draggable panel + LevelUpNotification auto-dismiss overlay)
 
 Progress: [████░░░░░░] 40% (v1.7 milestone)
 
@@ -44,6 +44,7 @@ Progress: [████░░░░░░] 40% (v1.7 milestone)
 | Phase 31 P02 | 2 | 2 tasks | 3 files |
 | Phase 31 P03 | 2 | 1 task | 1 file |
 | Phase 32 P01 | 2 | 2 tasks | 4 files |
+| Phase 32 P02 | 2 | 3 tasks | 5 files |
 | Phase 32 P03 | 3 | 2 tasks | 3 files |
 
 ## Accumulated Context
@@ -73,6 +74,9 @@ Recent decisions affecting current work:
 - [32-01]: Compare base stats only (not total) for level-up detection — equipment changes affect total, level gains affect base
 - [32-01]: P key toggles stats panel following same keyboard-enabled guard pattern as I/E/C keys
 - [32-01]: levelUpDeltas accumulates delta amount (next - prev) per stat, not the new absolute value
+- [32-02]: StatsPanel follows EquipmentPanel draggable pattern exactly — same useDraggablePanel hook and Phaser keyboard disable/enable on mount/unmount
+- [32-02]: LevelUpNotification manages own visibility via levelUpDeltas from statsStore — mounts unconditionally in GameUI
+- [32-02]: breakdown shows (base + equipment) format when equipment != 0, (base) only when equipment is 0
 - [32-03]: equippedItem prop is optional — tooltip degrades gracefully when no item equipped in slot
 - [32-03]: Module comparison uses modules[0]; accessory comparison uses accessory1 (v1 limitation)
 - [32-03]: Stat names shown are legacy ComputedStats keys (armor, speedMultiplier, etc.) — auto-upgrades when CharacterStats effects added
@@ -94,10 +98,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 32-03-PLAN.md (stat comparison tooltip + InventoryPanel equippedItem wiring)
+Stopped at: Completed 32-02-PLAN.md (StatsPanel UI + LevelUpNotification overlay wired into GameUI)
 Resume file: None
 
-**Next action:** Execute Phase 32 Plan 04 (if exists) or advance to next phase — `/gsd:execute-phase 32`
+**Next action:** Execute Phase 32 Plan 03 — `/gsd:execute-phase 32`
 
 ---
-*Last updated: 2026-02-18 after 32-03 stat comparison tooltip wired into InventoryPanel complete*
+*Last updated: 2026-02-18 after 32-02 StatsPanel and LevelUpNotification complete*
