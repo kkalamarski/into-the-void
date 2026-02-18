@@ -243,10 +243,12 @@ Plans:
   2. Each stat row in the panel shows the breakdown: base value, equipment bonus, and total — for example "Durability 115 (100 base + 15 from modules)"
   3. When a character levels up, an overlay notification appears for 3 seconds listing the stat deltas — for example "+5 Durability, +3 Power" — and then dismisses automatically
   4. Player hovers an unequipped item — the tooltip shows each stat bonus with a green or red delta indicator comparing it to the currently equipped item in the same slot
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 32-01-PLAN.md — TBD
+- [ ] 32-01-PLAN.md — Wire state foundations: statsStore level-up detection, gameStore stats toggle, P key handler, STAT_DISPLAY_ORDER constant
+- [ ] 32-02-PLAN.md — Build StatsPanel.tsx with draggable panel and stat breakdown; LevelUpNotification.tsx with auto-dismiss
+- [ ] 32-03-PLAN.md — Extend ItemTooltip with equippedItem prop for stat comparison; wire in InventoryPanel
 
 ## Progress
 
@@ -286,9 +288,9 @@ Phases execute in numeric order: 30 → 31 → 32
 | 29. Action Bar & Personal Storage | v1.6 | 2/2 | Complete | 2026-02-18 |
 | 30. Type Foundation & Pure Computation | v1.7 | 2/2 | Complete | 2026-02-18 |
 | 31. Server Wiring & Socket Delivery | v1.7 | 3/3 | Complete | 2026-02-18 |
-| 32. Client Display | v1.7 | TBD | Not started | - |
+| 32. Client Display | v1.7 | 3 | Planned | - |
 
 **Total:** 32 phases (31 complete, 1 planned)
 
 ---
-*Last updated: 2026-02-18 after Phase 31 execution complete*
+*Last updated: 2026-02-18 after Phase 32 planning complete*
