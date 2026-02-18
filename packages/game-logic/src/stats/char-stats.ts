@@ -88,10 +88,10 @@ export function computeCharStats(
     resilience: base.resilience + (level - 1) * growth.resilience,
   };
 
-  // Collect all equipped items
+  // Collect all equipped items (defensive: modules may be undefined in legacy DB rows)
   const equippedItems: InventoryItemJson[] = [
     equipment.exosuit,
-    ...equipment.modules,
+    ...(equipment.modules ?? []),
     equipment.tool,
     equipment.accessory1,
     equipment.accessory2,

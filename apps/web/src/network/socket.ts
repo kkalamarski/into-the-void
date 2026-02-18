@@ -60,7 +60,7 @@ class GameSocket {
     });
 
     this.socket.on('auth:error', (data) => {
-      console.error('Auth error:', data.error);
+      console.error('Auth error:', data.message);
       this.setConnectionState('error');
     });
 

@@ -115,6 +115,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         });
       } else {
         // Auth failed - send error info and disconnect
+        console.error('Auth failed:', result.error);
         const errorCode = result.error?.includes('Character not found')
           ? 'INVALID_CHARACTER'
           : result.error?.includes('Invalid token') || result.error?.includes('expired')
@@ -126,6 +127,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     } catch (error) {
       // Exception during auth - send error and disconnect
+      console.error('Auth exception:', error);
       const errorInfo = getErrorInfo('AUTH_FAILED', 'Authentication failed');
       client.emit('auth:error', errorInfo);
       client.disconnect();
