@@ -48,6 +48,9 @@ interface GameState {
   showChat: boolean;
   toggleChat: () => void;
 
+  showStats: boolean;
+  toggleStats: () => void;
+
   // Chat
   chatMessages: ChatMessage[];
   addChatMessage: (message: ChatMessage) => void;
@@ -98,6 +101,9 @@ export const useGameStore = create<GameState>((set) => ({
 
   showChat: false,
   toggleChat: () => set((state) => ({ showChat: !state.showChat })),
+
+  showStats: false,
+  toggleStats: () => set((state) => ({ showStats: !state.showStats })),
 
   // Chat
   chatMessages: [],

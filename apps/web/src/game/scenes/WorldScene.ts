@@ -200,6 +200,12 @@ export class WorldScene extends Phaser.Scene {
           useGameStore.getState().toggleChat();
         }
       });
+
+      this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P).on('down', () => {
+        if (this.input.keyboard?.enabled) {
+          useGameStore.getState().toggleStats();
+        }
+      });
     }
 
     // Tiles and player will be loaded via loadZoneFromState() when zone:state event arrives
