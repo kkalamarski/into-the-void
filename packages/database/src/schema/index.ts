@@ -20,3 +20,6 @@ export * from './storage';
 
 // Entity lifecycle persistence
 export * from './entity-lifecycle';
+
+// Ground items (loot dropped in zones)
+export * from './ground-items';
