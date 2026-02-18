@@ -265,13 +265,27 @@ export class TileRenderer {
   }
 
   /**
-   * Create top face (diamond shape) relative to container origin.
+   * Create top face using sprite texture if available, otherwise fallback to colored diamond.
    */
-  private createTopFace(tileId: TileId): Phaser.GameObjects.Graphics {
-    const color = this.getTileColor(tileId);
+  private createTopFace(tileId: TileId): Phaser.GameObjects.GameObject {
+    const textureKey = this.getTextureKey(tileId);
     const halfWidth = this.isoTransform.tileWidth / 2;
     const halfHeight = this.isoTransform.tileHeight / 2;
 
+    // Check if we have a loaded sprite texture (vs procedurally generated)
+    // Floor tiles are loaded from PNG, others are procedurally generated
+    const isFloorTile = textureKey.endsWith('_floor');
+
+    if (isFloorTile && this.scene.textures.exists(textureKey)) {
+      // Use sprite image for floor tiles
+      // Scale 96x96 sprite to fit isometric diamond (128x64)
+      const sprite = this.scene.add.image(0, 0, textureKey);
+      sprite.setScale(this.isoTransform.tileWidth / 96, this.isoTransform.tileHeight / 96);
+      return sprite;
+    }
+
+    // Fallback: draw colored diamond for walls/formations
+    const color = this.getTileColor(tileId);
     const graphics = this.scene.add.graphics();
     graphics.fillStyle(color, 1);
 
