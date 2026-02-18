@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 ## Current Position
 
-Phase: 31 of 32 (Server Wiring & Socket Delivery) — COMPLETE
-Plan: 3 of 3 in current phase
-Status: Plan 03 complete — Phase 31 fully done
-Last activity: 2026-02-18 — 31-03 executed (statsStore module graph wiring)
+Phase: 32 of 32 (Client Display)
+Plan: 1 of 3 in current phase
+Status: Plan 01 complete — state foundations wired
+Last activity: 2026-02-18 — 32-01 executed (stats panel toggle and level-up detection foundations)
 
 Progress: [████░░░░░░] 40% (v1.7 milestone)
 
@@ -43,6 +43,7 @@ Progress: [████░░░░░░] 40% (v1.7 milestone)
 | Phase 31 P01 | 2 | 2 tasks | 4 files |
 | Phase 31 P02 | 2 | 2 tasks | 3 files |
 | Phase 31 P03 | 2 | 1 task | 1 file |
+| Phase 32 P01 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,9 @@ Recent decisions affecting current work:
 - [31-02]: statsStore follows inventoryStore pattern exactly - same Zustand+immer structure, module-level socket wiring
 - [31-02]: migrate-stats-schema.ts targets characters table; hasOldShape() detects old 5-stat keys (strength/agility/endurance/intelligence); NEW_STATS_DEFAULT matches StatsJson level-1 defaults
 - [31-03]: statsStore activated via side-effect import in GameUI.tsx — no useStatsStore hook yet (rendering deferred to Phase 32)
+- [32-01]: Compare base stats only (not total) for level-up detection — equipment changes affect total, level gains affect base
+- [32-01]: P key toggles stats panel following same keyboard-enabled guard pattern as I/E/C keys
+- [32-01]: levelUpDeltas accumulates delta amount (next - prev) per stat, not the new absolute value
 
 ### Pending Todos
 
@@ -86,10 +90,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 31-03-PLAN.md (statsStore module graph wiring — Phase 31 complete)
+Stopped at: Completed 32-01-PLAN.md (stats panel toggle and level-up detection foundations)
 Resume file: None
 
-**Next action:** Execute Phase 32 — `/gsd:execute-phase 32`
+**Next action:** Execute Phase 32 Plan 02 — `/gsd:execute-phase 32`
 
 ---
-*Last updated: 2026-02-18 after 31-03 statsStore module graph wiring complete (Phase 31 done)*
+*Last updated: 2026-02-18 after 32-01 stats panel toggle and level-up detection foundations complete*
