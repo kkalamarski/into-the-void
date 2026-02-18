@@ -9,6 +9,7 @@ import { useInventoryStore } from '../../store/inventoryStore';
 import { useGameStore } from '../../store/gameStore';
 import { gameSocket } from '../../network/socket';
 import { ItemRegistry } from '@into-the-void/items';
+import type { InventoryEquipment } from '@into-the-void/shared-types';
 import { RARITY_COLORS } from '../constants';
 import { ItemTooltip } from '../../components/ItemTooltip';
 import { useDraggablePanel } from '../../hooks/useDraggablePanel';
@@ -19,9 +20,29 @@ interface SortableSlotProps {
   itemId: string;
   quantity: number;
   onContextMenu: (e: React.MouseEvent, instanceId: string) => void;
+  equipment: InventoryEquipment | undefined;
 }
 
-function SortableSlot({ instanceId, itemId, quantity, onContextMenu }: SortableSlotProps) {
+function getEquippedForSlot(slot: string | undefined, eq: InventoryEquipment | undefined): string | undefined {
+  if (!slot || !eq) return undefined;
+
+  switch (slot) {
+    case 'exosuit':
+      return eq.exosuit?.itemId;
+    case 'tool':
+      return eq.tool?.itemId;
+    case 'accessory':
+      // Compare against accessory1 by default
+      return eq.accessory1?.itemId;
+    case 'module':
+      // Compare against first equipped module
+      return eq.modules?.[0]?.itemId;
+    default:
+      return undefined;
+  }
+}
+
+function SortableSlot({ instanceId, itemId, quantity, onContextMenu, equipment }: SortableSlotProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: instanceId,
   });
@@ -35,8 +56,11 @@ function SortableSlot({ instanceId, itemId, quantity, onContextMenu }: SortableS
     borderColor: RARITY_COLORS[itemDef.rarity],
   };
 
+  const equippedItemId = getEquippedForSlot(itemDef?.equipSlot, equipment);
+  const equippedItemDef = equippedItemId ? ItemRegistry.get(equippedItemId) : undefined;
+
   return (
-    <ItemTooltip item={itemDef} disabled={isDragging}>
+    <ItemTooltip item={itemDef} disabled={isDragging} equippedItem={equippedItemDef}>
       <div
         ref={setNodeRef}
         className={`inventory-slot inventory-slot--filled ${isLevelLocked ? 'inventory-slot--locked' : ''}`}
@@ -144,6 +168,7 @@ export const InventoryPanel: React.FC = () => {
                 itemId={item.itemId}
                 quantity={item.quantity}
                 onContextMenu={handleContextMenu}
+                equipment={inventory.equipment}
               />
             ) : (
               <div key={`empty-${i}`} className="inventory-slot inventory-slot--empty" />
