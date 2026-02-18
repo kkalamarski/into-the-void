@@ -162,6 +162,15 @@ export function canPickup(
 }
 
 /**
+ * INTR-07: Level gating check.
+ * Returns false if entity level exceeds player level by more than 5.
+ * Only applies to creatures (minerals, plants, artifacts have no level).
+ */
+export function canInteractLevel(playerLevel: number, entityLevel: number): boolean {
+  return entityLevel <= playerLevel + 5;
+}
+
+/**
  * Check if player can attack a creature
  */
 export function canAttack(
