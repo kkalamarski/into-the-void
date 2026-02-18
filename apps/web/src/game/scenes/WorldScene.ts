@@ -1109,6 +1109,29 @@ export class WorldScene extends Phaser.Scene {
         }
       }
     }
+
+    // Update yield bar if yield changed for minerals/plants (UIHD-03)
+    if ('yield' in changes && this.entityRenderer) {
+      const yieldValue = (changes as { yield: number }).yield;
+      const maxYield = container.getData('maxYield') as number | undefined;
+      const elevationOffset = (container.getData('elevationOffset') as number) ?? 12;
+
+      if (maxYield !== undefined) {
+        // Find and destroy old yield bar using stored reference (avoids fragile Y-position search)
+        const oldYieldBar = container.getData('yieldBar') as Phaser.GameObjects.Graphics | undefined;
+        if (oldYieldBar) {
+          oldYieldBar.destroy();
+        }
+
+        // Create new yield bar with updated value
+        const newYieldBar = this.entityRenderer.createHealthBar(yieldValue, maxYield);
+        newYieldBar.y = -elevationOffset - 24;
+        container.add(newYieldBar);
+
+        // Store new reference for next update
+        container.setData('yieldBar', newYieldBar);
+      }
+    }
   }
 
   addPlayer(player: PlayerPublic): void {
