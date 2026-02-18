@@ -1,0 +1,59 @@
+.hotbar {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 8px;
+  padding: 8px 10px;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: 8px;
+}
+
+.hotbar-slot {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border: 2px solid var(--color-border, #3a3a4a);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  cursor: default;
+}
+
+.hotbar-slot--empty {
+  background-color: var(--color-bg-tertiary, #1a1a2a);
+  opacity: 0.6;
+}
+
+.hotbar-slot--filled {
+  background-color: var(--color-bg-secondary, #16213e);
+}
+
+.hotbar-slot--over {
+  border-color: var(--color-accent, #4a9eff) !important;
+  background-color: rgba(74, 158, 255, 0.15);
+}
+
+.hotbar-key {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-secondary, #888);
+  line-height: 1;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hotbar-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
