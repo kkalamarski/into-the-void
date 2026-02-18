@@ -84,4 +84,6 @@ export interface ItemDefinition {
   readonly toolType?: ToolType;
   /** Item effects when used/equipped */
   readonly effects?: readonly ItemEffectDef[];
+  /** Tool interaction range in tiles (tools only, 1-10). Higher rarity = longer reach. */
+  readonly range?: number;
 }
