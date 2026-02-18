@@ -21,3 +21,6 @@ export * from './utils/zone';
 export * from './inventory/validation';
 export * from './inventory/effects';
 export * from './inventory/stats';
+
+// Stats
+export * from './stats/char-stats';
