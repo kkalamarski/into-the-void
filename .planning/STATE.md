@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.6 Inventory & Items — Phase 28: Equipment System
+**Current focus:** v1.6 Inventory & Items — Phase 28: Equipment System COMPLETE
 
 ## Current Position
 
-Phase: 28 of 29 (Equipment System) — IN PROGRESS
-Plan: 2 of 3 complete
-Status: Phase 28 Plan 02 complete — tool swap handler, computed stats, exo-suit unequip guard
-Last activity: 2026-02-18 — Phase 28 Plan 02 complete: equipment:tool_swap handler, ComputedStats in shared-types, effectiveStats in equip/unequip responses, exo-suit guard
+Phase: 28 of 29 (Equipment System) — COMPLETE
+Plan: 3 of 3 complete
+Status: Phase 28 complete — HUD stats display, level-gated items, Q hotkey tool swap
+Last activity: 2026-02-18 — Phase 28 Plan 03 complete: HUD stats section, level-locked item styling, Q hotkey for equipment:tool_swap
 
-Progress: [████████░░░░░░░░░░░░] 47% (27/29 phases complete; 11/16 v1.6 plans complete)
+Progress: [█████████░░░░░░░░░░░] 50% (28/29 phases complete; 12/16 v1.6 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 81 (Phases 1-24 complete + Phase 25 Plans 01-04 + Phase 26 Plans 01-04 + Phase 26 Plan 02)
+- Total plans completed: 84 (Phases 1-28 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~4 hours
 
@@ -47,7 +47,8 @@ Progress: [████████░░░░░░░░░░░░] 47% (27
 | Phase 27 P02 | 754s | 3 tasks | 6 files |
 | Phase 27 P03 | 115 | 3 tasks | 4 files |
 | Phase 28 P01 | 159s | 3 tasks | 7 files |
-| Phase 28-equipment-system P02 | 164 | 3 tasks | 4 files |
+| Phase 28 P02 | 164s | 3 tasks | 4 files |
+| Phase 28 P03 | 201s | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,9 @@ Recent decisions affecting current work:
 - [28-02]: EquipResult.inventory typed as Inventory & { stats?: ComputedStats } — type-safe intersection preserving Drizzle DB type while allowing stats attachment
 - [28-02]: swapToolSlots uses single updateInventoryFull for atomic tool<->accessory1 swap — consistent with two-write exploit prevention pattern
 - [28-02]: Exo-suit unequip guard checked before any DB call; returns clear error 'Remove all modules before unequipping suit'
+- [28-03]: HUD reads inventory.stats via useInventoryStore — consistent with separation of inventoryStore from gameStore per 27-01 decision
+- [28-03]: stats defaults (armor:0, speedMultiplier:1.0) ensure HUD renders correctly before any equip operation populates stats
+- [28-03]: Q key handler placed inside if (this.input.keyboard) guard matching existing WASD setup pattern; respects keyboard.enabled gate
 
 ### Pending Todos
 
@@ -103,8 +107,8 @@ None.
 
 ### Blockers/Concerns
 
-**Design decisions needed before Phase 28 begins:**
-- Module type compatibility rules (whether module types are mutually exclusive, e.g. max 2 Speed modules per suit) — not specified in lore; needs design decision before server validation is written
+**Carried from Phase 28 planning (now resolved or deferred):**
+- Module type compatibility rules (whether module types are mutually exclusive, e.g. max 2 Speed modules per suit) — not specified in lore; Phase 28 did not implement server-side per-type module caps; deferred to future design decision
 - ilvl formula (tier x rarity multiplier: 1.0/1.2/1.5/1.8/2.2) — implemented in computeIlvl (25-01) and displayed in ItemTooltip (Phase 27-03); lore validation still pending
 
 **Carried from v1.3:**
@@ -114,10 +118,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 28-01-PLAN.md — EquipmentPanel UI, DndContext lift, cross-panel drag-to-equip (28-02 also complete)
+Stopped at: Completed 28-03-PLAN.md — Phase 28 Equipment System complete
 Resume file: None
 
-**Next action:** Execute Phase 28 Plan 03
+**Next action:** Execute Phase 29
 
 ---
-*Last updated: 2026-02-18 after Phase 28 Plan 01 complete*
+*Last updated: 2026-02-18 after Phase 28 Plan 03 complete*
