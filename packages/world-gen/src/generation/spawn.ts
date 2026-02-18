@@ -1,4 +1,5 @@
 import { BiomeType, SpawnPoint, ZONE_SIZE } from '@into-the-void/shared-types';
+import { ENTITY_IDS } from '@into-the-void/entities';
 import { SeededRandom } from '../random/seeded-random';
 
 /**
@@ -14,120 +15,101 @@ interface BiomeSpawnConfig {
 const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   void_plains: {
     creatures: [
-      { id: 'void_crawler', weight: 10, minLevel: 1, maxLevel: 5 },
-      { id: 'void_stalker', weight: 3, minLevel: 3, maxLevel: 8 },
+      { id: ENTITY_IDS.CREATURE_VOID_CRAWLER, weight: 10, minLevel: 1, maxLevel: 5 },
     ],
     minerals: [
-      { id: 'void_crystal', weight: 10, rarity: 1 },
-      { id: 'dark_ore', weight: 5, rarity: 2 },
+      { id: ENTITY_IDS.MINERAL_VOID_CRYSTAL, weight: 10, rarity: 1 },
     ],
     creatureDensity: 4,
     mineralDensity: 3,
   },
   crystal_caves: {
     creatures: [
-      { id: 'crystal_sentinel', weight: 5, minLevel: 5, maxLevel: 15 },
-      { id: 'crystal_shard', weight: 8, minLevel: 3, maxLevel: 10 },
+      { id: ENTITY_IDS.CREATURE_CRYSTAL_HUNTER, weight: 8, minLevel: 5, maxLevel: 15 },
     ],
     minerals: [
-      { id: 'prismatic_crystal', weight: 8, rarity: 2 },
-      { id: 'resonant_gem', weight: 3, rarity: 4 },
+      { id: ENTITY_IDS.MINERAL_PRISMATIC_CRYSTAL, weight: 8, rarity: 2 },
     ],
     creatureDensity: 3,
     mineralDensity: 8,
   },
   toxic_wastes: {
     creatures: [
-      { id: 'toxic_lurker', weight: 7, minLevel: 8, maxLevel: 20 },
-      { id: 'acid_spitter', weight: 5, minLevel: 6, maxLevel: 15 },
+      { id: ENTITY_IDS.CREATURE_TOXIC_LURKER, weight: 7, minLevel: 8, maxLevel: 20 },
     ],
     minerals: [
-      { id: 'toxic_sludge', weight: 10, rarity: 1 },
-      { id: 'corrosive_compound', weight: 4, rarity: 3 },
+      { id: ENTITY_IDS.MINERAL_CORROSIVE_DEPOSIT, weight: 10, rarity: 1 },
     ],
     creatureDensity: 5,
     mineralDensity: 4,
   },
   ancient_ruins: {
     creatures: [
-      { id: 'ancient_guardian', weight: 3, minLevel: 10, maxLevel: 25 },
-      { id: 'ruin_crawler', weight: 8, minLevel: 5, maxLevel: 15 },
+      { id: ENTITY_IDS.CREATURE_VOID_HORROR, weight: 3, minLevel: 10, maxLevel: 25 },
     ],
     minerals: [
-      { id: 'ancient_alloy', weight: 5, rarity: 3 },
-      { id: 'relic_fragment', weight: 2, rarity: 5 },
+      { id: ENTITY_IDS.MINERAL_ANOMALY_CRYSTAL, weight: 5, rarity: 3 },
     ],
     creatureDensity: 2,
     mineralDensity: 2,
   },
   frozen_expanse: {
     creatures: [
-      { id: 'frost_elemental', weight: 5, minLevel: 10, maxLevel: 25 },
-      { id: 'ice_wraith', weight: 6, minLevel: 8, maxLevel: 18 },
+      { id: ENTITY_IDS.CREATURE_FROST_STALKER, weight: 5, minLevel: 10, maxLevel: 25 },
     ],
     minerals: [
-      { id: 'frozen_core', weight: 6, rarity: 2 },
-      { id: 'permafrost_crystal', weight: 4, rarity: 3 },
+      { id: ENTITY_IDS.MINERAL_PERMAFROST_SHARD, weight: 6, rarity: 2 },
     ],
     creatureDensity: 3,
     mineralDensity: 4,
   },
   volcanic_ridge: {
     creatures: [
-      { id: 'magma_beast', weight: 4, minLevel: 12, maxLevel: 28 },
-      { id: 'ember_sprite', weight: 7, minLevel: 8, maxLevel: 20 },
+      { id: ENTITY_IDS.CREATURE_MAGMA_BEAST, weight: 4, minLevel: 12, maxLevel: 28 },
     ],
     minerals: [
-      { id: 'volcanic_glass', weight: 8, rarity: 2 },
-      { id: 'molten_core', weight: 3, rarity: 4 },
+      { id: ENTITY_IDS.MINERAL_VOLCANIC_ORE, weight: 8, rarity: 2 },
     ],
     creatureDensity: 4,
     mineralDensity: 5,
   },
   fungal_forest: {
     creatures: [
-      { id: 'spore_carrier', weight: 8, minLevel: 4, maxLevel: 12 },
-      { id: 'fungal_giant', weight: 3, minLevel: 8, maxLevel: 18 },
+      { id: ENTITY_IDS.CREATURE_SPORE_CARRIER, weight: 8, minLevel: 4, maxLevel: 12 },
+      { id: ENTITY_IDS.CREATURE_CANOPY_GRAZER, weight: 5, minLevel: 1, maxLevel: 6 },
     ],
     minerals: [
-      { id: 'bioluminescent_spore', weight: 10, rarity: 1 },
-      { id: 'mycelium_cluster', weight: 5, rarity: 2 },
+      { id: ENTITY_IDS.MINERAL_MYCELIAL_CLUSTER, weight: 10, rarity: 1 },
     ],
     creatureDensity: 6,
     mineralDensity: 7,
   },
   starfall_crater: {
     creatures: [
-      { id: 'void_horror', weight: 2, minLevel: 20, maxLevel: 35 },
-      { id: 'star_fragment', weight: 5, minLevel: 15, maxLevel: 25 },
+      { id: ENTITY_IDS.CREATURE_VOID_HORROR, weight: 2, minLevel: 20, maxLevel: 35 },
     ],
     minerals: [
-      { id: 'starsteel_ore', weight: 4, rarity: 4 },
-      { id: 'cosmic_fragment', weight: 1, rarity: 5 },
+      { id: ENTITY_IDS.MINERAL_COSMIC_FRAGMENT, weight: 4, rarity: 4 },
     ],
     creatureDensity: 2,
     mineralDensity: 3,
   },
   miasma_marshes: {
     creatures: [
-      { id: 'marsh_lurker', weight: 7, minLevel: 5, maxLevel: 15 },
-      { id: 'chemical_grazer', weight: 5, minLevel: 4, maxLevel: 10 },
+      { id: ENTITY_IDS.CREATURE_MARSH_LURKER, weight: 7, minLevel: 5, maxLevel: 15 },
     ],
     minerals: [
-      { id: 'chemical_sump', weight: 8, rarity: 2 },
-      { id: 'biogas_vent', weight: 4, rarity: 3 },
+      { id: ENTITY_IDS.MINERAL_CHEMICAL_SUMP, weight: 8, rarity: 2 },
     ],
     creatureDensity: 5,
     mineralDensity: 4,
   },
   petrified_expanse: {
     creatures: [
-      { id: 'dart_runner', weight: 8, minLevel: 6, maxLevel: 16 },
-      { id: 'shard_ambusher', weight: 4, minLevel: 8, maxLevel: 18 },
+      { id: ENTITY_IDS.CREATURE_DART_RUNNER, weight: 8, minLevel: 6, maxLevel: 16 },
     ],
     minerals: [
-      { id: 'mineralized_log', weight: 6, rarity: 2 },
-      { id: 'crystallized_compound', weight: 3, rarity: 4 },
+      { id: ENTITY_IDS.MINERAL_MINERALIZED_LOG, weight: 6, rarity: 2 },
     ],
     creatureDensity: 3,
     mineralDensity: 6,
