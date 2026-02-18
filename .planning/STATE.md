@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 35 of 38 (Loot Tables, Tool Interaction, and Respawn)
-Plan: 2 of 4 in current phase
-Status: In progress
-Last activity: 2026-02-18 — Plan 35-02 complete (tool interaction range property)
+Plan: 4 of 4 in current phase
+Status: Phase complete
+Last activity: 2026-02-18 — Plan 35-04 complete (respawn tick loop, ground item loading, setServer() wiring)
 
 Progress: [███░░░░░░░] 33% (v1.8 milestone — 2/6 phases complete)
 
@@ -38,6 +38,7 @@ Progress: [███░░░░░░░] 33% (v1.8 milestone — 2/6 phases co
 | v1.8 | 33-34 | 7 | (in progress) |
 
 **Recent Trend:** Stable, averaging 2-4 plans per phase
+| Phase 35-loot-tables-tool-interaction-respawn P04 | 2 | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,8 @@ Recent decisions affecting current work:
 - [35-01]: rollLootTable is a pure function — each HarvestYield entry evaluated independently, multiple items can drop per roll
 - [35-02]: range placed after effects in ItemDefinition — tool-only optional property, undefined for non-tools
 - [35-02]: Rarity-to-range mapping: common=1, rare=2, epic=3, exotic=4, legendary=5 — linear scale, consistent across all three tool types (mining, combat, research)
+- [Phase 35-04]: Error handling wraps entire processRespawnTick() body — tick loop never crashes the server on DB errors
+- [Phase 35-04]: ZonesService injected into GameGateway for setServer() wiring — server reference flows gateway -> zones, avoids circular injection
 
 ### Pending Todos
 
@@ -100,10 +103,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 35-02-PLAN.md — ItemDefinition.range property and all 15 tool range values
+Stopped at: Completed 35-04-PLAN.md — respawn tick loop, ground item loading, setServer() gateway wiring
 Resume file: None
 
-**Next action:** Execute plan 35-03 (EntityService.handleToolUse tool interaction)
+**Next action:** Execute Phase 36 (AI tick implementation)
 
 ---
-*Last updated: 2026-02-18 after Phase 35 Plan 02 complete (tool interaction range property)*
+*Last updated: 2026-02-18 after Phase 35 Plan 04 complete (respawn tick loop and ground item persistence)*
