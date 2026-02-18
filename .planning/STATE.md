@@ -90,6 +90,7 @@ Recent decisions affecting current work:
 - [Phase 36-02]: tickCreatureAI is pure function — callers apply result; no mutations inside FSM
 - [Phase 36-02]: Flee fallback chain: diagonal -> cardinal-x -> cardinal-y -> partial backtrack — prevents herbivores cornering
 - [Phase 36-02]: Creature bounds check uses ZONE_SIZE directly — creatures do not trigger zone transitions
+- [36-04]: isBlocked accessor stored as class field in PathfindingController — re-evaluated per step via closure over entityStore; cleared to null in cancelPath() for cleanup
 
 ### Pending Todos
 
