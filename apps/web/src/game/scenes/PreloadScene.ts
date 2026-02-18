@@ -57,9 +57,8 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private loadFloorTileSprites(): void {
-    // Load all 16 tile sprites from sprite-generator output (8 biomes x 2 types)
-    const tileSprites = [
-      // Floor tiles
+    // Floor tile bases (8 biomes)
+    const floorTiles = [
       'tile_void_floor',
       'tile_crystal_floor',
       'tile_toxic_floor',
@@ -68,7 +67,10 @@ export class PreloadScene extends Phaser.Scene {
       'tile_volcanic_floor',
       'tile_fungal_floor',
       'tile_crater_floor',
-      // Feature tiles (walls, pools, formations, etc.)
+    ];
+
+    // Feature tiles (walls, pools, formations, etc.)
+    const featureTiles = [
       'tile_void_wall',
       'tile_crystal_formation',
       'tile_toxic_pool',
@@ -79,7 +81,15 @@ export class PreloadScene extends Phaser.Scene {
       'tile_crater_debris',
     ];
 
-    for (const key of tileSprites) {
+    // Load base floor tiles and their variants (_v2, _v3)
+    for (const key of floorTiles) {
+      this.load.image(key, `sprites/${key}.png`);
+      this.load.image(`${key}_v2`, `sprites/${key}_v2.png`);
+      this.load.image(`${key}_v3`, `sprites/${key}_v3.png`);
+    }
+
+    // Load feature tiles (no variants for now)
+    for (const key of featureTiles) {
       this.load.image(key, `sprites/${key}.png`);
     }
   }

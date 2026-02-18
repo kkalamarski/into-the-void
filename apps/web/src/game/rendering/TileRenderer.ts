@@ -5,6 +5,19 @@ import { IsometricTransform } from '../utils/IsometricTransform';
 
 const ELEVATION_HEIGHT_STEP = 16; // Pixels per elevation level (5 levels = 80px max)
 
+// Variant weights: base (70%), v2 (20%), v3 (10%)
+const VARIANT_WEIGHTS = [0.7, 0.2, 0.1];
+
+/**
+ * Simple seeded random number generator based on position.
+ * Returns deterministic value 0-1 for any (x, y) coordinate.
+ */
+function seededRandom(x: number, y: number): number {
+  const seed = x * 374761393 + y * 668265263;
+  const hash = (seed ^ (seed >> 13)) * 1274126177;
+  return ((hash ^ (hash >> 16)) & 0x7fffffff) / 0x7fffffff;
+}
+
 /**
  * Mapping from TileId enum to Phaser texture keys
  */
@@ -146,7 +159,7 @@ export class TileRenderer {
     }
 
     // Add top face (renders in front of side faces)
-    const topFace = this.createTopFace(tileId);
+    const topFace = this.createTopFace(tileId, x, y);
     container.add(topFace);
 
     // Set depth using composite depth calculation
@@ -204,7 +217,7 @@ export class TileRenderer {
     }
 
     // Add top face (renders in front of side faces)
-    const topFace = this.createTopFace(tileId);
+    const topFace = this.createTopFace(tileId, worldX, worldY);
     container.add(topFace);
 
     // Set depth using WORLD coordinates for global sorting
@@ -265,12 +278,34 @@ export class TileRenderer {
   }
 
   /**
-   * Create top face using sprite texture. All 16 tile types now have isometric sprites.
+   * Create top face using sprite texture with variant selection based on position.
+   * Floor tiles have variants (_v2, _v3) selected deterministically by position seed.
+   * Probability: base 70%, v2 20%, v3 10%
    */
-  private createTopFace(tileId: TileId): Phaser.GameObjects.GameObject {
-    const textureKey = this.getTextureKey(tileId);
+  private createTopFace(tileId: TileId, x: number, y: number): Phaser.GameObjects.GameObject {
+    const baseTextureKey = this.getTextureKey(tileId);
+    const isFloorTile = baseTextureKey.endsWith('_floor');
 
-    // All tiles now use sprite images (128x64 isometric diamonds)
+    // Select variant for floor tiles based on position
+    let textureKey = baseTextureKey;
+    if (isFloorTile) {
+      const rand = seededRandom(x, y);
+      if (rand > VARIANT_WEIGHTS[0] + VARIANT_WEIGHTS[1]) {
+        // 10% chance for v3
+        textureKey = `${baseTextureKey}_v3`;
+      } else if (rand > VARIANT_WEIGHTS[0]) {
+        // 20% chance for v2
+        textureKey = `${baseTextureKey}_v2`;
+      }
+      // else 70% chance for base (no suffix)
+
+      // Fallback to base if variant doesn't exist
+      if (!this.scene.textures.exists(textureKey)) {
+        textureKey = baseTextureKey;
+      }
+    }
+
+    // Use sprite image
     if (this.scene.textures.exists(textureKey)) {
       const sprite = this.scene.add.image(0, 0, textureKey);
       return sprite;
