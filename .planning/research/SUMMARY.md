@@ -1,199 +1,212 @@
 # Project Research Summary
 
-**Project:** Into the Void — Character Stats System
-**Domain:** Multiplayer 2D sci-fi survival MMO — 8 primary stats, level scaling, equipment bonuses, stat panel HUD
+**Project:** Into the Void — v1.8 Entity System
+**Domain:** Multiplayer 2D sci-fi survival MMO — entity definitions, spawning, creature AI, loot tables, tool interaction
 **Researched:** 2026-02-18
 **Confidence:** HIGH
 
 ## Executive Summary
 
-The character stats system for Into the Void is a well-defined evolution of existing code — not a greenfield build. Every package needed already exists in the installed stack, and the majority of integration hooks (combat functions, equipment bonuses, HUD display, socket delivery) are already in place. The core work is a type rename and shape migration: replacing the legacy 5-stat `PlayerStats` (strength, agility, endurance, intelligence, perception) with the lore-aligned 8-stat `CharacterStats` (Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience), wiring those stats into 8 existing gameplay hooks, and surfacing them to players in a HUD stat panel.
+The v1.8 Entity System milestone adds four entity categories (Creatures, Plants, Minerals, Artifacts), a creature behavior AI tick, weighted loot tables, server-side tool interaction with range validation, a respawn system, and a fertility noise layer to Into the Void's existing chunk-based world. The codebase already has substantial scaffolding: `Creature`, `Mineral`, `SpawnPoint`, and `EntityRegistry` types exist in shared-types; `canInteract()`, `canHarvest()`, and A* pathfinding exist in game-logic; `generateSpawnPoints()` with per-biome configs and `weightedPick()` exist in world-gen; `entity:spawn`, `entity:despawn`, and `entity:update` events are defined in the socket contract. The milestone is fundamentally about filling in existing gaps, not building new architecture — the critical gaps being: `createEntityFromSpawn()` does not enrich entities from the registry, no respawn tick loop exists, loot is not resolved on entity death, and creature behavior is stub-level. One new npm package (`@nestjs/schedule`) and one new workspace package (`packages/entities`) are the only additions required.
 
-The recommended approach is to build strictly bottom-up: shared types first, then pure game-logic functions, then server orchestration, then client display. This order is mandatory because TypeScript compilation propagates — shared-types must exist before game-logic can import types, which must exist before game-server can call functions, which must exist before the web client can wire events. The `computeCharStats()` pure function in `game-logic` is the single most important deliverable: it is called by combat, by the stat panel, and eventually by creature AI. Building it correctly and testing it independently before wiring it into anything else is the critical path.
+The recommended approach is to build in hard dependency order: first create `packages/entities` (mirroring `packages/items`) with approximately 35 entity definitions covering all 10 biomes, then enrich `ZonesService.createEntityFromSpawn()` to use the registry with a new `EntityLifecycle` DB table for persistence, then add loot resolution and respawn on top of that working foundation. Creature AI (the wander tick) should come last — it depends on everything else being correct and introduces the most ongoing performance risk. The `CreatureBehavior` type must be corrected from the current incorrect `passive|neutral|aggressive|defensive` to the lore-accurate `herbivore|omnivore|predator|maniac` before any entity definitions are written — this is a breaking type change that touches all downstream systems.
 
-The primary risks are correctness risks, not architectural risks. Three stand out: (1) the old `PlayerStats` fields appear in `combat/damage.ts` and `combat/turn-order.ts` — missing either reference will produce silent wrong behavior rather than a compile error; (2) the JSONB shape change for existing character rows needs a one-time migration script or existing characters carry stale old-stat-name data; (3) stats must never be computed on the client — the server is authoritative, and client-side stat derivation is a cheat vector.
+The primary risks are performance (a global AI tick iterating all loaded zones will stall the Node.js event loop at scale) and persistence (in-memory-only respawn timers and ground item state are lost on zone eviction or server restart). Both risks have well-understood mitigations: scope the AI tick to zones with active players only using a self-rescheduling `setTimeout` pattern, and persist entity lifecycle state and ground items to the database. Skipping either mitigation creates bugs that are expensive to recover from after launch. A secondary risk is the existing mismatch between `BIOME_SPAWN_CONFIGS` IDs in world-gen (e.g., `void_stalker`, `crystal_sentinel`) and the IDs actually present in the current `EntityRegistry` — the new `packages/entities` package must cover all IDs referenced in spawn configs.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-The stat system requires zero new packages. All capability — TypeScript types, pure computation, JSONB persistence, WebSocket delivery, Zustand display — already exists in the installed stack. This is a type evolution and code addition within established patterns.
+The entity system requires exactly one new npm package (`@nestjs/schedule ^4.1.0`) for the AI tick and respawn sweep intervals. All other required capabilities — A* pathfinding, seeded random, noise generation, weighted pick, LRU zone cache, Socket.IO broadcast — are already installed. A new `packages/entities` workspace package modeled exactly on `packages/items` is the central new artifact. Loot tables are pure TypeScript in `game-logic/src/loot/`; no external library is warranted for a 15-line weighted pick function. The existing `heap-js` (installed) provides a priority queue for efficient respawn timer lookup once the queue grows beyond a few hundred entries.
 
 **Core technologies:**
-- TypeScript ^5.4.0: `CharacterStats` interface and `ItemEffect` discriminated union types — no runtime library needed for math this simple
-- `@into-the-void/shared-types` (workspace): replaces `PlayerStats` with `CharacterStats`; adds `CharStatsPayload` for socket delivery — same package, type evolution only
-- `@into-the-void/game-logic` (workspace): new `computeCharStats()` pure function — mirrors the `validateMovement` pattern (pure, tested, importable by both server and client)
-- `@into-the-void/database` (workspace): JSONB shape change only via `$type<StatsJson>()` update; no SQL schema migration required, only a one-time data migration script for existing rows
-- Zustand 4.5.7 + Immer ^11.1.4: new `statsStore.ts` as a dedicated separate store — mirrors `inventoryStore` pattern to prevent unnecessary Phaser re-renders from stat update events
-- Socket.IO ^4.7.0: new `stats:update` server event delivers `CharStatsPayload`; emitted on auth and every equip/unequip event
-- React 18 + react-icons ^5.5.0 + @floating-ui/react ^0.27.18: new `StatsPanel.tsx` HUD component; all libraries already installed
-
-**Key architectural decision:** A single `CharacterStats` type shared by both player characters and creatures. The combat milestone requires creatures to fight using the same `calculateDamage()` formulas — if creatures have a different stat model, combat requires two separate code paths. One type, same 8 stats, parameterized scaling constants for creature vs player scaling.
+- `@nestjs/schedule ^4.1.0` — scheduled AI tick and respawn sweep — integrates with NestJS lifecycle via `SchedulerRegistry`; raw `setInterval` loses lifecycle management and testability
+- `packages/entities` (new workspace package) — `EntityDefinition` types, `EntityRegistryImpl` singleton, per-category definition files — mirrors `packages/items` exactly; keeps game data out of wire-format contracts in shared-types
+- `@into-the-void/game-logic` (extend) — `rollLootTable()`, `tickCreatureAI()` FSM, tool range validation — pure functions, importable by both server and client; extract `weightedPick` from world-gen here
+- `@into-the-void/world-gen` (extend) — fertility noise as second `SimplexNoise(seed + '_fertility')` pass — zero API change, identical to existing terrain noise calls
+- `@into-the-void/database` (extend) — `loot_tables`, `loot_table_entries`, `entity_lifecycle` Drizzle tables; `species.lootTableId` FK already exists
 
 ### Expected Features
 
-**Must have (table stakes):**
-- `computeBaseStats(level)` pure function — the critical path dependency; every other feature requires this to exist first
-- `CharacterStats` type replacing `PlayerStats` — type safety enforced by TypeScript across the entire codebase; compile errors at every reference site that needs updating
-- Final stat computation (`base + equipment bonuses`) wired into 8 existing gameplay hooks: Durability → maxHealth, Toughness → damage reduction, Power → base damage, Haste → move speed, Vigor → maxEnergy, Recovery → energy regen rate, Perception → detection range, Resilience → hazard resistance
-- Stat panel UI (HUD overlay, toggle 'C') showing base / equipment bonus / total for all 8 stats with inline name descriptions
-- Level-up stat delta notification — server sends delta payload; client shows "+5 Durability" overlay for 3 seconds
-- Creature stats using the same formula — `computeBaseStats(level, 'creature')` with separate scaling constants; `calculateDamage()` accepts creature stats without a separate code path
+**Must have (table stakes — v1.8):**
+- BiomeType enum updated with `miasma_marshes` and `petrified_expanse` — blocks all entity definitions; critical path item
+- `CreatureBehavior` type corrected to `herbivore | omnivore | predator | maniac` per lore world bible
+- ~35 entity definitions (10 creatures, 10 plants, 10 minerals, 5 artifacts) covering all 10 biomes with loot tables, level ranges, and behavior types
+- `Plant` and `Artifact` entity types added to `EntityType` with supporting interfaces and `PlantDefinition` / `ArtifactDefinition` types
+- Loot table resolution on creature death and mineral depletion — weighted random drops spawned as ground item entities
+- Respawn tick loop — reactivates entities after `SpawnPoint.respawnTime` elapses; permanently skips artifacts (`respawnTime === -1`)
+- Creature wander and behavior AI tick — server-side position updates broadcast as `entity:update`; scoped to zones with active players only
+- Fertility zone modifier — per-spawn-position density multiplier derived from noise, not chunk center
+- Perception gating client-side — entity name and level rendered as `???` when `entity.level > player.perception * 3`
+- Artifact one-time discovery — `respawnTime: -1` spawn points permanently skipped after pickup
+- Server-side interaction range validation via `canInteract()` called before any interaction is processed
 
-**Should have (differentiators):**
-- Stat breakdown showing base vs equipment contribution ("Toughness 45 = 30 base + 15 from Armor Module") — teaches players how the system works; validated by Path of Exile community demand for this feature
-- Soft-caps on derived effects (e.g., max 75% damage reduction from Toughness) — prevents extreme power gaps at high levels; must be documented in stat panel as tunable constants
-- Item tooltip stat bonus display with delta comparison (green/red +/- vs currently equipped item)
-- Lore-named stat tooltips inline ("Resilience: reduces hazard tick damage") — unfamiliar stat names require explanation
+**Should have (competitive — first post-launch pass):**
+- Creature aggro visual cue (exclamation sprite or red outline on client; no server change needed)
+- Harvest depletion animation on minerals and plants (client-side, proportional to `yield / maxYield`)
+- Codex entry on first entity discovery (discovered_entities per character, small DB addition)
+- Creature level zone scaling (distance from 0,0 shifts creature level range upward by 1-3 levels)
 
 **Defer (v2+):**
-- Perception visual detection radius circle in Phaser canvas — high complexity, medium value; requires Phaser rendering work
-- Faction-specific stat bonuses (Verdant: +Resilience; Helix: +Power; Nexus: +Perception) — requires faction standing system which is not yet designed
-- Soft stat allocation via faction advancement — late-game differentiation layer, not foundational
-
-**Anti-features (do not build):**
-- Stat point allocation on level-up — breaks linear scaling balance model; equipment provides build variety instead
-- Persistent consumable buffs stored in character DB — complex expiry logic, exploit vector; session-only buffs in server memory only
-- Multiplicative equipment bonus stacking — exponential power curves, unbalanceable in multiplayer context; additive stacking only
-- Client-computed stats — cheat vector; client receives authoritative `CharStatsPayload` from server and renders it, never derives stats locally
+- Full A* pathfinding for creature AI — performance ceiling at scale; simplified directional wander is correct for v1
+- Creature taming and domestication — separate system; lore-supported as a Verdant Dynamics faction feature
+- Proximity trigger plants (spore clouds, acid pools) — requires status effect system; Miasma Marshes plants specifically
+- Dynamic ecosystem simulation (prey-predator population dynamics within zones)
+- Named boss entities — requires spawn announcement, boss-specific AI, and loot table design as a separate milestone
 
 ### Architecture Approach
 
-The architecture follows a strict layered pattern: shared types at the bottom, pure game-logic computation in the middle, server orchestration on top, client display at the top. A new `StatsService` in game-server orchestrates computation (loads character + equipment from in-memory maps, calls the pure function, emits `stats:update`). The client receives the computed breakdown via a new dedicated `statsStore` Zustand store and a new `StatsPanel.tsx` component renders it. The server never trusts client-provided stat values.
+The entity system extends the existing NestJS game-server and React/Phaser web client via targeted additions to existing services. The central new artifact is `packages/entities` — a workspace package with `EntityRegistryImpl` that replaces the flat `EntityRegistry` object currently in shared-types. The game-server acquires two new services (`AiService` for the creature tick, `EntityService` for tool use, combat, and loot resolution). The web client acquires a new `entityStore.ts` Zustand store to hold live entity state driven by socket events. All other changes are modifications to existing files.
 
 **Major components:**
-1. `packages/shared-types/src/core/stats.ts` (NEW) — canonical types: `PrimaryStatId`, `BaseStats`, `StatBreakdown`, `CharStatsPayload`; also updates `ServerEvents` with `stats:update`
-2. `packages/game-logic/src/stats/` (NEW module) — `STAT_DEFINITIONS` constant + `computeCharStats()` pure function; zero DB or socket dependencies; fully unit-testable
-3. `apps/game-server/src/game/stats.service.ts` (NEW) — NestJS service orchestrating computation and `stats:update` emission; called after auth and every equip/unequip event
-4. `apps/web/src/store/statsStore.ts` (NEW) — dedicated Zustand + immer store wired to `stats:update`; separate from `gameStore` to prevent Phaser re-renders
-5. `apps/web/src/components/StatsPanel.tsx` (NEW) — HUD overlay rendering stat breakdown table; built last in the dependency chain
+1. `packages/entities` — `EntityRegistryImpl` singleton with creature, mineral, plant, and artifact definitions; single source of truth for entity data shared between server and client; mirrors `packages/items` exactly
+2. `apps/game-server/src/game/entity.service.ts` (new) — handles tool use, attack, harvest, loot resolution, and respawn queue; calls `game-logic` pure functions for validation and calculation
+3. `apps/game-server/src/game/ai.service.ts` (new) — `@Interval(1000)` AI tick scoped to `activePlayerZones`; calls `tickCreatureAI()` from game-logic; broadcasts batched `entity:update` per zone per tick
+4. `apps/game-server/src/zones/zones.service.ts` (modified) — `createEntityFromSpawn()` enriched with EntityRegistry data; `scheduleRespawn()` and `processRespawns()` added
+5. `apps/web/src/store/entityStore.ts` (new) — Zustand store updated by `entity:spawn`, `entity:update`, `entity:despawn` socket events; no optimistic mutation
+6. `apps/web/src/game/rendering/EntityRenderer.ts` (modified) — resolves per-species `textureKey` from EntityRegistry instead of generic type string; applies fallback color from definition
 
-**Key constraint:** Stats must not be added to `gameStore`. The `gameStore` is subscribed to by the Phaser game instance; adding `CharStatsPayload` there triggers unnecessary Phaser render cycles on every equip event. The `inventoryStore` separation exists for this exact reason — `statsStore` follows the identical pattern.
+**Build order (hard dependency sequence):**
+Types and definitions → enriched spawning + EntityLifecycle DB → loot + interaction + respawn → AI tick → fertility noise → client perception gating + polish
 
 ### Critical Pitfalls
 
-1. **Client-authoritative stat computation** — If the client derives stats locally from level + equipment, any stat value can be forged. Prevention: server emits `CharStatsPayload` on every auth + equip change; `statsStore` holds server truth; client never calls `computeCharStats()` locally.
+1. **Duplicate entity spawn on zone reload** — `createEntityFromSpawn()` has no awareness of entity lifecycle state; killed creatures reappear instantly on zone re-entry. Prevention: implement `entity_lifecycle` DB table (`spawnId`, `zoneId`, `killedAt`, `respawnAt`) in the same phase as spawn enrichment. Apply lifecycle records on zone load before materializing spawn points. This table also solves respawn timer persistence across server restarts.
 
-2. **Adding stats to `gameStore` instead of a dedicated store** — The Phaser game instance subscribes to `gameStore`; stat updates on every equip event trigger unnecessary Phaser render cycles. Prevention: create `statsStore.ts` as a dedicated Zustand store with immer, identical in structure to `inventoryStore.ts`. This rationale is already documented in the codebase's `inventoryStore` separation.
+2. **AI tick stalling the Node.js event loop** — a global interval iterating all 500 possible LRU zones with 4-6 creatures each produces 2000-3000 entities per tick, each requiring collision validation and a broadcast. Prevention: scope AI tick to `activePlayerZones: Set<string>`, updated on player join/leave. Use self-rescheduling `setTimeout` pattern, not `setInterval`, to prevent tick pile-up. Batch all zone entity updates into one event per zone per tick.
 
-3. **Missing stat references in `combat/damage.ts` and `turn-order.ts`** — The old `PlayerStats` fields (`strength`, `agility`, `endurance`) appear in `calculateDamage()` and initiative calculation. If `DamageParams` accepts `Partial<PlayerStats>`, TypeScript will not error on the rename — it silently ignores missing partial fields. Prevention: grep for all old stat names before marking the type migration complete; update `DamageParams` to `Partial<BaseStats>` explicitly.
+3. **Loot items lost on zone eviction** — `ZonesService.spawnEntity()` writes only to in-memory zone state; if zone evicts before player picks up ground items, loot disappears permanently. Prevention: write ground items to a `ground_items` DB table immediately on spawn; restore on zone load; delete on pickup or `despawnAt` expiry. In-memory-only is never acceptable for core gameplay loot.
 
-4. **JSONB shape migration for existing character rows** — PostgreSQL JSONB is schema-less. Existing rows with old stat field names will coexist with new code that writes the new shape. The application will not error on read — it will return `undefined` for new stat names on old rows, silently producing wrong combat results. Prevention: write a one-time migration script (following `migrate-equipment-schema.ts` pattern) that remaps old stat keys to new keys for all existing character rows before deployment.
+4. **Interaction range validated only client-side** — `handleInteraction()` in `game.service.ts` does not currently call `canInteract()` before processing. A modified client can interact from any distance. Prevention: `canInteract(player, entity, range)` must be the first call in every interaction handler, using the range value from the entity's definition in EntityRegistry.
 
-5. **Non-atomic inventory operations during equip** — From the inventory pitfalls research (Part 3 of PITFALLS.md): `updateInventoryItems` and `updateEquipment` are separate DB calls today. A crash between them leaves an item in both columns. When stats are wired to equipment, this corruption also produces wrong effective stats. Prevention: all equip operations must use a single `UPDATE inventories SET items = $1, equipment = $2` call — established in the inventory milestone, verify it remains in place.
+5. **Biome spawn mismatch at biome transition tiles** — `generateSpawnPoints()` currently uses chunk-center biome sampling for spawn table selection; creatures spawned at biome-edge tiles are drawn from the wrong biome's spawn table. Prevention: sample biome at each candidate spawn position, not at chunk center. This is especially important for fertility noise — density should vary by tile biome, not zone biome.
+
+---
 
 ## Implications for Roadmap
 
-Based on combined research, the character stats milestone has a clear 3-phase internal structure driven by the TypeScript dependency chain. The build order is non-negotiable.
+Based on the hard dependency chain identified across all four research files, the milestone should be structured into six sequential phases. Each phase produces a testable, shippable increment and avoids the most severe pitfalls by addressing them at the earliest safe moment.
 
-### Phase 1: Type Foundation and Pure Computation
+### Phase 1: Foundation Types and Entity Definitions
 
-**Rationale:** Shared types must be established before any other package or app can compile. The pure computation function is the critical path dependency — everything else plugs into it. This phase has no UI, no server changes, no socket events. It is entirely package-level work that can be unit-tested independently before any integration begins.
+**Rationale:** Every downstream system depends on correct entity types and the `packages/entities` registry. BiomeType and CreatureBehavior corrections must happen first because they are breaking type changes — all entity definitions reference them. No server or client logic can be written against entity definitions until the definitions exist. This phase is entirely package-level work with no server or client changes.
+**Delivers:** Corrected `BiomeType` enum (10 biomes), corrected `CreatureBehavior` (`herbivore|omnivore|predator|maniac`), `packages/entities` package with `EntityRegistryImpl`, ~35 entity definitions with loot tables and level ranges, two new biome entries in `BIOME_SPAWN_CONFIGS`, `Plant` and `Artifact` interfaces in shared-types.
+**Addresses:** BiomeType expansion (P1), CreatureBehavior lore accuracy (P1), entity definitions content (P1), Plant and Artifact entity types (P1).
+**Avoids:** Writing entity definitions against wrong behavior type strings; downstream compile errors propagating from the type change caught immediately.
 
-**Delivers:** `CharacterStats` / `BaseStats` types in shared-types; `computeCharStats()` pure function in game-logic with full unit tests; `STAT_DEFINITIONS` constant with level-scaling values; updated `ItemEffect` union types for stat bonuses (`durability_bonus`, `toughness_bonus`, etc.); `ComputedStats` updated to use the 8-stat structured model; one-time JSONB data migration script written alongside the type change.
+### Phase 2: Entity Lifecycle Persistence and Enriched Spawning
 
-**Addresses:** `computeBaseStats(level)` pure function, `CharacterStats` type replacing `PlayerStats`, creature stat reuse (same function, different scaling constants).
+**Rationale:** `createEntityFromSpawn()` enrichment is the server-side integration point for Phase 1 definitions. The `entity_lifecycle` DB table must be built in the same phase — it is the foundation for both the respawn system (Phase 3) and server restart survival. Building these together avoids having to retrofit persistence onto an in-memory respawn system later, which is a high-recovery-cost fix.
+**Delivers:** `createEntityFromSpawn()` producing fully typed `Creature` and `Mineral` entities from EntityRegistry; `entity_lifecycle` DB table; zone load applies lifecycle records before materializing spawn points; `EntityRenderer` resolves per-species texture key from EntityRegistry; client `entityStore.ts` wired to existing `entity:spawn`, `entity:update`, `entity:despawn` events.
+**Uses:** `@into-the-void/entities` EntityRegistry, Drizzle ORM new table declarations.
+**Avoids:** Duplicate entity spawn on zone reload (Critical Pitfall 1); respawn timer reset on server restart (Pitfall 6).
 
-**Avoids pitfalls:** Missing stat references in combat functions (audited at this phase before any downstream code is written); JSONB migration script written before any production deployment.
+### Phase 3: Loot Tables, Tool Interaction, and Respawn
 
-**Research flag:** Standard patterns — no deeper research needed. Pure function math and TypeScript type evolution are well-documented. The `validateMovement` function in game-logic is the direct structural template.
+**Rationale:** Loot resolution, server-side range validation, and respawn are tightly coupled — they all trigger on the same events (entity death or depletion). Building them together creates one well-tested interaction path. Ground item persistence must be in this phase, not deferred; loot items in memory only is never acceptable for gameplay.
+**Delivers:** `EntityService` with `handleToolUse()`, `handleAttack()`, `resolveLoot()`; `rollLootTable()` pure function in game-logic; `canInteract()` called server-side before every interaction; ground items written to `ground_items` DB table on spawn; respawn tick (`@Interval(5000)`) draining `entity_lifecycle` records; `entity:tool_use` and `entity:attack` added to `ClientEvents`; `xp:gained` added to `ServerEvents`.
+**Addresses:** Loot tables (P1), loot resolution on death (P1), respawn tick loop (P1), artifact no-respawn (P1).
+**Avoids:** Loot item loss on zone eviction (Critical Pitfall 3); client-side-only interaction range (Critical Pitfall 4); loot rolls on client (security); loot table item IDs not validated against ItemRegistry caught at server startup.
 
-### Phase 2: Server Wiring and Socket Delivery
+### Phase 4: Creature AI Wander and Behavior Tick
 
-**Rationale:** Server orchestration depends on Phase 1 types being complete. `StatsService` imports `computeCharStats()` from game-logic, reads from `PlayerService` and `InventoryService` (both already exist), and emits a new `stats:update` event. The `ServerEvents` interface is updated here. The JSONB migration script is executed in this phase. Combat functions are updated to use the new stat names.
+**Rationale:** The AI tick is the highest-risk component — a permanent server-side load that grows with player count. It must be built after spawning and interaction are proven correct so that AI movement does not obscure underlying entity state bugs. The active-zone scoping and self-rescheduling pattern must be the implementation model from day one, not a retrofit added after performance degrades.
+**Delivers:** `AiService` with self-rescheduling tick scoped to `activePlayerZones`; `tickCreatureAI()` pure FSM in game-logic with `herbivore`, `omnivore`, `predator`, `maniac` behavior states; wander target selection via `getReachablePositions()` with dynamic tile occupancy check; `entity:update` position broadcasts batched per zone per tick; client Phaser interpolation to new creature positions; tick duration logging with a warning threshold.
+**Uses:** `@nestjs/schedule` SchedulerRegistry, existing `findPath()` / `getReachablePositions()` from game-logic.
+**Avoids:** AI tick accumulation stalling event loop (Critical Pitfall 2); creature overlapping player tile (Pitfall 8); per-entity broadcast storms.
 
-**Delivers:** `StatsService` NestJS service; `stats:update` added to `ServerEvents`; `game.gateway.ts` updated to call `computeAndEmit` after auth and all equip/unequip events; `game.module.ts` updated to register `StatsService`; `game-logic/src/combat/damage.ts` updated with new stat name references; `combat/turn-order.ts` updated (`agility` → `haste`); JSONB data migration script executed for existing character rows.
+### Phase 5: Fertility Noise and Biome Spawn Quality
 
-**Addresses:** Stat effects wired into all 8 gameplay hooks; creature stats via same formula; level-up stat delta in server event payload.
+**Rationale:** Fertility is an enhancement to spawning, not a prerequisite for any other system. It belongs after spawning and loot are proven correct. Per-tile biome sampling (vs chunk-center) is a correctness fix that becomes more visually obvious once entity definitions are diverse — biome-edge creatures appearing in the wrong biome tile is jarring once there are 10 distinct creature types.
+**Delivers:** `getFertilityAt(worldSeed, x, y)` in world-gen using second `SimplexNoise(seed + '_fertility')` instance; fertility multiplier applied at each spawn position (not chunk center); per-tile biome sampling in `generateSpawnPoints()` replacing chunk-center sampling; spawn density variance cap per zone (15 creatures max, 10 minerals max, 5 plants max, 2 artifacts max per chunk).
+**Addresses:** Fertility zone modifier (P1).
+**Avoids:** Fertility noise sampled at chunk center (Pitfall 7); dominant-biome mismatch at biome-edge tiles (Chunk Streaming Pitfall 5).
 
-**Avoids pitfalls:** Client-authoritative stat computation (server is sole computation site); non-atomic inventory operations (verify equip path uses single DB write); missing combat stat references (updated in this phase, not deferred).
+### Phase 6: Perception Gating and Client Polish
 
-**Research flag:** Standard patterns — NestJS service injection, Socket.IO event emission, Drizzle transaction patterns all have existing examples in codebase. `PlayerService` and `InventoryService` are direct structural templates.
-
-### Phase 3: Client Display
-
-**Rationale:** Client display can only be built after the `stats:update` socket event exists and delivers data (Phase 2). The `statsStore` wires the socket event to Zustand state. `StatsPanel.tsx` renders what the store holds. This phase is pure UI work and can be iterated independently once the event is flowing.
-
-**Delivers:** `statsStore.ts` Zustand + immer store wired to `stats:update`; `StatsPanel.tsx` HUD overlay component with toggle; stat name tooltips using inline descriptions; level-up notification overlay; stat icons from already-installed react-icons gi set.
-
-**Addresses:** Stat panel UI (8 stats, 3 columns: base / bonus / total); level-up delta notification; stat name tooltips for lore-named stats; stat breakdown showing base vs equipment contribution.
-
-**Avoids pitfalls:** Stats added to `gameStore` triggering Phaser re-renders (explicitly separate store); client computing stats locally (store holds server-delivered `CharStatsPayload`, renders it directly).
-
-**Research flag:** Standard patterns — Zustand store with immer, React component, HUD styling. `inventoryStore.ts` is the direct structural template. `HUD.tsx` and `ChatPanel.tsx` are the panel reference patterns.
+**Rationale:** Perception gating is entirely client-side rendering logic — entity level is already on `Creature.level` and sent in zone state. This phase has no server dependencies beyond what earlier phases deliver. Placing it last allows the broadcast model (strict per-player filtering vs zone-room broadcast with field stripping) to be decided with full knowledge of how AI broadcasts perform in practice.
+**Delivers:** Client-side `???` display when `entity.level > player.perception * 3`; internal AI state fields stripped from server broadcasts before emission; entity fade-in on spawn and respawn; harvest depletion visual on minerals proportional to `yield / maxYield`.
+**Addresses:** Perception gating (P1), perception gating consistency on AI update broadcasts (Pitfall 5), creature AI state not exposed to client (security).
+**Avoids:** Perception gating applied only at zone load but not on subsequent AI update broadcasts.
 
 ### Phase Ordering Rationale
 
-- Phase 1 before Phase 2: TypeScript compilation enforces this — server code cannot import non-existent types from shared-types.
-- Phase 2 before Phase 3: The `stats:update` socket event must exist before the client store can wire to it.
-- Combat function update happens in Phase 2, not deferred to Phase 3: combat using the wrong stat names produces silent wrong results, not compile errors.
-- JSONB data migration executes in Phase 2, before any production deployment of new code that writes the new shape.
-- `StatsPanel.tsx` is built last: it depends on every other layer being stable; building it earlier creates a component that renders nothing and obscures integration problems.
+- **Types before data before logic before AI** — each layer depends on the previous. Attempting to write game logic before entity definitions exist creates placeholder stubs that must be rewritten.
+- **Persistence co-located with the feature it supports** — `entity_lifecycle` in Phase 2, `ground_items` in Phase 3. Retrofitting persistence after the feature is live means data loss in the interim and a high recovery cost.
+- **AI tick last among server features** — all other entity interactions are player-triggered and bounded by player count; the AI tick is unbounded and grows with loaded zones.
+- **Lore compliance as a blocker, not a nice-to-have** — `CreatureBehavior` type correction in Phase 1 is a breaking change that touches all entity definitions. Deferring it creates compounding refactor debt.
+- **Client polish last** — perception gating and animations have no server dependencies and are safe to defer without blocking any other feature.
 
 ### Research Flags
 
-No phases require a dedicated `/gsd:research-phase` call. The research files have produced specific, verified implementation details with confirmed file paths and function signatures.
+Phases needing careful design decisions during planning:
+- **Phase 2 (`entity_lifecycle` table):** Decide whether a single table can serve both the respawn check (skip spawn if `respawnAt > now`) and the ground item persistence, or whether those need separate tables. Query patterns differ enough that separate tables may be cleaner. Index on `(zoneId, spawnId)` is required for performance.
+- **Phase 4 (AI tick):** Define the tick budget explicitly before implementation — max entities per tick, max milliseconds before a warning is logged. Define the `entities:batch_update` event payload shape and update `ServerEvents` in shared-types before writing client code, to avoid a breaking event shape change mid-implementation.
+- **Phase 5 (fertility noise):** Confirm static (baked at world-gen time, deterministic per seed) vs dynamic (player activity affects it at runtime) fertility model before implementation. Static is far simpler and correct for v1.8. Document this decision explicitly; it is irreversible without a data migration.
+- **Phase 6 (perception gating model):** Decide strict per-player filtering (`visibleEntities: Set<string>` per player, more CPU-intensive but accurate) vs relaxed zone-room broadcast with field stripping (simpler, leaks position data to players outside perception range). This decision affects Phase 4 broadcast implementation — if strict filtering is required, it should be designed in Phase 4, not retrofitted in Phase 6.
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1:** Pure TypeScript type work, pure function math. `validateMovement` in game-logic is the direct template.
-- **Phase 2:** NestJS service injection, Socket.IO event types. `PlayerService` and `InventoryService` are direct templates.
-- **Phase 3:** Zustand + immer store, React HUD component. `inventoryStore.ts` and `HUD.tsx` are direct templates.
+Phases with well-documented patterns (can skip additional research):
+- **Phase 1 (types + definitions):** Purely data work following established `packages/items` patterns. `ItemRegistryImpl` is the direct blueprint.
+- **Phase 3 (loot tables):** `weightedPick` already exists and is proven. Loot table schema is a standard relational model. `handleItemPickup` and the claim pattern are direct templates for `handleToolUse`.
+- **Phase 6 (client polish):** Rendering conditionals are straightforward. Field stripping before broadcast is a one-line filter. `inventoryStore.ts` is the direct template for `entityStore.ts`.
+
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All claims verified by direct file audit. Zero new dependencies identified. Every package version confirmed in package.json. All integration point files confirmed at specific paths. |
-| Features | HIGH | Codebase integration map verified — all 8 stat hooks confirmed in existing source files. Competitor analysis (WoW Classic, Diablo III, Path of Exile) cross-referenced against project lore. Soft-cap values are placeholder constants requiring balance testing — documented as such. |
-| Architecture | HIGH | All architectural claims verified against actual source files. `inventoryStore` separation pattern verified as direct template. `gameStore` Phaser Game instance subscription confirmed. `effectiveStats()` bonuses map confirmed to route unknown string keys — equipment stat bonuses flow through existing code without changes. |
-| Pitfalls | HIGH | Stats-specific pitfalls derived from architecture patterns verified in source. Inventory pitfalls (non-atomic writes) confirmed as real codebase issues from prior research. Movement and chunk streaming pitfalls retained from prior research as supporting context. |
+| Stack | HIGH | All existing packages verified by direct file audit. One new package (`@nestjs/schedule`) version-verified against NestJS v10 peer constraints. All integration points traced to specific source files. |
+| Features | HIGH | Direct codebase inspection confirmed which interfaces exist and what is missing. Lore world bible sourced directly for behavior class names and biome list. Competitor patterns (Tibia, Minecraft, ARK) used for table-stakes validation. |
+| Architecture | HIGH | All component boundaries, integration points, and build order derived from direct file reads. No external architecture sources required. `packages/items` provides a proven pattern to mirror. Existing `createEntityFromSpawn()` gap confirmed with specific line numbers. |
+| Pitfalls | HIGH | All critical pitfalls sourced from direct codebase gaps verified in source files (missing `canInteract()` call in `handleInteraction()`, in-memory-only entity state, chunk-center biome sampling). Performance thresholds for AI tick (50+ zones) are MEDIUM confidence — derived from Minecraft entity lag research, not measured against this NestJS/Socket.IO stack. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Soft-cap values are placeholder constants:** The specific values (e.g., "75% max damage reduction from Toughness") are design decisions, not research findings. These require balance testing after the system is implemented. Implement as named constants in `STAT_DEFINITIONS`, not hardcoded values, so they can be tuned without code changes.
+- **`entity_lifecycle` and `ground_items` table design:** Research identifies the need for both tables but not the final schemas. During Phase 2 planning, decide whether to merge them or keep separate. Separate tables are recommended: `entity_lifecycle` for spawn point state, `ground_items` for dropped items with `despawnAt`.
+- **AI tick batch event format:** Research recommends batching entity updates per zone per tick but does not specify the event payload shape. During Phase 4 planning, define `entities:batch_update` payload and update `ServerEvents` before any client code is written.
+- **Perception gating model (strict vs relaxed):** Two models identified; decision deferred. Must be made before Phase 4 AI tick broadcast implementation, not after, because strict filtering changes the broadcast architecture.
+- **Plant interaction model:** FEATURES.md specifies passive harvest for v1.8 and proximity triggers for v2+. Confirm whether plants use the same `entity:tool_use` flow as minerals or a simpler `player:interact` proximity approach before `EntityService` is built in Phase 3.
+- **AI tick performance baseline:** The 50-zone threshold is from Minecraft community research. Instrument tick duration logging in Phase 4 and establish a documented entity cap before AI is enabled in production.
 
-- **Level-scaling formula values require gameplay validation:** The `BASE_STATS_LEVEL_1` and `STAT_PER_LEVEL` constants proposed in the research are reasonable starting points but need playtest validation. Implement as named constants for easy tuning.
-
-- **Stat naming ambiguity — Resilience vs Toughness:** Both names sound defensive. Resilience = environmental hazard resistance; Toughness = physical damage armor. The distinction is lore-correct but may confuse players. Confirm with project owner before finalizing — only the display strings and `PrimaryStatId` union need changing, not the combat code.
-
-- **Faction-specific stat bonuses:** Lore-grounded future feature. When the faction system is built, `STAT_DEFINITIONS` needs a `factionBonuses` field. Design the `StatDefinition` interface to accommodate this slot without restructuring `computeCharStats()`.
+---
 
 ## Sources
 
 ### Primary (HIGH confidence — direct codebase inspection)
+- `packages/shared-types/src/core/entity.ts` — `Creature`, `Mineral`, `SpawnPoint`, `CreatureBehavior`, `EntityType` interface shapes confirmed
+- `packages/shared-types/src/game/entity-registry.ts` — existing flat `EntityRegistry` object with `CreatureConfig`, `MineralConfig` (4 creatures, 4 minerals — incomplete)
+- `packages/shared-types/src/network/events.ts` — `ClientEvents`, `ServerEvents` event maps; `entity:spawn`, `entity:despawn`, `entity:update` confirmed
+- `packages/world-gen/src/generation/spawn.ts` — `BIOME_SPAWN_CONFIGS` with all 8 biomes, `weightedPick()`, `generateSpawnPoints()`; ID mismatch with EntityRegistry confirmed
+- `packages/world-gen/src/generation/chunk.ts` — chunk-center biome sampling in `getChunkBiome()` confirmed as the spawning gap
+- `packages/world-gen/src/noise/simplex.ts` — `SimplexNoise` class with `noise2D()` and `fbm()` confirmed; second instance pattern verified
+- `packages/world-gen/src/random/seeded-random.ts` — `SeededRandom` with `nextInt`, `nextFloat`, `pick`, `derive` confirmed
+- `packages/game-logic/src/movement/pathfinding.ts` — `findPath()`, `hasLineOfSight()`, `getReachablePositions()` confirmed
+- `packages/game-logic/src/interaction/interaction.ts` — `canInteract()`, `canHarvest()`, `canAttack()` confirmed; NOT called in `handleInteraction()` confirmed
+- `packages/game-logic/src/visibility/range.ts` — `getVisibleEntities()`, `getVisibilityChanges()`, `MAX_VISIBLE_ENTITIES = 20` confirmed
+- `packages/items/src/registry.ts` — `ItemRegistryImpl` singleton confirmed as blueprint for `EntityRegistryImpl`
+- `apps/game-server/src/zones/zones.service.ts` — `createEntityFromSpawn()` gap (missing health, speciesId, behavior fields) confirmed at lines 60-80
+- `apps/game-server/src/game/game.service.ts` — `handleInteraction()` missing `canInteract()` call confirmed; claim pattern confirmed
+- `apps/game-server/src/game/game.gateway.ts` — zone-room broadcast pattern; `player:interact` handler shape confirmed
+- `apps/web/src/game/rendering/EntityRenderer.ts` — generic type-string texture key confirmed (to be replaced with per-species lookup)
+- `apps/web/src/game/scenes/WorldScene.ts` — `spawnEntity()`, `despawnEntity()`, `updateEntity()` confirmed
+- `lore/world-bible.md` — Creature Behavioral Classifications (Herbivore/Omnivore/Predator/Maniac), 10 biomes, survival tier table confirmed
 
-- `packages/shared-types/src/core/player.ts` — `PlayerStats` (5 stats), `Player` interface fields confirmed
-- `packages/database/src/schema/characters.ts` — `StatsJson` JSONB shape (5 fields), default values confirmed
-- `packages/database/src/schema/species.ts` — `SpeciesStatsJson { baseHealth, baseDamage, armor, speed }` confirmed
-- `packages/game-logic/src/inventory/stats.ts` — `ComputedStats`, `effectiveStats()` pure function, bonuses map string-key routing confirmed
-- `packages/game-logic/src/combat/damage.ts` — `attackerStats.strength`, `defenderStats.endurance` old stat references confirmed
-- `packages/game-logic/src/combat/turn-order.ts` — `stats?.agility` initiative reference confirmed
-- `packages/items/src/types.ts` — `ItemEffect` discriminated union with `stat_buff` effect type confirmed
-- `packages/game-logic/src/inventory/effects.ts` — `resolveEffect()` exhaustive switch pattern confirmed
-- `apps/web/src/ui/hud/HUD.tsx` — existing stats section with `react-icons/gi` usage confirmed
-- `apps/web/src/store/gameStore.ts` — Phaser Game instance in store (confirmed rationale for separate statsStore)
-- `apps/web/src/store/inventoryStore.ts` — direct structural template for statsStore confirmed
-- `apps/game-server/src/game/player.service.ts` — `ConnectedPlayer` in-memory map pattern confirmed
-- `apps/game-server/src/game/inventory.service.ts` — InventoryService in-memory pattern confirmed
-- `apps/game-server/src/game/game.gateway.ts` — event handler injection pattern confirmed
-- `lore/world-bible.md` — biome tier system, faction identity, exo-suit lore, all 8 stat names grounded
+### Secondary (MEDIUM confidence — official docs and npm)
+- NestJS Task Scheduling docs — `@Interval()`, `SchedulerRegistry.addInterval()` API
+- `@nestjs/schedule` GitHub releases — version 6.1.1 latest; ^4.1.0 compatible with NestJS v10
+- Tibia creature behavior documentation — chase/wander/runaway/dead states; leash radius pattern
+- Gabriel Gambetta client-server game architecture — reconciliation and server-authority patterns
 
-### Secondary (MEDIUM confidence — web research)
-
-- WoW Classic linear level scaling and armor cap: https://pavcreations.com/level-systems-and-character-growth-in-rpg-games/
-- Path of Exile stat breakdown player demand: https://www.pathofexile.com/forum/view-thread/2713434/page/1
-- Linear vs multiplicative progression balance: https://sinisterdesign.net/designing-rpg-mechanics-for-scalability/
-- RPG stat design taxonomy (primary, secondary, derived): https://blog.writtenrealms.com/stats/
-- Diablo III character screen breakdown approach: https://diablo.fandom.com/wiki/Character_Screen
-- Gabriel Gambetta client-side prediction (movement pitfalls context): https://www.gabrielgambetta.com/client-side-prediction-live-demo.html
-
-### Tertiary (MEDIUM confidence — design inference)
-
-- Soft-cap values (75% damage reduction cap, etc.) — design starting points derived from WoW Classic armor cap precedent; require balance testing
-- Level-scaling formula constants — mathematically derived from level range analysis; require gameplay validation
+### Tertiary (LOW confidence — community research)
+- Minecraft entity lag thresholds — entity count vs event loop performance; not validated against NestJS/Socket.IO
+- Redis sorted set for respawn queue — upgrade path only; not used in v1.8
 
 ---
+
 *Research completed: 2026-02-18*
 *Ready for roadmap: yes*

@@ -1,27 +1,41 @@
-# Feature Research: Character Stats System
+# Feature Research: Entity System (v1.8)
 
-**Domain:** Character stat system — RPG/survival MMO (Into the Void)
+**Domain:** Entity system — creatures, plants, minerals, artifacts in a multiplayer 2D sci-fi survival MMO
 **Researched:** 2026-02-18
-**Confidence:** HIGH (codebase direct inspection + lore alignment); MEDIUM (competitor UX patterns via web research)
+**Confidence:** HIGH (codebase direct inspection + lore alignment); MEDIUM (survival game patterns via web research)
 
 ---
 
 ## Context: What Already Exists
 
-Before listing features, the codebase baseline establishes what the new stat system is ADDING TO, not replacing.
+The entity system builds on a partial foundation. Understand what is already in place before adding the new layer.
 
-| Component | Current State | Relevance to Stat System |
-|-----------|---------------|--------------------------|
-| `Player.health / maxHealth` | Numeric fields in `player.ts` | Durability stat drives `maxHealth` |
-| `Player.energy / maxEnergy` | Numeric fields in `player.ts` | Vigor stat drives `maxEnergy` |
-| `Player.level` | Integer in `player.ts` | Base stats scale linearly per level |
-| `PlayerStats` (shared-types) | `strength, agility, endurance, intelligence, perception` — legacy pre-design type | REPLACE with new 8-stat model: Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience |
-| `ComputedStats` (game-logic) | `armor, speedMultiplier, hazardResistance, detectionRange, energyCapacity, rechargeRate, jumpHeight, bonuses` | Already maps equipment effects to derived values — the stat system provides the BASE layer; equipment provides BONUS layer on top |
-| `effectiveStats()` in `inventory/stats.ts` | Pure function: sums equipment effects into ComputedStats | Must be extended: final stats = base (from character stats) + equipment bonuses |
-| `calculateDamage()` in `combat/damage.ts` | Uses `attackerStats.strength` and `defenderStats.endurance` (old PlayerStats) | Must be updated to use new stat model (Power → damage, Toughness → armor reduction) |
-| HUD (health + energy bars) | Already rendered in React HUD | Stat system does not change existing HUD bars — adds stat panel overlay |
+| Component | Current State | Relevance to Entity System |
+|-----------|---------------|---------------------------|
+| `Entity`, `Creature`, `Mineral` interfaces | In `shared-types/core/entity.ts` | Foundation types exist. `Creature` has health, level, behavior. `Mineral` has yield/tier. Both need new fields (loot tables, fertility, respawn). |
+| `CreatureBehavior` type | `'passive' \| 'neutral' \| 'aggressive' \| 'defensive'` | Does NOT match lore's 4-class model (Herbivore/Omnivore/Predator/Maniac). Must be updated. |
+| `EntityRegistry` | Stub in `shared-types/game/entity-registry.ts` with 4 creatures, 4 minerals | Placeholder data. Needs full expansion to ~35 definitions matching lore biomes. |
+| `BiomeSpawnConfig` in `world-gen/generation/spawn.ts` | Per-biome creature/mineral lists with weights and densities | This is the spawning engine. Works. Does not handle Plants or Artifacts yet. Only 8 old biome types; lore now has 10. |
+| `ZonesService` | Loads zones, spawns entities from `SpawnPoint`, `despawnEntity()`, `spawnEntity()` | Respawn mechanism: `SpawnPoint.respawnTime` exists but respawn tick loop does NOT exist. Must be built. |
+| `GameService.handleInteraction()` | Dispatches on entity type: `mineral` deactivates immediately (no yield logic), `creature` sets `inCombat` only | Interaction logic is stub-level. Harvest, combat, loot all need real implementation. |
+| `Perception` stat | In `CharacterStats` (durability, toughness, power, haste, vigor, recovery, perception, resilience) | Perception gates entity visibility — the `???` display requires reading this stat. Foundation exists in stats system. |
+| `getBiome()` / biome types | 8 biome types in `world-gen`, 10 biomes in lore (missing: Miasma Marshes → `miasma_marshes`, Petrified Expanse → `petrified_expanse`) | Biome mismatch must be resolved. Entity definitions must reference correct biome IDs. |
+| Entity rendering (health bars) | Basic entity rendering exists in Phaser client | Health bars rendered. No perception gating, no `???` display, no loot animation. |
 
-**Key insight:** The new stat system introduces a BASE STATS layer that feeds into the existing COMPUTED STATS layer. It does not replace ComputedStats — it extends it. The formula becomes: `finalStat = baseStat(level) + equipmentBonus`.
+**Key insight:** The spawn, zone, and interaction infrastructure exists in skeletal form. v1.8 fills in the content (35 definitions), the AI tick (wander loop), the loot system (weighted drops), and the perception gate (???). No architectural rebuild needed — targeted extension of existing systems.
+
+---
+
+## Lore Alignment: 4 Behavior Classes
+
+Lore defines exactly four behavioral classes. The existing `CreatureBehavior` type (`passive`, `neutral`, `aggressive`, `defensive`) does not match these. All implementation must use lore-accurate behavior names.
+
+| Lore Class | Threat Level | Attack Condition | Current Type (wrong) | Correct Type |
+|-----------|-------------|------------------|---------------------|-------------|
+| Herbivore | Low | Cornered only / young threatened | `'passive'` | `'herbivore'` |
+| Omnivore | Moderate | Significantly larger AND hungry | `'neutral'` | `'omnivore'` |
+| Predator | High | Hungry + viable prey identified | `'aggressive'` | `'predator'` |
+| Maniac | Extreme | Any perceived entity, always | `'defensive'` | `'maniac'` |
 
 ---
 
@@ -29,31 +43,34 @@ Before listing features, the codebase baseline establishes what the new stat sys
 
 ### Table Stakes (Users Expect These)
 
-Features that RPG/survival MMO players universally assume exist. Missing these makes the progression system feel hollow or broken.
+Survival MMO players universally expect these behaviors. Missing any of them makes the world feel empty, static, or broken.
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **Base stats scaling with level** | Every RPG player expects that leveling up makes their character measurably stronger. If killing a level 5 enemy gives the same result at level 10 as level 1, the level system feels meaningless. Linear scaling (constant per-level gain) is the standard for balanceable MMOs — Fire Emblem and WoW Classic both use linear HP growth because it keeps enemy design tractable across the level range. | LOW | Each of the 8 stats grows by a fixed amount per level (e.g., Durability = 10 + (level × 5) yielding maxHealth directly). Formula is pure math in `game-logic`, no DB write per level-up required. Stat values recomputed from `player.level` on every session load — not stored per stat in DB. |
-| **Equipment bonuses layered on base stats** | Players expect equipped items to provide meaningful numerical improvements. In the existing system, equipment already produces ComputedStats. The new system means those bonuses stack ON TOP of base stats from level. This pattern is universal — every RPG from Diablo to WoW to No Man's Sky uses base + item bonus = final value. | LOW | Already partially implemented: `effectiveStats()` returns equipment contribution. New: `computeBaseStats(level)` returns base from level. Final: `finalStats = computeBaseStats(level) + effectiveStats(equipment)`. Both are pure functions in `game-logic`, no new architecture needed. |
-| **Stat effects actually influence gameplay** | If stats exist but combat/movement/hazards ignore them, players feel cheated. The 8 designed stats MUST each have a clear, observable gameplay effect: Durability = health pool, Toughness = damage reduction, Power = damage output, Haste = movement speed, Vigor = energy pool, Recovery = energy regen rate, Perception = detection range, Resilience = hazard resistance. | MEDIUM | Each stat effect maps to an existing game system. Toughness feeds into `calculateDamage()` armor reduction. Haste feeds into movement speed in `MovementController`. Perception feeds into `visibility/range.ts`. Resilience feeds into biome hazard tick damage. These hooks exist — they need stat parameters plumbed in. |
-| **Stat panel UI accessible from HUD** | Players need a place to see their stats. Every MMO has a character sheet (WoW: 'C' key, Diablo III: Details panel, Path of Exile: character sheet). Without it, players cannot see whether leveling up or equipping an item made them stronger. | MEDIUM | New HUD overlay panel (React component). Shows all 8 stats with: base value (from level), equipment bonus (+X from modules), final value (total). Toggled via keyboard shortcut (e.g., 'C' or 'Tab'). Does not replace existing health/energy bars — those stay in persistent HUD. |
-| **Level-up notification with stat increase display** | When a character levels up, players expect immediate visual feedback showing WHAT improved. "Level 10!" with no indication of what changed makes leveling feel empty. WoW's classic level-up panel showed delta (+10 Stamina) — players remember this as satisfying. | LOW | On level-up server event: client shows overlay or HUD notification listing each stat that increased by X. Stat deltas computed server-side (`newStats - oldStats`), sent with the level-up event payload. No complex animation required — text display is sufficient. |
-| **Creature stats reusing the same model** | Lore states this stat system will be reused for creatures. Players expect enemies to have comparable stats — a level 5 creature should feel like fighting a level 5 character in terms of health/damage. If creatures use a completely different system, difficulty scaling feels arbitrary. | MEDIUM | `CreatureStats` interface mirrors `CharacterStats` (same 8 stats). Creature stat values defined in creature definitions (already have `level` field in `Creature` type). `calculateDamage()` already accepts both player and creature stat parameters — just needs the new stat names substituted. |
-| **Stat values visible on item tooltips (bonus preview)** | When hovering an equippable item, players expect to see: (a) what stat it affects, (b) by how much, and (c) optionally whether this is an increase or decrease versus currently equipped item. This is the standard "compare" pattern in every loot-based game (Diablo III's green/red delta arrows, WoW's tooltip comparison). | MEDIUM | Item tooltip (already exists as `ItemTooltip.tsx` component) needs: stat bonus rows derived from item effects array. Delta comparison (green +5 if better, red -3 if worse) requires knowing current ComputedStats — server sends these on inventory load, client stores in Zustand. |
+| Feature | Why Expected | Complexity | Dependencies on Existing |
+|---------|--------------|------------|--------------------------|
+| **4 entity types: Creature, Plant, Mineral, Artifact** | Survival games (Minecraft, ARK, No Man's Sky, Tibia) always provide distinct entity categories that feel different to interact with. Creatures move and fight back. Plants are harvested passively. Minerals deplete on interaction. Artifacts are collectible rarities. Players parse these categories by instinct. | LOW | `EntityType` in `entity.ts` already has `creature`, `mineral`; add `plant`, `artifact`. |
+| **~35 entity definitions covering all 10 biomes** | Each biome must feel unique. Encountering the same creatures in every zone makes the world feel copy-pasted. Lore specifies unique flora/fauna per biome. 10 creatures, 10 plants, 10 minerals, 5 artifacts = 35 definitions is minimum viable content for distinct biome identity. | MEDIUM | `EntityRegistry` already exists as the data store. `BiomeSpawnConfig` already exists per biome. Definitions are data, not code — moderate content work. |
+| **Biome-specific spawning** | Players expect creatures to match their environment: bioluminescent fauna in Luminous Canopy, silicon-armored creatures in Volcanic Reaches, blind vibration-sensing creatures in Fungal Depths. Biome identity depends on this. | LOW | `BiomeSpawnConfig` in `world-gen/generation/spawn.ts` already implements this. Needs 2 new biome entries (Miasma Marshes, Petrified Expanse) and updated creature IDs. |
+| **Weighted random loot drops** | Players expect killing creatures or harvesting resources to yield items. Without drops, there is no resource loop, no progression, no reason to interact with entities. Loot tables are fundamental to every survival game from Minecraft to DayZ. The standard approach is weighted random selection from a per-entity drop table. | MEDIUM | Item system with 100 items and `ItemRegistry` already built. `ZonesService.spawnEntity()` can spawn ground item entities. Ground items with `despawnAt` already modeled in `ItemEntity`. Weighted pick function already in `world-gen/generation/spawn.ts`. |
+| **Entity health and depletion** | Creatures must be damageable and killable. Minerals must deplete over harvests (not disappear in one hit). Players expect feedback: damage numbers, health bar changes, resource node "cracking" or visually depleting. | LOW (server) / MEDIUM (client visual) | `Creature.health/maxHealth` already in type. `Mineral.yield/maxYield` already in type. `GameService.handleInteraction()` needs real damage/depletion logic. `ZonesService.updateEntity()` exists. |
+| **Entity respawn system** | When entities die or are depleted, they must come back. Static non-respawning entities would be exhausted by the player population within hours. Respawn timers (1-5 min for common creatures, 2-5 min for minerals, longer for artifacts) are the genre standard. | MEDIUM | `SpawnPoint.respawnTime` exists. BUT the respawn tick loop does NOT exist — `ZonesService` has no timer-based entity reactivation. This is the primary new server component needed. |
+| **Creature idle wander movement** | Creatures standing perfectly still look wrong and feel dead. Players expect passive creatures to graze, patrol a small area, or move randomly. This is table stakes for any creature system — even Minecraft skeletons wander at night. Wander patterns make the world feel alive. | MEDIUM | No movement system for entities exists currently. Server-side position updates for entities must be added. Should be periodic (every 3-5s) and short-range (2-4 tiles from spawn point) to avoid performance problems. |
+| **Perception/level gating with ??? display** | In survival MMOs (WoW's skull icon, EverQuest's con system, Pantheon's Perception system), players receive visual cues about whether an entity is within their ability to engage safely. "???" for entities that exceed the player's Perception/level is an expected pattern that communicates danger, rewards exploration, and drives character progression. | MEDIUM | `CharacterStats.perception` exists in the stats system. Entity display logic lives in Phaser client. Requires: server sends entity level/tier in zone state, client compares against player Perception stat, renders `???` for out-of-range entities. |
+| **Interaction feedback (harvest yield, loot drop)** | When a player harvests a mineral, they expect to see items added to inventory. When a creature dies, they expect to see loot appear on the ground or go directly to inventory. No visual/audio feedback = players doubt the interaction worked. | LOW | `InventoryService.addItem()` exists. Ground item spawning via `ZonesService.spawnEntity()` exists. Socket events exist. Need: loot resolution on entity death + item spawn + inventory update broadcast. |
 
 ---
 
 ### Differentiators (Competitive Advantage)
 
-Features that fit Into the Void's specific sci-fi survival identity. Not expected by all players, but provide meaningful depth once table stakes are solid.
+Features that fit Into the Void's specific lore and sci-fi identity. These go beyond standard survival game patterns and make the entity system feel unique to Terminus.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Stat breakdown showing base vs equipment contribution** | Most games show only the final stat value. Showing `Toughness: 45 (30 base + 15 from Armor Module Mk.II)` teaches players HOW the system works and makes module choices feel meaningful. Path of Exile players specifically requested this for PoE2 — the community feedback shows players want to understand their numbers, not just see totals. Albion Online and WoW's DejaCharacterStats addon both address this player need. | MEDIUM | Stat panel shows three columns: Base (from level), Bonus (from equipment), Total. Computed server-side from `computeBaseStats(level)` + `effectiveStats(equipment)`. No additional data fetching — both sources already available on character load. The breakdown makes module upgrades legible ("this module gave me +15 Toughness") and validates that the item system and stat system are connected. |
-| **Lore-named stats (not generic Strength/Dexterity)** | The 8 designed stat names — Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience — are thematically appropriate for sci-fi survival equipment. "Durability" fits an exo-suit body better than "Constitution." This naming creates setting immersion that generic RPG stat names cannot. Naming choices like these are validated by games like Dead Cells and Hades that use setting-appropriate stat naming to enhance tone. | LOW | Pure naming choice. No implementation complexity. Critical: the HUD panel must also include short tooltips explaining what each stat DOES ("Toughness: reduces incoming damage by X per point"). Players unfamiliar with the system need this education inline. |
-| **Separate Recovery stat with observable regen rate** | Many RPGs bundle energy/stamina regen into a single invisible stat. Making Recovery an explicit named stat with a visible effect (energy recharges faster as you watch the bar) makes the Vigor/Recovery pair feel like a meaningful sub-system. This directly supports the exo-suit theme — suits have power cores that recharge at different rates. | LOW | Recovery stat → `energyRegenRate` in final computed stats. Already exists as `rechargeRate` in `ComputedStats`. Just needs to be driven by `baseStats.recovery + equipmentBonus` instead of a hardcoded value. The existing energy bar already shows the regen visually — no new UI needed. |
-| **Perception stat with visible detection range indicator** | Perception controls how far the player can detect enemies/items/hazards. Making this visible — e.g., a subtle circle radius in the game world when the stat panel is open — gives players immediate feedback that the stat matters. Survival games like DayZ and The Long Dark use visible detection mechanics; players value them when they're transparent. | HIGH | Requires Phaser canvas rendering of a detection radius circle (configurable opacity, only shown when stat panel open). Uses existing `visibility/range.ts`. This is a differentiator not a prerequisite — defer if timeline is tight. |
-| **Stat soft-caps (no hard ceiling, diminishing returns above threshold)** | Linear scaling is simple and predictable at low levels but can create extreme power gaps at high levels if uncapped. Soft-caps (e.g., armor reduction is capped at 75% regardless of Toughness value) prevent the system from breaking balance in higher-tier zones while preserving the value of stacking stats up to the cap. WoW Classic used armor cap, PoE uses diminishing returns on resistance — both validated by large player bases. | MEDIUM | Each of the 8 stats needs a derived-value cap defined as a constant. Example: Toughness provides damage reduction = `min(75%, toughness * 0.5%)`. The cap is on the DERIVED effect, not the stat value itself — players can still see their Toughness keep growing, but the diminishing returns are visible in the tooltip. This must be documented in the stat panel ("Max 75% reduction"). |
+| **4-class lore-accurate creature behavior AI** | The Herbivore/Omnivore/Predator/Maniac system from the world bible is more nuanced than the standard "passive/aggressive" binary of most survival games. Herbivores flee when cornered (defensive only). Omnivores calculate size differential before attacking. Predators are satiated vs hungry (conditional threat). Maniacs attack everything without survival instinct. This creates emergent player experiences: a satiated predator can be approached, a cornered herbivore is more dangerous than players expect. | MEDIUM | State machine per creature type: Herbivore (idle, flee, fight-if-cornered). Omnivore (idle, wander, size-check, hunt). Predator (idle, stalk, hunger-timer, hunt). Maniac (always aggro, no flee state). Implemented as a server-side tick — NOT pathfinding, just directional updates and aggro flag. |
+| **Fertility zone modifier (Barren/Normal/Lush)** | Biome-level fertility zones modulate spawn density: Lush zones have 1.5x entity density, Barren zones have 0.5x. This creates within-biome variation — two chunks of Luminous Canopy feel different, with some feeling dense and teeming vs sparse and foreboding. Players discover these zones through exploration rather than a map UI. Aligned with lore's aggressive adaptation and symbiotic complexity of Terminus biology. | LOW | `BiomeSpawnConfig.creatureDensity/mineralDensity` already drives spawn count. Add a `fertilityMultiplier` per chunk derived from the existing noise layer (reuse elevation or moisture). No new infrastructure — one line in spawn density calculation. |
+| **Perception-gated discovery with scan unlock** | Rather than just showing `???` forever, players with Perception investment can "scan" an unknown entity to permanently unlock its codex entry — species name, behavior class, loot preview. This creates an explorer progression path: research-tool players level Perception to catalogue Terminus fauna, matching Verdant Dynamics' xenobiology research theme and the lore's emphasis on corporate knowledge extraction. | HIGH | Requires: codex data store (per-character or account-level discovered entities), scan action on examine interaction, unlock event. High complexity for v1.8 — flag as future feature. The `???` display is table stakes; the scan/unlock is the differentiator. |
+| **Artifact entities as one-time world discoveries** | Artifacts do not respawn. Finding one is a permanent event per zone instance. This creates scarcity and genuine discovery moments — the feeling of "I found something no one in this zone has seen." Aligns with lore's Ancient ruins theme (artifacts are remnants of the Ancients, their absence after collection means you found the last piece). | LOW | `SpawnPoint.respawnTime = -1` (or `Infinity`) for artifact spawn points. `ZonesService.despawnEntity()` marks inactive; respawn tick skips `respawnTime === -1`. Simple flag, large experiential payoff. |
+| **Biome-tier creature level brackets matching survival tiers** | Lore defines 4 survival tiers (I-IV). Creature level ranges must be bracketed to match: Tier I biomes (Luminous Canopy, Coastal Shallows, Scarred Badlands) spawn creatures level 1-10. Tier II (Miasma Marshes, Petrified Expanse) spawn 10-20. Tier III (Volcanic Reaches, Crystalline Wastes, Fungal Depths, Frozen Reaches) spawn 20-35. Tier IV (Anomaly Zones) spawn 35+. This makes biome danger legible — stepping into a higher tier feels immediately different. | LOW | Level ranges already in `BiomeSpawnConfig` per creature entry. Restructuring them to match lore tiers is a data change, not a code change. |
+| **Plant-specific interaction: passive harvest vs proximity trigger** | Plants in lore are described as reactive — the Luminous Canopy brightens when approached. Some have proximity triggers (gas-releasing pods in Miasma Marshes). Implementing two plant interaction modes — passive harvest (approach and gather) vs proximity trigger (approaching causes a spore cloud status effect) — creates environmental depth. Players must learn which plants are safe to approach. | HIGH | Proximity trigger requires server-side zone-tick proximity check for players near plant entities. Status effect system needed. High complexity — the passive harvest plant is v1.8 table stakes; proximity trigger is a differentiator for future milestone. |
 
 ---
 
@@ -61,95 +78,102 @@ Features that fit Into the Void's specific sci-fi survival identity. Not expecte
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| **Stat point allocation on level-up** | Gives players agency — "I want to be a tanky build, so I put all points in Toughness." Feels very RPG. Classic approach in games like Path of Exile and Diablo II. | In a multiplayer survival MMO where players interact with the same creatures and environments, unequal stat distributions create extreme balance problems. A player who dumps all points into Haste moves across the map faster than the game's zone system can handle (teleport exploits, server-side position validation failures). More importantly: the project brief specifies LINEAR SCALING — adding player choice to that linear model requires a full rebalance pass. This is a different game. | Equipment-driven differentiation. Exo-suit module choices already provide the "build variety" that stat points would give — a player who equips 4 Haste modules is the "speed build." This is the right model: stats scale predictably from level (balance is maintainable), equipment provides build expression. |
-| **Persistent stat buffs from consumables stored in character DB** | Players request this to "bank" buffs before difficult content. "Let me pre-buff and log off" is a common request. | Buff state persisting across sessions creates complex expiry logic, timezone-aware calculation of remaining time, and exploitable behavior (stack 20 buffs on Thursday, use them all in Friday's raid). Also inflates the `characters` DB row with time-indexed buff state. | Time-bounded session buffs only. Buff applied when consumable used, tracked in server memory (game session state), lost on disconnect or zone change. Simple to implement, no DB complexity. Buffs that matter happen when you play. |
-| **Negative stats / debuffs that permanently reduce base stats** | "Hardcore" survival flavor — starving reduces Vigor, taking acid damage reduces Toughness permanently. Very survival-game. | Permanent negative modification to base stats (which scale from level) creates a compounding tracking problem: the stat formula `baseStat(level)` must now account for `- permanentDebuffs`. This is a separate system (debuff tracking) with its own persistence requirements, UI complexity, and exploit vectors (players might intentionally debuff others' base stats). | Use existing `CombatEffect` system for time-limited debuffs. Biome hazard ticks reduce current health/energy (already modeled). Permanent base stat reduction is a feature for a future "hardcore mode" milestone, not the foundational stat system. |
-| **Multiplier stacking between stat bonuses** | Equipment bonuses multiply together instead of adding: `(1 + armor1%) × (1 + armor2%)`. Creates more interesting build choices. PoE uses this model. | Multiplicative stacking with linear base stats creates exponential power curves that are invisible to players and extremely difficult to balance. Example: 4 Armor modules each providing 20% multiplicative armor reduction = `(1.2)^4 = 2.07x` multiplier, not 1.8x additive. Players cannot intuit this. In a multiplayer context where server has to validate combat results, unpredictable damage values create client-server sync problems. | Additive stacking for all equipment bonuses. Consistent, predictable, easier to balance. The module slot limit on exo-suits (3-6 slots by rarity) naturally caps stacking without needing multiplicative diminishing returns. |
-| **Stat window showing all computed internals (derived values, hidden multipliers)** | Power users want full transparency. PoE players notoriously demand complete stat breakdowns including hidden modifiers. | The current game design uses clean stat names with observable effects (Toughness → damage reduction, Haste → speed). Exposing internal derived values (0.0034 damage reduction per Toughness point, capped at 0.75 total) trains players to interact with numbers rather than gameplay. At this stage of development, a full internals dump would expose balance decisions that aren't finalized. | Show final derived effect, not intermediate formula: "Toughness 45 → 22% damage reduction." This is enough information for meaningful decisions without revealing implementation details. A full breakdown mode can be added in a polish pass once balance is locked. |
+| **Full pathfinding for creature AI** | Players expect creatures to navigate around obstacles, not walk into walls. Pathfinding makes AI feel smart. | A* or Dijkstra on a per-entity basis in a multiplayer server tick is catastrophically expensive at scale. 50 creatures across 10 zones running A* at 60fps = immediate performance ceiling. This is the most documented pitfall in server-side MMO entity AI (Minecraft server entity lag). | Simple directional wander: creatures move in a random cardinal direction, try an alternative direction if blocked. For aggro: move toward player on each server tick (4-8 ticks/sec) — simple delta toward target. Players accept imprecise creature movement. The Tibia model (creatures track toward player without full pathfinding) is the proven pattern for this scale. |
+| **Real-time creature combat with turn-by-turn actions** | Players expect action-RPG-style combat where creature decision-making happens every frame, abilities fire on cooldowns, etc. | Full real-time combat simulation per creature on the server is an engine architecture decision that requires a dedicated combat tick with state machines per entity, cooldown tracking, ability queues. This is a separate milestone, not entity system scope. | Creature combat in v1.8 is: creature deals damage on each server tick when in aggro range. Damage is fixed per creature type with minor randomness. Full turn-based or ability-based combat is a future milestone. Entity system provides the AI behavior states (flee/hunt/ignore) — damage resolution is kept simple. |
+| **Infinite entity density (spawn everywhere)** | Dense creature populations feel alive. Players in survival games like to feel surrounded by wildlife. | High entity counts per zone are the primary cause of server tick performance degradation. Each entity requires position updates, behavior ticks, proximity checks. At >30 entities per zone, server tick time starts suffering. The fix (entity AI optimizer, reducing visible mob range) negates the purpose. | Density caps per zone: 15 creatures max, 10 minerals max, 5 plants max, 2 artifacts max per chunk. The fertility zone modifier allows chunks to feel denser or sparser within these caps. Quality of encounter over quantity of entities. |
+| **Creature memory / grudge system** | Players ask for creatures that "remember" being attacked, track players across zones, persist aggro. | Cross-zone entity state persistence requires entity state to survive zone cache eviction (currently zones are LRU cached with 5-minute TTL). Persisting creature aggro in the database is premature complexity. Cross-zone tracking defeats the zone boundary as a safe retreat mechanic. | Aggro radius is per-zone and session only. Creatures de-aggro when player leaves zone or creature returns to spawn leash radius. This is the standard model (WoW, Tibia leash radius). |
+| **Random rare creature spawns (boss equivalent) in every zone** | Players want rare named creatures for high-value loot — makes exploration exciting. | Without a full notification or map system, random rare spawns are invisible to players most of the time and are killed instantly by the first player to encounter them, creating spawn camping. | Defer rare/boss spawns to a dedicated "boss system" milestone. In v1.8, rarity is handled through Artifact entities (one-time discoveries) and loot table rarity weights. Named bosses require their own design and player communication system. |
+| **Creature taming/domestication** | Common survival game request (ARK: Survival Evolved, Palworld). Players want pets. | Taming requires a creature state machine addition (tamed/wild), persistent creature ownership data, movement mode changes (follow player), client rendering changes. This is a full parallel system to build, not an entity system feature. | Out of scope for v1.8. Note in backlog: Verdant Dynamics faction quest line could introduce creature taming as a faction-specific progression feature. The lore supports it ("bioengineering native species for industrial purposes"). |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[computeBaseStats(level)] — pure function in game-logic
-    └──feeds──> [ComputedStats (armor, speed, etc.)]
-                    └──feeds──> [Combat damage calculation]
-                    └──feeds──> [Movement speed (Haste)]
-                    └──feeds──> [Energy regen (Recovery)]
-                    └──feeds──> [Detection range (Perception)]
-                    └──feeds──> [Hazard resistance (Resilience)]
+[Entity Definitions (~35)] — data in EntityRegistry + BiomeSpawnConfig
+    └──feeds──> [Biome-specific spawning] (already working)
+    └──feeds──> [Loot tables per entity] (new: drop table field in EntityRegistry)
+    └──feeds──> [Level brackets per biome tier] (data only)
 
-[Stat Panel UI]
-    └──requires──> [computeBaseStats(level)] (base column data)
-    └──requires──> [effectiveStats(equipment)] (bonus column data)
-    └──requires──> [Inventory system Phase 25+] (equipment must be loadable)
+[BiomeType expansion] — add miasma_marshes, petrified_expanse to BiomeType enum
+    └──required by──> [Entity definitions] (definitions reference biome IDs)
+    └──required by──> [BiomeSpawnConfig] (new entries needed)
 
-[Level-up notification]
-    └──requires──> [computeBaseStats(level)] (to compute deltas)
-    └──requires──> [XP system] (already in player.ts: level, xp, xpToNextLevel)
+[Respawn tick loop] — new: interval timer in ZonesService
+    └──requires──> [SpawnPoint.respawnTime] (already exists, populated)
+    └──enables──> [Creature respawn after death]
+    └──enables──> [Mineral respawn after depletion]
+    └──excludes──> [Artifact respawn] (respawnTime = -1, intentionally skipped)
 
-[Item tooltip stat bonus display]
-    └──requires──> [Item effects system in packages/items] (already built, Phase 25)
-    └──requires──> [Current ComputedStats from server] (available via inventory:update)
-    └──requires──> [ItemTooltip.tsx] (already exists)
+[Creature behavior AI tick] — new: server-side entity update loop
+    └──requires──> [4-class behavior types] (update CreatureBehavior type)
+    └──requires──> [Entity position update in ZonesService] (extend updateEntity())
+    └──feeds──> [Client entity position sync] (new socket event: entity:moved)
 
-[Creature stat reuse]
-    └──requires──> [computeBaseStats(level)] (shared formula, parameterized)
-    └──requires──> [Creature definitions with level field] (already in Creature type)
+[Loot resolution] — on creature death / mineral depletion
+    └──requires──> [Loot tables in EntityRegistry] (new field per entity definition)
+    └──requires──> [Weighted pick function] (already in world-gen/random, reuse)
+    └──requires──> [ItemRegistry] (already built with 100 items)
+    └──feeds──> [Ground item spawn via ZonesService.spawnEntity()]
+    └──feeds──> [Inventory update via InventoryService.addItem()]
 
-[Soft caps]
-    └──requires──> [computeBaseStats(level)] (caps applied at derived value stage)
-    └──enhances──> [Stat Panel UI] (cap shown inline: "45 Toughness → 22% (cap: 75%)")
+[Perception gating / ??? display]
+    └──requires──> [CharacterStats.perception] (already in stats system)
+    └──requires──> [Entity level field in zone state payload] (must be sent to client)
+    └──requires──> [Client Phaser rendering: ??? override] (conditional name render)
 
-[Stat breakdown (base vs bonus)]
-    └──requires──> [Stat Panel UI] (breakdown is a feature of the panel)
-    └──requires──> [computeBaseStats(level)] (base value)
-    └──requires──> [effectiveStats(equipment)] (bonus value, already returns per-stat)
+[Fertility zones]
+    └──requires──> [Noise layer access in spawn.ts] (already has SeededRandom, can derive)
+    └──enhances──> [Biome-specific spawning] (density multiplier on creature/mineral count)
 
-[Perception visual indicator]
-    └──requires──> [Stat Panel UI] (only visible when panel is open)
-    └──requires──> [Phaser canvas access] (circle rendering in WorldScene)
-    └──requires──> [visibility/range.ts] (already exists)
+[Artifact one-time discovery]
+    └──requires──> [Respawn tick loop] (to skip respawnTime === -1 entities)
+    └──enhances──> [Perception gating] (artifact reveals name only with sufficient Perception)
 ```
 
 ### Dependency Notes
 
-- **Base stat computation is the critical path:** Every other feature depends on `computeBaseStats(level)` existing as a pure function in `game-logic`. This is the first deliverable.
-- **ComputedStats already exists and must not be replaced:** The existing `effectiveStats()` function in `inventory/stats.ts` already handles equipment bonuses. The new system adds a `computeBaseStats()` function that produces the base layer. Final stats = base + equipment. Do not rebuild what already works.
-- **Old `PlayerStats` type must be replaced, not extended:** The existing `PlayerStats` in `shared-types/core/player.ts` uses `strength, agility, endurance, intelligence, perception` — a legacy design. These names conflict with the new 8-stat model. Replace the type definition; audit `damage.ts` which references `attackerStats.strength` and `defenderStats.endurance`.
-- **Stat panel is independent of combat implementation:** The UI can be built and tested before all 8 stat effects are fully wired into gameplay. Show the numbers; wire the effects in the same milestone.
-- **Creature stats reuse the same function, parameterized:** `computeBaseStats(level, entityType)` where `entityType` controls scaling constants. Player and creature can have different per-level gains from the same function signature.
+- **BiomeType expansion is the critical path:** Every entity definition references a biome ID. The two missing biomes (`miasma_marshes`, `petrified_expanse`) must be added to the `BiomeType` enum and `BIOME_SPAWN_CONFIGS` before any definitions using them can be written.
+- **Respawn tick loop must be built before creature/mineral content matters:** Without respawn, every entity that gets harvested or killed creates a permanently dead spawn point. The loop is not complex (setInterval on `ZonesService`, checks `entity.active === false && Date.now() > respawnAt`), but it is a prerequisite for testing entity flow.
+- **Loot tables are independent of behavior AI:** Loot resolution on death can be implemented before the wander AI tick. These are separate subsystems with the same trigger (entity death/depletion).
+- **Perception gating depends on stats system (already built in previous phase):** The `CharacterStats.perception` field exists. The gating only requires the client to receive entity level in the zone state and compare it to the player's Perception value. Server-side the stat is already computable.
+- **Creature behavior AI is purely server-side:** The client does not simulate creature movement — it renders entity positions received from the server. The AI tick runs on the game-server and broadcasts position changes via socket.
 
 ---
 
 ## MVP Definition
 
-### Launch With (character stats milestone — v1 of the system)
+### Launch With — v1.8 Entity System
 
-Minimum to make the stat system real and observable to players.
+Minimum to make the world feel populated with entities that behave, respawn, and drop loot.
 
-- [ ] **`computeBaseStats(level)` pure function** — Returns the 8 base stats from `player.level`. Linear formula per stat. Lives in `packages/game-logic/src/stats/base.ts`. Unit-tested.
-- [ ] **`CharacterStats` type definition** — Replaces old `PlayerStats` in `shared-types`. 8 fields: durability, toughness, power, haste, vigor, recovery, perception, resilience.
-- [ ] **Final stat computation** — `computeFinalStats(level, equipment)` = `computeBaseStats(level)` + `effectiveStats(equipment)`. Returns unified stat object. Replaces the ComputedStats type or extends it cleanly.
-- [ ] **Wire stats into existing gameplay systems** — Toughness → armor reduction in `calculateDamage()`. Haste → speed in movement. Vigor → maxEnergy. Recovery → rechargeRate. Durability → maxHealth. Perception → detectionRange. Resilience → hazardResistance. Power → baseDamage contribution.
-- [ ] **Stat panel UI** — HUD overlay panel (toggle with 'C'). Shows all 8 stats in three columns: Base (from level), Bonus (from equipment), Total. Stat name + inline description of what it does.
-- [ ] **Level-up stat delta notification** — Server sends stat deltas with level-up event. Client displays "+5 Durability, +3 Power" overlay for 3 seconds.
-- [ ] **Creature stats via same formula** — `CreatureStats` computed from `computeBaseStats(creatureLevel, 'creature')`. Creature level already in `Creature.level`. `calculateDamage()` accepts creature stats.
-- [ ] **Stat tooltip on stat panel entries** — Clicking/hovering a stat name shows "Resilience: Reduces hazard tick damage from biome environmental effects."
+- [ ] **`BiomeType` updated** — Add `miasma_marshes` and `petrified_expanse` to enum. Add `BiomeSpawnConfig` entries for both. Update biome generation thresholds.
+- [ ] **`CreatureBehavior` updated** — Replace `'passive' | 'neutral' | 'aggressive' | 'defensive'` with `'herbivore' | 'omnivore' | 'predator' | 'maniac'` matching lore classification.
+- [ ] **~35 entity definitions** — 10 creatures, 10 plants, 10 minerals, 5 artifacts. Each with: id, name, biomes[], levelRange, behavior (creatures), loot table (weighted drops), baseHealth/yield, respawnTime. All sourced from/aligned with lore biome descriptions.
+- [ ] **Plant and Artifact entity types** — Add `PlantConfig` and `ArtifactConfig` interfaces to `EntityRegistry`. Add `'plant'` and `'artifact'` to `EntityType` in `entity.ts`. Add `Plant` and `Artifact` entity interfaces.
+- [ ] **Loot table field on entity definitions** — `lootTable: Array<{ itemId: string; weight: number; quantityMin: number; quantityMax: number }>` per creature and mineral definition. Artifacts use guaranteed fixed drops.
+- [ ] **Loot resolution on entity death/depletion** — `GameService.handleInteraction()` resolves loot table on creature death: pick items via weighted random, spawn as ground item entities via `ZonesService.spawnEntity()`. Mineral harvest reduces `mineral.yield`; at 0, mark inactive + schedule respawn.
+- [ ] **Respawn tick loop** — `ZonesService` runs `setInterval` (every 5s) checking all inactive entities. If `entity.respawnAt < Date.now()` and `entity.respawnTime !== -1`, reactivate entity (restore health/yield, set `active = true`, broadcast to zone). Artifacts (`respawnTime === -1`) are permanently skipped.
+- [ ] **Entity behavior tick (wander + aggro)** — Server-side tick (every 3-4s) per creature. Herbivore: random direction move (2 tile max from spawn), flee if player within 2 tiles. Omnivore: idle, move toward player if player is lower level AND omnivore is "hungry" (time-based flag). Predator: move toward nearest player if within aggro range (5 tiles). Maniac: always move toward nearest player. Position broadcast via `entity:moved` event.
+- [ ] **Fertility zone modifier** — Per-chunk `fertilityMultiplier` derived from noise (reuse moisture layer: `< 0.3 → 0.5x, 0.3-0.7 → 1x, > 0.7 → 1.5x`). Applied to `creatureDensity` and `mineralDensity` in `generateSpawnPoints()`.
+- [ ] **Perception gating client-side** — Zone state includes entity `level` (already on `Creature.level`). Client compares entity level to player `perception` stat. If `entity.level > player.perception * 3`, render entity name as `???` and hide level display. Below threshold: display normal name and level.
+- [ ] **Artifact one-time spawning** — Artifact spawn points have `respawnTime: -1` in `SpawnPoint`. Respawn tick loop skips these. Once artifact is picked up, its spawn is permanently inactive (per zone instance lifetime).
 
-### Add After Validation (v1.x — refinement pass)
+### Add After Validation (v1.x — content and polish pass)
 
-- [ ] **Soft-caps with display in stat panel** — Show "22% damage reduction (cap: 75%)" derived from Toughness.
-- [ ] **Item tooltip delta comparison** — Green/red +/- delta when comparing item to equipped item, derived from stat bonus difference.
-- [ ] **Stat breakdown in item tooltips** — "This module grants +15 Toughness" with clear label per effect type.
-- [ ] **Stat history on level-up** — "Previous level stats" vs "current" comparison in a level-up summary panel (nice to have, not critical).
+- [ ] **Creature aggro sound/visual cue** — Client-side: render aggro indicator (exclamation mark sprite or red outline) when a creature enters attack state toward the player. No server change needed — derive from entity state in zone update.
+- [ ] **Harvest progress animation** — Client-side: mineral/plant shows depletion visual (cracking, color shift) proportional to `yield / maxYield`. Pure client, no server change.
+- [ ] **Codex entry on first discovery** — Track discovered entity IDs per character. On first sighting of an entity above Perception threshold, unlock its codex entry (name, behavior class, loot hint). Requires a small DB column (discovered_entities JSON array on character row).
+- [ ] **Scan action for ??? entities** — Players with research tools can scan `???` entities to reveal them. Interact + research tool = scan attempt. Successful scan (based on Perception vs entity level) unlocks codex entry.
+- [ ] **Creature level scaling to zone** — Spawned creature level is randomized within `levelRange`. Add zone-level modifier: deeper zones (higher coordinate distance from 0,0) shift the level range upward by 1-3 levels. Makes exploration into unknown territory meaningfully harder.
 
-### Future Consideration (v2+ — defer)
+### Future Consideration (v2+)
 
-- [ ] **Perception visual detection circle** — Phaser circle overlay when stat panel open. High complexity, medium value. Defer to polish milestone.
-- [ ] **Faction-specific stat bonuses** — Verdant characters gain bonus Resilience (adapted to biome hazards), Helix gain bonus Power (mining and combat culture), Nexus gain bonus Perception (intelligence/scouting). Requires faction standing system.
-- [ ] **Soft stat allocation via faction advancement** — As a future progression layer, faction rank grants small additional stat allocations. Not stat points per level — faction-progression-locked bonuses. This preserves linear level scaling while adding late-game differentiation.
+- [ ] **Full creature pathfinding (A\*)** — Only viable with server-side spatial indexing and entity count limits enforced. Requires dedicated performance testing. Not v1.8.
+- [ ] **Creature taming (Verdant faction feature)** — Lore supports it. Full separate milestone. Requires creature ownership, follow behavior, persistent tamed-creature data.
+- [ ] **Proximity trigger plants (spore cloud, acid)** — Miasma Marshes plants should have proximity triggers. Requires status effect system. Defer to hazard/status-effect milestone.
+- [ ] **Dynamic creature ecosystems (predator eats herbivore)** — Prey-predator population dynamics within zones. Conceptually rich, architecturally complex. Future milestone.
+- [ ] **Named boss entities** — Rare spawn, high-value loot, zone notification. Requires boss-specific AI, spawn announcement, loot table design. Separate milestone.
 
 ---
 
@@ -157,88 +181,78 @@ Minimum to make the stat system real and observable to players.
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| `computeBaseStats(level)` pure function | HIGH (foundation) | LOW | P1 |
-| `CharacterStats` type (replaces old PlayerStats) | HIGH (type safety) | LOW | P1 |
-| Final stat computation (base + equipment) | HIGH (foundation) | LOW | P1 |
-| Wire stats into gameplay (damage, speed, energy, detection) | HIGH (makes stats real) | MEDIUM | P1 |
-| Stat panel UI (8 stats, 3 columns) | HIGH (player visibility) | MEDIUM | P1 |
-| Level-up delta notification | MEDIUM (reward feel) | LOW | P1 |
-| Creature stats via same formula | HIGH (combat balance) | LOW | P1 |
-| Stat name tooltips (inline descriptions) | MEDIUM (UX clarity) | LOW | P1 |
-| Soft-caps with display | MEDIUM (balance safety) | MEDIUM | P2 |
-| Item tooltip delta comparison | MEDIUM (gear clarity) | MEDIUM | P2 |
-| Stat breakdown in item tooltips | LOW (advanced users) | LOW | P2 |
-| Perception visual circle | LOW (visual delight) | HIGH | P3 |
-| Faction-specific stat bonuses | MEDIUM (identity) | HIGH | P3 |
+| BiomeType expansion (2 missing biomes) | HIGH (blocks all entity definitions) | LOW | P1 |
+| CreatureBehavior lore-accurate types | HIGH (lore compliance, AI states) | LOW | P1 |
+| ~35 entity definitions (content) | HIGH (world feels alive) | MEDIUM | P1 |
+| Plant and Artifact entity types | HIGH (entity diversity) | LOW | P1 |
+| Loot tables + resolution on death | HIGH (core resource loop) | MEDIUM | P1 |
+| Respawn tick loop | HIGH (world repopulates) | LOW | P1 |
+| Creature wander/behavior AI tick | MEDIUM (world feels alive) | MEDIUM | P1 |
+| Fertility zone modifier | MEDIUM (within-biome variety) | LOW | P1 |
+| Perception gating / ??? display | MEDIUM (progression + danger signal) | LOW | P1 |
+| Artifact one-time spawning | MEDIUM (discovery moments) | LOW | P1 |
+| Creature aggro visual cue | MEDIUM (player safety signal) | LOW | P2 |
+| Harvest depletion animation | LOW (polish) | LOW | P2 |
+| Codex discovery tracking | LOW (exploration reward) | MEDIUM | P2 |
+| Scan action for ??? entities | LOW (advanced Perception use) | HIGH | P3 |
+| Creature level zone scaling | LOW (depth reward) | LOW | P2 |
+
+**Priority key:**
+- P1: Must have for v1.8 entity system milestone
+- P2: Should have, add in first post-launch patch
+- P3: Nice to have, future milestone
 
 ---
 
 ## Competitor Feature Analysis
 
-| Feature | WoW (Classic) | Diablo III | Path of Exile | Our Approach |
-|---------|--------------|------------|---------------|--------------|
-| Stat scaling model | Linear per level (stamina, strength, etc.) | Automatic per level, no player choice | Per-level passive tree points | Linear per level, no player allocation — consistent with Fire Emblem / WoW Classic balance model |
-| Number of primary stats | 5 (Strength, Agility, Stamina, Intellect, Spirit) | 4 (Strength, Dexterity, Intelligence, Vitality) | 4 (Strength, Dexterity, Intelligence, Life) + passive tree | 8 (Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience) — more than genre standard, justified by 8 distinct gameplay systems each stat governs |
-| Equipment bonus model | Flat additions to primary stats, then derived secondaries | Equipment adds to primary stats and secondary stats directly | Complex layered modifiers with additive/multiplicative categories | Additive only — flat bonus per equipped item sums onto base. Simpler than PoE, comparable to WoW Classic |
-| Stat panel | Character sheet (C key), shows all primary + derived | Details panel shows offense/defense/life categories | Character sheet with full derived value chains | HUD overlay (C key), shows 8 stats with base/bonus/total columns |
-| Level-up notification | Dialog showing stat gains | Automatic with animated effects | Text message only | Server event + client overlay showing per-stat delta |
-| Creature parity with player stats | Creatures have equivalent stat values on loot tables | Creature stats are opaque (difficulty scaling only) | Creature stats shown in Path of Building (third party) | Same function, same formula — creature and player stats use identical model |
-| Soft caps | Yes (armor cap, resistance cap, hit cap) | Yes (toughness, cooldown reduction capped) | Yes, diminishing returns on most stats | Yes — derived-effect caps (e.g., max 75% damage reduction from Toughness) |
+| Feature | Tibia | Minecraft | ARK: Survival Evolved | Our Approach |
+|---------|-------|-----------|----------------------|--------------|
+| Creature behavior model | 4 states: chase, wander, runaway, dead. Flee HP threshold per creature. | 3 types: passive, neutral, hostile. Simple proximity aggro. | Complex: tame/wild, many attack modes, flee. | 4 lore classes: herbivore/omnivore/predator/maniac. Behavior varies by class not proximity alone. |
+| Spawn system | Fixed spawn points with respawn timer. Players camp spawns. | Chunk-based dynamic spawning (mobs spawn in dark areas). | Spawn regions, respawn on death. Dino level tied to region. | Spawn points in chunk with respawn timer. Fertility modifier adds density variation. |
+| Loot model | Per-creature loot table with weighted items. Ground loot despawns. | Per-creature loot table, direct-to-inventory option. | Harvesting body with tools for resources. Separate inventory loot. | Weighted drop table per entity. Ground item spawn with despawn timer. Optional direct-to-inventory on pickup. |
+| Entity gating (danger signaling) | Skull icon for much-stronger creatures. Color-coded level indicator. | No level display — visual cues only (size, appearance). | Creature level visible always. Region tier communicated via biome. | Perception stat gates name/level visibility. `???` for entities above threshold. Clear progression signal. |
+| Plant interaction | Static resource nodes. No plant behavior. | 2-block range, right-click to harvest. Grow over time. | Passive resource nodes. Some trigger nearby creatures. | Passive harvest (approach + interact). Proximity triggers deferred to v2. |
+| Respawn | Fixed timers, well-known (spawn camping meta). | Instant in dark areas. No memory of killed mobs. | Respawn after time, same region. Difficulty scales. | Zone-based timer (1-5 min). Randomized within range. Artifacts: no respawn. |
+| AI movement (server-side) | Tile-based pathfinding toward player. Leash radius. | Client-side mob AI with server validation. | Server-side with pathfinding. Performance capped by dino count. | Simplified directional AI tick (no A*). Leash radius from spawn. Acceptable for 2D tile world. |
 
 ---
 
 ## Existing Code Integration Map
 
-This maps every stat to its existing code hook — no new systems needed, only new parameters.
+Every new entity system feature maps to an existing integration point. No new architecture.
 
-| Stat | Effect | Existing Hook | Change Required |
-|------|--------|---------------|-----------------|
-| Durability | maxHealth | `player.maxHealth` field | Set from `finalStats.durability` on character load / level-up |
-| Toughness | armor / damage reduction | `calculateDamage()`: `armorReduction` param | Pass `finalStats.toughness` as `armorReduction` |
-| Power | base damage output | `calculateDamage()`: `baseDamage` param | `baseDamage += finalStats.power * POWER_FACTOR` |
-| Haste | movement speed multiplier | `MovementController` speed param | `speed = BASE_SPEED * finalStats.speedMultiplier` where `speedMultiplier = 1 + (haste * 0.01)` |
-| Vigor | maxEnergy | `player.maxEnergy` field | Set from `finalStats.vigor` on character load / level-up |
-| Recovery | energy regen rate | `ComputedStats.rechargeRate` | Set from `finalStats.recovery` (base) + equipment rechargeRate bonus |
-| Perception | detection range | `visibility/range.ts` | Pass `finalStats.detectionRange` to range computation |
-| Resilience | hazard damage reduction | Biome hazard tick (in game-server zone tick) | Read `finalStats.hazardResistance` when applying biome damage tick |
-
-All hooks exist. The work is: (1) build `computeBaseStats(level)` + `computeFinalStats()`, (2) plumb the result into these 8 call sites.
-
----
-
-## Lore Alignment Notes
-
-The 8 stat names were designed for this project. Confirming alignment with world-bible:
-
-| Stat | Lore Grounding |
-|------|----------------|
-| Durability | Exo-suits take physical damage in Terminus. "How much punishment the suit and wearer can absorb" — aligns with Tier I-IV zone survivability requirements. |
-| Toughness | Corporate workers in hostile zones (Volcanic Reaches, Tier III) need armor protection against silicon-armored predators and geological hazards. |
-| Power | Helix Extraction's identity is industrial output — damage (mining yield, combat output) maps to their culture. All factions fight creatures. |
-| Haste | Petrified Expanse lore explicitly states "everything that survives here has adapted to constant movement." Haste is survival in calcification-risk zones. |
-| Vigor | Exo-suit power cores are mentioned repeatedly in lore. Vigor = the power reserve a suit can hold. |
-| Recovery | "Energy" recharge connects to exo-suit power core recharge rate — Verdant's bioengineered suits might have better Recovery as faction bonus. |
-| Perception | Nexus Frontiers are defined by intelligence gathering. Perception ("detecting vital clues, hiding enemies") fits their corporate identity. |
-| Resilience | Miasma Marshes require "chemical filtration systems, sealed gear, decontamination protocols" — Resilience = hazard resistance to the planet's hostile environments. |
-
-All 8 stats have clear lore grounding. Confirm with project owner before finalizing: do Resilience and Toughness need different names to avoid confusion? (Resilience = environmental hazard resistance; Toughness = physical damage armor — they are distinct but both sound defensive.)
+| Feature | Integration Point | Change Type |
+|---------|------------------|-------------|
+| Plant/Artifact entity types | `entity.ts`: extend `EntityType`, add `Plant`, `Artifact` interfaces | Type extension |
+| Lore-accurate behavior types | `entity.ts`: `CreatureBehavior` type update | Breaking type change — audit all uses |
+| Entity definitions (35) | `entity-registry.ts`: expand creature/mineral, add plant/artifact records | Data addition |
+| Biome expansion (2 biomes) | `shared-types/game/biome.ts`: `BiomeType` enum; `world-gen/generation/biome.ts` and `spawn.ts`: new entries | Config + data |
+| Loot table field | `entity-registry.ts`: add `lootTable` field to `CreatureConfig`, `MineralConfig`, `ArtifactConfig` | Type extension |
+| Loot resolution | `game.service.ts`: `handleInteraction()` creature/mineral branch | Logic addition |
+| Respawn loop | `zones.service.ts`: `setInterval` in `onModuleInit()` | New method |
+| Behavior AI tick | `zones.service.ts`: separate `setInterval` for entity position updates | New method + new socket event |
+| Fertility modifier | `world-gen/generation/spawn.ts`: `generateSpawnPoints()` density multiplier | Algorithm change (1 line) |
+| Perception gating | Client Phaser scene: entity name render conditional | Client rendering logic |
+| Artifact no-respawn | `zones.service.ts` respawn loop: `if (spawnPoint.respawnTime === -1) continue` | Guard clause |
 
 ---
 
 ## Sources
 
-- Direct codebase inspection: `packages/shared-types/src/core/player.ts` (`PlayerStats` legacy type), `packages/game-logic/src/inventory/stats.ts` (`ComputedStats`, `effectiveStats()`), `packages/game-logic/src/combat/damage.ts` (`calculateDamage()`), `packages/game-logic/src/visibility/range.ts`
-- WoW Classic linear level scaling model and armor cap: https://pavcreations.com/level-systems-and-character-growth-in-rpg-games/
-- Path of Exile stat breakdown player demand: https://www.pathofexile.com/forum/view-thread/2713434/page/1
-- Linear vs multiplicative progression balance: https://sinisterdesign.net/designing-rpg-mechanics-for-scalability/
-- RPG stat design taxonomy (primary, secondary, derived): https://blog.writtenrealms.com/stats/
-- Linear scaling for MMO balancability: https://www.davideaversa.it/blog/gamedesign-math-rpg-level-based-progression/
-- Diablo III character screen breakdown approach: https://diablo.fandom.com/wiki/Character_Screen
-- Into the Void world-bible.md (biome tiers, faction identity, environmental hazards, exo-suit lore)
-- Into the Void Phase 25 research: `.planning/phases/25-item-data-model-foundation/25-RESEARCH.md`
+- Direct codebase inspection: `packages/shared-types/src/core/entity.ts`, `packages/shared-types/src/game/entity-registry.ts`, `packages/world-gen/src/generation/spawn.ts`, `packages/world-gen/src/generation/biome.ts`, `apps/game-server/src/zones/zones.service.ts`, `apps/game-server/src/game/game.service.ts`
+- Into the Void lore: `lore/world-bible.md` — Creature Behavioral Classifications (Herbivore/Omnivore/Predator/Maniac), biome descriptions with per-biome fauna/flora/hazards, survival tier table
+- Survival game entity AI (state machine patterns): https://developers-heaven.net/blog/game-ai-behavior-trees-state-machines-and-pathfinding/
+- Tibia creature behavior (chase/wander/runaway/dead + flee threshold + leash): https://tibiantis-notes.github.io/Creature
+- Loot table design (weighted random, tier batching, anti-patterns): https://www.gamedeveloper.com/design/loot-drop-best-practices
+- Respawn timer design (variable randomization, spawn camping mitigation): https://forums.mmorpg.com/discussion/391074/preffered-spawn-system
+- Server-side entity AI performance pitfalls (mob count vs tick time): https://help.sparkedhost.com/en/article/how-to-fix-minecraft-server-tick-lag-from-entities-1m5a7g2/
+- Pantheon Perception system (Perception as exploration gating): https://www.mmorpg.com/developer-journals/feature-spotlight-perception-system-2000105610
+- Fertility/lush-barren density patterns: https://survivingtheaftermath.fandom.com/wiki/Biomes
+- Wandering AI tutorial (random path + directional fallback): https://arongranberg.com/astar/documentation/stable/wander.html
 
 ---
 
-*Feature research for: Character Stats System — Into the Void survival MMO*
+*Feature research for: Entity System — Into the Void survival MMO v1.8*
 *Researched: 2026-02-18*
-*Confidence: HIGH for code integration map (codebase-confirmed); HIGH for stat-to-gameplay mapping (existing hooks verified); MEDIUM for competitor UX patterns (web research); MEDIUM for soft-cap values (placeholder constants, require balance testing)*
+*Confidence: HIGH for codebase integration map (directly verified); HIGH for lore alignment (world-bible sourced); MEDIUM for competitor behavior patterns (web research, cross-referenced with Tibia dev documentation); MEDIUM for performance thresholds (entity count caps derived from Minecraft community research, not specific to this stack)*

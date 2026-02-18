@@ -1,317 +1,68 @@
-# Stack Research: Character Stats System
+# Stack Research: Entity System
 
-**Domain:** Multiplayer 2D sci-fi survival MMO — character stat system with 8 primary stats, level scaling, equipment bonuses
+**Domain:** Multiplayer 2D sci-fi survival MMO — entity definitions (Creatures, Plants, Minerals, Artifacts), fertility noise layer, loot tables, creature AI (idle wander FSM), entity respawn system, tool interaction with range
 **Researched:** 2026-02-18
 **Confidence:** HIGH
 
 ## Executive Summary
 
-The character stats system requires **zero new packages**. Every capability needed — type definitions, pure computation, JSONB persistence, WebSocket delivery, Zustand display, combat integration — is already present in the installed stack.
+The entity system milestone requires **one new package** (`@nestjs/schedule`) and **zero frontend packages**. Every other capability — noise generation for fertility layer, weighted random selection for loot tables, A* pathfinding for creature AI movement, entity management in memory — is already in the installed stack or can be implemented as pure TypeScript functions in existing packages.
 
-The work is entirely type evolution and code addition within existing patterns. The existing `PlayerStats` interface (5 stats: strength, agility, endurance, intelligence, perception) and its companion `StatsJson` database type must be replaced with the new 8-stat model (Durability, Toughness, Power, Haste, Vigor, Recovery, Perception, Resilience). This is a JSONB shape migration — the `characters.stats` column changes from one flat object shape to another. No schema columns are added or removed; only the typed content of the JSONB column changes.
+The game-logic package already has A* pathfinding (`findPath`, `hasLineOfSight`), seeded random (`SeededRandom.pick` / weighted selection helpers), and the interaction validation scaffold (`canInteract`, `canHarvest`). The world-gen package has a `SimplexNoise` class, `SeededRandom`, and the `generateSpawnPoints` function with a working `weightedPick` helper. The database already has a `species` table with `lootTableId` FK stub and a `discoveredSpecies` junction table. The shared-types package already defines `Creature`, `Mineral`, `ItemEntity`, `CreatureBehavior`, `Entity` base interfaces, and `ServerEvents` for `entity:spawn` / `entity:despawn` / `entity:update`.
 
-The existing `ComputedStats` interface and `effectiveStats()` function in `game-logic` already implement the pattern for deriving stats from equipment. The 8 new stats replace the current ad-hoc fields (armor, speedMultiplier, hazardResistance, etc.) with a structured, lore-aligned model that also applies cleanly to creature species. The `ItemEffect` discriminated union in `packages/items` gains new effect types for each new stat. The `calculateDamage()` and `calculateHitChance()` combat functions gain new stat references (Power for damage, Haste for speed, Toughness for armor, Perception for detection, Resilience for resistance).
-
-The species schema (`SpeciesStatsJson`) needs parallel extension to accommodate the same 8-stat model for creatures, which the combat milestone requires. Building the shared `CharacterStats` type now means creatures can reuse it without schema rework later.
+What is genuinely new:
+1. **`@nestjs/schedule` v4+** — for the AI tick loop (`@Interval(1000)`) and respawn sweep (`@Interval(5000)`). Native `setInterval` would work, but `@nestjs/schedule` integrates cleanly with the NestJS lifecycle (start on `OnModuleInit`, stop on `OnModuleDestroy`) and provides `SchedulerRegistry` for testability.
+2. **Entity definition packages** — A new `packages/entities` package modeled on the existing `packages/items` pattern: `EntityDefinition` types, `EntityRegistry` singleton, per-category definition files (creatures, minerals, plants, artifacts). The `items` package is the exact blueprint — same structure, same registry pattern.
+3. **Loot table system** — Pure TypeScript in `packages/game-logic/src/loot/`. No library needed. The `weightedPick` function already exists in `world-gen/src/generation/spawn.ts` — extract, generalize, and move it to `game-logic` as `rollLootTable(table, rng)`.
+4. **Creature AI FSM** — Pure TypeScript state machine in `packages/game-logic/src/ai/`. States: `idle`, `wander`, `alert`, `flee`. Transitions driven by the AI tick. Uses existing `SeededRandom` for wander target selection and existing `findPath` for movement.
+5. **Fertility noise layer** — New named seed layer (`${worldSeed}_fertility`) passed through `SimplexNoise.fbm()` — same pattern as the existing biome and terrain noise layers. No new library.
 
 ---
 
 ## Recommended Stack
 
-### Core Technologies (All Present — NO NEW PACKAGES)
+### Core Technologies
 
-| Technology | Version | Purpose | Why Sufficient |
-|------------|---------|---------|----------------|
-| TypeScript | ^5.4.0 (installed) | Stat type definitions, pure computation | The 8 new stats are TypeScript interfaces and pure functions. No runtime library needed for math this simple. The existing discriminated union pattern for `ItemEffect` handles new stat effect types without external libs. |
-| `@into-the-void/shared-types` | workspace | `CharacterStats` interface, `ComputedStats` extension | `PlayerStats` (5 stats) is already in `packages/shared-types/src/core/player.ts`. Replace with `CharacterStats` (8 stats). Both `shared-types` and all apps already import from this package — the rename propagates cleanly. |
-| `@into-the-void/game-logic` | workspace | `computeStats()` pure function for level scaling + equipment bonuses | `effectiveStats(equipment)` in `packages/game-logic/src/inventory/stats.ts` is the validated pattern. A new `computeStats(level, equipment)` pure function adds level-scaling on top. Same pure function, no side effects, no new dependencies. |
-| `@into-the-void/database` | workspace | `StatsJson` JSONB shape in `characters` table | `characters.stats` JSONB already stores `StatsJson`. Update the interface from 5 old fields to 8 new fields. Drizzle infers types from the updated `.$type<StatsJson>()` call. No migration SQL needed — PostgreSQL JSONB is schema-less; the application code sets the new shape on write. |
-| `@into-the-void/items` | workspace | `ItemEffect` new stat effect types | `ItemEffect` is a discriminated union in `packages/items/src/types.ts`. Add new variant types: `{ type: 'durability'; value: number }`, `{ type: 'toughness'; value: number }`, etc. The `resolveEffect()` switch in `game-logic` gains matching cases. Exhaustive switch means TypeScript will error if a new type is added without a handler. |
-| Drizzle ORM | 0.30.10 (installed) | JSONB `$type<>()` typing for stat fields | `.$type<StatsJson>()` on the `stats` column provides TypeScript safety for the JSONB content. No SQL migration needed for a JSONB shape change — only the TypeScript interface updates. Existing Drizzle query helpers (`getCharacter`, `updateCharacter`) require no changes beyond the type update. |
-| Zustand | 4.5.7 (installed) | `player.stats` display in React HUD | `useGameStore().player` already carries the `Player` type (which includes `PlayerStats`). After renaming to `CharacterStats`, the HUD reads stats from the same `player` object. No new store slice needed — stats are player attributes, not a separate domain. |
-| Socket.IO | ^4.7.0 (installed) | Stat delivery to client on auth and level-up | The `AuthResponse` already sends the full `Player` object on auth. `Player.stats` carries the base stats. The `inventory:update` event carries `ComputedStats` (equipment bonuses). No new events needed — the existing delivery channels cover stat display. |
-| Immer | ^11.1.4 (installed) | Already used in `inventoryStore.ts` — no change | Stat mutations happen server-side. The client receives authoritative state via socket events and stores it directly. No nested stat mutation patterns emerge that require Immer in a new stats store. |
-| React 18 | ^18.2.0 (installed) | Stat display in HUD component | `HUD.tsx` already reads `inventory?.stats` for equipment bonuses (armor, speedMultiplier, hazardResistance). Adding the 8 new character stats means adding 8 new display rows in the existing `stats-section` div. No new component libraries needed. |
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| TypeScript | ^5.4.0 (installed) | Entity definition types, FSM state types, loot table types | All new capabilities are type definitions and pure functions. The `CreatureBehavior` union type already exists in shared-types. Extension follows existing discriminated union patterns. |
+| `@nestjs/schedule` | ^4.1.0 (install) | `@Interval()` for AI tick loop and respawn sweep in game-server | The game-server is NestJS. An AI tick that fires every 1s and a respawn sweep every 5s are the primary new runtime behaviors. `@nestjs/schedule` v4 integrates with NestJS lifecycle via `SchedulerModule.forRoot()`. The alternative (raw `setInterval` in `OnModuleInit`) works but loses lifecycle integration and testability. Latest released version is 6.1.1 as of 2026-02. Pinning to ^4.1.0 matches the existing NestJS v10 peer constraint. |
+| `@into-the-void/game-logic` | workspace (extend) | `rollLootTable()`, `CreatureAI` FSM, `canInteractWithTool()` range validation | The pattern is established: pure functions, no DB calls, importable by server and client. The loot table roller, AI state transitions, and tool range validation all belong here. The existing `canInteract()` and `canHarvest()` functions are the extension points. |
+| `@into-the-void/world-gen` | workspace (extend) | Fertility noise layer as a second `SimplexNoise` pass | `SimplexNoise` and `SeededRandom` already exist. A fertility layer is `new SimplexNoise(worldSeed + '_fertility')` with `fbm(x, y, 3)` — identical to the existing terrain noise calls. No API change to the noise classes. |
+| `@into-the-void/database` | workspace (extend) | `loot_tables` and `loot_table_entries` tables, optional plants/artifacts schema | `species` table already has `lootTableId varchar(50)`. The loot table schema is two new tables (`loot_tables`, `loot_table_entries`) following the relational pattern of `species` + `species_stats`. For plants and artifacts (static world entities that do not need per-instance rows), JSONB definitions in the entity registry are sufficient — no new DB tables needed. |
+| Drizzle ORM | ^0.30.0 (installed) | Schema for loot_tables + loot_table_entries | No version upgrade needed. Two new `pgTable` declarations following existing patterns. |
+| Socket.IO | ^4.7.0 (installed) | Broadcast `entity:spawn`, `entity:despawn`, `entity:update` on AI movement and respawn | All three event types already defined in `ServerEvents` interface. No new events needed. AI movement is delivered as `entity:update` with new position. Respawn is `entity:spawn`. Death is `entity:despawn`. |
+| Zustand | ^4.5.0 (installed) | Client-side entity state for AI-moving creatures | The `gameStore` already tracks `entities` from `ZoneState`. AI movement updates arrive as `entity:update` events and merge into the entity map. No new store slice needed. |
+| Phaser 3 | ^3.80.0 (installed) | Creature sprite interpolation toward new AI-updated position | Existing Phaser entity rendering already handles `entity:update` events. Smooth movement between tiles requires interpolation logic in the scene, not a new library. |
 
-### Supporting Libraries (No New Packages)
+### Supporting Libraries
 
-| Library | Version | Purpose | Why Already Sufficient |
-|---------|---------|---------|------------------------|
-| `react-icons` | ^5.5.0 (installed) | Stat icons in HUD | Already used for GiShield, GiLightningFrequency, GiPoisonGas in `HUD.tsx`. The `gi` (Game Icons) set has specific icons for each of the 8 new stats. No icon library addition needed. |
-| `@floating-ui/react` | ^0.27.18 (installed) | Stat tooltip on HUD hover | Already installed for item tooltips (v1.6 milestone). The same `useFloating` + `flip` + `shift` pattern can provide breakdowns of base stat + equipment bonus when a player hovers a stat row. No new package needed — extend the existing tooltip pattern. |
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| `lru-cache` | ^11.2.6 (installed) | Zone entity cache — already used in `ZonesService` | No change needed. The existing `LRUCache<string, ZoneState>` already holds entities per zone. AI-mutated entity state lives in this cache. |
+| `ioredis` | ^5.4.0 (installed) | Respawn queue as Redis sorted set (optional optimization) | Use if respawn load becomes significant (>1000 respawning entities across all active zones). For the initial milestone, an in-memory `Map<timestamp, SpawnPoint[]>` in `ZonesService` is sufficient. Redis sorted sets are the upgrade path if the game scales to many active zones. |
+| `heap-js` | ^2.7.1 (installed) | Priority queue for respawn timer ordering | Already installed. Use a `MinHeap<RespawnEntry>` keyed on `respawnAt` timestamp to efficiently find which entities are due for respawn in the 5s sweep. More efficient than iterating all pending respawns. |
 
-### Development Tools (No New Additions)
+### Development Tools
 
-The existing NX + TypeScript + ESLint + Prettier + SWC toolchain handles everything. No new dev tooling needed.
-
----
-
-## Architecture Decisions
-
-### CharacterStats: Unified Type for Players and Creatures
-
-Define a single `CharacterStats` interface in `shared-types` used for both player characters and creature species. This is the decision that makes the combat milestone work without a rewrite:
-
-```typescript
-// packages/shared-types/src/core/player.ts (replace PlayerStats with CharacterStats)
-
-/**
- * Character stats — 8 primary stats, shared by players and creatures.
- * Base values are set by level scaling formula.
- * Effective values = base + equipment bonuses (computed server-side only).
- *
- * Stat definitions (lore-aligned):
- * - Durability: Maximum health pool
- * - Toughness: Physical damage reduction (armor equivalent)
- * - Power: Damage output multiplier
- * - Haste: Action speed / move speed
- * - Vigor: Energy/stamina pool
- * - Recovery: Regeneration rate (health + energy)
- * - Perception: Detection range + critical hit chance
- * - Resilience: Environmental hazard resistance + status effect reduction
- */
-export interface CharacterStats {
-  durability: number;
-  toughness: number;
-  power: number;
-  haste: number;
-  vigor: number;
-  recovery: number;
-  perception: number;
-  resilience: number;
-}
-```
-
-Replace the existing `PlayerStats` type alias everywhere. Update `Player` interface and `CombatParticipant` to use `CharacterStats`. Update `SpeciesStatsJson` in `database/src/schema/species.ts` to store the same shape (replacing `{ baseHealth, baseDamage, armor, speed }`).
-
-### Level Scaling Formula: Pure Function in game-logic
-
-Base stat values scale with level. The formula lives in a new pure function `baseStatsForLevel(level: number): CharacterStats` in `packages/game-logic/src/stats/`:
-
-```typescript
-// packages/game-logic/src/stats/base-stats.ts
-
-const BASE_STATS_LEVEL_1: CharacterStats = {
-  durability: 100,   // max health
-  toughness: 10,     // damage reduction
-  power: 10,         // damage output
-  haste: 10,         // action speed
-  vigor: 100,        // energy pool
-  recovery: 5,       // regen rate
-  perception: 10,    // detection range / crit
-  resilience: 10,    // hazard resistance
-};
-
-const STAT_PER_LEVEL: CharacterStats = {
-  durability: 10,    // +10 max health per level
-  toughness: 1,
-  power: 1,
-  haste: 0.5,
-  vigor: 5,          // +5 energy per level
-  recovery: 0.2,
-  perception: 0.5,
-  resilience: 0.5,
-};
-
-export function baseStatsForLevel(level: number): CharacterStats {
-  return {
-    durability: BASE_STATS_LEVEL_1.durability + STAT_PER_LEVEL.durability * (level - 1),
-    toughness: BASE_STATS_LEVEL_1.toughness + STAT_PER_LEVEL.toughness * (level - 1),
-    power: BASE_STATS_LEVEL_1.power + STAT_PER_LEVEL.power * (level - 1),
-    haste: BASE_STATS_LEVEL_1.haste + STAT_PER_LEVEL.haste * (level - 1),
-    vigor: BASE_STATS_LEVEL_1.vigor + STAT_PER_LEVEL.vigor * (level - 1),
-    recovery: BASE_STATS_LEVEL_1.recovery + STAT_PER_LEVEL.recovery * (level - 1),
-    perception: BASE_STATS_LEVEL_1.perception + STAT_PER_LEVEL.perception * (level - 1),
-    resilience: BASE_STATS_LEVEL_1.resilience + STAT_PER_LEVEL.resilience * (level - 1),
-  };
-}
-```
-
-Pure function. No DB calls. No side effects. Called by the server when computing effective stats, by combat functions, and by character creation. Mirrors the pattern of `validateMovement` — pure, testable, importable by both server and client.
-
-### ComputedStats: Replace Ad-hoc Fields with 8-Stat Model
-
-The current `ComputedStats` interface has ad-hoc fields (`armor`, `speedMultiplier`, `hazardResistance`, `detectionRange`, `energyCapacity`, `rechargeRate`, `jumpHeight`, `bonuses: Record<string, number>`). Replace with a structured model aligned to the 8 new stats:
-
-```typescript
-// packages/shared-types/src/game/inventory.ts (update ComputedStats)
-
-/**
- * Effective stats: base stats (from level) + equipment bonuses.
- * Server computes this. Client uses for display only.
- * Never trust client-provided ComputedStats values.
- */
-export interface ComputedStats {
-  /** Base stat values derived from character level */
-  base: CharacterStats;
-  /** Equipment bonus deltas — additive on top of base */
-  equipment: Partial<CharacterStats>;
-  /** Final effective values = base + equipment */
-  effective: CharacterStats;
-  /**
-   * Extended bonuses from modules/accessories that don't map to
-   * primary stats (e.g., 'miningYield', 'craftingSpeed').
-   * Preserved for tool specialization milestone.
-   */
-  bonuses: Record<string, number>;
-}
-```
-
-The `effectiveStats()` function in `game-logic/src/inventory/stats.ts` evolves into `computeStats(level, equipment)` that returns this structured `ComputedStats`.
-
-### ItemEffect: New Stat Effect Types
-
-Add new `ItemEffect` variants in `packages/items/src/types.ts` for the 8 new stats:
-
-```typescript
-export type ItemEffect =
-  // ... existing effects preserved ...
-  | { readonly type: 'heal'; readonly amount: number }
-  | { readonly type: 'energy_restore'; readonly amount: number }
-  | { readonly type: 'suit_repair'; readonly amount: number }
-  | { readonly type: 'stat_buff'; readonly stat: string; readonly amount: number; readonly duration: number }
-  // New stat equipment effects:
-  | { readonly type: 'durability_bonus'; readonly value: number }
-  | { readonly type: 'toughness_bonus'; readonly value: number }
-  | { readonly type: 'power_bonus'; readonly value: number }
-  | { readonly type: 'haste_bonus'; readonly value: number }
-  | { readonly type: 'vigor_bonus'; readonly value: number }
-  | { readonly type: 'recovery_bonus'; readonly value: number }
-  | { readonly type: 'perception_bonus'; readonly value: number }
-  | { readonly type: 'resilience_bonus'; readonly value: number };
-```
-
-The existing ad-hoc effects (`armor`, `speed`, `life_support`, `sensor`, `power_core`, `mobility`) map to the new stats:
-- `armor` → `toughness_bonus`
-- `speed` → `haste_bonus`
-- `life_support` → `resilience_bonus`
-- `sensor` → `perception_bonus`
-- `power_core` (energyCapacity + rechargeRate) → `vigor_bonus` + `recovery_bonus`
-- `mobility` (jumpHeight) → `haste_bonus` (movement capability)
-
-The exhaustive `switch` in `resolveEffect()` ensures TypeScript compile error if any new effect type is added without a handler.
-
-### Combat Functions: Update to 8-Stat Model
-
-`calculateDamage()` and `calculateHitChance()` in `game-logic/src/combat/damage.ts` currently reference `strength`, `agility`, `endurance` from the old `PlayerStats`. Update to reference the new `CharacterStats`:
-
-```typescript
-// calculateDamage:
-// OLD: damage += (attackerStats.strength ?? 10) * 0.5;
-// NEW: damage += (attackerStats.power ?? 10) * 0.5;
-
-// OLD: effectiveArmor = armorReduction * (1 + (defenderStats.endurance ?? 10) * 0.02);
-// NEW: effectiveArmor = armorReduction * (1 + (defenderStats.toughness ?? 10) * 0.02);
-
-// calculateHitChance:
-// OLD: attackerAgility, defenderAgility
-// NEW: attackerStats.perception, defenderStats.haste (perception vs dodge)
-```
-
-### Database: JSONB Shape Change Only
-
-The `characters.stats` column already stores JSONB typed as `StatsJson`. Update the interface from the 5-field old shape to the 8-field new shape. No SQL migration needed because PostgreSQL JSONB is schema-less — the old shape rows continue to work until the application writes the new shape on character save.
-
-Existing rows with old shape keys (`strength`, `agility`, `endurance`, `intelligence`, `perception`) are safe to leave in place; they will be overwritten on the next character save with the new shape. A one-time Drizzle migration script (following the pattern of `migrate-equipment-schema.ts`) should transform existing rows on deployment for consistency:
-
-```typescript
-// Mapping from old stats to new stats (migration script only)
-// OLD strength → NEW power
-// OLD agility  → NEW haste
-// OLD endurance → NEW durability (and toughness)
-// OLD intelligence → NEW recovery (and vigor)
-// OLD perception → NEW perception (same name, keep value)
-```
-
-### StatsJson in characters table:
-
-```typescript
-// packages/database/src/schema/characters.ts
-
-export interface StatsJson {
-  durability: number;
-  toughness: number;
-  power: number;
-  haste: number;
-  vigor: number;
-  recovery: number;
-  perception: number;
-  resilience: number;
-}
-
-// Default values in the Drizzle table definition:
-stats: jsonb('stats').$type<StatsJson>().notNull().default({
-  durability: 100,
-  toughness: 10,
-  power: 10,
-  haste: 10,
-  vigor: 100,
-  recovery: 5,
-  perception: 10,
-  resilience: 10,
-}),
-```
-
-### HUD Display: Add Stat Panel
-
-`HUD.tsx` currently displays 3 stats (armor, speed, hazard resistance) using `react-icons/gi`. Extend the stats section to display all 8 new stats with appropriate icons from the already-installed `react-icons` gi set:
-
-```typescript
-// Stat → react-icons/gi mapping (all icons already in the installed gi set)
-// Durability   → GiHeart (max health indicator)
-// Toughness    → GiShield (replacing current GiShield/armor display)
-// Power        → GiSwordBrandish (damage output)
-// Haste        → GiLightningFrequency (replacing current speed display)
-// Vigor        → GiBatteries (energy pool)
-// Recovery     → GiRecycle (regeneration)
-// Perception   → GiRadarSweep (detection range)
-// Resilience   → GiPoisonGas (replacing current hazard resistance display)
-```
-
-The stats-section div already exists in HUD.tsx. The player stat values come from `player.stats` (base CharacterStats). The equipment bonus values come from `inventory?.stats?.equipment` (ComputedStats.equipment). Display format: `base + equipment_bonus = effective` or just the effective value for simplicity.
+| Tool | Purpose | Notes |
+|------|---------|-------|
+| NX | Monorepo task runner for the new `packages/entities` package | Follow the existing `packages/items/project.json` pattern. `nx run entities:build` and `nx run entities:test`. |
+| Drizzle Studio | Schema inspection for new loot_tables and loot_table_entries | `nx run database:studio` — no change to workflow. |
 
 ---
 
-## Integration Points
+## Installation
 
-### Files That Change (No New Files Needed in Most Cases)
+```bash
+# One new package only
+pnpm add @nestjs/schedule --filter @into-the-void/game-server
 
-| File | Change Type | What Changes |
-|------|-------------|--------------|
-| `packages/shared-types/src/core/player.ts` | Modify | `PlayerStats` → `CharacterStats` with 8 new fields; `Player` interface updated |
-| `packages/database/src/schema/characters.ts` | Modify | `StatsJson` interface 5→8 fields; default values updated |
-| `packages/database/src/schema/species.ts` | Modify | `SpeciesStatsJson` aligned to `CharacterStats` (creatures need the same 8 stats) |
-| `packages/game-logic/src/inventory/stats.ts` | Modify | `ComputedStats` type updated; `effectiveStats()` → `computeStats(level, equipment)` |
-| `packages/game-logic/src/combat/damage.ts` | Modify | Stat references: `strength → power`, `agility → haste/perception`, `endurance → toughness/durability` |
-| `packages/game-logic/src/combat/turn-order.ts` | Modify | `agility → haste` for initiative calculation |
-| `packages/items/src/types.ts` | Modify | 8 new `ItemEffect` variant types added; old ad-hoc effects deprecated/mapped |
-| `packages/game-logic/src/inventory/effects.ts` | Modify | `resolveEffect()` switch: new cases for 8 stat bonus effect types |
-| `apps/web/src/ui/hud/HUD.tsx` | Modify | Stats section updated to display 8 new stats from `player.stats` + equipment bonuses |
-| `apps/game-server/src/*` | Modify | Any code referencing `PlayerStats` old fields updated to `CharacterStats` new fields |
-| `packages/game-logic/src/stats/base-stats.ts` | **NEW** | `baseStatsForLevel(level)` pure function |
-| `packages/game-logic/src/stats/compute.ts` | **NEW** | `computeStats(level, equipment): ComputedStats` pure function |
-| `packages/database/src/migrations/migrate-stats-schema.ts` | **NEW** | One-time migration script to remap old stat names to new names |
+# Corresponding types (if not bundled)
+pnpm add -D @types/cron --filter @into-the-void/game-server
+```
 
-### New Zustand Store: Not Needed
-
-Character stats are player attributes carried in the existing `Player` object in `gameStore.player`. Equipment-derived bonuses are in `inventoryStore.inventory.stats` (ComputedStats). No new Zustand store is required. Stat display in the HUD reads from the stores that already exist.
-
-### New Socket Events: Not Needed
-
-The existing `auth` response delivers the full `Player` object (including `CharacterStats`). The `inventory:update` event delivers `Inventory` (which includes `ComputedStats`). A `stats:update` event would only be needed if stats can change outside of auth or inventory operations — which they cannot in this milestone (stats only change via level-up, which triggers a character save and can be delivered inline with the XP update). No new socket events needed.
-
----
-
-## What NOT to Add
-
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| Separate `statsStore.ts` Zustand slice | Stats are player attributes, not a separate domain. Creating a third store (`gameStore` + `inventoryStore` + `statsStore`) for what is ultimately a few numbers on `player.stats` adds subscription complexity with no benefit. | Read stats from `useGameStore().player.stats` (base) and `useInventoryStore().inventory?.stats?.effective` (computed) |
-| `mathjs` or similar math library for stat formulas | Stat computation is 8 additions and 8 multiplications. A 400KB math library for `base + bonus` is extreme over-engineering. | Plain TypeScript arithmetic in pure functions |
-| PostgreSQL computed columns or generated columns for stat aggregation | Stat computation must run in `game-logic` (shared package) so both server and client can use the same formula. Moving stat aggregation to PostgreSQL isolates it on the server, prevents client-side preview (stat tooltip before equip), and adds a SQL dependency to a pure math operation. | `computeStats(level, equipment)` pure function in `packages/game-logic` |
-| Redux for stat state | Already have Zustand. Same argument as in the inventory STACK.md — two state management systems for a single session-scoped domain. | Existing Zustand stores |
-| Stat allocation system (spend points on stats) | The 8 stats are derived from level and equipment — they are NOT player-allocated. Allocatable stats would require a different architecture (allocation events, point pools, respec costs). The lore does not specify an allocation system; stats are a function of what you wear and your level. | Level scaling formula + equipment bonuses as the two inputs |
-| Caching computed stats in the database | `computeStats(level, equipment)` is deterministic and fast (< 1ms). Caching in a `computed_stats` column creates a cache invalidation problem: any equipment change requires a cache update. If the cache and the formula drift (bug), the stored value is wrong. | Recompute on demand from authoritative inputs (level + equipment) |
+The new `packages/entities` package is a workspace package — no npm install needed, just create the directory structure following the `packages/items` blueprint.
 
 ---
 
@@ -319,20 +70,147 @@ The existing `auth` response delivers the full `Player` object (including `Chara
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| 8 flat stats on `CharacterStats` | Nested stat categories (e.g., `{ offense: { power, haste }, defense: { toughness, durability }, ... }`) | Only if the UI has category-grouped tabs. Current HUD is a flat stat list. Nesting adds complexity with no display benefit at this scope. |
-| `computeStats()` as a new pure function in `game-logic/src/stats/` | Extending the existing `effectiveStats()` function in-place | The function signature changes from `(equipment) → ComputedStats` to `(level, equipment) → ComputedStats`. Renaming communicates the expanded scope clearly. The old name can be kept as a re-export alias if other callers depend on it. |
-| Single `CharacterStats` type shared by players and creatures | Separate `PlayerStats` and `CreatureStats` types | Only if creatures need completely different stat fields than players. Since creatures fight players using the same combat formulas, they need the same 8 stats to produce correct `calculateDamage()` results. One type is simpler and correct. |
-| Inline stat display in existing HUD stats section | New `CharacterStatsPanel.tsx` React component | A dedicated panel component makes sense if stats have interactive tooltips (hover for breakdown), tabs (base vs effective), or per-stat help text. At minimum viable display (8 rows of icon + number), extending the existing stats section in `HUD.tsx` is sufficient. Extract to a component when the display grows beyond 20 lines. |
+| `@nestjs/schedule @Interval()` | Raw `setInterval` in `OnModuleInit` | Use raw `setInterval` if NestJS lifecycle integration is not needed (e.g., standalone Node process). In the existing NestJS game-server, `@nestjs/schedule` is the idiomatic choice. |
+| In-memory `MinHeap` for respawn queue | Redis sorted set for respawn queue | Use Redis sorted set if the server runs multiple instances (horizontal scaling). For a single-process game-server, in-memory heap is simpler and faster. Redis becomes necessary if respawn state must survive process restarts. |
+| Pure TypeScript FSM in `game-logic` | A behavior tree library (e.g., `behaviortree.js`) | Use a behavior tree library if AI complexity grows to 10+ behaviors with complex preconditions. For idle wander (2 states, 3 transitions), a plain TypeScript discriminated union state machine is 30 lines and has zero dependencies. |
+| `weightedPick` as a pure function in `game-logic` | External loot table library (e.g., `LootTable.js`) | External libraries add 10KB+ for what is genuinely a 15-line function. The algorithm is `sum weights → random roll → linear scan` — no external library is justified. |
+| New `packages/entities` workspace package | Embed entity definitions in `packages/shared-types` | `shared-types` is for wire-format contracts. Entity definitions (full stat blocks, loot table IDs, texture keys) are game data, not wire contracts. Separate package keeps the contract layer thin. Mirrors the `packages/items` architecture exactly. |
+| Fertility noise as a second `SimplexNoise(seed + '_fertility')` layer | Separate noise library (e.g., `simplex-noise` npm) | The existing `SimplexNoise` class in `world-gen` is the established abstraction. A second npm noise library creates a divergence between noise implementations. The project owns the noise implementation — extend it, don't fork it. |
+
+---
+
+## What NOT to Add
+
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| `behaviortree.js` or similar AI library | Idle wander FSM is 2 active states with simple random walk logic. A full behavior tree library adds 40KB+ bundle and API complexity for what is a switch statement over `CreatureBehavior`. | Plain TypeScript FSM: `type AIState = 'idle' \| 'wander' \| 'alert' \| 'flee'` with a `tickAI(state, context) → AIState` pure function |
+| `pathfinding.js` or A* library | `findPath(x1, y1, x2, y2, collisionMap)` already exists in `packages/game-logic/src/movement/pathfinding.ts`. It handles diagonals, elevation costs, and corner-cutting prevention. It is exactly what wander movement needs. | Existing `findPath` — already used for movement validation; extend for creature wander |
+| `LootTable.js` or loot library | The `weightedPick` function already exists in `world-gen/src/generation/spawn.ts` and handles the full weighted random selection algorithm. Moving it to `game-logic` and generalizing it covers all loot use cases. | Extract `weightedPick` from world-gen into `game-logic/src/loot/weighted-pick.ts` |
+| A separate `EntityManager` service for each entity type | Over-engineering. The existing `ZonesService` already manages entities in an `LRUCache<string, ZoneState>` with `Map<string, Entity>`. Adding a separate `CreatureManager`, `MineralManager`, `PlantManager` service layer for the same data structure is redundant. | Extend `ZonesService` with entity-type-specific methods or add a single `EntityService` that delegates to `ZonesService` for state |
+| Colyseus or other game-server framework | The NestJS WebSocket server is established and working with Socket.IO. A framework migration for one new feature is a full rewrite risk. | Extend the existing `game.gateway.ts` + `game.service.ts` pattern |
+| A database row per live entity instance | Creatures and minerals are runtime state, not persistent state. They respawn from `SpawnPoint` definitions in world-gen. Storing live entity positions in PostgreSQL creates O(entities * zones) write load on every AI tick. | Keep live entity state in the in-memory `ZonesService` LRU cache. Only persist player-created structures and loot table configuration (static game data). |
+
+---
+
+## Stack Patterns by Variant
+
+**If AI tick load becomes a bottleneck (>500 creatures moving simultaneously):**
+- Batch AI ticks by zone rather than individual entity ticks
+- Only tick creatures in zones with active players (skip unpopulated zones entirely)
+- Wander step probability: roll once per creature per tick (e.g., 20% chance to move) — reduces path calculations by 80%
+
+**If respawn queue grows large (>1000 pending respawns):**
+- Migrate from in-memory `MinHeap` to Redis sorted set (`ZADD respawns <timestamp> <entityKey>`)
+- `ZRANGEBYSCORE respawns 0 <now>` efficiently retrieves all due respawns
+- `ioredis` is already installed — zero new infrastructure required
+
+**If loot tables need designer-editable data:**
+- Promote `loot_tables` from code-defined to database-seeded (DB migration + seed script)
+- Admin API endpoint (NestJS REST) for loot table CRUD
+- For MVP: define loot tables as TypeScript constants in `packages/entities` — the same pattern as item definitions in `packages/items/src/definitions/`
+
+---
+
+## New Package: `packages/entities`
+
+Model this exactly after `packages/items`. It is the single source of truth for entity definitions that the game-server and world-gen spawn system reference.
+
+```
+packages/entities/
+  src/
+    types.ts          — EntityDefinition, CreatureDefinition, MineralDefinition, PlantDefinition, ArtifactDefinition
+    registry.ts       — EntityRegistry singleton (same Map<id, Definition> pattern as ItemRegistry)
+    index.ts          — public exports
+    definitions/
+      creatures.ts    — void_crawler, crystal_sentinel, toxic_lurker, frost_elemental, etc.
+      minerals.ts     — void_stone, crystal_shard, volcanic_ore, ancient_fragment, etc.
+      plants.ts       — flora definitions (fertility-seeded spawn)
+      artifacts.ts    — ancient/alien artifact definitions (rare, high-tier biomes)
+  project.json        — NX project config (build, test targets)
+  package.json        — { name: "@into-the-void/entities" }
+  tsconfig.json       — extends tsconfig.base.json
+```
+
+The `EntityRegistry` exposes:
+- `EntityRegistry.get(id)` → `EntityDefinition | undefined`
+- `EntityRegistry.getByType(type)` → `EntityDefinition[]`
+- `EntityRegistry.getByBiome(biome)` → `EntityDefinition[]`
+
+The existing `EntityRegistry` object in `packages/shared-types/src/game/entity-registry.ts` is a flat object — migrate it to a proper class-based registry matching `ItemRegistryImpl` in `packages/items/src/registry.ts`.
+
+---
+
+## AI Tick Architecture
+
+The AI tick runs in the game-server as a NestJS scheduled interval:
+
+```typescript
+// apps/game-server/src/game/ai.service.ts
+@Injectable()
+export class AiService implements OnModuleInit, OnModuleDestroy {
+  constructor(
+    private readonly schedulerRegistry: SchedulerRegistry,
+    private readonly zonesService: ZonesService,
+    private readonly gameGateway: GameGateway,  // for broadcasting entity:update
+  ) {}
+
+  onModuleInit() {
+    // Only tick zones with active players
+    const interval = setInterval(() => this.tickActiveZones(), 1000);
+    this.schedulerRegistry.addInterval('ai-tick', interval);
+  }
+
+  onModuleDestroy() {
+    this.schedulerRegistry.deleteInterval('ai-tick');
+  }
+
+  private async tickActiveZones() {
+    // Get zones with players → tick creature AI for each
+    // Broadcast entity:update for creatures that moved
+  }
+}
+```
+
+The FSM logic (`tickAI(creature, context) → { newState, newPosition? }`) lives in `packages/game-logic/src/ai/` as a pure function, following the same pattern as `validateMovement`, `calculateDamage`, etc.
+
+---
+
+## Loot Table Schema
+
+Two new tables in `packages/database/src/schema/`:
+
+```typescript
+// loot_tables table — grouping of loot entries
+export const lootTables = pgTable('loot_tables', {
+  id: varchar('id', { length: 50 }).primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+});
+
+// loot_table_entries table — weighted item entries
+export const lootTableEntries = pgTable('loot_table_entries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tableId: varchar('table_id', { length: 50 }).notNull().references(() => lootTables.id),
+  itemId: varchar('item_id', { length: 100 }).notNull(),  // references ItemRegistry
+  weight: integer('weight').notNull().default(10),
+  minQuantity: integer('min_quantity').notNull().default(1),
+  maxQuantity: integer('max_quantity').notNull().default(1),
+  condition: varchar('condition', { length: 50 }),  // 'always', 'rare', 'lucky' — future
+});
+```
+
+The `species` table's existing `lootTableId varchar(50)` FK already points to `loot_tables.id`. No species schema change needed.
 
 ---
 
 ## Version Compatibility
 
-| Package | Installed Version | Compatibility Notes |
-|---------|-------------------|---------------------|
-| TypeScript | ^5.4.0 | Discriminated unions, const enums, template literal types all work for the stat system. No version-related issues. |
-| Drizzle ORM | 0.30.10 | `.$type<StatsJson>()` on `jsonb()` is the correct API for typed JSONB. Compatible with the `StatsJson` shape change — no Drizzle version change needed. |
-| `@into-the-void/items` | workspace | The new `ItemEffect` union variants are additive. Existing exhaustive switch in `resolveEffect()` will emit TypeScript compile errors for new unhandled cases — this is the correct behavior to force handler completeness. |
+| Package | Version | Compatibility Notes |
+|---------|---------|---------------------|
+| `@nestjs/schedule` | ^4.1.0 | Peer dependency requires `@nestjs/common ^10.0.0` (installed at ^10.3.0). Compatible. Latest available is 6.1.1 — either works; pin to 4.x to stay conservative with existing NestJS v10 peer range. |
+| `heap-js` | ^2.7.1 (installed) | `MinHeap<T>` with custom comparator. Already used in the project. No version change needed. |
+| Drizzle ORM | ^0.30.0 (installed) | Two new `pgTable` declarations — standard patterns. No version upgrade needed. |
+| TypeScript | ^5.4.0 (installed) | Discriminated union FSM states, `const` enum for behavior types — all within ^5.4 capabilities. |
 
 ---
 
@@ -340,37 +218,68 @@ The existing `auth` response delivers the full `Player` object (including `Chara
 
 ### HIGH Confidence (Verified in Codebase)
 
-- `packages/shared-types/src/core/player.ts` — `PlayerStats` (5 stats: strength, agility, endurance, intelligence, perception) confirmed. `Player` interface confirmed with `health`, `maxHealth`, `energy`, `maxEnergy`, `level`, `xp` fields.
-- `packages/database/src/schema/characters.ts` — `StatsJson` (5 stats matching `PlayerStats`) confirmed. Default values confirmed at 10 each. `characters.stats` JSONB column confirmed.
-- `packages/database/src/schema/species.ts` — `SpeciesStatsJson { baseHealth, baseDamage, armor, speed }` confirmed. This is the creature stat model that needs alignment to `CharacterStats`.
-- `packages/game-logic/src/inventory/stats.ts` — `ComputedStats` interface and `effectiveStats(equipment)` pure function confirmed. Current `ComputedStats` fields: armor, speedMultiplier, hazardResistance, detectionRange, energyCapacity, rechargeRate, jumpHeight, bonuses. This is the direct replacement target.
-- `packages/game-logic/src/combat/damage.ts` — References to `attackerStats.strength`, `attackerStats.agility`, `defenderStats.endurance` confirmed. These are the old stat references that need updating to new 8-stat model.
-- `packages/game-logic/src/combat/turn-order.ts` — `stats?.agility` reference confirmed for initiative. Update to `stats?.haste`.
-- `packages/items/src/types.ts` — `ItemEffect` discriminated union confirmed with 10 existing effect types. Pattern is proven for adding new stat-aligned variants.
-- `packages/game-logic/src/inventory/effects.ts` — `resolveEffect()` exhaustive switch confirmed. New cases can be added without breaking existing cases.
-- `apps/web/src/ui/hud/HUD.tsx` — `stats.armor`, `stats.speedMultiplier`, `stats.hazardResistance` display confirmed. `react-icons/gi` already imported for stat icons.
-- `apps/web/src/store/gameStore.ts` — `player: Player | null` confirmed. Stats accessible via `player.stats`. No new store slice needed.
-- `package.json` — `react-icons ^5.5.0`, `@floating-ui/react ^0.27.18`, `immer ^11.1.4`, `zustand ^4.5.0` all confirmed installed. No new packages needed.
+- `packages/game-logic/src/movement/pathfinding.ts` — `findPath()`, `hasLineOfSight()`, `getReachablePositions()` confirmed. A* with diagonal support, corner-cutting prevention, elevation cost. Directly usable for creature wander movement.
+- `packages/game-logic/src/interaction/interaction.ts` — `canInteract()`, `canHarvest()`, `getEntitiesInRange()` confirmed. Range validation already exists using `manhattanDistance`. Tool range can extend `canHarvest` with a range parameter.
+- `packages/world-gen/src/generation/spawn.ts` — `weightedPick()` confirmed. Weighted random selection algorithm present. Extract to `game-logic/src/loot/`.
+- `packages/world-gen/src/noise/simplex.ts` — `SimplexNoise` class with `noise2D()` and `fbm()` confirmed. Fertility layer = second `SimplexNoise` instance with a different seed. Zero API changes.
+- `packages/world-gen/src/random/seeded-random.ts` — `SeededRandom` with `nextInt`, `nextFloat`, `pick`, `derive` confirmed. Creature wander target selection uses this for deterministic behavior.
+- `packages/shared-types/src/core/entity.ts` — `Creature`, `Mineral`, `ItemEntity`, `Structure`, `CreatureBehavior` ('passive'|'neutral'|'aggressive'|'defensive') all confirmed. AI FSM can extend `CreatureBehavior` or use a separate `AIState` type.
+- `packages/shared-types/src/network/events.ts` — `entity:spawn`, `entity:despawn`, `entity:update` in `ServerEvents` confirmed. No new socket events needed for AI movement or respawn.
+- `packages/shared-types/src/game/entity-registry.ts` — Flat `EntityRegistry` object confirmed. Exists but is a plain object, not a class-based registry. Migration to `EntityRegistryImpl` class (matching `ItemRegistryImpl`) is the correct evolution.
+- `packages/database/src/schema/species.ts` — `lootTableId varchar(50)` column confirmed on `species` table. New `loot_tables` and `loot_table_entries` tables complete the FK chain.
+- `packages/database/src/schema/discoveries.ts` — `discovered_species` junction table confirmed (`characterId`, `speciesId`, `killCount`). The entity system milestone populates this table on first creature kill.
+- `apps/game-server/src/zones/zones.service.ts` — `LRUCache<string, ZoneState>` with `Map<string, Entity>` confirmed. AI-updated entity positions update values in this map. `spawnEntity` / `despawnEntity` methods exist for respawn use.
+- `package.json` — `heap-js ^2.7.1`, `ioredis ^5.4.0`, `lru-cache ^11.2.6` all confirmed installed. No new dependencies needed beyond `@nestjs/schedule`.
+- `packages/items/src/registry.ts` — `ItemRegistryImpl` class pattern confirmed as the blueprint for `packages/entities/src/registry.ts`.
 
-### MEDIUM Confidence (Pattern Reference)
+### MEDIUM Confidence (Official Docs / npm Verified)
 
-- `packages/game-logic/src/movement/validation.ts` — `validateMovement()` pure function pattern is the reference for `baseStatsForLevel()` and `computeStats()`. Same constraints: no DB calls, no socket calls, returns typed result, importable by both server and client.
-- `packages/database/src/migrations/migrate-equipment-schema.ts` — One-time migration script pattern for JSONB shape transformation. The stat migration script follows this exact pattern to remap old 5-stat keys to new 8-stat keys.
-- `lore/world-bible.md` — Survival tier system (Tier I-IV biomes) confirms that `resilience` (hazard resistance) and `perception` (detection) are lore-aligned stat concepts. The biome descriptions reference "equipment requirements" and "specialized equipment" — confirming the stat-equipment linkage.
+- `@nestjs/schedule` latest version is 6.1.1 (verified via GitHub releases). Peer dependency is `@nestjs/common ^10`. Compatible with installed `^10.3.0`. `SchedulerRegistry.addInterval()` API confirmed via official NestJS docs. (Source: [nestjs/schedule GitHub releases](https://github.com/nestjs/schedule/releases))
+- `SchedulerRegistry.addInterval(name, interval)` confirmed as the idiomatic NestJS pattern for runtime interval management. Integrates with `OnModuleInit` / `OnModuleDestroy` lifecycle hooks. (Source: [NestJS Task Scheduling docs](https://docs.nestjs.com/techniques/task-scheduling))
 
----
+### LOW Confidence (Pattern Reference Only)
 
-## Installation
-
-No new packages needed.
-
-```bash
-# Nothing to install
-# All capability is in the existing installed stack
-```
+- Redis sorted set for respawn queue: The pattern (`ZADD + ZRANGEBYSCORE`) is well-documented for delayed task queues. Not verified against the specific ioredis version installed. Noted as an upgrade path, not a requirement for the initial milestone.
 
 ---
 
-*Stack research for: Character Stats System — Into the Void*
+## Integration Points
+
+### New Package
+
+| Package | Created From | What It Adds |
+|---------|--------------|--------------|
+| `packages/entities` | Blueprint: `packages/items` | `EntityDefinition` types, `EntityRegistry` singleton, creature/mineral/plant/artifact definition files |
+
+### New Files in Existing Packages
+
+| File | Package | What It Adds |
+|------|---------|--------------|
+| `src/loot/weighted-pick.ts` | `game-logic` | Extracted + generalized from `world-gen/src/generation/spawn.ts` |
+| `src/loot/loot-table.ts` | `game-logic` | `rollLootTable(table, rng): LootDrop[]` pure function |
+| `src/ai/creature-ai.ts` | `game-logic` | `tickCreatureAI(creature, context): AIResult` pure FSM function |
+| `src/ai/wander.ts` | `game-logic` | `getWanderTarget(pos, collisionMap, rng): Position \| null` — uses `getReachablePositions` |
+| `src/generation/fertility.ts` | `world-gen` | `getFertilityAt(worldSeed, x, y): number` — second noise layer |
+| `src/schema/loot-tables.ts` | `database` | `lootTables` and `lootTableEntries` Drizzle table definitions |
+
+### New Files in Game Server
+
+| File | What It Adds |
+|------|--------------|
+| `apps/game-server/src/game/ai.service.ts` | `@Interval(1000)` AI tick, broadcasts `entity:update` |
+| `apps/game-server/src/game/respawn.service.ts` | `@Interval(5000)` respawn sweep, broadcasts `entity:spawn` |
+
+### Modified Files
+
+| File | Change |
+|------|--------|
+| `apps/game-server/src/game/game.module.ts` | Register `AiService`, `RespawnService`; import `ScheduleModule.forRoot()` |
+| `apps/game-server/src/zones/zones.service.ts` | Add respawn queue (`MinHeap<RespawnEntry>`); add `queueRespawn()`, `drainDueRespawns()` methods |
+| `packages/shared-types/src/game/entity-registry.ts` | Migrate flat object to `EntityRegistryImpl` class pattern |
+| `packages/game-logic/src/interaction/interaction.ts` | Extend `canHarvest()` with tool range parameter; add tool-specific range constants |
+
+---
+
+*Stack research for: Entity System — Into the Void*
 *Researched: 2026-02-18*
-*Confidence: HIGH — All existing packages verified by direct file audit. All integration points verified in source files at specific line locations. Zero new package dependencies identified.*
+*Confidence: HIGH — All existing packages verified by direct file audit. One new package (@nestjs/schedule) identified and version-verified. All integration points traced to specific source files.*
