@@ -5,6 +5,15 @@ import { Server } from 'socket.io';
 import { ZonesService } from '../zones/zones.service';
 import { PlayerService } from './player.service';
 
+/**
+ * CRAI-09: Type-enforced whitelist for creature broadcasts.
+ * Only position is broadcast — no AI internal state (FSM state, wander target, aggro flag).
+ */
+interface PublicCreatureUpdate {
+  entityId: string;
+  changes: { position: { x: number; y: number; zoneId: string } };
+}
+
 const AI_TICK_INTERVAL_MS = 1000; // Creatures move at half player speed
 const AI_TICK_WARN_MS = 200; // Log warning if tick processing exceeds this threshold
 
@@ -112,7 +121,7 @@ export class AiService implements OnModuleInit {
     const collisions = chunk.collisions;
 
     // Collect all movements in a batch
-    const movedCreatures: Array<{ entityId: string; changes: { position: { x: number; y: number; zoneId: string } } }> = [];
+    const movedCreatures: PublicCreatureUpdate[] = [];
 
     // Process each creature through FSM
     for (const creature of creatures) {
