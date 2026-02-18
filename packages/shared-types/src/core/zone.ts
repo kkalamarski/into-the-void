@@ -3,6 +3,12 @@ import { PlayerPublic } from './player';
 import { BiomeType } from '../game/biome';
 
 /**
+ * Fertility zone type — determines spawn density modulation
+ * Barren = sparse spawns, Normal = standard density, Lush = dense spawns
+ */
+export type FertilityType = 'Barren' | 'Normal' | 'Lush';
+
+/**
  * Zone size in tiles
  */
 export const ZONE_SIZE = 64;

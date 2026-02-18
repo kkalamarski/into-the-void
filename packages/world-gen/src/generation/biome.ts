@@ -1,4 +1,4 @@
-import { BiomeType, ZONE_SIZE } from '@into-the-void/shared-types';
+import { BiomeType, FertilityType, ZONE_SIZE } from '@into-the-void/shared-types';
 import { SimplexNoise } from '../noise/simplex';
 
 /**
@@ -27,12 +27,15 @@ export class BiomeGenerator {
   private temperatureNoise: SimplexNoise;
   private moistureNoise: SimplexNoise;
   private elevationNoise: SimplexNoise;
+  private fertilityNoise: SimplexNoise;
   private params: BiomeParams;
+  private readonly FERTILITY_SCALE = 0.0012;
 
   constructor(worldSeed: string, params: Partial<BiomeParams> = {}) {
     this.temperatureNoise = new SimplexNoise(`${worldSeed}_temp`);
     this.moistureNoise = new SimplexNoise(`${worldSeed}_moisture`);
     this.elevationNoise = new SimplexNoise(`${worldSeed}_elevation`);
+    this.fertilityNoise = new SimplexNoise(`${worldSeed}_fertility`);
     this.params = { ...DEFAULT_BIOME_PARAMS, ...params };
   }
 
@@ -171,6 +174,24 @@ export class BiomeGenerator {
     const centerX = chunkX * chunkSize + chunkSize / 2;
     const centerY = chunkY * chunkSize + chunkSize / 2;
     return this.getBiome(centerX, centerY);
+  }
+
+  /**
+   * Get fertility type at world coordinates.
+   * Uses a 4th SimplexNoise layer seeded with '_fertility' suffix for
+   * deterministic, seed-reproducible results independent of other noise layers.
+   * Returns Barren (<0.33), Normal (0.33-0.66), or Lush (>0.66).
+   */
+  getFertilityAt(worldX: number, worldY: number): FertilityType {
+    const raw = this.fertilityNoise.fbm(
+      worldX * this.FERTILITY_SCALE,
+      worldY * this.FERTILITY_SCALE,
+      3 // 3 octaves for variation without tiny patches
+    );
+    const normalized = (raw + 1) / 2; // Map [-1, 1] to [0, 1]
+    if (normalized < 0.33) return 'Barren';
+    if (normalized < 0.66) return 'Normal';
+    return 'Lush';
   }
 }
 
