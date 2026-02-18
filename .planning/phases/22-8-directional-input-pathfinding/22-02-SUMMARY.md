@@ -94,6 +94,14 @@ None - plan executed exactly as written.
 - PathfindingController.getDirection already handles all 8 directions (verified in research)
 - Ready for Phase 22 completion or Phase 23 (camera work)
 
+## Self-Check: PASSED
+
+- `packages/game-logic/src/movement/pathfinding.ts` - FOUND
+- `.planning/phases/22-8-directional-input-pathfinding/22-02-SUMMARY.md` - FOUND
+- Commit `5ba2a9a` (Task 1) - FOUND
+- Commit `6d8c0b0` (Task 2) - FOUND
+- Commit `3f40c13` (docs) - FOUND
+
 ---
 *Phase: 22-8-directional-input-pathfinding*
 *Completed: 2026-02-17*

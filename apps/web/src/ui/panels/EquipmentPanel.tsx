@@ -1,25 +1,38 @@
 import React, { useEffect } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { useInventoryStore } from '../../store/inventoryStore';
+import { useStatsStore } from '../../store/statsStore';
 import { useGameStore } from '../../store/gameStore';
 import { gameSocket } from '../../network/socket';
 import { ItemRegistry } from '@into-the-void/items';
-import { RARITY_COLORS } from '../constants';
+import { RARITY_COLORS, STAT_DISPLAY_ORDER } from '../constants';
 import { ItemTooltip } from '../../components/ItemTooltip';
 import { useDraggablePanel } from '../../hooks/useDraggablePanel';
 import type { InventoryItem } from '@into-the-void/shared-types';
 import {
   GiSpaceSuit,
+  GiHearts,
   GiShield,
-  GiPoisonGas,
-  GiLightningFrequency,
-  GiRadarSweep,
-  GiJumpAcross,
+  GiSwordWound,
+  GiSpeedometer,
   GiBattery100,
-  GiEnergyArrow,
+  GiHealing,
+  GiRadarSweep,
+  GiMagicShield,
 } from 'react-icons/gi';
 import type { IconType } from 'react-icons';
 import './EquipmentPanel.css';
+
+const STAT_ICONS: Record<string, IconType> = {
+  durability: GiHearts,
+  toughness: GiShield,
+  power: GiSwordWound,
+  haste: GiSpeedometer,
+  vigor: GiBattery100,
+  recovery: GiHealing,
+  perception: GiRadarSweep,
+  resilience: GiMagicShield,
+};
 
 interface EquipSlotProps {
   slotId: string;
@@ -75,52 +88,31 @@ function EquipSlot({ slotId, label, item, disabled, onUnequip, size = 'normal' }
   );
 }
 
-interface StatBarProps {
+interface CharStatRowProps {
+  statKey: string;
   label: string;
-  value: number;
-  max: number;
-  Icon: IconType;
-  color: string;
+  base: number;
+  equipment: number;
+  total: number;
 }
 
-function StatBar({ label, value, max, Icon, color }: StatBarProps) {
-  const percent = Math.min((value / max) * 100, 100);
+function CharStatRow({ statKey, label, base, equipment, total }: CharStatRowProps) {
+  const Icon = STAT_ICONS[statKey] ?? GiHearts;
   return (
-    <div className="stat-bar">
-      <div className="stat-bar-header">
-        <Icon className="stat-bar-icon" style={{ color }} />
-        <span className="stat-bar-label">{label}</span>
-        <span className="stat-bar-value">{value}</span>
-      </div>
-      <div className="stat-bar-track">
-        <div
-          className="stat-bar-fill"
-          style={{ width: `${percent}%`, backgroundColor: color }}
-        />
-      </div>
-    </div>
-  );
-}
-
-interface StatRowProps {
-  label: string;
-  value: string;
-  Icon: IconType;
-  color?: string;
-}
-
-function StatRow({ label, value, Icon, color }: StatRowProps) {
-  return (
-    <div className="stat-row-compact">
-      <Icon className="stat-icon-small" style={{ color: color ?? 'var(--color-accent)' }} />
-      <span className="stat-label-compact">{label}</span>
-      <span className="stat-value-compact">{value}</span>
+    <div className="char-stat-row">
+      <Icon className="char-stat-icon" />
+      <span className="char-stat-label">{label}</span>
+      <span className="char-stat-total">{total}</span>
+      <span className="char-stat-breakdown">
+        {equipment !== 0 ? `(${base}+${equipment})` : ''}
+      </span>
     </div>
   );
 }
 
 export const EquipmentPanel: React.FC = () => {
   const { inventory } = useInventoryStore();
+  const { stats } = useStatsStore();
   const { toggleEquipment, player } = useGameStore();
   const { position, isDragging, handleMouseDown } = useDraggablePanel();
 
@@ -153,17 +145,6 @@ export const EquipmentPanel: React.FC = () => {
 
   const handleUnequip = (instanceId: string) => {
     gameSocket.emit('inventory:unequip', { instanceId });
-  };
-
-  const stats = inventory.stats ?? {
-    armor: 0,
-    speedMultiplier: 1.0,
-    hazardResistance: 0,
-    detectionRange: 0,
-    energyCapacity: 100,
-    rechargeRate: 1.0,
-    jumpHeight: 1.0,
-    bonuses: {},
   };
 
   return (
@@ -247,67 +228,23 @@ export const EquipmentPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Stats */}
+        {/* Right: Character Stats */}
         <div className="stats-column">
-          <div className="stats-section-title">Combat Stats</div>
-
-          <StatBar
-            label="Armor"
-            value={stats.armor}
-            max={100}
-            Icon={GiShield}
-            color="#4a9eff"
-          />
-
-          <StatBar
-            label="Hazard Resist"
-            value={stats.hazardResistance}
-            max={100}
-            Icon={GiPoisonGas}
-            color="#4aff4a"
-          />
-
-          <div className="stats-divider" />
-
-          <div className="stats-section-title">Performance</div>
-
-          <StatRow
-            label="Speed"
-            value={`${(stats.speedMultiplier * 100).toFixed(0)}%`}
-            Icon={GiLightningFrequency}
-            color="#ffcc00"
-          />
-          <StatRow
-            label="Detection"
-            value={`${stats.detectionRange}m`}
-            Icon={GiRadarSweep}
-            color="#00ccff"
-          />
-          <StatRow
-            label="Jump"
-            value={`${(stats.jumpHeight * 100).toFixed(0)}%`}
-            Icon={GiJumpAcross}
-            color="#ff9944"
-          />
-
-          <div className="stats-divider" />
-
-          <div className="stats-section-title">Energy</div>
-
-          <StatBar
-            label="Capacity"
-            value={stats.energyCapacity}
-            max={200}
-            Icon={GiBattery100}
-            color="#ffcc00"
-          />
-
-          <StatRow
-            label="Recharge"
-            value={`${(stats.rechargeRate * 100).toFixed(0)}%`}
-            Icon={GiEnergyArrow}
-            color="#ffcc00"
-          />
+          <div className="stats-section-title">Character Stats</div>
+          {stats ? (
+            STAT_DISPLAY_ORDER.map(({ key, label }) => (
+              <CharStatRow
+                key={key}
+                statKey={key}
+                label={label}
+                base={stats.base[key]}
+                equipment={stats.equipment[key]}
+                total={stats.total[key]}
+              />
+            ))
+          ) : (
+            <div className="stats-loading">Loading stats...</div>
+          )}
         </div>
       </div>
     </div>

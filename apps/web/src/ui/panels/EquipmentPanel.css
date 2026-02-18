@@ -282,3 +282,45 @@
   color: var(--color-text-primary);
   font-weight: 600;
 }
+
+/* Character stat row (8-stat system) */
+.char-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 12px;
+}
+
+.char-stat-icon {
+  font-size: 14px;
+  width: 18px;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.char-stat-label {
+  flex: 1;
+  color: var(--color-text-secondary);
+}
+
+.char-stat-total {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  min-width: 28px;
+  text-align: right;
+}
+
+.char-stat-breakdown {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  min-width: 50px;
+}
+
+.stats-loading {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  text-align: center;
+  padding: 20px 0;
+}

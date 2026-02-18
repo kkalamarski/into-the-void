@@ -201,9 +201,10 @@ export class WorldScene extends Phaser.Scene {
         }
       });
 
+      // P is alias for E (both toggle equipment+stats panel)
       this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P).on('down', () => {
         if (this.input.keyboard?.enabled) {
-          useGameStore.getState().toggleStats();
+          useGameStore.getState().toggleEquipment();
         }
       });
     }
