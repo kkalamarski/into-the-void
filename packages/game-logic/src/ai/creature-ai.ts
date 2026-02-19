@@ -4,6 +4,8 @@ import { chebyshevDistance } from '../movement/pathfinding';
 
 const FLEE_RADIUS = 5;
 const WANDER_CHANCE = 0.25;
+const AGGRO_RADIUS = 5;     // Tiles within which predator/maniac aggro
+const LEASH_DISTANCE = 10;  // Max tiles from spawn before returning
 
 /**
  * Result of a creature AI tick — pure data, no side effects
@@ -11,6 +13,12 @@ const WANDER_CHANCE = 0.25;
 export interface AiTickResult {
   /** null means the creature did not move this tick */
   newPosition: Position | null;
+  /** For predator/maniac: playerId to initiate combat with (aggro triggered) */
+  aggroTarget?: string;
+  /** For combat: whether to attack current target */
+  shouldAttack?: boolean;
+  /** For leash: whether creature should return to spawn */
+  shouldReturn?: boolean;
 }
 
 /**
@@ -30,9 +38,10 @@ export function tickCreatureAI(
     case 'herbivore':
       return tickHerbivore(creature, players, collisionMap);
     case 'omnivore':
+      return tickOmnivore(creature, players, collisionMap);
     case 'predator':
     case 'maniac':
-      return tickWander(creature, collisionMap);
+      return tickPredator(creature, players, collisionMap);
   }
 }
 
@@ -62,6 +71,135 @@ function tickHerbivore(
   }
 
   return tickWander(creature, collisionMap);
+}
+
+/**
+ * Omnivore behavior:
+ * - If provoked (player attacked it): behave like predator
+ * - If not provoked: just wander
+ */
+function tickOmnivore(
+  creature: Creature,
+  players: PlayerPublic[],
+  collisionMap: boolean[][],
+): AiTickResult {
+  // If provoked, behave like predator
+  if (creature.provoked) {
+    return tickPredator(creature, players, collisionMap);
+  }
+
+  // Not provoked - just wander
+  return tickWander(creature, collisionMap);
+}
+
+/**
+ * Predator/maniac behavior:
+ * - If has combatTarget: chase or attack
+ * - If no target: scan for nearby players to aggro
+ * - If too far from spawn: return to spawn
+ */
+function tickPredator(
+  creature: Creature,
+  players: PlayerPublic[],
+  collisionMap: boolean[][],
+): AiTickResult {
+  // Check leash distance first
+  if (creature.spawnPosition) {
+    const distFromSpawn = chebyshevDistance(
+      creature.position.x,
+      creature.position.y,
+      creature.spawnPosition.x,
+      creature.spawnPosition.y,
+    );
+
+    if (distFromSpawn >= LEASH_DISTANCE) {
+      // Too far from spawn - return
+      return moveToward(creature, creature.spawnPosition, collisionMap, true);
+    }
+  }
+
+  // If has combat target, chase them
+  if (creature.combatTarget) {
+    const target = players.find(p => p.id === creature.combatTarget);
+    if (target) {
+      const distToTarget = chebyshevDistance(
+        creature.position.x,
+        creature.position.y,
+        target.position.x,
+        target.position.y,
+      );
+
+      // Adjacent = attack
+      if (distToTarget <= 1) {
+        return { newPosition: null, shouldAttack: true };
+      }
+
+      // Chase
+      return moveToward(creature, target.position, collisionMap, false);
+    } else {
+      // Target left zone - will be cleared by AiService
+      return { newPosition: null, shouldReturn: true };
+    }
+  }
+
+  // No target - scan for players to aggro
+  const nearbyPlayers = players
+    .map((p) => ({
+      player: p,
+      dist: chebyshevDistance(
+        creature.position.x,
+        creature.position.y,
+        p.position.x,
+        p.position.y,
+      ),
+    }))
+    .filter(({ dist }) => dist <= AGGRO_RADIUS)
+    .sort((a, b) => a.dist - b.dist);
+
+  if (nearbyPlayers.length > 0) {
+    // Aggro on closest player
+    return { newPosition: null, aggroTarget: nearbyPlayers[0].player.id };
+  }
+
+  // No players nearby - wander
+  return tickWander(creature, collisionMap);
+}
+
+/**
+ * Move one step toward a target position.
+ * Returns shouldReturn: true if this is a return-to-spawn movement.
+ */
+function moveToward(
+  creature: Creature,
+  target: { x: number; y: number },
+  collisionMap: boolean[][],
+  isReturning: boolean,
+): AiTickResult {
+  const rawDx = target.x - creature.position.x;
+  const rawDy = target.y - creature.position.y;
+  const dx = rawDx === 0 ? 0 : rawDx > 0 ? 1 : -1;
+  const dy = rawDy === 0 ? 0 : rawDy > 0 ? 1 : -1;
+
+  // Try direct move first, then axis-aligned fallbacks
+  const attempts = [
+    { dx, dy },
+    { dx, dy: 0 },
+    { dx: 0, dy },
+  ];
+
+  for (const { dx: mdx, dy: mdy } of attempts) {
+    if (mdx === 0 && mdy === 0) continue;
+    const nx = creature.position.x + mdx;
+    const ny = creature.position.y + mdy;
+    if (nx >= 0 && nx < ZONE_SIZE && ny >= 0 && ny < ZONE_SIZE && !collisionMap[ny]?.[nx]) {
+      return {
+        newPosition: { ...creature.position, x: nx, y: ny },
+        shouldReturn: isReturning,
+      };
+    }
+  }
+
+  return { newPosition: null, shouldReturn: isReturning };
 }
 
 /**
