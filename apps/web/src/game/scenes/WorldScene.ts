@@ -98,6 +98,8 @@ export class WorldScene extends Phaser.Scene {
   private rightMouseDown = false;
   private lastClickedEntity: string | null = null;
   private targetHighlight: TargetHighlight | null = null;
+  // Portal tile detection: track last position where portal:use was emitted to prevent duplicates
+  private lastPortalEmitKey: string | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -503,6 +505,46 @@ export class WorldScene extends Phaser.Scene {
 
     // Emit combat:start to server
     gameSocket.emit('combat:start', { targetEntityId: entityId });
+  }
+
+  /**
+   * Check if the player is standing on a portal tile (TileId = 16) and emit portal:use.
+   * Called after each movement step completes (client prediction).
+   * Debounced by position key: once emitted for a given tile, won't re-emit until
+   * the player moves to a different tile (lastPortalEmitKey is cleared on non-portal tiles).
+   */
+  private checkPortalTile(position: Position): void {
+    const posKey = `${position.x},${position.y},${position.zoneId}`;
+
+    // Already emitted for this exact position — skip
+    if (this.lastPortalEmitKey === posKey) return;
+
+    // Look up tile ID at the player's position
+    let tileNumericId: number | undefined;
+
+    if (this.chunkManager) {
+      // Prefer currentTiles for the current zone (fast path)
+      if (position.zoneId === this.currentZoneId && this.currentTiles) {
+        tileNumericId = this.currentTiles[position.y]?.[position.x];
+      } else {
+        const chunk = this.chunkManager.getChunk(position.zoneId);
+        if (chunk?.data.tiles) {
+          tileNumericId = chunk.data.tiles[position.y]?.[position.x];
+        }
+      }
+    } else if (this.currentTiles) {
+      tileNumericId = this.currentTiles[position.y]?.[position.x];
+    }
+
+    // TileId.PORTAL = 16
+    if (tileNumericId === 16) {
+      this.lastPortalEmitKey = posKey;
+      gameSocket.emit('portal:use', {});
+    } else {
+      // Player moved off a portal tile — reset debounce so portal can be re-triggered
+      // if the player returns to the same portal position later
+      this.lastPortalEmitKey = null;
+    }
   }
 
   private generatePlaceholderWorld(): void {
@@ -1478,6 +1520,13 @@ export class WorldScene extends Phaser.Scene {
 
     // Check if a pending zone transition should commit now that position has updated
     this.checkPendingZoneTransition(position);
+
+    // Check if player landed on a portal tile (TileId.PORTAL = 16) — emit portal:use if so.
+    // Only check on new movement predictions (not server reconciliation) to avoid spam.
+    // checkPortalTile is debounced by position key so duplicate calls are safe.
+    if (!reconciling) {
+      this.checkPortalTile(position);
+    }
   }
 
   updateLocalPlayer(position: Position): void {
