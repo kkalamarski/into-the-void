@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 45 of 45 (Combat Log)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-02-19 — Phase 44 complete (target selection UI — highlight + frame)
+Plan: 01 complete
+Status: In progress
+Last activity: 2026-02-19 — Phase 45 Plan 01 complete (combat log panel)
 
 Progress: [██████░░░░] 67% (v1.10 milestone — 2/3 phases)
 
@@ -49,6 +49,7 @@ Progress: [██████░░░░] 67% (v1.10 milestone — 2/3 phases)
 | 43 | 02 | 3min | 3 | 3 |
 | 44 | 01 | 3min | 2 | 2 |
 | 44 | 02 | 1min | 2 | 3 |
+| 45 | 01 | 3min | 3 | 5 |
 
 ## Accumulated Context
 
@@ -65,6 +66,8 @@ Recent decisions affecting current work:
 - [44-01]: Isometric ellipse ring colored by behavior->rarity tier: herbivore=common, omnivore=rare, predator=epic, maniac=legendary
 - [44-01]: combatStore.subscribe bridges Zustand store and Phaser rendering for auto-target
 - [44-02]: TargetFrame uses perception gating (creature.level > perception * 3 → shows "???")
+- [Phase 45]: combatLogStore.visible synced from gameStore.showCombatLog via HUD useEffect — single source of truth in gameStore
+- [Phase 45]: HUD hooks moved before early return to comply with React Rules of Hooks
 
 ### v1.10 Combat UX Context
 
@@ -92,10 +95,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Phase 44 complete — target selection UI verified
+Stopped at: Completed 45-01-PLAN.md — combat log panel
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 45`
+**Next action:** `/gsd:plan-phase 45` (plan 02 if needed, or milestone complete)
 
 ---
-*Last updated: 2026-02-19 after Phase 44 execution complete*
+*Last updated: 2026-02-19 after Phase 45 Plan 01 execution complete*
