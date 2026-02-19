@@ -5,6 +5,7 @@ import { BIOME_DISPLAY_NAMES, BIOME_COLORS, BiomeType } from '@into-the-void/sha
 import { GiShield, GiLightningFrequency, GiPoisonGas, GiCrossedSwords } from 'react-icons/gi';
 import { useCombatStore } from '../../store/combatStore';
 import { ActionBar } from './ActionBar';
+import { TargetFrame } from './TargetFrame';
 import './HUD.css';
 
 export const HUD: React.FC = () => {
@@ -138,6 +139,7 @@ export const HUD: React.FC = () => {
           <span className="combat-indicator-text">In Combat</span>
         </div>
       )}
+      <TargetFrame />
       <div className="hud-minimap" aria-label="Minimap" />
     </div>
   );
