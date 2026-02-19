@@ -140,31 +140,36 @@
   pointer-events: none;
 }
 
-/* Biome Indicator */
+/* Biome Indicator - positioned above minimap */
 .biome-indicator {
+  position: absolute;
+  bottom: 210px; /* 20px minimap bottom + 180px minimap height + 10px gap */
+  right: 20px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 8px 12px;
+  justify-content: center;
+  gap: 10px;
+  width: 180px; /* Match minimap width */
+  padding: 10px 14px;
   background-color: var(--color-bg-secondary);
   border: 1px solid var(--color-bg-tertiary);
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .biome-dot {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .biome-name {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  text-align: center;
 }
 
 /* Equipment Stats Section */
@@ -193,4 +198,44 @@
 .stat-value {
   color: var(--color-text-primary);
   font-weight: 500;
+}
+
+/* Combat indicator */
+.combat-indicator {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(180, 30, 30, 0.85);
+  border: 2px solid var(--color-danger, #ff4444);
+  border-radius: 4px;
+  animation: combat-pulse 1.5s ease-in-out infinite;
+}
+
+.combat-indicator-icon {
+  width: 16px;
+  height: 16px;
+  color: #fff;
+}
+
+.combat-indicator-text {
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+@keyframes combat-pulse {
+  0%, 100% {
+    opacity: 1;
+    border-color: var(--color-danger, #ff4444);
+  }
+  50% {
+    opacity: 0.8;
+    border-color: rgba(255, 68, 68, 0.6);
+  }
 }
