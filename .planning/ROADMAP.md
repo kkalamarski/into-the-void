@@ -432,11 +432,12 @@ Plans:
   2. Dead player automatically respawns at their faction hub / safe point after a short delay (~3 seconds) — position is faction-specific
   3. Player retains all items and XP after death — inventory and stats are unchanged post-respawn
   4. Other players see the death (player disappears) and respawn (player reappears at hub) — multiplayer visibility maintained
-**Plans**: 2 plans in 2 waves
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 41-01-PLAN.md — Add player death detection in combat tick; emit player:death event; define faction respawn coordinates
-- [ ] 41-02-PLAN.md — Implement respawn logic in PlayerService; teleport to faction hub; emit player:respawn event
+- [x] 41-01-PLAN.md — Add player death detection in combat tick; emit player:death event; define faction respawn coordinates
+- [x] 41-02-PLAN.md — Implement respawn logic in PlayerService; teleport to faction hub; emit player:respawn event
+- [ ] 41-03-PLAN.md — Emit zone:state to respawning player so client loads correct zone tiles (gap closure)
 
 #### Phase 42: Combat Feedback and HUD
 
