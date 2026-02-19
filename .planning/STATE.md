@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 41 - Player Death and Respawn
-Plan: —
-Status: Ready for planning
-Last activity: 2026-02-19 — Phase 40 complete (3/3 plans, verified)
+Plan: 01 complete
+Status: In progress
+Last activity: 2026-02-19 — Phase 41 Plan 01 complete
 
 Progress: [█████░░░░░] 50% (v1.9 milestone — 2/4 phases complete)
 
@@ -49,6 +49,7 @@ Progress: [█████░░░░░] 50% (v1.9 milestone — 2/4 phases co
 | 40 | 01 | 2.5min | 3 | 3 |
 | 40 | 02 | 2.5min | 3 | 3 |
 | 40 | 03 | 3.3min | 3 | 2 |
+| 41 | 01 | 5min | 3 | 6 |
 
 ## Accumulated Context
 
@@ -92,6 +93,10 @@ Recent decisions affecting current work:
 - [Phase 40]: processCreatureCombatTick emits combat:damage to both player socket and zone — direct player notification plus zone broadcast
 - [Phase 40]: Returning state split into two sub-cases: active-combat leash exceeded and post-combat return — distinct handling for each
 - [Phase 40]: Zone change guard in creatureAttackTick stops creature combat sessions when player leaves zone
+- [41-01]: isDead stored as optional field on Player interface — falsy by default, no schema migration needed
+- [41-01]: player:death emitted to both player socket AND zone room — player notification plus zone broadcast
+- [41-01]: stopCombat() called on dead player's own session at death — prevents dead player from dealing damage
+- [41-01]: Faction respawn coords: verdant=zone_-2_0 (Canopy), helix=zone_2_0 (Ironhold), nexus+neutral=zone_0_2 (Meridian)
 
 ### v1.9 Combat System Context
 
@@ -124,10 +129,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed Phase 40 execution
+Stopped at: Completed Phase 41 Plan 01 execution
 Resume file: None
 
-**Next action:** Plan Phase 41 (Player Death and Respawn)
+**Next action:** Execute Phase 41 Plan 02 (Player Respawn)
 
 ---
 *Last updated: 2026-02-19 after Phase 40 complete*
