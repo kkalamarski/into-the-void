@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.9 Combat System — Phase 42 in progress, combat feedback (floating numbers + HUD indicator) nearly complete
+**Current focus:** v1.9 Combat System — MILESTONE COMPLETE
 
 ## Current Position
 
 Phase: 42 - Combat Feedback and HUD
-Plan: 02 complete
-Status: In Progress
-Last activity: 2026-02-19 — Phase 42 Plan 02 complete (In Combat HUD indicator)
+Plan: All 2 plans complete
+Status: Complete
+Last activity: 2026-02-19 — Phase 42 verified, v1.9 shipped
 
-Progress: [████████░░] 80% (v1.9 milestone — Phase 42 in progress)
+Progress: [██████████] 100% (v1.9 milestone — 4/4 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 136 (Phases 1-41 complete)
+- Total plans completed: 138 (Phases 1-42 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~5 hours
 
@@ -36,7 +36,7 @@ Progress: [████████░░] 80% (v1.9 milestone — Phase 42 in p
 | v1.6 | 25-29 | 16 | 2 days |
 | v1.7 | 30-32 | 9 | 1 day |
 | v1.8 | 33-38 | 22 | 2 days |
-| v1.9 | 39-42 | TBD | (in progress) |
+| v1.9 | 39-42 | 12 | 1 day |
 
 **Recent Trend:** Stable, averaging 2-4 plans per phase
 
@@ -123,10 +123,11 @@ Key existing code to build on:
 - **EntityService** (`apps/game-server/src/game/entity.service.ts`): Handles tool interaction, loot drops, entity death
 - **CharacterStats**: Power, Toughness, Haste wired for both player and creature damage
 
-Design notes for remaining phase:
-- Player death + 3-second respawn at faction hub is complete (Phase 41)
-- Phase 42 Plan 01 DONE: Floating damage numbers wired — EntityRenderer.createFloatingDamage (static), WorldScene.showDamageNumber, gameStore combat:damage handler
-- Phase 42 Plan 02 DONE: "In Combat" HUD indicator — useCombatStore tracks inCombat via combat:start/player:death/entity:update/combat:damage events; HUD shows red pulsing badge with crossed swords icon
+v1.9 complete — all combat features shipped:
+- Phase 39: Auto-attack combat loop with Power/Toughness/Haste stat integration
+- Phase 40: Creature aggro AI (predator/maniac auto-attack, omnivore retaliation, leash)
+- Phase 41: Player death + 3-second respawn at faction hub
+- Phase 42: Floating damage numbers + "In Combat" HUD indicator
 
 ### Pending Todos
 
@@ -145,10 +146,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed Phase 42 Plan 02 (In Combat HUD indicator)
+Stopped at: v1.9 Combat System milestone complete
 Resume file: None
 
-**Next action:** Execute Phase 42 Plan 03 (if any remaining plans) or complete Phase 42
+**Next action:** `/gsd:complete-milestone`
 
 ---
-*Last updated: 2026-02-19 after Phase 42 Plan 02 complete*
+*Last updated: 2026-02-19 after v1.9 milestone complete*

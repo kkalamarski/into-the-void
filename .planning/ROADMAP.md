@@ -11,7 +11,7 @@
 - ✅ **v1.6 Inventory & Items** - Phases 25-29 (shipped 2026-02-18)
 - ✅ **v1.7 Character Stats** - Phases 30-32 (shipped 2026-02-18)
 - ✅ **v1.8 Entity System** - Phases 33-38 (shipped 2026-02-19)
-- 🚧 **v1.9 Combat System** - Phases 39-42 (in progress)
+- ✅ **v1.9 Combat System** - Phases 39-42 (shipped 2026-02-19)
 
 ## Phases
 
@@ -452,8 +452,8 @@ Plans:
 **Plans**: 2 plans in 1 wave
 
 Plans:
-- [ ] 42-01-PLAN.md — Add FloatingDamage component to EntityRenderer; animate damage numbers on combat:damage event
-- [ ] 42-02-PLAN.md — Add combat state indicator to HUD; wire combatStore to track in-combat status
+- [x] 42-01-PLAN.md — Add FloatingDamage component to EntityRenderer; animate damage numbers on combat:damage event
+- [x] 42-02-PLAN.md — Add combat state indicator to HUD; wire combatStore to track in-combat status
 
 ## Progress
 
@@ -503,9 +503,9 @@ Phases execute in numeric order: 39 -> 40 -> 41 -> 42
 | 39. Combat Core and Damage Calculation | v1.9 | 4/4 | Complete | 2026-02-19 |
 | 40. Creature Combat AI and Aggro | v1.9 | 3/3 | Complete | 2026-02-19 |
 | 41. Player Death and Respawn | v1.9 | 3/3 | Complete | 2026-02-19 |
-| 42. Combat Feedback and HUD | v1.9 | 0/2 | Not started | - |
+| 42. Combat Feedback and HUD | v1.9 | 2/2 | Complete | 2026-02-19 |
 
-**Total:** 42 phases (41 complete, 1 remaining)
+**Total:** 42 phases (42 complete, 0 remaining)
 
 ---
-*Last updated: 2026-02-19 after Phase 42 planning*
+*Last updated: 2026-02-19 after Phase 42 complete — v1.9 shipped*
