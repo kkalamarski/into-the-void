@@ -27,6 +27,14 @@ interface CombatSession {
   lastAttackAt: number;
 }
 
+interface CreatureCombatSession {
+  creatureId: string;
+  targetPlayerId: string;
+  zoneId: string;
+  startedAt: number;
+  lastAttackAt: number;
+}
+
 interface StartCombatResult {
   success: boolean;
   error?: string;
@@ -48,6 +56,9 @@ interface CombatDamageResult {
 export class CombatService {
   /** Active combat sessions indexed by playerId */
   private sessions: Map<string, CombatSession> = new Map();
+
+  /** Active creature combat sessions indexed by creatureId */
+  private creatureSessions: Map<string, CreatureCombatSession> = new Map();
 
   private server: Server | null = null;
 
@@ -116,6 +127,11 @@ export class CombatService {
       return { success: false, error: `Creature level ${creature.level} exceeds your level by more than 5` };
     }
 
+    // Provoke omnivores when player attacks them (AGGR-02)
+    if (creature.behavior === 'omnivore') {
+      await this.provokeCreature(player.position.zoneId, targetEntityId);
+    }
+
     // Create combat session
     const session: CombatSession = {
       playerId: player.id,
@@ -159,6 +175,13 @@ export class CombatService {
    */
   handleDisconnect(playerId: string): void {
     this.stopCombat(playerId);
+
+    // Stop any creature combat sessions targeting this player
+    for (const [creatureId, session] of this.creatureSessions.entries()) {
+      if (session.targetPlayerId === playerId) {
+        this.creatureSessions.delete(creatureId);
+      }
+    }
   }
 
   /**
@@ -315,5 +338,164 @@ export class CombatService {
     }
 
     return results;
+  }
+
+  /**
+   * Start combat where a creature targets a player.
+   * Called by AiService when FSM returns aggroTarget.
+   */
+  async startCreatureCombat(
+    creatureId: string,
+    targetPlayerId: string,
+    zoneId: string,
+  ): Promise<boolean> {
+    // Don't start duplicate session
+    if (this.creatureSessions.has(creatureId)) {
+      return false;
+    }
+
+    const session: CreatureCombatSession = {
+      creatureId,
+      targetPlayerId,
+      zoneId,
+      startedAt: Date.now(),
+      lastAttackAt: 0, // Allows immediate first attack
+    };
+
+    this.creatureSessions.set(creatureId, session);
+
+    // Emit combat:start to the targeted player
+    const playerSocket = this.playerService.getSocketByPlayerId(targetPlayerId);
+    if (playerSocket && this.server) {
+      this.server.to(playerSocket).emit('combat:start', {
+        attackerId: creatureId,
+        defenderId: targetPlayerId,
+        timestamp: session.startedAt,
+      });
+    }
+
+    return true;
+  }
+
+  /**
+   * Stop creature combat (creature died, target left, leash exceeded).
+   */
+  stopCreatureCombat(creatureId: string): void {
+    this.creatureSessions.delete(creatureId);
+  }
+
+  /**
+   * Get creature combat session.
+   */
+  getCreatureSession(creatureId: string): CreatureCombatSession | undefined {
+    return this.creatureSessions.get(creatureId);
+  }
+
+  /**
+   * Execute one attack from creature to player.
+   * Returns damage result for broadcasting, or null if not time to attack yet.
+   */
+  async creatureAttackTick(
+    session: CreatureCombatSession,
+    creature: Creature,
+  ): Promise<CombatDamageResult | null> {
+    const player = this.playerService.getPlayerById(session.targetPlayerId);
+    if (!player) {
+      this.stopCreatureCombat(session.creatureId);
+      return null;
+    }
+
+    // Calculate creature stats for interval calculation
+    const emptyEquipment: EquipmentJson = { modules: [] };
+    const creatureStats = computeCharStats(creature.level, emptyEquipment, 'creature');
+    const attackInterval = calculateAttackInterval(creatureStats.haste);
+
+    // Check if enough time has passed since last attack
+    const now = Date.now();
+    if (now - session.lastAttackAt < attackInterval) {
+      return null;
+    }
+
+    // Check if player is still in range (adjacent)
+    const dist = Math.max(
+      Math.abs(creature.position.x - player.position.x),
+      Math.abs(creature.position.y - player.position.y),
+    );
+    if (dist > 1) {
+      // Player moved away — don't attack but don't stop combat (will chase)
+      return null;
+    }
+
+    // Get player stats for damage calculation
+    const inventory = this.inventoryService.getInventory(player.id);
+    const playerEquipment = inventory?.equipment as EquipmentJson ?? { modules: [] };
+    const playerStats = computeCharStats(player.level, playerEquipment, 'player');
+
+    // Calculate damage: Creature Power vs Player Toughness
+    const damageResult = calculateDamage({
+      baseDamage: 10,
+      attackerLevel: creature.level,
+      defenderLevel: player.level,
+      attackerStats: creatureStats,
+      defenderStats: playerStats,
+      weaponDamage: creature.level * 2, // Creature "weapon" scales with level
+      armorReduction: playerStats.toughness, // Player toughness as armor
+    });
+
+    // Apply damage to player
+    const newHealth = Math.max(0, player.health - damageResult.damage);
+    const killed = newHealth <= 0;
+
+    // Update player health via PlayerService
+    this.playerService.updateHealth(player.id, newHealth);
+
+    if (killed) {
+      // Player died — combat ends (death handling in Phase 41)
+      this.stopCreatureCombat(session.creatureId);
+    }
+
+    // Update last attack time
+    session.lastAttackAt = now;
+
+    return {
+      attackerId: session.creatureId,
+      defenderId: session.targetPlayerId,
+      damage: damageResult.damage,
+      defenderHealth: newHealth,
+      defenderMaxHealth: player.maxHealth,
+      critical: damageResult.critical,
+      killed,
+    };
+  }
+
+  /**
+   * Process all creature combat ticks for a zone.
+   * Called by AiService during zone tick.
+   */
+  async processCreatureCombatTick(
+    zoneId: string,
+    creatures: Creature[],
+  ): Promise<CombatDamageResult[]> {
+    const results: CombatDamageResult[] = [];
+
+    for (const creature of creatures) {
+      const session = this.creatureSessions.get(creature.id);
+      if (!session || session.zoneId !== zoneId) continue;
+
+      const result = await this.creatureAttackTick(session, creature);
+      if (result) {
+        results.push(result);
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Mark creature as provoked (for omnivore retaliation).
+   * Called when player attacks an omnivore.
+   */
+  async provokeCreature(zoneId: string, creatureId: string): Promise<void> {
+    await this.zonesService.updateEntity(zoneId, creatureId, { provoked: true } as Partial<Creature>);
   }
 }
