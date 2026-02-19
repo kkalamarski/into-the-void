@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.9 Combat System — Phase 39, Plan 01 complete
+**Current focus:** v1.9 Combat System — Phase 39, Plan 02 complete
 
 ## Current Position
 
 Phase: 39 - Combat Core and Damage Calculation
-Plan: 02
+Plan: 03
 Status: In progress
-Last activity: 2026-02-19 — 39-01 complete (CombatService + combat:start handler)
+Last activity: 2026-02-19 — 39-02 complete (auto-attack loop, combat:damage event, creature death loot/respawn)
 
-Progress: [█░░░░░░░░░] 10% (v1.9 milestone — Phase 39 Plan 01/4 complete)
+Progress: [██░░░░░░░░] 20% (v1.9 milestone — Phase 39 Plan 02/4 complete)
 
 ## Performance Metrics
 
@@ -45,6 +45,7 @@ Progress: [█░░░░░░░░░] 10% (v1.9 milestone — Phase 39 Plan
 | 38 | 03 | 2min | 3 | 2 |
 | 38 | 04 | 2min | 1 | 1 |
 | 39 | 01 | 3min | 3 | 4 |
+| 39 | 02 | 4min | 3 | 5 |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Recent decisions affecting current work:
 - [39-01]: CombatSession stored in-memory Map (not DB) — sessions do not survive server restart; acceptable for real-time combat loop where reconnect starts fresh
 - [39-01]: combat:start emit uses CombatState shape with empty participants[] — participants populated in Plan 02 when auto-attack loop runs
 - [39-01]: stopCombat() calls setInCombat(false) — single source of truth for inCombat flag; gateway disconnect path calls combatService first
+- [39-02]: attackTick() re-validates canInteract() on every tick — combat stops automatically if player moves out of range without explicit stop-combat event
+- [39-02]: combatResults emitted inline in runZoneTick() after creature AI batch — no separate combat emit loop or additional tick timer
+- [39-02]: CombatService.setServer() wired in GameGateway.afterInit() alongside AiService and ZonesService — consistent server-reference injection pattern
 
 ### v1.9 Combat System Context
 
@@ -108,10 +112,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 39-01-PLAN.md
+Stopped at: Completed 39-02-PLAN.md
 Resume file: None
 
-**Next action:** Execute 39-02-PLAN.md (auto-attack loop)
+**Next action:** Execute 39-03-PLAN.md (creature aggro FSM)
 
 ---
-*Last updated: 2026-02-19 after 39-01 complete*
+*Last updated: 2026-02-19 after 39-02 complete*
