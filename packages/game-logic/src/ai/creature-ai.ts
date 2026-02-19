@@ -112,8 +112,19 @@ function tickPredator(
       creature.spawnPosition.y,
     );
 
-    if (distFromSpawn >= LEASH_DISTANCE) {
-      // Too far from spawn - return
+    // If at spawn and no target, just wander
+    if (distFromSpawn <= 1 && !creature.combatTarget) {
+      return tickWander(creature, collisionMap);
+    }
+
+    // If has target, check leash
+    if (creature.combatTarget && distFromSpawn >= LEASH_DISTANCE) {
+      // Too far from spawn - return (combat will be stopped by AiService)
+      return moveToward(creature, creature.spawnPosition, collisionMap, true);
+    }
+
+    // If no target but far from spawn (was returning), continue returning
+    if (!creature.combatTarget && distFromSpawn > 1) {
       return moveToward(creature, creature.spawnPosition, collisionMap, true);
     }
   }
@@ -137,7 +148,7 @@ function tickPredator(
       // Chase
       return moveToward(creature, target.position, collisionMap, false);
     } else {
-      // Target left zone - will be cleared by AiService
+      // Target left zone - signal to clear target and return
       return { newPosition: null, shouldReturn: true };
     }
   }
