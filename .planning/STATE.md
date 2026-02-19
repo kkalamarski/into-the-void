@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 44 of 45 (Target Selection UI)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-02-19 — Phase 43 complete (click-to-attack + aggro bug fix)
+Plan: 02 complete
+Status: In progress
+Last activity: 2026-02-19 — Phase 44 Plan 02 complete (TargetFrame HUD component)
 
 Progress: [███░░░░░░░] 33% (v1.10 milestone — 1/3 phases)
 
@@ -50,6 +50,7 @@ Progress: [███░░░░░░░] 33% (v1.10 milestone — 1/3 phases)
 | 42 | 02 | 3min | 3 | 5 |
 | 43 | 01 | 2min | 3 | 2 |
 | 43 | 02 | 3min | 3 | 3 |
+| 44 | 02 | 1min | 2 | 3 |
 
 ## Accumulated Context
 
@@ -66,10 +67,11 @@ Recent decisions affecting current work:
 
 ### v1.10 Combat UX Context
 
-Phase 43 complete. Key existing code for Phase 44+:
+Phase 43 complete. Phase 44 Plans 01-02 complete. Key existing code:
 - **EntityRenderer** (`apps/web/src/game/rendering/EntityRenderer.ts`): Interactive sprites with entityId/entityType on containers — target highlight goes here
-- **WorldScene** (`apps/web/src/game/scenes/WorldScene.ts`): gameobjectdown handler + handleEntityClick() — tracks current target
-- **combatStore** (`apps/web/src/store/combatStore.ts`): Tracks in-combat state, opponent, combat:start/stop events
+- **WorldScene** (`apps/web/src/game/scenes/WorldScene.ts`): gameobjectdown handler + handleEntityClick() — tracks current target; TargetHighlight class renders pulsing ring
+- **combatStore** (`apps/web/src/store/combatStore.ts`): Tracks in-combat state, targetEntityId, combat:start/stop events
+- **TargetFrame** (`apps/web/src/ui/hud/TargetFrame.tsx`): Top-center HUD showing creature name (behavior-colored), health bar, level badge, perception gating, damage flash
 - **CombatService** (`apps/game-server/src/game/combat.service.ts`): Session tracking, startCombat(), stopCombat()
 - **HUD** (`apps/web/src/ui/hud/HUD.tsx`): React HUD — combat log panel goes here (Phase 45)
 
@@ -90,10 +92,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Phase 43 complete — click-to-attack and aggro bug fix verified
+Stopped at: Completed 44-02-PLAN.md — TargetFrame HUD component integrated
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 44`
+**Next action:** Continue Phase 44 (Plan 03 if any, or plan Phase 45)
 
 ---
 *Last updated: 2026-02-19 after Phase 43 execution complete*
