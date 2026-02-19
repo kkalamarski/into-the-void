@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ZONE_SIZE, MOVE_DELAY_MS, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure } from '@into-the-void/shared-types';
 import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
+import { ItemRegistry } from '@into-the-void/items';
 import { TileRenderer } from '../rendering/TileRenderer';
 import { EntityRenderer } from '../rendering/EntityRenderer';
 import { ChunkManager } from '../rendering/ChunkManager';
@@ -14,6 +15,7 @@ import { IsometricTransform } from '../utils/IsometricTransform';
 import { DepthSorter } from '../rendering/DepthSorter';
 import { useGameStore } from '../../store/gameStore';
 import { useEntityStore } from '../../store/entityStore';
+import { useInventoryStore } from '../../store/inventoryStore';
 import { gameSocket } from '../../network/socket';
 
 export const ISO_TILE_WIDTH = 256;
@@ -91,6 +93,7 @@ export class WorldScene extends Phaser.Scene {
   private tileInfoPopup: Phaser.GameObjects.Container | null = null;
   private leftMouseDown = false;
   private rightMouseDown = false;
+  private lastClickedEntity: string | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -237,6 +240,12 @@ export class WorldScene extends Phaser.Scene {
 
     // Click-to-move handler
     this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      // Skip pathfinding if we clicked an entity (handled by gameobjectdown)
+      if (this.lastClickedEntity) {
+        this.lastClickedEntity = null;
+        return;
+      }
+
       // Only handle left click for movement
       if (pointer.rightButtonDown()) return;
 
@@ -284,6 +293,27 @@ export class WorldScene extends Phaser.Scene {
 
     // Prevent context menu on right click
     this.input.mouse?.disableContextMenu();
+
+    // Entity click handler for click-to-attack (CATK-01, CATK-02, CATK-04)
+    this.input.on('gameobjectdown', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject) => {
+      // Only process left-click
+      if (!pointer.leftButtonDown()) return;
+
+      // Check if clicked object's parent container has entity data
+      const container = gameObject.parentContainer;
+      if (!container) return;
+
+      const entityId = container.getData('entityId') as string | undefined;
+      const entityType = container.getData('entityType') as string | undefined;
+
+      if (!entityId || entityType !== 'creature') return;
+
+      // Track that we clicked an entity to suppress pathfinding
+      this.lastClickedEntity = entityId;
+
+      // Attempt to start combat with this creature
+      this.handleEntityClick(entityId);
+    });
   }
 
   /**
@@ -380,6 +410,51 @@ export class WorldScene extends Phaser.Scene {
       this.tileInfoPopup.destroy();
       this.tileInfoPopup = null;
     }
+  }
+
+  /**
+   * Handle click on entity creature — attempt to start combat.
+   * Implements CATK-01 (initiate combat on click) and CATK-02 (range pre-check).
+   */
+  private handleEntityClick(entityId: string): void {
+    // Get player's equipped tool from inventory store
+    const inventoryStore = useInventoryStore.getState();
+    const tool = inventoryStore.inventory?.equipment.tool;
+
+    if (!tool) {
+      // No tool equipped — silently ignore per CATK-02
+      return;
+    }
+
+    const toolDef = ItemRegistry.get(tool.itemId);
+    if (!toolDef || toolDef.toolType !== 'combat') {
+      // Not a combat tool — silently ignore per requirements
+      return;
+    }
+
+    // Get tool range
+    const toolRange = toolDef.range ?? 1;
+
+    // Get entity position from entityStore
+    const entity = useEntityStore.getState().entities.get(entityId);
+    if (!entity || entity.type !== 'creature') return;
+
+    // Get player position from gameStore
+    const player = useGameStore.getState().player;
+    if (!player) return;
+
+    // Check range using Chebyshev distance (matches server logic)
+    const dx = Math.abs(entity.position.x - player.position.x);
+    const dy = Math.abs(entity.position.y - player.position.y);
+    const distance = Math.max(dx, dy);
+
+    if (distance > toolRange) {
+      // Out of range — silently ignore per CATK-02
+      return;
+    }
+
+    // Emit combat:start to server
+    gameSocket.emit('combat:start', { targetEntityId: entityId });
   }
 
   private generatePlaceholderWorld(): void {
