@@ -487,6 +487,10 @@ export class WorldScene extends Phaser.Scene {
   private handleInput(time: number): void {
     if (!this.localPlayer || !this.movementController || time - this.lastMoveTime < this.moveDelay) return;
 
+    // Can't move while dead
+    const player = useGameStore.getState().player;
+    if (player?.isDead) return;
+
     // Check if any movement key is pressed
     const anyWasdDown = this.wasd && (
       this.wasd.W.isDown || this.wasd.A.isDown || this.wasd.S.isDown || this.wasd.D.isDown
@@ -1361,6 +1365,26 @@ export class WorldScene extends Phaser.Scene {
       default:
         return 0x7b68ee;
     }
+  }
+
+  /**
+   * Handle local player death - disable movement controls.
+   */
+  handlePlayerDeath(): void {
+    // Cancel any active movement
+    this.movementController?.clearPendingInputs();
+    this.pathfindingController?.cancelPath();
+    // Could add visual feedback here (grayscale, overlay, etc.) in future
+  }
+
+  /**
+   * Handle local player respawn - re-enable movement and update position.
+   */
+  handlePlayerRespawn(position: Position): void {
+    // Update local player position
+    this.updateLocalPlayer(position);
+    // Trigger zone load if zone changed (zone:state will follow from server)
+    // The zone:state handler will load the new zone data
   }
 
   getMovementController(): MovementController | null {

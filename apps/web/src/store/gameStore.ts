@@ -295,6 +295,81 @@ gameSocket.on('player:left', ({ playerId }: { playerId: string }) => {
   }
 });
 
+// Handle player death
+gameSocket.on('player:death', ({ playerId, killerId, position }: { playerId: string; killerId: string; position: Position }) => {
+  const currentPlayer = useGameStore.getState().player;
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+
+  if (currentPlayer && playerId === currentPlayer.id) {
+    // Local player died
+    useGameStore.getState().setPlayer({
+      ...currentPlayer,
+      isDead: true,
+      health: 0,
+    });
+    // Show death message
+    const chatMessage: ChatMessage = {
+      id: Date.now().toString(),
+      senderId: 'system',
+      senderName: 'System',
+      message: 'You have been killed. Respawning...',
+      channel: 'system',
+      timestamp: Date.now(),
+    };
+    useGameStore.getState().addChatMessage(chatMessage);
+    // Disable movement in WorldScene
+    if (worldScene) {
+      worldScene.handlePlayerDeath();
+    }
+  } else if (worldScene) {
+    // Another player died - remove their sprite
+    worldScene.removePlayer(playerId);
+  }
+});
+
+// Handle player respawn
+gameSocket.on('player:respawn', ({ playerId, position }: { playerId: string; position: Position }) => {
+  const currentPlayer = useGameStore.getState().player;
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+
+  if (currentPlayer && playerId === currentPlayer.id) {
+    // Local player respawned
+    useGameStore.getState().setPlayer({
+      ...currentPlayer,
+      isDead: false,
+      health: currentPlayer.maxHealth,
+      position,
+    });
+    // Show respawn message
+    const chatMessage: ChatMessage = {
+      id: Date.now().toString(),
+      senderId: 'system',
+      senderName: 'System',
+      message: 'You have respawned at your faction hub.',
+      channel: 'system',
+      timestamp: Date.now(),
+    };
+    useGameStore.getState().addChatMessage(chatMessage);
+    // Re-enable movement and update position
+    if (worldScene) {
+      worldScene.handlePlayerRespawn(position);
+    }
+  } else if (worldScene) {
+    // Another player respawned - add them at new position
+    // Note: Their full PlayerPublic will come via player:joined if they changed zones
+    worldScene.addPlayer({
+      id: playerId,
+      name: 'Player', // Will be updated by zone:state
+      faction: 'neutral',
+      position,
+      level: 1,
+      inCombat: false,
+    });
+  }
+});
+
 // Handle server errors (e.g., level-gated interaction rejection)
 gameSocket.on('error', ({ code, message }: { code: string; message: string }) => {
   const chatMessage: ChatMessage = {
