@@ -432,7 +432,7 @@ Plans:
   2. Dead player automatically respawns at their faction hub / safe point after a short delay (~3 seconds) — position is faction-specific
   3. Player retains all items and XP after death — inventory and stats are unchanged post-respawn
   4. Other players see the death (player disappears) and respawn (player reappears at hub) — multiplayer visibility maintained
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
 - [ ] 41-01-PLAN.md — Add player death detection in combat tick; emit player:death event; define faction respawn coordinates
@@ -501,10 +501,10 @@ Phases execute in numeric order: 39 -> 40 -> 41 -> 42
 | 38. Perception Gating and Client Polish | v1.8 | 4/4 | Complete | 2026-02-19 |
 | 39. Combat Core and Damage Calculation | v1.9 | 4/4 | Complete | 2026-02-19 |
 | 40. Creature Combat AI and Aggro | v1.9 | 3/3 | Complete | 2026-02-19 |
-| 41. Player Death and Respawn | v1.9 | 0/2 | Not started | - |
+| 41. Player Death and Respawn | v1.9 | 0/2 | Planned | - |
 | 42. Combat Feedback and HUD | v1.9 | 0/2 | Not started | - |
 
 **Total:** 42 phases (40 complete, 2 remaining)
 
 ---
-*Last updated: 2026-02-19 after Phase 40 complete*
+*Last updated: 2026-02-19 after Phase 41 planning*
