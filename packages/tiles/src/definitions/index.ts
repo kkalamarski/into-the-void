@@ -9,6 +9,7 @@ import { ICE_FLOOR, ICE_WALL } from './ice-tiles';
 import { VOLCANIC_FLOOR, LAVA } from './volcanic-tiles';
 import { FUNGAL_FLOOR, FUNGAL_GROWTH } from './fungal-tiles';
 import { CRATER_FLOOR, CRATER_DEBRIS } from './crater-tiles';
+import { PORTAL } from './portal-tile';
 
 /**
  * All tile definitions - register these with TileRegistry
@@ -38,6 +39,8 @@ export const ALL_TILES: readonly TileDefinition[] = [
   // Starfall Crater
   CRATER_FLOOR,
   CRATER_DEBRIS,
+  // Portal Structure
+  PORTAL,
 ];
 
 /**
@@ -60,6 +63,7 @@ export const TILE_IDS = {
   FUNGAL_GROWTH: 'fungal_growth',
   CRATER_FLOOR: 'crater_floor',
   CRATER_DEBRIS: 'crater_debris',
+  PORTAL: 'portal',
 } as const;
 
 // Re-export individual tiles for direct imports
@@ -80,4 +84,5 @@ export {
   FUNGAL_GROWTH,
   CRATER_FLOOR,
   CRATER_DEBRIS,
+  PORTAL,
 };
