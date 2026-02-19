@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.9 Combat System — Phase 40 complete, Phase 41 ready
+**Current focus:** v1.9 Combat System — Phase 41 Plan 02 complete, full death-respawn cycle wired
 
 ## Current Position
 
 Phase: 41 - Player Death and Respawn
-Plan: 01 complete
+Plan: 02 complete
 Status: In progress
-Last activity: 2026-02-19 — Phase 41 Plan 01 complete
+Last activity: 2026-02-19 — Phase 41 Plan 02 complete
 
 Progress: [█████░░░░░] 50% (v1.9 milestone — 2/4 phases complete)
 
@@ -50,6 +50,7 @@ Progress: [█████░░░░░] 50% (v1.9 milestone — 2/4 phases co
 | 40 | 02 | 2.5min | 3 | 3 |
 | 40 | 03 | 3.3min | 3 | 2 |
 | 41 | 01 | 5min | 3 | 6 |
+| 41 | 02 | 6min | 3 | 5 |
 
 ## Accumulated Context
 
@@ -97,6 +98,10 @@ Recent decisions affecting current work:
 - [41-01]: player:death emitted to both player socket AND zone room — player notification plus zone broadcast
 - [41-01]: stopCombat() called on dead player's own session at death — prevents dead player from dealing damage
 - [41-01]: Faction respawn coords: verdant=zone_-2_0 (Canopy), helix=zone_2_0 (Ironhold), nexus+neutral=zone_0_2 (Meridian)
+- [41-02]: scheduleRespawn clears existing timer before setting new one — prevents double-respawn if called twice for same player
+- [41-02]: handleDisconnect clears pending respawn timer — dead-while-disconnecting players don't respawn into void
+- [41-02]: respawnPlayer emits player:left to old zone only when zone differs — avoids spurious left event on same-zone respawn
+- [41-02]: handlePlayerRespawn calls updateLocalPlayer() which handles missing-sprite edge case (re-creates if destroyed)
 
 ### v1.9 Combat System Context
 
@@ -108,7 +113,7 @@ Key existing code to build on:
 - **CharacterStats**: Power, Toughness, Haste wired for both player and creature damage
 
 Design notes for remaining phases:
-- Player death respawn uses faction hub coordinates (need to define per faction)
+- Player death + 3-second respawn at faction hub is complete (Phase 41 Plans 01+02)
 - Damage numbers are client-side floating text — server emits `combat:damage` event
 - "In Combat" indicator for HUD when player is in active combat
 
@@ -129,10 +134,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed Phase 41 Plan 01 execution
+Stopped at: Completed Phase 41 Plan 02 execution
 Resume file: None
 
-**Next action:** Execute Phase 41 Plan 02 (Player Respawn)
+**Next action:** Execute Phase 41 Plan 03 (if any) or proceed to next phase
 
 ---
 *Last updated: 2026-02-19 after Phase 40 complete*
