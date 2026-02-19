@@ -573,12 +573,12 @@ Plans:
   2. Each hub contains at least one NPC of each of the 5 types (Trader, Guard, Faction Rep, Ambient, Service) — they appear at fixed tile positions within the hub
   3. NPCs have a visible representation in the Phaser canvas — either a sprite or a distinct colored placeholder tile with a nameplate
   4. Clicking an NPC does not initiate combat — the server rejects any combat:start event targeting an NPC, and the NPC cannot be targeted by combat tools
-**Plans**: TBD
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 48-01: NpcDefinition types and NpcRegistry in packages/npcs
-- [ ] 48-02: Define NPC instances for all 4 faction hubs (5 types each)
-- [ ] 48-03: NPC rendering in hub zones (sprite placeholder + nameplate)
+- [ ] 48-01-PLAN.md — Create @into-the-void/npcs package with NpcDefinition types and NpcRegistry singleton
+- [ ] 48-02-PLAN.md — Define 20 NPCs for all 4 faction hubs (5 types each) with spawn positions
+- [ ] 48-03-PLAN.md — NPC spawning in hub zones, rendering with nameplates, combat targeting rejection
 
 #### Phase 49: NPC Interaction Window
 
