@@ -1,10 +1,22 @@
 import { Injectable } from '@nestjs/common';
+import { Server } from 'socket.io';
 import { PlayerService } from './player.service';
 import { ZonesService } from '../zones/zones.service';
 import { InventoryService } from './inventory.service';
-import { Creature } from '@into-the-void/shared-types';
-import { canInteract, canInteractLevel } from '@into-the-void/game-logic';
+import { EntityService } from './entity.service';
+import { Creature, ItemEntity } from '@into-the-void/shared-types';
+import {
+  canInteract,
+  canInteractLevel,
+  calculateDamage,
+  computeCharStats,
+  rollLootTable,
+  getCreatureLoot,
+} from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
+import { EntityRegistry } from '@into-the-void/entities';
+import type { CreatureDefinition } from '@into-the-void/entities';
+import type { EquipmentJson } from '@into-the-void/database';
 
 interface CombatSession {
   playerId: string;
@@ -19,16 +31,38 @@ interface StartCombatResult {
   session?: CombatSession;
 }
 
+interface CombatDamageResult {
+  attackerId: string;
+  defenderId: string;
+  damage: number;
+  defenderHealth: number;
+  defenderMaxHealth: number;
+  critical: boolean;
+  killed: boolean;
+  groundItems?: ItemEntity[];
+}
+
 @Injectable()
 export class CombatService {
   /** Active combat sessions indexed by playerId */
   private sessions: Map<string, CombatSession> = new Map();
 
+  private server: Server | null = null;
+
   constructor(
     private readonly playerService: PlayerService,
     private readonly zonesService: ZonesService,
     private readonly inventoryService: InventoryService,
+    private readonly entityService: EntityService,
   ) {}
+
+  /**
+   * Set the Socket.IO server reference.
+   * Called by GameGateway.afterInit().
+   */
+  setServer(server: Server): void {
+    this.server = server;
+  }
 
   /**
    * Start combat between a player and a creature.
@@ -122,5 +156,149 @@ export class CombatService {
    */
   handleDisconnect(playerId: string): void {
     this.stopCombat(playerId);
+  }
+
+  /**
+   * Handle creature death: spawn loot and schedule respawn.
+   * Mirrors the logic in EntityService.handleAttack() for consistency.
+   */
+  private async handleCreatureDeath(
+    creature: Creature,
+    zoneId: string,
+  ): Promise<ItemEntity[]> {
+    const def = EntityRegistry.get(creature.speciesId) as CreatureDefinition | undefined;
+    if (!def) return [];
+
+    // Get loot from creature's loot table
+    const lootEntries = getCreatureLoot(def.lootTableId);
+    const loot = rollLootTable(lootEntries);
+
+    // Spawn ground items using EntityService
+    const groundItems = await this.entityService.spawnGroundItemsForCombat(
+      loot,
+      creature.position.x,
+      creature.position.y,
+      creature.position.zoneId,
+    );
+
+    // Schedule respawn with +/-25% variance (RESP-02)
+    const variance = def.respawnSeconds * 0.25;
+    const offset = (Math.random() * 2 - 1) * variance;
+    const respawnSeconds = Math.round(def.respawnSeconds + offset);
+    await this.zonesService.recordEntityKill(creature.id, zoneId, respawnSeconds);
+
+    return groundItems;
+  }
+
+  /**
+   * Execute one attack from player to target creature.
+   * Returns damage result for broadcasting.
+   */
+  async attackTick(session: CombatSession): Promise<CombatDamageResult | null> {
+    const player = this.playerService.getPlayerById(session.playerId);
+    if (!player) {
+      this.stopCombat(session.playerId);
+      return null;
+    }
+
+    // Get target creature
+    const entity = await this.zonesService.getEntity(session.zoneId, session.targetId);
+    if (!entity || entity.type !== 'creature') {
+      this.stopCombat(session.playerId);
+      return null;
+    }
+
+    const creature = entity as Creature;
+    if (!creature.active || creature.health <= 0) {
+      this.stopCombat(session.playerId);
+      return null;
+    }
+
+    // Validate range (player may have moved)
+    const inventory = this.inventoryService.getInventory(player.id);
+    if (!inventory) {
+      this.stopCombat(session.playerId);
+      return null;
+    }
+
+    const tool = inventory.equipment.tool;
+    const toolDef = tool ? ItemRegistry.get(tool.itemId) : null;
+    const toolRange = toolDef?.range ?? 1;
+
+    const rangeCheck = canInteract(player, entity, toolRange);
+    if (!rangeCheck.canInteract) {
+      // Player moved out of range — stop combat
+      this.stopCombat(session.playerId);
+      return null;
+    }
+
+    // Calculate player stats
+    const playerStats = computeCharStats(player.level, inventory.equipment as EquipmentJson, 'player');
+
+    // Calculate creature stats from definition using creature scaling
+    const creatureLevel = creature.level;
+    const emptyEquipment: EquipmentJson = { modules: [] };
+    const creatureStats = computeCharStats(creatureLevel, emptyEquipment, 'creature');
+
+    // Calculate damage: Power vs Toughness
+    const damageResult = calculateDamage({
+      baseDamage: 10,
+      attackerLevel: player.level,
+      defenderLevel: creatureLevel,
+      attackerStats: playerStats,
+      defenderStats: creatureStats,
+      weaponDamage: toolDef?.ilvl ?? 0,
+      armorReduction: 0, // Creatures don't have armor items
+    });
+
+    // Apply damage to creature
+    creature.health = Math.max(0, creature.health - damageResult.damage);
+    const killed = creature.health <= 0;
+
+    let groundItems: ItemEntity[] = [];
+
+    if (killed) {
+      // Handle loot drop and respawn scheduling
+      groundItems = await this.handleCreatureDeath(creature, session.zoneId);
+      this.stopCombat(session.playerId);
+    }
+
+    // Update entity in zone
+    await this.zonesService.updateEntity(session.zoneId, session.targetId, {
+      health: creature.health,
+      active: !killed,
+    });
+
+    return {
+      attackerId: player.id,
+      defenderId: session.targetId,
+      damage: damageResult.damage,
+      defenderHealth: creature.health,
+      defenderMaxHealth: creature.maxHealth,
+      critical: damageResult.critical,
+      killed,
+      groundItems: groundItems.length > 0 ? groundItems : undefined,
+    };
+  }
+
+  /**
+   * Process all combat ticks for a zone.
+   * Called by AiService during zone tick.
+   * Returns damage events to broadcast.
+   */
+  async processCombatTick(zoneId: string): Promise<CombatDamageResult[]> {
+    const results: CombatDamageResult[] = [];
+
+    // Get all sessions in this zone
+    const zoneSessions = this.getAllSessions().filter(s => s.zoneId === zoneId);
+
+    for (const session of zoneSessions) {
+      const result = await this.attackTick(session);
+      if (result) {
+        results.push(result);
+      }
+    }
+
+    return results;
   }
 }

@@ -270,6 +270,19 @@ export class EntityService {
     };
   }
 
+  /**
+   * Public wrapper for spawning ground items from combat kills.
+   * Called by CombatService when a creature dies via auto-attack.
+   */
+  async spawnGroundItemsForCombat(
+    loot: { instanceId: string; itemId: string; quantity: number }[],
+    x: number,
+    y: number,
+    zoneId: string,
+  ): Promise<ItemEntity[]> {
+    return this.spawnGroundItems(loot, x, y, zoneId);
+  }
+
   private async spawnGroundItems(
     loot: { instanceId: string; itemId: string; quantity: number }[],
     x: number,
