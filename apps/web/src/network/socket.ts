@@ -74,6 +74,7 @@ class GameSocket {
       'entity:spawn',
       'entity:despawn',
       'entity:update',
+      'entity:batch',
       'player:joined',
       'player:left',
       'player:moved',
