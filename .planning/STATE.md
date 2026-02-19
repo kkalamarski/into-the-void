@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.9 Combat System — Phase 40 Plan 03 complete, Plan 04 next (if exists)
+**Current focus:** v1.9 Combat System — Phase 40 complete, Phase 41 ready
 
 ## Current Position
 
-Phase: 40 - Creature Combat AI and Aggro
-Plan: 03 complete
-Status: In progress (Plan 04 next if exists)
-Last activity: 2026-02-19 — Phase 40 Plan 03 complete (Leash return-to-spawn behavior and combat end conditions)
+Phase: 41 - Player Death and Respawn
+Plan: —
+Status: Ready for planning
+Last activity: 2026-02-19 — Phase 40 complete (3/3 plans, verified)
 
-Progress: [██░░░░░░░░] 25% (v1.9 milestone — 1/4 phases complete)
+Progress: [█████░░░░░] 50% (v1.9 milestone — 2/4 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 130 (Phases 1-39 complete)
+- Total plans completed: 133 (Phases 1-40 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~5 hours
 
@@ -42,8 +42,6 @@ Progress: [██░░░░░░░░] 25% (v1.9 milestone — 1/4 phases co
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
-| 38 | 03 | 2min | 3 | 2 |
-| 38 | 04 | 2min | 1 | 1 |
 | 39 | 01 | 3min | 3 | 4 |
 | 39 | 02 | 4min | 3 | 5 |
 | 39 | 03 | 4min | 3 | 3 |
@@ -98,19 +96,16 @@ Recent decisions affecting current work:
 ### v1.9 Combat System Context
 
 Key existing code to build on:
-- **CombatService** (`apps/game-server/src/game/combat.service.ts`): Session tracking, startCombat() with full validation chain, exported for AiService
-- **AiService** (`apps/game-server/src/game/ai.service.ts`): 1-second tick loop with self-rescheduling setTimeout, scoped to active zones
-- **tickCreatureAI** (`packages/game-logic/src/ai/creature-ai.ts`): Extended FSM — predator/maniac now aggro, chase, attack, leash; omnivore provoked-retaliation; herbivore flee unchanged
+- **CombatService** (`apps/game-server/src/game/combat.service.ts`): Full creature and player combat — session tracking, aggro, attack ticks, damage calculation
+- **AiService** (`apps/game-server/src/game/ai.service.ts`): 1-second tick loop with creature AI and combat tick integration
+- **tickCreatureAI** (`packages/game-logic/src/ai/creature-ai.ts`): Complete FSM — predator/maniac aggro, chase, attack, leash; omnivore provoked-retaliation; herbivore flee
 - **EntityService** (`apps/game-server/src/game/entity.service.ts`): Handles tool interaction, loot drops, entity death
-- **CharacterStats**: Power, Toughness, Haste already defined and computed server-side
-- **calculateDamage** exists in game-logic but needs Power/Toughness formula wiring
+- **CharacterStats**: Power, Toughness, Haste wired for both player and creature damage
 
-Design notes for v1.9:
-- Combat uses same tick interval as AI wander (~1 second base, modified by Haste)
-- Creature aggro extends existing FSM states — add `attacking`, `chasing`, `returning`
-- Leash distance (~10 tiles) tracked per creature from spawn point
+Design notes for remaining phases:
 - Player death respawn uses faction hub coordinates (need to define per faction)
 - Damage numbers are client-side floating text — server emits `combat:damage` event
+- "In Combat" indicator for HUD when player is in active combat
 
 ### Pending Todos
 
@@ -129,10 +124,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 40-03-PLAN.md
+Stopped at: Completed Phase 40 execution
 Resume file: None
 
-**Next action:** Execute Phase 40 Plan 04 (if exists), otherwise plan Phase 41
+**Next action:** Plan Phase 41 (Player Death and Respawn)
 
 ---
-*Last updated: 2026-02-19 after 40-03 complete*
+*Last updated: 2026-02-19 after Phase 40 complete*

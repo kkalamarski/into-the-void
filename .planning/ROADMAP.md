@@ -415,12 +415,12 @@ Plans:
   3. Herbivores continue to flee from players without change from v1.8 — no combat behavior added
   4. A player who moves away from a creature is chased up to ~10 tiles from the creature's spawn point — beyond that distance the creature returns to spawn
   5. Combat ends when either combatant dies, the player leaves range, or the creature exceeds leash distance — both sides exit combat state
-**Plans**: 3 plans in 2 waves
+**Plans**: 3 plans in 2 waves (completed 2026-02-19)
 
 Plans:
-- [ ] 40-01-PLAN.md — Add spawnPosition and combatTarget to Creature interface; extend tickCreatureAI FSM with combat states and aggro detection
-- [ ] 40-02-PLAN.md — Add creature combat session tracking to CombatService; wire AiService to handle FSM aggro/attack intents
-- [ ] 40-03-PLAN.md — Complete leash system with return-to-spawn behavior and combat termination
+- [x] 40-01-PLAN.md — Add spawnPosition and combatTarget to Creature interface; extend tickCreatureAI FSM with combat states and aggro detection
+- [x] 40-02-PLAN.md — Add creature combat session tracking to CombatService; wire AiService to handle FSM aggro/attack intents
+- [x] 40-03-PLAN.md — Complete leash system with return-to-spawn behavior and combat termination
 
 #### Phase 41: Player Death and Respawn
 
@@ -500,11 +500,11 @@ Phases execute in numeric order: 39 -> 40 -> 41 -> 42
 | 37. Fertility Noise and Biome Spawn Quality | v1.8 | 3/3 | Complete | 2026-02-18 |
 | 38. Perception Gating and Client Polish | v1.8 | 4/4 | Complete | 2026-02-19 |
 | 39. Combat Core and Damage Calculation | v1.9 | 4/4 | Complete | 2026-02-19 |
-| 40. Creature Combat AI and Aggro | v1.9 | 0/3 | Not started | - |
+| 40. Creature Combat AI and Aggro | v1.9 | 3/3 | Complete | 2026-02-19 |
 | 41. Player Death and Respawn | v1.9 | 0/2 | Not started | - |
 | 42. Combat Feedback and HUD | v1.9 | 0/2 | Not started | - |
 
-**Total:** 42 phases (38 complete, 4 remaining)
+**Total:** 42 phases (40 complete, 2 remaining)
 
 ---
-*Last updated: 2026-02-19 after Phase 40 planning*
+*Last updated: 2026-02-19 after Phase 40 complete*
