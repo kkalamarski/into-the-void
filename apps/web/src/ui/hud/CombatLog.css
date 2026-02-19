@@ -1,0 +1,114 @@
+.combat-log {
+  position: absolute;
+  bottom: 220px; /* Above action bar */
+  left: 20px;
+  width: 320px;
+  max-height: 200px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid var(--color-bg-tertiary, #3a3a4a);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+}
+
+.combat-log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--color-bg-tertiary, #3a3a4a);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.combat-log-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-primary, #e0e0e0);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.combat-log-hint {
+  font-size: 10px;
+  color: var(--color-text-secondary, #888);
+}
+
+.combat-log-entries {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.combat-log-empty {
+  color: var(--color-text-secondary, #888);
+  font-style: italic;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.combat-log-entry {
+  margin-bottom: 4px;
+}
+
+/* Outgoing damage - white/neutral */
+.combat-log-entry-dealt {
+  color: var(--color-text-primary, #e0e0e0);
+}
+
+/* Incoming damage - red-tinted */
+.combat-log-entry-received {
+  color: #ff8888;
+}
+
+.combat-log-timestamp {
+  color: var(--color-text-secondary, #888);
+  margin-right: 6px;
+}
+
+.combat-log-target {
+  font-weight: 600;
+  color: var(--color-accent, #4da6ff);
+}
+
+.combat-log-damage {
+  font-weight: bold;
+}
+
+.combat-log-entry-dealt .combat-log-damage {
+  color: #ffffff;
+}
+
+.combat-log-entry-received .combat-log-damage {
+  color: #ff4444;
+}
+
+.combat-log-critical {
+  color: #ffcc00 !important;
+  text-shadow: 0 0 4px rgba(255, 204, 0, 0.5);
+}
+
+.combat-log-killed {
+  color: #44ff44;
+  font-weight: 600;
+}
+
+/* Scrollbar styling */
+.combat-log-entries::-webkit-scrollbar {
+  width: 6px;
+}
+
+.combat-log-entries::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.combat-log-entries::-webkit-scrollbar-thumb {
+  background: var(--color-bg-tertiary, #3a3a4a);
+  border-radius: 3px;
+}
+
+.combat-log-entries::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent, #4da6ff);
+}
