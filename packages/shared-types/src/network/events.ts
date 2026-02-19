@@ -32,7 +32,9 @@ export type ClientEventType =
   | 'equipment:tool_swap'
   | 'storage:open'
   | 'entity:tool_use'
-  | 'portal:use';
+  | 'portal:use'
+  | 'hub:recall'
+  | 'hub:leave';
 
 /**
  * Server-to-client event types
@@ -82,6 +84,8 @@ export interface ClientEvents {
   'storage:open': Record<string, never>;
   'entity:tool_use': { targetEntityId: string };
   'portal:use': Record<string, never>;
+  'hub:recall': Record<string, never>;
+  'hub:leave': Record<string, never>;
   'respawn:sos': Record<string, never>;
   'respawn:reboot': { itemInstanceId: string };
 }

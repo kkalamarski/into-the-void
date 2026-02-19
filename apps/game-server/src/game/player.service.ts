@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Server } from 'socket.io';
 import { Player, Position, PlayerPublic, FactionId, ZoneState } from '@into-the-void/shared-types';
 import { DatabaseService } from '../database/database.service';
-import { findCharacterById, isCharacterOwnedByAccount, updateLastPlayed, saveLastWorldPosition } from '@into-the-void/database';
+import { findCharacterById, isCharacterOwnedByAccount, updateLastPlayed, saveLastWorldPosition, getLastWorldPosition } from '@into-the-void/database';
 import { isHubZone } from '@into-the-void/shared-types';
 import { InventoryService } from './inventory.service';
 import { getFactionRespawnPosition } from '@into-the-void/game-logic';
@@ -276,6 +276,57 @@ export class PlayerService {
       success: true,
       oldZoneId,
       newZoneId: hubPosition.zoneId,
+    };
+  }
+
+  /**
+   * Teleport player from their faction hub back to their saved open-world position.
+   * Rejects if player is not in a hub zone.
+   * Falls back to DB-persisted position, then z_0_0 center if nothing is saved.
+   */
+  async teleportFromHub(playerId: string): Promise<{
+    success: boolean;
+    error?: string;
+    oldZoneId?: string;
+    newZoneId?: string;
+  }> {
+    const player = this.players.get(playerId);
+    if (!player) return { success: false, error: 'Player not found' };
+
+    // Must be in hub
+    if (!isHubZone(player.position.zoneId)) {
+      return { success: false, error: 'Not in hub' };
+    }
+
+    // Get saved world position (in-memory first, then DB fallback)
+    let returnPosition = player.lastWorldPosition;
+    if (!returnPosition) {
+      const db = this.databaseService.getClient();
+      const dbPosition = await getLastWorldPosition(db, playerId);
+      if (dbPosition) {
+        returnPosition = dbPosition;
+      }
+    }
+
+    // If no saved position, default to open world origin
+    if (!returnPosition) {
+      returnPosition = { x: 32, y: 32, zoneId: 'z_0_0' };
+    }
+
+    const oldZoneId = player.position.zoneId;
+
+    // Clear saved position (it has been consumed)
+    player.lastWorldPosition = undefined;
+    const db = this.databaseService.getClient();
+    await saveLastWorldPosition(db, playerId, null);
+
+    // Teleport to open world
+    player.position = { ...returnPosition };
+
+    return {
+      success: true,
+      oldZoneId,
+      newZoneId: returnPosition.zoneId,
     };
   }
 
