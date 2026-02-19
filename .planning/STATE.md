@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.9 Combat System — Phase 39 complete (all 4 plans done)
+**Current focus:** v1.9 Combat System — Phase 39 complete, Phase 40 ready
 
 ## Current Position
 
-Phase: 39 - Combat Core and Damage Calculation
-Plan: 04
-Status: Complete
-Last activity: 2026-02-19 — 39-04 complete (Toughness damage reduction gap closure, deterministic unit test)
+Phase: 40 - Creature Combat AI and Aggro
+Plan: —
+Status: Ready for planning
+Last activity: 2026-02-19 — Phase 39 complete (4/4 plans, gap closure verified)
 
-Progress: [████░░░░░░] 40% (v1.9 milestone — Phase 39 Plan 04/4 complete)
+Progress: [██░░░░░░░░] 25% (v1.9 milestone — 1/4 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 127 (Phases 1-39-01 complete)
+- Total plans completed: 130 (Phases 1-39 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~5 hours
 

@@ -396,12 +396,13 @@ Plans:
   2. Damage dealt equals attacker Power minus a Toughness-based reduction — observable by comparing damage numbers across creatures with different Toughness values
   3. A player with higher Haste stat attacks more frequently than a player with base Haste — attack interval visibly decreases
   4. Creature health decreases with each attack and creature dies when health reaches zero — death triggers existing loot drop from v1.8
-**Plans**: 3 plans in 2 waves
+**Plans**: 4 plans in 3 waves (completed 2026-02-19)
 
 Plans:
-- [ ] 39-01-PLAN.md — Create CombatService with startCombat(), stopCombat(), getSession(); wire combat:start client event
-- [ ] 39-02-PLAN.md — Add attackTick() and processCombatTick() to CombatService; integrate with AiService tick loop; emit combat:damage
-- [ ] 39-03-PLAN.md — Add calculateAttackInterval() pure function; wire Haste stat to per-player attack timing
+- [x] 39-01-PLAN.md — Create CombatService with startCombat(), stopCombat(), getSession(); wire combat:start client event
+- [x] 39-02-PLAN.md — Add attackTick() and processCombatTick() to CombatService; integrate with AiService tick loop; emit combat:damage
+- [x] 39-03-PLAN.md — Add calculateAttackInterval() pure function; wire Haste stat to per-player attack timing
+- [x] 39-04-PLAN.md — Gap closure: Fix Toughness damage reduction (armorReduction derivation)
 
 #### Phase 40: Creature Combat AI and Aggro
 
@@ -498,7 +499,7 @@ Phases execute in numeric order: 39 -> 40 -> 41 -> 42
 | 36. Creature AI Wander and Behavior Tick | v1.8 | 4/4 | Complete | 2026-02-18 |
 | 37. Fertility Noise and Biome Spawn Quality | v1.8 | 3/3 | Complete | 2026-02-18 |
 | 38. Perception Gating and Client Polish | v1.8 | 4/4 | Complete | 2026-02-19 |
-| 39. Combat Core and Damage Calculation | v1.9 | 0/3 | Planned | - |
+| 39. Combat Core and Damage Calculation | v1.9 | 4/4 | Complete | 2026-02-19 |
 | 40. Creature Combat AI and Aggro | v1.9 | 0/3 | Not started | - |
 | 41. Player Death and Respawn | v1.9 | 0/2 | Not started | - |
 | 42. Combat Feedback and HUD | v1.9 | 0/2 | Not started | - |
