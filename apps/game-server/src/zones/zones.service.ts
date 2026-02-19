@@ -31,6 +31,14 @@ interface ZoneState {
 }
 
 /**
+ * Minimal interface for AI aggro checking.
+ * Using interface (not import) to avoid circular dependency between ZonesModule and GameModule.
+ */
+interface AggroChecker {
+  checkCreatureAggro(creature: Creature, zoneId: string): Promise<void>;
+}
+
+/**
  * Far-future date used as respawnAt for artifacts (they never respawn).
  * Using 2100-01-01 as a sentinel value.
  */
@@ -44,6 +52,8 @@ export class ZonesService implements OnModuleInit {
   private claimedEntities: Map<string, string> = new Map();
   // Socket.IO server reference for respawn broadcasts
   private server: Server | null = null;
+  // AI aggro checker — set after GameModule initializes to avoid circular dep
+  private aggroChecker: AggroChecker | null = null;
 
   constructor(
     private readonly configService: ConfigService,
@@ -75,6 +85,14 @@ export class ZonesService implements OnModuleInit {
    */
   setServer(server: Server): void {
     this.server = server;
+  }
+
+  /**
+   * Set the aggro checker (AiService) for immediate aggro on respawn.
+   * Called by GameGateway.afterInit() to avoid circular module dependency.
+   */
+  setAggroChecker(checker: AggroChecker): void {
+    this.aggroChecker = checker;
   }
 
   private async loadZone(zoneId: string): Promise<ZoneState> {
@@ -449,6 +467,11 @@ export class ZonesService implements OnModuleInit {
             // Broadcast entity:spawn to zone (players in zone will see respawn)
             if (this.server) {
               this.server.to(record.zoneId).emit('entity:spawn', entity);
+            }
+
+            // Trigger immediate aggro check if this is an aggressive creature
+            if (entity.type === 'creature' && this.aggroChecker) {
+              this.aggroChecker.checkCreatureAggro(entity as Creature, record.zoneId);
             }
           }
         }
