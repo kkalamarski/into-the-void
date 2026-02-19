@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Creature, PlayerPublic } from '@into-the-void/shared-types';
+import { Creature, PlayerPublic, isHubZone } from '@into-the-void/shared-types';
 import { tickCreatureAI } from '@into-the-void/game-logic';
 import { Server } from 'socket.io';
 import { ZonesService } from '../zones/zones.service';
@@ -47,6 +47,11 @@ export class AiService implements OnModuleInit {
    * Called when the first player joins a zone.
    */
   activateZone(zoneId: string): void {
+    // Hub zones have no AI - they're safe areas with no creatures
+    if (isHubZone(zoneId)) {
+      return;
+    }
+
     if (this.activeZones.has(zoneId)) {
       // Zone already active — guard against duplicate timers
       return;
@@ -72,6 +77,10 @@ export class AiService implements OnModuleInit {
    * This ensures predators/maniacs aggro without waiting for the next tick.
    */
   async checkImmediateAggro(zoneId: string): Promise<void> {
+    if (isHubZone(zoneId)) {
+      return;
+    }
+
     // Get all entities in the zone
     const entities = await this.zonesService.getZoneEntities(zoneId);
 
@@ -133,6 +142,10 @@ export class AiService implements OnModuleInit {
    * More efficient than full zone scan — only checks creatures near this player.
    */
   async checkImmediateAggroForPlayer(zoneId: string, playerId: string): Promise<void> {
+    if (isHubZone(zoneId)) {
+      return;
+    }
+
     const player = this.playerService.getPlayerById(playerId);
     if (!player || player.position.zoneId !== zoneId) return;
 
@@ -170,6 +183,10 @@ export class AiService implements OnModuleInit {
    * Called by the respawn tick loop when a creature materializes.
    */
   async checkCreatureAggro(creature: Creature, zoneId: string): Promise<void> {
+    if (isHubZone(zoneId)) {
+      return;
+    }
+
     // Only aggressive creatures
     if (creature.behavior !== 'predator' && creature.behavior !== 'maniac') return;
 
