@@ -392,6 +392,13 @@ export class CombatService {
   }
 
   /**
+   * Check if creature has an active combat session.
+   */
+  isCreatureInCombat(creatureId: string): boolean {
+    return this.creatureSessions.has(creatureId);
+  }
+
+  /**
    * Execute one attack from creature to player.
    * Returns damage result for broadcasting, or null if not time to attack yet.
    */
@@ -401,6 +408,12 @@ export class CombatService {
   ): Promise<CombatDamageResult | null> {
     const player = this.playerService.getPlayerById(session.targetPlayerId);
     if (!player) {
+      this.stopCreatureCombat(session.creatureId);
+      return null;
+    }
+
+    // Check if player is still in same zone
+    if (player.position.zoneId !== session.zoneId) {
       this.stopCreatureCombat(session.creatureId);
       return null;
     }
