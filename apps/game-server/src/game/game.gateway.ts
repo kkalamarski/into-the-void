@@ -59,6 +59,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.combatService.setServer(server);
     this.playerService.setServer(server);
     this.playerService.setZoneStateProvider((zoneId) => this.gameService.getZoneState(zoneId));
+    // Wire aggro checker to ZonesService for immediate aggro on creature respawn
+    this.zonesService.setAggroChecker(this.aiService);
     console.log('[GameGateway] WebSocket server initialized, ZonesService, AiService, CombatService, and PlayerService connected');
   }
 
@@ -122,8 +124,17 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         // Join player to 3x3 grid of zone rooms (current + 8 adjacent)
         this.updatePlayerRooms(client, result.player.position.zoneId);
 
+        const playerZoneId = result.player.position.zoneId;
+        const zoneAlreadyActive = this.aiService.isZoneActive(playerZoneId);
+
         // Activate AI tick loop for the zone the player just joined
-        this.aiService.activateZone(result.player.position.zoneId);
+        this.aiService.activateZone(playerZoneId);
+
+        // If zone was already active (other players present), trigger immediate aggro
+        // for this specific player. activateZone only runs checkImmediateAggro on first activation.
+        if (zoneAlreadyActive) {
+          this.aiService.checkImmediateAggroForPlayer(playerZoneId, result.player.id);
+        }
 
         // Send initial zone state
         const zoneState = await this.gameService.getZoneState(
@@ -211,7 +222,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
           if (this.playerService.getPlayersInZone(result.oldZoneId).length === 0) {
             this.aiService.deactivateZone(result.oldZoneId);
           }
+          const newZoneAlreadyActive = this.aiService.isZoneActive(result.newZoneId);
           this.aiService.activateZone(result.newZoneId);
+
+          // If zone was already active, trigger immediate aggro for this player
+          if (newZoneAlreadyActive && result.playerId) {
+            this.aiService.checkImmediateAggroForPlayer(result.newZoneId, result.playerId);
+          }
 
           // Send new zone state to player
           const zoneState = await this.gameService.getZoneState(result.newZoneId);
