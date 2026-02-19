@@ -5,6 +5,43 @@ import {
 } from '@into-the-void/shared-types';
 
 /**
+ * Base attack interval in milliseconds.
+ * With base Haste (50), attacks happen every 1000ms.
+ */
+const BASE_ATTACK_INTERVAL_MS = 1000;
+
+/**
+ * Reference Haste value for base interval.
+ * Haste above this = faster, below = slower.
+ */
+const BASE_HASTE = 50;
+
+/**
+ * Calculate attack interval based on Haste stat.
+ * Higher Haste = lower interval = faster attacks.
+ *
+ * Formula: interval = baseInterval * (baseHaste / currentHaste)
+ * - At Haste 50: 1000ms (1 attack/second)
+ * - At Haste 100: 500ms (2 attacks/second)
+ * - At Haste 25: 2000ms (0.5 attacks/second)
+ *
+ * Clamped to minimum 200ms (5 attacks/second max) and maximum 3000ms.
+ *
+ * @param haste - Current Haste stat value
+ * @returns Attack interval in milliseconds
+ */
+export function calculateAttackInterval(haste: number): number {
+  // Prevent division by zero
+  const effectiveHaste = Math.max(1, haste);
+
+  // Linear scaling: double haste = half interval
+  const interval = BASE_ATTACK_INTERVAL_MS * (BASE_HASTE / effectiveHaste);
+
+  // Clamp between 200ms (very fast) and 3000ms (very slow)
+  return Math.round(Math.max(200, Math.min(3000, interval)));
+}
+
+/**
  * Base damage calculation parameters
  */
 export interface DamageParams {
