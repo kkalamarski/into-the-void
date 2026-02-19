@@ -3,41 +3,71 @@
 **Defined:** 2026-02-17
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.9 Requirements
+## v1.10 Requirements
 
-Requirements for Combat System milestone. Each maps to roadmap phases.
+Requirements for Combat UX milestone. Each maps to roadmap phases.
+
+### Bug Fixes
+
+- [ ] **FIX-01**: Predator/maniac creatures properly aggro on nearby players
+
+### Click-to-Attack
+
+- [ ] **CATK-01**: Player can click a creature with a combat tool equipped to start auto-attacking
+- [ ] **CATK-02**: Attack only initiates if creature is within tool's attack range
+- [ ] **CATK-03**: Combat tools have per-tool attack ranges (melee=1 tile, ranged=3-5 tiles)
+- [ ] **CATK-04**: Entity sprites are interactive (clickable) in Phaser
+
+### Target Selection
+
+- [ ] **TARG-01**: Targeted entity shows visual highlight (glow, outline, or marker)
+- [ ] **TARG-02**: Target indicator persists while in combat with that entity
+- [ ] **TARG-03**: Target clears when combat ends (kill, death, leash, out of range)
+- [ ] **TARG-04**: Clicking a different creature switches target
+
+### Combat Log
+
+- [ ] **CLOG-01**: Combat log panel displays damage dealt by player
+- [ ] **CLOG-02**: Combat log panel displays damage received by player
+- [ ] **CLOG-03**: Log entries include timestamp and damage amount
+- [ ] **CLOG-04**: Log is scrollable and shows recent history
+- [ ] **CLOG-05**: Log can be toggled visible/hidden
+
+## v1.9 Requirements (Complete)
+
+Requirements for Combat System milestone. All mapped.
 
 ### Combat Engagement
 
-- [ ] **COMB-01**: Player can click a creature with combat tool equipped to start attacking
-- [ ] **COMB-02**: Player auto-attacks the target every tick (~1 second) while in range
-- [ ] **COMB-03**: Damage is calculated from attacker's Power stat vs defender's Toughness
-- [ ] **COMB-04**: Haste stat affects attack speed (faster ticks at higher Haste)
+- [x] **COMB-01**: Player can click a creature with combat tool equipped to start attacking
+- [x] **COMB-02**: Player auto-attacks the target every tick (~1 second) while in range
+- [x] **COMB-03**: Damage is calculated from attacker's Power stat vs defender's Toughness
+- [x] **COMB-04**: Haste stat affects attack speed (faster ticks at higher Haste)
 
 ### Creature Aggro
 
-- [ ] **AGGR-01**: Predators and maniacs automatically attack players within ~5 tiles
-- [ ] **AGGR-02**: Omnivores only attack if the player attacks them first
-- [ ] **AGGR-03**: Herbivores continue to flee (no aggro change from v1.8)
+- [x] **AGGR-01**: Predators and maniacs automatically attack players within ~5 tiles
+- [x] **AGGR-02**: Omnivores only attack if the player attacks them first
+- [x] **AGGR-03**: Herbivores continue to flee (no aggro change from v1.8)
 
 ### Combat State
 
-- [ ] **CSTA-01**: Creatures have combat states: idle, attacking, chasing, returning
-- [ ] **CSTA-02**: Creatures chase players who move away (up to ~10 tiles from spawn)
-- [ ] **CSTA-03**: Creatures return to spawn point after losing target (leash exceeded)
-- [ ] **CSTA-04**: Combat ends when one combatant dies or leaves range
+- [x] **CSTA-01**: Creatures have combat states: idle, attacking, chasing, returning
+- [x] **CSTA-02**: Creatures chase players who move away (up to ~10 tiles from spawn)
+- [x] **CSTA-03**: Creatures return to spawn point after losing target (leash exceeded)
+- [x] **CSTA-04**: Combat ends when one combatant dies or leaves range
 
 ### Player Death
 
-- [ ] **DEAT-01**: Player dies when health reaches zero
-- [ ] **DEAT-02**: Dead player respawns at faction hub / safe point
-- [ ] **DEAT-03**: No item or XP loss on death (forgiving)
+- [x] **DEAT-01**: Player dies when health reaches zero
+- [x] **DEAT-02**: Dead player respawns at faction hub / safe point
+- [x] **DEAT-03**: No item or XP loss on death (forgiving)
 
 ### Combat Feedback
 
-- [ ] **FEED-01**: Damage numbers appear above targets when hit
-- [ ] **FEED-02**: Combat state is visible in HUD (e.g., "In Combat" indicator)
-- [ ] **FEED-03**: Health bar updates in real-time during combat
+- [x] **FEED-01**: Damage numbers appear above targets when hit
+- [x] **FEED-02**: Combat state is visible in HUD (e.g., "In Combat" indicator)
+- [x] **FEED-03**: Health bar updates in real-time during combat
 
 ## v1.8 Requirements (Complete)
 
@@ -305,27 +335,51 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-### v1.9 Combat System
+### v1.10 Combat UX
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| COMB-01 | Phase 39 | Pending |
-| COMB-02 | Phase 39 | Pending |
-| COMB-03 | Phase 39 | Pending |
-| COMB-04 | Phase 39 | Pending |
-| AGGR-01 | Phase 40 | Pending |
-| AGGR-02 | Phase 40 | Pending |
-| AGGR-03 | Phase 40 | Pending |
-| CSTA-01 | Phase 40 | Pending |
-| CSTA-02 | Phase 40 | Pending |
-| CSTA-03 | Phase 40 | Pending |
-| CSTA-04 | Phase 40 | Pending |
-| DEAT-01 | Phase 41 | Pending |
-| DEAT-02 | Phase 41 | Pending |
-| DEAT-03 | Phase 41 | Pending |
-| FEED-01 | Phase 42 | Pending |
-| FEED-02 | Phase 42 | Pending |
-| FEED-03 | Phase 42 | Pending |
+| FIX-01 | Phase 43 | Pending |
+| CATK-01 | Phase 43 | Pending |
+| CATK-02 | Phase 43 | Pending |
+| CATK-03 | Phase 43 | Pending |
+| CATK-04 | Phase 43 | Pending |
+| TARG-01 | Phase 44 | Pending |
+| TARG-02 | Phase 44 | Pending |
+| TARG-03 | Phase 44 | Pending |
+| TARG-04 | Phase 44 | Pending |
+| CLOG-01 | Phase 45 | Pending |
+| CLOG-02 | Phase 45 | Pending |
+| CLOG-03 | Phase 45 | Pending |
+| CLOG-04 | Phase 45 | Pending |
+| CLOG-05 | Phase 45 | Pending |
+
+**Coverage:**
+- v1.10 requirements: 14 total
+- Mapped to phases: 14
+- Unmapped: 0
+
+### v1.9 Combat System (Complete)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| COMB-01 | Phase 39 | Complete |
+| COMB-02 | Phase 39 | Complete |
+| COMB-03 | Phase 39 | Complete |
+| COMB-04 | Phase 39 | Complete |
+| AGGR-01 | Phase 40 | Complete |
+| AGGR-02 | Phase 40 | Complete |
+| AGGR-03 | Phase 40 | Complete |
+| CSTA-01 | Phase 40 | Complete |
+| CSTA-02 | Phase 40 | Complete |
+| CSTA-03 | Phase 40 | Complete |
+| CSTA-04 | Phase 40 | Complete |
+| DEAT-01 | Phase 41 | Complete |
+| DEAT-02 | Phase 41 | Complete |
+| DEAT-03 | Phase 41 | Complete |
+| FEED-01 | Phase 42 | Complete |
+| FEED-02 | Phase 42 | Complete |
+| FEED-03 | Phase 42 | Complete |
 
 **Coverage:**
 - v1.9 requirements: 17 total
@@ -397,4 +451,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-19 after v1.9 roadmap created (phases 39-42)*
+*Last updated: 2026-02-19 after v1.10 requirements added (phases 43-45)*
