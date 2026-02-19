@@ -478,10 +478,11 @@ Plans:
   3. A predator or maniac creature that spawns within ~5 tiles of a player automatically begins chasing and attacking without any player interaction — aggro triggers consistently on zone load and respawn
   4. Entity sprites in the Phaser canvas respond to pointer-down events — clicking on a creature's visual area registers as a creature click, not a tile click
   5. Combat tool attack ranges are defined per tool (melee=1 tile, ranged tools between 3 and 5 tiles based on item definition) — range is not a global constant
-**Plans**: TBD
+**Plans**: 2 plans in 1 wave
 
 Plans:
-- [ ] 43-01-PLAN.md — TBD
+- [ ] 43-01-PLAN.md — Make entity sprites interactive; add entity click handler; emit combat:start on creature click
+- [ ] 43-02-PLAN.md — Fix predator/maniac aggro bug; add immediate aggro check on zone activation and player join
 
 #### Phase 44: Target Selection UI
 
@@ -562,11 +563,11 @@ Phases execute in numeric order: 43 -> 44 -> 45
 | 40. Creature Combat AI and Aggro | v1.9 | 3/3 | Complete | 2026-02-19 |
 | 41. Player Death and Respawn | v1.9 | 3/3 | Complete | 2026-02-19 |
 | 42. Combat Feedback and HUD | v1.9 | 2/2 | Complete | 2026-02-19 |
-| 43. Click-to-Attack and Bug Fix | v1.10 | TBD | Not started | - |
+| 43. Click-to-Attack and Bug Fix | v1.10 | 0/2 | Not started | - |
 | 44. Target Selection UI | v1.10 | TBD | Not started | - |
 | 45. Combat Log | v1.10 | TBD | Not started | - |
 
 **Total:** 45 phases (42 complete, 3 remaining)
 
 ---
-*Last updated: 2026-02-19 after v1.10 roadmap created — phases 43-45*
+*Last updated: 2026-02-19 after phase 43 planning — 2 plans created*
