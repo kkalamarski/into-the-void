@@ -39,6 +39,7 @@ Progress: [░░░░░░░░░░] 0% (v1.11 milestone)
 | v1.9 | 39-42 | 12 | 1 day |
 | v1.10 | 43-45 | 5 | 1 day |
 | v1.11 | 46-50 | TBD | in progress |
+| Phase 46 P01 | 8 | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -54,6 +55,8 @@ Recent decisions affecting current work:
 - [v1.11]: NPCs are static at fixed hub positions (no schedules)
 - [46-02]: Hub zones use hub_ prefix; BiomeType mapped to valid values (fungal_forest, volcanic_ridge, void_plains)
 - [46-02]: hub_neutral respawns to hub_nexus (Meridian Station — neutral welcome)
+- [Phase 46]: Credits added to PlayerPublic (not kept private) - balance visible to other clients at this stage
+- [Phase 46]: Default 1000 credits set at DB schema level to ensure consistency
 
 ### Pending Todos
 
@@ -72,10 +75,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 46-02-PLAN.md — four faction hub zones infrastructure
+Stopped at: Completed 46-01-PLAN.md — credits currency foundation (DB schema, shared-types, HUD display)
 Resume file: None
 
 **Next action:** Execute next plan in phase 46
 
 ---
-*Last updated: 2026-02-19 after v1.11 roadmap creation*
+*Last updated: 2026-02-19 after 46-01 credits currency foundation*
