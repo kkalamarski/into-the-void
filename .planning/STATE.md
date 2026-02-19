@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.9 Combat System — Phase 41 Plan 03 complete, zone:state emitted on cross-zone respawn
+**Current focus:** v1.9 Combat System — Phase 41 complete, player death and respawn working
 
 ## Current Position
 
 Phase: 41 - Player Death and Respawn
-Plan: 03 complete
-Status: In progress
-Last activity: 2026-02-19 — Phase 41 Plan 03 complete
+Plan: All 3 plans complete
+Status: Complete
+Last activity: 2026-02-19 — Phase 41 verified complete
 
-Progress: [█████░░░░░] 50% (v1.9 milestone — 2/4 phases complete)
+Progress: [███████░░░] 75% (v1.9 milestone — 3/4 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 133 (Phases 1-40 complete)
+- Total plans completed: 136 (Phases 1-41 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~5 hours
 
@@ -116,10 +116,10 @@ Key existing code to build on:
 - **EntityService** (`apps/game-server/src/game/entity.service.ts`): Handles tool interaction, loot drops, entity death
 - **CharacterStats**: Power, Toughness, Haste wired for both player and creature damage
 
-Design notes for remaining phases:
-- Player death + 3-second respawn at faction hub is complete (Phase 41 Plans 01+02)
-- Damage numbers are client-side floating text — server emits `combat:damage` event
-- "In Combat" indicator for HUD when player is in active combat
+Design notes for remaining phase:
+- Player death + 3-second respawn at faction hub is complete (Phase 41)
+- Phase 42: Damage numbers are client-side floating text — server emits `combat:damage` event
+- Phase 42: "In Combat" indicator for HUD when player is in active combat
 
 ### Pending Todos
 
@@ -138,10 +138,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed Phase 41 Plan 03 execution
+Stopped at: Completed Phase 41 execution and verification
 Resume file: None
 
-**Next action:** Execute Phase 41 Plan 04 (if any) or proceed to next phase
+**Next action:** Plan Phase 42 (Combat Feedback and HUD)
 
 ---
-*Last updated: 2026-02-19 after Phase 40 complete*
+*Last updated: 2026-02-19 after Phase 41 complete*
