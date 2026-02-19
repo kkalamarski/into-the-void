@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.9 Combat System — Phase 39, Plan 02 complete
+**Current focus:** v1.9 Combat System — Phase 39, Plan 03 complete
 
 ## Current Position
 
 Phase: 39 - Combat Core and Damage Calculation
-Plan: 03
+Plan: 04
 Status: In progress
-Last activity: 2026-02-19 — 39-02 complete (auto-attack loop, combat:damage event, creature death loot/respawn)
+Last activity: 2026-02-19 — 39-03 complete (calculateAttackInterval, Haste-based attack timing, unit tests)
 
-Progress: [██░░░░░░░░] 20% (v1.9 milestone — Phase 39 Plan 02/4 complete)
+Progress: [███░░░░░░░] 30% (v1.9 milestone — Phase 39 Plan 03/4 complete)
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Progress: [██░░░░░░░░] 20% (v1.9 milestone — Phase 39 Plan
 | 38 | 04 | 2min | 1 | 1 |
 | 39 | 01 | 3min | 3 | 4 |
 | 39 | 02 | 4min | 3 | 5 |
+| 39 | 03 | 4min | 3 | 3 |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [39-02]: attackTick() re-validates canInteract() on every tick — combat stops automatically if player moves out of range without explicit stop-combat event
 - [39-02]: combatResults emitted inline in runZoneTick() after creature AI batch — no separate combat emit loop or additional tick timer
 - [39-02]: CombatService.setServer() wired in GameGateway.afterInit() alongside AiService and ZonesService — consistent server-reference injection pattern
+- [39-03]: calculateAttackInterval uses linear scaling (interval = 1000 * 50 / haste): doubling haste halves interval, consistent with haste stat semantics
+- [39-03]: Timing gate placed before creature lookup in attackTick(): avoids zone/DB access on skipped ticks — performance optimization
+- [39-03]: lastAttackAt initialized to 0: ensures first attack fires immediately on combat start regardless of Haste value
 
 ### v1.9 Combat System Context
 
@@ -112,10 +116,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 39-02-PLAN.md
+Stopped at: Completed 39-03-PLAN.md
 Resume file: None
 
-**Next action:** Execute 39-03-PLAN.md (creature aggro FSM)
+**Next action:** Execute 39-04-PLAN.md (player death and respawn)
 
 ---
-*Last updated: 2026-02-19 after 39-02 complete*
+*Last updated: 2026-02-19 after 39-03 complete*
