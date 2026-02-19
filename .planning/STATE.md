@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 38 of 38 (Perception Gating and Client Polish)
-Plan: 3 of 3 in current phase
+Plan: 4 of 4 in current phase
 Status: Complete
-Last activity: 2026-02-18 — Phase 38 Plan 03 complete (entity spawn fade-in UIHD-02 + yield bar depletion UIHD-03)
+Last activity: 2026-02-19 — Phase 38 Plan 04 complete (error event handler wired to chat — INTR-07 gap closure)
 
 Progress: [██████████] 100% (v1.8 milestone — Phase 38 complete, all plans done)
 
@@ -42,6 +42,7 @@ Progress: [██████████] 100% (v1.8 milestone — Phase 38 com
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 38 | 03 | 2min | 3 | 2 |
+| 38 | 04 | 2min | 1 | 1 |
 
 ## Accumulated Context
 
@@ -115,6 +116,7 @@ Recent decisions affecting current work:
 - [38-03]: container.setData('yieldBar') stores Graphics reference directly — avoids fragile Y-position instanceof search that could fail on floating-point or layout changes
 - [38-03]: zoneId presence on spawnEntity() distinguishes zone:state (initial load, no fade) from entity:spawn (runtime respawn, 400ms Linear fade)
 - [38-03]: this.elevationOffset (12px hover constant) stored as 'elevationOffset' data key — yield bar Y uses hover offset, not terrain height offset
+- [38-04]: gameSocket.on('error') uses channel: 'system' — consistent with existing system message convention; single catch-all for all server-emitted errors
 
 ### Pending Todos
 
@@ -132,11 +134,11 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-18
-Stopped at: Phase 38 Plan 03 complete — entity spawn fade-in (UIHD-02) + yield bar depletion (UIHD-03)
+Last session: 2026-02-19
+Stopped at: Phase 38 Plan 04 complete — error event handler wired to chat (INTR-07 gap closure)
 Resume file: None
 
-**Next action:** v1.8 milestone complete — all Phase 38 plans done
+**Next action:** v1.8 milestone complete — all Phase 38 plans done (including gap-closure Plan 04)
 
 ---
-*Last updated: 2026-02-18 after Phase 38 Plan 03 complete (entity spawn fade-in UIHD-02, yield bar depletion UIHD-03)*
+*Last updated: 2026-02-19 after Phase 38 Plan 04 complete (error socket event handler — INTR-07 gap closure)*
