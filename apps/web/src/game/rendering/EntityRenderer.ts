@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { Entity, Creature, Mineral, Plant, CreatureBehavior, Position, ZONE_SIZE } from '@into-the-void/shared-types';
+import { Entity, Creature, Mineral, Plant, Npc, CreatureBehavior, Position, ZONE_SIZE } from '@into-the-void/shared-types';
 import { IsometricTransform } from '../utils/IsometricTransform';
 import { useStatsStore } from '../../store/statsStore';
 
@@ -15,6 +15,7 @@ const ENTITY_SCALE: Record<string, number> = {
   plant: 1.8,      // Medium - harvestable plants
   artifact: 1.5,   // Medium-small - collectible items
   item: 1.0,       // Small - dropped items on ground
+  npc: 2.2,        // NPCs slightly smaller than creatures
 };
 
 // Base sprite height for UI positioning (256px texture)
@@ -144,6 +145,13 @@ export class EntityRenderer {
     // Artifacts and items just get nameplate
     if (entity.type === 'artifact' || entity.type === 'item') {
       const nameplate = this.createNameplate(displayName);
+      nameplate.y = uiBaseY;
+      container.add(nameplate);
+    }
+
+    // NPCs get nameplate with distinct styling based on NPC type
+    if (this.isNpc(entity)) {
+      const nameplate = this.createNpcNameplate(entity.name, entity.npcType);
       nameplate.y = uiBaseY;
       container.add(nameplate);
     }
@@ -373,6 +381,8 @@ export class EntityRenderer {
         return 'artifact';
       case 'item':
         return 'item';
+      case 'npc':
+        return 'player'; // Reuse player sprite as fallback for NPCs until NPC sprites are added
       default:
         return 'item';
     }
@@ -397,6 +407,53 @@ export class EntityRenderer {
    */
   private isPlant(entity: Entity): entity is Plant {
     return entity.type === 'plant';
+  }
+
+  /**
+   * Type guard to check if entity is an Npc.
+   */
+  private isNpc(entity: Entity): entity is Npc {
+    return entity.type === 'npc';
+  }
+
+  /**
+   * Creates an NPC nameplate with type indicator and distinct color border.
+   */
+  createNpcNameplate(name: string, npcType: string): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(0, 0);
+
+    // NPC type indicator colors
+    const typeColors: Record<string, number> = {
+      trader: 0xf0c040,      // Gold for traders
+      guard: 0x8080a0,       // Steel gray for guards
+      faction_rep: 0x60a0ff, // Blue for faction reps
+      ambient: 0xa0a0a0,     // Gray for ambient
+      service: 0x60c060,     // Green for service
+    };
+
+    const typeColor = typeColors[npcType] ?? 0xffffff;
+
+    // Background panel
+    const bg = this.scene.add.graphics();
+    const width = 300;
+    const height = 50;
+    bg.fillStyle(0x222222, 0.9);
+    bg.fillRoundedRect(-width / 2, -height / 2, width, height, 8);
+    bg.lineStyle(3, typeColor, 1);
+    bg.strokeRoundedRect(-width / 2, -height / 2, width, height, 8);
+    container.add(bg);
+
+    // Name text
+    const text = this.scene.add.text(0, 0, name, {
+      fontSize: '30px',
+      fontStyle: 'bold',
+      color: '#ffffff',
+    });
+    text.setOrigin(0.5, 0.5);
+    text.setShadow(2, 2, '#000000', 4);
+    container.add(text);
+
+    return container;
   }
 
   /**

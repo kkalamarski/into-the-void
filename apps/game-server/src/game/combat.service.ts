@@ -113,6 +113,12 @@ export class CombatService {
     // Get target entity
     const entity = await this.zonesService.getEntity(player.position.zoneId, targetEntityId);
     if (!entity) return { success: false, error: 'Target not found' };
+
+    // NPCs cannot be attacked
+    if (entity.type === 'npc') {
+      return { success: false, error: 'Cannot attack NPCs' };
+    }
+
     if (entity.type !== 'creature') return { success: false, error: 'Target is not a creature' };
 
     const creature = entity as Creature;

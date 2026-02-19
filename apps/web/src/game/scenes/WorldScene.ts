@@ -345,7 +345,17 @@ export class WorldScene extends Phaser.Scene {
       const entityId = container.getData('entityId') as string | undefined;
       const entityType = container.getData('entityType') as string | undefined;
 
-      if (!entityId || entityType !== 'creature') return;
+      if (!entityId) return;
+
+      // NPC interaction will be added in Phase 49
+      // For now, just acknowledge the click without action to prevent pathfinding
+      if (entityType === 'npc') {
+        this.lastClickedEntity = entityId;
+        console.log('NPC clicked:', entityId);
+        return; // Do not proceed to combat
+      }
+
+      if (entityType !== 'creature') return;
 
       // Track that we clicked an entity to suppress pathfinding
       this.lastClickedEntity = entityId;
