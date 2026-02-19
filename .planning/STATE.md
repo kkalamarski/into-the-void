@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 48 of 50 (NPC Definition System and Hub Spawns)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-19 — 48-01: @into-the-void/npcs package with NpcDefinition discriminated union and NpcRegistry singleton
+Last activity: 2026-02-19 — 48-02: 20 NPC definitions for all 4 faction hubs + NpcSpawn positions in HubConfig
 
 Progress: [██░░░░░░░░] 20% (v1.11 milestone — 2/5 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 150 (Phases 1-48 plan 01 complete)
+- Total plans completed: 151 (Phases 1-48 plan 02 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~5.5 hours
 
@@ -38,7 +38,7 @@ Progress: [██░░░░░░░░] 20% (v1.11 milestone — 2/5 phases)
 | v1.8 | 33-38 | 22 | 2 days |
 | v1.9 | 39-42 | 12 | 1 day |
 | v1.10 | 43-45 | 5 | 1 day |
-| v1.11 | 46-50 | 7/TBD | in progress |
+| v1.11 | 46-50 | 8/TBD | in progress |
 
 ## Accumulated Context
 
@@ -74,6 +74,9 @@ Recent decisions affecting current work:
 - [48-01]: npcs package uses commonjs type + src/index.ts main (matching entities/items pattern, not esm/dist)
 - [48-01]: NpcFaction: 'verdant' | 'helix' | 'nexus' | 'neutral' matching lore factions
 - [48-01]: UNKNOWN_NPC fallback is ambient type with magenta color (0xff00ff) — consistent with EntityRegistry
+- [48-02]: 5-NPC hub layout: trader NW (20,20), guard N (32,15), rep NE (44,20), ambient SW (20,44), service SE (44,44)
+- [48-02]: NpcRegistry.registerAll(ALL_NPCS) called on module load in packages/npcs/src/index.ts
+- [48-02]: NpcSpawn exported from world-gen (not npcs) since it describes world position, not NPC identity
 
 ### Pending Todos
 
@@ -92,10 +95,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 48-npc-definition-system-and-hub-spawns/48-01-PLAN.md — @into-the-void/npcs package with NpcDefinition discriminated union and NpcRegistry singleton
+Stopped at: Completed 48-npc-definition-system-and-hub-spawns/48-02-PLAN.md — 20 NPC definitions for all 4 faction hubs registered in NpcRegistry, NpcSpawn positions added to HubConfig
 Resume file: None
 
-**Next action:** Execute next plan in Phase 48 (48-02: NPC definitions for hub zones)
+**Next action:** Execute next plan in Phase 48 (48-03: hub NPC spawning in game-server)
 
 ---
-*Last updated: 2026-02-19 after 48-01 execution complete*
+*Last updated: 2026-02-19 after 48-02 execution complete*
