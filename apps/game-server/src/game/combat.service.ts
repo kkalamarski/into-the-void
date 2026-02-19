@@ -260,7 +260,7 @@ export class CombatService {
       attackerStats: playerStats,
       defenderStats: creatureStats,
       weaponDamage: toolDef?.ilvl ?? 0,
-      armorReduction: 0, // Creatures don't have armor items
+      armorReduction: creatureStats.toughness, // Toughness provides base armor for creatures
     });
 
     // Apply damage to creature
