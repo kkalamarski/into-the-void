@@ -449,7 +449,7 @@ Plans:
   2. The HUD displays "In Combat" indicator when the player is in active combat — indicator disappears when combat ends
   3. Health bars update immediately when damage is dealt — no delay between combat:damage event and visual update
   4. Damage numbers use appropriate colors — red for damage dealt to player, white for damage dealt to creatures
-**Plans**: TBD
+**Plans**: 2 plans in 1 wave
 
 Plans:
 - [ ] 42-01-PLAN.md — Add FloatingDamage component to EntityRenderer; animate damage numbers on combat:damage event
@@ -508,4 +508,4 @@ Phases execute in numeric order: 39 -> 40 -> 41 -> 42
 **Total:** 42 phases (41 complete, 1 remaining)
 
 ---
-*Last updated: 2026-02-19 after Phase 41 execution*
+*Last updated: 2026-02-19 after Phase 42 planning*
