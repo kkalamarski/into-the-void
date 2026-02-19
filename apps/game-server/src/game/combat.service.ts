@@ -4,7 +4,7 @@ import { PlayerService } from './player.service';
 import { ZonesService } from '../zones/zones.service';
 import { InventoryService } from './inventory.service';
 import { EntityService } from './entity.service';
-import { Creature, ItemEntity } from '@into-the-void/shared-types';
+import { Creature, ItemEntity, isHubZone } from '@into-the-void/shared-types';
 import {
   canInteract,
   canInteractLevel,
@@ -84,6 +84,11 @@ export class CombatService {
   async startCombat(socketId: string, targetEntityId: string): Promise<StartCombatResult> {
     const player = this.playerService.getPlayerBySocket(socketId);
     if (!player) return { success: false, error: 'Player not found' };
+
+    // Hub zones are safe - no combat allowed
+    if (isHubZone(player.position.zoneId)) {
+      return { success: false, error: 'Combat is not allowed in hub zones' };
+    }
 
     // Check if already in combat
     if (this.sessions.has(player.id)) {
@@ -349,6 +354,11 @@ export class CombatService {
     targetPlayerId: string,
     zoneId: string,
   ): Promise<boolean> {
+    // Hub zones are safe - creatures cannot attack players
+    if (isHubZone(zoneId)) {
+      return false;
+    }
+
     // Don't start duplicate session
     if (this.creatureSessions.has(creatureId)) {
       return false;
@@ -489,8 +499,8 @@ export class CombatService {
         position: player.position,
       });
 
-      // Schedule respawn after delay
-      this.playerService.scheduleRespawn(session.targetPlayerId);
+      // Player now chooses respawn method via death screen (S.O.S. or Reboot Kit)
+      // No auto-respawn - player must select an option
     }
 
     // Update last attack time
