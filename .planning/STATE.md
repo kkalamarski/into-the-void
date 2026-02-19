@@ -50,6 +50,7 @@ Progress: [███░░░░░░░] 33% (v1.10 milestone — 1/3 phases)
 | 42 | 02 | 3min | 3 | 5 |
 | 43 | 01 | 2min | 3 | 2 |
 | 43 | 02 | 3min | 3 | 3 |
+| 44 | 01 | 3min | 2 | 2 |
 | 44 | 02 | 1min | 2 | 3 |
 
 ## Accumulated Context
@@ -64,6 +65,7 @@ Recent decisions affecting current work:
 - [43-01]: lastClickedEntity flag guards pointerup pathfinding handler to prevent click-to-move on entity click
 - [43-02]: AggroChecker interface + setter on ZonesService avoids circular GameModule/ZonesModule dependency for respawn aggro
 - [43-02]: checkImmediateAggro fires before scheduleNextTick in activateZone; checkImmediateAggroForPlayer used for player-scoped scan on join
+- [Phase 44]: Isometric ellipse ring colored by behavior->rarity tier: herbivore=common, omnivore=rare, predator=epic, maniac=legendary; combatStore.subscribe bridges store and Phaser rendering for auto-target
 
 ### v1.10 Combat UX Context
 
@@ -92,10 +94,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 44-02-PLAN.md — TargetFrame HUD component integrated
+Stopped at: Completed 44-01-PLAN.md — target highlight visual feedback (pulsing ring)
 Resume file: None
 
 **Next action:** Continue Phase 44 (Plan 03 if any, or plan Phase 45)
 
 ---
-*Last updated: 2026-02-19 after Phase 43 execution complete*
+*Last updated: 2026-02-19 after Phase 44 Plan 01 execution complete*
