@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.9 Combat System — Phase 41 Plan 02 complete, full death-respawn cycle wired
+**Current focus:** v1.9 Combat System — Phase 41 Plan 03 complete, zone:state emitted on cross-zone respawn
 
 ## Current Position
 
 Phase: 41 - Player Death and Respawn
-Plan: 02 complete
+Plan: 03 complete
 Status: In progress
-Last activity: 2026-02-19 — Phase 41 Plan 02 complete
+Last activity: 2026-02-19 — Phase 41 Plan 03 complete
 
 Progress: [█████░░░░░] 50% (v1.9 milestone — 2/4 phases complete)
 
@@ -51,6 +51,7 @@ Progress: [█████░░░░░] 50% (v1.9 milestone — 2/4 phases co
 | 40 | 03 | 3.3min | 3 | 2 |
 | 41 | 01 | 5min | 3 | 6 |
 | 41 | 02 | 6min | 3 | 5 |
+| 41 | 03 | 4min | 1 | 2 |
 
 ## Accumulated Context
 
@@ -102,6 +103,9 @@ Recent decisions affecting current work:
 - [41-02]: handleDisconnect clears pending respawn timer — dead-while-disconnecting players don't respawn into void
 - [41-02]: respawnPlayer emits player:left to old zone only when zone differs — avoids spurious left event on same-zone respawn
 - [41-02]: handlePlayerRespawn calls updateLocalPlayer() which handles missing-sprite edge case (re-creates if destroyed)
+- [41-03]: zoneStateProvider injected via setter callback rather than direct GameService dependency — avoids circular injection, follows existing setServer() pattern
+- [41-03]: zone:state emitted before player:left to old zone — client receives zone data first, ordering matches handleAuth pattern
+- [41-03]: respawnPlayer made async to await zoneStateProvider; scheduleRespawn setTimeout callback does not await (unawaited promise acceptable in setTimeout)
 
 ### v1.9 Combat System Context
 
@@ -134,10 +138,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed Phase 41 Plan 02 execution
+Stopped at: Completed Phase 41 Plan 03 execution
 Resume file: None
 
-**Next action:** Execute Phase 41 Plan 03 (if any) or proceed to next phase
+**Next action:** Execute Phase 41 Plan 04 (if any) or proceed to next phase
 
 ---
 *Last updated: 2026-02-19 after Phase 40 complete*
