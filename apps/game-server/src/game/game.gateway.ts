@@ -24,6 +24,7 @@ import {
   getErrorInfo,
   CharStatsPayload,
   CharacterStats,
+  isHubZone,
 } from '@into-the-void/shared-types';
 import { computeCharStats } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
@@ -768,6 +769,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const player = this.playerService.getPlayerBySocket(client.id);
       if (!player) return;
 
+      // In hub, portal acts as an exit back to the open world
+      if (isHubZone(player.position.zoneId)) {
+        return this.handleHubLeave(client);
+      }
+
       // Validate player is standing on a portal tile (TileId.PORTAL = 16)
       const zoneState = await this.gameService.getZoneState(player.position.zoneId);
       const tileId = zoneState.chunk.tiles[player.position.y]?.[player.position.x];
@@ -822,6 +828,122 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       client.emit('error', {
         code: 'SERVER_ERROR',
         message: 'Failed to process portal use',
+      });
+    }
+  }
+
+  @SubscribeMessage('hub:recall')
+  async handleHubRecall(@ConnectedSocket() client: Socket): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      // Block recall if player is already in a hub
+      if (isHubZone(player.position.zoneId)) {
+        client.emit('error', {
+          code: 'ALREADY_IN_HUB',
+          message: 'Already in hub — use a portal or Leave Hub to return to the open world',
+        });
+        return;
+      }
+
+      // Teleport to faction hub (saves current position as lastWorldPosition)
+      const result = await this.playerService.teleportToHub(player.id);
+
+      if (result.success && result.oldZoneId && result.newZoneId) {
+        // Update room subscriptions for new zone
+        this.updatePlayerRooms(client, result.newZoneId);
+
+        // Notify old zone that player left
+        this.server.to(result.oldZoneId).emit('player:left', { playerId: player.id });
+
+        // Deactivate old zone if no players remain
+        if (this.playerService.getPlayersInZone(result.oldZoneId).length === 0) {
+          this.aiService.deactivateZone(result.oldZoneId);
+        }
+
+        // Activate AI for the hub zone
+        this.aiService.activateZone(result.newZoneId);
+
+        // Send new zone state to player
+        const newZoneState = await this.gameService.getZoneState(result.newZoneId);
+        client.emit('zone:state', newZoneState);
+
+        // Notify new zone of player arrival
+        client.to(result.newZoneId).emit('player:joined', {
+          id: player.id,
+          name: player.name,
+          faction: player.faction,
+          position: player.position,
+          level: player.level,
+          inCombat: player.inCombat,
+          credits: player.credits,
+        });
+      } else {
+        client.emit('error', {
+          code: 'RECALL_FAILED',
+          message: result.error || 'Failed to recall to hub',
+        });
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to process recall',
+      });
+    }
+  }
+
+  @SubscribeMessage('hub:leave')
+  async handleHubLeave(@ConnectedSocket() client: Socket): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      // Teleport from hub back to saved open-world position
+      const result = await this.playerService.teleportFromHub(player.id);
+
+      if (result.success && result.oldZoneId && result.newZoneId) {
+        // Update room subscriptions for new zone
+        this.updatePlayerRooms(client, result.newZoneId);
+
+        // Notify hub zone that player left
+        this.server.to(result.oldZoneId).emit('player:left', { playerId: player.id });
+
+        // No need to deactivate hub (it has no AI enemies)
+
+        // Activate AI for the open-world zone the player returns to
+        const newZoneAlreadyActive = this.aiService.isZoneActive(result.newZoneId);
+        this.aiService.activateZone(result.newZoneId);
+
+        // If zone was already active, trigger immediate aggro for this player
+        if (newZoneAlreadyActive) {
+          this.aiService.checkImmediateAggroForPlayer(result.newZoneId, player.id);
+        }
+
+        // Send new zone state to player
+        const newZoneState = await this.gameService.getZoneState(result.newZoneId);
+        client.emit('zone:state', newZoneState);
+
+        // Notify new zone of player arrival
+        client.to(result.newZoneId).emit('player:joined', {
+          id: player.id,
+          name: player.name,
+          faction: player.faction,
+          position: player.position,
+          level: player.level,
+          inCombat: player.inCombat,
+          credits: player.credits,
+        });
+      } else {
+        client.emit('error', {
+          code: 'LEAVE_HUB_FAILED',
+          message: result.error || 'Failed to leave hub',
+        });
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to process hub leave',
       });
     }
   }
