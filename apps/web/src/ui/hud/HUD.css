@@ -172,6 +172,26 @@
   text-align: center;
 }
 
+/* Credits Display */
+.credits-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 5px 10px;
+  background: var(--color-bg-secondary);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffd700;
+}
+
+.credits-icon {
+  font-size: 1rem;
+  color: #ffd700;
+  flex-shrink: 0;
+}
+
 /* Equipment Stats Section */
 .stats-section {
   display: flex;

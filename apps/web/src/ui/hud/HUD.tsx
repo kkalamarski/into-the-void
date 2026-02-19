@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { BIOME_DISPLAY_NAMES, BIOME_COLORS, BiomeType } from '@into-the-void/shared-types';
-import { GiShield, GiLightningFrequency, GiPoisonGas, GiCrossedSwords } from 'react-icons/gi';
+import { GiShield, GiLightningFrequency, GiPoisonGas, GiCrossedSwords, GiTwoCoins } from 'react-icons/gi';
 import { useCombatStore } from '../../store/combatStore';
 import { useCombatLogStore } from '../../store/combatLogStore';
 import { ActionBar } from './ActionBar';
@@ -127,6 +127,10 @@ export const HUD: React.FC = () => {
             <GiPoisonGas className="stat-icon" title="Hazard Resistance" />
             <span className="stat-value">{stats.hazardResistance}</span>
           </div>
+        </div>
+        <div className="credits-display">
+          <GiTwoCoins className="credits-icon" title="Credits" />
+          <span>{(player.credits ?? 0).toLocaleString()} cr</span>
         </div>
       </div>
 

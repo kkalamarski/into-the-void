@@ -403,6 +403,7 @@ gameSocket.on('player:respawn', ({ playerId, position, health, maxHealth }: { pl
       position,
       level: 1,
       inCombat: false,
+      credits: 0,
     });
   }
 });
