@@ -2,13 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { BIOME_DISPLAY_NAMES, BIOME_COLORS, BiomeType } from '@into-the-void/shared-types';
-import { GiShield, GiLightningFrequency, GiPoisonGas } from 'react-icons/gi';
+import { GiShield, GiLightningFrequency, GiPoisonGas, GiCrossedSwords } from 'react-icons/gi';
+import { useCombatStore } from '../../store/combatStore';
 import { ActionBar } from './ActionBar';
 import './HUD.css';
 
 export const HUD: React.FC = () => {
   const { player, zoneState, toggleInventory, toggleEquipment, toggleChat } = useGameStore();
   const { inventory } = useInventoryStore();
+  const { inCombat } = useCombatStore();
 
   if (!player) return null;
 
@@ -84,18 +86,6 @@ export const HUD: React.FC = () => {
             {player.xp} / {player.xpToNextLevel} XP
           </span>
         </div>
-        {displayedBiome && (
-          <div className="biome-indicator">
-            <span
-              className="biome-dot"
-              style={{ backgroundColor: BIOME_COLORS[displayedBiome] }}
-            />
-            <span className="biome-name">
-              {BIOME_DISPLAY_NAMES[displayedBiome]}
-              {zoneState?.fertilityType && ` (${zoneState.fertilityType})`}
-            </span>
-          </div>
-        )}
         <div className="stats-section">
           <div className="stat-row">
             <GiShield className="stat-icon" title="Armor" />
@@ -130,6 +120,24 @@ export const HUD: React.FC = () => {
         <ActionBar />
       </div>
 
+      {displayedBiome && (
+        <div className="biome-indicator">
+          <span
+            className="biome-dot"
+            style={{ backgroundColor: BIOME_COLORS[displayedBiome] }}
+          />
+          <span className="biome-name">
+            {BIOME_DISPLAY_NAMES[displayedBiome]}
+            {zoneState?.fertilityType && ` (${zoneState.fertilityType})`}
+          </span>
+        </div>
+      )}
+      {inCombat && (
+        <div className="combat-indicator">
+          <GiCrossedSwords className="combat-indicator-icon" />
+          <span className="combat-indicator-text">In Combat</span>
+        </div>
+      )}
       <div className="hud-minimap" aria-label="Minimap" />
     </div>
   );
