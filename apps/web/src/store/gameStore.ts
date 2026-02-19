@@ -294,3 +294,16 @@ gameSocket.on('player:left', ({ playerId }: { playerId: string }) => {
     worldScene.removePlayer(playerId);
   }
 });
+
+// Handle server errors (e.g., level-gated interaction rejection)
+gameSocket.on('error', ({ code, message }: { code: string; message: string }) => {
+  const chatMessage: ChatMessage = {
+    id: Date.now().toString(),
+    senderId: 'system',
+    senderName: 'System',
+    message: message,
+    channel: 'system',
+    timestamp: Date.now(),
+  };
+  useGameStore.getState().addChatMessage(chatMessage);
+});
