@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 43 of 45 (Click-to-Attack and Bug Fix)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-02-19 — v1.10 roadmap created (phases 43-45)
+Plan: 02
+Status: In progress
+Last activity: 2026-02-19 — Phase 43 Plan 01 complete (click-to-attack client wiring)
 
-Progress: [░░░░░░░░░░] 0% (v1.10 milestone — 0/3 phases)
+Progress: [░░░░░░░░░░] 5% (v1.10 milestone — 0.3/3 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 138 (Phases 1-42 complete)
+- Total plans completed: 139 (Phases 1-43 Plan 01 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~5 hours
 
@@ -37,6 +37,7 @@ Progress: [░░░░░░░░░░] 0% (v1.10 milestone — 0/3 phases)
 | v1.7 | 30-32 | 9 | 1 day |
 | v1.8 | 33-38 | 22 | 2 days |
 | v1.9 | 39-42 | 12 | 1 day |
+| v1.10 | 43-45 | TBD | in progress |
 
 **Recent Trend:** Stable, averaging 2-4 plans per phase
 
@@ -47,6 +48,7 @@ Progress: [░░░░░░░░░░] 0% (v1.10 milestone — 0/3 phases)
 | 41 | 03 | 4min | 1 | 2 |
 | 42 | 01 | 2min | 3 | 3 |
 | 42 | 02 | 3min | 3 | 5 |
+| 43 | 01 | 2min | 3 | 2 |
 
 ## Accumulated Context
 
@@ -55,6 +57,9 @@ Progress: [░░░░░░░░░░] 0% (v1.10 milestone — 0/3 phases)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [43-01]: gameobjectdown scene-level delegation used for entity click routing (not per-entity handlers)
+- [43-01]: Chebyshev distance (max(dx,dy)) for client range pre-check — matches server-side combat validation
+- [43-01]: lastClickedEntity flag guards pointerup pathfinding handler to prevent click-to-move on entity click
 - [42-02]: combat:start listener uses participants[] array to find player involvement and opponent
 - [42-02]: combat:damage and player:death added to socket.ts forwarded event list — were missing, blocking combatStore listeners
 - [Phase 40]: processCreatureCombatTick emits combat:damage to both player socket and zone — direct player notification plus zone broadcast
@@ -66,8 +71,9 @@ Key existing code to build on:
 - **CombatService** (`apps/game-server/src/game/combat.service.ts`): startCombat(), stopCombat(), session tracking, attack ticks
 - **AiService** (`apps/game-server/src/game/ai.service.ts`): 1-second tick loop with creature AI and combat tick integration
 - **tickCreatureAI** (`packages/game-logic/src/ai/creature-ai.ts`): FSM — predator/maniac aggro, chase, attack; aggro bug is here (FIX-01)
-- **EntityRenderer** (`apps/web/src/game/rendering/EntityRenderer.ts`): Phaser sprites for entities — needs pointer-down interactivity (CATK-04)
-- **ItemDefinition** (`packages/items`): Tool definitions — needs attackRange property (CATK-03)
+- **EntityRenderer** (`apps/web/src/game/rendering/EntityRenderer.ts`): NOW INTERACTIVE — sprites have setInteractive, containers store entityId/entityType
+- **WorldScene** (`apps/web/src/game/scenes/WorldScene.ts`): gameobjectdown handler + handleEntityClick() for click-to-attack
+- **ItemDefinition** (`packages/items`): Tool definitions with toolType and range properties
 - **HUD** (`apps/web/src/ui/hud/HUD.tsx`): React HUD — combat log panel goes here (CLOG-*)
 
 ### Pending Todos
@@ -84,13 +90,17 @@ None.
 - Server-side elevation validation not wired (client-side complete, server uses old validation)
 - Low priority — only relevant if elevation interacts with item pickup range
 
+**Pre-existing (not caused by Phase 43):**
+- game-server build error: game.gateway.ts:228 TS2345 — unresolved before Phase 43
+- ESLint config missing for web app — project-wide issue
+
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: v1.10 roadmap created — phases 43-45 defined
+Stopped at: Phase 43 Plan 01 complete — click-to-attack client wiring done
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 43`
+**Next action:** Execute 43-02-PLAN.md (aggro bug fix in creature-ai.ts)
 
 ---
-*Last updated: 2026-02-19 after v1.10 roadmap created*
+*Last updated: 2026-02-19 after Phase 43 Plan 01 complete*
