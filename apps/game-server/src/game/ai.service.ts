@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Creature } from '@into-the-void/shared-types';
+import { Creature, PlayerPublic } from '@into-the-void/shared-types';
 import { tickCreatureAI } from '@into-the-void/game-logic';
 import { Server } from 'socket.io';
 import { ZonesService } from '../zones/zones.service';
@@ -52,7 +52,160 @@ export class AiService implements OnModuleInit {
       return;
     }
     this.activeZones.add(zoneId);
+
+    // Immediate aggro check for already-present aggressive creatures
+    this.checkImmediateAggro(zoneId);
+
     this.scheduleNextTick(zoneId);
+  }
+
+  /**
+   * Check if a zone has an active AI tick loop.
+   */
+  isZoneActive(zoneId: string): boolean {
+    return this.activeZones.has(zoneId);
+  }
+
+  /**
+   * Immediately check and trigger aggro for all aggressive creatures in a zone.
+   * Called when a player joins a zone or entities respawn.
+   * This ensures predators/maniacs aggro without waiting for the next tick.
+   */
+  async checkImmediateAggro(zoneId: string): Promise<void> {
+    // Get all entities in the zone
+    const entities = await this.zonesService.getZoneEntities(zoneId);
+
+    // Filter to active aggressive creatures (predator/maniac) not already in combat
+    const aggressiveCreatures = entities.filter(
+      (e): e is Creature =>
+        e.type === 'creature' &&
+        e.active &&
+        (e as Creature).health > 0 &&
+        ((e as Creature).behavior === 'predator' || (e as Creature).behavior === 'maniac') &&
+        !this.combatService.isCreatureInCombat(e.id) &&
+        !(e as Creature).combatTarget,
+    );
+
+    if (aggressiveCreatures.length === 0) return;
+
+    // Get players in zone
+    const players = this.playerService.getPlayersInZone(zoneId);
+    if (players.length === 0) return;
+
+    const AGGRO_RADIUS = 5;
+
+    // Check each aggressive creature for nearby players
+    for (const creature of aggressiveCreatures) {
+      // Find closest player within aggro radius
+      let closestPlayer: PlayerPublic | null = null;
+      let closestDist = Infinity;
+
+      for (const player of players) {
+        const dist = Math.max(
+          Math.abs(creature.position.x - player.position.x),
+          Math.abs(creature.position.y - player.position.y),
+        );
+
+        if (dist <= AGGRO_RADIUS && dist < closestDist) {
+          closestDist = dist;
+          closestPlayer = player;
+        }
+      }
+
+      if (closestPlayer) {
+        // Trigger aggro immediately
+        await this.combatService.startCreatureCombat(
+          creature.id,
+          closestPlayer.id,
+          zoneId,
+        );
+
+        // Update creature's combatTarget
+        await this.zonesService.updateEntity(zoneId, creature.id, {
+          combatTarget: closestPlayer.id,
+        } as Partial<Creature>);
+      }
+    }
+  }
+
+  /**
+   * Check aggro specifically for a newly-joined player.
+   * More efficient than full zone scan — only checks creatures near this player.
+   */
+  async checkImmediateAggroForPlayer(zoneId: string, playerId: string): Promise<void> {
+    const player = this.playerService.getPlayerById(playerId);
+    if (!player || player.position.zoneId !== zoneId) return;
+
+    const entities = await this.zonesService.getZoneEntities(zoneId);
+    const AGGRO_RADIUS = 5;
+
+    // Find aggressive creatures near this specific player
+    const aggressiveCreatures = entities.filter(
+      (e): e is Creature =>
+        e.type === 'creature' &&
+        e.active &&
+        (e as Creature).health > 0 &&
+        ((e as Creature).behavior === 'predator' || (e as Creature).behavior === 'maniac') &&
+        !this.combatService.isCreatureInCombat(e.id) &&
+        !(e as Creature).combatTarget,
+    );
+
+    for (const creature of aggressiveCreatures) {
+      const dist = Math.max(
+        Math.abs(creature.position.x - player.position.x),
+        Math.abs(creature.position.y - player.position.y),
+      );
+
+      if (dist <= AGGRO_RADIUS) {
+        await this.combatService.startCreatureCombat(creature.id, playerId, zoneId);
+        await this.zonesService.updateEntity(zoneId, creature.id, {
+          combatTarget: playerId,
+        } as Partial<Creature>);
+      }
+    }
+  }
+
+  /**
+   * Check if a newly spawned/respawned creature should immediately aggro.
+   * Called by the respawn tick loop when a creature materializes.
+   */
+  async checkCreatureAggro(creature: Creature, zoneId: string): Promise<void> {
+    // Only aggressive creatures
+    if (creature.behavior !== 'predator' && creature.behavior !== 'maniac') return;
+
+    // Already in combat?
+    if (this.combatService.isCreatureInCombat(creature.id) || creature.combatTarget) return;
+
+    // Zone must be active (has players)
+    if (!this.activeZones.has(zoneId)) return;
+
+    const players = this.playerService.getPlayersInZone(zoneId);
+    if (players.length === 0) return;
+
+    const AGGRO_RADIUS = 5;
+
+    // Find closest player within aggro radius
+    let closestPlayer: PlayerPublic | null = null;
+    let closestDist = Infinity;
+
+    for (const player of players) {
+      const dist = Math.max(
+        Math.abs(creature.position.x - player.position.x),
+        Math.abs(creature.position.y - player.position.y),
+      );
+
+      if (dist <= AGGRO_RADIUS && dist < closestDist) {
+        closestDist = dist;
+        closestPlayer = player;
+      }
+    }
+
+    if (closestPlayer) {
+      await this.combatService.startCreatureCombat(creature.id, closestPlayer.id, zoneId);
+      await this.zonesService.updateEntity(zoneId, creature.id, {
+        combatTarget: closestPlayer.id,
+      } as Partial<Creature>);
+    }
   }
 
   /**
