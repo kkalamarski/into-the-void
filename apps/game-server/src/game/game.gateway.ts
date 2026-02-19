@@ -26,6 +26,7 @@ import {
   CharacterStats,
 } from '@into-the-void/shared-types';
 import { computeCharStats } from '@into-the-void/game-logic';
+import { ItemRegistry } from '@into-the-void/items';
 import { EquipmentJson } from '@into-the-void/database';
 
 @WebSocketGateway({
@@ -660,6 +661,167 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       client.emit('error', {
         code: 'SERVER_ERROR',
         message: 'Failed to start combat',
+      });
+    }
+  }
+
+  @SubscribeMessage('respawn:sos')
+  async handleRespawnSOS(
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      // Validate player is dead
+      if (!this.playerService.isDead(player.id)) {
+        client.emit('error', { code: 'NOT_DEAD', message: 'You are not in Emergency Lockdown Mode' });
+        return;
+      }
+
+      // Perform S.O.S. respawn (full health, teleport to faction hub)
+      await this.playerService.respawnWithSOS(player.id);
+
+      // Update 3x3 room subscriptions for new zone
+      const respawnedPlayer = this.playerService.getPlayerById(player.id);
+      if (respawnedPlayer) {
+        this.updatePlayerRooms(client, respawnedPlayer.position.zoneId);
+
+        // Activate AI for the new zone
+        this.aiService.activateZone(respawnedPlayer.position.zoneId);
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to process S.O.S. respawn',
+      });
+    }
+  }
+
+  @SubscribeMessage('respawn:reboot')
+  async handleRespawnReboot(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { itemInstanceId: string },
+  ): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      // Validate player is dead
+      if (!this.playerService.isDead(player.id)) {
+        client.emit('error', { code: 'NOT_DEAD', message: 'You are not in Emergency Lockdown Mode' });
+        return;
+      }
+
+      // Validate item exists in inventory
+      const inventory = this.inventoryService.getInventory(player.id);
+      if (!inventory) {
+        client.emit('error', { code: 'INVENTORY_ERROR', message: 'Inventory not loaded' });
+        return;
+      }
+
+      const item = inventory.items.find(i => i.instanceId === payload.itemInstanceId);
+      if (!item) {
+        client.emit('error', { code: 'ITEM_NOT_FOUND', message: 'Item not found in inventory' });
+        return;
+      }
+
+      // Validate item is an emergency reboot kit
+      const itemDef = ItemRegistry.get(item.itemId);
+      if (!itemDef) {
+        client.emit('error', { code: 'INVALID_ITEM', message: 'Unknown item' });
+        return;
+      }
+
+      const rebootEffect = itemDef.effects?.find(
+        e => e.trigger === 'on_use' && e.effect.type === 'emergency_reboot'
+      );
+      if (!rebootEffect || rebootEffect.effect.type !== 'emergency_reboot') {
+        client.emit('error', { code: 'INVALID_ITEM', message: 'Item is not an Emergency Reboot Kit' });
+        return;
+      }
+
+      const healPercent = rebootEffect.effect.healPercent;
+
+      // Remove item from inventory (consume it)
+      await this.inventoryService.removeItem(player.id, payload.itemInstanceId);
+
+      // Perform reboot respawn (partial health, stay in place)
+      await this.playerService.respawnWithReboot(player.id, healPercent);
+
+      // Send updated inventory
+      const updatedInventory = this.inventoryService.getInventory(player.id);
+      if (updatedInventory) {
+        client.emit('inventory:update', updatedInventory);
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to process reboot respawn',
+      });
+    }
+  }
+
+  @SubscribeMessage('portal:use')
+  async handlePortalUse(@ConnectedSocket() client: Socket): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      // Validate player is standing on a portal tile (TileId.PORTAL = 16)
+      const zoneState = await this.gameService.getZoneState(player.position.zoneId);
+      const tileId = zoneState.chunk.tiles[player.position.y]?.[player.position.x];
+
+      if (tileId !== 16) {
+        client.emit('error', {
+          code: 'NOT_ON_PORTAL',
+          message: 'Must stand on a portal to use it',
+        });
+        return;
+      }
+
+      // Teleport to faction hub
+      const result = await this.playerService.teleportToHub(player.id);
+
+      if (result.success && result.oldZoneId && result.newZoneId) {
+        // Update 3x3 room subscriptions for new zone
+        this.updatePlayerRooms(client, result.newZoneId);
+
+        // Notify old zone that player left
+        this.server.to(result.oldZoneId).emit('player:left', { playerId: player.id });
+
+        // Deactivate old zone if no players remain
+        if (this.playerService.getPlayersInZone(result.oldZoneId).length === 0) {
+          this.aiService.deactivateZone(result.oldZoneId);
+        }
+
+        // Activate AI for the hub zone
+        this.aiService.activateZone(result.newZoneId);
+
+        // Send new zone state to player
+        const newZoneState = await this.gameService.getZoneState(result.newZoneId);
+        client.emit('zone:state', newZoneState);
+
+        // Notify new zone of player arrival
+        client.to(result.newZoneId).emit('player:joined', {
+          id: player.id,
+          name: player.name,
+          faction: player.faction,
+          position: player.position,
+          level: player.level,
+          inCombat: player.inCombat,
+          credits: player.credits,
+        });
+      } else {
+        client.emit('error', {
+          code: 'PORTAL_FAILED',
+          message: result.error || 'Failed to use portal',
+        });
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to process portal use',
       });
     }
   }
