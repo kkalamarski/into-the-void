@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 47 of 50 (Hub Travel)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-19 — Phase 46 complete: credits currency, hub zones, safe zone enforcement
+Plan: 1 of TBD in current phase
+Status: In progress
+Last activity: 2026-02-19 — 47-01: Portal tile type + placement in open-world chunks
 
 Progress: [██░░░░░░░░] 20% (v1.11 milestone — 1/5 phases)
 
@@ -58,6 +58,10 @@ Recent decisions affecting current work:
 - [46-03]: Safe Zone indicator positioned top-right (mutually exclusive with combat indicator)
 - [Phase 46]: Credits added to PlayerPublic (not kept private) - balance visible to other clients at this stage
 - [Phase 46]: Default 1000 credits set at DB schema level to ensure consistency
+- [47-01]: Portal numeric ID = 16 (next after CRATER_DEBRIS = 15 in TileId enum)
+- [47-01]: 1 portal per open-world chunk; hub chunks unaffected (generateHubChunk returns structures: [])
+- [47-01]: Portal placement range x/y 20-44 (center third of 64x64 chunk)
+- [47-01]: tile_portal sprite key reserved; renderer falls back gracefully until sprite added
 
 ### Pending Todos
 
@@ -76,10 +80,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Phase 46 complete — credits currency, hub zone infrastructure, safe zone enforcement all verified
+Stopped at: Completed 47-hub-travel/47-01-PLAN.md — portal tile type and placement
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 47`
+**Next action:** Execute 47-02 (portal interaction/travel logic)
 
 ---
-*Last updated: 2026-02-19 after Phase 46 execution complete*
+*Last updated: 2026-02-19 after 47-01 execution complete*
