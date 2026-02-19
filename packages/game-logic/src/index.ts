@@ -7,6 +7,7 @@ export { findPathWithElevation } from './movement/pathfinding';
 // Combat
 export * from './combat/damage';
 export * from './combat/turn-order';
+export { FACTION_RESPAWN_COORDS, getFactionRespawnPosition } from './combat/respawn';
 
 // Interaction
 export * from './interaction/interaction';
