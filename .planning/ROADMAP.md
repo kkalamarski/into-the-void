@@ -415,12 +415,12 @@ Plans:
   3. Herbivores continue to flee from players without change from v1.8 — no combat behavior added
   4. A player who moves away from a creature is chased up to ~10 tiles from the creature's spawn point — beyond that distance the creature returns to spawn
   5. Combat ends when either combatant dies, the player leaves range, or the creature exceeds leash distance — both sides exit combat state
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 40-01-PLAN.md — Extend tickCreatureAI FSM with attacking/chasing/returning states; add aggro detection for predator/maniac
-- [ ] 40-02-PLAN.md — Add creature attack logic to AI tick; wire damage to player via combat:damage event
-- [ ] 40-03-PLAN.md — Implement leash system with spawn point tracking; creature return behavior
+- [ ] 40-01-PLAN.md — Add spawnPosition and combatTarget to Creature interface; extend tickCreatureAI FSM with combat states and aggro detection
+- [ ] 40-02-PLAN.md — Add creature combat session tracking to CombatService; wire AiService to handle FSM aggro/attack intents
+- [ ] 40-03-PLAN.md — Complete leash system with return-to-spawn behavior and combat termination
 
 #### Phase 41: Player Death and Respawn
 
@@ -507,4 +507,4 @@ Phases execute in numeric order: 39 -> 40 -> 41 -> 42
 **Total:** 42 phases (38 complete, 4 remaining)
 
 ---
-*Last updated: 2026-02-19 after Phase 39 planning*
+*Last updated: 2026-02-19 after Phase 40 planning*
