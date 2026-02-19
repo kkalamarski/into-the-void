@@ -537,12 +537,12 @@ Plans:
   2. The four faction hub zones exist as server-side instanced areas separate from open-world coordinates — loading into a hub does not replace or corrupt open-world zone state
   3. A hub zone returns no combat events and no hostile creature spawns — attempting to start combat in a hub is rejected by the server
   4. Player can move freely inside a hub using WASD and click-to-move — the existing movement system works without modification
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 46-01: Credits DB column and HUD display
-- [ ] 46-02: Hub zone definitions and instancing (4 faction hubs)
-- [ ] 46-03: Hub safe zone enforcement (no combat, no hostile spawns)
+- [ ] 46-01-PLAN.md — Credits DB column and HUD display
+- [ ] 46-02-PLAN.md — Hub zone definitions and instancing (4 faction hubs)
+- [ ] 46-03-PLAN.md — Hub safe zone enforcement (no combat, no hostile spawns)
 
 #### Phase 47: Hub Travel
 
@@ -667,7 +667,7 @@ Phases execute in numeric order: 46 -> 47 -> 48 -> 49 -> 50
 | 43. Click-to-Attack and Bug Fix | v1.10 | 2/2 | Complete | 2026-02-19 |
 | 44. Target Selection UI | v1.10 | 2/2 | Complete | 2026-02-19 |
 | 45. Combat Log | v1.10 | 1/1 | Complete | 2026-02-19 |
-| 46. Currency and Hub Foundation | v1.11 | TBD | Not started | - |
+| 46. Currency and Hub Foundation | v1.11 | 0/3 | Not started | - |
 | 47. Hub Travel | v1.11 | TBD | Not started | - |
 | 48. NPC Definition System and Hub Spawns | v1.11 | TBD | Not started | - |
 | 49. NPC Interaction Window | v1.11 | TBD | Not started | - |
@@ -676,4 +676,4 @@ Phases execute in numeric order: 46 -> 47 -> 48 -> 49 -> 50
 **Total:** 50 phases (45 complete, 5 remaining)
 
 ---
-*Last updated: 2026-02-19 after v1.11 roadmap creation*
+*Last updated: 2026-02-19 after Phase 46 planning*
