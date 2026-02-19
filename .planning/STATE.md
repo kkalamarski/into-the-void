@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 47 of 50 (Hub Travel)
-Plan: 3 of TBD in current phase
+Plan: 4 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-19 — 47-03: Hub recall hotkey (H key) and leave-hub mechanic
+Last activity: 2026-02-19 — 47-04: Client-side portal tile detection (emit portal:use on tile 16)
 
 Progress: [██░░░░░░░░] 20% (v1.11 milestone — 1/5 phases)
 
@@ -68,6 +68,8 @@ Recent decisions affecting current work:
 - [47-03]: H key recall delegates to teleportToHub (same as portal:use) — saves position and teleports to faction hub
 - [47-03]: teleportFromHub clears saved position after use — one-way trip, returning to hub re-saves
 - [47-03]: portal:use in hub delegates to handleHubLeave via method call (no code duplication)
+- [47-04]: Portal check in WorldScene runs on reconciling=false only; debounced by position key (clears on non-portal)
+- [47-04]: Portal travel fully wired end-to-end (open world <-> hub) via tile 16 detection + portal:use emit
 
 ### Pending Todos
 
@@ -86,10 +88,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 47-hub-travel/47-03-PLAN.md — hub recall hotkey and leave-hub mechanic
+Stopped at: Completed 47-hub-travel/47-04-PLAN.md — client-side portal tile detection
 Resume file: None
 
 **Next action:** Execute next plan in hub travel phase
 
 ---
-*Last updated: 2026-02-19 after 47-03 execution complete*
+*Last updated: 2026-02-19 after 47-04 execution complete*
