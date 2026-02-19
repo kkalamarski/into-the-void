@@ -168,6 +168,7 @@ export class ZonesService implements OnModuleInit {
         maxHealth: creatureDef.baseHealth,
         level,
         behavior: creatureDef.behavior,
+        spawnPosition: { x: spawn.x, y: spawn.y },
       };
       return creature;
     }
