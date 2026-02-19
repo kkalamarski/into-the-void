@@ -8,6 +8,7 @@ import { InventoryService } from './inventory.service';
 import { StorageService } from './storage.service';
 import { EntityService } from './entity.service';
 import { AiService } from './ai.service';
+import { CombatService } from './combat.service';
 import { ZonesModule } from '../zones/zones.module';
 
 @Module({
@@ -22,7 +23,7 @@ import { ZonesModule } from '../zones/zones.module';
     }),
     ZonesModule,
   ],
-  providers: [GameGateway, GameService, PlayerService, InventoryService, StorageService, EntityService, AiService],
-  exports: [GameService, PlayerService, InventoryService, StorageService, EntityService, AiService],
+  providers: [GameGateway, GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService],
+  exports: [GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService],
 })
 export class GameModule {}
