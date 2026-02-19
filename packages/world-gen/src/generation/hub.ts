@@ -2,6 +2,13 @@ import { ChunkData, BiomeType, FertilityType, ZONE_SIZE } from '@into-the-void/s
 
 const PORTAL_TILE_ID = 16; // TileId.PORTAL from terrain.ts
 
+/** NPC spawn position within a hub */
+export interface NpcSpawn {
+  npcId: string;
+  x: number;
+  y: number;
+}
+
 /** Hub layout configuration per faction */
 export interface HubConfig {
   biome: BiomeType;
@@ -11,6 +18,8 @@ export interface HubConfig {
   wallTile: number;
   displayName: string;
   fertilityType: FertilityType;
+  /** NPC spawn positions for this hub */
+  npcSpawns: readonly NpcSpawn[];
 }
 
 const HUB_CONFIGS: Record<string, HubConfig> = {
@@ -20,6 +29,13 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
     wallTile: 3,                  // CRYSTAL_FORMATION (has 256x256 sprite)
     displayName: 'Canopy Station',
     fertilityType: 'Normal',
+    npcSpawns: [
+      { npcId: 'npc_verdant_trader', x: 20, y: 20 },   // NW area - trader
+      { npcId: 'npc_verdant_guard', x: 32, y: 15 },    // N of center - guard
+      { npcId: 'npc_verdant_rep', x: 44, y: 20 },      // NE area - faction rep
+      { npcId: 'npc_verdant_ambient', x: 20, y: 44 },  // SW area - ambient
+      { npcId: 'npc_verdant_service', x: 44, y: 44 },  // SE area - medical
+    ],
   },
   hub_helix: {
     biome: 'volcanic_ridge',      // Ironhold Station - industrial, volcanic mountain
@@ -27,6 +43,13 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
     wallTile: 1,                  // VOID_WALL (has 256x256 sprite)
     displayName: 'Ironhold Station',
     fertilityType: 'Normal',
+    npcSpawns: [
+      { npcId: 'npc_helix_trader', x: 20, y: 20 },
+      { npcId: 'npc_helix_guard', x: 32, y: 15 },
+      { npcId: 'npc_helix_rep', x: 44, y: 20 },
+      { npcId: 'npc_helix_ambient', x: 20, y: 44 },
+      { npcId: 'npc_helix_service', x: 44, y: 44 },
+    ],
   },
   hub_nexus: {
     biome: 'void_plains',         // Meridian Station - neutral, transactional
@@ -34,6 +57,13 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
     wallTile: 1,                  // VOID_WALL (has 256x256 sprite)
     displayName: 'Meridian Station',
     fertilityType: 'Normal',
+    npcSpawns: [
+      { npcId: 'npc_nexus_trader', x: 20, y: 20 },
+      { npcId: 'npc_nexus_guard', x: 32, y: 15 },
+      { npcId: 'npc_nexus_rep', x: 44, y: 20 },
+      { npcId: 'npc_nexus_ambient', x: 20, y: 44 },
+      { npcId: 'npc_nexus_service', x: 44, y: 44 },
+    ],
   },
   hub_neutral: {
     biome: 'void_plains',         // Unaffiliated go to Meridian (neutral welcome)
@@ -41,6 +71,13 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
     wallTile: 1,                  // VOID_WALL
     displayName: 'Meridian Station',
     fertilityType: 'Normal',
+    npcSpawns: [
+      { npcId: 'npc_neutral_trader', x: 20, y: 20 },
+      { npcId: 'npc_neutral_guard', x: 32, y: 15 },
+      { npcId: 'npc_neutral_rep', x: 44, y: 20 },
+      { npcId: 'npc_neutral_ambient', x: 20, y: 44 },
+      { npcId: 'npc_neutral_service', x: 44, y: 44 },
+    ],
   },
 };
 
