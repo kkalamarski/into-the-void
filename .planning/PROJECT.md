@@ -23,15 +23,19 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~15,000+ LOC TypeScript
 
-## Current Milestone: v1.10 Combat UX
+## Current Milestone: v1.11 NPCs & Trading
 
-**Goal:** Complete the combat user experience with click-to-attack targeting, visual target selection, and combat log feedback.
+**Goal:** Implement NPC system with faction orbital hubs, interaction window, simple dialogue, and trading for buy/sell commerce.
 
 **Target features:**
-- Click-to-attack: click creature with combat tool to initiate auto-attack
-- Per-tool attack ranges (melee=1 tile, ranged=3-5 tiles based on item definition)
-- Target selection UI: visual indicator showing which entity is targeted
-- Combat log: scrollable text log showing damage dealt/received with timestamps
+- Currency system (credits)
+- Orbital faction hubs (4 instanced stations: Verdant, Helix, Nexus, Unaffiliated)
+- Hub travel via portal structures + recall ability
+- NPC definition system with types and fixed spawns
+- Core NPC types: Trader, Guard, Faction Rep, Ambient, Service
+- Interaction window (click NPC → modal with portrait, dialogue, actions)
+- Simple linear dialogue
+- Trading system (buy/sell with credit prices)
 
 ## Core Value
 
@@ -105,24 +109,34 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Player death and respawn at faction hub — v1.9
 - ✓ Floating damage numbers above entities — v1.9
 - ✓ "In Combat" HUD indicator — v1.9
+- ✓ Click-to-attack: player clicks creature with combat tool equipped to start auto-attack — v1.10
+- ✓ Per-tool attack ranges: melee tools 1 tile, ranged tools 3-5 tiles — v1.10
+- ✓ Target selection UI: visual highlight/indicator on targeted entity — v1.10
+- ✓ Combat log panel: scrollable text log of damage events with timestamps — v1.10
 
 ### Active
 
-- [ ] Click-to-attack: player clicks creature with combat tool equipped to start auto-attack
-- [ ] Per-tool attack ranges: melee tools 1 tile, ranged tools 3-5 tiles
-- [ ] Target selection UI: visual highlight/indicator on targeted entity
-- [ ] Combat log panel: scrollable text log of damage events with timestamps
+- [ ] Currency system with credits
+- [ ] Orbital faction hubs (4 instanced stations)
+- [ ] Hub travel via portals + recall ability
+- [ ] NPC definition system with types and spawns
+- [ ] NPC interaction window with portrait and dialogue
+- [ ] Trading system with buy/sell interface
 
 ### Out of Scope
 
 - OAuth/social login — email/password sufficient
 - Sprite-based rendering — color tiles only until art pipeline ready
 - PvP combat — PvE first, PvP in future milestone
-- Active combat abilities — auto-attack only for v1.9, abilities in v2.0
+- Active combat abilities — auto-attack only, abilities in v2.0
 - Status effects / debuffs — future expansion
 - Chat system — separate milestone
 - Sound/music — polish phase
 - Mobile controls — web-first
+- Surface faction HQs (Canopy, Ironhold, Meridian) — orbital first, surface later
+- Shared city at 0,0 — designed in future milestone
+- Quest/mission system — v1.12+ (NPC framework first)
+- Branching dialogue — simple linear for v1.11
 
 ## Constraints
 
@@ -153,4 +167,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-19 after v1.10 milestone start*
+*Last updated: 2026-02-19 after v1.11 milestone start*
