@@ -3,35 +3,85 @@
 **Defined:** 2026-02-17
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.10 Requirements
+## v1.11 Requirements
 
-Requirements for Combat UX milestone. Each maps to roadmap phases.
+Requirements for NPCs & Trading milestone. Each maps to roadmap phases.
+
+### Currency
+
+- [ ] **CURR-01**: Player has credits balance visible in HUD
+- [ ] **CURR-02**: Credits persist across sessions (stored in database)
+- [ ] **CURR-03**: Player earns credits by selling items to traders
+- [ ] **CURR-04**: Player spends credits when buying items from traders
+
+### Hubs
+
+- [ ] **HUB-01**: Each faction has an orbital station hub (4 total: Verdant, Helix, Nexus, Unaffiliated)
+- [ ] **HUB-02**: Hubs are instanced areas separate from the open world
+- [ ] **HUB-03**: Hubs are safe zones (no combat, no hostile creatures)
+- [ ] **HUB-04**: NPCs spawn at fixed positions within hubs
+- [ ] **HUB-05**: Player can walk around hub using existing movement system
+
+### Travel
+
+- [ ] **TRVL-01**: Portal structures exist in open world zones
+- [ ] **TRVL-02**: Interacting with portal teleports player to their faction's hub
+- [ ] **TRVL-03**: Player has recall ability (hotkey) to return to home hub from anywhere
+- [ ] **TRVL-04**: Player can leave hub to return to their last world position
+
+### NPC Definition
+
+- [ ] **NPCD-01**: NPC definition system with type, name, dialogue, inventory
+- [ ] **NPCD-02**: 5 NPC types implemented: Trader, Guard, Faction Rep, Ambient, Service
+- [ ] **NPCD-03**: NPCs have visual representation (sprite or color placeholder)
+- [ ] **NPCD-04**: NPCs are non-hostile and cannot be attacked
+
+### NPC Interaction
+
+- [ ] **NPCI-01**: Clicking NPC opens interaction window (modal)
+- [ ] **NPCI-02**: Interaction window shows NPC portrait, name, and type
+- [ ] **NPCI-03**: Interaction window shows dialogue text
+- [ ] **NPCI-04**: Action buttons appear based on NPC type (Trade for Traders, etc.)
+- [ ] **NPCI-05**: Player can close interaction window to resume gameplay
+
+### Trading
+
+- [ ] **TRAD-01**: Trader NPCs have inventory of items for sale
+- [ ] **TRAD-02**: Player can view trader's inventory with credit prices
+- [ ] **TRAD-03**: Player can buy items (credits deducted, item added to inventory)
+- [ ] **TRAD-04**: Player can sell items from inventory (item removed, credits added)
+- [ ] **TRAD-05**: Buy and sell prices differ (sell price lower than buy price)
+- [ ] **TRAD-06**: Transactions validate sufficient credits and inventory space
+
+## v1.10 Requirements (Complete)
+
+Requirements for Combat UX milestone. All complete.
 
 ### Bug Fixes
 
-- [ ] **FIX-01**: Predator/maniac creatures properly aggro on nearby players
+- [x] **FIX-01**: Predator/maniac creatures properly aggro on nearby players
 
 ### Click-to-Attack
 
-- [ ] **CATK-01**: Player can click a creature with a combat tool equipped to start auto-attacking
-- [ ] **CATK-02**: Attack only initiates if creature is within tool's attack range
-- [ ] **CATK-03**: Combat tools have per-tool attack ranges (melee=1 tile, ranged=3-5 tiles)
-- [ ] **CATK-04**: Entity sprites are interactive (clickable) in Phaser
+- [x] **CATK-01**: Player can click a creature with a combat tool equipped to start auto-attacking
+- [x] **CATK-02**: Attack only initiates if creature is within tool's attack range
+- [x] **CATK-03**: Combat tools have per-tool attack ranges (melee=1 tile, ranged=3-5 tiles)
+- [x] **CATK-04**: Entity sprites are interactive (clickable) in Phaser
 
 ### Target Selection
 
-- [ ] **TARG-01**: Targeted entity shows visual highlight (glow, outline, or marker)
-- [ ] **TARG-02**: Target indicator persists while in combat with that entity
-- [ ] **TARG-03**: Target clears when combat ends (kill, death, leash, out of range)
-- [ ] **TARG-04**: Clicking a different creature switches target
+- [x] **TARG-01**: Targeted entity shows visual highlight (glow, outline, or marker)
+- [x] **TARG-02**: Target indicator persists while in combat with that entity
+- [x] **TARG-03**: Target clears when combat ends (kill, death, leash, out of range)
+- [x] **TARG-04**: Clicking a different creature switches target
 
 ### Combat Log
 
-- [ ] **CLOG-01**: Combat log panel displays damage dealt by player
-- [ ] **CLOG-02**: Combat log panel displays damage received by player
-- [ ] **CLOG-03**: Log entries include timestamp and damage amount
-- [ ] **CLOG-04**: Log is scrollable and shows recent history
-- [ ] **CLOG-05**: Log can be toggled visible/hidden
+- [x] **CLOG-01**: Combat log panel displays damage dealt by player
+- [x] **CLOG-02**: Combat log panel displays damage received by player
+- [x] **CLOG-03**: Log entries include timestamp and damage amount
+- [x] **CLOG-04**: Log is scrollable and shows recent history
+- [x] **CLOG-05**: Log can be toggled visible/hidden
 
 ## v1.9 Requirements (Complete)
 
@@ -249,6 +299,30 @@ Requirements for Character Stats milestone.
 
 Deferred to future releases. Not in current roadmap.
 
+### Quests (v1.12+)
+
+- **QUST-01**: Quest NPCs can offer missions to players
+- **QUST-02**: Player can accept/decline quests
+- **QUST-03**: Quest objectives tracked in UI
+- **QUST-04**: Quest completion grants rewards
+
+### Advanced Dialogue
+
+- **DIAL-01**: Branching dialogue with player choices
+- **DIAL-02**: Dialogue choices affect NPC responses
+- **DIAL-03**: Dialogue state persists (remember past conversations)
+
+### Surface Locations
+
+- **SURF-01**: Surface faction HQs accessible (Canopy, Ironhold, Meridian)
+- **SURF-02**: Shared city at coordinates 0,0
+
+### NPC Enhancements
+
+- **NPCE-01**: NPC schedules/routines (move around hub)
+- **NPCE-02**: Reputation system affecting prices/dialogue
+- **NPCE-03**: Rare world NPCs (event spawns)
+
 ### Combat Abilities (v2.0+)
 
 - **CABI-01**: Active combat abilities (power strike, block, etc.)
@@ -330,29 +404,47 @@ Explicitly excluded. Documented to prevent scope creep.
 | Free-movement (non-grid) WASD | Breaks client-side prediction model |
 | Camera rotation | Sprites drawn for fixed angle |
 | Cross-zone pathfinding | Requires multi-zone graph |
+| Quest/mission system | NPC framework first, quests in v1.12+ |
+| Branching dialogue | Simple linear for v1.11, complex later |
+| Surface faction HQs | Orbital stations first, surface later |
+| Shared city at 0,0 | Future milestone |
+| NPC combat | NPCs are non-hostile for v1.11 |
+| NPC schedules/routines | Static spawns for v1.11 |
+| Reputation system | Future milestone |
 
 ## Traceability
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-### v1.10 Combat UX
+### v1.11 NPCs & Trading
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | Phase 43 | Pending |
-| CATK-01 | Phase 43 | Pending |
-| CATK-02 | Phase 43 | Pending |
-| CATK-03 | Phase 43 | Pending |
-| CATK-04 | Phase 43 | Pending |
-| TARG-01 | Phase 44 | Pending |
-| TARG-02 | Phase 44 | Pending |
-| TARG-03 | Phase 44 | Pending |
-| TARG-04 | Phase 44 | Pending |
-| CLOG-01 | Phase 45 | Pending |
-| CLOG-02 | Phase 45 | Pending |
-| CLOG-03 | Phase 45 | Pending |
-| CLOG-04 | Phase 45 | Pending |
-| CLOG-05 | Phase 45 | Pending |
+| (populated by roadmapper) | | |
+
+**Coverage:**
+- v1.11 requirements: 24 total
+- Mapped to phases: TBD
+- Unmapped: TBD
+
+### v1.10 Combat UX (Complete)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| FIX-01 | Phase 43 | Complete |
+| CATK-01 | Phase 43 | Complete |
+| CATK-02 | Phase 43 | Complete |
+| CATK-03 | Phase 43 | Complete |
+| CATK-04 | Phase 43 | Complete |
+| TARG-01 | Phase 44 | Complete |
+| TARG-02 | Phase 44 | Complete |
+| TARG-03 | Phase 44 | Complete |
+| TARG-04 | Phase 44 | Complete |
+| CLOG-01 | Phase 45 | Complete |
+| CLOG-02 | Phase 45 | Complete |
+| CLOG-03 | Phase 45 | Complete |
+| CLOG-04 | Phase 45 | Complete |
+| CLOG-05 | Phase 45 | Complete |
 
 **Coverage:**
 - v1.10 requirements: 14 total
@@ -451,4 +543,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-19 after v1.10 requirements added (phases 43-45)*
+*Last updated: 2026-02-19 after v1.11 NPCs & Trading requirements added*
