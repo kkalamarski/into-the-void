@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.9 Combat System — Phase 39 ready for planning
+**Current focus:** v1.9 Combat System — Phase 39, Plan 01 complete
 
 ## Current Position
 
 Phase: 39 - Combat Core and Damage Calculation
-Plan: —
-Status: Ready for planning
-Last activity: 2026-02-19 — v1.9 roadmap created
+Plan: 02
+Status: In progress
+Last activity: 2026-02-19 — 39-01 complete (CombatService + combat:start handler)
 
-Progress: [░░░░░░░░░░] 0% (v1.9 milestone — 0/4 phases complete)
+Progress: [█░░░░░░░░░] 10% (v1.9 milestone — Phase 39 Plan 01/4 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 126 (Phases 1-38 complete)
+- Total plans completed: 127 (Phases 1-39-01 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~5 hours
 
@@ -36,7 +36,7 @@ Progress: [░░░░░░░░░░] 0% (v1.9 milestone — 0/4 phases com
 | v1.6 | 25-29 | 16 | 2 days |
 | v1.7 | 30-32 | 9 | 1 day |
 | v1.8 | 33-38 | 22 | 2 days |
-| v1.9 | 39-42 | TBD | (starting) |
+| v1.9 | 39-42 | TBD | (in progress) |
 
 **Recent Trend:** Stable, averaging 2-4 plans per phase
 
@@ -44,6 +44,7 @@ Progress: [░░░░░░░░░░] 0% (v1.9 milestone — 0/4 phases com
 |-------|------|----------|-------|-------|
 | 38 | 03 | 2min | 3 | 2 |
 | 38 | 04 | 2min | 1 | 1 |
+| 39 | 01 | 3min | 3 | 4 |
 
 ## Accumulated Context
 
@@ -69,10 +70,14 @@ Recent decisions affecting current work:
 - [38-03]: zoneId presence on spawnEntity() distinguishes zone:state (initial load, no fade) from entity:spawn (runtime respawn, 400ms Linear fade)
 - [38-03]: this.elevationOffset (12px hover constant) stored as 'elevationOffset' data key — yield bar Y uses hover offset, not terrain height offset
 - [38-04]: gameSocket.on('error') uses channel: 'system' — consistent with existing system message convention; single catch-all for all server-emitted errors
+- [39-01]: CombatSession stored in-memory Map (not DB) — sessions do not survive server restart; acceptable for real-time combat loop where reconnect starts fresh
+- [39-01]: combat:start emit uses CombatState shape with empty participants[] — participants populated in Plan 02 when auto-attack loop runs
+- [39-01]: stopCombat() calls setInCombat(false) — single source of truth for inCombat flag; gateway disconnect path calls combatService first
 
 ### v1.9 Combat System Context
 
 Key existing code to build on:
+- **CombatService** (`apps/game-server/src/game/combat.service.ts`): Session tracking, startCombat() with full validation chain, exported for AiService
 - **AiService** (`apps/game-server/src/game/ai.service.ts`): 1-second tick loop with self-rescheduling setTimeout, scoped to active zones
 - **tickCreatureAI** (`packages/game-logic/src/ai/creature-ai.ts`): Pure FSM with herbivore/omnivore/predator/maniac branches — currently predator/maniac just wander
 - **EntityService** (`apps/game-server/src/game/entity.service.ts`): Handles tool interaction, loot drops, entity death
@@ -103,10 +108,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: v1.9 roadmap created
+Stopped at: Completed 39-01-PLAN.md
 Resume file: None
 
-**Next action:** Plan Phase 39 with `/gsd:plan-phase 39`
+**Next action:** Execute 39-02-PLAN.md (auto-attack loop)
 
 ---
-*Last updated: 2026-02-19 after v1.9 roadmap created*
+*Last updated: 2026-02-19 after 39-01 complete*
