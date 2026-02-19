@@ -369,9 +369,10 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 38-01-PLAN.md — Strip AI state from entity:batch broadcasts; wire entity:batch to WorldScene
-- [ ] 38-02-PLAN.md — Add perception gating to EntityRenderer; level gating server-side check in EntityService
-- [ ] 38-03-PLAN.md — Entity fade-in animation on spawn/respawn; yield bar depletion visual update
+- [x] 38-01-PLAN.md — Strip AI state from entity:batch broadcasts; wire entity:batch to WorldScene
+- [x] 38-02-PLAN.md — Add perception gating to EntityRenderer; level gating server-side check in EntityService
+- [x] 38-03-PLAN.md — Entity fade-in animation on spawn/respawn; yield bar depletion visual update
+- [x] 38-04-PLAN.md — Gap closure: Wire error event handler for level-gating rejection messages
 
 ## Progress
 
@@ -417,9 +418,9 @@ Phases execute in numeric order: 33 -> 34 -> 35 -> 36 -> 37 -> 38
 | 35. Loot Tables, Tool Interaction, and Respawn | v1.8 | 4/4 | Complete | 2026-02-18 |
 | 36. Creature AI Wander and Behavior Tick | v1.8 | 4/4 | Complete | 2026-02-18 |
 | 37. Fertility Noise and Biome Spawn Quality | v1.8 | 3/3 | Complete | 2026-02-18 |
-| 38. Perception Gating and Client Polish | v1.8 | 3/3 | Not started | - |
+| 38. Perception Gating and Client Polish | v1.8 | 4/4 | Complete | 2026-02-19 |
 
-**Total:** 38 phases (37 complete, 1 remaining)
+**Total:** 38 phases (38 complete, 0 remaining)
 
 ---
-*Last updated: 2026-02-18 after Phase 38 planning complete*
+*Last updated: 2026-02-19 after Phase 38 execution complete*
