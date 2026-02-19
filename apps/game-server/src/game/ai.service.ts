@@ -4,6 +4,7 @@ import { tickCreatureAI } from '@into-the-void/game-logic';
 import { Server } from 'socket.io';
 import { ZonesService } from '../zones/zones.service';
 import { PlayerService } from './player.service';
+import { CombatService } from './combat.service';
 
 /**
  * CRAI-09: Type-enforced whitelist for creature broadcasts.
@@ -26,6 +27,7 @@ export class AiService implements OnModuleInit {
   constructor(
     private readonly zonesService: ZonesService,
     private readonly playerService: PlayerService,
+    private readonly combatService: CombatService,
   ) {}
 
   onModuleInit(): void {
@@ -101,6 +103,7 @@ export class AiService implements OnModuleInit {
    * Run one AI tick for a zone.
    * Processes all active creatures through the tickCreatureAI FSM and emits a
    * single entity:batch event with all position changes for the tick.
+   * Also processes combat ticks for all players in combat in this zone.
    */
   private async runZoneTick(zoneId: string): Promise<void> {
     // Get all entities in the zone
@@ -110,8 +113,6 @@ export class AiService implements OnModuleInit {
     const creatures = entities.filter(
       (e): e is Creature => e.type === 'creature' && e.active && (e as Creature).health > 0,
     );
-
-    if (creatures.length === 0) return;
 
     // Get players in zone for flee calculations
     const players = this.playerService.getPlayersInZone(zoneId);
@@ -145,5 +146,37 @@ export class AiService implements OnModuleInit {
     if (movedCreatures.length > 0) {
       this.server?.to(zoneId).emit('entity:batch', { updates: movedCreatures });
     }
+
+    // Process combat ticks for players in this zone
+    const combatResults = await this.combatService.processCombatTick(zoneId);
+
+    // Emit combat damage events to zone
+    for (const result of combatResults) {
+      this.server?.to(zoneId).emit('combat:damage', {
+        attackerId: result.attackerId,
+        defenderId: result.defenderId,
+        damage: result.damage,
+        defenderHealth: result.defenderHealth,
+        defenderMaxHealth: result.defenderMaxHealth,
+        critical: result.critical,
+        killed: result.killed,
+      });
+
+      // If creature was killed, emit entity:update for death state
+      if (result.killed) {
+        this.server?.to(zoneId).emit('entity:update', {
+          entityId: result.defenderId,
+          changes: { health: 0, active: false },
+        });
+
+        // Emit spawned loot items
+        if (result.groundItems) {
+          for (const item of result.groundItems) {
+            this.server?.to(zoneId).emit('entity:spawn', item);
+          }
+        }
+      }
+    }
+
   }
 }
