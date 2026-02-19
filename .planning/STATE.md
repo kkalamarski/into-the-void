@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 47 of 50 (Hub Travel)
-Plan: 2 of TBD in current phase
+Plan: 3 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-19 — 47-02: Portal interaction/travel logic (teleportToHub, portal:use handler)
+Last activity: 2026-02-19 — 47-03: Hub recall hotkey (H key) and leave-hub mechanic
 
 Progress: [██░░░░░░░░] 20% (v1.11 milestone — 1/5 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 146 (Phases 1-46 complete)
+- Total plans completed: 149 (Phases 1-47 plan 03 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~5.5 hours
 
@@ -38,7 +38,7 @@ Progress: [██░░░░░░░░] 20% (v1.11 milestone — 1/5 phases)
 | v1.8 | 33-38 | 22 | 2 days |
 | v1.9 | 39-42 | 12 | 1 day |
 | v1.10 | 43-45 | 5 | 1 day |
-| v1.11 | 46-50 | 3/TBD | in progress |
+| v1.11 | 46-50 | 6/TBD | in progress |
 
 ## Accumulated Context
 
@@ -65,6 +65,9 @@ Recent decisions affecting current work:
 - [47-02]: Server validates player stands on TileId.PORTAL (=16) before allowing hub teleport
 - [47-02]: lastWorldPosition saved both in-memory (ConnectedPlayer) and to DB on hub entry; restored from DB on authenticate()
 - [47-02]: Hub AI activated (aiService.activateZone) after portal teleport, matching handleAuth pattern
+- [47-03]: H key recall delegates to teleportToHub (same as portal:use) — saves position and teleports to faction hub
+- [47-03]: teleportFromHub clears saved position after use — one-way trip, returning to hub re-saves
+- [47-03]: portal:use in hub delegates to handleHubLeave via method call (no code duplication)
 
 ### Pending Todos
 
@@ -83,10 +86,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 47-hub-travel/47-02-PLAN.md — portal interaction/travel logic
+Stopped at: Completed 47-hub-travel/47-03-PLAN.md — hub recall hotkey and leave-hub mechanic
 Resume file: None
 
-**Next action:** Execute 47-03 (next plan in hub travel phase)
+**Next action:** Execute next plan in hub travel phase
 
 ---
-*Last updated: 2026-02-19 after 47-02 execution complete*
+*Last updated: 2026-02-19 after 47-03 execution complete*
