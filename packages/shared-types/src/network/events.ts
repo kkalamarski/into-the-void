@@ -48,6 +48,7 @@ export type ServerEventType =
   | 'player:left'
   | 'player:moved'
   | 'combat:start'
+  | 'combat:damage'
   | 'combat:result'
   | 'combat:end'
   | 'chat:message'
@@ -94,6 +95,15 @@ export interface ServerEvents {
   'player:left': { playerId: string };
   'player:moved': { playerId: string; position: import('../core/position').Position; lastProcessedInput?: number };
   'combat:start': import('../game/combat').CombatState;
+  'combat:damage': {
+    attackerId: string;
+    defenderId: string;
+    damage: number;
+    defenderHealth: number;
+    defenderMaxHealth: number;
+    critical: boolean;
+    killed: boolean;
+  };
   'combat:result': import('../game/combat').CombatResult;
   'combat:end': { combatId: string; winner: string };
   'chat:message': ChatMessage;
