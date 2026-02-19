@@ -420,12 +420,39 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmapper) | | |
+| CURR-01 | Phase 46 | Pending |
+| CURR-02 | Phase 46 | Pending |
+| CURR-03 | Phase 50 | Pending |
+| CURR-04 | Phase 50 | Pending |
+| HUB-01 | Phase 46 | Pending |
+| HUB-02 | Phase 46 | Pending |
+| HUB-03 | Phase 46 | Pending |
+| HUB-04 | Phase 48 | Pending |
+| HUB-05 | Phase 46 | Pending |
+| TRVL-01 | Phase 47 | Pending |
+| TRVL-02 | Phase 47 | Pending |
+| TRVL-03 | Phase 47 | Pending |
+| TRVL-04 | Phase 47 | Pending |
+| NPCD-01 | Phase 48 | Pending |
+| NPCD-02 | Phase 48 | Pending |
+| NPCD-03 | Phase 48 | Pending |
+| NPCD-04 | Phase 48 | Pending |
+| NPCI-01 | Phase 49 | Pending |
+| NPCI-02 | Phase 49 | Pending |
+| NPCI-03 | Phase 49 | Pending |
+| NPCI-04 | Phase 49 | Pending |
+| NPCI-05 | Phase 49 | Pending |
+| TRAD-01 | Phase 50 | Pending |
+| TRAD-02 | Phase 50 | Pending |
+| TRAD-03 | Phase 50 | Pending |
+| TRAD-04 | Phase 50 | Pending |
+| TRAD-05 | Phase 50 | Pending |
+| TRAD-06 | Phase 50 | Pending |
 
 **Coverage:**
-- v1.11 requirements: 24 total
-- Mapped to phases: TBD
-- Unmapped: TBD
+- v1.11 requirements: 28 total
+- Mapped to phases: 28
+- Unmapped: 0
 
 ### v1.10 Combat UX (Complete)
 
@@ -543,4 +570,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-19 after v1.11 NPCs & Trading requirements added*
+*Last updated: 2026-02-19 after v1.11 roadmap created — 28 requirements mapped to phases 46-50*

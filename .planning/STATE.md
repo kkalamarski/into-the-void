@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.11 NPCs & Trading — Defining requirements
+**Current focus:** v1.11 NPCs & Trading — Phase 46: Currency and Hub Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-19 — Milestone v1.11 started
+Phase: 46 of 50 (Currency and Hub Foundation)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-19 — v1.11 roadmap created (phases 46-50)
 
 Progress: [░░░░░░░░░░] 0% (v1.11 milestone)
 
@@ -38,7 +38,7 @@ Progress: [░░░░░░░░░░] 0% (v1.11 milestone)
 | v1.8 | 33-38 | 22 | 2 days |
 | v1.9 | 39-42 | 12 | 1 day |
 | v1.10 | 43-45 | 5 | 1 day |
-| v1.11 | TBD | TBD | in progress |
+| v1.11 | 46-50 | TBD | in progress |
 
 ## Accumulated Context
 
@@ -49,26 +49,9 @@ Recent decisions affecting current work:
 
 - [v1.11]: Orbital stations as faction hubs (not surface HQs)
 - [v1.11]: Credits as currency
-- [v1.11]: Trading before quests
-- [v1.11]: Simple linear dialogue (no branching for v1.11)
-- [v1.11]: Portal structures + recall for hub travel
-
-### v1.11 NPCs & Trading Context
-
-**Scope:**
-- Currency system (credits)
-- 4 orbital faction hubs (instanced)
-- Hub travel (portals + recall)
-- NPC definition system
-- 5 NPC types: Trader, Guard, Faction Rep, Ambient, Service
-- Interaction window (modal with portrait, dialogue, actions)
-- Trading system (buy/sell)
-
-**Deferred:**
-- Surface HQs (Canopy, Ironhold, Meridian)
-- Shared city at 0,0
-- Quest/mission system
-- Branching dialogue
+- [v1.11]: Portal structures + recall (H key) for hub travel
+- [v1.11]: Simple linear dialogue (no branching)
+- [v1.11]: NPCs are static at fixed hub positions (no schedules)
 
 ### Pending Todos
 
@@ -87,10 +70,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Defining v1.11 requirements
+Stopped at: v1.11 roadmap created — 5 phases (46-50) defined, 28 requirements mapped
 Resume file: None
 
-**Next action:** Define requirements → create roadmap
+**Next action:** `/gsd:plan-phase 46`
 
 ---
-*Last updated: 2026-02-19 after v1.11 milestone start*
+*Last updated: 2026-02-19 after v1.11 roadmap creation*

@@ -13,6 +13,7 @@
 - ✅ **v1.8 Entity System** - Phases 33-38 (shipped 2026-02-19)
 - ✅ **v1.9 Combat System** - Phases 39-42 (shipped 2026-02-19)
 - ✅ **v1.10 Combat UX** - Phases 43-45 (shipped 2026-02-19)
+- 🚧 **v1.11 NPCs & Trading** - Phases 46-50 (in progress)
 
 ## Phases
 
@@ -459,7 +460,8 @@ Plans:
 
 </details>
 
-### v1.10 Combat UX (In Progress)
+<details>
+<summary>✅ v1.10 Combat UX (Phases 43-45) - SHIPPED 2026-02-19</summary>
 
 **Milestone Goal:** Complete the combat user experience with click-to-attack targeting, visual target selection, and combat log feedback. Closes the aggro bug from v1.9 and adds all missing player-facing combat interactions.
 
@@ -515,10 +517,108 @@ Plans:
 Plans:
 - [x] 45-01-PLAN.md — Create combatLogStore, CombatLog component, and L key toggle
 
+</details>
+
+### v1.11 NPCs & Trading (In Progress)
+
+**Milestone Goal:** Implement faction orbital hubs as instanced safe zones, a credits currency system, hub travel via portals and recall, an NPC definition system with 5 types and fixed hub spawns, an interaction window with portrait and linear dialogue, and a trading system for buy/sell commerce with credit price spreads.
+
+**Phases:** 5 (46-50)
+**Depth:** Quick (from config)
+**Coverage:** 28/28 requirements mapped
+
+#### Phase 46: Currency and Hub Foundation
+
+**Goal**: The credits currency type exists in the database and HUD, and the four faction orbital hubs exist as discrete, safe, instanced zones that players can walk around using the existing movement system
+**Depends on**: Phase 45 (v1.10 complete)
+**Requirements**: CURR-01, CURR-02, HUB-01, HUB-02, HUB-03, HUB-05
+**Success Criteria** (what must be TRUE):
+  1. Player HUD shows a credits balance (e.g., "1,000 cr") that is non-zero for a new character seeded with starting credits and persists after logging out and back in
+  2. The four faction hub zones exist as server-side instanced areas separate from open-world coordinates — loading into a hub does not replace or corrupt open-world zone state
+  3. A hub zone returns no combat events and no hostile creature spawns — attempting to start combat in a hub is rejected by the server
+  4. Player can move freely inside a hub using WASD and click-to-move — the existing movement system works without modification
+**Plans**: TBD
+
+Plans:
+- [ ] 46-01: Credits DB column and HUD display
+- [ ] 46-02: Hub zone definitions and instancing (4 faction hubs)
+- [ ] 46-03: Hub safe zone enforcement (no combat, no hostile spawns)
+
+#### Phase 47: Hub Travel
+
+**Goal**: Players can travel to their faction hub from the open world via portal structures, return instantly from anywhere via a recall ability, and leave the hub back to their last open-world position
+**Depends on**: Phase 46 (hub zones exist and are loadable)
+**Requirements**: TRVL-01, TRVL-02, TRVL-03, TRVL-04
+**Success Criteria** (what must be TRUE):
+  1. Portal structures appear in open-world zones — walking up to and interacting with a portal teleports the player into their faction's hub zone
+  2. Player presses the recall hotkey from anywhere in the open world — they are immediately teleported to their faction hub; the last open-world position is saved for return
+  3. Player uses the "Leave Hub" action or portal within the hub — they are teleported back to the exact open-world position they left from
+  4. Hub arrival and departure are visible to other players in both zones — players appear and disappear correctly on zone transitions
+**Plans**: TBD
+
+Plans:
+- [ ] 47-01: Portal structure tile type and open-world placement
+- [ ] 47-02: Portal interaction handler and hub teleport (save/restore world position)
+- [ ] 47-03: Recall hotkey (H key) and leave-hub mechanic
+
+#### Phase 48: NPC Definition System and Hub Spawns
+
+**Goal**: The NPC definition registry exists with all 5 NPC types, NPCs have a visual representation in the hub, are fixed at designated spawn positions, and are non-hostile
+**Depends on**: Phase 46 (hub zones exist with tile layouts to place NPCs in)
+**Requirements**: HUB-04, NPCD-01, NPCD-02, NPCD-03, NPCD-04
+**Success Criteria** (what must be TRUE):
+  1. `NpcRegistry.get(npcId)` returns a typed `NpcDefinition` with type, name, dialogue lines, and inventory for all defined NPCs without error
+  2. Each hub contains at least one NPC of each of the 5 types (Trader, Guard, Faction Rep, Ambient, Service) — they appear at fixed tile positions within the hub
+  3. NPCs have a visible representation in the Phaser canvas — either a sprite or a distinct colored placeholder tile with a nameplate
+  4. Clicking an NPC does not initiate combat — the server rejects any combat:start event targeting an NPC, and the NPC cannot be targeted by combat tools
+**Plans**: TBD
+
+Plans:
+- [ ] 48-01: NpcDefinition types and NpcRegistry in packages/npcs
+- [ ] 48-02: Define NPC instances for all 4 faction hubs (5 types each)
+- [ ] 48-03: NPC rendering in hub zones (sprite placeholder + nameplate)
+
+#### Phase 49: NPC Interaction Window
+
+**Goal**: Players can click any NPC to open an interaction modal showing the NPC's portrait, name, type, and dialogue text, with action buttons appropriate to the NPC type, and close the window to resume gameplay
+**Depends on**: Phase 48 (NPCs are visible and clickable in hubs)
+**Requirements**: NPCI-01, NPCI-02, NPCI-03, NPCI-04, NPCI-05
+**Success Criteria** (what must be TRUE):
+  1. Player clicks an NPC in the hub — an interaction modal opens showing the NPC's portrait (or colored placeholder), name, and type label
+  2. The modal displays the NPC's dialogue text — for a Trader it reads something like "Looking to trade? I've got supplies for your expeditions." and the text is drawn from the NPC definition
+  3. Action buttons appear based on NPC type — the Trader NPC shows a "Trade" button; a Guard shows no action buttons; a Service NPC shows a relevant service button
+  4. Player clicks the close button or presses Escape — the interaction modal closes and the player can move and interact with the world again; Phaser input is re-enabled
+**Plans**: TBD
+
+Plans:
+- [ ] 49-01: NPC click detection and npc:interact server event; npcStore Zustand store
+- [ ] 49-02: NpcInteractionModal.tsx with portrait, name, type, dialogue
+- [ ] 49-03: Action button routing per NPC type; Escape/close to dismiss; Phaser input guard
+
+#### Phase 50: Trading System
+
+**Goal**: Players can open a trader's inventory, buy items with credits deducted, sell items from their inventory with credits added, with a price spread between buy and sell, and all transactions validated for sufficient credits and inventory space
+**Depends on**: Phase 49 (interaction window exists — Trade button opens trader UI) and Phase 46 (credits exist in DB)
+**Requirements**: CURR-03, CURR-04, TRAD-01, TRAD-02, TRAD-03, TRAD-04, TRAD-05, TRAD-06
+**Success Criteria** (what must be TRUE):
+  1. Player opens a Trader NPC and sees a panel listing the trader's available items with buy prices in credits — each item shows name, quantity, and credit cost
+  2. Player clicks "Buy" on an item they can afford — credits are deducted from their balance, the item appears in their inventory, and the HUD credit balance updates immediately
+  3. Player selects an item from their inventory in the trade panel and clicks "Sell" — the item is removed from inventory, credits are added to balance, and the HUD updates
+  4. Sell price displayed is lower than buy price for the same item — the spread is consistent and drawn from the NPC definition or item definition
+  5. Player attempts to buy an item without sufficient credits — the transaction is rejected by the server, credits are unchanged, and the client shows an insufficient funds message
+  6. Player attempts to buy an item when inventory is full — the transaction is rejected by the server and the client shows an inventory full message
+**Plans**: TBD
+
+Plans:
+- [ ] 50-01: Trade DB operations (deductCredits, addCredits, atomic buy/sell transactions)
+- [ ] 50-02: TradeService with buy/sell handlers; trade:buy and trade:sell socket events
+- [ ] 50-03: TradingPanel.tsx with trader inventory, buy interface, and sell interface
+- [ ] 50-04: Credit balance sync to client; creditsStore; HUD credit display wiring
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 43 -> 44 -> 45
+Phases execute in numeric order: 46 -> 47 -> 48 -> 49 -> 50
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -567,8 +667,13 @@ Phases execute in numeric order: 43 -> 44 -> 45
 | 43. Click-to-Attack and Bug Fix | v1.10 | 2/2 | Complete | 2026-02-19 |
 | 44. Target Selection UI | v1.10 | 2/2 | Complete | 2026-02-19 |
 | 45. Combat Log | v1.10 | 1/1 | Complete | 2026-02-19 |
+| 46. Currency and Hub Foundation | v1.11 | TBD | Not started | - |
+| 47. Hub Travel | v1.11 | TBD | Not started | - |
+| 48. NPC Definition System and Hub Spawns | v1.11 | TBD | Not started | - |
+| 49. NPC Interaction Window | v1.11 | TBD | Not started | - |
+| 50. Trading System | v1.11 | TBD | Not started | - |
 
-**Total:** 45 phases (45 complete, 0 remaining)
+**Total:** 50 phases (45 complete, 5 remaining)
 
 ---
-*Last updated: 2026-02-19 after phase 45 execution — v1.10 milestone complete*
+*Last updated: 2026-02-19 after v1.11 roadmap creation*
