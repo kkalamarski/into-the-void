@@ -510,10 +510,10 @@ Plans:
   2. When the player receives damage from a creature, a timestamped entry appears showing the damage amount — entries for incoming and outgoing damage are visually distinct
   3. The combat log is scrollable — older entries remain accessible by scrolling up; newest entries appear at the bottom
   4. Player presses the combat log toggle key (or clicks a toggle button) — the panel hides completely and re-appears on second press; hidden state persists until toggled again
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 45-01-PLAN.md — TBD
+- [ ] 45-01-PLAN.md — Create combatLogStore, CombatLog component, and L key toggle
 
 ## Progress
 
