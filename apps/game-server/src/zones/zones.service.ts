@@ -7,11 +7,13 @@ import {
   Entity,
   ItemEntity,
   Mineral,
+  Npc,
   Plant,
   SpawnPoint,
 } from '@into-the-void/shared-types';
-import { generateChunk, generateHubChunk, isKnownHub } from '@into-the-void/world-gen';
+import { generateChunk, generateHubChunk, isKnownHub, getHubConfig } from '@into-the-void/world-gen';
 import { isHubZone } from '@into-the-void/shared-types';
+import { NpcRegistry } from '@into-the-void/npcs';
 import { EntityRegistry } from '@into-the-void/entities';
 import type {
   ArtifactDefinition,
@@ -182,8 +184,14 @@ export class ZonesService implements OnModuleInit {
 
     const chunk = generateHubChunk(zoneId);
 
-    // Hub zones have no entity spawns (safe zone) — empty entity map
+    // Hub zones start with NPC entities from hub configuration
     const entities = new Map<string, Entity>();
+
+    // Spawn NPCs for this hub zone
+    const npcEntities = this.spawnHubNpcs(zoneId);
+    for (const [id, npc] of npcEntities) {
+      entities.set(id, npc);
+    }
 
     const zoneState: ZoneState = {
       chunk,
@@ -192,6 +200,39 @@ export class ZonesService implements OnModuleInit {
 
     this.zones.set(zoneId, zoneState);
     return zoneState;
+  }
+
+  /**
+   * Spawn NPCs for a hub zone based on hub configuration.
+   * Called when loading a hub zone.
+   */
+  private spawnHubNpcs(zoneId: string): Map<string, Npc> {
+    const npcs = new Map<string, Npc>();
+    const hubConfig = getHubConfig(zoneId);
+    if (!hubConfig) return npcs;
+
+    for (const spawn of hubConfig.npcSpawns) {
+      const def = NpcRegistry.get(spawn.npcId);
+
+      const npcEntity: Npc = {
+        id: `${zoneId}_npc_${spawn.npcId}`,
+        type: 'npc',
+        position: {
+          x: spawn.x,
+          y: spawn.y,
+          zoneId: zoneId,
+        },
+        name: def.displayName,
+        active: true,
+        npcId: spawn.npcId,
+        npcType: def.npcType,
+        faction: def.faction,
+      };
+
+      npcs.set(npcEntity.id, npcEntity);
+    }
+
+    return npcs;
   }
 
   private createEntityFromSpawn(spawn: SpawnPoint, zoneId: string): Entity {

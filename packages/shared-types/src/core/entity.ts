@@ -123,3 +123,16 @@ export interface ItemEntity extends Entity {
   /** Time when item will despawn */
   despawnAt: number;
 }
+
+/**
+ * NPC entity (non-player characters in hubs)
+ */
+export interface Npc extends Entity {
+  type: 'npc';
+  /** NPC definition ID from NpcRegistry */
+  npcId: string;
+  /** NPC type from definition */
+  npcType: 'trader' | 'guard' | 'faction_rep' | 'ambient' | 'service';
+  /** Faction affiliation */
+  faction: 'verdant' | 'helix' | 'nexus' | 'neutral';
+}
