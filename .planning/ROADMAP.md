@@ -396,12 +396,12 @@ Plans:
   2. Damage dealt equals attacker Power minus a Toughness-based reduction — observable by comparing damage numbers across creatures with different Toughness values
   3. A player with higher Haste stat attacks more frequently than a player with base Haste — attack interval visibly decreases
   4. Creature health decreases with each attack and creature dies when health reaches zero — death triggers existing loot drop from v1.8
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 39-01-PLAN.md — Add CombatService with startCombat(), attackTick(), calculateDamage(); wire combat:start event
-- [ ] 39-02-PLAN.md — Add combat:attack server handler; integrate with existing AiService tick loop for player auto-attacks
-- [ ] 39-03-PLAN.md — Wire Haste stat to attack interval calculation; update damage formula in game-logic
+- [ ] 39-01-PLAN.md — Create CombatService with startCombat(), stopCombat(), getSession(); wire combat:start client event
+- [ ] 39-02-PLAN.md — Add attackTick() and processCombatTick() to CombatService; integrate with AiService tick loop; emit combat:damage
+- [ ] 39-03-PLAN.md — Add calculateAttackInterval() pure function; wire Haste stat to per-player attack timing
 
 #### Phase 40: Creature Combat AI and Aggro
 
@@ -498,7 +498,7 @@ Phases execute in numeric order: 39 -> 40 -> 41 -> 42
 | 36. Creature AI Wander and Behavior Tick | v1.8 | 4/4 | Complete | 2026-02-18 |
 | 37. Fertility Noise and Biome Spawn Quality | v1.8 | 3/3 | Complete | 2026-02-18 |
 | 38. Perception Gating and Client Polish | v1.8 | 4/4 | Complete | 2026-02-19 |
-| 39. Combat Core and Damage Calculation | v1.9 | 0/3 | Not started | - |
+| 39. Combat Core and Damage Calculation | v1.9 | 0/3 | Planned | - |
 | 40. Creature Combat AI and Aggro | v1.9 | 0/3 | Not started | - |
 | 41. Player Death and Respawn | v1.9 | 0/2 | Not started | - |
 | 42. Combat Feedback and HUD | v1.9 | 0/2 | Not started | - |
@@ -506,4 +506,4 @@ Phases execute in numeric order: 39 -> 40 -> 41 -> 42
 **Total:** 42 phases (38 complete, 4 remaining)
 
 ---
-*Last updated: 2026-02-19 after v1.9 roadmap created*
+*Last updated: 2026-02-19 after Phase 39 planning*
