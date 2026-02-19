@@ -128,13 +128,37 @@ export class AiService implements OnModuleInit {
     for (const creature of creatures) {
       const result = tickCreatureAI(creature, players, collisions);
 
+      // Handle aggro detection (predator/maniac found player)
+      if (result.aggroTarget) {
+        await this.combatService.startCreatureCombat(
+          creature.id,
+          result.aggroTarget,
+          zoneId,
+        );
+        await this.zonesService.updateEntity(zoneId, creature.id, {
+          combatTarget: result.aggroTarget,
+        } as Partial<Creature>);
+      }
+
+      // Handle return to spawn (leash exceeded or target left)
+      if (result.shouldReturn) {
+        if (creature.combatTarget) {
+          // Stop combat session
+          this.combatService.stopCreatureCombat(creature.id);
+        }
+        // Clear combat state on creature
+        await this.zonesService.updateEntity(zoneId, creature.id, {
+          combatTarget: undefined,
+          provoked: false,
+        } as Partial<Creature>);
+      }
+
+      // Update position if creature moved
       if (result.newPosition) {
-        // Update in-memory state via ZonesService
         await this.zonesService.updateEntity(zoneId, creature.id, {
           position: result.newPosition,
         });
 
-        // Add to batch
         movedCreatures.push({
           entityId: creature.id,
           changes: { position: result.newPosition },
@@ -147,7 +171,7 @@ export class AiService implements OnModuleInit {
       this.server?.to(zoneId).emit('entity:batch', { updates: movedCreatures });
     }
 
-    // Process combat ticks for players in this zone
+    // Process combat ticks for players in this zone (player -> creature)
     const combatResults = await this.combatService.processCombatTick(zoneId);
 
     // Emit combat damage events to zone
@@ -176,6 +200,37 @@ export class AiService implements OnModuleInit {
           }
         }
       }
+    }
+
+    // Process creature combat ticks (creature -> player)
+    const creatureCombatResults = await this.combatService.processCreatureCombatTick(zoneId, creatures);
+
+    // Emit creature combat damage events
+    for (const result of creatureCombatResults) {
+      // Emit to the player being attacked
+      const playerSocket = this.playerService.getSocketByPlayerId(result.defenderId);
+      if (playerSocket) {
+        this.server?.to(playerSocket).emit('combat:damage', {
+          attackerId: result.attackerId,
+          defenderId: result.defenderId,
+          damage: result.damage,
+          defenderHealth: result.defenderHealth,
+          defenderMaxHealth: result.defenderMaxHealth,
+          critical: result.critical,
+          killed: result.killed,
+        });
+      }
+
+      // Also emit to zone for other players to see
+      this.server?.to(zoneId).emit('combat:damage', {
+        attackerId: result.attackerId,
+        defenderId: result.defenderId,
+        damage: result.damage,
+        defenderHealth: result.defenderHealth,
+        defenderMaxHealth: result.defenderMaxHealth,
+        critical: result.critical,
+        killed: result.killed,
+      });
     }
 
   }
