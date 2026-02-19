@@ -16,8 +16,8 @@ import { useGameStore } from '../../store/gameStore';
 import { useEntityStore } from '../../store/entityStore';
 import { gameSocket } from '../../network/socket';
 
-export const ISO_TILE_WIDTH = 128;
-export const ISO_TILE_HEIGHT = 64;
+export const ISO_TILE_WIDTH = 256;
+export const ISO_TILE_HEIGHT = 128;
 // Visibility radius in tiles (~1.5 chunks allows seeing into adjacent chunks)
 const VISIBILITY_RADIUS = 48;
 
@@ -219,8 +219,8 @@ export class WorldScene extends Phaser.Scene {
       }
     });
 
-    // Set fixed zoom to show ~15x11 tiles viewport
-    this.cameras.main.setZoom(1.5);
+    // Set fixed zoom to show ~20x15 tiles viewport (for 256x256 sprites)
+    this.cameras.main.setZoom(0.5);
 
     // Disable scroll zoom to maintain fixed viewport
     // (uncomment below to allow limited zoom adjustment)
@@ -414,7 +414,7 @@ export class WorldScene extends Phaser.Scene {
 
     // Get elevation for the correct zone
     const elevation = this.getTileElevation(position.x, position.y, position.zoneId);
-    const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
+    const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 × diamond height)
     // Use world coordinates for screen position so player aligns with chunk positions
     const { worldX, worldY } = this.positionToWorldCoords(position);
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
@@ -425,14 +425,14 @@ export class WorldScene extends Phaser.Scene {
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
-    // Blob shadow
-    const shadow = this.add.ellipse(0, 0, 40, 20, 0x000000, 0.3);
+    // Blob shadow (doubled for 256x256 tiles)
+    const shadow = this.add.ellipse(0, 0, 80, 40, 0x000000, 0.3);
     container.add(shadow);
 
     // Player sprite elevated (texture is 2x resolution, scale down for crispness)
-    const sprite = this.add.sprite(0, -12, 'player');
+    const sprite = this.add.sprite(0, -24, 'player');
     sprite.setOrigin(0.5, 1.0);
-    sprite.setScale(0.5);
+    sprite.setScale(1.0);
     container.add(sprite);
 
     // Store reference (as container now, not sprite)
@@ -1082,7 +1082,7 @@ export class WorldScene extends Phaser.Scene {
       const { worldX, worldY } = this.positionToWorldCoords(changes.position);
       // Calculate target screen position
       const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
-      const elevationOffset = elevation * 24; // ELEVATION_HEIGHT_STEP = 24
+      const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 × diamond height)
       const targetY = screenPos.y - elevationOffset;
 
       // Kill any existing movement tween on this container
@@ -1168,7 +1168,7 @@ export class WorldScene extends Phaser.Scene {
 
     // Get elevation for the correct zone
     const elevation = this.getTileElevation(player.position.x, player.position.y, player.position.zoneId);
-    const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
+    const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 × diamond height)
     // Use world coordinates for screen position
     const { worldX, worldY } = this.positionToWorldCoords(player.position);
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
@@ -1178,14 +1178,14 @@ export class WorldScene extends Phaser.Scene {
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
-    // Shadow
-    const shadow = this.add.ellipse(0, 0, 40, 20, 0x000000, 0.3);
+    // Shadow (doubled for 256x256 tiles)
+    const shadow = this.add.ellipse(0, 0, 80, 40, 0x000000, 0.3);
     container.add(shadow);
 
     // Player sprite (texture is 2x resolution, scale down for crispness)
-    const sprite = this.add.sprite(0, -12, 'player');
+    const sprite = this.add.sprite(0, -24, 'player');
     sprite.setOrigin(0.5, 1.0);
-    sprite.setScale(0.5);
+    sprite.setScale(1.0);
     sprite.setTint(this.getFactionColor(player.faction));
     container.add(sprite);
 
@@ -1209,7 +1209,7 @@ export class WorldScene extends Phaser.Scene {
 
     // Get elevation for the correct zone
     const elevation = this.getTileElevation(position.x, position.y, position.zoneId);
-    const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
+    const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 × diamond height)
     // Use world coordinates for screen position
     const { worldX, worldY } = this.positionToWorldCoords(position);
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
@@ -1241,7 +1241,7 @@ export class WorldScene extends Phaser.Scene {
 
     // Get elevation for the correct zone (handles race condition when zone:state arrives after position update)
     const elevation = this.getTileElevation(position.x, position.y, position.zoneId);
-    const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
+    const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 × diamond height)
     // Use world coordinates for screen position so player aligns with chunk positions
     const { worldX, worldY } = this.positionToWorldCoords(position);
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
@@ -1365,6 +1365,44 @@ export class WorldScene extends Phaser.Scene {
       default:
         return 0x7b68ee;
     }
+  }
+
+  /**
+   * Show a floating damage number above the target entity.
+   * Called by gameStore's combat:damage socket handler.
+   *
+   * @param defenderId - Entity or player ID that took damage
+   * @param damage - Amount of damage dealt
+   * @param isLocalPlayer - True if the local player took the damage (shows red)
+   */
+  showDamageNumber(defenderId: string, damage: number, isLocalPlayer: boolean): void {
+    let targetX: number;
+    let targetY: number;
+
+    if (isLocalPlayer && this.localPlayer) {
+      // Local player took damage - use local player sprite position
+      targetX = this.localPlayer.x;
+      targetY = this.localPlayer.y;
+    } else {
+      // Check entity sprites map
+      const container = this.entitySprites.get(defenderId);
+      if (container) {
+        targetX = container.x;
+        targetY = container.y;
+      } else {
+        // Check player sprites map (other players taking damage)
+        const playerSprite = this.playerSprites.get(defenderId);
+        if (playerSprite) {
+          targetX = playerSprite.x;
+          targetY = playerSprite.y;
+        } else {
+          // Entity not found (may have despawned) - skip
+          return;
+        }
+      }
+    }
+
+    EntityRenderer.createFloatingDamage(this, targetX, targetY, damage, isLocalPlayer);
   }
 
   /**
