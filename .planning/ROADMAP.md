@@ -481,8 +481,8 @@ Plans:
 **Plans**: 2 plans in 1 wave
 
 Plans:
-- [ ] 43-01-PLAN.md — Make entity sprites interactive; add entity click handler; emit combat:start on creature click
-- [ ] 43-02-PLAN.md — Fix predator/maniac aggro bug; add immediate aggro check on zone activation and player join
+- [x] 43-01-PLAN.md — Make entity sprites interactive; add entity click handler; emit combat:start on creature click
+- [x] 43-02-PLAN.md — Fix predator/maniac aggro bug; add immediate aggro check on zone activation and player join
 
 #### Phase 44: Target Selection UI
 
@@ -563,11 +563,11 @@ Phases execute in numeric order: 43 -> 44 -> 45
 | 40. Creature Combat AI and Aggro | v1.9 | 3/3 | Complete | 2026-02-19 |
 | 41. Player Death and Respawn | v1.9 | 3/3 | Complete | 2026-02-19 |
 | 42. Combat Feedback and HUD | v1.9 | 2/2 | Complete | 2026-02-19 |
-| 43. Click-to-Attack and Bug Fix | v1.10 | 0/2 | Not started | - |
+| 43. Click-to-Attack and Bug Fix | v1.10 | 2/2 | Complete | 2026-02-19 |
 | 44. Target Selection UI | v1.10 | TBD | Not started | - |
 | 45. Combat Log | v1.10 | TBD | Not started | - |
 
-**Total:** 45 phases (42 complete, 3 remaining)
+**Total:** 45 phases (43 complete, 2 remaining)
 
 ---
-*Last updated: 2026-02-19 after phase 43 planning — 2 plans created*
+*Last updated: 2026-02-19 after phase 43 execution — 2/2 plans complete*

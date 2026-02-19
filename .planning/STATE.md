@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.10 Combat UX — Phase 43: Click-to-Attack and Bug Fix
+**Current focus:** v1.10 Combat UX — Phase 44: Target Selection UI
 
 ## Current Position
 
-Phase: 43 of 45 (Click-to-Attack and Bug Fix)
-Plan: 02 complete
-Status: In progress
-Last activity: 2026-02-19 — Phase 43 Plan 02 complete (predator/maniac aggro bug fix)
+Phase: 44 of 45 (Target Selection UI)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-02-19 — Phase 43 complete (click-to-attack + aggro bug fix)
 
-Progress: [░░░░░░░░░░] 5% (v1.10 milestone — 0.3/3 phases)
+Progress: [███░░░░░░░] 33% (v1.10 milestone — 1/3 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 139 (Phases 1-43 Plan 01 complete)
+- Total plans completed: 140 (Phases 1-43 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~5 hours
 
@@ -37,7 +37,7 @@ Progress: [░░░░░░░░░░] 5% (v1.10 milestone — 0.3/3 phases)
 | v1.7 | 30-32 | 9 | 1 day |
 | v1.8 | 33-38 | 22 | 2 days |
 | v1.9 | 39-42 | 12 | 1 day |
-| v1.10 | 43-45 | TBD | in progress |
+| v1.10 | 43-45 | 2 (so far) | in progress |
 
 **Recent Trend:** Stable, averaging 2-4 plans per phase
 
@@ -61,23 +61,17 @@ Recent decisions affecting current work:
 - [43-01]: gameobjectdown scene-level delegation used for entity click routing (not per-entity handlers)
 - [43-01]: Chebyshev distance (max(dx,dy)) for client range pre-check — matches server-side combat validation
 - [43-01]: lastClickedEntity flag guards pointerup pathfinding handler to prevent click-to-move on entity click
-- [42-02]: combat:start listener uses participants[] array to find player involvement and opponent
-- [42-02]: combat:damage and player:death added to socket.ts forwarded event list — were missing, blocking combatStore listeners
-- [Phase 40]: processCreatureCombatTick emits combat:damage to both player socket and zone — direct player notification plus zone broadcast
-- [41-01]: Faction respawn coords: verdant=zone_-2_0 (Canopy), helix=zone_2_0 (Ironhold), nexus+neutral=zone_0_2 (Meridian)
-- [Phase 43]: AggroChecker interface + setter on ZonesService avoids circular GameModule/ZonesModule dependency for respawn aggro
-- [Phase 43]: checkImmediateAggro fires before scheduleNextTick in activateZone; checkImmediateAggroForPlayer used for player-scoped scan on join
+- [43-02]: AggroChecker interface + setter on ZonesService avoids circular GameModule/ZonesModule dependency for respawn aggro
+- [43-02]: checkImmediateAggro fires before scheduleNextTick in activateZone; checkImmediateAggroForPlayer used for player-scoped scan on join
 
 ### v1.10 Combat UX Context
 
-Key existing code to build on:
-- **CombatService** (`apps/game-server/src/game/combat.service.ts`): startCombat(), stopCombat(), session tracking, attack ticks
-- **AiService** (`apps/game-server/src/game/ai.service.ts`): 1-second tick loop with creature AI and combat tick integration
-- **tickCreatureAI** (`packages/game-logic/src/ai/creature-ai.ts`): FSM — predator/maniac aggro, chase, attack; aggro bug is here (FIX-01)
-- **EntityRenderer** (`apps/web/src/game/rendering/EntityRenderer.ts`): NOW INTERACTIVE — sprites have setInteractive, containers store entityId/entityType
-- **WorldScene** (`apps/web/src/game/scenes/WorldScene.ts`): gameobjectdown handler + handleEntityClick() for click-to-attack
-- **ItemDefinition** (`packages/items`): Tool definitions with toolType and range properties
-- **HUD** (`apps/web/src/ui/hud/HUD.tsx`): React HUD — combat log panel goes here (CLOG-*)
+Phase 43 complete. Key existing code for Phase 44+:
+- **EntityRenderer** (`apps/web/src/game/rendering/EntityRenderer.ts`): Interactive sprites with entityId/entityType on containers — target highlight goes here
+- **WorldScene** (`apps/web/src/game/scenes/WorldScene.ts`): gameobjectdown handler + handleEntityClick() — tracks current target
+- **combatStore** (`apps/web/src/store/combatStore.ts`): Tracks in-combat state, opponent, combat:start/stop events
+- **CombatService** (`apps/game-server/src/game/combat.service.ts`): Session tracking, startCombat(), stopCombat()
+- **HUD** (`apps/web/src/ui/hud/HUD.tsx`): React HUD — combat log panel goes here (Phase 45)
 
 ### Pending Todos
 
@@ -93,16 +87,13 @@ None.
 - Server-side elevation validation not wired (client-side complete, server uses old validation)
 - Low priority — only relevant if elevation interacts with item pickup range
 
-**Pre-existing (not caused by Phase 43):**
-- ESLint config missing for game-server app — project-wide infrastructure issue (no .eslintrc in app dir)
-
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 43-02-PLAN.md — predator/maniac aggro bug fix
+Stopped at: Phase 43 complete — click-to-attack and aggro bug fix verified
 Resume file: None
 
-**Next action:** Execute 43-03-PLAN.md (if exists) or plan next phase
+**Next action:** `/gsd:plan-phase 44`
 
 ---
-*Last updated: 2026-02-19 after Phase 43 Plan 02 complete*
+*Last updated: 2026-02-19 after Phase 43 execution complete*
