@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, MOVE_DELAY_MS, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure } from '@into-the-void/shared-types';
+import { ZONE_SIZE, MOVE_DELAY_MS, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure, isHubZone } from '@into-the-void/shared-types';
 import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
 import { ItemRegistry } from '@into-the-void/items';
@@ -234,6 +234,14 @@ export class WorldScene extends Phaser.Scene {
       this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P).on('down', () => {
         if (this.input.keyboard?.enabled) {
           useGameStore.getState().toggleEquipment();
+        }
+      });
+
+      // Recall hotkey: H teleports player to faction hub from open world
+      // Server validates and rejects if player is already in hub
+      this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.H).on('down', () => {
+        if (this.input.keyboard?.enabled) {
+          gameSocket.emit('hub:recall', {});
         }
       });
     }
@@ -861,6 +869,11 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private parseZoneCoords(zoneId: string): { x: number; y: number } {
+    // Hub zones are instanced at origin (0, 0)
+    if (isHubZone(zoneId)) {
+      return { x: 0, y: 0 };
+    }
+    // Open-world zones use z_X_Y format
     const parts = zoneId.split('_');
     return {
       x: parseInt(parts[1], 10),
