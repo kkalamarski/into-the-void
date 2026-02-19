@@ -28,7 +28,8 @@
       "@into-the-void/world-gen": ["packages/world-gen/src/index.ts"],
       "@into-the-void/tiles": ["packages/tiles/src/index.ts"],
       "@into-the-void/items": ["packages/items/src/index.ts"],
-      "@into-the-void/entities": ["packages/entities/src/index.ts"]
+      "@into-the-void/entities": ["packages/entities/src/index.ts"],
+      "@into-the-void/npcs": ["packages/npcs/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
