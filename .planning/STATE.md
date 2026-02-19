@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 46 of 50 (Currency and Hub Foundation)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-19 — v1.11 roadmap created (phases 46-50)
+Plan: 2 of TBD in current phase
+Status: In progress
+Last activity: 2026-02-19 — 46-02 complete: four hub zones with static generation and isHubZone routing
 
 Progress: [░░░░░░░░░░] 0% (v1.11 milestone)
 
@@ -52,6 +52,8 @@ Recent decisions affecting current work:
 - [v1.11]: Portal structures + recall (H key) for hub travel
 - [v1.11]: Simple linear dialogue (no branching)
 - [v1.11]: NPCs are static at fixed hub positions (no schedules)
+- [46-02]: Hub zones use hub_ prefix; BiomeType mapped to valid values (fungal_forest, volcanic_ridge, void_plains)
+- [46-02]: hub_neutral respawns to hub_nexus (Meridian Station — neutral welcome)
 
 ### Pending Todos
 
@@ -70,10 +72,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: v1.11 roadmap created — 5 phases (46-50) defined, 28 requirements mapped
+Stopped at: Completed 46-02-PLAN.md — four faction hub zones infrastructure
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 46`
+**Next action:** Execute next plan in phase 46
 
 ---
 *Last updated: 2026-02-19 after v1.11 roadmap creation*
