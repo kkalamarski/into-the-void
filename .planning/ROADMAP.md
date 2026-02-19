@@ -12,7 +12,7 @@
 - ✅ **v1.7 Character Stats** - Phases 30-32 (shipped 2026-02-18)
 - ✅ **v1.8 Entity System** - Phases 33-38 (shipped 2026-02-19)
 - ✅ **v1.9 Combat System** - Phases 39-42 (shipped 2026-02-19)
-- 🚧 **v1.10 Combat UX** - Phases 43-45 (in progress)
+- ✅ **v1.10 Combat UX** - Phases 43-45 (shipped 2026-02-19)
 
 ## Phases
 
@@ -513,7 +513,7 @@ Plans:
 **Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 45-01-PLAN.md — Create combatLogStore, CombatLog component, and L key toggle
+- [x] 45-01-PLAN.md — Create combatLogStore, CombatLog component, and L key toggle
 
 ## Progress
 
@@ -566,9 +566,9 @@ Phases execute in numeric order: 43 -> 44 -> 45
 | 42. Combat Feedback and HUD | v1.9 | 2/2 | Complete | 2026-02-19 |
 | 43. Click-to-Attack and Bug Fix | v1.10 | 2/2 | Complete | 2026-02-19 |
 | 44. Target Selection UI | v1.10 | 2/2 | Complete | 2026-02-19 |
-| 45. Combat Log | v1.10 | TBD | Not started | - |
+| 45. Combat Log | v1.10 | 1/1 | Complete | 2026-02-19 |
 
-**Total:** 45 phases (44 complete, 1 remaining)
+**Total:** 45 phases (45 complete, 0 remaining)
 
 ---
-*Last updated: 2026-02-19 after phase 44 execution — 2/2 plans complete*
+*Last updated: 2026-02-19 after phase 45 execution — v1.10 milestone complete*

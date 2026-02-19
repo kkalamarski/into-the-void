@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.10 Combat UX — Phase 45: Combat Log
+**Current focus:** v1.10 Combat UX — COMPLETE
 
 ## Current Position
 
-Phase: 45 of 45 (Combat Log)
-Plan: 01 complete
-Status: In progress
-Last activity: 2026-02-19 — Phase 45 Plan 01 complete (combat log panel)
+Phase: 45 of 45 (Combat Log) — COMPLETE
+Plan: 1/1 complete
+Status: Milestone complete
+Last activity: 2026-02-19 — Phase 45 execution complete (combat log panel)
 
-Progress: [██████░░░░] 67% (v1.10 milestone — 2/3 phases)
+Progress: [██████████] 100% (v1.10 milestone — 3/3 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 142 (Phases 1-44 complete)
+- Total plans completed: 143 (Phases 1-45 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~5 hours
 
@@ -37,7 +37,7 @@ Progress: [██████░░░░] 67% (v1.10 milestone — 2/3 phases)
 | v1.7 | 30-32 | 9 | 1 day |
 | v1.8 | 33-38 | 22 | 2 days |
 | v1.9 | 39-42 | 12 | 1 day |
-| v1.10 | 43-45 | 4 (so far) | in progress |
+| v1.10 | 43-45 | 5 | 1 day |
 
 **Recent Trend:** Stable, averaging 2-4 plans per phase
 
@@ -66,17 +66,21 @@ Recent decisions affecting current work:
 - [44-01]: Isometric ellipse ring colored by behavior->rarity tier: herbivore=common, omnivore=rare, predator=epic, maniac=legendary
 - [44-01]: combatStore.subscribe bridges Zustand store and Phaser rendering for auto-target
 - [44-02]: TargetFrame uses perception gating (creature.level > perception * 3 → shows "???")
-- [Phase 45]: combatLogStore.visible synced from gameStore.showCombatLog via HUD useEffect — single source of truth in gameStore
-- [Phase 45]: HUD hooks moved before early return to comply with React Rules of Hooks
+- [45-01]: combatLogStore.visible synced from gameStore.showCombatLog via HUD useEffect — single source of truth in gameStore
+- [45-01]: HUD hooks moved before early return to comply with React Rules of Hooks
 
-### v1.10 Combat UX Context
+### v1.10 Combat UX Complete
 
-Phase 44 complete. Key existing code for Phase 45:
-- **TargetHighlight** (`apps/web/src/game/rendering/TargetHighlight.ts`): Pulsing isometric ring beneath targeted creature
-- **TargetFrame** (`apps/web/src/ui/hud/TargetFrame.tsx`): Top-center HUD with creature name, health bar, level badge, damage flash
-- **combatStore** (`apps/web/src/store/combatStore.ts`): Tracks in-combat state, targetEntityId, combat:start/stop events
-- **HUD** (`apps/web/src/ui/hud/HUD.tsx`): React HUD — combat log panel goes here (Phase 45)
-- **combat:damage event**: Already emitted by server, wired in TargetFrame for flash — Phase 45 will consume for log entries
+All 3 phases shipped:
+- **Phase 43**: Click-to-attack, attack range per tool, aggro bug fix
+- **Phase 44**: Target highlight ring, TargetFrame HUD
+- **Phase 45**: Combat log panel with timestamp, dealt/received distinction, L key toggle
+
+Key files:
+- `apps/web/src/store/combatLogStore.ts` — Log state, socket wiring
+- `apps/web/src/ui/hud/CombatLog.tsx` — Scrollable panel UI
+- `apps/web/src/game/rendering/TargetHighlight.ts` — Pulsing ring
+- `apps/web/src/ui/hud/TargetFrame.tsx` — Target HUD frame
 
 ### Pending Todos
 
@@ -95,10 +99,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 45-01-PLAN.md — combat log panel
+Stopped at: v1.10 milestone complete
 Resume file: None
 
-**Next action:** `/gsd:plan-phase 45` (plan 02 if needed, or milestone complete)
+**Next action:** `/gsd:complete-milestone` or `/gsd:new-milestone` for v1.11
 
 ---
-*Last updated: 2026-02-19 after Phase 45 Plan 01 execution complete*
+*Last updated: 2026-02-19 after Phase 45 execution complete — v1.10 shipped*
