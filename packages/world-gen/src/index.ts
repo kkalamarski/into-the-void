@@ -8,3 +8,4 @@ export * from './generation/biome';
 export * from './generation/spawn';
 export * from './generation/terrain';
 export * from './generation/structures';
+export { generateHubChunk, isKnownHub, getHubConfig, type HubConfig } from './generation/hub';
