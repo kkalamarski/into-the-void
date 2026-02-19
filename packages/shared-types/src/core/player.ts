@@ -33,6 +33,8 @@ export interface Player {
   inCombat: boolean;
   /** Whether player is online */
   online: boolean;
+  /** Whether player is currently dead (awaiting respawn) */
+  isDead?: boolean;
 }
 
 /**

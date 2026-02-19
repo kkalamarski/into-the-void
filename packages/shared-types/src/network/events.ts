@@ -55,6 +55,8 @@ export type ServerEventType =
   | 'inventory:update'
   | 'storage:update'
   | 'stats:update'
+  | 'player:death'
+  | 'player:respawn'
   | 'error';
 
 /**
@@ -110,6 +112,15 @@ export interface ServerEvents {
   'inventory:update': import('../game/inventory').Inventory;
   'storage:update': import('../game/storage').PersonalStorage;
   'stats:update': import('../game/stats').CharStatsPayload;
+  'player:death': {
+    playerId: string;
+    killerId: string;  // Entity that killed the player
+    position: import('../core/position').Position; // Where player died
+  };
+  'player:respawn': {
+    playerId: string;
+    position: import('../core/position').Position; // Where player respawned
+  };
   'error': { code: string; message: string };
 }
 
