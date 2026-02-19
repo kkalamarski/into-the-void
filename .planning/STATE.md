@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 47 of 50 (Hub Travel)
-Plan: 4 of TBD in current phase
+Plan: 5 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-19 — 47-04: Client-side portal tile detection (emit portal:use on tile 16)
+Last activity: 2026-02-19 — 47-05: Portal tile (ID 16) placed at hub center (32,32) in generateHubChunk()
 
 Progress: [██░░░░░░░░] 20% (v1.11 milestone — 1/5 phases)
 
@@ -70,6 +70,7 @@ Recent decisions affecting current work:
 - [47-03]: portal:use in hub delegates to handleHubLeave via method call (no code duplication)
 - [47-04]: Portal check in WorldScene runs on reconciling=false only; debounced by position key (clears on non-portal)
 - [47-04]: Portal travel fully wired end-to-end (open world <-> hub) via tile 16 detection + portal:use emit
+- [47-05]: Portal tile placed at hub center (32,32); hub exit chain complete (tile 16 -> portal:use -> handleHubLeave -> lastWorldPosition)
 
 ### Pending Todos
 
@@ -88,10 +89,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 47-hub-travel/47-04-PLAN.md — client-side portal tile detection
+Stopped at: Completed 47-hub-travel/47-05-PLAN.md — portal tile placement in hub zones
 Resume file: None
 
-**Next action:** Execute next plan in hub travel phase
+**Next action:** Execute next plan in hub travel phase (or begin Phase 48: NPC dialogue)
 
 ---
-*Last updated: 2026-02-19 after 47-04 execution complete*
+*Last updated: 2026-02-19 after 47-05 execution complete*
