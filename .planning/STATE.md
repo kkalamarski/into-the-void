@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.9 Combat System — Phase 39, Plan 03 complete
+**Current focus:** v1.9 Combat System — Phase 39 complete (all 4 plans done)
 
 ## Current Position
 
 Phase: 39 - Combat Core and Damage Calculation
 Plan: 04
-Status: In progress
-Last activity: 2026-02-19 — 39-03 complete (calculateAttackInterval, Haste-based attack timing, unit tests)
+Status: Complete
+Last activity: 2026-02-19 — 39-04 complete (Toughness damage reduction gap closure, deterministic unit test)
 
-Progress: [███░░░░░░░] 30% (v1.9 milestone — Phase 39 Plan 03/4 complete)
+Progress: [████░░░░░░] 40% (v1.9 milestone — Phase 39 Plan 04/4 complete)
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Progress: [███░░░░░░░] 30% (v1.9 milestone — Phase 39 Plan
 | 39 | 01 | 3min | 3 | 4 |
 | 39 | 02 | 4min | 3 | 5 |
 | 39 | 03 | 4min | 3 | 3 |
+| 39 | 04 | 2min | 2 | 2 |
 
 ## Accumulated Context
 
@@ -81,6 +82,8 @@ Recent decisions affecting current work:
 - [39-03]: calculateAttackInterval uses linear scaling (interval = 1000 * 50 / haste): doubling haste halves interval, consistent with haste stat semantics
 - [39-03]: Timing gate placed before creature lookup in attackTick(): avoids zone/DB access on skipped ticks — performance optimization
 - [39-03]: lastAttackAt initialized to 0: ensures first attack fires immediately on combat start regardless of Haste value
+- [Phase 39]: armorReduction set to creatureStats.toughness — Toughness now serves as base armor value feeding into effectiveArmor quadratic scaling
+- [Phase 39]: Toughness test uses critChance=0 and 20-run average with 0.8x threshold — eliminates crit randomness and ±10% variance flakiness deterministically
 
 ### v1.9 Combat System Context
 
@@ -116,10 +119,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 39-03-PLAN.md
+Stopped at: Completed 39-04-PLAN.md
 Resume file: None
 
-**Next action:** Execute 39-04-PLAN.md (player death and respawn)
+**Next action:** Begin Phase 40 planning
 
 ---
-*Last updated: 2026-02-19 after 39-03 complete*
+*Last updated: 2026-02-19 after 39-04 complete*
