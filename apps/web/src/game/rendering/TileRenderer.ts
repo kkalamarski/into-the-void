@@ -50,6 +50,7 @@ export const TILE_TEXTURE_MAP: Record<TileId, string> = {
   [TileId.FUNGAL_GROWTH]: 'tile_fungal_growth',
   [TileId.CRATER_FLOOR]: 'tile_crater_floor',
   [TileId.CRATER_DEBRIS]: 'tile_crater_debris',
+  [TileId.PORTAL]: 'tile_portal',
 };
 
 /**

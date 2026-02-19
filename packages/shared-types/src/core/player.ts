@@ -37,6 +37,8 @@ export interface Player {
   isDead?: boolean;
   /** Current credits balance */
   credits: number;
+  /** Last open-world position — saved when entering a hub, used for return travel */
+  lastWorldPosition?: Position;
 }
 
 /**

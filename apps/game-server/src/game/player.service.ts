@@ -3,7 +3,8 @@ import { JwtService } from '@nestjs/jwt';
 import { Server } from 'socket.io';
 import { Player, Position, PlayerPublic, FactionId, ZoneState } from '@into-the-void/shared-types';
 import { DatabaseService } from '../database/database.service';
-import { findCharacterById, isCharacterOwnedByAccount, updateLastPlayed } from '@into-the-void/database';
+import { findCharacterById, isCharacterOwnedByAccount, updateLastPlayed, saveLastWorldPosition } from '@into-the-void/database';
+import { isHubZone } from '@into-the-void/shared-types';
 import { InventoryService } from './inventory.service';
 import { getFactionRespawnPosition } from '@into-the-void/game-logic';
 
@@ -11,6 +12,7 @@ const RESPAWN_DELAY_MS = 3000; // 3 seconds
 
 interface ConnectedPlayer extends Player {
   socketId: string;
+  lastWorldPosition?: Position;
 }
 
 interface AuthResult {
@@ -86,6 +88,11 @@ export class PlayerService {
         credits: character.credits,
         socketId,
       };
+
+      // Restore last open-world position if character has one
+      if (character.lastWorldPosition) {
+        player.lastWorldPosition = character.lastWorldPosition;
+      }
 
       // Store player
       this.players.set(player.id, player);
@@ -229,6 +236,47 @@ export class PlayerService {
    */
   private async respawnPlayer(playerId: string): Promise<void> {
     await this.respawnWithSOS(playerId);
+  }
+
+  /**
+   * Teleport player to their faction hub, saving their current open-world position for return.
+   * Rejects if player is already in a hub zone.
+   */
+  async teleportToHub(playerId: string): Promise<{
+    success: boolean;
+    error?: string;
+    oldZoneId?: string;
+    newZoneId?: string;
+  }> {
+    const player = this.players.get(playerId);
+    if (!player) return { success: false, error: 'Player not found' };
+
+    // Already in a hub — reject
+    if (isHubZone(player.position.zoneId)) {
+      return { success: false, error: 'Already in hub' };
+    }
+
+    // Determine faction hub position
+    const hubPosition = getFactionRespawnPosition(player.faction);
+    const oldZoneId = player.position.zoneId;
+
+    // Save current open-world position (in-memory and DB)
+    player.lastWorldPosition = { ...player.position };
+    const db = this.databaseService.getClient();
+    await saveLastWorldPosition(db, playerId, {
+      x: player.position.x,
+      y: player.position.y,
+      zoneId: player.position.zoneId,
+    });
+
+    // Teleport to hub
+    player.position = hubPosition;
+
+    return {
+      success: true,
+      oldZoneId,
+      newZoneId: hubPosition.zoneId,
+    };
   }
 
   getPlayerBySocket(socketId: string): ConnectedPlayer | undefined {

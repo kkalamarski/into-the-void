@@ -31,7 +31,8 @@ export type ClientEventType =
   | 'inventory:unequip'
   | 'equipment:tool_swap'
   | 'storage:open'
-  | 'entity:tool_use';
+  | 'entity:tool_use'
+  | 'portal:use';
 
 /**
  * Server-to-client event types
@@ -80,6 +81,9 @@ export interface ClientEvents {
   'equipment:tool_swap': Record<string, never>;
   'storage:open': Record<string, never>;
   'entity:tool_use': { targetEntityId: string };
+  'portal:use': Record<string, never>;
+  'respawn:sos': Record<string, never>;
+  'respawn:reboot': { itemInstanceId: string };
 }
 
 /**
@@ -120,6 +124,8 @@ export interface ServerEvents {
   'player:respawn': {
     playerId: string;
     position: import('../core/position').Position; // Where player respawned
+    health: number; // Restored health amount
+    maxHealth: number; // Max health for reference
   };
   'error': { code: string; message: string };
 }
