@@ -9,6 +9,7 @@ import {
   canInteract,
   canInteractLevel,
   calculateDamage,
+  calculateAttackInterval,
   computeCharStats,
   rollLootTable,
   getCreatureLoot,
@@ -23,6 +24,7 @@ interface CombatSession {
   targetId: string;
   zoneId: string;
   startedAt: number;
+  lastAttackAt: number;
 }
 
 interface StartCombatResult {
@@ -120,6 +122,7 @@ export class CombatService {
       targetId: targetEntityId,
       zoneId: player.position.zoneId,
       startedAt: Date.now(),
+      lastAttackAt: 0,  // Allows immediate first attack
     };
     this.sessions.set(player.id, session);
 
@@ -192,12 +195,30 @@ export class CombatService {
 
   /**
    * Execute one attack from player to target creature.
-   * Returns damage result for broadcasting.
+   * Returns damage result for broadcasting, or null if not time to attack yet.
    */
   async attackTick(session: CombatSession): Promise<CombatDamageResult | null> {
     const player = this.playerService.getPlayerById(session.playerId);
     if (!player) {
       this.stopCombat(session.playerId);
+      return null;
+    }
+
+    // Get player inventory for tool and stats
+    const inventory = this.inventoryService.getInventory(player.id);
+    if (!inventory) {
+      this.stopCombat(session.playerId);
+      return null;
+    }
+
+    // Calculate player stats for interval calculation
+    const playerStats = computeCharStats(player.level, inventory.equipment as EquipmentJson, 'player');
+    const attackInterval = calculateAttackInterval(playerStats.haste);
+
+    // Check if enough time has passed since last attack
+    const now = Date.now();
+    if (now - session.lastAttackAt < attackInterval) {
+      // Not time to attack yet
       return null;
     }
 
@@ -215,12 +236,6 @@ export class CombatService {
     }
 
     // Validate range (player may have moved)
-    const inventory = this.inventoryService.getInventory(player.id);
-    if (!inventory) {
-      this.stopCombat(session.playerId);
-      return null;
-    }
-
     const tool = inventory.equipment.tool;
     const toolDef = tool ? ItemRegistry.get(tool.itemId) : null;
     const toolRange = toolDef?.range ?? 1;
@@ -232,10 +247,7 @@ export class CombatService {
       return null;
     }
 
-    // Calculate player stats
-    const playerStats = computeCharStats(player.level, inventory.equipment as EquipmentJson, 'player');
-
-    // Calculate creature stats from definition using creature scaling
+    // Calculate creature stats from definition
     const creatureLevel = creature.level;
     const emptyEquipment: EquipmentJson = { modules: [] };
     const creatureStats = computeCharStats(creatureLevel, emptyEquipment, 'creature');
@@ -267,7 +279,10 @@ export class CombatService {
     await this.zonesService.updateEntity(session.zoneId, session.targetId, {
       health: creature.health,
       active: !killed,
-    });
+    } as Partial<Creature>);
+
+    // Update last attack time AFTER successful attack
+    session.lastAttackAt = now;
 
     return {
       attackerId: player.id,
