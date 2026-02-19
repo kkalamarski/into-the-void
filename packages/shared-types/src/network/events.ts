@@ -20,6 +20,7 @@ export type ClientEventType =
   | 'player:interact'
   | 'player:action'
   | 'combat:action'
+  | 'combat:start'
   | 'chat:send'
   | 'inventory:use'
   | 'inventory:drop'
@@ -64,6 +65,7 @@ export interface ClientEvents {
   'player:interact': { targetId: string };
   'player:action': { action: string; data?: unknown };
   'combat:action': import('../game/combat').CombatActionRequest;
+  'combat:start': { targetEntityId: string };
   'chat:send': ChatMessageRequest;
   'inventory:use': { instanceId: string };
   'inventory:drop': { instanceId: string; quantity: number };
