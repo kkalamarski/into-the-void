@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.9 Combat System — Phase 40 Plan 01 complete, Plan 02 next
+**Current focus:** v1.9 Combat System — Phase 40 Plan 02 complete, Plan 03 next
 
 ## Current Position
 
 Phase: 40 - Creature Combat AI and Aggro
-Plan: 01 complete
-Status: In progress (Plan 02 next)
-Last activity: 2026-02-19 — Phase 40 Plan 01 complete (Creature FSM combat states and aggro detection)
+Plan: 02 complete
+Status: In progress (Plan 03 next)
+Last activity: 2026-02-19 — Phase 40 Plan 02 complete (Creature attack logic and AiService aggro wiring)
 
 Progress: [██░░░░░░░░] 25% (v1.9 milestone — 1/4 phases complete)
 
@@ -49,6 +49,7 @@ Progress: [██░░░░░░░░] 25% (v1.9 milestone — 1/4 phases co
 | 39 | 03 | 4min | 3 | 3 |
 | 39 | 04 | 2min | 2 | 2 |
 | 40 | 01 | 2.5min | 3 | 3 |
+| 40 | 02 | 2.5min | 3 | 3 |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Recent decisions affecting current work:
 - [40-01]: AGGRO_RADIUS=5 and LEASH_DISTANCE=10 as top-level constants in creature-ai.ts — matches plan spec, consistent with FLEE_RADIUS=5 for herbivores
 - [40-01]: tickOmnivore() delegates entirely to tickPredator() when provoked — avoids duplicating predator logic, single code path for aggro behavior
 - [40-01]: moveToward() uses 3-attempt fallback (diagonal, x-only, y-only) — chasing does not need backtrack fallback unlike flee()
+- [Phase 40]: creatureAttackTick skips when player out of range (returns null) rather than stopping combat — creature chases via FSM
+- [Phase 40]: processCreatureCombatTick emits combat:damage to both player socket and zone — direct player notification plus zone broadcast
 
 ### v1.9 Combat System Context
 
@@ -123,10 +126,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 40-01-PLAN.md
+Stopped at: Completed 40-02-PLAN.md
 Resume file: None
 
-**Next action:** Execute Phase 40 Plan 02 (AiService aggro wiring)
+**Next action:** Execute Phase 40 Plan 03
 
 ---
-*Last updated: 2026-02-19 after 40-01 complete*
+*Last updated: 2026-02-19 after 40-02 complete*
