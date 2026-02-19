@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 41 - Player Death and Respawn
-Plan: All 3 plans complete
-Status: Complete
-Last activity: 2026-02-19 — Phase 41 verified complete
+Phase: 42 - Combat Feedback and HUD
+Plan: 01 complete
+Status: In Progress
+Last activity: 2026-02-19 — Phase 42 Plan 01 complete (floating damage numbers)
 
-Progress: [███████░░░] 75% (v1.9 milestone — 3/4 phases complete)
+Progress: [████████░░] 80% (v1.9 milestone — Phase 42 in progress)
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Progress: [███████░░░] 75% (v1.9 milestone — 3/4 phases co
 | 41 | 01 | 5min | 3 | 6 |
 | 41 | 02 | 6min | 3 | 5 |
 | 41 | 03 | 4min | 1 | 2 |
+| 42 | 01 | 2min | 3 | 3 |
 
 ## Accumulated Context
 
@@ -106,6 +107,8 @@ Recent decisions affecting current work:
 - [41-03]: zoneStateProvider injected via setter callback rather than direct GameService dependency — avoids circular injection, follows existing setServer() pattern
 - [41-03]: zone:state emitted before player:left to old zone — client receives zone data first, ordering matches handleAuth pattern
 - [41-03]: respawnPlayer made async to await zoneStateProvider; scheduleRespawn setTimeout callback does not await (unawaited promise acceptable in setTimeout)
+- [42-01]: createFloatingDamage is a static method on EntityRenderer — no instance state needed, callable from WorldScene directly
+- [42-01]: combat:damage updateEntity cast to Partial<Entity> — health/maxHealth are on Creature subtype, cast is safe since server only emits for creatures
 
 ### v1.9 Combat System Context
 
@@ -118,8 +121,8 @@ Key existing code to build on:
 
 Design notes for remaining phase:
 - Player death + 3-second respawn at faction hub is complete (Phase 41)
-- Phase 42: Damage numbers are client-side floating text — server emits `combat:damage` event
-- Phase 42: "In Combat" indicator for HUD when player is in active combat
+- Phase 42 Plan 01 DONE: Floating damage numbers wired — EntityRenderer.createFloatingDamage (static), WorldScene.showDamageNumber, gameStore combat:damage handler
+- Phase 42 Plan 02 remaining: "In Combat" indicator for HUD when player is in active combat
 
 ### Pending Todos
 
@@ -138,10 +141,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed Phase 41 execution and verification
+Stopped at: Completed Phase 42 Plan 01 (floating damage numbers)
 Resume file: None
 
-**Next action:** Plan Phase 42 (Combat Feedback and HUD)
+**Next action:** Execute Phase 42 Plan 02 (In Combat HUD indicator)
 
 ---
 *Last updated: 2026-02-19 after Phase 41 complete*
