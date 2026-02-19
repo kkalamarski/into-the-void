@@ -1,6 +1,7 @@
 import { BiomeType, TileStructure, ZONE_SIZE } from '@into-the-void/shared-types';
 import { TileRegistry, TILE_IDS } from '@into-the-void/tiles';
 import { SimplexNoise } from '../noise/simplex';
+import { SeededRandom } from '../random/seeded-random';
 import { TileId } from './terrain';
 
 // Constants for blocking feature generation
@@ -43,8 +44,58 @@ const FEATURE_HEIGHTS: Record<string, number> = {
 
 const DEFAULT_FEATURE_HEIGHT = 3;
 
+/** Portal placement constants */
+const PORTAL_MIN = 20;   // Min x/y position (avoid edges and walls)
+const PORTAL_MAX = 44;   // Max x/y position (stay in center region)
+const PORTAL_NUMERIC_ID = 16; // TileId.PORTAL — matches terrain.ts enum
+
 function getFeatureHeight(featureTileId: string): number {
   return FEATURE_HEIGHTS[featureTileId] ?? DEFAULT_FEATURE_HEIGHT;
+}
+
+/**
+ * Place exactly 1 portal in the chunk at a deterministic center-region position.
+ * Portals are walkable (collision=false) and appear only on open (non-blocked) tiles.
+ * Uses a dedicated seed so portal position is independent of other feature noise.
+ */
+function placePortals(
+  worldSeed: string,
+  chunkX: number,
+  chunkY: number,
+  tiles: number[][],
+  heights: number[][],
+  collisions: boolean[][],
+  structures: TileStructure[]
+): void {
+  const random = new SeededRandom(`${worldSeed}_portals_${chunkX}_${chunkY}`);
+
+  // Try up to 20 positions to find a non-blocked tile in the center region
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const x = random.nextInt(PORTAL_MIN, PORTAL_MAX);
+    const y = random.nextInt(PORTAL_MIN, PORTAL_MAX);
+
+    // Skip if blocked by terrain or existing structure
+    if (collisions[y][x]) continue;
+
+    // Place portal tile
+    tiles[y][x] = PORTAL_NUMERIC_ID;
+    collisions[y][x] = false; // Portals are always walkable
+    heights[y][x] = 0;        // Floor level
+
+    structures.push({
+      type: 'feature',
+      tiles: [{
+        x,
+        y,
+        tileId: TILE_IDS.PORTAL,
+        height: 0,
+      }]
+    });
+
+    // Successfully placed — 1 portal per chunk
+    return;
+  }
+  // If all attempts are blocked (very dense zone), skip portal placement gracefully
 }
 
 /**
@@ -102,6 +153,9 @@ export function generateStructures(
       }
     }
   }
+
+  // Place portal structure (1 per chunk, deterministic)
+  placePortals(worldSeed, chunkX, chunkY, tiles, heights, collisions, structures);
 
   return structures;
 }
