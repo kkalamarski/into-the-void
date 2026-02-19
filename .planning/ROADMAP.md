@@ -554,12 +554,14 @@ Plans:
   2. Player presses the recall hotkey from anywhere in the open world — they are immediately teleported to their faction hub; the last open-world position is saved for return
   3. Player uses the "Leave Hub" action or portal within the hub — they are teleported back to the exact open-world position they left from
   4. Hub arrival and departure are visible to other players in both zones — players appear and disappear correctly on zone transitions
-**Plans**: 3 plans in 3 waves
+**Plans**: 5 plans in 3 waves (completed 2026-02-20)
 
 Plans:
-- [ ] 47-01-PLAN.md — Portal structure tile type and open-world placement
-- [ ] 47-02-PLAN.md — Portal interaction handler and hub teleport (save/restore world position)
-- [ ] 47-03-PLAN.md — Recall hotkey (H key) and leave-hub mechanic
+- [x] 47-01-PLAN.md — Portal structure tile type and open-world placement
+- [x] 47-02-PLAN.md — Portal interaction handler and hub teleport (save/restore world position)
+- [x] 47-03-PLAN.md — Recall hotkey (H key) and leave-hub mechanic
+- [x] 47-04-PLAN.md — Client-side portal tile detection (gap closure)
+- [x] 47-05-PLAN.md — Hub portal tile placement (gap closure)
 
 #### Phase 48: NPC Definition System and Hub Spawns
 
@@ -668,12 +670,12 @@ Phases execute in numeric order: 46 -> 47 -> 48 -> 49 -> 50
 | 44. Target Selection UI | v1.10 | 2/2 | Complete | 2026-02-19 |
 | 45. Combat Log | v1.10 | 1/1 | Complete | 2026-02-19 |
 | 46. Currency and Hub Foundation | v1.11 | 3/3 | Complete | 2026-02-19 |
-| 47. Hub Travel | v1.11 | 3/3 | Not started | - |
+| 47. Hub Travel | v1.11 | 5/5 | Complete | 2026-02-20 |
 | 48. NPC Definition System and Hub Spawns | v1.11 | TBD | Not started | - |
 | 49. NPC Interaction Window | v1.11 | TBD | Not started | - |
 | 50. Trading System | v1.11 | TBD | Not started | - |
 
-**Total:** 50 phases (46 complete, 4 remaining)
+**Total:** 50 phases (47 complete, 3 remaining)
 
 ---
-*Last updated: 2026-02-19 after Phase 47 planning*
+*Last updated: 2026-02-20 after Phase 47 execution complete*
