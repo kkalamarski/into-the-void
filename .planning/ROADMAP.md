@@ -497,8 +497,8 @@ Plans:
 **Plans**: 2 plans in 1 wave
 
 Plans:
-- [ ] 44-01-PLAN.md — Create TargetHighlight class with pulsing ring; wire to WorldScene and combatStore
-- [ ] 44-02-PLAN.md — Create TargetFrame HUD component with health bar, name, level, damage flash
+- [x] 44-01-PLAN.md — Create TargetHighlight class with pulsing ring; wire to WorldScene and combatStore
+- [x] 44-02-PLAN.md — Create TargetFrame HUD component with health bar, name, level, damage flash
 
 #### Phase 45: Combat Log
 
@@ -565,10 +565,10 @@ Phases execute in numeric order: 43 -> 44 -> 45
 | 41. Player Death and Respawn | v1.9 | 3/3 | Complete | 2026-02-19 |
 | 42. Combat Feedback and HUD | v1.9 | 2/2 | Complete | 2026-02-19 |
 | 43. Click-to-Attack and Bug Fix | v1.10 | 2/2 | Complete | 2026-02-19 |
-| 44. Target Selection UI | v1.10 | 2 | Not started | - |
+| 44. Target Selection UI | v1.10 | 2/2 | Complete | 2026-02-19 |
 | 45. Combat Log | v1.10 | TBD | Not started | - |
 
-**Total:** 45 phases (43 complete, 2 remaining)
+**Total:** 45 phases (44 complete, 1 remaining)
 
 ---
-*Last updated: 2026-02-19 after phase 44 planning — 2 plans created*
+*Last updated: 2026-02-19 after phase 44 execution — 2/2 plans complete*
