@@ -118,6 +118,42 @@ Requirements for Character Stats milestone.
 - [x] **STAT-17**: Level-up notification shows stat deltas ("+5 Durability")
 - [x] **STAT-18**: Item tooltip shows stat delta comparison vs equipped item (green/red +/-)
 
+## v1.9 Requirements
+
+Requirements for Combat System milestone. Each maps to roadmap phases.
+
+### Combat Engagement
+
+- [ ] **COMB-01**: Player can click a creature with combat tool equipped to start attacking
+- [ ] **COMB-02**: Player auto-attacks the target every tick (~1 second) while in range
+- [ ] **COMB-03**: Damage is calculated from attacker's Power stat vs defender's Toughness
+- [ ] **COMB-04**: Haste stat affects attack speed (faster ticks at higher Haste)
+
+### Creature Aggro
+
+- [ ] **AGGR-01**: Predators and maniacs automatically attack players within ~5 tiles
+- [ ] **AGGR-02**: Omnivores only attack if the player attacks them first
+- [ ] **AGGR-03**: Herbivores continue to flee (no aggro change from v1.8)
+
+### Combat State
+
+- [ ] **CSTA-01**: Creatures have combat states: idle, attacking, chasing, returning
+- [ ] **CSTA-02**: Creatures chase players who move away (up to ~10 tiles from spawn)
+- [ ] **CSTA-03**: Creatures return to spawn point after losing target (leash exceeded)
+- [ ] **CSTA-04**: Combat ends when one combatant dies or leaves range
+
+### Player Death
+
+- [ ] **DEAT-01**: Player dies when health reaches zero
+- [ ] **DEAT-02**: Dead player respawns at faction hub / safe point
+- [ ] **DEAT-03**: No item or XP loss on death (forgiving)
+
+### Combat Feedback
+
+- [ ] **FEED-01**: Damage numbers appear above targets when hit
+- [ ] **FEED-02**: Combat state is visible in HUD (e.g., "In Combat" indicator)
+- [ ] **FEED-03**: Health bar updates in real-time during combat
+
 ## v1.6 Requirements (Complete)
 
 ### Item System
@@ -183,17 +219,17 @@ Requirements for Character Stats milestone.
 
 Deferred to future releases. Not in current roadmap.
 
-### Combat
+### Combat Abilities (v2.0+)
 
-- **CMBT-01**: Creatures attack players when aggro conditions met
-- **CMBT-02**: Damage calculations use stats system
-- **CMBT-03**: Player death and respawn mechanics
+- **CABI-01**: Active combat abilities (power strike, block, etc.)
+- **CABI-02**: Ability cooldowns and resource costs
+- **CABI-03**: PvP combat between players
 
 ### Advanced AI
 
-- **AADV-01**: Predators aggro when player within range
-- **AADV-02**: Maniacs always aggressive
-- **AADV-03**: Full A* pathfinding for creature movement
+- **AADV-01**: Full A* pathfinding for creature movement
+- **AADV-02**: Pack behavior (creatures coordinate attacks)
+- **AADV-03**: Territory defense patterns
 
 ### Enhanced Entities
 
@@ -246,7 +282,6 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Combat system | Separate milestone — creatures don't attack in v1.8 |
 | Full creature pathfinding | Performance risk at scale; directional wander is sufficient |
 | Creature taming | Requires faction system integration |
 | Boss entities | Requires spawn announcements, unique AI, separate design |
