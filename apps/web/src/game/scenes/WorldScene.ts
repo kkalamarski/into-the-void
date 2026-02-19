@@ -16,7 +16,10 @@ import { DepthSorter } from '../rendering/DepthSorter';
 import { useGameStore } from '../../store/gameStore';
 import { useEntityStore } from '../../store/entityStore';
 import { useInventoryStore } from '../../store/inventoryStore';
+import { useAlertStore } from '../../store/alertStore';
+import { useCombatStore } from '../../store/combatStore';
 import { gameSocket } from '../../network/socket';
+import { TargetHighlight } from '../rendering/TargetHighlight';
 
 export const ISO_TILE_WIDTH = 256;
 export const ISO_TILE_HEIGHT = 128;
@@ -94,6 +97,7 @@ export class WorldScene extends Phaser.Scene {
   private leftMouseDown = false;
   private rightMouseDown = false;
   private lastClickedEntity: string | null = null;
+  private targetHighlight: TargetHighlight | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -114,6 +118,27 @@ export class WorldScene extends Phaser.Scene {
 
     // Initialize EntityRenderer with isometric dimensions
     this.entityRenderer = new EntityRenderer(this, ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
+
+    // Initialize TargetHighlight for entity targeting feedback
+    this.targetHighlight = new TargetHighlight(this);
+
+    // Subscribe to combatStore target changes for auto-targeting
+    useCombatStore.subscribe((state, prevState) => {
+      if (state.targetEntityId !== prevState.targetEntityId) {
+        if (state.targetEntityId) {
+          // Auto-target: show highlight on new target (e.g., first creature to aggro player)
+          const entity = useEntityStore.getState().entities.get(state.targetEntityId);
+          const container = this.entitySprites.get(state.targetEntityId);
+          if (entity && container) {
+            const creature = entity as { behavior?: string };
+            this.targetHighlight?.show(state.targetEntityId, container, creature.behavior ?? 'herbivore');
+          }
+        } else {
+          // Target cleared (combat ended)
+          this.targetHighlight?.hide();
+        }
+      }
+    });
 
     // Initialize ViewportCuller with isometric dimensions and expanded padding
     this.viewportCuller = new ViewportCuller(ISO_TILE_WIDTH, ISO_TILE_HEIGHT, 4);
@@ -248,6 +273,10 @@ export class WorldScene extends Phaser.Scene {
 
       // Only handle left click for movement
       if (pointer.rightButtonDown()) return;
+
+      // Clear target highlight when clicking ground (empty tile)
+      this.targetHighlight?.hide();
+      useCombatStore.getState().setInCombat(useCombatStore.getState().inCombat, null);
 
       if (!this.isoTransform) return;
 
@@ -417,18 +446,20 @@ export class WorldScene extends Phaser.Scene {
    * Implements CATK-01 (initiate combat on click) and CATK-02 (range pre-check).
    */
   private handleEntityClick(entityId: string): void {
+    const { addAlert } = useAlertStore.getState();
+
     // Get player's equipped tool from inventory store
     const inventoryStore = useInventoryStore.getState();
     const tool = inventoryStore.inventory?.equipment.tool;
 
     if (!tool) {
-      // No tool equipped — silently ignore per CATK-02
+      addAlert('No weapon equipped', 'warning');
       return;
     }
 
     const toolDef = ItemRegistry.get(tool.itemId);
     if (!toolDef || toolDef.toolType !== 'combat') {
-      // Not a combat tool — silently ignore per requirements
+      addAlert('Equipped tool is not a weapon', 'warning');
       return;
     }
 
@@ -437,7 +468,9 @@ export class WorldScene extends Phaser.Scene {
 
     // Get entity position from entityStore
     const entity = useEntityStore.getState().entities.get(entityId);
-    if (!entity || entity.type !== 'creature') return;
+    if (!entity || entity.type !== 'creature') {
+      return;
+    }
 
     // Get player position from gameStore
     const player = useGameStore.getState().player;
@@ -449,8 +482,15 @@ export class WorldScene extends Phaser.Scene {
     const distance = Math.max(dx, dy);
 
     if (distance > toolRange) {
-      // Out of range — silently ignore per CATK-02
+      addAlert('Target out of range', 'warning');
       return;
+    }
+
+    // Show highlight on target (get behavior from entity store)
+    const creatureEntity = entity as { behavior?: string };
+    const targetContainer = this.entitySprites.get(entityId);
+    if (targetContainer) {
+      this.targetHighlight?.show(entityId, targetContainer, creatureEntity.behavior ?? 'herbivore');
     }
 
     // Emit combat:start to server
@@ -703,6 +743,7 @@ export class WorldScene extends Phaser.Scene {
    * and clean up orphaned entities. Called once the player is HYSTERESIS_TILES deep.
    */
   private commitZoneTransition(newZoneId: string, biome: BiomeType): void {
+    const previousBiome = this.currentBiome;
     console.log('[WorldScene] commitZoneTransition:', { from: this.currentZoneId, to: newZoneId });
     this.currentZoneId = newZoneId;
 
@@ -723,6 +764,15 @@ export class WorldScene extends Phaser.Scene {
         // Update HUD
         if (this.zoneHUD) {
           this.zoneHUD.updateZone(newZoneId, chunk.biome);
+        }
+
+        // Show zone/biome transition alert
+        const biomeChanged = previousBiome !== chunk.biome;
+        const biomeName = this.formatBiomeName(chunk.biome);
+        if (biomeChanged) {
+          useAlertStore.getState().addAlert(`Entering ${biomeName}`, 'info');
+        } else {
+          useAlertStore.getState().addAlert(`Zone ${newZoneId}`, 'info');
         }
       }
     }
@@ -798,6 +848,16 @@ export class WorldScene extends Phaser.Scene {
       this.pendingBiome = biome;
       console.log('[WorldScene] Zone transition pending at depth', depth, '- awaiting', HYSTERESIS_TILES, 'tiles');
     }
+  }
+
+  /**
+   * Format biome type to a readable name (e.g., 'void_plains' -> 'Void Plains').
+   */
+  private formatBiomeName(biome: BiomeType): string {
+    return biome
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   private parseZoneCoords(zoneId: string): { x: number; y: number } {
@@ -1038,6 +1098,11 @@ export class WorldScene extends Phaser.Scene {
   }
 
   despawnEntity(entityId: string): void {
+    // Clear highlight with fade if despawned entity was targeted (fade out for death animation)
+    if (this.targetHighlight?.isHighlighting(entityId)) {
+      this.targetHighlight.hide(true);
+    }
+
     const container = this.entitySprites.get(entityId);
     if (container) {
       // Explicitly destroy all children first
@@ -1174,6 +1239,10 @@ export class WorldScene extends Phaser.Scene {
           // Update depth during movement for correct sorting
           if (this.depthSorter) {
             this.depthSorter.markDirty(entityId);
+          }
+          // Update highlight position if this entity is highlighted
+          if (this.targetHighlight?.isHighlighting(entityId)) {
+            this.targetHighlight.updatePosition(container);
           }
         },
         onComplete: () => {
@@ -1562,6 +1631,10 @@ export class WorldScene extends Phaser.Scene {
   }
 
   shutdown(): void {
+    if (this.targetHighlight) {
+      this.targetHighlight.destroy();
+      this.targetHighlight = null;
+    }
     if (this.pathfindingController) {
       this.pathfindingController.destroy();
       this.pathfindingController = null;
