@@ -3,7 +3,19 @@ import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
 import { IsometricTransform } from '../utils/IsometricTransform';
 
-const ELEVATION_HEIGHT_STEP = 16; // Pixels per elevation level (5 levels = 80px max)
+const ELEVATION_HEIGHT_STEP = 128; // Pixels per elevation level (1.0 × diamond height for 256x256 cubes)
+
+// Height-based tinting: lower elevations appear darker for visual depth
+// Brightness = 0.55 + (elevation * 0.15), capped at 1.0
+const ELEVATION_TINT_BASE = 0.55;
+const ELEVATION_TINT_STEP = 0.15;
+
+// Sprite dimensions for the new isometric cube sprites
+const SPRITE_SIZE = 256;
+// The top diamond's center is at (128, 64) in a 256x256 cube sprite
+// Origin (0.5, 0.25) aligns the diamond center with container position
+const SPRITE_ORIGIN_X = 0.5;
+const SPRITE_ORIGIN_Y = 0.25;
 
 // Variant weights: base (70%), v2 (20%), v3 (10%)
 const VARIANT_WEIGHTS = [0.7, 0.2, 0.1];
@@ -48,7 +60,7 @@ export class TileRenderer {
   private tileSize: number;
   private isoTransform: IsometricTransform;
 
-  constructor(scene: Phaser.Scene, tileWidth: number = 128, tileHeight: number = 64) {
+  constructor(scene: Phaser.Scene, tileWidth: number = 256, tileHeight: number = 128) {
     this.scene = scene;
     this.tileSize = tileWidth; // Keep for backwards compat, but tileWidth is primary
     this.isoTransform = new IsometricTransform(tileWidth, tileHeight);
@@ -59,6 +71,20 @@ export class TileRenderer {
    */
   getTextureKey(tileId: TileId): string {
     return TILE_TEXTURE_MAP[tileId] ?? 'tile_void_floor';
+  }
+
+  /**
+   * Check if a texture exists and is the correct 256x256 cube format.
+   * Returns false for missing textures or old small-format sprites.
+   */
+  private isValidCubeTexture(textureKey: string): boolean {
+    if (!this.scene.textures.exists(textureKey)) {
+      return false;
+    }
+    const texture = this.scene.textures.get(textureKey);
+    const source = texture.getSourceImage();
+    // Valid cube sprites are 256x256
+    return source.width === SPRITE_SIZE && source.height === SPRITE_SIZE;
   }
 
   /**
@@ -123,7 +149,8 @@ export class TileRenderer {
   }
 
   /**
-   * Create a tile with elevation support, including side faces for height differences.
+   * Create a tile with elevation support.
+   * New 256x256 sprites include all 3 faces (top + sides) pre-rendered.
    * Returns a container with proper depth and elevation offset.
    */
   createTileWithElevation(
@@ -131,7 +158,7 @@ export class TileRenderer {
     y: number,
     tileId: TileId,
     elevation: number,
-    heights: number[][]
+    _heights: number[][]
   ): Phaser.GameObjects.Container {
     const screenPos = this.isoTransform.gridToScreen(x, y);
     const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
@@ -142,25 +169,12 @@ export class TileRenderer {
     container.setData('gridY', y);
     container.setData('elevation', elevation);
 
-    // Add side faces FIRST (render behind top face)
+    // Add the cube sprite (includes top + side faces pre-rendered)
+    const cubeSprite = this.createCubeSprite(tileId, x, y);
+    container.add(cubeSprite);
 
-    // South face (if south neighbor is lower)
-    if (y < heights.length - 1 && heights[y + 1][x] < elevation) {
-      const elevationSteps = elevation - heights[y + 1][x];
-      const southFace = this.createSouthFace(elevationSteps);
-      container.add(southFace);
-    }
-
-    // East face (if east neighbor is lower)
-    if (x < heights[0].length - 1 && heights[y][x + 1] < elevation) {
-      const elevationSteps = elevation - heights[y][x + 1];
-      const eastFace = this.createEastFace(elevationSteps);
-      container.add(eastFace);
-    }
-
-    // Add top face (renders in front of side faces)
-    const topFace = this.createTopFace(tileId, x, y);
-    container.add(topFace);
+    // Apply height-based tinting for visual depth
+    this.applyElevationTint(cubeSprite, elevation);
 
     // Set depth using composite depth calculation
     const depth = this.isoTransform.calculateDepth(x, y, elevation);
@@ -172,22 +186,23 @@ export class TileRenderer {
   /**
    * Create a tile using WORLD coordinates for position and depth.
    * This ensures tiles participate in global depth sorting with players/entities.
+   * New 256x256 sprites include all 3 faces (top + sides) pre-rendered.
    * @param worldX World grid X coordinate (chunkX * ZONE_SIZE + localX)
    * @param worldY World grid Y coordinate (chunkY * ZONE_SIZE + localY)
    * @param tileId The tile type
    * @param elevation Tile elevation
-   * @param heights Local heights array for side face calculation
-   * @param localX Local X within chunk (for heights array lookup)
-   * @param localY Local Y within chunk (for heights array lookup)
+   * @param _heights Local heights array (unused - side faces now in sprite)
+   * @param _localX Local X within chunk (unused)
+   * @param _localY Local Y within chunk (unused)
    */
   createTileWithElevationWorld(
     worldX: number,
     worldY: number,
     tileId: TileId,
     elevation: number,
-    heights: number[][],
-    localX: number,
-    localY: number
+    _heights: number[][],
+    _localX: number,
+    _localY: number
   ): Phaser.GameObjects.Container {
     // Use world coordinates for screen position
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
@@ -199,26 +214,13 @@ export class TileRenderer {
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
-    // Add side faces FIRST (render behind top face)
-    // Use local coordinates for heights array lookup
+    // Add the cube sprite (includes top + side faces pre-rendered)
+    const cubeSprite = this.createCubeSprite(tileId, worldX, worldY);
+    container.add(cubeSprite);
 
-    // South face (if south neighbor is lower)
-    if (localY < heights.length - 1 && heights[localY + 1][localX] < elevation) {
-      const elevationSteps = elevation - heights[localY + 1][localX];
-      const southFace = this.createSouthFace(elevationSteps);
-      container.add(southFace);
-    }
-
-    // East face (if east neighbor is lower)
-    if (localX < heights[0].length - 1 && heights[localY][localX + 1] < elevation) {
-      const elevationSteps = elevation - heights[localY][localX + 1];
-      const eastFace = this.createEastFace(elevationSteps);
-      container.add(eastFace);
-    }
-
-    // Add top face (renders in front of side faces)
-    const topFace = this.createTopFace(tileId, worldX, worldY);
-    container.add(topFace);
+    // Apply height-based tinting for visual depth
+    // Lower elevations appear darker, higher elevations appear normal/brighter
+    this.applyElevationTint(cubeSprite, elevation);
 
     // Set depth using WORLD coordinates for global sorting
     const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation);
@@ -228,61 +230,29 @@ export class TileRenderer {
   }
 
   /**
-   * Create south-facing side face for elevated tiles.
-   * Grid-south (y+1) is screen bottom-LEFT, so this face extends from bottom to left edge.
-   * Renders as a parallelogram on the left side of the tile.
+   * Apply brightness tint based on elevation for visual depth.
+   * Lower tiles appear darker, higher tiles appear normal/brighter.
    */
-  private createSouthFace(elevationSteps: number): Phaser.GameObjects.Graphics {
-    const halfWidth = this.isoTransform.tileWidth / 2;
-    const halfHeight = this.isoTransform.tileHeight / 2;
-    const faceHeight = elevationSteps * ELEVATION_HEIGHT_STEP;
+  private applyElevationTint(sprite: Phaser.GameObjects.GameObject, elevation: number): void {
+    // Only Image sprites support tinting; Graphics fallbacks already have baked colors
+    if (!(sprite instanceof Phaser.GameObjects.Image)) {
+      return;
+    }
 
-    const graphics = this.scene.add.graphics();
-    graphics.fillStyle(0x1a1a2a, 1); // Dark shading
-
-    // Left-side parallelogram (for grid-south neighbor)
-    graphics.beginPath();
-    graphics.moveTo(0, halfHeight);                    // Diamond bottom
-    graphics.lineTo(-halfWidth, 0);                    // Diamond left
-    graphics.lineTo(-halfWidth, faceHeight);           // Below left point
-    graphics.lineTo(0, halfHeight + faceHeight);       // Below bottom
-    graphics.closePath();
-    graphics.fillPath();
-
-    return graphics;
+    // Calculate brightness: 0.7 at elevation 0, +0.1 per level, max 1.0
+    const brightness = Math.min(1.0, ELEVATION_TINT_BASE + elevation * ELEVATION_TINT_STEP);
+    const tintValue = Math.floor(brightness * 255);
+    const tint = (tintValue << 16) | (tintValue << 8) | tintValue;
+    sprite.setTint(tint);
   }
 
   /**
-   * Create east-facing side face for elevated tiles.
-   * Grid-east (x+1) is screen bottom-RIGHT, so this face extends from bottom to right edge.
-   * Renders as a parallelogram on the right side of the tile.
-   */
-  private createEastFace(elevationSteps: number): Phaser.GameObjects.Graphics {
-    const halfWidth = this.isoTransform.tileWidth / 2;
-    const halfHeight = this.isoTransform.tileHeight / 2;
-    const faceHeight = elevationSteps * ELEVATION_HEIGHT_STEP;
-
-    const graphics = this.scene.add.graphics();
-    graphics.fillStyle(0x0a0a1a, 1); // Even darker for two-tone shading
-
-    // Right-side parallelogram (for grid-east neighbor)
-    graphics.beginPath();
-    graphics.moveTo(0, halfHeight);                    // Diamond bottom
-    graphics.lineTo(halfWidth, 0);                     // Diamond right
-    graphics.lineTo(halfWidth, faceHeight);            // Below right point
-    graphics.lineTo(0, halfHeight + faceHeight);       // Below bottom
-    graphics.closePath();
-    graphics.fillPath();
-
-    return graphics;
-  }
-
-  /**
-   * Create top face using sprite texture with variant selection based on position.
+   * Create cube sprite using 256x256 pre-rendered isometric cube texture.
+   * Includes top face + south/east side faces all in one sprite.
    * Floor tiles have variants (_v2, _v3) selected deterministically by position seed.
    * Probability: base 70%, v2 20%, v3 10%
    */
-  private createTopFace(tileId: TileId, x: number, y: number): Phaser.GameObjects.GameObject {
+  private createCubeSprite(tileId: TileId, x: number, y: number): Phaser.GameObjects.GameObject {
     const baseTextureKey = this.getTextureKey(tileId);
     const isFloorTile = baseTextureKey.endsWith('_floor');
 
@@ -299,31 +269,76 @@ export class TileRenderer {
       }
       // else 70% chance for base (no suffix)
 
-      // Fallback to base if variant doesn't exist
-      if (!this.scene.textures.exists(textureKey)) {
+      // Fallback to base if variant doesn't exist or isn't 256x256 cube format
+      if (!this.isValidCubeTexture(textureKey)) {
         textureKey = baseTextureKey;
       }
     }
 
-    // Use sprite image
+    // Use cube sprite at native 256x256 size
     if (this.scene.textures.exists(textureKey)) {
       const sprite = this.scene.add.image(0, 0, textureKey);
+      // Set origin to align top diamond center with container position
+      // Top diamond center is at (128, 64) in a 256x256 cube sprite
+      sprite.setOrigin(SPRITE_ORIGIN_X, SPRITE_ORIGIN_Y);
+      // Render at native size (no scaling)
+      sprite.setDisplaySize(SPRITE_SIZE, SPRITE_SIZE);
       return sprite;
     }
 
-    // Fallback: draw colored diamond if texture somehow missing
-    const halfWidth = this.isoTransform.tileWidth / 2;
-    const halfHeight = this.isoTransform.tileHeight / 2;
+    // Fallback: draw colored isometric cube if texture missing
+    return this.createFallbackCube(tileId);
+  }
+
+  /**
+   * Create a fallback procedural isometric cube when sprite is missing.
+   * Draws top diamond + south face + east face programmatically.
+   */
+  private createFallbackCube(tileId: TileId): Phaser.GameObjects.Graphics {
+    const halfWidth = this.isoTransform.tileWidth / 2;  // 128
+    const halfHeight = this.isoTransform.tileHeight / 2; // 64
+    const sideHeight = halfHeight; // Side faces extend down by half the diamond height
     const color = this.getTileColor(tileId);
+
     const graphics = this.scene.add.graphics();
-    graphics.fillStyle(color, 1);
+
+    // Calculate darker shades for side faces
+    const r = (color >> 16) & 0xff;
+    const g = (color >> 8) & 0xff;
+    const b = color & 0xff;
+    const southColor = ((r * 0.6) << 16) | ((g * 0.6) << 8) | (b * 0.6);
+    const eastColor = ((r * 0.4) << 16) | ((g * 0.4) << 8) | (b * 0.4);
+
+    // Draw south face (left side) - behind top
+    graphics.fillStyle(southColor, 1);
     graphics.beginPath();
-    graphics.moveTo(0, -halfHeight);
-    graphics.lineTo(halfWidth, 0);
-    graphics.lineTo(0, halfHeight);
-    graphics.lineTo(-halfWidth, 0);
+    graphics.moveTo(0, halfHeight);                      // Diamond bottom
+    graphics.lineTo(-halfWidth, 0);                      // Diamond left
+    graphics.lineTo(-halfWidth, sideHeight);             // Below left
+    graphics.lineTo(0, halfHeight + sideHeight);         // Below bottom
     graphics.closePath();
     graphics.fillPath();
+
+    // Draw east face (right side) - behind top
+    graphics.fillStyle(eastColor, 1);
+    graphics.beginPath();
+    graphics.moveTo(0, halfHeight);                      // Diamond bottom
+    graphics.lineTo(halfWidth, 0);                       // Diamond right
+    graphics.lineTo(halfWidth, sideHeight);              // Below right
+    graphics.lineTo(0, halfHeight + sideHeight);         // Below bottom
+    graphics.closePath();
+    graphics.fillPath();
+
+    // Draw top face (diamond) - in front
+    graphics.fillStyle(color, 1);
+    graphics.beginPath();
+    graphics.moveTo(0, -halfHeight);                     // Top
+    graphics.lineTo(halfWidth, 0);                       // Right
+    graphics.lineTo(0, halfHeight);                      // Bottom
+    graphics.lineTo(-halfWidth, 0);                      // Left
+    graphics.closePath();
+    graphics.fillPath();
+
     return graphics;
   }
 }
