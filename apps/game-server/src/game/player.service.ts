@@ -146,6 +146,16 @@ export class PlayerService {
     }
   }
 
+  /**
+   * Update player health (called by CombatService when creature deals damage).
+   */
+  updateHealth(playerId: string, health: number): void {
+    const player = this.players.get(playerId);
+    if (player) {
+      player.health = health;
+    }
+  }
+
   getAllOnlinePlayers(): ConnectedPlayer[] {
     return Array.from(this.players.values()).filter((p) => p.online);
   }
