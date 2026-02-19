@@ -89,8 +89,20 @@ export class EntityRenderer {
     const sprite = this.scene.add.sprite(0, -this.elevationOffset, this.getEntityTexture(entity));
     sprite.setOrigin(0.5, 1.0); // Bottom-center origin for ground alignment
     sprite.setScale(scale);
+
+    // Make creature sprites interactive for click-to-attack
+    if (entity.type === 'creature') {
+      sprite.setInteractive({ useHandCursor: true });
+    } else {
+      sprite.setInteractive();
+    }
+
     container.add(sprite);
     container.setData('entityScale', scale); // Store for UI positioning
+
+    // Store entity identity on container for click handling in WorldScene
+    container.setData('entityId', entity.id);
+    container.setData('entityType', entity.type);
 
     // UI positioning based on sprite height
     const uiBaseY = -this.elevationOffset - spriteHeight * 0.5;
