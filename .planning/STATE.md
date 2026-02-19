@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 47 of 50 (Hub Travel)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-19 — 47-01: Portal tile type + placement in open-world chunks
+Last activity: 2026-02-19 — 47-02: Portal interaction/travel logic (teleportToHub, portal:use handler)
 
 Progress: [██░░░░░░░░] 20% (v1.11 milestone — 1/5 phases)
 
@@ -62,6 +62,9 @@ Recent decisions affecting current work:
 - [47-01]: 1 portal per open-world chunk; hub chunks unaffected (generateHubChunk returns structures: [])
 - [47-01]: Portal placement range x/y 20-44 (center third of 64x64 chunk)
 - [47-01]: tile_portal sprite key reserved; renderer falls back gracefully until sprite added
+- [47-02]: Server validates player stands on TileId.PORTAL (=16) before allowing hub teleport
+- [47-02]: lastWorldPosition saved both in-memory (ConnectedPlayer) and to DB on hub entry; restored from DB on authenticate()
+- [47-02]: Hub AI activated (aiService.activateZone) after portal teleport, matching handleAuth pattern
 
 ### Pending Todos
 
@@ -80,10 +83,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 47-hub-travel/47-01-PLAN.md — portal tile type and placement
+Stopped at: Completed 47-hub-travel/47-02-PLAN.md — portal interaction/travel logic
 Resume file: None
 
-**Next action:** Execute 47-02 (portal interaction/travel logic)
+**Next action:** Execute 47-03 (next plan in hub travel phase)
 
 ---
-*Last updated: 2026-02-19 after 47-01 execution complete*
+*Last updated: 2026-02-19 after 47-02 execution complete*
