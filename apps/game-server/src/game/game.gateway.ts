@@ -16,6 +16,7 @@ import { StorageService } from './storage.service';
 import { EntityService } from './entity.service';
 import { ZonesService } from '../zones/zones.service';
 import { AiService } from './ai.service';
+import { CombatService } from './combat.service';
 import {
   ClientEvents,
   Direction,
@@ -49,6 +50,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly entityService: EntityService,
     private readonly zonesService: ZonesService,
     private readonly aiService: AiService,
+    private readonly combatService: CombatService,
   ) {}
 
   afterInit(server: Server) {
@@ -81,6 +83,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     // Get player's zone BEFORE disconnect removes them from the service
     const player = this.playerService.getPlayerBySocket(client.id);
     const zoneId = player?.position.zoneId;
+
+    // Clean up combat state before removing player
+    if (player) {
+      this.combatService.handleDisconnect(player.id);
+    }
 
     await this.playerService.handleDisconnect(client.id);
 
@@ -601,6 +608,38 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       client.emit('error', {
         code: 'SERVER_ERROR',
         message: 'Failed to process tool use',
+      });
+    }
+  }
+
+  @SubscribeMessage('combat:start')
+  async handleCombatStart(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { targetEntityId: string },
+  ): Promise<void> {
+    try {
+      const result = await this.combatService.startCombat(client.id, payload.targetEntityId);
+
+      if (!result.success) {
+        client.emit('error', { code: 'COMBAT_START_FAILED', message: result.error });
+        return;
+      }
+
+      // Emit combat:start to the player with target info
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (player) {
+        client.emit('combat:start', {
+          active: true,
+          turn: 0,
+          participants: [],
+          currentActorId: player.id,
+          startedAt: result.session!.startedAt,
+        });
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to start combat',
       });
     }
   }
