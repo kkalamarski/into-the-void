@@ -4,44 +4,37 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, and a complete auth-to-gameplay flow.
 
-## Current State (v1.1 shipped)
+## Current State (v1.8 shipped)
 
 **Shipped features:**
-- Authentication: Register, login, JWT tokens
-- Character management: Select, create characters with faction selection
-- WebSocket game connection with auth handshake
-- World rendering with 16 biome tile types and viewport culling
-- Movement: WASD keyboard + click-to-move A* pathfinding
-- Client-side prediction with server reconciliation
-- Entity rendering with health bars and behavior icons
-- HUD: Health, energy, XP bars + zone name + minimap
+- Authentication: Register, login, JWT tokens, character management
+- World: Procedural biomes, elevation, structures, seamless chunk streaming
+- Movement: 8-directional WASD, click-to-move pathfinding, client prediction
+- Inventory: 100 items, exo-suit equipment, module slots, action bar, storage
+- Stats: 8 primary stats with equipment bonuses, level scaling
+- Entities: 35 definitions, fertility-based spawning, creature AI, tool interaction, loot, respawn
 
 **Tech stack:**
 - Frontend: React 18, Phaser 3, Zustand, React Router v7
 - Backend: NestJS (API + WebSocket game server)
 - Database: PostgreSQL with Drizzle ORM
-- Monorepo: NX with 3 apps + 4 shared packages
+- Monorepo: NX with 3 apps + 5 shared packages
 
-**Codebase:** ~9,120 LOC TypeScript
+**Codebase:** ~15,000+ LOC TypeScript
 
-## Current Milestone: v1.8 Entity System
+## Current Milestone: v1.9 Combat System
 
-**Goal:** Implement entity definition system with spawning, interaction, and loot. Entities include creatures (idle wander), plants, minerals, and artifacts — all interactable via tools with range-based interaction.
+**Goal:** Implement PvE auto-attack combat with creature aggro. Players can fight creatures using combat tools, creatures deal damage back, and death has consequences.
 
 **Target features:**
-- Entity definition system (strategy pattern, repository) matching items/tiles pattern
-- 4 entity types: Creatures, Plants, Minerals, Artifacts with type hierarchy
-- ~35 entity definitions (~10 creatures, ~10 plants, ~10 minerals, ~5 artifacts)
-- Fertility noise layer determining spawn density (Barren/Normal/Lush)
-- Biome-specific entity spawning with 0-5 entities per chunk
-- Entity stats (level-based, reusing CharacterStats)
-- Health bars for all entities
-- Weighted random loot drop tables
-- Tool interaction with range stat (1-10 tiles)
-- Perception/level gating (shows "???" if insufficient)
-- Creature idle wander behavior
-- Entity respawn with random timer ranges
-- Zone HUD shows fertility: "Biome Name (Fertility)"
+- Click-to-attack engagement (same pattern as tool interaction)
+- Auto-attack on 1-second tick cycle
+- Damage calculation from Power/Toughness stats
+- Creature aggro: predators and maniacs attack players within ~5 tiles
+- Leash system: creatures chase ~10 tiles then return to spawn point
+- Player death: respawn at faction hub / safe point
+- Combat HUD feedback: damage numbers, combat state indicator
+- Creature combat AI: attack, chase, return behaviors
 
 ## Core Value
 
@@ -99,31 +92,38 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Equipment stat bonuses aggregated from equipped items — v1.7
 - ✓ Stats UI with breakdown display — v1.7
 - ✓ Level-up notification with stat deltas — v1.7
+- ✓ Entity definition system with strategy pattern and repository — v1.8
+- ✓ 4 entity types with type hierarchy (Creatures, Plants, Minerals, Artifacts) — v1.8
+- ✓ Fertility noise layer (Barren/Normal/Lush spawn density) — v1.8
+- ✓ Biome-specific entity spawning with density caps — v1.8
+- ✓ Entity stats and health bars — v1.8
+- ✓ Weighted random loot drop tables — v1.8
+- ✓ Tool interaction with range stat — v1.8
+- ✓ Perception/level gating for entities — v1.8
+- ✓ Creature idle wander and flee behaviors — v1.8
+- ✓ Entity respawn system with DB persistence — v1.8
+- ✓ Zone HUD fertility display — v1.8
 
 ### Active
 
-- [ ] Entity definition system with strategy pattern and repository
-- [ ] 4 entity types with type hierarchy (Creatures, Plants, Minerals, Artifacts)
-- [ ] Fertility noise layer (Barren/Normal/Lush spawn density)
-- [ ] Biome-specific entity spawning (0-5 per chunk)
-- [ ] Entity stats and health bars
-- [ ] Weighted random loot drop tables
-- [ ] Tool interaction with range stat
-- [ ] Perception/level gating for entities
-- [ ] Creature idle wander behavior
-- [ ] Entity respawn system
-- [ ] Zone HUD fertility display
+- [ ] Click-to-attack combat engagement
+- [ ] Auto-attack on tick cycle with damage calculation
+- [ ] Creature aggro system (predators/maniacs attack on sight)
+- [ ] Leash system for creature chase and return
+- [ ] Player death and respawn at safe point
+- [ ] Combat HUD feedback (damage numbers, state)
+- [ ] Combat state machine (idle, attacking, chasing, returning)
 
 ### Out of Scope
 
 - OAuth/social login — email/password sufficient
 - Sprite-based rendering — color tiles only until art pipeline ready
-- Combat system — separate milestone (creatures attack, damage dealing)
+- PvP combat — PvE first, PvP in future milestone
+- Active combat abilities — auto-attack only for v1.9, abilities in v2.0
+- Status effects / debuffs — future expansion
 - Chat system — separate milestone
 - Sound/music — polish phase
 - Mobile controls — web-first
-- Tool abilities on action bar — future expansion
-- Tool durability/consumption — future milestone
 
 ## Constraints
 
@@ -154,4 +154,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-18 after v1.8 milestone start*
+*Last updated: 2026-02-19 after v1.9 milestone start*

@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-18)
+See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.8 Entity System — Phase 38: Perception Gating and Client Polish
+**Current focus:** v1.9 Combat System — Defining requirements
 
 ## Current Position
 
-Phase: 38 of 38 (Perception Gating and Client Polish)
-Plan: 4 of 4 in current phase
-Status: Complete
-Last activity: 2026-02-19 — Phase 38 Plan 04 complete (error event handler wired to chat — INTR-07 gap closure)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-19 — Milestone v1.9 started
 
-Progress: [██████████] 100% (v1.8 milestone — Phase 38 complete, all plans done)
+Progress: [░░░░░░░░░░] 0% (v1.9 milestone — requirements phase)
 
 ## Performance Metrics
 
@@ -135,10 +135,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Phase 38 Plan 04 complete — error event handler wired to chat (INTR-07 gap closure)
+Stopped at: v1.9 milestone started — defining requirements
 Resume file: None
 
-**Next action:** v1.8 milestone complete — all Phase 38 plans done (including gap-closure Plan 04)
+**Next action:** Define v1.9 requirements and create roadmap
 
 ---
-*Last updated: 2026-02-19 after Phase 38 Plan 04 complete (error socket event handler — INTR-07 gap closure)*
+*Last updated: 2026-02-19 after v1.9 milestone start*
