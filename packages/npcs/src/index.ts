@@ -16,6 +16,10 @@ export type {
 // Registry
 export { NpcRegistry } from './registry';
 
-// NPC definitions will be added in Plan 48-02
-// import { ALL_NPCS } from './definitions';
-// NpcRegistry.registerAll(ALL_NPCS);
+// Definitions
+export { ALL_NPCS, VERDANT_NPCS, HELIX_NPCS, NEXUS_NPCS, NEUTRAL_NPCS } from './definitions';
+
+// Register all NPCs on module load
+import { NpcRegistry } from './registry';
+import { ALL_NPCS } from './definitions';
+NpcRegistry.registerAll(ALL_NPCS);
