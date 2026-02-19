@@ -667,13 +667,13 @@ Phases execute in numeric order: 46 -> 47 -> 48 -> 49 -> 50
 | 43. Click-to-Attack and Bug Fix | v1.10 | 2/2 | Complete | 2026-02-19 |
 | 44. Target Selection UI | v1.10 | 2/2 | Complete | 2026-02-19 |
 | 45. Combat Log | v1.10 | 1/1 | Complete | 2026-02-19 |
-| 46. Currency and Hub Foundation | v1.11 | 0/3 | Not started | - |
+| 46. Currency and Hub Foundation | v1.11 | 3/3 | Complete | 2026-02-19 |
 | 47. Hub Travel | v1.11 | TBD | Not started | - |
 | 48. NPC Definition System and Hub Spawns | v1.11 | TBD | Not started | - |
 | 49. NPC Interaction Window | v1.11 | TBD | Not started | - |
 | 50. Trading System | v1.11 | TBD | Not started | - |
 
-**Total:** 50 phases (45 complete, 5 remaining)
+**Total:** 50 phases (46 complete, 4 remaining)
 
 ---
-*Last updated: 2026-02-19 after Phase 46 planning*
+*Last updated: 2026-02-19 after Phase 46 execution*

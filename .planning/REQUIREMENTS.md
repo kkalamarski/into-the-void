@@ -420,15 +420,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CURR-01 | Phase 46 | Pending |
-| CURR-02 | Phase 46 | Pending |
+| CURR-01 | Phase 46 | Complete |
+| CURR-02 | Phase 46 | Complete |
 | CURR-03 | Phase 50 | Pending |
 | CURR-04 | Phase 50 | Pending |
-| HUB-01 | Phase 46 | Pending |
-| HUB-02 | Phase 46 | Pending |
-| HUB-03 | Phase 46 | Pending |
+| HUB-01 | Phase 46 | Complete |
+| HUB-02 | Phase 46 | Complete |
+| HUB-03 | Phase 46 | Complete |
 | HUB-04 | Phase 48 | Pending |
-| HUB-05 | Phase 46 | Pending |
+| HUB-05 | Phase 46 | Complete |
 | TRVL-01 | Phase 47 | Pending |
 | TRVL-02 | Phase 47 | Pending |
 | TRVL-03 | Phase 47 | Pending |
