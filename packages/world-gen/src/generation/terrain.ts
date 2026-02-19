@@ -25,6 +25,7 @@ export enum TileId {
   FUNGAL_GROWTH = 13,
   CRATER_FLOOR = 14,
   CRATER_DEBRIS = 15,
+  PORTAL = 16,
 }
 
 /**
@@ -49,6 +50,7 @@ export function tileIdToString(id: TileId): string {
     [TileId.FUNGAL_GROWTH]: TILE_IDS.FUNGAL_GROWTH,
     [TileId.CRATER_FLOOR]: TILE_IDS.CRATER_FLOOR,
     [TileId.CRATER_DEBRIS]: TILE_IDS.CRATER_DEBRIS,
+    [TileId.PORTAL]: TILE_IDS.PORTAL,
   };
   return mapping[id] ?? TILE_IDS.VOID_FLOOR;
 }
