@@ -57,7 +57,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.zonesService.setServer(server);
     this.aiService.setServer(server);
     this.combatService.setServer(server);
-    console.log('[GameGateway] WebSocket server initialized, ZonesService, AiService, and CombatService connected');
+    this.playerService.setServer(server);
+    console.log('[GameGateway] WebSocket server initialized, ZonesService, AiService, CombatService, and PlayerService connected');
   }
 
   async handleConnection(client: Socket) {

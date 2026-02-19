@@ -488,6 +488,9 @@ export class CombatService {
         killerId: session.creatureId,
         position: player.position,
       });
+
+      // Schedule respawn after delay
+      this.playerService.scheduleRespawn(session.targetPlayerId);
     }
 
     // Update last attack time
