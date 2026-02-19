@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Player, ConnectionState, ChatMessage, Entity, ZoneState, Position, PlayerPublic } from '@into-the-void/shared-types';
+import { Player, ConnectionState, ChatMessage, Entity, Creature, ZoneState, Position, PlayerPublic } from '@into-the-void/shared-types';
 import { Game } from '../game/Game';
 import { gameSocket } from '../network/socket';
 
@@ -367,6 +367,44 @@ gameSocket.on('player:respawn', ({ playerId, position }: { playerId: string; pos
       level: 1,
       inCombat: false,
     });
+  }
+});
+
+// Handle combat damage - show floating damage numbers and update health
+gameSocket.on('combat:damage', (data: {
+  attackerId: string;
+  defenderId: string;
+  damage: number;
+  defenderHealth: number;
+  defenderMaxHealth: number;
+  critical: boolean;
+  killed: boolean;
+}) => {
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+  const currentPlayer = useGameStore.getState().player;
+
+  if (!worldScene) return;
+
+  // Determine if this is damage to the local player
+  const isLocalPlayer = currentPlayer?.id === data.defenderId;
+
+  // Show floating damage number
+  worldScene.showDamageNumber(data.defenderId, data.damage, isLocalPlayer);
+
+  // Update local player health if they took damage
+  if (isLocalPlayer && currentPlayer) {
+    useGameStore.getState().setPlayer({
+      ...currentPlayer,
+      health: data.defenderHealth,
+    });
+  } else {
+    // Update creature health bar in real-time (FEED-03)
+    // Cast to Partial<Entity> since Creature extends Entity with health/maxHealth fields
+    worldScene.updateEntity(data.defenderId, {
+      health: data.defenderHealth,
+      maxHealth: data.defenderMaxHealth,
+    } as Partial<Entity>);
   }
 });
 
