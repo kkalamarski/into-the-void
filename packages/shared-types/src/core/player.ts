@@ -35,6 +35,8 @@ export interface Player {
   online: boolean;
   /** Whether player is currently dead (awaiting respawn) */
   isDead?: boolean;
+  /** Current credits balance */
+  credits: number;
 }
 
 /**
@@ -47,6 +49,7 @@ export interface PlayerPublic {
   position: Position;
   level: number;
   inCombat: boolean;
+  credits: number;
 }
 
 /**

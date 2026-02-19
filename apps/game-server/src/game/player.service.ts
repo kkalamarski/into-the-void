@@ -83,6 +83,7 @@ export class PlayerService {
         xpToNextLevel: character.level * 100,
         inCombat: false,
         online: true,
+        credits: character.credits,
         socketId,
       };
 
@@ -139,10 +140,10 @@ export class PlayerService {
   }
 
   /**
-   * Respawn player at their faction hub.
-   * Restores health, clears death state, teleports to hub.
+   * Respawn player at their faction hub (S.O.S. extraction).
+   * Restores full health, clears death state, teleports to hub.
    */
-  private async respawnPlayer(playerId: string): Promise<void> {
+  async respawnWithSOS(playerId: string): Promise<void> {
     const player = this.players.get(playerId);
     if (!player) return;
 
@@ -152,7 +153,7 @@ export class PlayerService {
     // Store old zone for leave notification
     const oldZoneId = player.position.zoneId;
 
-    // Update player state
+    // Update player state - full health
     player.health = player.maxHealth;
     player.isDead = false;
     player.position = respawnPos;
@@ -162,6 +163,8 @@ export class PlayerService {
       this.server.to(player.socketId).emit('player:respawn', {
         playerId,
         position: respawnPos,
+        health: player.health,
+        maxHealth: player.maxHealth,
       });
 
       // Emit zone:state to player if zone changed (mirrors handleAuth pattern)
@@ -179,8 +182,53 @@ export class PlayerService {
       this.server.to(respawnPos.zoneId).emit('player:respawn', {
         playerId,
         position: respawnPos,
+        health: player.health,
+        maxHealth: player.maxHealth,
       });
     }
+  }
+
+  /**
+   * Respawn player at their death position using Emergency Reboot Kit.
+   * Restores partial health based on kit quality, clears death state.
+   */
+  async respawnWithReboot(playerId: string, healPercent: number): Promise<void> {
+    const player = this.players.get(playerId);
+    if (!player) return;
+
+    // Calculate restored health (percentage of max)
+    const restoredHealth = Math.floor(player.maxHealth * (healPercent / 100));
+
+    // Update player state - partial health, same position
+    player.health = restoredHealth;
+    player.isDead = false;
+    // Position stays the same (revive in place)
+
+    // Emit player:respawn to player socket
+    if (this.server) {
+      this.server.to(player.socketId).emit('player:respawn', {
+        playerId,
+        position: player.position,
+        health: player.health,
+        maxHealth: player.maxHealth,
+      });
+
+      // Notify zone that player respawned (in same zone)
+      this.server.to(player.position.zoneId).emit('player:respawn', {
+        playerId,
+        position: player.position,
+        health: player.health,
+        maxHealth: player.maxHealth,
+      });
+    }
+  }
+
+  /**
+   * Legacy respawn method - used by scheduleRespawn for auto-respawn.
+   * Kept for backwards compatibility but scheduleRespawn is no longer called on death.
+   */
+  private async respawnPlayer(playerId: string): Promise<void> {
+    await this.respawnWithSOS(playerId);
   }
 
   getPlayerBySocket(socketId: string): ConnectedPlayer | undefined {
@@ -212,6 +260,7 @@ export class PlayerService {
           position: player.position,
           level: player.level,
           inCombat: player.inCombat,
+          credits: player.credits,
         });
       }
     }

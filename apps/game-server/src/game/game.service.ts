@@ -187,6 +187,7 @@ export class GameService {
           position: newPosition,
           level: player.level,
           inCombat: player.inCombat,
+          credits: player.credits,
         },
       };
     }
