@@ -1061,7 +1061,7 @@ export class WorldScene extends Phaser.Scene {
     const container = this.entitySprites.get(entityId);
     if (!container || !this.isoTransform || !this.entityRenderer) return;
 
-    // Update position
+    // Update position with smooth movement animation
     if (changes.position) {
       // Check if entity moved out of visibility range
       if (!this.isEntityVisible(changes.position)) {
@@ -1074,13 +1074,38 @@ export class WorldScene extends Phaser.Scene {
 
       // Get elevation for the correct zone
       const elevation = this.getTileElevation(changes.position.x, changes.position.y, changes.position.zoneId);
-      // Convert to world coordinates for EntityRenderer
+      // Convert to world coordinates
       const { worldX, worldY } = this.positionToWorldCoords(changes.position);
-      this.entityRenderer.updateEntityPosition(container, worldX, worldY, elevation);
+      // Calculate target screen position
+      const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
+      const elevationOffset = elevation * 24; // ELEVATION_HEIGHT_STEP = 24
+      const targetY = screenPos.y - elevationOffset;
 
-      if (this.depthSorter) {
-        this.depthSorter.markDirty(entityId);
-      }
+      // Kill any existing movement tween on this container
+      this.tweens.killTweensOf(container);
+
+      // Smooth movement tween (500ms to complete before next AI tick at 1000ms)
+      this.tweens.add({
+        targets: container,
+        x: screenPos.x,
+        y: targetY,
+        duration: 500,
+        ease: 'Linear',
+        onUpdate: () => {
+          // Update depth during movement for correct sorting
+          if (this.depthSorter) {
+            this.depthSorter.markDirty(entityId);
+          }
+        },
+        onComplete: () => {
+          // Update stored grid position and elevation after tween completes
+          container.setData('gridX', worldX);
+          container.setData('gridY', worldY);
+          container.setData('elevation', elevation);
+          const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevation);
+          container.setDepth(depth);
+        },
+      });
     }
 
     // Update health bar if health changed for creatures
