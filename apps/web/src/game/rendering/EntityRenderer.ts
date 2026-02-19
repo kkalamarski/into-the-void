@@ -3,10 +3,22 @@ import { Entity, Creature, Mineral, Plant, CreatureBehavior, Position, ZONE_SIZE
 import { IsometricTransform } from '../utils/IsometricTransform';
 import { useStatsStore } from '../../store/statsStore';
 
-const ELEVATION_HEIGHT_STEP = 16; // Pixels per elevation level
+const ELEVATION_HEIGHT_STEP = 128; // Pixels per elevation level (1.0 × diamond height for 256x256 cubes)
 const OCCLUSION_DEPTH_THRESHOLD = 10.0;  // Structures this far "in front" occlude entities
 const OCCLUSION_MIN_HEIGHT = 3;          // Only structures >= 3 elevation levels occlude
 const OCCLUDED_ALPHA = 0.3;              // Alpha for occluded entities (30% visible)
+
+// Entity size scales by type - base scale multiplier for 256x256 sprites
+const ENTITY_SCALE: Record<string, number> = {
+  creature: 2.5,   // Large - creatures should be prominent
+  mineral: 2.0,    // Medium-large - resource nodes
+  plant: 1.8,      // Medium - harvestable plants
+  artifact: 1.5,   // Medium-small - collectible items
+  item: 1.0,       // Small - dropped items on ground
+};
+
+// Base sprite height for UI positioning (256px texture)
+const BASE_SPRITE_HEIGHT = 256;
 
 interface Occluder {
   depth: number;
@@ -24,9 +36,9 @@ export class EntityRenderer {
   private scene: Phaser.Scene;
   private tileSize: number;
   private isoTransform: IsometricTransform;
-  private elevationOffset = 12; // Pixels entities hover above ground
+  private elevationOffset = 24; // Pixels entities hover above ground (doubled for 256x256 sprites)
 
-  constructor(scene: Phaser.Scene, tileWidth: number = 128, tileHeight: number = 64) {
+  constructor(scene: Phaser.Scene, tileWidth: number = 256, tileHeight: number = 128) {
     this.scene = scene;
     this.tileSize = tileWidth; // Keep for backwards compat
     this.isoTransform = new IsometricTransform(tileWidth, tileHeight);
@@ -62,67 +74,66 @@ export class EntityRenderer {
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
-    // Blob shadow at ground level (container origin)
-    const shadow = this.scene.add.ellipse(0, 0, 40, 20, 0x000000, 0.3);
+    // Get scale for this entity type
+    const scale = ENTITY_SCALE[entity.type] ?? 1.0;
+    const spriteHeight = BASE_SPRITE_HEIGHT * scale;
+
+    // Blob shadow at ground level (container origin) - sized based on entity type
+    const shadowWidth = 60 * scale;
+    const shadowHeight = 30 * scale;
+    const shadow = this.scene.add.ellipse(0, 0, shadowWidth, shadowHeight, 0x000000, 0.3);
     shadow.setOrigin(0.5, 0.5);
     container.add(shadow);
 
-    // Entity sprite elevated above ground
+    // Entity sprite elevated above ground (scaled based on entity type)
     const sprite = this.scene.add.sprite(0, -this.elevationOffset, this.getEntityTexture(entity));
     sprite.setOrigin(0.5, 1.0); // Bottom-center origin for ground alignment
+    sprite.setScale(scale);
     container.add(sprite);
+    container.setData('entityScale', scale); // Store for UI positioning
 
-    // Nameplate above sprite — perception gated for creatures (INTR-06)
+    // UI positioning based on sprite height
+    const uiBaseY = -this.elevationOffset - spriteHeight * 0.5;
     const { name: displayName, gated } = this.applyPerceptionGate(entity);
-    const nameplate = this.createNameplate(displayName);
-    nameplate.y = -this.elevationOffset - 60; // Above sprite, health bar, and behavior icon
-    container.add(nameplate);
 
-    // Health bar for creatures (always visible per INTR-08)
+    // Creatures get WoW-style health bar with behavior icon and name inside
     if (this.isCreature(entity)) {
-      const healthBar = this.createHealthBar(entity.health, entity.maxHealth);
-      healthBar.y = -this.elevationOffset - 24; // Above sprite
+      const healthBar = this.createHealthBarWithName(displayName, entity.health, entity.maxHealth, entity.behavior, gated);
+      healthBar.y = uiBaseY;
       container.add(healthBar);
     }
 
-    // Yield bar for minerals (same visual as health bar)
+    // Minerals get nameplate + yield bar
     if (this.isMineral(entity)) {
+      const nameplate = this.createNameplate(displayName);
+      nameplate.y = uiBaseY - 20;
+      container.add(nameplate);
+
       const yieldBar = this.createHealthBar(entity.yield, entity.maxYield);
-      yieldBar.y = -this.elevationOffset - 24;
+      yieldBar.y = uiBaseY;
       container.add(yieldBar);
-      // Store for direct lookup in updateEntity (avoids fragile Y-position search)
       container.setData('maxYield', entity.maxYield);
       container.setData('yieldBar', yieldBar);
     }
 
-    // Yield bar for plants (same visual as health bar)
+    // Plants get nameplate + yield bar
     if (this.isPlant(entity)) {
+      const nameplate = this.createNameplate(displayName);
+      nameplate.y = uiBaseY - 20;
+      container.add(nameplate);
+
       const yieldBar = this.createHealthBar(entity.yield, entity.maxYield);
-      yieldBar.y = -this.elevationOffset - 24;
+      yieldBar.y = uiBaseY;
       container.add(yieldBar);
-      // Store for direct lookup in updateEntity (avoids fragile Y-position search)
       container.setData('maxYield', entity.maxYield);
       container.setData('yieldBar', yieldBar);
     }
 
-    // Behavior icon for creatures (above health bar) — show '?' if perception gated
-    if (this.isCreature(entity)) {
-      if (gated) {
-        // Gated creature — show unknown indicator
-        const unknownIcon = this.scene.add.text(0, 0, '?', {
-          fontSize: '12px',
-          color: '#888888',
-          backgroundColor: '#000000',
-          padding: { x: 4, y: 2 },
-        });
-        unknownIcon.setOrigin(0.5, 0.5);
-        unknownIcon.y = -this.elevationOffset - 34;
-        container.add(unknownIcon);
-      } else {
-        const behaviorIcon = this.createBehaviorIcon(entity.behavior);
-        behaviorIcon.y = -this.elevationOffset - 34; // Above health bar
-        container.add(behaviorIcon);
-      }
+    // Artifacts and items just get nameplate
+    if (entity.type === 'artifact' || entity.type === 'item') {
+      const nameplate = this.createNameplate(displayName);
+      nameplate.y = uiBaseY;
+      container.add(nameplate);
     }
 
     // Store data for update handlers (yield bar update, fade-in offset)
@@ -136,30 +147,129 @@ export class EntityRenderer {
   }
 
   /**
-   * Creates a nameplate text showing entity name.
+   * Creates a simple nameplate text (for entities without health bars).
    */
   createNameplate(name: string): Phaser.GameObjects.Text {
     const text = this.scene.add.text(0, 0, name, {
-      fontSize: '11px',
+      fontSize: '32px',
+      fontStyle: 'bold',
       color: '#ffffff',
-      backgroundColor: '#000000aa',
-      padding: { x: 4, y: 2 },
+      backgroundColor: '#000000cc',
+      padding: { x: 16, y: 10 },
     });
     text.setOrigin(0.5, 0.5);
+    text.setShadow(2, 2, '#000000', 3);
 
     return text;
   }
 
   /**
-   * Creates a health bar graphic with color-coded fill.
+   * Creates a WoW-style health bar with behavior icon and name inside.
+   * Returns a container with background, health fill, behavior icon, and name text.
    */
-  createHealthBar(currentHealth: number, maxHealth: number): Phaser.GameObjects.Graphics {
-    const width = 30;
-    const height = 4;
+  createHealthBarWithName(name: string, currentHealth: number, maxHealth: number, behavior?: CreatureBehavior, gated?: boolean): Phaser.GameObjects.Container {
+    const width = 360;
+    const height = 56;
+    const container = this.scene.add.container(0, 0);
+
     const graphics = this.scene.add.graphics();
 
+    // Border
+    graphics.lineStyle(4, 0x000000, 1);
+    graphics.strokeRect(-width / 2, -height / 2, width, height);
+
     // Background
-    graphics.fillStyle(0x333333);
+    graphics.fillStyle(0x222222, 0.95);
+    graphics.fillRect(-width / 2, -height / 2, width, height);
+
+    // Health fill color based on percentage
+    const healthPercent = currentHealth / maxHealth;
+    let fillColor: number;
+    if (healthPercent > 0.5) {
+      fillColor = 0x44cc44; // green
+    } else if (healthPercent >= 0.25) {
+      fillColor = 0xccaa00; // yellow-orange
+    } else {
+      fillColor = 0xcc4444; // red
+    }
+
+    // Fill bar (inset by 4px for border)
+    const fillWidth = (width - 8) * healthPercent;
+    graphics.fillStyle(fillColor, 1);
+    graphics.fillRect(-width / 2 + 4, -height / 2 + 4, fillWidth, height - 8);
+
+    container.add(graphics);
+
+    // Behavior icon on left side (if creature)
+    if (behavior || gated) {
+      let letter: string;
+      let color: string;
+
+      if (gated) {
+        letter = '?';
+        color = '#888888';
+      } else {
+        switch (behavior) {
+          case 'herbivore':
+            letter = 'H';
+            color = '#44ff44';
+            break;
+          case 'omnivore':
+            letter = 'O';
+            color = '#ffdd00';
+            break;
+          case 'predator':
+            letter = 'P';
+            color = '#ff8844';
+            break;
+          case 'maniac':
+            letter = 'M';
+            color = '#ff4444';
+            break;
+          default:
+            letter = '?';
+            color = '#888888';
+        }
+      }
+
+      const icon = this.scene.add.text(-width / 2 + 32, 0, `[${letter}]`, {
+        fontSize: '32px',
+        fontStyle: 'bold',
+        color: color,
+      });
+      icon.setOrigin(0.5, 0.5);
+      icon.setShadow(2, 2, '#000000', 4);
+      container.add(icon);
+    }
+
+    // Name text (offset right if behavior icon present)
+    const textX = (behavior || gated) ? 20 : 0;
+    const text = this.scene.add.text(textX, 0, name, {
+      fontSize: '34px',
+      fontStyle: 'bold',
+      color: '#ffffff',
+    });
+    text.setOrigin(0.5, 0.5);
+    text.setShadow(2, 2, '#000000', 4);
+    container.add(text);
+
+    return container;
+  }
+
+  /**
+   * Creates a simple health/yield bar without name (for minerals/plants).
+   */
+  createHealthBar(currentHealth: number, maxHealth: number): Phaser.GameObjects.Graphics {
+    const width = 280;
+    const height = 32;
+    const graphics = this.scene.add.graphics();
+
+    // Border
+    graphics.lineStyle(4, 0x000000, 1);
+    graphics.strokeRect(-width / 2, 0, width, height);
+
+    // Background
+    graphics.fillStyle(0x222222, 0.95);
     graphics.fillRect(-width / 2, 0, width, height);
 
     // Health fill color based on percentage
@@ -168,15 +278,15 @@ export class EntityRenderer {
     if (healthPercent > 0.5) {
       fillColor = 0x44cc44; // green
     } else if (healthPercent >= 0.25) {
-      fillColor = 0xffcc00; // yellow
+      fillColor = 0xccaa00; // yellow-orange
     } else {
-      fillColor = 0xff4444; // red
+      fillColor = 0xcc4444; // red
     }
 
-    // Fill bar
-    const fillWidth = width * healthPercent;
-    graphics.fillStyle(fillColor);
-    graphics.fillRect(-width / 2, 0, fillWidth, height);
+    // Fill bar (inset by 4px for border)
+    const fillWidth = (width - 8) * healthPercent;
+    graphics.fillStyle(fillColor, 1);
+    graphics.fillRect(-width / 2 + 4, 4, fillWidth, height - 8);
 
     return graphics;
   }
@@ -209,12 +319,14 @@ export class EntityRenderer {
     }
 
     const text = this.scene.add.text(0, 0, letter, {
-      fontSize: '12px',
+      fontSize: '32px',
+      fontStyle: 'bold',
       color: color,
-      backgroundColor: '#000000',
-      padding: { x: 4, y: 2 },
+      backgroundColor: '#000000cc',
+      padding: { x: 12, y: 6 },
     });
     text.setOrigin(0.5, 0.5);
+    text.setShadow(2, 2, '#000000', 3);
 
     return text;
   }
@@ -334,6 +446,45 @@ export class EntityRenderer {
    */
   getTransform(): IsometricTransform {
     return this.isoTransform;
+  }
+
+  /**
+   * Creates an animated floating damage number above a position.
+   * Text floats upward and fades out over ~1 second.
+   *
+   * @param scene - Phaser scene to create the text in
+   * @param x - Screen X position (world coords)
+   * @param y - Screen Y position (world coords)
+   * @param damage - Damage amount to display
+   * @param isPlayerDamage - If true, uses red color (local player took damage); otherwise white
+   */
+  static createFloatingDamage(scene: Phaser.Scene, x: number, y: number, damage: number, isPlayerDamage: boolean): void {
+    const color = isPlayerDamage ? '#ff4444' : '#ffffff';
+    const text = scene.add.text(x, y, `-${damage}`, {
+      fontSize: '32px',
+      fontStyle: 'bold',
+      color: color,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',
+        blur: 4,
+        fill: true,
+      },
+    });
+    text.setOrigin(0.5, 0.5);
+    text.setDepth(3000);
+
+    scene.tweens.add({
+      targets: text,
+      y: y - 80,
+      alpha: 0,
+      duration: 1000,
+      ease: 'Cubic.easeOut',
+      onComplete: () => {
+        text.destroy();
+      },
+    });
   }
 
   /**
