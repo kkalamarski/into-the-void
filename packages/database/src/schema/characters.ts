@@ -42,6 +42,7 @@ export const characters = pgTable('characters', {
   xp: integer('xp').notNull().default(0),
   health: integer('health').notNull().default(100),
   maxHealth: integer('max_health').notNull().default(100),
+  credits: integer('credits').notNull().default(1000),
   position: jsonb('position').$type<PositionJson>().notNull().default({
     x: 32,
     y: 32,
