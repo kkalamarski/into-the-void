@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.9 Combat System — Phase 41 complete, player death and respawn working
+**Current focus:** v1.9 Combat System — Phase 42 in progress, combat feedback (floating numbers + HUD indicator) nearly complete
 
 ## Current Position
 
 Phase: 42 - Combat Feedback and HUD
-Plan: 01 complete
+Plan: 02 complete
 Status: In Progress
-Last activity: 2026-02-19 — Phase 42 Plan 01 complete (floating damage numbers)
+Last activity: 2026-02-19 — Phase 42 Plan 02 complete (In Combat HUD indicator)
 
 Progress: [████████░░] 80% (v1.9 milestone — Phase 42 in progress)
 
@@ -53,6 +53,7 @@ Progress: [████████░░] 80% (v1.9 milestone — Phase 42 in p
 | 41 | 02 | 6min | 3 | 5 |
 | 41 | 03 | 4min | 1 | 2 |
 | 42 | 01 | 2min | 3 | 3 |
+| 42 | 02 | 3min | 3 | 5 |
 
 ## Accumulated Context
 
@@ -109,6 +110,9 @@ Recent decisions affecting current work:
 - [41-03]: respawnPlayer made async to await zoneStateProvider; scheduleRespawn setTimeout callback does not await (unawaited promise acceptable in setTimeout)
 - [42-01]: createFloatingDamage is a static method on EntityRenderer — no instance state needed, callable from WorldScene directly
 - [42-01]: combat:damage updateEntity cast to Partial<Entity> — health/maxHealth are on Creature subtype, cast is safe since server only emits for creatures
+- [42-02]: combat:start listener uses participants[] array to find player involvement and opponent — aligns with actual CombatState shape from shared-types
+- [42-02]: combat:damage and player:death added to socket.ts forwarded event list — were missing, blocking combatStore listeners from firing
+- [42-02]: Creature import + explicit Partial<Creature> variable fixes pre-existing type error in gameStore.ts combat:damage handler
 
 ### v1.9 Combat System Context
 
@@ -122,7 +126,7 @@ Key existing code to build on:
 Design notes for remaining phase:
 - Player death + 3-second respawn at faction hub is complete (Phase 41)
 - Phase 42 Plan 01 DONE: Floating damage numbers wired — EntityRenderer.createFloatingDamage (static), WorldScene.showDamageNumber, gameStore combat:damage handler
-- Phase 42 Plan 02 remaining: "In Combat" indicator for HUD when player is in active combat
+- Phase 42 Plan 02 DONE: "In Combat" HUD indicator — useCombatStore tracks inCombat via combat:start/player:death/entity:update/combat:damage events; HUD shows red pulsing badge with crossed swords icon
 
 ### Pending Todos
 
@@ -141,10 +145,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed Phase 42 Plan 01 (floating damage numbers)
+Stopped at: Completed Phase 42 Plan 02 (In Combat HUD indicator)
 Resume file: None
 
-**Next action:** Execute Phase 42 Plan 02 (In Combat HUD indicator)
+**Next action:** Execute Phase 42 Plan 03 (if any remaining plans) or complete Phase 42
 
 ---
-*Last updated: 2026-02-19 after Phase 41 complete*
+*Last updated: 2026-02-19 after Phase 42 Plan 02 complete*
