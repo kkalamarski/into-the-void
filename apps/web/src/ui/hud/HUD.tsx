@@ -166,6 +166,12 @@ export const HUD: React.FC = () => {
           </span>
         </div>
       )}
+      {zoneState?.zoneType === 'hub' && (
+        <div className="safe-zone-indicator">
+          <GiShield className="safe-zone-icon" />
+          <span className="safe-zone-text">Safe Zone</span>
+        </div>
+      )}
       {inCombat && (
         <div className="combat-indicator">
           <GiCrossedSwords className="combat-indicator-icon" />

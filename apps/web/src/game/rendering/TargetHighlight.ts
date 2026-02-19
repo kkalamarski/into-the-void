@@ -52,7 +52,7 @@ export class TargetHighlight {
       yoyo: true,
       repeat: -1,
       onUpdate: (tween) => {
-        const progress = tween.getValue();
+        const progress = tween.getValue() ?? 0;
         // Pulse scale: 1.0 to 1.2
         const scale = 1.0 + (progress * 0.2);
         // Pulse alpha: 0.8 to 0.4
