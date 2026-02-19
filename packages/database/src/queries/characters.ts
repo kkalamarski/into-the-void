@@ -91,6 +91,35 @@ export async function deleteCharacter(db: DbClient, characterId: string): Promis
 }
 
 /**
+ * Save last open-world position (called when player enters a hub)
+ */
+export async function saveLastWorldPosition(
+  db: DbClient,
+  characterId: string,
+  position: import('../schema/characters').PositionJson | null
+): Promise<void> {
+  await db
+    .update(characters)
+    .set({ lastWorldPosition: position })
+    .where(eq(characters.id, characterId));
+}
+
+/**
+ * Get last open-world position (for returning from hub)
+ */
+export async function getLastWorldPosition(
+  db: DbClient,
+  characterId: string
+): Promise<import('../schema/characters').PositionJson | null> {
+  const result = await db
+    .select({ lastWorldPosition: characters.lastWorldPosition })
+    .from(characters)
+    .where(eq(characters.id, characterId))
+    .limit(1);
+  return result[0]?.lastWorldPosition ?? null;
+}
+
+/**
  * Check if character belongs to account
  */
 export async function isCharacterOwnedByAccount(

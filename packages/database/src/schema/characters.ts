@@ -48,6 +48,7 @@ export const characters = pgTable('characters', {
     y: 32,
     zoneId: 'z_0_0',
   }),
+  lastWorldPosition: jsonb('last_world_position').$type<PositionJson | null>(),
   stats: jsonb('stats').$type<StatsJson>().notNull().default({
     durability: 100,
     toughness: 50,
