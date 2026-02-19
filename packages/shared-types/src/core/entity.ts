@@ -44,6 +44,12 @@ export interface Creature extends Entity {
   level: number;
   /** Behavior type */
   behavior: CreatureBehavior;
+  /** Original spawn coordinates for leash calculation */
+  spawnPosition?: { x: number; y: number };
+  /** The playerId this creature is currently targeting in combat */
+  combatTarget?: string;
+  /** For omnivores: set to true when a player attacks them, triggering retaliation */
+  provoked?: boolean;
 }
 
 /**
