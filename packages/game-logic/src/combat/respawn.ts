@@ -1,11 +1,11 @@
 import { FactionId, Position } from '@into-the-void/shared-types';
 
-/** Faction hub respawn coordinates. Zone IDs follow pattern 'zone_X_Y'. */
+/** Faction hub respawn coordinates. Players respawn in their faction's orbital station. */
 export const FACTION_RESPAWN_COORDS: Record<FactionId, Position> = {
-  verdant: { x: 8, y: 8, zoneId: 'zone_-2_0' },  // Canopy - western forest
-  helix: { x: 8, y: 8, zoneId: 'zone_2_0' },     // Ironhold - eastern volcanic
-  nexus: { x: 8, y: 8, zoneId: 'zone_0_2' },     // Meridian - southern coast
-  neutral: { x: 8, y: 8, zoneId: 'zone_0_2' },   // Also Meridian (neutral welcome)
+  verdant: { x: 32, y: 32, zoneId: 'hub_verdant' },  // Canopy Station - Verdant hub
+  helix: { x: 32, y: 32, zoneId: 'hub_helix' },      // Ironhold Station - Helix hub
+  nexus: { x: 32, y: 32, zoneId: 'hub_nexus' },      // Meridian Station - Nexus hub
+  neutral: { x: 32, y: 32, zoneId: 'hub_nexus' },    // Unaffiliated go to Nexus (neutral welcome)
 };
 
 /**

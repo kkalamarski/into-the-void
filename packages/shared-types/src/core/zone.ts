@@ -9,6 +9,23 @@ import { BiomeType } from '../game/biome';
 export type FertilityType = 'Barren' | 'Normal' | 'Lush';
 
 /**
+ * Zone type discriminator — distinguishes hub instanced areas from the open world
+ */
+export type ZoneType = 'open_world' | 'hub';
+
+/** Hub zone IDs for faction orbital stations */
+export const HUB_ZONE_IDS = ['hub_verdant', 'hub_helix', 'hub_nexus', 'hub_neutral'] as const;
+
+export type HubZoneId = typeof HUB_ZONE_IDS[number];
+
+/**
+ * Returns true if the given zoneId refers to a hub zone.
+ */
+export function isHubZone(zoneId: string): boolean {
+  return zoneId.startsWith('hub_');
+}
+
+/**
  * Zone size in tiles
  */
 export const ZONE_SIZE = 64;
@@ -96,6 +113,8 @@ export interface ZoneState {
   biome: BiomeType;
   /** Fertility tier of this zone (Barren/Normal/Lush) */
   fertilityType: FertilityType;
+  /** Zone type discriminator — 'hub' for faction stations, 'open_world' for procedural zones */
+  zoneType?: ZoneType;
 }
 
 /**
