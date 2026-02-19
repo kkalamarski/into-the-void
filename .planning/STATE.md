@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.9 Combat System — Phase 39 complete, Phase 40 ready
+**Current focus:** v1.9 Combat System — Phase 40 Plan 01 complete, Plan 02 next
 
 ## Current Position
 
 Phase: 40 - Creature Combat AI and Aggro
-Plan: —
-Status: Ready for planning
-Last activity: 2026-02-19 — Phase 39 complete (4/4 plans, gap closure verified)
+Plan: 01 complete
+Status: In progress (Plan 02 next)
+Last activity: 2026-02-19 — Phase 40 Plan 01 complete (Creature FSM combat states and aggro detection)
 
 Progress: [██░░░░░░░░] 25% (v1.9 milestone — 1/4 phases complete)
 
@@ -48,6 +48,7 @@ Progress: [██░░░░░░░░] 25% (v1.9 milestone — 1/4 phases co
 | 39 | 02 | 4min | 3 | 5 |
 | 39 | 03 | 4min | 3 | 3 |
 | 39 | 04 | 2min | 2 | 2 |
+| 40 | 01 | 2.5min | 3 | 3 |
 
 ## Accumulated Context
 
@@ -84,13 +85,16 @@ Recent decisions affecting current work:
 - [39-03]: lastAttackAt initialized to 0: ensures first attack fires immediately on combat start regardless of Haste value
 - [Phase 39]: armorReduction set to creatureStats.toughness — Toughness now serves as base armor value feeding into effectiveArmor quadratic scaling
 - [Phase 39]: Toughness test uses critChance=0 and 20-run average with 0.8x threshold — eliminates crit randomness and ±10% variance flakiness deterministically
+- [40-01]: AGGRO_RADIUS=5 and LEASH_DISTANCE=10 as top-level constants in creature-ai.ts — matches plan spec, consistent with FLEE_RADIUS=5 for herbivores
+- [40-01]: tickOmnivore() delegates entirely to tickPredator() when provoked — avoids duplicating predator logic, single code path for aggro behavior
+- [40-01]: moveToward() uses 3-attempt fallback (diagonal, x-only, y-only) — chasing does not need backtrack fallback unlike flee()
 
 ### v1.9 Combat System Context
 
 Key existing code to build on:
 - **CombatService** (`apps/game-server/src/game/combat.service.ts`): Session tracking, startCombat() with full validation chain, exported for AiService
 - **AiService** (`apps/game-server/src/game/ai.service.ts`): 1-second tick loop with self-rescheduling setTimeout, scoped to active zones
-- **tickCreatureAI** (`packages/game-logic/src/ai/creature-ai.ts`): Pure FSM with herbivore/omnivore/predator/maniac branches — currently predator/maniac just wander
+- **tickCreatureAI** (`packages/game-logic/src/ai/creature-ai.ts`): Extended FSM — predator/maniac now aggro, chase, attack, leash; omnivore provoked-retaliation; herbivore flee unchanged
 - **EntityService** (`apps/game-server/src/game/entity.service.ts`): Handles tool interaction, loot drops, entity death
 - **CharacterStats**: Power, Toughness, Haste already defined and computed server-side
 - **calculateDamage** exists in game-logic but needs Power/Toughness formula wiring
@@ -119,10 +123,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 39-04-PLAN.md
+Stopped at: Completed 40-01-PLAN.md
 Resume file: None
 
-**Next action:** Begin Phase 40 planning
+**Next action:** Execute Phase 40 Plan 02 (AiService aggro wiring)
 
 ---
-*Last updated: 2026-02-19 after 39-04 complete*
+*Last updated: 2026-02-19 after 40-01 complete*
