@@ -12,6 +12,7 @@
 - ✅ **v1.7 Character Stats** - Phases 30-32 (shipped 2026-02-18)
 - ✅ **v1.8 Entity System** - Phases 33-38 (shipped 2026-02-19)
 - ✅ **v1.9 Combat System** - Phases 39-42 (shipped 2026-02-19)
+- 🚧 **v1.10 Combat UX** - Phases 43-45 (in progress)
 
 ## Phases
 
@@ -378,7 +379,8 @@ Plans:
 
 </details>
 
-### v1.9 Combat System (In Progress)
+<details>
+<summary>✅ v1.9 Combat System (Phases 39-42) - SHIPPED 2026-02-19</summary>
 
 **Milestone Goal:** Implement PvE auto-attack combat with creature aggro, damage calculation using Power/Toughness stats, creature chase/leash behavior, player death with safe respawn, and combat HUD feedback including damage numbers and combat state indicators.
 
@@ -455,10 +457,66 @@ Plans:
 - [x] 42-01-PLAN.md — Add FloatingDamage component to EntityRenderer; animate damage numbers on combat:damage event
 - [x] 42-02-PLAN.md — Add combat state indicator to HUD; wire combatStore to track in-combat status
 
+</details>
+
+### v1.10 Combat UX (In Progress)
+
+**Milestone Goal:** Complete the combat user experience with click-to-attack targeting, visual target selection, and combat log feedback. Closes the aggro bug from v1.9 and adds all missing player-facing combat interactions.
+
+**Phases:** 3 (43-45)
+**Depth:** Quick (from config)
+**Coverage:** 14/14 requirements mapped
+
+#### Phase 43: Click-to-Attack and Bug Fix
+
+**Goal**: Players can initiate combat by clicking a creature with a combat tool equipped, with attack range enforced per-tool, and predator/maniac creatures correctly aggro on nearby players
+**Depends on**: Phase 42 (v1.9 complete — combat loop, damage numbers, HUD indicator)
+**Requirements**: FIX-01, CATK-01, CATK-02, CATK-03, CATK-04
+**Success Criteria** (what must be TRUE):
+  1. Player equips a melee combat tool and clicks a creature within 1 tile — auto-attack begins immediately; clicking the same creature with a ranged tool from beyond 1 tile and within 3-5 tiles also starts combat
+  2. Player clicks a creature that is outside the equipped tool's attack range — no combat starts and no error appears; the click is silently ignored
+  3. A predator or maniac creature that spawns within ~5 tiles of a player automatically begins chasing and attacking without any player interaction — aggro triggers consistently on zone load and respawn
+  4. Entity sprites in the Phaser canvas respond to pointer-down events — clicking on a creature's visual area registers as a creature click, not a tile click
+  5. Combat tool attack ranges are defined per tool (melee=1 tile, ranged tools between 3 and 5 tiles based on item definition) — range is not a global constant
+**Plans**: TBD
+
+Plans:
+- [ ] 43-01-PLAN.md — TBD
+
+#### Phase 44: Target Selection UI
+
+**Goal**: Players can see which entity they are targeting during combat — a visible highlight persists on the target, switches when the player clicks a different creature, and clears automatically when combat ends
+**Depends on**: Phase 43 (click-to-attack working — player can enter combat via creature click)
+**Requirements**: TARG-01, TARG-02, TARG-03, TARG-04
+**Success Criteria** (what must be TRUE):
+  1. Player clicks a creature to start combat — a visual highlight (glow, outline, or marker) appears on that creature immediately; the highlight is visible over the creature's sprite
+  2. The target highlight persists on the creature throughout the combat session — it does not flicker or disappear while the auto-attack loop is running
+  3. Player clicks a different creature while already in combat — the highlight moves to the new creature and auto-attack retargets
+  4. Combat ends (creature dies, player dies, creature leashes, or player moves out of range) — the target highlight disappears and no entity appears highlighted
+**Plans**: TBD
+
+Plans:
+- [ ] 44-01-PLAN.md — TBD
+
+#### Phase 45: Combat Log
+
+**Goal**: Players can see a scrollable log of combat events — damage dealt and received with timestamps — and toggle the log panel visible or hidden
+**Depends on**: Phase 44 (target selection UI complete — combat interactions are fully established)
+**Requirements**: CLOG-01, CLOG-02, CLOG-03, CLOG-04, CLOG-05
+**Success Criteria** (what must be TRUE):
+  1. When the player deals damage to a creature, a timestamped entry appears in the combat log panel showing the damage amount — for example "[00:42] Hit Voidcrawler for 34 damage"
+  2. When the player receives damage from a creature, a timestamped entry appears showing the damage amount — entries for incoming and outgoing damage are visually distinct
+  3. The combat log is scrollable — older entries remain accessible by scrolling up; newest entries appear at the bottom
+  4. Player presses the combat log toggle key (or clicks a toggle button) — the panel hides completely and re-appears on second press; hidden state persists until toggled again
+**Plans**: TBD
+
+Plans:
+- [ ] 45-01-PLAN.md — TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 39 -> 40 -> 41 -> 42
+Phases execute in numeric order: 43 -> 44 -> 45
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -504,8 +562,11 @@ Phases execute in numeric order: 39 -> 40 -> 41 -> 42
 | 40. Creature Combat AI and Aggro | v1.9 | 3/3 | Complete | 2026-02-19 |
 | 41. Player Death and Respawn | v1.9 | 3/3 | Complete | 2026-02-19 |
 | 42. Combat Feedback and HUD | v1.9 | 2/2 | Complete | 2026-02-19 |
+| 43. Click-to-Attack and Bug Fix | v1.10 | TBD | Not started | - |
+| 44. Target Selection UI | v1.10 | TBD | Not started | - |
+| 45. Combat Log | v1.10 | TBD | Not started | - |
 
-**Total:** 42 phases (42 complete, 0 remaining)
+**Total:** 45 phases (42 complete, 3 remaining)
 
 ---
-*Last updated: 2026-02-19 after Phase 42 complete — v1.9 shipped*
+*Last updated: 2026-02-19 after v1.10 roadmap created — phases 43-45*
