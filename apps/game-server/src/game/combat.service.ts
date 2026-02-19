@@ -463,8 +463,31 @@ export class CombatService {
     this.playerService.updateHealth(player.id, newHealth);
 
     if (killed) {
-      // Player died — combat ends (death handling in Phase 41)
+      // Mark player as dead
+      this.playerService.setDead(session.targetPlayerId, true);
+
+      // Stop any player-initiated combat session (player can no longer attack)
+      this.stopCombat(session.targetPlayerId);
+
+      // Stop creature's combat session
       this.stopCreatureCombat(session.creatureId);
+
+      // Emit player:death event to player socket
+      const playerSocket = this.playerService.getSocketByPlayerId(session.targetPlayerId);
+      if (playerSocket && this.server) {
+        this.server.to(playerSocket).emit('player:death', {
+          playerId: session.targetPlayerId,
+          killerId: session.creatureId,
+          position: player.position,
+        });
+      }
+
+      // Also emit to zone room so other players see the death
+      this.server?.to(session.zoneId).emit('player:death', {
+        playerId: session.targetPlayerId,
+        killerId: session.creatureId,
+        position: player.position,
+      });
     }
 
     // Update last attack time

@@ -156,6 +156,24 @@ export class PlayerService {
     }
   }
 
+  /**
+   * Set or clear player dead state (called by CombatService on player death/respawn).
+   */
+  setDead(playerId: string, isDead: boolean): void {
+    const player = this.players.get(playerId);
+    if (player) {
+      player.isDead = isDead;
+    }
+  }
+
+  /**
+   * Returns true if player is currently in dead state.
+   */
+  isDead(playerId: string): boolean {
+    const player = this.players.get(playerId);
+    return player?.isDead === true;
+  }
+
   getAllOnlinePlayers(): ConnectedPlayer[] {
     return Array.from(this.players.values()).filter((p) => p.online);
   }
