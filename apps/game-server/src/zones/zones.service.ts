@@ -10,7 +10,8 @@ import {
   Plant,
   SpawnPoint,
 } from '@into-the-void/shared-types';
-import { generateChunk } from '@into-the-void/world-gen';
+import { generateChunk, generateHubChunk, isKnownHub } from '@into-the-void/world-gen';
+import { isHubZone } from '@into-the-void/shared-types';
 import { EntityRegistry } from '@into-the-void/entities';
 import type {
   ArtifactDefinition,
@@ -96,6 +97,11 @@ export class ZonesService implements OnModuleInit {
   }
 
   private async loadZone(zoneId: string): Promise<ZoneState> {
+    // Hub zones use static generation, not procedural world-gen
+    if (isHubZone(zoneId)) {
+      return this.loadHubZone(zoneId);
+    }
+
     // Parse zone coordinates
     const [, x, y] = zoneId.split('_').map(Number);
 
@@ -154,6 +160,30 @@ export class ZonesService implements OnModuleInit {
       };
       entities.set(itemEntity.id, itemEntity);
     }
+
+    const zoneState: ZoneState = {
+      chunk,
+      entities,
+    };
+
+    this.zones.set(zoneId, zoneState);
+    return zoneState;
+  }
+
+  /**
+   * Load a hub zone using static generation (no procedural world-gen, no entity spawns).
+   * Hub zones are safe areas with a walkable floor and blocked perimeter.
+   * Ground items dropped by players (trading) are still supported via the LRU cache.
+   */
+  private async loadHubZone(zoneId: string): Promise<ZoneState> {
+    if (!isKnownHub(zoneId)) {
+      throw new Error(`Unknown hub zone: ${zoneId}`);
+    }
+
+    const chunk = generateHubChunk(zoneId);
+
+    // Hub zones have no entity spawns (safe zone) — empty entity map
+    const entities = new Map<string, Entity>();
 
     const zoneState: ZoneState = {
       chunk,
