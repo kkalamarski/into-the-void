@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Server } from 'socket.io';
-import { Player, Position, PlayerPublic, FactionId } from '@into-the-void/shared-types';
+import { Player, Position, PlayerPublic, FactionId, ZoneState } from '@into-the-void/shared-types';
 import { DatabaseService } from '../database/database.service';
 import { findCharacterById, isCharacterOwnedByAccount, updateLastPlayed } from '@into-the-void/database';
 import { InventoryService } from './inventory.service';
@@ -26,9 +26,14 @@ export class PlayerService {
   private lastMoveTimes: Map<string, number> = new Map(); // playerId -> timestamp
   private respawnTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
   private server: Server | null = null;
+  private zoneStateProvider: ((zoneId: string) => Promise<ZoneState>) | null = null;
 
   setServer(server: Server): void {
     this.server = server;
+  }
+
+  setZoneStateProvider(provider: (zoneId: string) => Promise<ZoneState>): void {
+    this.zoneStateProvider = provider;
   }
 
   constructor(
@@ -137,7 +142,7 @@ export class PlayerService {
    * Respawn player at their faction hub.
    * Restores health, clears death state, teleports to hub.
    */
-  private respawnPlayer(playerId: string): void {
+  private async respawnPlayer(playerId: string): Promise<void> {
     const player = this.players.get(playerId);
     if (!player) return;
 
@@ -158,6 +163,12 @@ export class PlayerService {
         playerId,
         position: respawnPos,
       });
+
+      // Emit zone:state to player if zone changed (mirrors handleAuth pattern)
+      if (oldZoneId !== respawnPos.zoneId && this.zoneStateProvider) {
+        const zoneState = await this.zoneStateProvider(respawnPos.zoneId);
+        this.server.to(player.socketId).emit('zone:state', zoneState);
+      }
 
       // Notify old zone that player left (if different from new zone)
       if (oldZoneId !== respawnPos.zoneId) {
