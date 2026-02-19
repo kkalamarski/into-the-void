@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.11 NPCs & Trading — Phase 47: Hub Travel
+**Current focus:** v1.11 NPCs & Trading — Phase 48: NPC Definition System and Hub Spawns
 
 ## Current Position
 
-Phase: 47 of 50 (Hub Travel)
-Plan: 5 of TBD in current phase
+Phase: 48 of 50 (NPC Definition System and Hub Spawns)
+Plan: 1 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-19 — 47-05: Portal tile (ID 16) placed at hub center (32,32) in generateHubChunk()
+Last activity: 2026-02-19 — 48-01: @into-the-void/npcs package with NpcDefinition discriminated union and NpcRegistry singleton
 
-Progress: [██░░░░░░░░] 20% (v1.11 milestone — 1/5 phases)
+Progress: [██░░░░░░░░] 20% (v1.11 milestone — 2/5 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 149 (Phases 1-47 plan 03 complete)
+- Total plans completed: 150 (Phases 1-48 plan 01 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~5.5 hours
 
@@ -38,7 +38,7 @@ Progress: [██░░░░░░░░] 20% (v1.11 milestone — 1/5 phases)
 | v1.8 | 33-38 | 22 | 2 days |
 | v1.9 | 39-42 | 12 | 1 day |
 | v1.10 | 43-45 | 5 | 1 day |
-| v1.11 | 46-50 | 6/TBD | in progress |
+| v1.11 | 46-50 | 7/TBD | in progress |
 
 ## Accumulated Context
 
@@ -71,6 +71,9 @@ Recent decisions affecting current work:
 - [47-04]: Portal check in WorldScene runs on reconciling=false only; debounced by position key (clears on non-portal)
 - [47-04]: Portal travel fully wired end-to-end (open world <-> hub) via tile 16 detection + portal:use emit
 - [47-05]: Portal tile placed at hub center (32,32); hub exit chain complete (tile 16 -> portal:use -> handleHubLeave -> lastWorldPosition)
+- [48-01]: npcs package uses commonjs type + src/index.ts main (matching entities/items pattern, not esm/dist)
+- [48-01]: NpcFaction: 'verdant' | 'helix' | 'nexus' | 'neutral' matching lore factions
+- [48-01]: UNKNOWN_NPC fallback is ambient type with magenta color (0xff00ff) — consistent with EntityRegistry
 
 ### Pending Todos
 
@@ -89,10 +92,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 47-hub-travel/47-05-PLAN.md — portal tile placement in hub zones
+Stopped at: Completed 48-npc-definition-system-and-hub-spawns/48-01-PLAN.md — @into-the-void/npcs package with NpcDefinition discriminated union and NpcRegistry singleton
 Resume file: None
 
-**Next action:** Execute next plan in hub travel phase (or begin Phase 48: NPC dialogue)
+**Next action:** Execute next plan in Phase 48 (48-02: NPC definitions for hub zones)
 
 ---
-*Last updated: 2026-02-19 after 47-05 execution complete*
+*Last updated: 2026-02-19 after 48-01 execution complete*
