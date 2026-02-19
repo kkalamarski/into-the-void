@@ -79,12 +79,15 @@ class GameSocket {
       'player:left',
       'player:moved',
       'combat:start',
+      'combat:damage',
       'combat:result',
       'combat:end',
       'chat:message',
       'inventory:update',
       'storage:update',
       'stats:update',
+      'player:death',
+      'player:respawn',
       'error',
     ];
 

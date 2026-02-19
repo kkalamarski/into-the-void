@@ -400,11 +400,12 @@ gameSocket.on('combat:damage', (data: {
     });
   } else {
     // Update creature health bar in real-time (FEED-03)
-    // Cast to Partial<Entity> since Creature extends Entity with health/maxHealth fields
-    worldScene.updateEntity(data.defenderId, {
+    // Cast to Partial<Creature> since health/maxHealth are Creature-specific fields
+    const creatureUpdate: Partial<Creature> = {
       health: data.defenderHealth,
       maxHealth: data.defenderMaxHealth,
-    } as Partial<Entity>);
+    };
+    worldScene.updateEntity(data.defenderId, creatureUpdate as Partial<Entity>);
   }
 });
 
