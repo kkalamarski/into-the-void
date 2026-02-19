@@ -494,10 +494,11 @@ Plans:
   2. The target highlight persists on the creature throughout the combat session — it does not flicker or disappear while the auto-attack loop is running
   3. Player clicks a different creature while already in combat — the highlight moves to the new creature and auto-attack retargets
   4. Combat ends (creature dies, player dies, creature leashes, or player moves out of range) — the target highlight disappears and no entity appears highlighted
-**Plans**: TBD
+**Plans**: 2 plans in 1 wave
 
 Plans:
-- [ ] 44-01-PLAN.md — TBD
+- [ ] 44-01-PLAN.md — Create TargetHighlight class with pulsing ring; wire to WorldScene and combatStore
+- [ ] 44-02-PLAN.md — Create TargetFrame HUD component with health bar, name, level, damage flash
 
 #### Phase 45: Combat Log
 
@@ -564,10 +565,10 @@ Phases execute in numeric order: 43 -> 44 -> 45
 | 41. Player Death and Respawn | v1.9 | 3/3 | Complete | 2026-02-19 |
 | 42. Combat Feedback and HUD | v1.9 | 2/2 | Complete | 2026-02-19 |
 | 43. Click-to-Attack and Bug Fix | v1.10 | 2/2 | Complete | 2026-02-19 |
-| 44. Target Selection UI | v1.10 | TBD | Not started | - |
+| 44. Target Selection UI | v1.10 | 2 | Not started | - |
 | 45. Combat Log | v1.10 | TBD | Not started | - |
 
 **Total:** 45 phases (43 complete, 2 remaining)
 
 ---
-*Last updated: 2026-02-19 after phase 43 execution — 2/2 plans complete*
+*Last updated: 2026-02-19 after phase 44 planning — 2 plans created*
