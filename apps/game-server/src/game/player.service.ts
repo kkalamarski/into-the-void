@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Server } from 'socket.io';
 import { Player, Position, PlayerPublic, FactionId } from '@into-the-void/shared-types';
 import { DatabaseService } from '../database/database.service';
 import { findCharacterById, isCharacterOwnedByAccount, updateLastPlayed } from '@into-the-void/database';
 import { InventoryService } from './inventory.service';
+import { getFactionRespawnPosition } from '@into-the-void/game-logic';
+
+const RESPAWN_DELAY_MS = 3000; // 3 seconds
 
 interface ConnectedPlayer extends Player {
   socketId: string;
@@ -20,6 +24,12 @@ export class PlayerService {
   private players: Map<string, ConnectedPlayer> = new Map(); // playerId -> player
   private socketToPlayer: Map<string, string> = new Map(); // socketId -> playerId
   private lastMoveTimes: Map<string, number> = new Map(); // playerId -> timestamp
+  private respawnTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
+  private server: Server | null = null;
+
+  setServer(server: Server): void {
+    this.server = server;
+  }
 
   constructor(
     private readonly jwtService: JwtService,
@@ -84,6 +94,13 @@ export class PlayerService {
   async handleDisconnect(socketId: string): Promise<void> {
     const playerId = this.socketToPlayer.get(socketId);
     if (playerId) {
+      // Clear any pending respawn timer
+      const respawnTimer = this.respawnTimers.get(playerId);
+      if (respawnTimer) {
+        clearTimeout(respawnTimer);
+        this.respawnTimers.delete(playerId);
+      }
+
       // Flush inventory to DB before removing player
       await this.inventoryService.flushAndUnload(playerId);
 
@@ -94,6 +111,64 @@ export class PlayerService {
       this.players.delete(playerId);
       this.socketToPlayer.delete(socketId);
       this.lastMoveTimes.delete(playerId);
+    }
+  }
+
+  /**
+   * Schedule player respawn after RESPAWN_DELAY_MS.
+   * Called when player dies.
+   */
+  scheduleRespawn(playerId: string): void {
+    // Clear any existing respawn timer
+    const existing = this.respawnTimers.get(playerId);
+    if (existing) {
+      clearTimeout(existing);
+    }
+
+    const timer = setTimeout(() => {
+      this.respawnTimers.delete(playerId);
+      this.respawnPlayer(playerId);
+    }, RESPAWN_DELAY_MS);
+
+    this.respawnTimers.set(playerId, timer);
+  }
+
+  /**
+   * Respawn player at their faction hub.
+   * Restores health, clears death state, teleports to hub.
+   */
+  private respawnPlayer(playerId: string): void {
+    const player = this.players.get(playerId);
+    if (!player) return;
+
+    // Get faction respawn position
+    const respawnPos = getFactionRespawnPosition(player.faction);
+
+    // Store old zone for leave notification
+    const oldZoneId = player.position.zoneId;
+
+    // Update player state
+    player.health = player.maxHealth;
+    player.isDead = false;
+    player.position = respawnPos;
+
+    // Emit player:respawn to player socket
+    if (this.server) {
+      this.server.to(player.socketId).emit('player:respawn', {
+        playerId,
+        position: respawnPos,
+      });
+
+      // Notify old zone that player left (if different from new zone)
+      if (oldZoneId !== respawnPos.zoneId) {
+        this.server.to(oldZoneId).emit('player:left', { playerId });
+      }
+
+      // Notify new zone that player respawned
+      this.server.to(respawnPos.zoneId).emit('player:respawn', {
+        playerId,
+        position: respawnPos,
+      });
     }
   }
 
