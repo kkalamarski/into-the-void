@@ -1,5 +1,7 @@
 import { ChunkData, BiomeType, FertilityType, ZONE_SIZE } from '@into-the-void/shared-types';
 
+const PORTAL_TILE_ID = 16; // TileId.PORTAL from terrain.ts
+
 /** Hub layout configuration per faction */
 export interface HubConfig {
   biome: BiomeType;
@@ -14,29 +16,29 @@ export interface HubConfig {
 const HUB_CONFIGS: Record<string, HubConfig> = {
   hub_verdant: {
     biome: 'fungal_forest',       // Canopy Station - living architecture, forest biome
-    floorTile: 2,                 // Forest floor tile
-    wallTile: 3,                  // Vegetation/tree wall tile
+    floorTile: 2,                 // CRYSTAL_FLOOR (has 256x256 sprite)
+    wallTile: 3,                  // CRYSTAL_FORMATION (has 256x256 sprite)
     displayName: 'Canopy Station',
     fertilityType: 'Normal',
   },
   hub_helix: {
     biome: 'volcanic_ridge',      // Ironhold Station - industrial, volcanic mountain
-    floorTile: 4,                 // Metal/industrial floor
-    wallTile: 5,                  // Industrial wall
+    floorTile: 8,                 // ICE_FLOOR (has 256x256 sprite - repurpose for industrial)
+    wallTile: 1,                  // VOID_WALL (has 256x256 sprite)
     displayName: 'Ironhold Station',
     fertilityType: 'Normal',
   },
   hub_nexus: {
     biome: 'void_plains',         // Meridian Station - neutral, transactional
-    floorTile: 6,                 // Clean floor
-    wallTile: 7,                  // Glass/neutral wall
+    floorTile: 0,                 // VOID_FLOOR (has 256x256 sprite)
+    wallTile: 1,                  // VOID_WALL (has 256x256 sprite)
     displayName: 'Meridian Station',
     fertilityType: 'Normal',
   },
   hub_neutral: {
     biome: 'void_plains',         // Unaffiliated go to Meridian (neutral welcome)
-    floorTile: 6,
-    wallTile: 7,
+    floorTile: 0,                 // VOID_FLOOR
+    wallTile: 1,                  // VOID_WALL
     displayName: 'Meridian Station',
     fertilityType: 'Normal',
   },
@@ -93,6 +95,12 @@ export function generateHubChunk(hubZoneId: string): ChunkData {
     heights.push(heightRow);
     collisions.push(collisionRow);
   }
+
+  // Place portal tile at hub center for exit
+  const portalX = 32;
+  const portalY = 32;
+  tiles[portalY][portalX] = PORTAL_TILE_ID;
+  // Portal is walkable (collision already false from floor tile generation)
 
   return {
     zoneId: hubZoneId,
