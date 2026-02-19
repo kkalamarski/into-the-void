@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 43 of 45 (Click-to-Attack and Bug Fix)
-Plan: 02
+Plan: 02 complete
 Status: In progress
-Last activity: 2026-02-19 — Phase 43 Plan 01 complete (click-to-attack client wiring)
+Last activity: 2026-02-19 — Phase 43 Plan 02 complete (predator/maniac aggro bug fix)
 
 Progress: [░░░░░░░░░░] 5% (v1.10 milestone — 0.3/3 phases)
 
@@ -49,6 +49,7 @@ Progress: [░░░░░░░░░░] 5% (v1.10 milestone — 0.3/3 phases)
 | 42 | 01 | 2min | 3 | 3 |
 | 42 | 02 | 3min | 3 | 5 |
 | 43 | 01 | 2min | 3 | 2 |
+| 43 | 02 | 3min | 3 | 3 |
 
 ## Accumulated Context
 
@@ -64,6 +65,8 @@ Recent decisions affecting current work:
 - [42-02]: combat:damage and player:death added to socket.ts forwarded event list — were missing, blocking combatStore listeners
 - [Phase 40]: processCreatureCombatTick emits combat:damage to both player socket and zone — direct player notification plus zone broadcast
 - [41-01]: Faction respawn coords: verdant=zone_-2_0 (Canopy), helix=zone_2_0 (Ironhold), nexus+neutral=zone_0_2 (Meridian)
+- [Phase 43]: AggroChecker interface + setter on ZonesService avoids circular GameModule/ZonesModule dependency for respawn aggro
+- [Phase 43]: checkImmediateAggro fires before scheduleNextTick in activateZone; checkImmediateAggroForPlayer used for player-scoped scan on join
 
 ### v1.10 Combat UX Context
 
@@ -91,16 +94,15 @@ None.
 - Low priority — only relevant if elevation interacts with item pickup range
 
 **Pre-existing (not caused by Phase 43):**
-- game-server build error: game.gateway.ts:228 TS2345 — unresolved before Phase 43
-- ESLint config missing for web app — project-wide issue
+- ESLint config missing for game-server app — project-wide infrastructure issue (no .eslintrc in app dir)
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Phase 43 Plan 01 complete — click-to-attack client wiring done
+Stopped at: Completed 43-02-PLAN.md — predator/maniac aggro bug fix
 Resume file: None
 
-**Next action:** Execute 43-02-PLAN.md (aggro bug fix in creature-ai.ts)
+**Next action:** Execute 43-03-PLAN.md (if exists) or plan next phase
 
 ---
-*Last updated: 2026-02-19 after Phase 43 Plan 01 complete*
+*Last updated: 2026-02-19 after Phase 43 Plan 02 complete*
