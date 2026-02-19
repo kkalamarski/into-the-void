@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 48 of 50 (NPC Definition System and Hub Spawns)
-Plan: 2 of TBD in current phase
+Plan: 3 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-19 — 48-02: 20 NPC definitions for all 4 faction hubs + NpcSpawn positions in HubConfig
+Last activity: 2026-02-19 — 48-03: NPC spawning in hub zones, NPC rendering with nameplates, combat targeting guard
 
 Progress: [██░░░░░░░░] 20% (v1.11 milestone — 2/5 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 151 (Phases 1-48 plan 02 complete)
+- Total plans completed: 152 (Phases 1-48 plan 03 complete)
 - Average duration: ~3m per plan
-- Total execution time: ~5.5 hours
+- Total execution time: ~5.6 hours
 
 **By Milestone:**
 
@@ -38,7 +38,7 @@ Progress: [██░░░░░░░░] 20% (v1.11 milestone — 2/5 phases)
 | v1.8 | 33-38 | 22 | 2 days |
 | v1.9 | 39-42 | 12 | 1 day |
 | v1.10 | 43-45 | 5 | 1 day |
-| v1.11 | 46-50 | 8/TBD | in progress |
+| v1.11 | 46-50 | 9/TBD | in progress |
 
 ## Accumulated Context
 
@@ -77,6 +77,10 @@ Recent decisions affecting current work:
 - [48-02]: 5-NPC hub layout: trader NW (20,20), guard N (32,15), rep NE (44,20), ambient SW (20,44), service SE (44,44)
 - [48-02]: NpcRegistry.registerAll(ALL_NPCS) called on module load in packages/npcs/src/index.ts
 - [48-02]: NpcSpawn exported from world-gen (not npcs) since it describes world position, not NPC identity
+- [48-03]: NPC fallback texture is 'player' sprite until NPC sprites are created; NPC scale set to 2.2 (slightly smaller than creatures at 2.5)
+- [48-03]: spawnHubNpcs uses NpcRegistry.get() which returns UNKNOWN_NPC fallback — no null guard needed
+- [48-03]: NPC entities included in hub zone entity map from load time — appear in zone:state on hub entry without extra events
+- [48-03]: NPC click handler suppresses pathfinding (lastClickedEntity) but does not emit combat:start — placeholder for Phase 49 interaction
 
 ### Pending Todos
 
@@ -95,10 +99,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 48-npc-definition-system-and-hub-spawns/48-02-PLAN.md — 20 NPC definitions for all 4 faction hubs registered in NpcRegistry, NpcSpawn positions added to HubConfig
+Stopped at: Completed 48-npc-definition-system-and-hub-spawns/48-03-PLAN.md — NPC spawning in hub zones wired end-to-end, NPC rendering with type-colored nameplates in Phaser, combat targeting guard server + client
 Resume file: None
 
-**Next action:** Execute next plan in Phase 48 (48-03: hub NPC spawning in game-server)
+**Next action:** Execute next plan in Phase 48 (48-04 if exists, otherwise proceed to Phase 49)
 
 ---
-*Last updated: 2026-02-19 after 48-02 execution complete*
+*Last updated: 2026-02-19 after 48-03 execution complete*
