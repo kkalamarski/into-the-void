@@ -4,33 +4,16 @@ import { useInventoryStore } from '../../store/inventoryStore';
 import { BIOME_DISPLAY_NAMES, BIOME_COLORS, BiomeType } from '@into-the-void/shared-types';
 import { GiShield, GiLightningFrequency, GiPoisonGas, GiCrossedSwords } from 'react-icons/gi';
 import { useCombatStore } from '../../store/combatStore';
+import { useCombatLogStore } from '../../store/combatLogStore';
 import { ActionBar } from './ActionBar';
 import { TargetFrame } from './TargetFrame';
+import { CombatLog } from './CombatLog';
 import './HUD.css';
 
 export const HUD: React.FC = () => {
-  const { player, zoneState, toggleInventory, toggleEquipment, toggleChat } = useGameStore();
+  const { player, zoneState, toggleInventory, toggleEquipment, toggleChat, showCombatLog, toggleCombatLog } = useGameStore();
   const { inventory } = useInventoryStore();
   const { inCombat } = useCombatStore();
-
-  if (!player) return null;
-
-  const stats = inventory?.stats ?? {
-    armor: 0,
-    speedMultiplier: 1.0,
-    hazardResistance: 0,
-    detectionRange: 0,
-    energyCapacity: 100,
-    rechargeRate: 1.0,
-    jumpHeight: 1.0,
-    bonuses: {},
-  };
-
-  const healthPercent = (player.health / player.maxHealth) * 100;
-  const energy = player.energy ?? 100;
-  const maxEnergy = player.maxEnergy ?? 100;
-  const energyPercent = (energy / maxEnergy) * 100;
-  const xpPercent = (player.xp / player.xpToNextLevel) * 100;
 
   // Biome display with hysteresis to prevent flickering
   const [displayedBiome, setDisplayedBiome] = useState<BiomeType | null>(null);
@@ -55,6 +38,50 @@ export const HUD: React.FC = () => {
       biomeStableCountRef.current = 1;
     }
   }, [zoneState?.biome, displayedBiome]);
+
+  // Sync showCombatLog from gameStore to combatLogStore visible state
+  useEffect(() => {
+    useCombatLogStore.setState({ visible: showCombatLog });
+  }, [showCombatLog]);
+
+  // Wire L key to toggle combat log visibility
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if typing in input or textarea
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      if (e.key.toLowerCase() === 'l') {
+        toggleCombatLog();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleCombatLog]);
+
+  if (!player) return null;
+
+  const stats = inventory?.stats ?? {
+    armor: 0,
+    speedMultiplier: 1.0,
+    hazardResistance: 0,
+    detectionRange: 0,
+    energyCapacity: 100,
+    rechargeRate: 1.0,
+    jumpHeight: 1.0,
+    bonuses: {},
+  };
+
+  const healthPercent = (player.health / player.maxHealth) * 100;
+  const energy = player.energy ?? 100;
+  const maxEnergy = player.maxEnergy ?? 100;
+  const energyPercent = (energy / maxEnergy) * 100;
+  const xpPercent = (player.xp / player.xpToNextLevel) * 100;
 
   return (
     <div className="hud">
@@ -102,6 +129,8 @@ export const HUD: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <CombatLog />
 
       <div className="hud-bottom">
         <div className="action-bar">

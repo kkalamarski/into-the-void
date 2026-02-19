@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Player, ConnectionState, ChatMessage, Entity, Creature, ZoneState, Position, PlayerPublic } from '@into-the-void/shared-types';
 import { Game } from '../game/Game';
 import { gameSocket } from '../network/socket';
+import { useEntityStore } from './entityStore';
 
 interface GameState {
   // Connection
@@ -47,6 +48,14 @@ interface GameState {
 
   showChat: boolean;
   toggleChat: () => void;
+
+  // Death screen
+  showDeathScreen: boolean;
+  setShowDeathScreen: (show: boolean) => void;
+
+  // Combat log
+  showCombatLog: boolean;
+  toggleCombatLog: () => void;
 
   // Chat
   chatMessages: ChatMessage[];
@@ -98,6 +107,14 @@ export const useGameStore = create<GameState>((set) => ({
 
   showChat: false,
   toggleChat: () => set((state) => ({ showChat: !state.showChat })),
+
+  // Death screen
+  showDeathScreen: false,
+  setShowDeathScreen: (show) => set({ showDeathScreen: show }),
+
+  // Combat log
+  showCombatLog: true, // Default visible
+  toggleCombatLog: () => set((state) => ({ showCombatLog: !state.showCombatLog })),
 
   // Chat
   chatMessages: [],
@@ -165,6 +182,18 @@ gameSocket.on('zone:state', (data: ZoneState) => {
   // adjacent zones (loaded via zone:chunk) must persist for cross-chunk visibility.
   // spawnEntity already checks for duplicates and filters by visibility distance.
   const isInitialLoad = currentZoneId === null;
+
+  // Populate entityStore for click-to-attack lookups
+  // Clear on initial load, then add all zone entities
+  if (isInitialLoad) {
+    useEntityStore.getState().clearEntities();
+  }
+  if (entities && entities.length > 0) {
+    for (const entity of entities) {
+      useEntityStore.getState().spawnEntity(entity);
+    }
+  }
+
   if (game) {
     const worldScene = game.getWorldScene();
     if (worldScene) {
@@ -302,18 +331,20 @@ gameSocket.on('player:death', ({ playerId, killerId, position }: { playerId: str
   const worldScene = game?.getWorldScene();
 
   if (currentPlayer && playerId === currentPlayer.id) {
-    // Local player died
+    // Local player died - enter Emergency Lockdown Mode
     useGameStore.getState().setPlayer({
       ...currentPlayer,
       isDead: true,
       health: 0,
     });
-    // Show death message
+    // Show death screen (replaces auto-respawn)
+    useGameStore.getState().setShowDeathScreen(true);
+    // Show lockdown message
     const chatMessage: ChatMessage = {
       id: Date.now().toString(),
       senderId: 'system',
       senderName: 'System',
-      message: 'You have been killed. Respawning...',
+      message: 'Emergency Lockdown Mode activated. Choose a recovery option.',
       channel: 'system',
       timestamp: Date.now(),
     };
@@ -329,25 +360,31 @@ gameSocket.on('player:death', ({ playerId, killerId, position }: { playerId: str
 });
 
 // Handle player respawn
-gameSocket.on('player:respawn', ({ playerId, position }: { playerId: string; position: Position }) => {
+gameSocket.on('player:respawn', ({ playerId, position, health, maxHealth }: { playerId: string; position: Position; health: number; maxHealth: number }) => {
   const currentPlayer = useGameStore.getState().player;
   const game = useGameStore.getState().game;
   const worldScene = game?.getWorldScene();
 
   if (currentPlayer && playerId === currentPlayer.id) {
-    // Local player respawned
+    // Local player respawned - hide death screen
+    useGameStore.getState().setShowDeathScreen(false);
     useGameStore.getState().setPlayer({
       ...currentPlayer,
       isDead: false,
-      health: currentPlayer.maxHealth,
+      health: health,
+      maxHealth: maxHealth,
       position,
     });
-    // Show respawn message
+    // Show respawn message based on health restored
+    const healthPercent = Math.round((health / maxHealth) * 100);
+    const isFullHealth = healthPercent >= 100;
     const chatMessage: ChatMessage = {
       id: Date.now().toString(),
       senderId: 'system',
       senderName: 'System',
-      message: 'You have respawned at your faction hub.',
+      message: isFullHealth
+        ? 'Emergency extraction complete. You have been transported to your faction hub.'
+        : `Suit rebooted. ${healthPercent}% integrity restored.`,
       channel: 'system',
       timestamp: Date.now(),
     };
