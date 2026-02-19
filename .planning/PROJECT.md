@@ -4,7 +4,7 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, and a complete auth-to-gameplay flow.
 
-## Current State (v1.8 shipped)
+## Current State (v1.9 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
@@ -13,6 +13,7 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Inventory: 100 items, exo-suit equipment, module slots, action bar, storage
 - Stats: 8 primary stats with equipment bonuses, level scaling
 - Entities: 35 definitions, fertility-based spawning, creature AI, tool interaction, loot, respawn
+- Combat: Auto-attack loop, creature aggro AI, player death/respawn, damage numbers, combat indicator
 
 **Tech stack:**
 - Frontend: React 18, Phaser 3, Zustand, React Router v7
@@ -22,19 +23,15 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~15,000+ LOC TypeScript
 
-## Current Milestone: v1.9 Combat System
+## Current Milestone: v1.10 Combat UX
 
-**Goal:** Implement PvE auto-attack combat with creature aggro. Players can fight creatures using combat tools, creatures deal damage back, and death has consequences.
+**Goal:** Complete the combat user experience with click-to-attack targeting, visual target selection, and combat log feedback.
 
 **Target features:**
-- Click-to-attack engagement (same pattern as tool interaction)
-- Auto-attack on 1-second tick cycle
-- Damage calculation from Power/Toughness stats
-- Creature aggro: predators and maniacs attack players within ~5 tiles
-- Leash system: creatures chase ~10 tiles then return to spawn point
-- Player death: respawn at faction hub / safe point
-- Combat HUD feedback: damage numbers, combat state indicator
-- Creature combat AI: attack, chase, return behaviors
+- Click-to-attack: click creature with combat tool to initiate auto-attack
+- Per-tool attack ranges (melee=1 tile, ranged=3-5 tiles based on item definition)
+- Target selection UI: visual indicator showing which entity is targeted
+- Combat log: scrollable text log showing damage dealt/received with timestamps
 
 ## Core Value
 
@@ -103,16 +100,18 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Creature idle wander and flee behaviors — v1.8
 - ✓ Entity respawn system with DB persistence — v1.8
 - ✓ Zone HUD fertility display — v1.8
+- ✓ Auto-attack combat loop with Power/Toughness/Haste — v1.9
+- ✓ Creature aggro AI (predator/maniac auto-attack, omnivore retaliation) — v1.9
+- ✓ Player death and respawn at faction hub — v1.9
+- ✓ Floating damage numbers above entities — v1.9
+- ✓ "In Combat" HUD indicator — v1.9
 
 ### Active
 
-- [ ] Click-to-attack combat engagement
-- [ ] Auto-attack on tick cycle with damage calculation
-- [ ] Creature aggro system (predators/maniacs attack on sight)
-- [ ] Leash system for creature chase and return
-- [ ] Player death and respawn at safe point
-- [ ] Combat HUD feedback (damage numbers, state)
-- [ ] Combat state machine (idle, attacking, chasing, returning)
+- [ ] Click-to-attack: player clicks creature with combat tool equipped to start auto-attack
+- [ ] Per-tool attack ranges: melee tools 1 tile, ranged tools 3-5 tiles
+- [ ] Target selection UI: visual highlight/indicator on targeted entity
+- [ ] Combat log panel: scrollable text log of damage events with timestamps
 
 ### Out of Scope
 
@@ -154,4 +153,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-19 after v1.9 milestone start*
+*Last updated: 2026-02-19 after v1.10 milestone start*
