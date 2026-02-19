@@ -24,7 +24,8 @@ import {
 } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
 import type { Inventory, InventoryItemJson, EquipmentJson } from '@into-the-void/database';
-import { getBiome, BiomeGenerator } from '@into-the-void/world-gen';
+import { getBiome, BiomeGenerator, getHubConfig } from '@into-the-void/world-gen';
+import { isHubZone } from '@into-the-void/shared-types';
 
 interface MoveResult {
   success: boolean;
@@ -83,6 +84,28 @@ export class GameService {
   ) {}
 
   async getZoneState(zoneId: string): Promise<ZoneState> {
+    // Hub zones don't use coordinate-based biome/fertility — use static config.
+    // This early return must come BEFORE the coordinate parsing that would produce
+    // NaN values for hub zone IDs like 'hub_verdant'.
+    if (isHubZone(zoneId)) {
+      const hubConfig = getHubConfig(zoneId);
+      const entities = await this.zonesService.getZoneEntities(zoneId);
+      const players = this.playerService.getPlayersInZone(zoneId);
+      const chunk = await this.zonesService.getChunk(zoneId);
+
+      return {
+        zoneId,
+        entities,
+        players,
+        lastUpdate: Date.now(),
+        chunk,
+        biome: hubConfig?.biome ?? 'void_plains',
+        fertilityType: hubConfig?.fertilityType ?? 'Normal',
+        zoneType: 'hub',
+      };
+    }
+
+    // Existing open-world zone logic
     const entities = await this.zonesService.getZoneEntities(zoneId);
     const players = this.playerService.getPlayersInZone(zoneId);
     const chunk = await this.zonesService.getChunk(zoneId);
