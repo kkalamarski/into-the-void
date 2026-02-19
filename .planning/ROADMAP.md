@@ -576,9 +576,9 @@ Plans:
 **Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 48-01-PLAN.md — Create @into-the-void/npcs package with NpcDefinition types and NpcRegistry singleton
-- [ ] 48-02-PLAN.md — Define 20 NPCs for all 4 faction hubs (5 types each) with spawn positions
-- [ ] 48-03-PLAN.md — NPC spawning in hub zones, rendering with nameplates, combat targeting rejection
+- [x] 48-01-PLAN.md — Create @into-the-void/npcs package with NpcDefinition types and NpcRegistry singleton
+- [x] 48-02-PLAN.md — Define 20 NPCs for all 4 faction hubs (5 types each) with spawn positions
+- [x] 48-03-PLAN.md — NPC spawning in hub zones, rendering with nameplates, combat targeting rejection
 
 #### Phase 49: NPC Interaction Window
 
@@ -671,11 +671,11 @@ Phases execute in numeric order: 46 -> 47 -> 48 -> 49 -> 50
 | 45. Combat Log | v1.10 | 1/1 | Complete | 2026-02-19 |
 | 46. Currency and Hub Foundation | v1.11 | 3/3 | Complete | 2026-02-19 |
 | 47. Hub Travel | v1.11 | 5/5 | Complete | 2026-02-20 |
-| 48. NPC Definition System and Hub Spawns | v1.11 | TBD | Not started | - |
+| 48. NPC Definition System and Hub Spawns | v1.11 | 3/3 | Complete | 2026-02-20 |
 | 49. NPC Interaction Window | v1.11 | TBD | Not started | - |
 | 50. Trading System | v1.11 | TBD | Not started | - |
 
-**Total:** 50 phases (47 complete, 3 remaining)
+**Total:** 50 phases (48 complete, 2 remaining)
 
 ---
-*Last updated: 2026-02-20 after Phase 47 execution complete*
+*Last updated: 2026-02-20 after Phase 48 execution complete*
