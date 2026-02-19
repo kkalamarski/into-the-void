@@ -10,7 +10,8 @@
 - ✅ **v1.5 Movement Overhaul** - Phases 21-24 (shipped 2026-02-17)
 - ✅ **v1.6 Inventory & Items** - Phases 25-29 (shipped 2026-02-18)
 - ✅ **v1.7 Character Stats** - Phases 30-32 (shipped 2026-02-18)
-- 🚧 **v1.8 Entity System** - Phases 33-38 (in progress)
+- ✅ **v1.8 Entity System** - Phases 33-38 (shipped 2026-02-19)
+- 🚧 **v1.9 Combat System** - Phases 39-42 (in progress)
 
 ## Phases
 
@@ -256,7 +257,8 @@ See: `.planning/milestones/v1.7-ROADMAP.md`
 
 </details>
 
-### v1.8 Entity System (In Progress)
+<details>
+<summary>✅ v1.8 Entity System (Phases 33-38) - SHIPPED 2026-02-19</summary>
 
 **Milestone Goal:** Implement entity definition system with spawning, interaction, and loot. Entities include creatures (idle wander), plants, minerals, and artifacts — all interactable via tools with range-based interaction, perception gating, and a respawn system. The world gains a fertility noise layer that shapes spawn density by tile.
 
@@ -366,7 +368,7 @@ Plans:
   3. AI internal state (FSM state, wander target, aggro flag) is absent from `entity:update` broadcasts — a client inspecting socket payloads sees only position and health
   4. Entities fade in smoothly when spawned or respawned — the spawn event triggers a client-side fade-in animation rather than instant appearance
   5. Minerals and plants show proportional visual depletion as yield decreases — a half-depleted mineral looks visually different from a full one
-**Plans**: 3 plans in 2 waves
+**Plans**: 4 plans in 2 waves
 
 Plans:
 - [x] 38-01-PLAN.md — Strip AI state from entity:batch broadcasts; wire entity:batch to WorldScene
@@ -374,10 +376,87 @@ Plans:
 - [x] 38-03-PLAN.md — Entity fade-in animation on spawn/respawn; yield bar depletion visual update
 - [x] 38-04-PLAN.md — Gap closure: Wire error event handler for level-gating rejection messages
 
+</details>
+
+### v1.9 Combat System (In Progress)
+
+**Milestone Goal:** Implement PvE auto-attack combat with creature aggro, damage calculation using Power/Toughness stats, creature chase/leash behavior, player death with safe respawn, and combat HUD feedback including damage numbers and combat state indicators.
+
+**Phases:** 4 (39-42)
+**Depth:** Quick (from config)
+**Coverage:** 17/17 requirements mapped
+
+#### Phase 39: Combat Core and Damage Calculation
+
+**Goal**: Players can engage creatures in combat by clicking with a combat tool equipped — the auto-attack loop deals damage every tick using Power vs Toughness calculation, with Haste affecting attack speed
+**Depends on**: Phase 38 (v1.8 complete — entity system, AI tick loop, tool interaction)
+**Requirements**: COMB-01, COMB-02, COMB-03, COMB-04
+**Success Criteria** (what must be TRUE):
+  1. Player clicks a creature while holding a combat tool — the player enters combat and begins auto-attacking every tick (base ~1 second)
+  2. Damage dealt equals attacker Power minus a Toughness-based reduction — observable by comparing damage numbers across creatures with different Toughness values
+  3. A player with higher Haste stat attacks more frequently than a player with base Haste — attack interval visibly decreases
+  4. Creature health decreases with each attack and creature dies when health reaches zero — death triggers existing loot drop from v1.8
+**Plans**: TBD
+
+Plans:
+- [ ] 39-01-PLAN.md — Add CombatService with startCombat(), attackTick(), calculateDamage(); wire combat:start event
+- [ ] 39-02-PLAN.md — Add combat:attack server handler; integrate with existing AiService tick loop for player auto-attacks
+- [ ] 39-03-PLAN.md — Wire Haste stat to attack interval calculation; update damage formula in game-logic
+
+#### Phase 40: Creature Combat AI and Aggro
+
+**Goal**: Creatures with aggressive behaviors (predators, maniacs) automatically attack nearby players, omnivores retaliate when attacked, and all combat creatures have a state machine for attacking, chasing, and returning to spawn
+**Depends on**: Phase 39 (combat core — creatures can take and deal damage)
+**Requirements**: AGGR-01, AGGR-02, AGGR-03, CSTA-01, CSTA-02, CSTA-03, CSTA-04
+**Success Criteria** (what must be TRUE):
+  1. A predator or maniac creature within ~5 tiles of a player automatically targets and attacks the player — no player action required to trigger aggro
+  2. An omnivore creature ignores players until the player attacks it — then the omnivore retaliates
+  3. Herbivores continue to flee from players without change from v1.8 — no combat behavior added
+  4. A player who moves away from a creature is chased up to ~10 tiles from the creature's spawn point — beyond that distance the creature returns to spawn
+  5. Combat ends when either combatant dies, the player leaves range, or the creature exceeds leash distance — both sides exit combat state
+**Plans**: TBD
+
+Plans:
+- [ ] 40-01-PLAN.md — Extend tickCreatureAI FSM with attacking/chasing/returning states; add aggro detection for predator/maniac
+- [ ] 40-02-PLAN.md — Add creature attack logic to AI tick; wire damage to player via combat:damage event
+- [ ] 40-03-PLAN.md — Implement leash system with spawn point tracking; creature return behavior
+
+#### Phase 41: Player Death and Respawn
+
+**Goal**: Players who reach zero health die and respawn at their faction's safe point with no item or XP loss — death is forgiving but meaningful
+**Depends on**: Phase 40 (creatures can deal damage to players)
+**Requirements**: DEAT-01, DEAT-02, DEAT-03
+**Success Criteria** (what must be TRUE):
+  1. When player health reaches zero, the player dies — character is removed from combat and cannot move or act
+  2. Dead player automatically respawns at their faction hub / safe point after a short delay (~3 seconds) — position is faction-specific
+  3. Player retains all items and XP after death — inventory and stats are unchanged post-respawn
+  4. Other players see the death (player disappears) and respawn (player reappears at hub) — multiplayer visibility maintained
+**Plans**: TBD
+
+Plans:
+- [ ] 41-01-PLAN.md — Add player death detection in combat tick; emit player:death event; define faction respawn coordinates
+- [ ] 41-02-PLAN.md — Implement respawn logic in PlayerService; teleport to faction hub; emit player:respawn event
+
+#### Phase 42: Combat Feedback and HUD
+
+**Goal**: Players receive clear visual feedback during combat — damage numbers float above targets, an "In Combat" indicator appears in the HUD, and health bars update in real-time
+**Depends on**: Phase 41 (full combat loop complete — player can die and respawn)
+**Requirements**: FEED-01, FEED-02, FEED-03
+**Success Criteria** (what must be TRUE):
+  1. When a creature or player takes damage, a floating number appears above them showing the damage amount — numbers fade out after ~1 second
+  2. The HUD displays "In Combat" indicator when the player is in active combat — indicator disappears when combat ends
+  3. Health bars update immediately when damage is dealt — no delay between combat:damage event and visual update
+  4. Damage numbers use appropriate colors — red for damage dealt to player, white for damage dealt to creatures
+**Plans**: TBD
+
+Plans:
+- [ ] 42-01-PLAN.md — Add FloatingDamage component to EntityRenderer; animate damage numbers on combat:damage event
+- [ ] 42-02-PLAN.md — Add combat state indicator to HUD; wire combatStore to track in-combat status
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 33 -> 34 -> 35 -> 36 -> 37 -> 38
+Phases execute in numeric order: 39 -> 40 -> 41 -> 42
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -419,8 +498,12 @@ Phases execute in numeric order: 33 -> 34 -> 35 -> 36 -> 37 -> 38
 | 36. Creature AI Wander and Behavior Tick | v1.8 | 4/4 | Complete | 2026-02-18 |
 | 37. Fertility Noise and Biome Spawn Quality | v1.8 | 3/3 | Complete | 2026-02-18 |
 | 38. Perception Gating and Client Polish | v1.8 | 4/4 | Complete | 2026-02-19 |
+| 39. Combat Core and Damage Calculation | v1.9 | 0/3 | Not started | - |
+| 40. Creature Combat AI and Aggro | v1.9 | 0/3 | Not started | - |
+| 41. Player Death and Respawn | v1.9 | 0/2 | Not started | - |
+| 42. Combat Feedback and HUD | v1.9 | 0/2 | Not started | - |
 
-**Total:** 38 phases (38 complete, 0 remaining)
+**Total:** 42 phases (38 complete, 4 remaining)
 
 ---
-*Last updated: 2026-02-19 after Phase 38 execution complete*
+*Last updated: 2026-02-19 after v1.9 roadmap created*

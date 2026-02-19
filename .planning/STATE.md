@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.9 Combat System — Defining requirements
+**Current focus:** v1.9 Combat System — Phase 39 ready for planning
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 39 - Combat Core and Damage Calculation
 Plan: —
-Status: Defining requirements
-Last activity: 2026-02-19 — Milestone v1.9 started
+Status: Ready for planning
+Last activity: 2026-02-19 — v1.9 roadmap created
 
-Progress: [░░░░░░░░░░] 0% (v1.9 milestone — requirements phase)
+Progress: [░░░░░░░░░░] 0% (v1.9 milestone — 0/4 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 122 (Phases 1-37 complete)
+- Total plans completed: 126 (Phases 1-38 complete)
 - Average duration: ~3m per plan
-- Total execution time: ~4.5 hours
+- Total execution time: ~5 hours
 
 **By Milestone:**
 
@@ -35,7 +35,8 @@ Progress: [░░░░░░░░░░] 0% (v1.9 milestone — requirements p
 | v1.5 | 21-24 | 9 | 1 day |
 | v1.6 | 25-29 | 16 | 2 days |
 | v1.7 | 30-32 | 9 | 1 day |
-| v1.8 | 33-37 | 18 | (in progress) |
+| v1.8 | 33-38 | 22 | 2 days |
+| v1.9 | 39-42 | TBD | (starting) |
 
 **Recent Trend:** Stable, averaging 2-4 plans per phase
 
@@ -51,62 +52,13 @@ Progress: [░░░░░░░░░░] 0% (v1.9 milestone — requirements p
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [v1.8 research]: Build order is non-negotiable: types → enriched spawning + lifecycle DB → loot + interaction + respawn → AI tick → fertility → client polish
+- [v1.8 research]: Build order is non-negotiable: types -> enriched spawning + lifecycle DB -> loot + interaction + respawn -> AI tick -> fertility -> client polish
 - [v1.8 research]: `CreatureBehavior` type correction (`herbivore|omnivore|predator|maniac`) is a breaking change — must happen in Phase 33 before any entity definitions are written
 - [v1.8 research]: `entity_lifecycle` DB table must be built in Phase 34 alongside `createEntityFromSpawn()` enrichment — retrofitting persistence later is high recovery cost
 - [v1.8 research]: AI tick scoped to `activePlayerZones` only with self-rescheduling setTimeout — setInterval is explicitly rejected; global tick stalls event loop
 - [v1.8 research]: `ground_items` DB table in Phase 35 — loot in memory only is never acceptable; items must survive zone eviction
 - [v1.8 research]: Fertility model is static (baked at world-gen time, deterministic per seed) — dynamic fertility deferred; decision is irreversible without data migration
 - [v1.8 research]: Perception gating model: relaxed zone-room broadcast with field stripping (simpler) rather than strict per-player filtering — finalize before Phase 36 AI broadcast implementation
-- [33-01]: CreatureBehavior renamed from passive|neutral|aggressive|defensive to herbivore|omnivore|predator|maniac — lore mandate applied as first change in Phase 33
-- [33-01]: miasma_marshes and petrified_expanse added as Tier II biomes — uses existing tile visuals (fungal/void/toxic) without new sprites
-- [33-01]: Plant and Artifact EntityType variants added with full interfaces — foundation for entity lifecycle system in Phase 34+
-- [33-01]: Legacy EntityRegistry in shared-types marked @deprecated — to be replaced by @into-the-void/entities package
-- [33-02]: packages/entities mirrors packages/items exactly — same package.json shape, project.json executor, tsconfig.lib.json, and registry singleton pattern
-- [33-02]: ArtifactDefinition.respawns typed as literal false (not boolean) — type-level enforcement of one-time discovery rule
-- [33-02]: src/definitions/ directory created empty — definitions population deferred to Plan 33-03
-- [33-03]: BIOME_SPAWN_CONFIGS reduced to one primary entry per biome — old hardcoded IDs (void_stalker, etc.) had no registry entries; only ENTITY_IDS-backed entries kept to satisfy must-have truth "references only IDs present in registry"
-- [33-03]: CREATURE_VOID_HORROR spans ancient_ruins + starfall_crater — single maniac-class creature covers both Tier IV biomes per lore
-- [33-03]: Auto-registration on module import — EntityRegistry.registerAll(ALL_ENTITIES) in index.ts side-effect runs at load time
-- [34-01]: entity_lifecycle uses entityId (zoneId_spawnId_x_y format) as PK — globally unique, eliminates composite key
-- [34-01]: FAR_FUTURE (2100-01-01) used as artifact respawnAt sentinel rather than nullable column — simpler queries
-- [34-01]: Deterministic level from hash(worldSeed + entityId) — no RNG state needed, reproducible per seed
-- [34-01]: Plant and Artifact branches in createEntityFromSpawn() are forward-compatibility stubs — world-gen not yet producing those entityTypes
-- [34-02]: GameSocket.on() upgraded to array-based multi-handler dispatch — both gameStore (Phaser) and entityStore (React/pathfinding) can independently handle entity events without silent handler replacement
-- [34-02]: enableMapSet() from immer called at module top in entityStore.ts — required for immer v11 Map mutation support in draft producers
-- [34-04]: Entity check in isWorldTileBlocked uses local tile coords — same space as terrain collision, no remapping needed
-- [34-04]: Terrain checked first in isWorldTileBlocked, entity scan only if passable — short-circuit avoids O(n) scan for walls
-- [34-04]: Server entity blocking placed between validateMovement and isZoneTransition in movePlayer — logically correct layering
-- [34-03]: createHealthBar() reused for mineral/plant yield bars — parameter semantics (current/max) are identical; no new visual component needed
-- [34-03]: getEntityTexture() now accepts Entity not EntityType — enables species-specific texture lookup; missing textures handled gracefully by Phaser until Phase 38 adds sprites
-- [35-01]: Seed script accepts Map parameter instead of importing CREATURE_LOOT_TABLES directly — avoids circular dependency: database -> game-logic -> database
-- [35-01]: CREATURE_LOOT_TABLES is runtime source of truth (in-memory); DB tables (loot_tables, loot_table_entries) exist for admin tooling and future dynamic config
-- [35-01]: rollLootTable is a pure function — each HarvestYield entry evaluated independently, multiple items can drop per roll
-- [35-02]: range placed after effects in ItemDefinition — tool-only optional property, undefined for non-tools
-- [35-02]: Rarity-to-range mapping: common=1, rare=2, epic=3, exotic=4, legendary=5 — linear scale, consistent across all three tool types (mining, combat, research)
-- [Phase 35-04]: Error handling wraps entire processRespawnTick() body — tick loop never crashes the server on DB errors
-- [Phase 35-04]: ZonesService injected into GameGateway for setServer() wiring — server reference flows gateway -> zones, avoids circular injection
-- [35-03]: ToolUseResult.entityChanges typed as Record<string,unknown> — Partial<Entity> excludes subtype fields (health, yield) needed for gateway broadcast
-- [35-03]: EntityService injected directly into GameService (no forwardRef) — no circular dependency exists between them
-- [35-03]: UNKNOWN_ENTITY fallback given respawnSeconds: 60 — satisfies new required property on CreatureDefinition without semantic impact
-- [Phase 36]: AiService uses self-rescheduling setTimeout (not setInterval) — prevents event loop stalls when tick exceeds interval
-- [Phase 36]: AI_TICK_INTERVAL_MS=1000 for creature speed; AI_TICK_WARN_MS=200 performance monitoring threshold
-- [Phase 36-02]: tickCreatureAI is pure function — callers apply result; no mutations inside FSM
-- [Phase 36-02]: Flee fallback chain: diagonal -> cardinal-x -> cardinal-y -> partial backtrack — prevents herbivores cornering
-- [Phase 36-02]: Creature bounds check uses ZONE_SIZE directly — creatures do not trigger zone transitions
-- [36-04]: isBlocked accessor stored as class field in PathfindingController — re-evaluated per step via closure over entityStore; cleared to null in cancelPath() for cleanup
-- [36-03]: entity:batch emitted once per zone per tick (not N individual entity:update events) — relaxed zone-room broadcast per v1.8 research decision
-- [36-03]: activateZone safe to call multiple times due to idempotency guard — calling on every player join and zone-transition is correct pattern
-- [36-03]: deactivateZone called after playerService.handleDisconnect() so getPlayersInZone returns accurate post-disconnect count
-- [37-01]: FERTILITY_SCALE = 0.0012 as private readonly class property (between temperatureScale 0.001 and moistureScale 0.0015) for medium-scale fertility blobs
-- [37-01]: 3 octaves for fertility fbm — balances variation against tiny-patch noise artifacts
-- [37-01]: Equal-thirds thresholds (Barren <0.33, Normal 0.33-0.66, Lush >=0.66) for balanced distribution
-- [37-01]: BiomeGenerator passed to generateSpawnPoints instead of BiomeType — enables Plan 37-02 per-spawn-point fertility sampling without another signature change
-- [37-02]: Density decision uses chunk-center fertility; spawn table uses per-tile biome — intentional split per SPWN-03 and research pitfall 4
-- [37-02]: Plants and artifacts omitted from spawn caps enforcement for now — forward-compatibility stubs noted; will activate in Phase 38
-- [37-03]: BiomeGenerator instantiated per getZoneState() call (not cached) — acceptable since getZoneState is called once per zone transition, not per frame
-- [37-03]: Fertility displayed inline without separate hysteresis — biome hysteresis gate is sufficient; fertility changes less frequently than biome at boundaries
-- [37-03]: ZoneState.fertilityType is required (not optional) — enforces correctness at the type level; all ZoneState consumers must provide it
 - [38-01]: PublicCreatureUpdate interface at module level enforces CRAI-09 — named type on movedCreatures[] array makes TypeScript reject AI internal state fields at compile time
 - [38-01]: entity:batch handler in gameStore.ts does not update Zustand entities array — entityStore already handles React/pathfinding; gameStore handler is Phaser-rendering-only, matching the dual-handler pattern from Phase 34-02
 - [38-02]: canInteractLevel uses entityLevel <= playerLevel + 5 — exclusive boundary, consistent with INTR-07 "more than 5 levels higher" spec
@@ -117,6 +69,22 @@ Recent decisions affecting current work:
 - [38-03]: zoneId presence on spawnEntity() distinguishes zone:state (initial load, no fade) from entity:spawn (runtime respawn, 400ms Linear fade)
 - [38-03]: this.elevationOffset (12px hover constant) stored as 'elevationOffset' data key — yield bar Y uses hover offset, not terrain height offset
 - [38-04]: gameSocket.on('error') uses channel: 'system' — consistent with existing system message convention; single catch-all for all server-emitted errors
+
+### v1.9 Combat System Context
+
+Key existing code to build on:
+- **AiService** (`apps/game-server/src/game/ai.service.ts`): 1-second tick loop with self-rescheduling setTimeout, scoped to active zones
+- **tickCreatureAI** (`packages/game-logic/src/ai/creature-ai.ts`): Pure FSM with herbivore/omnivore/predator/maniac branches — currently predator/maniac just wander
+- **EntityService** (`apps/game-server/src/game/entity.service.ts`): Handles tool interaction, loot drops, entity death
+- **CharacterStats**: Power, Toughness, Haste already defined and computed server-side
+- **calculateDamage** exists in game-logic but needs Power/Toughness formula wiring
+
+Design notes for v1.9:
+- Combat uses same tick interval as AI wander (~1 second base, modified by Haste)
+- Creature aggro extends existing FSM states — add `attacking`, `chasing`, `returning`
+- Leash distance (~10 tiles) tracked per creature from spawn point
+- Player death respawn uses faction hub coordinates (need to define per faction)
+- Damage numbers are client-side floating text — server emits `combat:damage` event
 
 ### Pending Todos
 
@@ -135,10 +103,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: v1.9 milestone started — defining requirements
+Stopped at: v1.9 roadmap created
 Resume file: None
 
-**Next action:** Define v1.9 requirements and create roadmap
+**Next action:** Plan Phase 39 with `/gsd:plan-phase 39`
 
 ---
-*Last updated: 2026-02-19 after v1.9 milestone start*
+*Last updated: 2026-02-19 after v1.9 roadmap created*

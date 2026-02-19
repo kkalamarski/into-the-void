@@ -3,121 +3,6 @@
 **Defined:** 2026-02-17
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.8 Requirements
-
-Requirements for Entity System milestone. Each maps to roadmap phases.
-
-### Entity Definitions
-
-- [ ] **ENTD-01**: BiomeType enum includes all 10 lore biomes (add `miasma_marshes`, `petrified_expanse`)
-- [ ] **ENTD-02**: CreatureBehavior type matches lore (`herbivore | omnivore | predator | maniac`)
-- [ ] **ENTD-03**: Plant and Artifact entity types added to EntityType with supporting interfaces
-- [ ] **ENTD-04**: `packages/entities` workspace package created mirroring `packages/items` pattern
-- [ ] **ENTD-05**: EntityRegistryImpl singleton with creature, plant, mineral, artifact definitions
-- [ ] **ENTD-06**: ~10 creature definitions covering all biomes with behavior types and level ranges
-- [ ] **ENTD-07**: ~10 plant definitions covering all biomes with harvest yields
-- [ ] **ENTD-08**: ~10 mineral definitions covering all biomes with mining yields
-- [ ] **ENTD-09**: ~5 artifact definitions with one-time discovery (no respawn)
-- [ ] **ENTD-10**: Each entity definition includes loot table reference
-- [ ] **ENTD-11**: BIOME_SPAWN_CONFIGS updated with all entity IDs from new definitions
-
-### Spawning
-
-- [ ] **SPWN-01**: Fertility noise layer using second SimplexNoise instance
-- [ ] **SPWN-02**: Fertility zones (Barren/Normal/Lush) affect spawn density per chunk
-- [ ] **SPWN-03**: Per-tile biome sampling for spawn table selection (not chunk-center)
-- [ ] **SPWN-04**: `createEntityFromSpawn()` enriches entities from EntityRegistry
-- [ ] **SPWN-05**: Spawn density caps per chunk (15 creatures, 10 minerals, 5 plants, 2 artifacts max)
-
-### Persistence
-
-- [ ] **PERS-01**: `entity_lifecycle` DB table tracks spawn point state (killedAt, respawnAt)
-- [ ] **PERS-02**: Zone load applies lifecycle records before materializing spawn points
-- [ ] **PERS-03**: `ground_items` DB table persists dropped loot items
-- [ ] **PERS-04**: Ground items restored on zone load, deleted on pickup or expiry
-- [ ] **PERS-05**: Respawn timers survive server restart via DB persistence
-
-### Loot
-
-- [ ] **LOOT-01**: Loot table schema in database (loot_tables, loot_table_entries)
-- [ ] **LOOT-02**: `rollLootTable()` pure function in game-logic using weighted random
-- [ ] **LOOT-03**: Loot resolved on creature death and spawned as ground items
-- [ ] **LOOT-04**: Loot resolved on mineral/plant depletion and spawned as ground items
-- [ ] **LOOT-05**: Ground items have despawn timer (configurable per item type)
-
-### Interaction
-
-- [ ] **INTR-01**: Tool `range` property added to ItemDefinition (1-10 tiles)
-- [ ] **INTR-02**: Existing tools updated with range values based on rarity
-- [ ] **INTR-03**: `canInteract()` called server-side before processing any interaction
-- [ ] **INTR-04**: `entity:tool_use` client event added for tool-based interactions
-- [ ] **INTR-05**: EntityService handles tool use, harvest, mine, collect actions
-- [ ] **INTR-06**: Perception gating: entities show "???" when level > player.perception * 3
-- [ ] **INTR-07**: Level gating: interaction blocked when entity level > player level + 5
-- [ ] **INTR-08**: Health bars displayed for all entity types
-
-### Creature AI
-
-- [ ] **CRAI-01**: AiService with tick loop scoped to zones with active players
-- [ ] **CRAI-02**: Self-rescheduling setTimeout pattern (not setInterval) prevents tick pile-up
-- [ ] **CRAI-03**: `tickCreatureAI()` pure FSM in game-logic with behavior-based states
-- [ ] **CRAI-04**: Herbivores: idle wander, flee when player within 5 tiles
-- [ ] **CRAI-05**: Omnivores: idle wander, ignore player unless damaged
-- [ ] **CRAI-06**: Predators: idle wander (no aggro in v1.8, combat deferred)
-- [ ] **CRAI-07**: Maniacs: idle wander (no aggro in v1.8, combat deferred)
-- [ ] **CRAI-08**: Creature position updates batched per zone per tick
-- [ ] **CRAI-09**: AI state stripped from server broadcasts (security)
-
-### Respawn
-
-- [ ] **RESP-01**: Respawn tick loop processes entity_lifecycle records
-- [ ] **RESP-02**: Random respawn timer range per entity type
-- [ ] **RESP-03**: Artifacts have respawnTime: -1 (permanent removal after collection)
-- [ ] **RESP-04**: Respawned entities appear at original spawn point
-
-### UI/HUD
-
-- [ ] **UIHD-01**: Zone HUD shows fertility type: "Biome Name (Fertility)"
-- [ ] **UIHD-02**: Entity fade-in animation on spawn/respawn
-- [ ] **UIHD-03**: Harvest depletion visual on minerals/plants (proportional to remaining yield)
-
-### Entity Blocking
-
-- [ ] **EBLK-01**: Entities block player movement (player cannot step on entity tile)
-- [ ] **EBLK-02**: Pathfinding considers entity positions when calculating routes
-- [ ] **EBLK-03**: Click-to-move path stops if entity moves into path mid-execution
-
-## v1.7 Requirements (Complete)
-
-Requirements for Character Stats milestone.
-
-### Stats Foundation
-
-- [x] **STAT-01**: CharacterStats type replaces legacy PlayerStats with 8 primary stats
-- [x] **STAT-02**: computeCharStats() pure function computes base + equipment bonuses
-- [x] **STAT-03**: Base stats scale linearly with character level (per-stat tuning)
-- [x] **STAT-04**: Creature stats use same computation function with creature-specific scaling
-
-### Stats Integration
-
-- [x] **STAT-05**: Durability stat affects maxHealth
-- [x] **STAT-06**: Toughness stat affects damage reduction (armor)
-- [x] **STAT-07**: Power stat affects damage output
-- [x] **STAT-08**: Haste stat affects movement and attack speed
-- [x] **STAT-09**: Vigor stat affects maxEnergy
-- [x] **STAT-10**: Recovery stat affects energy regeneration rate
-- [x] **STAT-11**: Perception stat affects detection range
-- [x] **STAT-12**: Resilience stat affects hazard resistance
-- [x] **STAT-13**: JSONB migration script updates existing character rows to new stat shape
-- [x] **STAT-14**: Combat functions updated to use new stat names (power, toughness, haste)
-
-### Stats Display
-
-- [x] **STAT-15**: Stats panel UI shows all 8 stats with current values
-- [x] **STAT-16**: Stat breakdown shows base vs equipment contribution ("30 + 15")
-- [x] **STAT-17**: Level-up notification shows stat deltas ("+5 Durability")
-- [x] **STAT-18**: Item tooltip shows stat delta comparison vs equipped item (green/red +/-)
-
 ## v1.9 Requirements
 
 Requirements for Combat System milestone. Each maps to roadmap phases.
@@ -153,6 +38,121 @@ Requirements for Combat System milestone. Each maps to roadmap phases.
 - [ ] **FEED-01**: Damage numbers appear above targets when hit
 - [ ] **FEED-02**: Combat state is visible in HUD (e.g., "In Combat" indicator)
 - [ ] **FEED-03**: Health bar updates in real-time during combat
+
+## v1.8 Requirements (Complete)
+
+Requirements for Entity System milestone. Each maps to roadmap phases.
+
+### Entity Definitions
+
+- [x] **ENTD-01**: BiomeType enum includes all 10 lore biomes (add `miasma_marshes`, `petrified_expanse`)
+- [x] **ENTD-02**: CreatureBehavior type matches lore (`herbivore | omnivore | predator | maniac`)
+- [x] **ENTD-03**: Plant and Artifact entity types added to EntityType with supporting interfaces
+- [x] **ENTD-04**: `packages/entities` workspace package created mirroring `packages/items` pattern
+- [x] **ENTD-05**: EntityRegistryImpl singleton with creature, plant, mineral, artifact definitions
+- [x] **ENTD-06**: ~10 creature definitions covering all biomes with behavior types and level ranges
+- [x] **ENTD-07**: ~10 plant definitions covering all biomes with harvest yields
+- [x] **ENTD-08**: ~10 mineral definitions covering all biomes with mining yields
+- [x] **ENTD-09**: ~5 artifact definitions with one-time discovery (no respawn)
+- [x] **ENTD-10**: Each entity definition includes loot table reference
+- [x] **ENTD-11**: BIOME_SPAWN_CONFIGS updated with all entity IDs from new definitions
+
+### Spawning
+
+- [x] **SPWN-01**: Fertility noise layer using second SimplexNoise instance
+- [x] **SPWN-02**: Fertility zones (Barren/Normal/Lush) affect spawn density per chunk
+- [x] **SPWN-03**: Per-tile biome sampling for spawn table selection (not chunk-center)
+- [x] **SPWN-04**: `createEntityFromSpawn()` enriches entities from EntityRegistry
+- [x] **SPWN-05**: Spawn density caps per chunk (15 creatures, 10 minerals, 5 plants, 2 artifacts max)
+
+### Persistence
+
+- [x] **PERS-01**: `entity_lifecycle` DB table tracks spawn point state (killedAt, respawnAt)
+- [x] **PERS-02**: Zone load applies lifecycle records before materializing spawn points
+- [x] **PERS-03**: `ground_items` DB table persists dropped loot items
+- [x] **PERS-04**: Ground items restored on zone load, deleted on pickup or expiry
+- [x] **PERS-05**: Respawn timers survive server restart via DB persistence
+
+### Loot
+
+- [x] **LOOT-01**: Loot table schema in database (loot_tables, loot_table_entries)
+- [x] **LOOT-02**: `rollLootTable()` pure function in game-logic using weighted random
+- [x] **LOOT-03**: Loot resolved on creature death and spawned as ground items
+- [x] **LOOT-04**: Loot resolved on mineral/plant depletion and spawned as ground items
+- [x] **LOOT-05**: Ground items have despawn timer (configurable per item type)
+
+### Interaction
+
+- [x] **INTR-01**: Tool `range` property added to ItemDefinition (1-10 tiles)
+- [x] **INTR-02**: Existing tools updated with range values based on rarity
+- [x] **INTR-03**: `canInteract()` called server-side before processing any interaction
+- [x] **INTR-04**: `entity:tool_use` client event added for tool-based interactions
+- [x] **INTR-05**: EntityService handles tool use, harvest, mine, collect actions
+- [x] **INTR-06**: Perception gating: entities show "???" when level > player.perception * 3
+- [x] **INTR-07**: Level gating: interaction blocked when entity level > player level + 5
+- [x] **INTR-08**: Health bars displayed for all entity types
+
+### Creature AI
+
+- [x] **CRAI-01**: AiService with tick loop scoped to zones with active players
+- [x] **CRAI-02**: Self-rescheduling setTimeout pattern (not setInterval) prevents tick pile-up
+- [x] **CRAI-03**: `tickCreatureAI()` pure FSM in game-logic with behavior-based states
+- [x] **CRAI-04**: Herbivores: idle wander, flee when player within 5 tiles
+- [x] **CRAI-05**: Omnivores: idle wander, ignore player unless damaged
+- [x] **CRAI-06**: Predators: idle wander (no aggro in v1.8, combat deferred)
+- [x] **CRAI-07**: Maniacs: idle wander (no aggro in v1.8, combat deferred)
+- [x] **CRAI-08**: Creature position updates batched per zone per tick
+- [x] **CRAI-09**: AI state stripped from server broadcasts (security)
+
+### Respawn
+
+- [x] **RESP-01**: Respawn tick loop processes entity_lifecycle records
+- [x] **RESP-02**: Random respawn timer range per entity type
+- [x] **RESP-03**: Artifacts have respawnTime: -1 (permanent removal after collection)
+- [x] **RESP-04**: Respawned entities appear at original spawn point
+
+### UI/HUD
+
+- [x] **UIHD-01**: Zone HUD shows fertility type: "Biome Name (Fertility)"
+- [x] **UIHD-02**: Entity fade-in animation on spawn/respawn
+- [x] **UIHD-03**: Harvest depletion visual on minerals/plants (proportional to remaining yield)
+
+### Entity Blocking
+
+- [x] **EBLK-01**: Entities block player movement (player cannot step on entity tile)
+- [x] **EBLK-02**: Pathfinding considers entity positions when calculating routes
+- [x] **EBLK-03**: Click-to-move path stops if entity moves into path mid-execution
+
+## v1.7 Requirements (Complete)
+
+Requirements for Character Stats milestone.
+
+### Stats Foundation
+
+- [x] **STAT-01**: CharacterStats type replaces legacy PlayerStats with 8 primary stats
+- [x] **STAT-02**: computeCharStats() pure function computes base + equipment bonuses
+- [x] **STAT-03**: Base stats scale linearly with character level (per-stat tuning)
+- [x] **STAT-04**: Creature stats use same computation function with creature-specific scaling
+
+### Stats Integration
+
+- [x] **STAT-05**: Durability stat affects maxHealth
+- [x] **STAT-06**: Toughness stat affects damage reduction (armor)
+- [x] **STAT-07**: Power stat affects damage output
+- [x] **STAT-08**: Haste stat affects movement and attack speed
+- [x] **STAT-09**: Vigor stat affects maxEnergy
+- [x] **STAT-10**: Recovery stat affects energy regeneration rate
+- [x] **STAT-11**: Perception stat affects detection range
+- [x] **STAT-12**: Resilience stat affects hazard resistance
+- [x] **STAT-13**: JSONB migration script updates existing character rows to new stat shape
+- [x] **STAT-14**: Combat functions updated to use new stat names (power, toughness, haste)
+
+### Stats Display
+
+- [x] **STAT-15**: Stats panel UI shows all 8 stats with current values
+- [x] **STAT-16**: Stat breakdown shows base vs equipment contribution ("30 + 15")
+- [x] **STAT-17**: Level-up notification shows stat deltas ("+5 Durability")
+- [x] **STAT-18**: Item tooltip shows stat delta comparison vs equipped item (green/red +/-)
 
 ## v1.6 Requirements (Complete)
 
@@ -305,61 +305,90 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
+### v1.9 Combat System
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ENTD-01 | Phase 33 | Pending |
-| ENTD-02 | Phase 33 | Pending |
-| ENTD-03 | Phase 33 | Pending |
-| ENTD-04 | Phase 33 | Pending |
-| ENTD-05 | Phase 33 | Pending |
-| ENTD-06 | Phase 33 | Pending |
-| ENTD-07 | Phase 33 | Pending |
-| ENTD-08 | Phase 33 | Pending |
-| ENTD-09 | Phase 33 | Pending |
-| ENTD-10 | Phase 33 | Pending |
-| ENTD-11 | Phase 33 | Pending |
-| SPWN-01 | Phase 37 | Pending |
-| SPWN-02 | Phase 37 | Pending |
-| SPWN-03 | Phase 37 | Pending |
-| SPWN-04 | Phase 34 | Pending |
-| SPWN-05 | Phase 37 | Pending |
-| PERS-01 | Phase 34 | Pending |
-| PERS-02 | Phase 34 | Pending |
-| PERS-03 | Phase 35 | Pending |
-| PERS-04 | Phase 35 | Pending |
-| PERS-05 | Phase 34 | Pending |
-| LOOT-01 | Phase 35 | Pending |
-| LOOT-02 | Phase 35 | Pending |
-| LOOT-03 | Phase 35 | Pending |
-| LOOT-04 | Phase 35 | Pending |
-| LOOT-05 | Phase 35 | Pending |
-| INTR-01 | Phase 35 | Pending |
-| INTR-02 | Phase 35 | Pending |
-| INTR-03 | Phase 35 | Pending |
-| INTR-04 | Phase 35 | Pending |
-| INTR-05 | Phase 35 | Pending |
-| INTR-06 | Phase 38 | Pending |
-| INTR-07 | Phase 38 | Pending |
-| INTR-08 | Phase 34 | Pending |
-| CRAI-01 | Phase 36 | Pending |
-| CRAI-02 | Phase 36 | Pending |
-| CRAI-03 | Phase 36 | Pending |
-| CRAI-04 | Phase 36 | Pending |
-| CRAI-05 | Phase 36 | Pending |
-| CRAI-06 | Phase 36 | Pending |
-| CRAI-07 | Phase 36 | Pending |
-| CRAI-08 | Phase 36 | Pending |
-| CRAI-09 | Phase 38 | Pending |
-| RESP-01 | Phase 35 | Pending |
-| RESP-02 | Phase 35 | Pending |
-| RESP-03 | Phase 35 | Pending |
-| RESP-04 | Phase 35 | Pending |
-| UIHD-01 | Phase 37 | Pending |
-| UIHD-02 | Phase 38 | Pending |
-| UIHD-03 | Phase 38 | Pending |
-| EBLK-01 | Phase 34 | Pending |
-| EBLK-02 | Phase 34 | Pending |
-| EBLK-03 | Phase 36 | Pending |
+| COMB-01 | Phase 39 | Pending |
+| COMB-02 | Phase 39 | Pending |
+| COMB-03 | Phase 39 | Pending |
+| COMB-04 | Phase 39 | Pending |
+| AGGR-01 | Phase 40 | Pending |
+| AGGR-02 | Phase 40 | Pending |
+| AGGR-03 | Phase 40 | Pending |
+| CSTA-01 | Phase 40 | Pending |
+| CSTA-02 | Phase 40 | Pending |
+| CSTA-03 | Phase 40 | Pending |
+| CSTA-04 | Phase 40 | Pending |
+| DEAT-01 | Phase 41 | Pending |
+| DEAT-02 | Phase 41 | Pending |
+| DEAT-03 | Phase 41 | Pending |
+| FEED-01 | Phase 42 | Pending |
+| FEED-02 | Phase 42 | Pending |
+| FEED-03 | Phase 42 | Pending |
+
+**Coverage:**
+- v1.9 requirements: 17 total
+- Mapped to phases: 17
+- Unmapped: 0
+
+### v1.8 Entity System (Complete)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| ENTD-01 | Phase 33 | Complete |
+| ENTD-02 | Phase 33 | Complete |
+| ENTD-03 | Phase 33 | Complete |
+| ENTD-04 | Phase 33 | Complete |
+| ENTD-05 | Phase 33 | Complete |
+| ENTD-06 | Phase 33 | Complete |
+| ENTD-07 | Phase 33 | Complete |
+| ENTD-08 | Phase 33 | Complete |
+| ENTD-09 | Phase 33 | Complete |
+| ENTD-10 | Phase 33 | Complete |
+| ENTD-11 | Phase 33 | Complete |
+| SPWN-01 | Phase 37 | Complete |
+| SPWN-02 | Phase 37 | Complete |
+| SPWN-03 | Phase 37 | Complete |
+| SPWN-04 | Phase 34 | Complete |
+| SPWN-05 | Phase 37 | Complete |
+| PERS-01 | Phase 34 | Complete |
+| PERS-02 | Phase 34 | Complete |
+| PERS-03 | Phase 35 | Complete |
+| PERS-04 | Phase 35 | Complete |
+| PERS-05 | Phase 34 | Complete |
+| LOOT-01 | Phase 35 | Complete |
+| LOOT-02 | Phase 35 | Complete |
+| LOOT-03 | Phase 35 | Complete |
+| LOOT-04 | Phase 35 | Complete |
+| LOOT-05 | Phase 35 | Complete |
+| INTR-01 | Phase 35 | Complete |
+| INTR-02 | Phase 35 | Complete |
+| INTR-03 | Phase 35 | Complete |
+| INTR-04 | Phase 35 | Complete |
+| INTR-05 | Phase 35 | Complete |
+| INTR-06 | Phase 38 | Complete |
+| INTR-07 | Phase 38 | Complete |
+| INTR-08 | Phase 34 | Complete |
+| CRAI-01 | Phase 36 | Complete |
+| CRAI-02 | Phase 36 | Complete |
+| CRAI-03 | Phase 36 | Complete |
+| CRAI-04 | Phase 36 | Complete |
+| CRAI-05 | Phase 36 | Complete |
+| CRAI-06 | Phase 36 | Complete |
+| CRAI-07 | Phase 36 | Complete |
+| CRAI-08 | Phase 36 | Complete |
+| CRAI-09 | Phase 38 | Complete |
+| RESP-01 | Phase 35 | Complete |
+| RESP-02 | Phase 35 | Complete |
+| RESP-03 | Phase 35 | Complete |
+| RESP-04 | Phase 35 | Complete |
+| UIHD-01 | Phase 37 | Complete |
+| UIHD-02 | Phase 38 | Complete |
+| UIHD-03 | Phase 38 | Complete |
+| EBLK-01 | Phase 34 | Complete |
+| EBLK-02 | Phase 34 | Complete |
+| EBLK-03 | Phase 36 | Complete |
 
 **Coverage:**
 - v1.8 requirements: 50 total
@@ -368,4 +397,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-18 after v1.8 roadmap created (phases 33-38)*
+*Last updated: 2026-02-19 after v1.9 roadmap created (phases 39-42)*
