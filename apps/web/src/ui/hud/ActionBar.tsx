@@ -1,92 +1,136 @@
-import React, { useEffect } from 'react';
-import { useDroppable } from '@dnd-kit/core';
-import { useActionBarStore } from '../../store/actionBarStore';
+import React, { useEffect, useState } from 'react';
+import { useAbilityStore, getEquippedAbilities } from '../../store/abilityStore';
+import { useCombatStore } from '../../store/combatStore';
 import { useInventoryStore } from '../../store/inventoryStore';
+import { useGameStore } from '../../store/gameStore';
 import { gameSocket } from '../../network/socket';
-import { ItemRegistry } from '@into-the-void/items';
-import { RARITY_COLORS } from '../constants';
-import { ItemTooltip } from '../../components/ItemTooltip';
+import type { AbilityDefinition } from '@into-the-void/shared-types';
 import './ActionBar.css';
 
 const SLOT_COUNT = 8;
 
-interface HotbarSlotProps {
+interface AbilitySlotProps {
   index: number;
-  instanceId: string | null;
+  ability: AbilityDefinition | null;
 }
 
-function HotbarSlot({ index, instanceId }: HotbarSlotProps) {
-  const { setNodeRef, isOver } = useDroppable({ id: `hotbar-${index}` });
-  const inventory = useInventoryStore((state) => state.inventory);
+function AbilitySlot({ index, ability }: AbilitySlotProps) {
+  const { isOnCooldown, getRemainingCooldown } = useAbilityStore();
+  const targetEntityId = useCombatStore((state) => state.targetEntityId);
+  const player = useGameStore((state) => state.player);
 
-  const item = instanceId
-    ? inventory?.items.find((i) => i.instanceId === instanceId) ?? null
-    : null;
+  const [cooldownProgress, setCooldownProgress] = useState(0);
 
-  const itemDef = item ? ItemRegistry.get(item.itemId) : null;
+  // Update cooldown progress for radial display
+  useEffect(() => {
+    if (!ability) return;
 
-  const isEmpty = !item || !itemDef;
-  const rarityColor = itemDef ? RARITY_COLORS[itemDef.rarity] : undefined;
+    const updateProgress = () => {
+      const remaining = getRemainingCooldown(ability.id);
+      if (remaining > 0) {
+        const progress = remaining / ability.cooldownMs;
+        setCooldownProgress(Math.min(1, progress));
+      } else {
+        setCooldownProgress(0);
+      }
+    };
 
-  const slotContent = (
+    updateProgress();
+    const interval = setInterval(updateProgress, 50);
+    return () => clearInterval(interval);
+  }, [ability, getRemainingCooldown]);
+
+  const handleClick = () => {
+    if (!ability) return;
+    if (isOnCooldown(ability.id)) return;
+    if (!player || player.energy < ability.energyCost) return;
+
+    gameSocket.emit('ability:use', {
+      abilityId: ability.id,
+      targetEntityId: ability.requiresTarget ? targetEntityId ?? undefined : undefined,
+    });
+  };
+
+  const isEmpty = !ability;
+  const onCooldown = ability ? isOnCooldown(ability.id) : false;
+  const insufficientEnergy = ability && player ? player.energy < ability.energyCost : false;
+  const disabled = onCooldown || insufficientEnergy;
+
+  return (
     <div
-      ref={setNodeRef}
-      className={`hotbar-slot ${isEmpty ? 'hotbar-slot--empty' : 'hotbar-slot--filled'} ${isOver ? 'hotbar-slot--over' : ''}`}
-      style={rarityColor ? { borderColor: rarityColor } : undefined}
+      className={`ability-slot ${isEmpty ? 'ability-slot--empty' : ''} ${disabled ? 'ability-slot--disabled' : ''}`}
+      onClick={handleClick}
+      title={ability ? `${ability.displayName}\n${ability.description}\nEnergy: ${ability.energyCost}\nCooldown: ${ability.cooldownMs / 1000}s` : undefined}
     >
-      <span className="hotbar-key">{index + 1}</span>
-      {itemDef && (
-        <div
-          className="hotbar-icon"
-          style={{ backgroundColor: `#${itemDef.color.toString(16).padStart(6, '0')}` }}
-        />
+      <span className="ability-key">{index + 1}</span>
+      {ability && (
+        <>
+          <div
+            className="ability-icon"
+            style={{ backgroundColor: `#${ability.iconColor.toString(16).padStart(6, '0')}` }}
+          />
+          {cooldownProgress > 0 && (
+            <div
+              className="ability-cooldown-overlay"
+              style={{
+                background: `conic-gradient(rgba(0,0,0,0.7) ${cooldownProgress * 360}deg, transparent 0deg)`,
+              }}
+            />
+          )}
+          {insufficientEnergy && !onCooldown && (
+            <div className="ability-no-energy" />
+          )}
+        </>
       )}
     </div>
   );
-
-  if (itemDef) {
-    return <ItemTooltip item={itemDef}>{slotContent}</ItemTooltip>;
-  }
-
-  return slotContent;
 }
 
 export const ActionBar: React.FC = () => {
-  const slots = useActionBarStore((state) => state.slots);
   const inventory = useInventoryStore((state) => state.inventory);
+  const targetEntityId = useCombatStore((state) => state.targetEntityId);
+  const player = useGameStore((state) => state.player);
+  const { isOnCooldown } = useAbilityStore();
 
+  // Derive abilities from equipment (re-renders when inventory changes)
+  const abilities = inventory ? getEquippedAbilities() : [];
+
+  // Pad abilities to 8 slots
+  const slots: (AbilityDefinition | null)[] = Array(SLOT_COUNT).fill(null);
+  abilities.forEach((ability, i) => {
+    if (i < SLOT_COUNT) slots[i] = ability;
+  });
+
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Chat-focus guard: ignore keypresses when an input or textarea is focused
+      // Chat-focus guard
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-
-      // Ignore repeated events (held key)
       if (e.repeat) return;
 
       const slotIndex = parseInt(e.key, 10) - 1;
-      if (isNaN(slotIndex) || slotIndex < 0 || slotIndex > 7) return;
+      if (isNaN(slotIndex) || slotIndex < 0 || slotIndex >= SLOT_COUNT) return;
 
-      const instanceId = slots[slotIndex];
-      if (!instanceId) return;
+      const ability = slots[slotIndex];
+      if (!ability) return;
+      if (isOnCooldown(ability.id)) return;
+      if (!player || player.energy < ability.energyCost) return;
 
-      // Verify item is still in inventory
-      const found = inventory?.items.find((i) => i.instanceId === instanceId);
-      if (!found) return;
-
-      gameSocket.emit('inventory:use', { instanceId });
+      gameSocket.emit('ability:use', {
+        abilityId: ability.id,
+        targetEntityId: ability.requiresTarget ? targetEntityId ?? undefined : undefined,
+      });
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [slots, inventory]);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [slots, targetEntityId, player, isOnCooldown]);
 
   return (
-    <div className="hotbar">
-      {Array.from({ length: SLOT_COUNT }, (_, i) => (
-        <HotbarSlot key={i} index={i} instanceId={slots[i]} />
+    <div className="action-bar">
+      {slots.map((ability, i) => (
+        <AbilitySlot key={i} index={i} ability={ability} />
       ))}
     </div>
   );
