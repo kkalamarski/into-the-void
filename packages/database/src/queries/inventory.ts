@@ -3,7 +3,8 @@ import { DbClient } from '../client';
 import { inventories, Inventory, NewInventory } from '../schema/inventories';
 
 /**
- * Create inventory for a character
+ * Create inventory for a character.
+ * @param data.equipment - Optional initial equipment (exosuit, tool, etc.)
  */
 export async function createInventory(db: DbClient, data: NewInventory): Promise<Inventory> {
   const [inventory] = await db.insert(inventories).values(data).returning();
