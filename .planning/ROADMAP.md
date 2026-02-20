@@ -287,11 +287,11 @@ Plans:
   2. Existing items updated with grantedAbilities field
   3. Player can drag abilities to rearrange action bar slots
   4. New items added with unique ability combinations
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 58-01: TBD
-- [ ] 58-02: TBD
+- [ ] 58-01-PLAN.md — Ability content expansion (definitions, tools, suits with grantedAbilities)
+- [ ] 58-02-PLAN.md — Drag-to-rearrange action bar slots with @dnd-kit
 
 ## Progress
 
@@ -362,4 +362,4 @@ Phases execute in numeric order: 56 → 57 → 58
 **Total:** 58 phases (57 complete, 1 remaining)
 
 ---
-*Last updated: 2026-02-20 after Phase 57 execution complete*
+*Last updated: 2026-02-20 after Phase 58 planning complete*
