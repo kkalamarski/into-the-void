@@ -11,16 +11,21 @@ import { useGameStore } from '../store/gameStore';
 import { useInventoryStore } from '../store/inventoryStore';
 import '../store/statsStore'; // Side-effect: registers stats:update socket handler
 import { useActionBarStore } from '../store/actionBarStore';
+import { useNpcStore } from '../store/npcStore';
 import { gameSocket } from '../network/socket';
 import { HUD } from './hud/HUD';
 import { ChatPanel } from './panels/ChatPanel';
 import { InventoryPanel } from './panels/InventoryPanel';
 import { EquipmentPanel } from './panels/EquipmentPanel';
+import { NpcInteractionModal } from './panels/NpcInteractionModal';
+import { DeathScreen } from './DeathScreen';
+import { AlertNotification } from './AlertNotification';
 import { LevelUpNotification } from '../components/LevelUpNotification';
 import './GameUI.css';
 
 export const GameUI: React.FC = () => {
-  const { showChat, showInventory, showEquipment, player } = useGameStore();
+  const { showChat, showInventory, showEquipment, showDeathScreen, player } = useGameStore();
+  const { interactingNpc } = useNpcStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -85,6 +90,9 @@ export const GameUI: React.FC = () => {
         {showInventory && <InventoryPanel />}
         {showEquipment && <EquipmentPanel />}
         <LevelUpNotification />
+        <AlertNotification />
+        {showDeathScreen && <DeathScreen />}
+        {interactingNpc && <NpcInteractionModal />}
         <div className="minimap-border" />
       </div>
     </DndContext>
