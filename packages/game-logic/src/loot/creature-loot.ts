@@ -41,6 +41,7 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 3, chance: 0.85 },
     { itemId: 'world_fungal_spore_cluster', minAmount: 1, maxAmount: 2, chance: 0.4 },
     { itemId: 'reagent_fungal_extract', minAmount: 1, maxAmount: 2, chance: 0.25 },
+    { itemId: 'world_luminous_extract', minAmount: 1, maxAmount: 1, chance: 0.08 },
   ]],
 
   // Tier II — Fungal Forest (Omnivore, levels 4-12)
@@ -49,6 +50,7 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_fungal_spore_cluster', minAmount: 2, maxAmount: 4, chance: 0.6 },
     { itemId: 'world_mycelial_fiber', minAmount: 1, maxAmount: 1, chance: 0.2 },
     { itemId: 'reagent_fungal_extract', minAmount: 1, maxAmount: 3, chance: 0.35 },
+    { itemId: 'world_spore_sack', minAmount: 1, maxAmount: 1, chance: 0.1 },
   ]],
 
   // Tier II — Crystal Caves (Predator, levels 8-18)
@@ -70,6 +72,7 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.75 },
     { itemId: 'world_alien_flora_petrified', minAmount: 1, maxAmount: 1, chance: 0.3 },
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.12 },
+    { itemId: 'reagent_petrification_enzyme', minAmount: 1, maxAmount: 1, chance: 0.08 },
   ]],
 
   // Tier III — Frozen Expanse (Predator, levels 10-22)
@@ -77,6 +80,7 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.75 },
     { itemId: 'world_frozen_shard', minAmount: 1, maxAmount: 3, chance: 0.6 },
     { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.1 },
+    { itemId: 'reagent_frost_essence', minAmount: 1, maxAmount: 1, chance: 0.15 },
   ]],
 
   // Tier III — Volcanic Ridge (Predator, levels 12-28)
@@ -102,6 +106,8 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.2 },
     { itemId: 'world_ancient_fragment', minAmount: 1, maxAmount: 1, chance: 0.08 },
     { itemId: 'reagent_ancient_circuitry', minAmount: 1, maxAmount: 2, chance: 0.15 },
+    { itemId: 'world_temporal_shard', minAmount: 1, maxAmount: 1, chance: 0.12 },
+    { itemId: 'reagent_anomaly_catalyst', minAmount: 1, maxAmount: 1, chance: 0.05 },
   ]],
 
   // Tier I — Void Plains (Herbivore, levels 1-4)
@@ -129,6 +135,7 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.75 },
     { itemId: 'world_frozen_shard', minAmount: 2, maxAmount: 4, chance: 0.6 },
     { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.12 },
+    { itemId: 'reagent_frost_essence', minAmount: 1, maxAmount: 1, chance: 0.18 },
   ]],
 
   // Tier II — Crystal Caves (Herbivore, levels 5-12)
@@ -143,6 +150,7 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 2, chance: 0.8 },
     { itemId: 'reagent_ancient_circuitry', minAmount: 1, maxAmount: 2, chance: 0.3 },
     { itemId: 'world_ancient_fragment', minAmount: 1, maxAmount: 1, chance: 0.05 },
+    { itemId: 'world_temporal_shard', minAmount: 1, maxAmount: 1, chance: 0.1 },
   ]],
 
   // Tier II — Petrified Expanse (Predator, levels 8-18)
