@@ -223,10 +223,10 @@ Plans:
   2. Player creates a new character — the character starts with a basic tool in their inventory or equipped
   3. The starter items are Common rarity and level 1 requirement — any new character can use them immediately
   4. Existing characters are not affected — only newly created characters receive the starter kit
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 54-01-PLAN.md — Add starter kit items to character creation flow
+- [ ] 54-01-PLAN.md — Grant basic exo-suit and combat tool on character creation
 
 #### Phase 55: Content Expansion
 
