@@ -312,10 +312,10 @@ Plans:
   1. Item with stats effect provides stat bonuses to player when equipped
   2. Item can define multiple stats in single effect (toughness + durability)
   3. Stats effect is documented as canonical pattern for equipment stats
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 59-01: Implementation TBD
+- [ ] 59-01-PLAN.md — Implement stats effect resolver with multi-stat support and documentation
 
 #### Phase 60: Migration
 
@@ -440,7 +440,7 @@ Phases execute in numeric order: 59 → 60 → 61 → 62 → 63
 | 56. Core Ability System | v1.13 | 3/3 | Complete | 2026-02-20 |
 | 57. Buff System | v1.13 | 3/3 | Complete | 2026-02-20 |
 | 58. Ability Content & Polish | v1.13 | 3/3 | Complete | 2026-02-21 |
-| 59. Type Foundation | v1.14 | 0/1 | Not started | - |
+| 59. Type Foundation | v1.14 | 1/1 | Not started | - |
 | 60. Migration | v1.14 | 0/1 | Not started | - |
 | 61. Aggregation Rules | v1.14 | 0/1 | Not started | - |
 | 62. Calculation Parity | v1.14 | 0/1 | Not started | - |
@@ -449,4 +449,4 @@ Phases execute in numeric order: 59 → 60 → 61 → 62 → 63
 **Total:** 63 phases (58 complete, 5 remaining)
 
 ---
-*Last updated: 2026-02-21 after v1.14 roadmap created*
+*Last updated: 2026-02-21 after Phase 59 planning*
