@@ -8,6 +8,7 @@ import { useCombatLogStore } from '../../store/combatLogStore';
 import { ActionBar } from './ActionBar';
 import { TargetFrame } from './TargetFrame';
 import { CombatLog } from './CombatLog';
+import { BuffBar } from './BuffBar';
 import './HUD.css';
 
 export const HUD: React.FC = () => {
@@ -114,6 +115,7 @@ export const HUD: React.FC = () => {
             {player.xp} / {player.xpToNextLevel} XP
           </span>
         </div>
+        <BuffBar />
         <div className="stats-section">
           <div className="stat-row">
             <GiShield className="stat-icon" title="Armor" />
