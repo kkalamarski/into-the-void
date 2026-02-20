@@ -282,6 +282,106 @@ export const WORLD_ALIEN_FLORA_PETRIFIED: ItemDefinition = {
 };
 
 // ============================================================
+// COASTAL SHALLOWS MATERIALS (1) — analog in void_plains
+// ============================================================
+
+export const WORLD_COASTAL_SHELL: ItemDefinition = {
+  id: 'world_coastal_shell',
+  displayName: 'Coastal Shell Fragment',
+  description:
+    'Shell fragments from Terminus marine-analog creatures. Contains calcium-analogs useful in suit reinforcement and medical compounds. New arrivals often collect these as supplemental income.',
+  category: 'world-item',
+  rarity: 'common',
+  maxStack: 99,
+  weight: 0.2,
+  baseValue: 55,
+  requiredLevel: 1,
+  ilvl: computeIlvl(1, 'common'),
+  textureKey: 'item_world_coastal_shell',
+  color: 0xeeddcc,
+};
+
+// ============================================================
+// LUMINOUS CANOPY MATERIALS (1) — analog in fungal_forest
+// ============================================================
+
+export const WORLD_LUMINOUS_EXTRACT: ItemDefinition = {
+  id: 'world_luminous_extract',
+  displayName: 'Luminous Extract',
+  description:
+    'Concentrated bioluminescent compound harvested from canopy flora. Glows steadily for weeks after extraction. Verdant uses it for living architecture lighting systems.',
+  category: 'world-item',
+  rarity: 'rare',
+  maxStack: 99,
+  weight: 0.15,
+  baseValue: 280,
+  requiredLevel: 5,
+  ilvl: computeIlvl(2, 'rare'),
+  textureKey: 'item_world_luminous_extract',
+  color: 0x44ffaa,
+};
+
+// ============================================================
+// ANOMALY ZONE MATERIALS (1)
+// ============================================================
+
+export const WORLD_TEMPORAL_SHARD: ItemDefinition = {
+  id: 'world_temporal_shard',
+  displayName: 'Temporal Shard',
+  description:
+    'A crystalline fragment that appears to exist slightly out of phase with normal time. Objects near it age at inconsistent rates. Nexus pays premium rates and asks no questions.',
+  category: 'world-item',
+  rarity: 'epic',
+  maxStack: 99,
+  weight: 0.1,
+  baseValue: 1800,
+  requiredLevel: 20,
+  ilvl: computeIlvl(3, 'epic'),
+  textureKey: 'item_world_temporal_shard',
+  color: 0xaaccff,
+};
+
+// ============================================================
+// DEEP FUNGAL MATERIALS (1)
+// ============================================================
+
+export const WORLD_SPORE_SACK: ItemDefinition = {
+  id: 'world_spore_sack',
+  displayName: 'Intact Spore Sack',
+  description:
+    'A complete spore reproduction structure from Fungal Depths organisms. Contains millions of dormant spores. Valuable to Verdant bioengineering programs. Handle with filtration active.',
+  category: 'world-item',
+  rarity: 'rare',
+  maxStack: 99,
+  weight: 0.3,
+  baseValue: 420,
+  requiredLevel: 8,
+  ilvl: computeIlvl(2, 'rare'),
+  textureKey: 'item_world_spore_sack',
+  color: 0xbb66bb,
+};
+
+// ============================================================
+// STARFALL CRATER MATERIALS (1)
+// ============================================================
+
+export const WORLD_METEOR_FRAGMENT: ItemDefinition = {
+  id: 'world_meteor_fragment',
+  displayName: 'Meteor Fragment',
+  description:
+    'A fragment of extra-Terminus material from the Starfall Crater impact site. Contains elements not found elsewhere on the planet. All three corporations maintain standing purchase orders.',
+  category: 'world-item',
+  rarity: 'exotic',
+  maxStack: 99,
+  weight: 0.4,
+  baseValue: 2500,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'exotic'),
+  textureKey: 'item_world_meteor_fragment',
+  color: 0x334455,
+};
+
+// ============================================================
 // ALL WORLD ITEMS
 // ============================================================
 
@@ -301,4 +401,9 @@ export const ALL_WORLD_ITEMS: readonly ItemDefinition[] = [
   WORLD_ORGANIC_MATERIAL_EPIC,
   WORLD_ALIEN_FLORA_LUMINOUS,
   WORLD_ALIEN_FLORA_PETRIFIED,
+  WORLD_COASTAL_SHELL,
+  WORLD_LUMINOUS_EXTRACT,
+  WORLD_TEMPORAL_SHARD,
+  WORLD_SPORE_SACK,
+  WORLD_METEOR_FRAGMENT,
 ];

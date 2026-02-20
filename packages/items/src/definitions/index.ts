@@ -145,6 +145,11 @@ export const ITEM_IDS = {
   WORLD_ORGANIC_MATERIAL_EPIC: 'world_organic_material_epic',
   WORLD_ALIEN_FLORA_LUMINOUS: 'world_alien_flora_luminous',
   WORLD_ALIEN_FLORA_PETRIFIED: 'world_alien_flora_petrified',
+  WORLD_COASTAL_SHELL: 'world_coastal_shell',
+  WORLD_LUMINOUS_EXTRACT: 'world_luminous_extract',
+  WORLD_TEMPORAL_SHARD: 'world_temporal_shard',
+  WORLD_SPORE_SACK: 'world_spore_sack',
+  WORLD_METEOR_FRAGMENT: 'world_meteor_fragment',
 
   // ---- REAGENTS ----
   REAGENT_CRYSTALLINE_DUST: 'reagent_crystalline_dust',
@@ -157,6 +162,11 @@ export const ITEM_IDS = {
   REAGENT_VOID_ESSENCE: 'reagent_void_essence',
   REAGENT_HELIX_GENE_SAMPLE: 'reagent_helix_gene_sample',
   REAGENT_VOID_HEART: 'reagent_void_heart',
+  REAGENT_BIOLUMINESCENT_COMPOUND: 'reagent_bioluminescent_compound',
+  REAGENT_FROST_ESSENCE: 'reagent_frost_essence',
+  REAGENT_PETRIFICATION_ENZYME: 'reagent_petrification_enzyme',
+  REAGENT_ANOMALY_CATALYST: 'reagent_anomaly_catalyst',
+  REAGENT_ANCIENT_STABILIZER: 'reagent_ancient_stabilizer',
 } as const;
 
 // Re-export individual items for direct imports

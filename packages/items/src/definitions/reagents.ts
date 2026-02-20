@@ -182,6 +182,100 @@ export const REAGENT_VOID_HEART: ItemDefinition = {
 };
 
 // ============================================================
+// NEW REAGENTS FOR CONTENT EXPANSION
+// ============================================================
+
+// COMMON REAGENT
+
+export const REAGENT_BIOLUMINESCENT_COMPOUND: ItemDefinition = {
+  id: 'reagent_bioluminescent_compound',
+  displayName: 'Bioluminescent Compound',
+  description:
+    'Processed bioluminescent material used in sensor module manufacturing and emergency lighting. Abundant in Luminous Canopy regions. Verdant controls most production.',
+  category: 'reagent',
+  rarity: 'common',
+  maxStack: 999,
+  weight: 0.1,
+  baseValue: 40,
+  requiredLevel: 1,
+  ilvl: computeIlvl(1, 'common'),
+  textureKey: 'item_reagent_bioluminescent',
+  color: 0x88ffcc,
+};
+
+// RARE REAGENT
+
+export const REAGENT_FROST_ESSENCE: ItemDefinition = {
+  id: 'reagent_frost_essence',
+  displayName: 'Frost Essence',
+  description:
+    'A cryogenic compound extracted from Frozen Reaches organisms. Maintains sub-zero temperatures indefinitely through unknown mechanisms. Essential for life support system manufacturing.',
+  category: 'reagent',
+  rarity: 'rare',
+  maxStack: 999,
+  weight: 0.15,
+  baseValue: 180,
+  requiredLevel: 10,
+  ilvl: computeIlvl(2, 'rare'),
+  textureKey: 'item_reagent_frost_essence',
+  color: 0xaaddff,
+};
+
+// EPIC REAGENT
+
+export const REAGENT_PETRIFICATION_ENZYME: ItemDefinition = {
+  id: 'reagent_petrification_enzyme',
+  displayName: 'Petrification Enzyme',
+  description:
+    'The biological agent responsible for calcification in the Petrified Expanse, carefully extracted and stabilized. Helix research teams have found applications in armor plating reinforcement.',
+  category: 'reagent',
+  rarity: 'epic',
+  maxStack: 999,
+  weight: 0.2,
+  baseValue: 1200,
+  requiredLevel: 15,
+  ilvl: computeIlvl(2, 'epic'),
+  textureKey: 'item_reagent_petrification',
+  color: 0xccbb99,
+};
+
+// EXOTIC REAGENT
+
+export const REAGENT_ANOMALY_CATALYST: ItemDefinition = {
+  id: 'reagent_anomaly_catalyst',
+  displayName: 'Anomaly Catalyst',
+  description:
+    "A substance that triggers localized reality distortions when exposed to certain energy patterns. The corporations use it in exotic equipment manufacturing. The ICC would prefer they didn't.",
+  category: 'reagent',
+  rarity: 'exotic',
+  maxStack: 999,
+  weight: 0.05,
+  baseValue: 6000,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'exotic'),
+  textureKey: 'item_reagent_anomaly_catalyst',
+  color: 0x9966ff,
+};
+
+// LEGENDARY REAGENT
+
+export const REAGENT_ANCIENT_STABILIZER: ItemDefinition = {
+  id: 'reagent_ancient_stabilizer',
+  displayName: 'Ancient Stabilizer',
+  description:
+    'A Prior Inhabitant component that appears to anchor nearby objects in stable spacetime. How it functions is unknown. Why the Ancients needed it is concerning. All recovered specimens are classified.',
+  category: 'reagent',
+  rarity: 'legendary',
+  maxStack: 999,
+  weight: 0.01,
+  baseValue: 75000,
+  requiredLevel: 35,
+  ilvl: computeIlvl(4, 'legendary'),
+  textureKey: 'item_reagent_ancient_stabilizer',
+  color: 0x66ffcc,
+};
+
+// ============================================================
 // ALL REAGENTS
 // ============================================================
 
@@ -196,4 +290,9 @@ export const ALL_REAGENTS: readonly ItemDefinition[] = [
   REAGENT_VOID_ESSENCE,
   REAGENT_HELIX_GENE_SAMPLE,
   REAGENT_VOID_HEART,
+  REAGENT_BIOLUMINESCENT_COMPOUND,
+  REAGENT_FROST_ESSENCE,
+  REAGENT_PETRIFICATION_ENZYME,
+  REAGENT_ANOMALY_CATALYST,
+  REAGENT_ANCIENT_STABILIZER,
 ];
