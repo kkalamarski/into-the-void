@@ -24,6 +24,9 @@ const HELIX_TRADER: TraderDefinition = {
     { itemId: 'pickaxe_iron', buyPrice: 150, sellPrice: 75, stock: 5 },
     { itemId: 'drill_basic', buyPrice: 300, sellPrice: 150, stock: 3 },
     { itemId: 'rations_standard', buyPrice: 25, sellPrice: 12, stock: 15 },
+    { itemId: 'world_meteor_fragment', buyPrice: 3000, sellPrice: 1500, stock: 2 },
+    { itemId: 'reagent_frost_essence', buyPrice: 220, sellPrice: 110, stock: 8 },
+    { itemId: 'reagent_petrification_enzyme', buyPrice: 1400, sellPrice: 700, stock: 3 },
   ],
   specialization: 'materials',
 };

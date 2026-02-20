@@ -24,6 +24,10 @@ const VERDANT_TRADER: TraderDefinition = {
     { itemId: 'medkit_basic', buyPrice: 50, sellPrice: 25, stock: 10 },
     { itemId: 'stim_energy', buyPrice: 75, sellPrice: 35, stock: 5 },
     { itemId: 'rations_standard', buyPrice: 20, sellPrice: 10, stock: 20 },
+    { itemId: 'antitoxin_common', buyPrice: 80, sellPrice: 40, stock: 10 },
+    { itemId: 'antitoxin_rare', buyPrice: 300, sellPrice: 150, stock: 5 },
+    { itemId: 'world_luminous_extract', buyPrice: 350, sellPrice: 175, stock: 6 },
+    { itemId: 'reagent_bioluminescent_compound', buyPrice: 55, sellPrice: 28, stock: 15 },
   ],
   specialization: 'consumables',
 };

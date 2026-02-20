@@ -25,6 +25,10 @@ const NEXUS_TRADER: TraderDefinition = {
     { itemId: 'stim_energy', buyPrice: 80, sellPrice: 40, stock: 6 },
     { itemId: 'pickaxe_iron', buyPrice: 160, sellPrice: 80, stock: 3 },
     { itemId: 'rations_standard', buyPrice: 22, sellPrice: 11, stock: 25 },
+    { itemId: 'antitoxin_common', buyPrice: 75, sellPrice: 38, stock: 12 },
+    { itemId: 'world_coastal_shell', buyPrice: 70, sellPrice: 35, stock: 20 },
+    { itemId: 'world_spore_sack', buyPrice: 500, sellPrice: 250, stock: 4 },
+    { itemId: 'reagent_bioluminescent_compound', buyPrice: 50, sellPrice: 25, stock: 20 },
   ],
   specialization: 'general',
 };
