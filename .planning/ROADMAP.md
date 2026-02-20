@@ -212,11 +212,11 @@ Plans:
   2. During player movement, terrain never briefly overlaps entities — smooth depth transitions
   3. Elevation level changes are visually distinct — player can clearly see when terrain goes up or down
   4. Elevation indicators work across all biomes and lighting conditions
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 53-01-PLAN.md — Fix entity depth sorting and movement overlap
-- [ ] 53-02-PLAN.md — Improve elevation visibility with shading or edge effects
+- [ ] 53-01-PLAN.md — Fix entity depth sorting with layer offset and reduce throttle for smooth movement
+- [ ] 53-02-PLAN.md — Add elevation edge highlighting and shadow effects for visual depth
 
 #### Phase 54: New Player Starter Kit
 
