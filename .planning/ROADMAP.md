@@ -14,7 +14,7 @@
 - ✅ **v1.9 Combat System** - Phases 39-42 (shipped 2026-02-19)
 - ✅ **v1.10 Combat UX** - Phases 43-45 (shipped 2026-02-19)
 - ✅ **v1.11 NPCs & Trading** - Phases 46-50 (shipped 2026-02-20)
-- 🚧 **v1.12 Bug Fixes & Content Polish** - Phases 51-55 (in progress)
+- ✅ **v1.12 Bug Fixes & Content Polish** - Phases 51-55 (shipped 2026-02-20)
 
 ## Phases
 
@@ -174,13 +174,10 @@ See: `.planning/milestones/v1.7-ROADMAP.md`
 
 </details>
 
-### v1.12 Bug Fixes & Content Polish (In Progress)
+<details>
+<summary>✅ v1.12 Bug Fixes & Content Polish (Phases 51-55) - SHIPPED 2026-02-20</summary>
 
 **Milestone Goal:** Fix persistence, spawning, and rendering bugs, improve new player experience with starter kit, and expand content variety with new creatures and items.
-
-**Phases:** 5 (51-55)
-**Depth:** Quick (from config)
-**Coverage:** 15/15 requirements mapped
 
 #### Phase 51: Player Position Persistence ✓
 
@@ -223,24 +220,19 @@ Plans:
 Plans:
 - [x] 54-01-PLAN.md — Grant basic exo-suit and universal Multi-Tool on character creation
 
-#### Phase 55: Content Expansion
+#### Phase 55: Content Expansion ✓
 
 **Goal**: Add 7 new creature definitions and 15 new item definitions to expand world variety and progression options
 **Depends on**: Phase 54 (starter kit complete — foundational UX polished)
 **Requirements**: CONT-01, CONT-02, CONT-03, CONT-04, CONT-05, CONT-06
-**Success Criteria** (what must be TRUE):
-  1. EntityRegistry contains 7 new creature definitions with unique names, behaviors, and stats appropriate to their biomes
-  2. New creatures appear in the world with biome-appropriate spawn rules — Crystal Flats creatures spawn in Crystal Flats, etc.
-  3. New creatures have loot tables that drop appropriate items including some of the new items
-  4. ItemRegistry contains 15 new item definitions spanning world-items, reagents, and consumables
-  5. New items have appropriate rarity distribution — not all Common, not all Legendary
-  6. New items are obtainable through gameplay — either as creature drops, trader inventory, or world spawns
-**Plans**: 3 plans in 2 waves
+**Status**: Complete (2026-02-20)
 
 Plans:
-- [ ] 55-01-PLAN.md — Define 7 new creatures with loot tables (Wave 1)
-- [ ] 55-02-PLAN.md — Define 15 new items across world-items, reagents, and consumables (Wave 1)
-- [ ] 55-03-PLAN.md — Wire creatures into spawn configs and items into trader inventories (Wave 2)
+- [x] 55-01-PLAN.md — Define 7 new creatures with loot tables (Wave 1)
+- [x] 55-02-PLAN.md — Define 15 new items across world-items, reagents, and consumables (Wave 1)
+- [x] 55-03-PLAN.md — Wire creatures into spawn configs and items into trader inventories (Wave 2)
+
+</details>
 
 ## Progress
 
@@ -303,9 +295,9 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55
 | 52. Hub NPC Spawning Fix | v1.12 | 1/1 | Complete | 2026-02-20 |
 | 53. Rendering & Depth Fixes | v1.12 | 2/2 | Complete | 2026-02-20 |
 | 54. New Player Starter Kit | v1.12 | 1/1 | Complete | 2026-02-20 |
-| 55. Content Expansion | v1.12 | 0/3 | Planned | - |
+| 55. Content Expansion | v1.12 | 3/3 | Complete | 2026-02-20 |
 
-**Total:** 55 phases (54 complete, 1 remaining)
+**Total:** 55 phases (55 complete, 0 remaining)
 
 ---
 *Last updated: 2026-02-20 after v1.12 roadmap created*
