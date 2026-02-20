@@ -225,22 +225,22 @@ Plans:
 
 #### Phase 55: Content Expansion
 
-**Goal**: Add 5-10 new creature definitions and 10-20 new item definitions to expand world variety and progression options
+**Goal**: Add 7 new creature definitions and 15 new item definitions to expand world variety and progression options
 **Depends on**: Phase 54 (starter kit complete — foundational UX polished)
 **Requirements**: CONT-01, CONT-02, CONT-03, CONT-04, CONT-05, CONT-06
 **Success Criteria** (what must be TRUE):
-  1. EntityRegistry contains 5-10 new creature definitions with unique names, behaviors, and stats appropriate to their biomes
+  1. EntityRegistry contains 7 new creature definitions with unique names, behaviors, and stats appropriate to their biomes
   2. New creatures appear in the world with biome-appropriate spawn rules — Crystal Flats creatures spawn in Crystal Flats, etc.
   3. New creatures have loot tables that drop appropriate items including some of the new items
-  4. ItemRegistry contains 10-20 new item definitions spanning equipment, consumables, and materials
+  4. ItemRegistry contains 15 new item definitions spanning world-items, reagents, and consumables
   5. New items have appropriate rarity distribution — not all Common, not all Legendary
   6. New items are obtainable through gameplay — either as creature drops, trader inventory, or world spawns
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 55-01-PLAN.md — Define 5-10 new creatures with biome spawns and loot tables
-- [ ] 55-02-PLAN.md — Define 10-20 new items across equipment, consumables, and materials
-- [ ] 55-03-PLAN.md — Wire new content into spawn configs and trader inventories
+- [ ] 55-01-PLAN.md — Define 7 new creatures with loot tables (Wave 1)
+- [ ] 55-02-PLAN.md — Define 15 new items across world-items, reagents, and consumables (Wave 1)
+- [ ] 55-03-PLAN.md — Wire creatures into spawn configs and items into trader inventories (Wave 2)
 
 ## Progress
 
@@ -303,7 +303,7 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55
 | 52. Hub NPC Spawning Fix | v1.12 | 1/1 | Complete | 2026-02-20 |
 | 53. Rendering & Depth Fixes | v1.12 | 2/2 | Complete | 2026-02-20 |
 | 54. New Player Starter Kit | v1.12 | 1/1 | Complete | 2026-02-20 |
-| 55. Content Expansion | v1.12 | 0/3 | Not started | - |
+| 55. Content Expansion | v1.12 | 0/3 | Planned | - |
 
 **Total:** 55 phases (54 complete, 1 remaining)
 
