@@ -347,11 +347,10 @@ export class WorldScene extends Phaser.Scene {
 
       if (!entityId) return;
 
-      // NPC interaction will be added in Phase 49
-      // For now, just acknowledge the click without action to prevent pathfinding
+      // NPC interaction: emit npc:interact to server which responds with NPC definition data
       if (entityType === 'npc') {
         this.lastClickedEntity = entityId;
-        console.log('NPC clicked:', entityId);
+        gameSocket.emit('npc:interact', { entityId });
         return; // Do not proceed to combat
       }
 
