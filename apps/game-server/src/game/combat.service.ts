@@ -4,6 +4,7 @@ import { PlayerService } from './player.service';
 import { ZonesService } from '../zones/zones.service';
 import { InventoryService } from './inventory.service';
 import { EntityService } from './entity.service';
+import { AbilityService } from './ability.service';
 import { Creature, ItemEntity, isHubZone } from '@into-the-void/shared-types';
 import {
   canInteract,
@@ -50,6 +51,7 @@ interface CombatDamageResult {
   critical: boolean;
   killed: boolean;
   groundItems?: ItemEntity[];
+  defenderPosition?: { x: number; y: number };
 }
 
 @Injectable()
@@ -67,6 +69,7 @@ export class CombatService {
     private readonly zonesService: ZonesService,
     private readonly inventoryService: InventoryService,
     private readonly entityService: EntityService,
+    private readonly abilityService: AbilityService,
   ) {}
 
   /**
@@ -105,11 +108,6 @@ export class CombatService {
     const toolDef = ItemRegistry.get(tool.itemId);
     if (!toolDef) return { success: false, error: 'Unknown tool' };
 
-    // Must be a combat tool
-    if (toolDef.toolType !== 'combat') {
-      return { success: false, error: 'Equipped tool is not a combat tool' };
-    }
-
     // Get target entity
     const entity = await this.zonesService.getEntity(player.position.zoneId, targetEntityId);
     if (!entity) return { success: false, error: 'Target not found' };
@@ -138,9 +136,23 @@ export class CombatService {
       return { success: false, error: `Creature level ${creature.level} exceeds your level by more than 5` };
     }
 
-    // Provoke omnivores when player attacks them (AGGR-02)
-    if (creature.behavior === 'omnivore') {
+    // Creatures react when attacked
+    const creatureBehavior = creature.behavior;
+    if (creatureBehavior === 'omnivore') {
+      // Provoke omnivores - they'll fight back like predators
       await this.provokeCreature(player.position.zoneId, targetEntityId);
+    }
+
+    // All creatures get combatTarget set so AI knows who attacked them
+    // - Herbivores use this to flee from the attacker
+    // - Predators/omnivores/maniacs use this to chase and attack
+    await this.zonesService.updateEntity(player.position.zoneId, targetEntityId, {
+      combatTarget: player.id,
+    } as Partial<Creature>);
+
+    // Predators, maniacs, and provoked omnivores immediately start combat session
+    if (creatureBehavior === 'predator' || creatureBehavior === 'maniac' || creatureBehavior === 'omnivore') {
+      await this.startCreatureCombat(targetEntityId, player.id, player.position.zoneId);
     }
 
     // Create combat session
@@ -246,7 +258,8 @@ export class CombatService {
     }
 
     // Calculate player stats for interval calculation
-    const playerStats = computeCharStats(player.level, inventory.equipment as EquipmentJson, 'player');
+    const activeBuffs = this.abilityService.getActiveBuffs(player.id);
+    const playerStats = computeCharStats(player.level, inventory.equipment as EquipmentJson, 'player', activeBuffs);
     const attackInterval = calculateAttackInterval(playerStats.haste);
 
     // Check if enough time has passed since last attack
@@ -286,14 +299,18 @@ export class CombatService {
     const emptyEquipment: EquipmentJson = { modules: [] };
     const creatureStats = computeCharStats(creatureLevel, emptyEquipment, 'creature');
 
+    // Tool type damage multiplier: combat tools are most effective
+    // Non-combat tools can be used as improvised weapons with reduced damage
+    const toolDamageMultiplier = this.getToolDamageMultiplier(toolDef?.toolType);
+
     // Calculate damage: Power vs Toughness
     const damageResult = calculateDamage({
-      baseDamage: 10,
+      baseDamage: 10 * toolDamageMultiplier,
       attackerLevel: player.level,
       defenderLevel: creatureLevel,
       attackerStats: playerStats,
       defenderStats: creatureStats,
-      weaponDamage: toolDef?.ilvl ?? 0,
+      weaponDamage: (toolDef?.ilvl ?? 0) * toolDamageMultiplier,
       armorReduction: creatureStats.toughness, // Toughness provides base armor for creatures
     });
 
@@ -307,6 +324,13 @@ export class CombatService {
       // Handle loot drop and respawn scheduling
       groundItems = await this.handleCreatureDeath(creature, session.zoneId);
       this.stopCombat(session.playerId);
+
+      // Grant XP to player based on creature level
+      // Base XP = 10 * creature level, with bonus for higher level creatures
+      const levelDiff = creature.level - player.level;
+      const levelBonus = levelDiff > 0 ? 1 + levelDiff * 0.1 : 1;
+      const xpReward = Math.floor(10 * creature.level * levelBonus);
+      this.playerService.grantXp(player.id, xpReward);
     }
 
     // Update entity in zone
@@ -327,6 +351,7 @@ export class CombatService {
       critical: damageResult.critical,
       killed,
       groundItems: groundItems.length > 0 ? groundItems : undefined,
+      defenderPosition: { x: creature.position.x, y: creature.position.y },
     };
   }
 
@@ -458,7 +483,8 @@ export class CombatService {
     // Get player stats for damage calculation
     const inventory = this.inventoryService.getInventory(player.id);
     const playerEquipment = inventory?.equipment as EquipmentJson ?? { modules: [] };
-    const playerStats = computeCharStats(player.level, playerEquipment, 'player');
+    const activeBuffs = this.abilityService.getActiveBuffs(player.id);
+    const playerStats = computeCharStats(player.level, playerEquipment, 'player', activeBuffs);
 
     // Calculate damage: Creature Power vs Player Toughness
     const damageResult = calculateDamage({
@@ -520,6 +546,7 @@ export class CombatService {
       defenderMaxHealth: player.maxHealth,
       critical: damageResult.critical,
       killed,
+      defenderPosition: { x: player.position.x, y: player.position.y },
     };
   }
 
@@ -552,5 +579,23 @@ export class CombatService {
    */
   async provokeCreature(zoneId: string, creatureId: string): Promise<void> {
     await this.zonesService.updateEntity(zoneId, creatureId, { provoked: true } as Partial<Creature>);
+  }
+
+  /**
+   * Get damage multiplier based on tool type.
+   * Combat tools deal full damage, other tools work as improvised weapons.
+   */
+  private getToolDamageMultiplier(toolType?: string): number {
+    switch (toolType) {
+      case 'combat':
+        return 1.0; // Full damage - specialized weapon
+      case 'universal':
+        return 0.5; // Half damage - multi-purpose tool
+      case 'mining':
+      case 'research':
+        return 0.3; // 30% damage - not designed for combat
+      default:
+        return 0.25; // Minimal damage for unknown tools
+    }
   }
 }
