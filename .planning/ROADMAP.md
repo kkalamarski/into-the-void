@@ -590,12 +590,12 @@ Plans:
   2. The modal displays the NPC's dialogue text — for a Trader it reads something like "Looking to trade? I've got supplies for your expeditions." and the text is drawn from the NPC definition
   3. Action buttons appear based on NPC type — the Trader NPC shows a "Trade" button; a Guard shows no action buttons; a Service NPC shows a relevant service button
   4. Player clicks the close button or presses Escape — the interaction modal closes and the player can move and interact with the world again; Phaser input is re-enabled
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 49-01: NPC click detection and npc:interact server event; npcStore Zustand store
-- [ ] 49-02: NpcInteractionModal.tsx with portrait, name, type, dialogue
-- [ ] 49-03: Action button routing per NPC type; Escape/close to dismiss; Phaser input guard
+- [ ] 49-01-PLAN.md — npcStore Zustand store; npc:interact socket event; server handler returns NPC definition
+- [ ] 49-02-PLAN.md — NpcInteractionModal.tsx with portrait, name, type label, dialogue text
+- [ ] 49-03-PLAN.md — Action buttons per NPC type; Escape key dismissal; Phaser input guard
 
 #### Phase 50: Trading System
 
@@ -672,7 +672,7 @@ Phases execute in numeric order: 46 -> 47 -> 48 -> 49 -> 50
 | 46. Currency and Hub Foundation | v1.11 | 3/3 | Complete | 2026-02-19 |
 | 47. Hub Travel | v1.11 | 5/5 | Complete | 2026-02-20 |
 | 48. NPC Definition System and Hub Spawns | v1.11 | 3/3 | Complete | 2026-02-20 |
-| 49. NPC Interaction Window | v1.11 | TBD | Not started | - |
+| 49. NPC Interaction Window | v1.11 | 3/3 | Not started | - |
 | 50. Trading System | v1.11 | TBD | Not started | - |
 
 **Total:** 50 phases (48 complete, 2 remaining)
