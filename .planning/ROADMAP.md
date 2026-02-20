@@ -192,20 +192,15 @@ See: `.planning/milestones/v1.7-ROADMAP.md`
 Plans:
 - [x] 51-01-PLAN.md — Save player position on disconnect and document restore flow
 
-#### Phase 52: Hub NPC Spawning Fix
+#### Phase 52: Hub NPC Spawning Fix ✓
 
 **Goal**: Hub zones correctly spawn NPCs from their definitions instead of creatures, fixing the bug where creatures appear in safe zones
 **Depends on**: Phase 51 (persistence complete — foundation stable)
 **Requirements**: FIX-01, FIX-02
-**Success Criteria** (what must be TRUE):
-  1. Player enters any faction hub — only NPCs appear, no creatures spawn in the hub zone
-  2. Hub zones show correct NPC types (Trader, Guard, Faction Rep, Ambient, Service) at their defined spawn positions
-  3. Creature spawning logic correctly identifies hub zones and skips creature generation entirely
-  4. Existing world creature spawning remains unchanged — creatures still spawn normally in open-world zones
-**Plans**: 1 plan
+**Status**: Complete (2026-02-20)
 
 Plans:
-- [ ] 52-01-PLAN.md — Diagnose and fix hub NPC spawning with validation
+- [x] 52-01-PLAN.md — Diagnose and fix hub NPC spawning with validation
 
 #### Phase 53: Rendering & Depth Fixes
 
@@ -315,12 +310,12 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55
 | 49. NPC Interaction Window | v1.11 | 3/3 | Complete | 2026-02-20 |
 | 50. Trading System | v1.11 | 4/4 | Complete | 2026-02-20 |
 | 51. Player Position Persistence | v1.12 | 1/1 | Complete | 2026-02-20 |
-| 52. Hub NPC Spawning Fix | v1.12 | 0/1 | Not started | - |
+| 52. Hub NPC Spawning Fix | v1.12 | 1/1 | Complete | 2026-02-20 |
 | 53. Rendering & Depth Fixes | v1.12 | 0/2 | Not started | - |
 | 54. New Player Starter Kit | v1.12 | 0/1 | Not started | - |
 | 55. Content Expansion | v1.12 | 0/3 | Not started | - |
 
-**Total:** 55 phases (51 complete, 4 remaining)
+**Total:** 55 phases (52 complete, 3 remaining)
 
 ---
 *Last updated: 2026-02-20 after v1.12 roadmap created*
