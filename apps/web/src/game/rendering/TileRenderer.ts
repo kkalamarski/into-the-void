@@ -288,12 +288,12 @@ export class TileRenderer {
   }
 
   /**
-   * Draw edge highlight at elevation DROP-OFFS (where you'd walk off a cliff).
-   * In isometric view, you can see cliff faces when terrain rises (south/east sides visible).
-   * But when terrain DROPS (going south or east), you can't see the cliff - it's hidden.
-   * This draws a warning line on the FRONT edges of tiles that drop off.
-   * - Bottom-left edge: drawn if south neighbor (y+1) is lower (drop going south)
-   * - Bottom-right edge: drawn if east neighbor (x+1) is lower (drop going east)
+   * Draw edge highlight to mark INVISIBLE cliff backs (north/west facing).
+   * In isometric view, south/east cliff faces are visible (brown sprite sides).
+   * But north/west cliff faces are hidden - terrain drops away invisibly.
+   * This draws a line on the TOP edges of elevated tiles to mark hidden cliffs.
+   * - Top-left edge: drawn if west neighbor (x-1) is lower (cliff faces west)
+   * - Top-right edge: drawn if north neighbor (y-1) is lower (cliff faces north)
    */
   private drawElevationEdge(
     container: Phaser.GameObjects.Container,
@@ -304,15 +304,15 @@ export class TileRenderer {
   ): void {
     if (elevation < MIN_ELEVATION_FOR_EDGE) return;
 
-    // Check which neighbors are lower (drop-offs in front of you)
-    const southElevation = heights[localY + 1]?.[localX] ?? 0;
-    const eastElevation = heights[localY]?.[localX + 1] ?? 0;
+    // Check if this tile is higher than north/west neighbors (invisible cliff backs)
+    const westElevation = heights[localY]?.[localX - 1] ?? 0;
+    const northElevation = heights[localY - 1]?.[localX] ?? 0;
 
-    const hasSouthDrop = elevation > southElevation;
-    const hasEastDrop = elevation > eastElevation;
+    const hasWestCliff = elevation > westElevation;
+    const hasNorthCliff = elevation > northElevation;
 
-    // Only draw if there's at least one drop-off edge
-    if (!hasSouthDrop && !hasEastDrop) return;
+    // Only draw if there's at least one invisible cliff edge
+    if (!hasWestCliff && !hasNorthCliff) return;
 
     const halfWidth = this.isoTransform.tileWidth / 2;  // 128
     const halfHeight = this.isoTransform.tileHeight / 2; // 64
@@ -320,19 +320,19 @@ export class TileRenderer {
     const graphics = this.scene.add.graphics();
     graphics.lineStyle(EDGE_HIGHLIGHT_WIDTH, EDGE_HIGHLIGHT_COLOR, EDGE_HIGHLIGHT_ALPHA);
 
-    // Draw bottom-left edge if south neighbor is lower (drop going south)
-    if (hasSouthDrop) {
+    // Draw top-left edge if west neighbor is lower (cliff back faces west)
+    if (hasWestCliff) {
       graphics.beginPath();
-      graphics.moveTo(-halfWidth, 0);         // Left point
-      graphics.lineTo(0, halfHeight);         // Bottom point
+      graphics.moveTo(0, -halfHeight);        // Top point
+      graphics.lineTo(-halfWidth, 0);         // Left point
       graphics.strokePath();
     }
 
-    // Draw bottom-right edge if east neighbor is lower (drop going east)
-    if (hasEastDrop) {
+    // Draw top-right edge if north neighbor is lower (cliff back faces north)
+    if (hasNorthCliff) {
       graphics.beginPath();
-      graphics.moveTo(halfWidth, 0);          // Right point
-      graphics.lineTo(0, halfHeight);         // Bottom point
+      graphics.moveTo(0, -halfHeight);        // Top point
+      graphics.lineTo(halfWidth, 0);          // Right point
       graphics.strokePath();
     }
 
