@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.11 NPCs & Trading — Phase 48: NPC Definition System and Hub Spawns
+**Current focus:** v1.11 NPCs & Trading — Phase 49: NPC Interaction Window
 
 ## Current Position
 
-Phase: 48 of 50 (NPC Definition System and Hub Spawns)
-Plan: 3 of TBD in current phase
+Phase: 49 of 50 (NPC Interaction Window)
+Plan: 1 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-19 — 48-03: NPC spawning in hub zones, NPC rendering with nameplates, combat targeting guard
+Last activity: 2026-02-20 — 49-01: NPC click round-trip wired, npcStore created, GameGateway handler added
 
 Progress: [██░░░░░░░░] 20% (v1.11 milestone — 2/5 phases)
 
@@ -81,6 +81,9 @@ Recent decisions affecting current work:
 - [48-03]: spawnHubNpcs uses NpcRegistry.get() which returns UNKNOWN_NPC fallback — no null guard needed
 - [48-03]: NPC entities included in hub zone entity map from load time — appear in zone:state on hub entry without extra events
 - [48-03]: NPC click handler suppresses pathfinding (lastClickedEntity) but does not emit combat:start — placeholder for Phase 49 interaction
+- [49-01]: npcStore socket wiring at module level follows combatStore pattern — consistent, no lifecycle issues
+- [49-01]: GameGateway uses zonesService.getEntity + NpcRegistry.get() for NPC interaction response
+- [49-01]: Type-specific NPC fields (inventory, serviceType, title, role) conditionally added to npc:interact:response payload
 
 ### Pending Todos
 
@@ -98,11 +101,11 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-19
-Stopped at: Completed 48-npc-definition-system-and-hub-spawns/48-03-PLAN.md — NPC spawning in hub zones wired end-to-end, NPC rendering with type-colored nameplates in Phaser, combat targeting guard server + client
+Last session: 2026-02-20
+Stopped at: Completed 49-npc-interaction-window/49-01-PLAN.md — NPC click round-trip wired, npcStore created, shared-types updated, GameGateway handler added
 Resume file: None
 
-**Next action:** Execute next plan in Phase 48 (48-04 if exists, otherwise proceed to Phase 49)
+**Next action:** Execute next plan in Phase 49 (49-02: NPC interaction modal UI)
 
 ---
-*Last updated: 2026-02-19 after 48-03 execution complete*
+*Last updated: 2026-02-20 after 49-01 execution complete*
