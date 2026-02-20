@@ -36,6 +36,7 @@ export type ItemEffect =
   | { readonly type: 'energy_restore'; readonly amount: number }
   | { readonly type: 'stat_buff'; readonly stat: string; readonly amount: number; readonly duration: number }
   | { readonly type: 'suit_repair'; readonly amount: number }
+  | { readonly type: 'emergency_reboot'; readonly healPercent: number }
   | { readonly type: 'armor'; readonly value: number }
   | { readonly type: 'speed'; readonly multiplier: number }
   | { readonly type: 'life_support'; readonly hazardResistance: number }
@@ -46,7 +47,7 @@ export type ItemEffect =
 /**
  * Tool specialization types
  */
-export type ToolType = 'mining' | 'combat' | 'research';
+export type ToolType = 'universal' | 'mining' | 'combat' | 'research';
 
 /**
  * Complete item definition - single source of truth for item data

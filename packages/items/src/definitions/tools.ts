@@ -2,6 +2,30 @@ import type { ItemDefinition } from '../types';
 import { computeIlvl } from '../utils';
 
 // ============================================================
+// UNIVERSAL TOOLS (1) — starter multi-purpose tool
+// ============================================================
+
+export const TOOL_UNIVERSAL_COMMON: ItemDefinition = {
+  id: 'tool_universal_common',
+  displayName: 'Multi-Tool',
+  description:
+    'A versatile all-purpose instrument issued to new arrivals. Can be used for basic mining, combat, and research tasks. Not specialized, but reliable.',
+  category: 'tool',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 2.0,
+  baseValue: 200,
+  requiredLevel: 1,
+  ilvl: computeIlvl(1, 'common'),
+  textureKey: 'item_tool_universal',
+  color: 0x888888,
+  equipSlot: 'tool',
+  toolType: 'universal',
+  effects: [],
+  range: 1,
+};
+
+// ============================================================
 // MINING TOOLS (5) — resource extraction specialization
 // ============================================================
 
@@ -318,6 +342,7 @@ export const TOOL_RESEARCH_LEGENDARY: ItemDefinition = {
 // ============================================================
 
 export const ALL_TOOLS: readonly ItemDefinition[] = [
+  TOOL_UNIVERSAL_COMMON,
   TOOL_MINING_COMMON,
   TOOL_MINING_RARE,
   TOOL_MINING_EPIC,

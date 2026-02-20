@@ -21,7 +21,7 @@ const MAX_CHARACTERS_PER_ACCOUNT = 5;
 
 // Starter kit item definitions (Common rarity, Level 1)
 const STARTER_SUIT_ID = 'suit_basic_common';
-const STARTER_TOOL_ID = 'tool_combat_common';
+const STARTER_TOOL_ID = 'tool_universal_common'; // Multi-Tool: works for mining, combat, research
 
 @Injectable()
 export class CharactersService {
