@@ -287,11 +287,12 @@ Plans:
   2. Existing items updated with grantedAbilities field
   3. Player can drag abilities to rearrange action bar slots
   4. New items added with unique ability combinations
-**Plans**: 2 plans in 2 waves
+**Plans**: 3 plans in 3 waves
 
 Plans:
 - [ ] 58-01-PLAN.md — Ability content expansion (definitions, tools, suits with grantedAbilities)
 - [ ] 58-02-PLAN.md — Drag-to-rearrange action bar slots with @dnd-kit
+- [ ] 58-03-PLAN.md — Gap closure: new items with unique ability combinations
 
 ## Progress
 
@@ -357,9 +358,9 @@ Phases execute in numeric order: 56 → 57 → 58
 | 55. Content Expansion | v1.12 | 3/3 | Complete | 2026-02-20 |
 | 56. Core Ability System | v1.13 | 3/3 | Complete | 2026-02-20 |
 | 57. Buff System | v1.13 | 3/3 | Complete | 2026-02-20 |
-| 58. Ability Content & Polish | v1.13 | 0/2 | Not started | - |
+| 58. Ability Content & Polish | v1.13 | 0/3 | Not started | - |
 
 **Total:** 58 phases (57 complete, 1 remaining)
 
 ---
-*Last updated: 2026-02-20 after Phase 58 planning complete*
+*Last updated: 2026-02-20 after Phase 58 gap closure plan added*
