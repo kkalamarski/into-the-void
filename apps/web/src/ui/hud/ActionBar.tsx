@@ -1,20 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useAbilityStore, getEquippedAbilities } from '../../store/abilityStore';
 import { useCombatStore } from '../../store/combatStore';
 import { useInventoryStore } from '../../store/inventoryStore';
+import { useActionBarStore } from '../../store/actionBarStore';
 import { useGameStore } from '../../store/gameStore';
 import { gameSocket } from '../../network/socket';
 import type { AbilityDefinition } from '@into-the-void/shared-types';
+import { DndContext, closestCenter, DragEndEvent, DragStartEvent, DragOverlay } from '@dnd-kit/core';
+import { SortableContext, useSortable, rectSwappingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import './ActionBar.css';
 
 const SLOT_COUNT = 8;
 
-interface AbilitySlotProps {
+interface AbilitySlotContentProps {
   index: number;
   ability: AbilityDefinition | null;
 }
 
-function AbilitySlot({ index, ability }: AbilitySlotProps) {
+function AbilitySlotContent({ index, ability }: AbilitySlotContentProps) {
   const { isOnCooldown, getRemainingCooldown } = useAbilityStore();
   const targetEntityId = useCombatStore((state) => state.targetEntityId);
   const player = useGameStore((state) => state.player);
@@ -54,14 +58,9 @@ function AbilitySlot({ index, ability }: AbilitySlotProps) {
   const isEmpty = !ability;
   const onCooldown = ability ? isOnCooldown(ability.id) : false;
   const insufficientEnergy = ability && player ? player.energy < ability.energyCost : false;
-  const disabled = onCooldown || insufficientEnergy;
 
   return (
-    <div
-      className={`ability-slot ${isEmpty ? 'ability-slot--empty' : ''} ${disabled ? 'ability-slot--disabled' : ''}`}
-      onClick={handleClick}
-      title={ability ? `${ability.displayName}\n${ability.description}\nEnergy: ${ability.energyCost}\nCooldown: ${ability.cooldownMs / 1000}s` : undefined}
-    >
+    <>
       <span className="ability-key">{index + 1}</span>
       {ability && (
         <>
@@ -82,24 +81,141 @@ function AbilitySlot({ index, ability }: AbilitySlotProps) {
           )}
         </>
       )}
+    </>
+  );
+}
+
+interface SortableAbilitySlotProps {
+  index: number;
+  ability: AbilityDefinition | null;
+  slotId: string;
+}
+
+function SortableAbilitySlot({ index, ability, slotId }: SortableAbilitySlotProps) {
+  const { isOnCooldown } = useAbilityStore();
+  const player = useGameStore((state) => state.player);
+  const targetEntityId = useCombatStore((state) => state.targetEntityId);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: slotId });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 100 : undefined,
+  };
+
+  const handleClick = () => {
+    if (!ability) return;
+    if (isOnCooldown(ability.id)) return;
+    if (!player || player.energy < ability.energyCost) return;
+
+    gameSocket.emit('ability:use', {
+      abilityId: ability.id,
+      targetEntityId: ability.requiresTarget ? targetEntityId ?? undefined : undefined,
+    });
+  };
+
+  const isEmpty = !ability;
+  const onCooldown = ability ? isOnCooldown(ability.id) : false;
+  const insufficientEnergy = ability && player ? player.energy < ability.energyCost : false;
+  const disabled = onCooldown || insufficientEnergy;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`ability-slot ${isEmpty ? 'ability-slot--empty' : ''} ${disabled ? 'ability-slot--disabled' : ''}`}
+      onClick={handleClick}
+      title={ability ? `${ability.displayName}\n${ability.description}\nEnergy: ${ability.energyCost}\nCooldown: ${ability.cooldownMs / 1000}s` : undefined}
+    >
+      <AbilitySlotContent index={index} ability={ability} />
     </div>
   );
 }
 
 export const ActionBar: React.FC = () => {
+  const { abilityOrder, swapAbilitySlots, setAbilityOrder } = useActionBarStore();
   const inventory = useInventoryStore((state) => state.inventory);
   const targetEntityId = useCombatStore((state) => state.targetEntityId);
   const player = useGameStore((state) => state.player);
   const { isOnCooldown } = useAbilityStore();
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   // Derive abilities from equipment (re-renders when inventory changes)
-  const abilities = inventory ? getEquippedAbilities() : [];
+  const equippedAbilities = inventory ? getEquippedAbilities() : [];
 
-  // Pad abilities to 8 slots
-  const slots: (AbilityDefinition | null)[] = Array(SLOT_COUNT).fill(null);
-  abilities.forEach((ability, i) => {
-    if (i < SLOT_COUNT) slots[i] = ability;
-  });
+  // Build ordered slots based on abilityOrder + equipped abilities
+  const slots = useMemo(() => {
+    const ordered: (AbilityDefinition | null)[] = Array(SLOT_COUNT).fill(null);
+    const usedAbilityIds = new Set<string>();
+
+    // First, place abilities in their stored positions
+    abilityOrder.forEach((abilityId, index) => {
+      if (index >= SLOT_COUNT) return;
+      if (!abilityId) return;
+      const ability = equippedAbilities.find(a => a.id === abilityId);
+      if (ability) {
+        ordered[index] = ability;
+        usedAbilityIds.add(abilityId);
+      }
+    });
+
+    // Then, fill remaining slots with unplaced abilities
+    let nextSlot = 0;
+    for (const ability of equippedAbilities) {
+      if (usedAbilityIds.has(ability.id)) continue;
+      while (nextSlot < SLOT_COUNT && ordered[nextSlot] !== null) {
+        nextSlot++;
+      }
+      if (nextSlot < SLOT_COUNT) {
+        ordered[nextSlot] = ability;
+        usedAbilityIds.add(ability.id);
+      }
+    }
+
+    return ordered;
+  }, [equippedAbilities, abilityOrder]);
+
+  // Update stored order when slots change (e.g., new abilities from equipment)
+  useEffect(() => {
+    const currentOrder = slots.map(s => s?.id ?? null);
+    // Only update if different to avoid loops
+    if (JSON.stringify(currentOrder) !== JSON.stringify(abilityOrder)) {
+      setAbilityOrder(currentOrder);
+    }
+  }, [slots, abilityOrder, setAbilityOrder]);
+
+  const slotIds = useMemo(() =>
+    Array.from({ length: SLOT_COUNT }, (_, i) => `slot-${i}`),
+    []
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const fromIndex = slotIds.indexOf(active.id as string);
+      const toIndex = slotIds.indexOf(over.id as string);
+      swapAbilitySlots(fromIndex, toIndex);
+    }
+    setActiveId(null);
+  };
+
+  const activeSlotIndex = activeId ? slotIds.indexOf(activeId) : -1;
+  const activeAbility = activeSlotIndex >= 0 ? slots[activeSlotIndex] : null;
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -128,10 +244,30 @@ export const ActionBar: React.FC = () => {
   }, [slots, targetEntityId, player, isOnCooldown]);
 
   return (
-    <div className="action-bar">
-      {slots.map((ability, i) => (
-        <AbilitySlot key={i} index={i} ability={ability} />
-      ))}
-    </div>
+    <DndContext
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext items={slotIds} strategy={rectSwappingStrategy}>
+        <div className="action-bar">
+          {slots.map((ability, i) => (
+            <SortableAbilitySlot
+              key={slotIds[i]}
+              index={i}
+              ability={ability}
+              slotId={slotIds[i]}
+            />
+          ))}
+        </div>
+      </SortableContext>
+      <DragOverlay>
+        {activeAbility && (
+          <div className="ability-slot ability-slot--drag-overlay">
+            <AbilitySlotContent index={activeSlotIndex} ability={activeAbility} />
+          </div>
+        )}
+      </DragOverlay>
+    </DndContext>
   );
 };
