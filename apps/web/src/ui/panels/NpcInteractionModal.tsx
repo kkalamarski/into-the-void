@@ -22,7 +22,7 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 
 export const NpcInteractionModal: React.FC = () => {
-  const { interactingNpc, closeInteraction } = useNpcStore();
+  const { interactingNpc, closeInteraction, openTrading } = useNpcStore();
   const { position, isDragging, handleMouseDown } = useDraggablePanel();
 
   // Disable Phaser keyboard when modal is open
@@ -76,8 +76,7 @@ export const NpcInteractionModal: React.FC = () => {
           <button
             className="npc-action-btn npc-action-btn--primary"
             onClick={() => {
-              // Phase 50 will handle trade opening
-              console.log('Trade clicked - to be implemented in Phase 50');
+              openTrading();
             }}
           >
             Trade
