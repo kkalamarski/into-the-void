@@ -17,6 +17,7 @@ import { EntityService } from './entity.service';
 import { ZonesService } from '../zones/zones.service';
 import { AiService } from './ai.service';
 import { CombatService } from './combat.service';
+import { TradeService } from './trade.service';
 import {
   ClientEvents,
   Direction,
@@ -55,6 +56,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly zonesService: ZonesService,
     private readonly aiService: AiService,
     private readonly combatService: CombatService,
+    private readonly tradeService: TradeService,
   ) {}
 
   afterInit(server: Server) {
@@ -1003,6 +1005,102 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
 
     client.emit('npc:interact:response', response);
+  }
+
+  @SubscribeMessage('trade:buy')
+  async handleTradeBuy(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { npcId: string; itemId: string; quantity: number },
+  ): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const result = await this.tradeService.buy(
+        player.id,
+        data.npcId,
+        data.itemId,
+        data.quantity,
+      );
+
+      if (result.success) {
+        // Send updated inventory
+        const inventory = this.inventoryService.getInventory(player.id);
+        if (inventory) {
+          client.emit('inventory:update', inventory);
+        }
+        // Send updated credits
+        if (result.newBalance !== undefined) {
+          client.emit('credits:update', { credits: result.newBalance });
+        }
+        // Send trade result
+        client.emit('trade:result', {
+          success: true,
+          action: 'buy',
+          itemId: data.itemId,
+          quantity: data.quantity,
+          newBalance: result.newBalance,
+        });
+      } else {
+        client.emit('trade:result', {
+          success: false,
+          action: 'buy',
+          error: result.error,
+        });
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'TRADE_ERROR',
+        message: 'Failed to process purchase',
+      });
+    }
+  }
+
+  @SubscribeMessage('trade:sell')
+  async handleTradeSell(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { npcId: string; itemInstanceId: string; quantity: number },
+  ): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const result = await this.tradeService.sell(
+        player.id,
+        data.npcId,
+        data.itemInstanceId,
+        data.quantity,
+      );
+
+      if (result.success) {
+        // Send updated inventory
+        const inventory = this.inventoryService.getInventory(player.id);
+        if (inventory) {
+          client.emit('inventory:update', inventory);
+        }
+        // Send updated credits
+        if (result.newBalance !== undefined) {
+          client.emit('credits:update', { credits: result.newBalance });
+        }
+        // Send trade result
+        client.emit('trade:result', {
+          success: true,
+          action: 'sell',
+          newBalance: result.newBalance,
+        });
+      } else {
+        client.emit('trade:result', {
+          success: false,
+          action: 'sell',
+          error: result.error,
+        });
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'TRADE_ERROR',
+        message: 'Failed to process sale',
+      });
+    }
   }
 
   /**
