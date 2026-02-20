@@ -1,11 +1,13 @@
+const ENTITY_LAYER_OFFSET = 1000; // Offset to ensure entities always render above terrain at same position
+
 export class IsometricTransform {
   private tileWidthHalf: number;
   private tileHeightHalf: number;
   private elevationWeight = 0.1; // Conservative weight for elevation in depth calculation
 
   constructor(
-    public readonly tileWidth: number = 128,
-    public readonly tileHeight: number = 64
+    public readonly tileWidth: number = 256,
+    public readonly tileHeight: number = 128
   ) {
     this.tileWidthHalf = tileWidth / 2;
     this.tileHeightHalf = tileHeight / 2;
@@ -54,13 +56,13 @@ export class IsometricTransform {
    * @param screenX - Screen X coordinate
    * @param screenY - Screen Y coordinate
    * @param getElevation - Function to get elevation at grid coordinates
-   * @param elevationHeightStep - Pixels per elevation level (default: 16)
+   * @param elevationHeightStep - Pixels per elevation level (default: 32 for 256x256 sprites)
    */
   screenToTileWithElevation(
     screenX: number,
     screenY: number,
     getElevation: (x: number, y: number) => number,
-    elevationHeightStep: number = 16
+    elevationHeightStep: number = 128
   ): { x: number; y: number } {
     // First pass: get initial tile guess
     let tile = this.screenToTile(screenX, screenY);
@@ -79,10 +81,11 @@ export class IsometricTransform {
    * Calculate depth value for Y-based sorting.
    * Uses screen Y position with grid X as tiebreaker (rightmost in front).
    * Elevation component ensures entities on higher terrain render in front.
+   * Entity layer offset guarantees entities always render above terrain at the same position.
    */
-  calculateDepth(gridX: number, gridY: number, elevation: number = 0, priorityBoost: number = 0): number {
+  calculateDepth(gridX: number, gridY: number, elevation: number = 0, priorityBoost: number = 0, isEntity: boolean = false): number {
     const screen = this.gridToScreen(gridX, gridY);
-    return screen.y + (gridX * 0.0001) + (elevation * this.elevationWeight) + priorityBoost;
+    return screen.y + (gridX * 0.0001) + (elevation * this.elevationWeight) + priorityBoost + (isEntity ? ENTITY_LAYER_OFFSET : 0);
   }
 
   /**
