@@ -18,17 +18,36 @@ interface NpcInteraction {
 
 interface NpcState {
   interactingNpc: NpcInteraction | null;
+  showTrading: boolean;
+  tradeError: string | null;
   setInteractingNpc: (npc: NpcInteraction | null) => void;
   closeInteraction: () => void;
+  openTrading: () => void;
+  closeTrading: () => void;
+  setTradeError: (error: string | null) => void;
 }
 
 export const useNpcStore = create<NpcState>((set) => ({
   interactingNpc: null,
+  showTrading: false,
+  tradeError: null,
   setInteractingNpc: (npc) => set({ interactingNpc: npc }),
-  closeInteraction: () => set({ interactingNpc: null }),
+  closeInteraction: () => set({ interactingNpc: null, showTrading: false, tradeError: null }),
+  openTrading: () => set({ showTrading: true, tradeError: null }),
+  closeTrading: () => set({ showTrading: false, tradeError: null }),
+  setTradeError: (error) => set({ tradeError: error }),
 }));
 
 // Listen for npc:interact:response - server sends NPC definition data when player interacts
 gameSocket.on('npc:interact:response', (data) => {
   useNpcStore.getState().setInteractingNpc(data as NpcInteraction);
+});
+
+// Listen for trade:result - show errors from failed trade attempts
+gameSocket.on('trade:result', (data: { success: boolean; error?: string }) => {
+  if (!data.success && data.error) {
+    useNpcStore.getState().setTradeError(data.error);
+  } else {
+    useNpcStore.getState().setTradeError(null);
+  }
 });
