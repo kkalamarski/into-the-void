@@ -294,6 +294,7 @@ export class TileRenderer {
    * This draws a line on the TOP edges of elevated tiles to mark hidden cliffs.
    * - Top-left edge: drawn if west neighbor (x-1) is lower (cliff faces west)
    * - Top-right edge: drawn if north neighbor (y-1) is lower (cliff faces north)
+   * Skip chunk boundaries (neighbor outside heights array) to avoid false edges.
    */
   private drawElevationEdge(
     container: Phaser.GameObjects.Container,
@@ -304,12 +305,17 @@ export class TileRenderer {
   ): void {
     if (elevation < MIN_ELEVATION_FOR_EDGE) return;
 
-    // Check if this tile is higher than north/west neighbors (invisible cliff backs)
-    const westElevation = heights[localY]?.[localX - 1] ?? 0;
-    const northElevation = heights[localY - 1]?.[localX] ?? 0;
+    // Check bounds - skip chunk edges where neighbor data is unavailable
+    const westInBounds = localX > 0 && heights[localY] !== undefined;
+    const northInBounds = localY > 0 && heights[localY - 1] !== undefined;
 
-    const hasWestCliff = elevation > westElevation;
-    const hasNorthCliff = elevation > northElevation;
+    // Check if this tile is higher than north/west neighbors (invisible cliff backs)
+    // Only check if neighbor is within chunk bounds
+    const westElevation = westInBounds ? (heights[localY][localX - 1] ?? elevation) : elevation;
+    const northElevation = northInBounds ? (heights[localY - 1][localX] ?? elevation) : elevation;
+
+    const hasWestCliff = westInBounds && elevation > westElevation;
+    const hasNorthCliff = northInBounds && elevation > northElevation;
 
     // Only draw if there's at least one invisible cliff edge
     if (!hasWestCliff && !hasNorthCliff) return;
