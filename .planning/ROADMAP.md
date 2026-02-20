@@ -268,11 +268,12 @@ Plans:
   2. Active buffs display as icons with remaining duration timers
   3. Buffed stats affect combat damage and survivability
   4. Buffs automatically expire and remove stat modifications
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 57-01: TBD
-- [ ] 57-02: TBD
+- [ ] 57-01-PLAN.md - Server Buff State & Events (Wave 1)
+- [ ] 57-02-PLAN.md - Buff Effect Execution & Stat Integration (Wave 2)
+- [ ] 57-03-PLAN.md - Client Buff UI & Visual Feedback (Wave 2)
 
 #### Phase 58: Ability Content & Polish
 
@@ -353,7 +354,7 @@ Phases execute in numeric order: 56 → 57 → 58
 | 54. New Player Starter Kit | v1.12 | 1/1 | Complete | 2026-02-20 |
 | 55. Content Expansion | v1.12 | 3/3 | Complete | 2026-02-20 |
 | 56. Core Ability System | v1.13 | 3/3 | Complete | 2026-02-20 |
-| 57. Buff System | v1.13 | 0/2 | Not started | - |
+| 57. Buff System | v1.13 | 0/3 | Not started | - |
 | 58. Ability Content & Polish | v1.13 | 0/2 | Not started | - |
 
 **Total:** 58 phases (56 complete, 2 remaining)
