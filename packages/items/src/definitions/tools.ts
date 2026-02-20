@@ -21,8 +21,11 @@ export const TOOL_UNIVERSAL_COMMON: ItemDefinition = {
   color: 0x888888,
   equipSlot: 'tool',
   toolType: 'universal',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stat_buff', stat: 'power', amount: 3, duration: 0 } },
+  ],
   range: 1,
+  grantedAbilities: ['basic_strike'],
 };
 
 // ============================================================
@@ -151,6 +154,7 @@ export const TOOL_COMBAT_COMMON: ItemDefinition = {
   toolType: 'combat',
   effects: [],
   range: 1,
+  grantedAbilities: ['basic_strike', 'shield_bash'],
 };
 
 export const TOOL_COMBAT_RARE: ItemDefinition = {
@@ -255,6 +259,7 @@ export const TOOL_RESEARCH_COMMON: ItemDefinition = {
   toolType: 'research',
   effects: [],
   range: 1,
+  grantedAbilities: ['energy_pulse'],
 };
 
 export const TOOL_RESEARCH_RARE: ItemDefinition = {
