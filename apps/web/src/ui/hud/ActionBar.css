@@ -14,8 +14,9 @@
   background: var(--color-bg-dark);
   border: 2px solid var(--color-border);
   border-radius: 4px;
-  cursor: pointer;
+  cursor: grab;
   overflow: hidden;
+  transition: transform 150ms ease, opacity 150ms ease;
 }
 
 .ability-slot:hover:not(.ability-slot--disabled):not(.ability-slot--empty) {
@@ -29,6 +30,22 @@
 
 .ability-slot--disabled {
   cursor: not-allowed;
+}
+
+/* Dragging state for source slot */
+.ability-slot--dragging {
+  opacity: 0.5;
+  border-color: var(--color-accent);
+  cursor: grabbing;
+}
+
+/* Drag overlay (ghost element while dragging) */
+.ability-slot--drag-overlay {
+  opacity: 0.9;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border-color: var(--color-accent);
+  cursor: grabbing;
 }
 
 .ability-key {
