@@ -123,6 +123,8 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 - [ ] Player location persistence across sessions
 - [ ] NPC spawning in hubs (bug fix)
+- [ ] Rendering depth sorting fix (entities below terrain)
+- [ ] Elevation visibility improvements
 - [ ] New player starter kit (basic suit + tool)
 - [ ] Content expansion: new creatures (5-10)
 - [ ] Content expansion: new items (10-20)
@@ -171,6 +173,8 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 - Player position not persisting across login sessions (v1.12 target)
 - NPCs not loading in hubs, creatures appearing instead (v1.12 target)
+- Entity depth sorting issues (entities appearing below terrain) (v1.12 target)
+- Elevation transitions not visually distinct (textures blend) (v1.12 target)
 
 ---
 *Last updated: 2026-02-20 after v1.12 milestone start*

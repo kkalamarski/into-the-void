@@ -17,6 +17,12 @@ Requirements for Bug Fixes & Content Polish milestone.
 - [ ] **FIX-01**: NPCs spawn correctly in hub zones (not creatures)
 - [ ] **FIX-02**: Hub zones show only NPCs, no creature spawns
 
+### Rendering Fixes
+
+- [ ] **REND-01**: Entity depth sorting fixed (entities never appear below terrain)
+- [ ] **REND-02**: Terrain/entity overlap during movement eliminated
+- [ ] **REND-03**: Elevation transitions visually distinct (clearer level changes)
+
 ### New Player Experience
 
 - [ ] **NPE-01**: New characters receive basic exo-suit on creation
@@ -330,7 +336,7 @@ Requirements for Character Stats milestone.
 
 Deferred to future releases. Not in current roadmap.
 
-### Quests (v1.12+)
+### Quests (v1.13+)
 
 - **QUST-01**: Quest NPCs can offer missions to players
 - **QUST-02**: Player can accept/decline quests
@@ -435,7 +441,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Free-movement (non-grid) WASD | Breaks client-side prediction model |
 | Camera rotation | Sprites drawn for fixed angle |
 | Cross-zone pathfinding | Requires multi-zone graph |
-| Quest/mission system | NPC framework first, quests in v1.12+ |
+| Quest/mission system | NPC framework first, quests in v1.13+ |
 | Branching dialogue | Simple linear for v1.11, complex later |
 | Surface faction HQs | Orbital stations first, surface later |
 | Shared city at 0,0 | Future milestone |
@@ -451,23 +457,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERS-01 | TBD | Pending |
-| PERS-02 | TBD | Pending |
-| FIX-01 | TBD | Pending |
-| FIX-02 | TBD | Pending |
-| NPE-01 | TBD | Pending |
-| NPE-02 | TBD | Pending |
-| CONT-01 | TBD | Pending |
-| CONT-02 | TBD | Pending |
-| CONT-03 | TBD | Pending |
-| CONT-04 | TBD | Pending |
-| CONT-05 | TBD | Pending |
-| CONT-06 | TBD | Pending |
+| PERS-01 | Phase 51 | Pending |
+| PERS-02 | Phase 51 | Pending |
+| FIX-01 | Phase 52 | Pending |
+| FIX-02 | Phase 52 | Pending |
+| REND-01 | Phase 53 | Pending |
+| REND-02 | Phase 53 | Pending |
+| REND-03 | Phase 53 | Pending |
+| NPE-01 | Phase 54 | Pending |
+| NPE-02 | Phase 54 | Pending |
+| CONT-01 | Phase 55 | Pending |
+| CONT-02 | Phase 55 | Pending |
+| CONT-03 | Phase 55 | Pending |
+| CONT-04 | Phase 55 | Pending |
+| CONT-05 | Phase 55 | Pending |
+| CONT-06 | Phase 55 | Pending |
 
 **Coverage:**
-- v1.12 requirements: 12 total
-- Mapped to phases: 0
-- Unmapped: 12 ⚠️
+- v1.12 requirements: 15 total
+- Mapped to phases: 15
+- Unmapped: 0 ✓
 
 ### v1.11 NPCs & Trading (Complete)
 
@@ -505,7 +514,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 **Coverage:**
 - v1.11 requirements: 28 total
 - Mapped to phases: 28
-- Complete: 28 ✓
+- Complete: 28
 
 ### v1.10 Combat UX (Complete)
 
@@ -623,4 +632,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-20 after v1.12 requirements defined — 12 requirements for bug fixes & content*
+*Last updated: 2026-02-20 after v1.12 roadmap created — 12/12 requirements mapped*
