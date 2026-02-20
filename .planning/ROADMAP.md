@@ -609,13 +609,13 @@ Plans:
   4. Sell price displayed is lower than buy price for the same item — the spread is consistent and drawn from the NPC definition or item definition
   5. Player attempts to buy an item without sufficient credits — the transaction is rejected by the server, credits are unchanged, and the client shows an insufficient funds message
   6. Player attempts to buy an item when inventory is full — the transaction is rejected by the server and the client shows an inventory full message
-**Plans**: TBD
+**Plans**: 4 plans in 3 waves
 
 Plans:
-- [ ] 50-01: Trade DB operations (deductCredits, addCredits, atomic buy/sell transactions)
-- [ ] 50-02: TradeService with buy/sell handlers; trade:buy and trade:sell socket events
-- [ ] 50-03: TradingPanel.tsx with trader inventory, buy interface, and sell interface
-- [ ] 50-04: Credit balance sync to client; creditsStore; HUD credit display wiring
+- [ ] 50-01-PLAN.md — Trade DB operations (deductCredits, addCredits) and socket event types
+- [ ] 50-02-PLAN.md — TradeService with buy/sell handlers; trade:buy and trade:sell socket events
+- [ ] 50-03-PLAN.md — TradingPanel.tsx with trader inventory, buy interface, and sell interface
+- [ ] 50-04-PLAN.md — Credit balance sync to client via credits:update socket event
 
 ## Progress
 
@@ -673,9 +673,9 @@ Phases execute in numeric order: 46 -> 47 -> 48 -> 49 -> 50
 | 47. Hub Travel | v1.11 | 5/5 | Complete | 2026-02-20 |
 | 48. NPC Definition System and Hub Spawns | v1.11 | 3/3 | Complete | 2026-02-20 |
 | 49. NPC Interaction Window | v1.11 | 3/3 | Complete | 2026-02-20 |
-| 50. Trading System | v1.11 | TBD | Not started | - |
+| 50. Trading System | v1.11 | 4/4 | Not started | - |
 
 **Total:** 50 phases (49 complete, 1 remaining)
 
 ---
-*Last updated: 2026-02-20 after Phase 49 execution complete*
+*Last updated: 2026-02-20 after Phase 50 planning complete*
