@@ -78,6 +78,10 @@ class GameSocket {
       'player:joined',
       'player:left',
       'player:moved',
+      'player:xp',
+      'player:level',
+      'player:health',
+      'player:regen',
       'combat:start',
       'combat:damage',
       'combat:result',
@@ -89,6 +93,11 @@ class GameSocket {
       'player:death',
       'player:respawn',
       'error',
+      'credits:update',
+      'trade:result',
+      'npc:interact:response',
+      'ability:result',
+      'ability:cooldown',
     ];
 
     for (const event of serverEvents) {
