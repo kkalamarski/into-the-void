@@ -198,8 +198,8 @@ export class TileRenderer {
       }
     }
 
-    // Add edge highlight for elevated tiles
-    this.drawElevationEdge(container, elevation);
+    // Add edge highlight at elevation transitions (cliffs only)
+    this.drawElevationEdge(container, elevation, x, y, heights);
 
     // Set depth using composite depth calculation
     const depth = this.isoTransform.calculateDepth(x, y, elevation);
@@ -260,8 +260,8 @@ export class TileRenderer {
       }
     }
 
-    // Add edge highlight for elevated tiles
-    this.drawElevationEdge(container, elevation);
+    // Add edge highlight at elevation transitions (cliffs only)
+    this.drawElevationEdge(container, elevation, localX, localY, heights);
 
     // Set depth using WORLD coordinates for global sorting
     const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation);
@@ -288,12 +288,30 @@ export class TileRenderer {
   }
 
   /**
-   * Draw edge highlight on elevated tiles for visual depth cues.
-   * Draws a semi-transparent white line along the top-left and top-right edges
-   * of the diamond to indicate elevation. Only draws for elevation >= 1.
+   * Draw edge highlight only at elevation TRANSITIONS (cliffs).
+   * Only draws edges where this tile is higher than its neighbor.
+   * - Top-left edge: drawn if west neighbor (x-1) is lower
+   * - Top-right edge: drawn if north neighbor (y-1) is lower
+   * This creates cliff edges only, not a grid on every tile.
    */
-  private drawElevationEdge(container: Phaser.GameObjects.Container, elevation: number): void {
+  private drawElevationEdge(
+    container: Phaser.GameObjects.Container,
+    elevation: number,
+    localX: number,
+    localY: number,
+    heights: number[][]
+  ): void {
     if (elevation < MIN_ELEVATION_FOR_EDGE) return;
+
+    // Check which neighbors are lower (cliff edges)
+    const westElevation = heights[localY]?.[localX - 1] ?? 0;
+    const northElevation = heights[localY - 1]?.[localX] ?? 0;
+
+    const hasWestCliff = elevation > westElevation;
+    const hasNorthCliff = elevation > northElevation;
+
+    // Only draw if there's at least one cliff edge
+    if (!hasWestCliff && !hasNorthCliff) return;
 
     const halfWidth = this.isoTransform.tileWidth / 2;  // 128
     const halfHeight = this.isoTransform.tileHeight / 2; // 64
@@ -301,17 +319,21 @@ export class TileRenderer {
     const graphics = this.scene.add.graphics();
     graphics.lineStyle(EDGE_HIGHLIGHT_WIDTH, EDGE_HIGHLIGHT_COLOR, EDGE_HIGHLIGHT_ALPHA);
 
-    // Draw top-left edge (from top point to left point of diamond)
-    graphics.beginPath();
-    graphics.moveTo(0, -halfHeight);        // Top point
-    graphics.lineTo(-halfWidth, 0);         // Left point
-    graphics.strokePath();
+    // Draw top-left edge only if west neighbor is lower (cliff face)
+    if (hasWestCliff) {
+      graphics.beginPath();
+      graphics.moveTo(0, -halfHeight);        // Top point
+      graphics.lineTo(-halfWidth, 0);         // Left point
+      graphics.strokePath();
+    }
 
-    // Draw top-right edge (from top point to right point of diamond)
-    graphics.beginPath();
-    graphics.moveTo(0, -halfHeight);        // Top point
-    graphics.lineTo(halfWidth, 0);          // Right point
-    graphics.strokePath();
+    // Draw top-right edge only if north neighbor is lower (cliff face)
+    if (hasNorthCliff) {
+      graphics.beginPath();
+      graphics.moveTo(0, -halfHeight);        // Top point
+      graphics.lineTo(halfWidth, 0);          // Right point
+      graphics.strokePath();
+    }
 
     container.add(graphics);
   }
