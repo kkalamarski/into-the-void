@@ -16,6 +16,9 @@ const EDGE_HIGHLIGHT_ALPHA = 0.3;      // 30% opacity
 const EDGE_HIGHLIGHT_WIDTH = 3;        // 3px line width
 const MIN_ELEVATION_FOR_EDGE = 1;      // Only highlight elevation >= 1
 
+// Elevation shadow for tiles below elevated neighbors
+const SHADOW_TINT_FACTOR = 0.85; // Darken by 15% when adjacent to higher elevation
+
 // Sprite dimensions for the new isometric cube sprites
 const SPRITE_SIZE = 256;
 // The top diamond's center is at (128, 64) in a 256x256 cube sprite
@@ -165,7 +168,7 @@ export class TileRenderer {
     y: number,
     tileId: TileId,
     elevation: number,
-    _heights: number[][]
+    heights: number[][]
   ): Phaser.GameObjects.Container {
     const screenPos = this.isoTransform.gridToScreen(x, y);
     const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
@@ -182,6 +185,18 @@ export class TileRenderer {
 
     // Apply height-based tinting for visual depth
     this.applyElevationTint(cubeSprite, elevation);
+
+    // Apply additional shadow darkening if adjacent to higher elevation
+    if (cubeSprite instanceof Phaser.GameObjects.Image && heights) {
+      if (this.isAdjacentToHigherElevation(x, y, elevation, heights)) {
+        const currentTint = cubeSprite.tintTopLeft;
+        const r = ((currentTint >> 16) & 0xff) * SHADOW_TINT_FACTOR;
+        const g = ((currentTint >> 8) & 0xff) * SHADOW_TINT_FACTOR;
+        const b = (currentTint & 0xff) * SHADOW_TINT_FACTOR;
+        const shadowTint = (Math.floor(r) << 16) | (Math.floor(g) << 8) | Math.floor(b);
+        cubeSprite.setTint(shadowTint);
+      }
+    }
 
     // Add edge highlight for elevated tiles
     this.drawElevationEdge(container, elevation);
@@ -201,18 +216,18 @@ export class TileRenderer {
    * @param worldY World grid Y coordinate (chunkY * ZONE_SIZE + localY)
    * @param tileId The tile type
    * @param elevation Tile elevation
-   * @param _heights Local heights array (unused - side faces now in sprite)
-   * @param _localX Local X within chunk (unused)
-   * @param _localY Local Y within chunk (unused)
+   * @param heights Local heights array for shadow calculation
+   * @param localX Local X within chunk for shadow calculation
+   * @param localY Local Y within chunk for shadow calculation
    */
   createTileWithElevationWorld(
     worldX: number,
     worldY: number,
     tileId: TileId,
     elevation: number,
-    _heights: number[][],
-    _localX: number,
-    _localY: number
+    heights: number[][],
+    localX: number,
+    localY: number
   ): Phaser.GameObjects.Container {
     // Use world coordinates for screen position
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
@@ -231,6 +246,19 @@ export class TileRenderer {
     // Apply height-based tinting for visual depth
     // Lower elevations appear darker, higher elevations appear normal/brighter
     this.applyElevationTint(cubeSprite, elevation);
+
+    // Apply additional shadow darkening if adjacent to higher elevation
+    if (cubeSprite instanceof Phaser.GameObjects.Image) {
+      if (this.isAdjacentToHigherElevation(localX, localY, elevation, heights)) {
+        // Further darken the tile to simulate shadow from adjacent cliff
+        const currentTint = cubeSprite.tintTopLeft;
+        const r = ((currentTint >> 16) & 0xff) * SHADOW_TINT_FACTOR;
+        const g = ((currentTint >> 8) & 0xff) * SHADOW_TINT_FACTOR;
+        const b = (currentTint & 0xff) * SHADOW_TINT_FACTOR;
+        const shadowTint = (Math.floor(r) << 16) | (Math.floor(g) << 8) | Math.floor(b);
+        cubeSprite.setTint(shadowTint);
+      }
+    }
 
     // Add edge highlight for elevated tiles
     this.drawElevationEdge(container, elevation);
@@ -286,6 +314,26 @@ export class TileRenderer {
     graphics.strokePath();
 
     container.add(graphics);
+  }
+
+  /**
+   * Check if a tile is adjacent to any higher elevation tile.
+   * Used to apply shadow darkening for visual depth cues.
+   */
+  private isAdjacentToHigherElevation(
+    localX: number,
+    localY: number,
+    elevation: number,
+    heights: number[][]
+  ): boolean {
+    // Check north (y-1) and west (x-1) neighbors (where light comes from in isometric)
+    const northY = localY - 1;
+    const westX = localX - 1;
+
+    const northElevation = heights[northY]?.[localX] ?? 0;
+    const westElevation = heights[localY]?.[westX] ?? 0;
+
+    return northElevation > elevation || westElevation > elevation;
   }
 
   /**
