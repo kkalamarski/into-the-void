@@ -3,47 +3,83 @@
 **Defined:** 2026-02-17
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.13 Requirements
+## v1.14 Requirements
 
-Requirements for Active Combat Abilities milestone.
+Requirements for Equipment Stats Overhaul milestone.
 
-### Ability Core
+### Type Foundation
 
-- [ ] **ABIL-01**: Ability definition system with id, name, description, category, energy cost, cooldown, range, and effects
-- [ ] **ABIL-02**: Items (suits, tools, modules) define which abilities they grant via grantedAbilities field
-- [ ] **ABIL-03**: Player can click entity to select target without starting auto-attack
-- [ ] **ABIL-04**: Player can use ability via action bar hotkey on selected target
-- [ ] **ABIL-05**: Server validates ability use (range check, energy check, cooldown check, target validity)
-- [ ] **ABIL-06**: Abilities consume energy on successful use
-- [ ] **ABIL-07**: Energy regenerates over time (configurable rate)
-- [ ] **ABIL-08**: Global cooldown (GCD) prevents ability spam (brief lockout after any ability)
+- [ ] **TYPE-01**: Stats effect type has resolver implementation in resolveEffect()
+- [ ] **TYPE-02**: Multi-stat effects resolve correctly (toughness + power in one effect)
+- [ ] **TYPE-03**: Documentation clarifies when to use `stats` vs legacy patterns
 
-### Ability UI
+### Migration
 
-- [ ] **ABUI-01**: Action bar auto-populates with abilities from equipped items
-- [ ] **ABUI-02**: Cooldown displays as radial sweep overlay on ability icon
-- [ ] **ABUI-03**: Ability tooltip shows name, energy cost, cooldown, range, description on hover
-- [ ] **ABUI-04**: Player can drag abilities to rearrange action bar slots
-- [ ] **ABUI-05**: Ability use triggers visual effect/animation on caster and/or target
-- [ ] **ABUI-06**: Insufficient energy or on-cooldown abilities show visual disabled state
+- [ ] **MIGR-01**: All items using `stat_buff` with `duration: 0` converted to `stats` effect
+- [ ] **MIGR-02**: Schema validation prevents `stat_buff` with `duration: 0` in new items
+- [ ] **MIGR-03**: Migration has rollback strategy tested in staging
 
-### Buff System
+### Aggregation
 
-- [ ] **BUFF-01**: Abilities can apply instant effects (immediate heal, damage, stat change)
-- [ ] **BUFF-02**: Abilities can apply duration buffs (temporary stat modification with timer)
-- [ ] **BUFF-03**: Active buffs display as icons near health bar with remaining duration
-- [ ] **BUFF-04**: Buff stat modifiers apply to combat calculations (Power, Toughness, etc.)
-- [ ] **BUFF-05**: Buffs expire after duration and remove their stat modifications
-- [ ] **BUFF-06**: Server tracks buff state and broadcasts buff apply/expire events
+- [ ] **AGGR-01**: Stat aggregation order documented (base → equipment → buffs)
+- [ ] **AGGR-02**: Same equip result regardless of equipment order
+- [ ] **AGGR-03**: Test suite validates known equipment combinations
+
+### Parity
+
+- [ ] **PARI-01**: Stat calculation functions in shared game-logic package
+- [ ] **PARI-02**: Client tooltips use shared calculation logic
+- [ ] **PARI-03**: Integration test asserts server/client parity
 
 ### Content
 
-- [ ] **CONT-01**: 20 ability definitions across Offensive, Defensive, and Utility categories
-- [ ] **CONT-02**: Offensive abilities include Attack, Electrocute, Charge, and similar damage abilities
-- [ ] **CONT-03**: Defensive abilities include Magnetic Field, Toughen, Nano Repair, and similar
-- [ ] **CONT-04**: Utility abilities include Gather and similar non-combat abilities
-- [ ] **CONT-05**: Existing items (suits, tools) updated with grantedAbilities
-- [ ] **CONT-06**: New items added with unique ability combinations
+- [ ] **CONT-01**: Suit stat profiles by archetype (tank/scout/combat/utility)
+- [ ] **CONT-02**: Rarity multipliers applied (1.4x/2.0x/2.8x/4.0x for Rare/Epic/Exotic/Legendary)
+- [ ] **CONT-03**: All equippable items have stats (no `effects: []`)
+- [ ] **CONT-04**: Tools have appropriate stat bonuses
+- [ ] **CONT-05**: Modules have stat bonuses
+
+## v1.13 Requirements (Complete)
+
+Requirements for Active Combat Abilities milestone. All complete.
+
+### Ability Core
+
+- [x] **ABIL-01**: Ability definition system with id, name, description, category, energy cost, cooldown, range, and effects
+- [x] **ABIL-02**: Items (suits, tools, modules) define which abilities they grant via grantedAbilities field
+- [x] **ABIL-03**: Player can click entity to select target without starting auto-attack
+- [x] **ABIL-04**: Player can use ability via action bar hotkey on selected target
+- [x] **ABIL-05**: Server validates ability use (range check, energy check, cooldown check, target validity)
+- [x] **ABIL-06**: Abilities consume energy on successful use
+- [x] **ABIL-07**: Energy regenerates over time (configurable rate)
+- [x] **ABIL-08**: Global cooldown (GCD) prevents ability spam (brief lockout after any ability)
+
+### Ability UI
+
+- [x] **ABUI-01**: Action bar auto-populates with abilities from equipped items
+- [x] **ABUI-02**: Cooldown displays as radial sweep overlay on ability icon
+- [x] **ABUI-03**: Ability tooltip shows name, energy cost, cooldown, range, description on hover
+- [x] **ABUI-04**: Player can drag abilities to rearrange action bar slots
+- [x] **ABUI-05**: Ability use triggers visual effect/animation on caster and/or target
+- [x] **ABUI-06**: Insufficient energy or on-cooldown abilities show visual disabled state
+
+### Buff System
+
+- [x] **BUFF-01**: Abilities can apply instant effects (immediate heal, damage, stat change)
+- [x] **BUFF-02**: Abilities can apply duration buffs (temporary stat modification with timer)
+- [x] **BUFF-03**: Active buffs display as icons near health bar with remaining duration
+- [x] **BUFF-04**: Buff stat modifiers apply to combat calculations (Power, Toughness, etc.)
+- [x] **BUFF-05**: Buffs expire after duration and remove their stat modifications
+- [x] **BUFF-06**: Server tracks buff state and broadcasts buff apply/expire events
+
+### Content
+
+- [x] **CONT-01**: 21 ability definitions across Offensive, Defensive, and Utility categories
+- [x] **CONT-02**: Offensive abilities include Attack, Electrocute, Charge, and similar damage abilities
+- [x] **CONT-03**: Defensive abilities include Magnetic Field, Toughen, Nano Repair, and similar
+- [x] **CONT-04**: Utility abilities include Gather and similar non-combat abilities
+- [x] **CONT-05**: Existing items (suits, tools) updated with grantedAbilities
+- [x] **CONT-06**: New items added with unique ability combinations
 
 ## v1.12 Requirements (Complete)
 
@@ -501,41 +537,68 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-### v1.13 Active Combat Abilities
+### v1.14 Equipment Stats Overhaul
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ABIL-01 | Phase 56 | Pending |
-| ABIL-02 | Phase 56 | Pending |
-| ABIL-03 | Phase 56 | Pending |
-| ABIL-04 | Phase 56 | Pending |
-| ABIL-05 | Phase 56 | Pending |
-| ABIL-06 | Phase 56 | Pending |
-| ABIL-07 | Phase 56 | Pending |
-| ABIL-08 | Phase 56 | Pending |
-| ABUI-01 | Phase 56 | Pending |
-| ABUI-02 | Phase 56 | Pending |
-| ABUI-03 | Phase 56 | Pending |
-| ABUI-04 | Phase 58 | Pending |
-| ABUI-05 | Phase 56 | Pending |
-| ABUI-06 | Phase 56 | Pending |
-| BUFF-01 | Phase 57 | Pending |
-| BUFF-02 | Phase 57 | Pending |
-| BUFF-03 | Phase 57 | Pending |
-| BUFF-04 | Phase 57 | Pending |
-| BUFF-05 | Phase 57 | Pending |
-| BUFF-06 | Phase 57 | Pending |
-| CONT-01 | Phase 58 | Pending |
-| CONT-02 | Phase 58 | Pending |
-| CONT-03 | Phase 58 | Pending |
-| CONT-04 | Phase 58 | Pending |
-| CONT-05 | Phase 58 | Pending |
-| CONT-06 | Phase 58 | Pending |
+| TYPE-01 | — | Pending |
+| TYPE-02 | — | Pending |
+| TYPE-03 | — | Pending |
+| MIGR-01 | — | Pending |
+| MIGR-02 | — | Pending |
+| MIGR-03 | — | Pending |
+| AGGR-01 | — | Pending |
+| AGGR-02 | — | Pending |
+| AGGR-03 | — | Pending |
+| PARI-01 | — | Pending |
+| PARI-02 | — | Pending |
+| PARI-03 | — | Pending |
+| CONT-01 | — | Pending |
+| CONT-02 | — | Pending |
+| CONT-03 | — | Pending |
+| CONT-04 | — | Pending |
+| CONT-05 | — | Pending |
+
+**Coverage:**
+- v1.14 requirements: 17 total
+- Mapped to phases: 0
+- Unmapped: 17 (pending roadmap)
+
+### v1.13 Active Combat Abilities (Complete)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| ABIL-01 | Phase 56 | Complete |
+| ABIL-02 | Phase 56 | Complete |
+| ABIL-03 | Phase 56 | Complete |
+| ABIL-04 | Phase 56 | Complete |
+| ABIL-05 | Phase 56 | Complete |
+| ABIL-06 | Phase 56 | Complete |
+| ABIL-07 | Phase 56 | Complete |
+| ABIL-08 | Phase 56 | Complete |
+| ABUI-01 | Phase 56 | Complete |
+| ABUI-02 | Phase 56 | Complete |
+| ABUI-03 | Phase 56 | Complete |
+| ABUI-04 | Phase 58 | Complete |
+| ABUI-05 | Phase 56 | Complete |
+| ABUI-06 | Phase 56 | Complete |
+| BUFF-01 | Phase 57 | Complete |
+| BUFF-02 | Phase 57 | Complete |
+| BUFF-03 | Phase 57 | Complete |
+| BUFF-04 | Phase 57 | Complete |
+| BUFF-05 | Phase 57 | Complete |
+| BUFF-06 | Phase 57 | Complete |
+| CONT-01 | Phase 58 | Complete |
+| CONT-02 | Phase 58 | Complete |
+| CONT-03 | Phase 58 | Complete |
+| CONT-04 | Phase 58 | Complete |
+| CONT-05 | Phase 58 | Complete |
+| CONT-06 | Phase 58 | Complete |
 
 **Coverage:**
 - v1.13 requirements: 26 total
 - Mapped to phases: 26
-- Unmapped: 0 ✓
+- Complete: 26 ✓
 
 ### v1.12 Bug Fixes & Content Polish (Complete)
 
@@ -716,4 +779,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-20 after v1.13 roadmap created — traceability complete*
+*Last updated: 2026-02-21 after v1.14 requirements defined*
