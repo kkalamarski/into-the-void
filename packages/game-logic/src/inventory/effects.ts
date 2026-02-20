@@ -87,6 +87,32 @@ export function resolveEffect(effect: ItemEffect): EffectResult {
         applied: { jumpHeight: effect.jumpHeight },
       };
 
+    case 'stats': {
+      // Build applied object from defined stats (filter out undefined)
+      const applied: Record<string, number> = {};
+      if (effect.durability !== undefined) applied.durability = effect.durability;
+      if (effect.toughness !== undefined) applied.toughness = effect.toughness;
+      if (effect.power !== undefined) applied.power = effect.power;
+      if (effect.haste !== undefined) applied.haste = effect.haste;
+      if (effect.vigor !== undefined) applied.vigor = effect.vigor;
+      if (effect.recovery !== undefined) applied.recovery = effect.recovery;
+      if (effect.perception !== undefined) applied.perception = effect.perception;
+      if (effect.resilience !== undefined) applied.resilience = effect.resilience;
+
+      return {
+        type: 'stats',
+        applied,
+      };
+    }
+
+    case 'emergency_reboot':
+      // Emergency reboot is handled specially by the death/respawn system
+      // The healPercent value is used by the respawn handler, not here
+      return {
+        type: 'emergency_reboot',
+        applied: { healthPercent: effect.healPercent },
+      };
+
     default: {
       // Exhaustive check - TypeScript will error if a case is missed
       const _exhaustive: never = effect;
