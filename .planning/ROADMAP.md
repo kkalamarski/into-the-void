@@ -593,9 +593,9 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 49-01-PLAN.md — npcStore Zustand store; npc:interact socket event; server handler returns NPC definition
-- [ ] 49-02-PLAN.md — NpcInteractionModal.tsx with portrait, name, type label, dialogue text
-- [ ] 49-03-PLAN.md — Action buttons per NPC type; Escape key dismissal; Phaser input guard
+- [x] 49-01-PLAN.md — npcStore Zustand store; npc:interact socket event; server handler returns NPC definition
+- [x] 49-02-PLAN.md — NpcInteractionModal.tsx with portrait, name, type label, dialogue text
+- [x] 49-03-PLAN.md — Action buttons per NPC type; Escape key dismissal; Phaser input guard
 
 #### Phase 50: Trading System
 
@@ -672,10 +672,10 @@ Phases execute in numeric order: 46 -> 47 -> 48 -> 49 -> 50
 | 46. Currency and Hub Foundation | v1.11 | 3/3 | Complete | 2026-02-19 |
 | 47. Hub Travel | v1.11 | 5/5 | Complete | 2026-02-20 |
 | 48. NPC Definition System and Hub Spawns | v1.11 | 3/3 | Complete | 2026-02-20 |
-| 49. NPC Interaction Window | v1.11 | 3/3 | Not started | - |
+| 49. NPC Interaction Window | v1.11 | 3/3 | Complete | 2026-02-20 |
 | 50. Trading System | v1.11 | TBD | Not started | - |
 
-**Total:** 50 phases (48 complete, 2 remaining)
+**Total:** 50 phases (49 complete, 1 remaining)
 
 ---
-*Last updated: 2026-02-20 after Phase 48 execution complete*
+*Last updated: 2026-02-20 after Phase 49 execution complete*
