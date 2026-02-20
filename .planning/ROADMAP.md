@@ -15,6 +15,7 @@
 - ✅ **v1.10 Combat UX** - Phases 43-45 (shipped 2026-02-19)
 - ✅ **v1.11 NPCs & Trading** - Phases 46-50 (shipped 2026-02-20)
 - ✅ **v1.12 Bug Fixes & Content Polish** - Phases 51-55 (shipped 2026-02-20)
+- 🚧 **v1.13 Active Combat Abilities** - Phases 56-58 (in progress)
 
 ## Phases
 
@@ -234,10 +235,65 @@ Plans:
 
 </details>
 
+### 🚧 v1.13 Active Combat Abilities (In Progress)
+
+**Milestone Goal:** Replace auto-attack with manual ability system where items grant abilities used via action bar hotkeys.
+
+#### Phase 56: Core Ability System
+
+**Goal**: Players can use item-granted abilities with energy costs and cooldowns
+**Depends on**: Phase 55
+**Requirements**: ABIL-01, ABIL-02, ABIL-03, ABIL-04, ABIL-05, ABIL-06, ABIL-07, ABIL-08, ABUI-01, ABUI-02, ABUI-03, ABUI-05, ABUI-06
+**Success Criteria** (what must be TRUE):
+  1. Player can see abilities from equipped items in action bar
+  2. Player can click entity to select target without auto-attack
+  3. Player can use ability via hotkey on selected target
+  4. Ability consumes energy and goes on cooldown when used
+  5. Cooldown displays as radial sweep overlay on ability icon
+  6. Energy regenerates over time at visible rate
+**Plans**: TBD
+
+Plans:
+- [ ] 56-01: TBD
+- [ ] 56-02: TBD
+- [ ] 56-03: TBD
+
+#### Phase 57: Buff System
+
+**Goal**: Abilities can apply temporary stat modifications with visual feedback
+**Depends on**: Phase 56
+**Requirements**: BUFF-01, BUFF-02, BUFF-03, BUFF-04, BUFF-05, BUFF-06
+**Success Criteria** (what must be TRUE):
+  1. Defensive abilities apply duration buffs with stat increases
+  2. Active buffs display as icons with remaining duration timers
+  3. Buffed stats affect combat damage and survivability
+  4. Buffs automatically expire and remove stat modifications
+**Plans**: TBD
+
+Plans:
+- [ ] 57-01: TBD
+- [ ] 57-02: TBD
+
+#### Phase 58: Ability Content & Polish
+
+**Goal**: 20+ abilities defined and action bar is fully polished
+**Depends on**: Phase 57
+**Requirements**: ABUI-04, CONT-01, CONT-02, CONT-03, CONT-04, CONT-05, CONT-06
+**Success Criteria** (what must be TRUE):
+  1. 20+ abilities exist across Offensive, Defensive, Utility categories
+  2. Existing items updated with grantedAbilities field
+  3. Player can drag abilities to rearrange action bar slots
+  4. New items added with unique ability combinations
+**Plans**: TBD
+
+Plans:
+- [ ] 58-01: TBD
+- [ ] 58-02: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55
+Phases execute in numeric order: 56 → 57 → 58
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -296,8 +352,11 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55
 | 53. Rendering & Depth Fixes | v1.12 | 2/2 | Complete | 2026-02-20 |
 | 54. New Player Starter Kit | v1.12 | 1/1 | Complete | 2026-02-20 |
 | 55. Content Expansion | v1.12 | 3/3 | Complete | 2026-02-20 |
+| 56. Core Ability System | v1.13 | 0/3 | Not started | - |
+| 57. Buff System | v1.13 | 0/2 | Not started | - |
+| 58. Ability Content & Polish | v1.13 | 0/2 | Not started | - |
 
-**Total:** 55 phases (55 complete, 0 remaining)
+**Total:** 58 phases (55 complete, 3 remaining)
 
 ---
-*Last updated: 2026-02-20 after v1.12 roadmap created*
+*Last updated: 2026-02-20 after v1.13 roadmap created*

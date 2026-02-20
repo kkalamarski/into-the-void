@@ -505,37 +505,37 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ABIL-01 | — | Pending |
-| ABIL-02 | — | Pending |
-| ABIL-03 | — | Pending |
-| ABIL-04 | — | Pending |
-| ABIL-05 | — | Pending |
-| ABIL-06 | — | Pending |
-| ABIL-07 | — | Pending |
-| ABIL-08 | — | Pending |
-| ABUI-01 | — | Pending |
-| ABUI-02 | — | Pending |
-| ABUI-03 | — | Pending |
-| ABUI-04 | — | Pending |
-| ABUI-05 | — | Pending |
-| ABUI-06 | — | Pending |
-| BUFF-01 | — | Pending |
-| BUFF-02 | — | Pending |
-| BUFF-03 | — | Pending |
-| BUFF-04 | — | Pending |
-| BUFF-05 | — | Pending |
-| BUFF-06 | — | Pending |
-| CONT-01 | — | Pending |
-| CONT-02 | — | Pending |
-| CONT-03 | — | Pending |
-| CONT-04 | — | Pending |
-| CONT-05 | — | Pending |
-| CONT-06 | — | Pending |
+| ABIL-01 | Phase 56 | Pending |
+| ABIL-02 | Phase 56 | Pending |
+| ABIL-03 | Phase 56 | Pending |
+| ABIL-04 | Phase 56 | Pending |
+| ABIL-05 | Phase 56 | Pending |
+| ABIL-06 | Phase 56 | Pending |
+| ABIL-07 | Phase 56 | Pending |
+| ABIL-08 | Phase 56 | Pending |
+| ABUI-01 | Phase 56 | Pending |
+| ABUI-02 | Phase 56 | Pending |
+| ABUI-03 | Phase 56 | Pending |
+| ABUI-04 | Phase 58 | Pending |
+| ABUI-05 | Phase 56 | Pending |
+| ABUI-06 | Phase 56 | Pending |
+| BUFF-01 | Phase 57 | Pending |
+| BUFF-02 | Phase 57 | Pending |
+| BUFF-03 | Phase 57 | Pending |
+| BUFF-04 | Phase 57 | Pending |
+| BUFF-05 | Phase 57 | Pending |
+| BUFF-06 | Phase 57 | Pending |
+| CONT-01 | Phase 58 | Pending |
+| CONT-02 | Phase 58 | Pending |
+| CONT-03 | Phase 58 | Pending |
+| CONT-04 | Phase 58 | Pending |
+| CONT-05 | Phase 58 | Pending |
+| CONT-06 | Phase 58 | Pending |
 
 **Coverage:**
 - v1.13 requirements: 26 total
-- Mapped to phases: 0
-- Unmapped: 26 ⚠️
+- Mapped to phases: 26
+- Unmapped: 0 ✓
 
 ### v1.12 Bug Fixes & Content Polish (Complete)
 
@@ -716,4 +716,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-20 after v1.13 requirements defined — 26 new requirements*
+*Last updated: 2026-02-20 after v1.13 roadmap created — traceability complete*
