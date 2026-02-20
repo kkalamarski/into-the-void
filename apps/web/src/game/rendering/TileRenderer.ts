@@ -11,9 +11,9 @@ const ELEVATION_TINT_BASE = 0.55;
 const ELEVATION_TINT_STEP = 0.15;
 
 // Elevation edge highlight for visual depth cues
-const EDGE_HIGHLIGHT_COLOR = 0xffffff; // White highlight
-const EDGE_HIGHLIGHT_ALPHA = 0.3;      // 30% opacity
-const EDGE_HIGHLIGHT_WIDTH = 3;        // 3px line width
+const EDGE_HIGHLIGHT_COLOR = 0x000000; // Dark edge (shadow line)
+const EDGE_HIGHLIGHT_ALPHA = 0.4;      // 40% opacity
+const EDGE_HIGHLIGHT_WIDTH = 2;        // 2px line width
 const MIN_ELEVATION_FOR_EDGE = 1;      // Only highlight elevation >= 1
 
 // Elevation shadow for tiles below elevated neighbors
