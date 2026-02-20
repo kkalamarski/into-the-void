@@ -4,11 +4,11 @@ import { IsometricTransform } from '../utils/IsometricTransform';
 /**
  * Manages depth sorting for entities with throttled updates.
  * Entities marked dirty have their depth recalculated on next update cycle.
- * Update frequency: 100ms (Claude's discretion for performance vs visual quality).
+ * Update frequency: 33ms (~30fps) for smooth depth transitions during movement.
  */
 export class DepthSorter {
   private lastUpdateTime = 0;
-  private updateInterval = 100; // ms between depth updates
+  private updateInterval = 33; // ~30fps depth updates for smooth movement
   private dirtyEntities = new Set<string>();
   private localPlayerId: string | null = null;
   private localPlayerPriority = 0.001; // Small boost to ensure local player visible
@@ -30,7 +30,7 @@ export class DepthSorter {
 
   /**
    * Update depths for dirty entities.
-   * Throttled to updateInterval (100ms).
+   * Throttled to updateInterval (33ms).
    *
    * @param time - Current game time in ms
    * @param entities - Map of entity ID to Phaser container
