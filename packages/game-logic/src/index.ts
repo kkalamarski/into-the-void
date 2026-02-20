@@ -32,3 +32,6 @@ export * from './loot/creature-loot';
 
 // AI
 export * from './ai/creature-ai';
+
+// Abilities
+export { AbilityRegistry } from './ability/ability-registry';
