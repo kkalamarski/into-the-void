@@ -459,3 +459,13 @@ gameSocket.on('error', ({ code, message }: { code: string; message: string }) =>
   };
   useGameStore.getState().addChatMessage(chatMessage);
 });
+
+// Listen for credits updates (from trading)
+gameSocket.on('credits:update', (data: { credits: number }) => {
+  const state = useGameStore.getState();
+  if (state.player) {
+    useGameStore.setState({
+      player: { ...state.player, credits: data.credits },
+    });
+  }
+});
