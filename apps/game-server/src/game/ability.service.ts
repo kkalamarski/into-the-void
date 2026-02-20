@@ -6,7 +6,7 @@ import { InventoryService } from './inventory.service';
 import { Creature, isHubZone } from '@into-the-void/shared-types';
 import { AbilityRegistry, canInteract, calculateDamage, computeCharStats } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
-import type { AbilityDefinition } from '@into-the-void/shared-types';
+import type { AbilityDefinition, Buff } from '@into-the-void/shared-types';
 import type { EquipmentJson } from '@into-the-void/database';
 
 interface AbilityCooldown {
@@ -35,6 +35,12 @@ export class AbilityService {
   /** GCD indexed by playerId - timestamp when GCD expires */
   private globalCooldowns: Map<string, number> = new Map();
 
+  /** Active buffs indexed by playerId */
+  private activeBuffs: Map<string, Buff[]> = new Map();
+
+  /** Buff expiration tick interval handle */
+  private buffTickInterval: NodeJS.Timeout | null = null;
+
   private server: Server | null = null;
 
   constructor(
@@ -45,6 +51,7 @@ export class AbilityService {
 
   setServer(server: Server): void {
     this.server = server;
+    this.startBuffTick();
   }
 
   /**
@@ -263,6 +270,9 @@ export class AbilityService {
    * Clean up cooldowns for disconnected player.
    */
   handleDisconnect(playerId: string): void {
+    // Clear all active buffs
+    this.clearBuffs(playerId);
+
     // Clean up all cooldowns for this player
     const keysToDelete: string[] = [];
     for (const key of this.cooldowns.keys()) {
@@ -272,5 +282,138 @@ export class AbilityService {
     }
     keysToDelete.forEach(k => this.cooldowns.delete(k));
     this.globalCooldowns.delete(playerId);
+  }
+
+  /**
+   * Get all active buffs for a player.
+   */
+  getActiveBuffs(playerId: string): Buff[] {
+    return this.activeBuffs.get(playerId) ?? [];
+  }
+
+  /**
+   * Apply a buff to a player. If same abilityId+stat exists, refresh duration.
+   */
+  applyBuff(playerId: string, buff: Buff): void {
+    const buffs = this.activeBuffs.get(playerId) ?? [];
+
+    // Check for existing buff with same abilityId + stat (refresh strategy)
+    const existingIndex = buffs.findIndex(
+      (b) => b.abilityId === buff.abilityId && b.stat === buff.stat
+    );
+
+    if (existingIndex >= 0) {
+      // Refresh duration, keep same buff id
+      buffs[existingIndex].expiresAt = buff.expiresAt;
+    } else {
+      // Add new buff (max 15 buffs per player)
+      if (buffs.length >= 15) {
+        // Remove oldest buff
+        const removed = buffs.shift();
+        if (removed) {
+          this.emitBuffExpire(playerId, removed.id);
+        }
+      }
+      buffs.push(buff);
+    }
+
+    this.activeBuffs.set(playerId, buffs);
+
+    // Emit buff:apply to player's zone
+    const player = this.playerService.getPlayerById(playerId);
+    if (player && this.server) {
+      this.server.to(player.position.zoneId).emit('buff:apply', {
+        buffId: buff.id,
+        displayName: buff.displayName,
+        stat: buff.stat,
+        amount: buff.amount,
+        expiresAt: buff.expiresAt,
+        iconColor: buff.iconColor,
+      });
+    }
+  }
+
+  /**
+   * Remove a buff from a player.
+   */
+  removeBuff(playerId: string, buffId: string): void {
+    const buffs = this.activeBuffs.get(playerId);
+    if (!buffs) return;
+
+    const index = buffs.findIndex((b) => b.id === buffId);
+    if (index >= 0) {
+      buffs.splice(index, 1);
+      if (buffs.length === 0) {
+        this.activeBuffs.delete(playerId);
+      }
+      this.emitBuffExpire(playerId, buffId);
+    }
+  }
+
+  /**
+   * Emit buff:expire event to player's zone.
+   */
+  private emitBuffExpire(playerId: string, buffId: string): void {
+    const player = this.playerService.getPlayerById(playerId);
+    if (player && this.server) {
+      this.server.to(player.position.zoneId).emit('buff:expire', { buffId });
+    }
+  }
+
+  /**
+   * Start the buff expiration tick loop.
+   * Should be called once in setServer().
+   */
+  startBuffTick(): void {
+    if (this.buffTickInterval) return;
+
+    this.buffTickInterval = setInterval(() => {
+      this.tickBuffExpiration();
+    }, 500); // Check every 500ms
+  }
+
+  /**
+   * Stop the buff expiration tick loop.
+   */
+  stopBuffTick(): void {
+    if (this.buffTickInterval) {
+      clearInterval(this.buffTickInterval);
+      this.buffTickInterval = null;
+    }
+  }
+
+  /**
+   * Check for expired buffs and remove them.
+   */
+  private tickBuffExpiration(): void {
+    const now = Date.now();
+
+    for (const [playerId, buffs] of this.activeBuffs.entries()) {
+      const expired: string[] = [];
+
+      for (const buff of buffs) {
+        if (now >= buff.expiresAt) {
+          expired.push(buff.id);
+        }
+      }
+
+      // Remove expired buffs and emit events
+      for (const buffId of expired) {
+        this.removeBuff(playerId, buffId);
+      }
+    }
+  }
+
+  /**
+   * Clear all buffs for a player (called on disconnect/death).
+   */
+  clearBuffs(playerId: string): void {
+    const buffs = this.activeBuffs.get(playerId);
+    if (buffs) {
+      for (const buff of buffs) {
+        this.emitBuffExpire(playerId, buff.id);
+      }
+      this.activeBuffs.delete(playerId);
+    }
   }
 }
