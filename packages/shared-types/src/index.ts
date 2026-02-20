@@ -16,6 +16,7 @@ export * from './game/storage';
 export * from './game/stats';
 export * from './game/entity-registry';
 export * from './game/ability';
+export * from './game/buff';
 
 // Network types
 export * from './network/events';
