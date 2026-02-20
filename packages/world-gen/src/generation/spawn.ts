@@ -30,6 +30,7 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   void_plains: {
     creatures: [
       { id: ENTITY_IDS.CREATURE_VOID_CRAWLER, weight: 10, minLevel: 1, maxLevel: 5 },
+      { id: ENTITY_IDS.CREATURE_COASTAL_SCUTTLER, weight: 8, minLevel: 1, maxLevel: 4 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_VOID_CRYSTAL, weight: 10, rarity: 1 },
@@ -40,6 +41,7 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   crystal_caves: {
     creatures: [
       { id: ENTITY_IDS.CREATURE_CRYSTAL_HUNTER, weight: 8, minLevel: 5, maxLevel: 15 },
+      { id: ENTITY_IDS.CREATURE_CRYSTAL_CRAWLER, weight: 6, minLevel: 5, maxLevel: 12 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_PRISMATIC_CRYSTAL, weight: 8, rarity: 2 },
@@ -60,6 +62,7 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   ancient_ruins: {
     creatures: [
       { id: ENTITY_IDS.CREATURE_VOID_HORROR, weight: 3, minLevel: 10, maxLevel: 25 },
+      { id: ENTITY_IDS.CREATURE_RUIN_SEEKER, weight: 4, minLevel: 18, maxLevel: 30 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_ANOMALY_CRYSTAL, weight: 5, rarity: 3 },
@@ -69,7 +72,8 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   frozen_expanse: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_FROST_STALKER, weight: 5, minLevel: 10, maxLevel: 25 },
+      { id: ENTITY_IDS.CREATURE_FROST_STALKER, weight: 5, minLevel: 10, maxLevel: 22 },
+      { id: ENTITY_IDS.CREATURE_ICE_BURROWER, weight: 4, minLevel: 12, maxLevel: 24 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_PERMAFROST_SHARD, weight: 6, rarity: 2 },
@@ -80,6 +84,7 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   volcanic_ridge: {
     creatures: [
       { id: ENTITY_IDS.CREATURE_MAGMA_BEAST, weight: 4, minLevel: 12, maxLevel: 28 },
+      { id: ENTITY_IDS.CREATURE_ASH_SKIMMER, weight: 6, minLevel: 10, maxLevel: 20 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_VOLCANIC_ORE, weight: 8, rarity: 2 },
@@ -111,6 +116,7 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   miasma_marshes: {
     creatures: [
       { id: ENTITY_IDS.CREATURE_MARSH_LURKER, weight: 7, minLevel: 5, maxLevel: 15 },
+      { id: ENTITY_IDS.CREATURE_MIASMA_DRIFTER, weight: 6, minLevel: 3, maxLevel: 10 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_CHEMICAL_SUMP, weight: 8, rarity: 2 },
@@ -121,6 +127,7 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   petrified_expanse: {
     creatures: [
       { id: ENTITY_IDS.CREATURE_DART_RUNNER, weight: 8, minLevel: 6, maxLevel: 16 },
+      { id: ENTITY_IDS.CREATURE_PETRIFIED_LURKER, weight: 5, minLevel: 8, maxLevel: 18 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_MINERALIZED_LOG, weight: 6, rarity: 2 },
