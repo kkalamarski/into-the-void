@@ -70,6 +70,8 @@ export class PlayerService {
       await updateLastPlayed(db, characterId);
 
       // Create connected player from character data
+      // Player position is restored from database - supports both open-world and hub zones
+      // Position persistence is handled by handleDisconnect saving to DB
       const player: ConnectedPlayer = {
         id: character.id,
         accountId: character.accountId,
@@ -104,6 +106,11 @@ export class PlayerService {
     }
   }
 
+  /**
+   * Handle player disconnect - saves position and inventory to database.
+   * Position is persisted so player spawns at same location on next login.
+   * Works for both graceful disconnects and abrupt drops (browser close, network loss).
+   */
   async handleDisconnect(socketId: string): Promise<void> {
     const playerId = this.socketToPlayer.get(socketId);
     if (playerId) {
@@ -372,6 +379,10 @@ export class PlayerService {
     return players;
   }
 
+  /**
+   * Update player position in memory (called during movement).
+   * Note: This is in-memory only. Persistence to DB happens on disconnect.
+   */
   updatePosition(playerId: string, position: Position): void {
     const player = this.players.get(playerId);
     if (player) {
