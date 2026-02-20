@@ -541,28 +541,28 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TYPE-01 | — | Pending |
-| TYPE-02 | — | Pending |
-| TYPE-03 | — | Pending |
-| MIGR-01 | — | Pending |
-| MIGR-02 | — | Pending |
-| MIGR-03 | — | Pending |
-| AGGR-01 | — | Pending |
-| AGGR-02 | — | Pending |
-| AGGR-03 | — | Pending |
-| PARI-01 | — | Pending |
-| PARI-02 | — | Pending |
-| PARI-03 | — | Pending |
-| CONT-01 | — | Pending |
-| CONT-02 | — | Pending |
-| CONT-03 | — | Pending |
-| CONT-04 | — | Pending |
-| CONT-05 | — | Pending |
+| TYPE-01 | Phase 59 | Pending |
+| TYPE-02 | Phase 59 | Pending |
+| TYPE-03 | Phase 59 | Pending |
+| MIGR-01 | Phase 60 | Pending |
+| MIGR-02 | Phase 60 | Pending |
+| MIGR-03 | Phase 60 | Pending |
+| AGGR-01 | Phase 61 | Pending |
+| AGGR-02 | Phase 61 | Pending |
+| AGGR-03 | Phase 61 | Pending |
+| PARI-01 | Phase 62 | Pending |
+| PARI-02 | Phase 62 | Pending |
+| PARI-03 | Phase 62 | Pending |
+| CONT-01 | Phase 63 | Pending |
+| CONT-02 | Phase 63 | Pending |
+| CONT-03 | Phase 63 | Pending |
+| CONT-04 | Phase 63 | Pending |
+| CONT-05 | Phase 63 | Pending |
 
 **Coverage:**
 - v1.14 requirements: 17 total
-- Mapped to phases: 0
-- Unmapped: 17 (pending roadmap)
+- Mapped to phases: 17
+- Unmapped: 0 ✓
 
 ### v1.13 Active Combat Abilities (Complete)
 
@@ -779,4 +779,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-21 after v1.14 requirements defined*
+*Last updated: 2026-02-21 after v1.14 roadmap created*

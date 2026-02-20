@@ -5,21 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-21)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.14 Equipment Stats Overhaul
+**Current focus:** Phase 59 - Type Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-21 — Milestone v1.14 started
+Phase: 59 of 63 (Type Foundation)
+Plan: Ready to plan
+Status: Ready to plan
+Last activity: 2026-02-21 — v1.14 roadmap created, milestone started
+
+Progress: [████████████████████████████████████████████████████████████████████████████████░░░░░░░░] 92%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 177 (Phase 58 complete - all 58 phases finished)
-- Average duration: ~3m per plan
-- Total execution time: ~6.9 hours across 13 milestones
+- Total plans completed: 177
+- Average duration: ~3 min per plan
+- Total execution time: ~8.9 hours across 13 milestones
 
 **By Milestone:**
 
@@ -39,14 +41,10 @@ Last activity: 2026-02-21 — Milestone v1.14 started
 | v1.11 | 46-50 | 18 | 2 days |
 | v1.12 | 51-55 | 9 | 1 day |
 | v1.13 | 56-58 | 9 | Complete |
+| v1.14 | 59-63 | 0/5 | In progress |
 
 **Recent Trend:**
-Stable velocity with comprehensive features. v1.12 lightweight, v1.11 feature-rich. Phase 57 completed with buff system infrastructure. Phase 58 completed ability content and polish (21 abilities across all items, drag-to-rearrange action bar, 8 new hybrid/specialized items). Milestone v1.13 (Active Combat Abilities) complete.
-
-**Recent Plans:**
-| Phase 58 P01 | 5min | 3 tasks | 3 files |
-| Phase 58 P02 | 3min | 3 tasks | 3 files |
-| Phase 58 P03 | 8min | 2 tasks | 3 files |
+Stable velocity. Milestone v1.13 complete. Starting v1.14 Equipment Stats Overhaul.
 
 ## Accumulated Context
 
@@ -55,36 +53,10 @@ Stable velocity with comprehensive features. v1.12 lightweight, v1.11 feature-ri
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Item-granted abilities as differentiator (not skill trees)
-- Client-side prediction for responsive combat feel
-- Server-authoritative validation for all ability execution
-- Energy resource already exists (from v1.7 Stats)
-- Action bar already exists (from v1.6 Inventory)
-- WebSocket event pattern established
-- AbilityEffect uses discriminated union for type-safe effect handling (56-01)
-- AbilityRegistry singleton mirrors ItemRegistry pattern for consistency (56-01)
-- 500ms global cooldown (GCD) prevents ability spam (56-02)
-- Server-authoritative ability validation: GCD → ownership → cooldown → energy → target → range (56-02)
-- Abilities granted by equipped items (tool/suit/modules) for item-based progression (56-02)
-- Action bar shows abilities from equipment (56-03)
-- Radial cooldown overlay using conic-gradient for visual feedback (56-03)
-- Target selection decoupled from auto-attack for ability-based combat (56-03)
-- Buff refresh strategy: same abilityId+stat refreshes duration instead of stacking (57-01)
-- Max 15 buffs per player with FIFO eviction to prevent unbounded growth (57-01)
-- 500ms tick interval for buff expiration checks (57-01)
-- Buff stat modifiers apply after equipment bonuses in stat computation (57-02)
-- Heal effects use buffed Power stat for scaling calculations (57-02)
-- Both player offense and defense benefit from active buffs (57-02)
-- crypto.randomUUID() used for buff ID generation (57-02)
-- [Phase 57-03]: Follow abilityStore pattern for socket event wiring (module-level in store file)
-- [Phase 57-03]: 100ms interval for buff duration countdown (10 updates/second)
-- [Phase 57-03]: Expiring animation threshold at 3 seconds for player reaction time
-- [Phase 58-01]: Added 18 new abilities for 21 total across offensive/defensive/utility categories
-- [Phase 58-01]: Item rarity determines ability count: Common=1-2, Rare=2-3, Epic=3-4, Exotic=4-5, Legendary=5-6
-- [Phase 58-01]: Tool abilities match tool type: mining=extraction+damage, combat=offense, research=utility+analysis
-- [Phase 58]: Drag-to-rearrange action bar using @dnd-kit with slot swapping and localStorage persistence (58-02)
-- [Phase 58-03]: New tool types added: bio, demolition, stealth, anomaly for specialized equipment categories
-- [Phase 58-03]: Hybrid tools combine abilities from multiple categories for unique build archetypes
+- Phase 56-58: Ability system with item-granted abilities (not skill trees)
+- Phase 30-32: 8-stat character system with server-authoritative computation
+- Phase 25-29: Item definition system with strategy pattern and effects array
+- Phase 57: Buff stat modifiers apply after equipment bonuses in stat computation
 
 ### Pending Todos
 
@@ -92,20 +64,16 @@ None.
 
 ### Blockers/Concerns
 
-None. All infrastructure required for ability system exists:
-- Action bar (from v1.6 Inventory)
-- Energy stat (from v1.7 Stats)
-- Combat service (from v1.9 Combat)
-- Item definitions (from v1.6 Items)
-- WebSocket events (established pattern)
+**Known issues from previous milestones:**
+- Legacy stat_buff with duration: 0 pattern exists in 43+ item definitions (needs migration)
+- Client tooltip calculations may diverge from server (no shared code yet)
+- Stat aggregation order not explicitly defined (needs documentation)
 
 ## Session Continuity
 
-Last session: 2026-02-20
-Stopped at: Completed 58-03-PLAN.md
+Last session: 2026-02-21
+Stopped at: v1.14 roadmap created, ready to plan Phase 59
 Resume file: None
 
-**Next action:** Define requirements for v1.14 Equipment Stats Overhaul, then create roadmap.
-
 ---
-*Last updated: 2026-02-21 after v1.14 milestone start*
+*Last updated: 2026-02-21 after v1.14 roadmap initialization*

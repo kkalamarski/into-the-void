@@ -15,7 +15,8 @@
 - ✅ **v1.10 Combat UX** - Phases 43-45 (shipped 2026-02-19)
 - ✅ **v1.11 NPCs & Trading** - Phases 46-50 (shipped 2026-02-20)
 - ✅ **v1.12 Bug Fixes & Content Polish** - Phases 51-55 (shipped 2026-02-20)
-- 🚧 **v1.13 Active Combat Abilities** - Phases 56-58 (in progress)
+- ✅ **v1.13 Active Combat Abilities** - Phases 56-58 (shipped 2026-02-21)
+- 🚧 **v1.14 Equipment Stats Overhaul** - Phases 59-63 (in progress)
 
 ## Phases
 
@@ -235,11 +236,12 @@ Plans:
 
 </details>
 
-### 🚧 v1.13 Active Combat Abilities (In Progress)
+<details>
+<summary>✅ v1.13 Active Combat Abilities (Phases 56-58) - SHIPPED 2026-02-21</summary>
 
 **Milestone Goal:** Replace auto-attack with manual ability system where items grant abilities used via action bar hotkeys.
 
-#### Phase 56: Core Ability System
+#### Phase 56: Core Ability System ✓
 
 **Goal**: Players can use item-granted abilities with energy costs and cooldowns
 **Depends on**: Phase 55
@@ -252,13 +254,14 @@ Plans:
   5. Cooldown displays as radial sweep overlay on ability icon
   6. Energy regenerates over time at visible rate
 **Plans**: 3 plans in 2 waves
+**Status**: Complete (2026-02-20)
 
 Plans:
 - [x] 56-01-PLAN.md — Ability Foundation (types, registry, item association)
 - [x] 56-02-PLAN.md — Server Validation & Execution (AbilityService, socket events)
 - [x] 56-03-PLAN.md — Client UI & State (action bar abilities, target selection, cooldown display)
 
-#### Phase 57: Buff System
+#### Phase 57: Buff System ✓
 
 **Goal**: Abilities can apply temporary stat modifications with visual feedback
 **Depends on**: Phase 56
@@ -269,7 +272,6 @@ Plans:
   3. Buffed stats affect combat damage and survivability
   4. Buffs automatically expire and remove stat modifications
 **Plans**: 3 plans in 2 waves
-
 **Status**: Complete (2026-02-20)
 
 Plans:
@@ -277,7 +279,7 @@ Plans:
 - [x] 57-02-PLAN.md - Buff Effect Execution & Stat Integration (Wave 2)
 - [x] 57-03-PLAN.md - Client Buff UI & Visual Feedback (Wave 2)
 
-#### Phase 58: Ability Content & Polish
+#### Phase 58: Ability Content & Polish ✓
 
 **Goal**: 20+ abilities defined and action bar is fully polished
 **Depends on**: Phase 57
@@ -288,16 +290,95 @@ Plans:
   3. Player can drag abilities to rearrange action bar slots
   4. New items added with unique ability combinations
 **Plans**: 3 plans in 3 waves
+**Status**: Complete (2026-02-21)
 
 Plans:
-- [ ] 58-01-PLAN.md — Ability content expansion (definitions, tools, suits with grantedAbilities)
-- [ ] 58-02-PLAN.md — Drag-to-rearrange action bar slots with @dnd-kit
-- [ ] 58-03-PLAN.md — Gap closure: new items with unique ability combinations
+- [x] 58-01-PLAN.md — Ability content expansion (definitions, tools, suits with grantedAbilities)
+- [x] 58-02-PLAN.md — Drag-to-rearrange action bar slots with @dnd-kit
+- [x] 58-03-PLAN.md — Gap closure: new items with unique ability combinations
+
+</details>
+
+### 🚧 v1.14 Equipment Stats Overhaul (In Progress)
+
+**Milestone Goal:** Fix the disconnected equipment stats system so items actually provide meaningful stat bonuses, with clear build identity and rarity progression.
+
+#### Phase 59: Type Foundation
+
+**Goal**: Stats effect type has working resolver implementation
+**Depends on**: Phase 58 (v1.13 complete)
+**Requirements**: TYPE-01, TYPE-02, TYPE-03
+**Success Criteria** (what must be TRUE):
+  1. Item with stats effect provides stat bonuses to player when equipped
+  2. Item can define multiple stats in single effect (toughness + durability)
+  3. Stats effect is documented as canonical pattern for equipment stats
+**Plans**: TBD
+
+Plans:
+- [ ] 59-01: Implementation TBD
+
+#### Phase 60: Migration
+
+**Goal**: All items converted from legacy stat_buff pattern to clean stats effect
+**Depends on**: Phase 59
+**Requirements**: MIGR-01, MIGR-02, MIGR-03
+**Success Criteria** (what must be TRUE):
+  1. All equipped items provide stats via stats effect, not stat_buff with duration 0
+  2. New item definitions cannot use stat_buff with duration 0 (schema validation fails)
+  3. Migration can be rolled back if issues discovered
+**Plans**: TBD
+
+Plans:
+- [ ] 60-01: Implementation TBD
+
+#### Phase 61: Aggregation Rules
+
+**Goal**: Stat aggregation is deterministic regardless of equipment order
+**Depends on**: Phase 60
+**Requirements**: AGGR-01, AGGR-02, AGGR-03
+**Success Criteria** (what must be TRUE):
+  1. Equipping items in different order produces same final stats
+  2. Equipment stats and buff stats combine correctly (documented order)
+  3. Test suite validates known equipment combinations match expected totals
+**Plans**: TBD
+
+Plans:
+- [ ] 61-01: Implementation TBD
+
+#### Phase 62: Calculation Parity
+
+**Goal**: Client tooltips show accurate stat deltas using shared calculation code
+**Depends on**: Phase 61
+**Requirements**: PARI-01, PARI-02, PARI-03
+**Success Criteria** (what must be TRUE):
+  1. Item tooltip delta matches actual stat change when equipped
+  2. Client and server use same calculation functions from game-logic package
+  3. Integration test asserts server stats equal client stats for same equipment
+**Plans**: TBD
+
+Plans:
+- [ ] 62-01: Implementation TBD
+
+#### Phase 63: Content Normalization
+
+**Goal**: All items have appropriate stat profiles with rarity scaling
+**Depends on**: Phase 62
+**Requirements**: CONT-01, CONT-02, CONT-03, CONT-04, CONT-05
+**Success Criteria** (what must be TRUE):
+  1. Tank suits provide more durability and toughness than scout suits
+  2. Legendary items provide 4x stat bonuses compared to common items
+  3. All equippable items have at least one stat effect (no empty effects arrays)
+  4. Tools provide stats appropriate to their role (combat tools give power, mining tools give perception)
+  5. Modules provide focused stat bonuses based on module type
+**Plans**: TBD
+
+Plans:
+- [ ] 63-01: Implementation TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 56 → 57 → 58
+Phases execute in numeric order: 59 → 60 → 61 → 62 → 63
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -358,9 +439,14 @@ Phases execute in numeric order: 56 → 57 → 58
 | 55. Content Expansion | v1.12 | 3/3 | Complete | 2026-02-20 |
 | 56. Core Ability System | v1.13 | 3/3 | Complete | 2026-02-20 |
 | 57. Buff System | v1.13 | 3/3 | Complete | 2026-02-20 |
-| 58. Ability Content & Polish | v1.13 | 0/3 | Not started | - |
+| 58. Ability Content & Polish | v1.13 | 3/3 | Complete | 2026-02-21 |
+| 59. Type Foundation | v1.14 | 0/1 | Not started | - |
+| 60. Migration | v1.14 | 0/1 | Not started | - |
+| 61. Aggregation Rules | v1.14 | 0/1 | Not started | - |
+| 62. Calculation Parity | v1.14 | 0/1 | Not started | - |
+| 63. Content Normalization | v1.14 | 0/1 | Not started | - |
 
-**Total:** 58 phases (57 complete, 1 remaining)
+**Total:** 63 phases (58 complete, 5 remaining)
 
 ---
-*Last updated: 2026-02-20 after Phase 58 gap closure plan added*
+*Last updated: 2026-02-21 after v1.14 roadmap created*
