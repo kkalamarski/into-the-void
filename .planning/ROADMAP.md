@@ -192,7 +192,7 @@ See: `.planning/milestones/v1.7-ROADMAP.md`
   2. Player logs out in a hub zone and logs back in — they spawn in the same hub zone at the same position
   3. Player disconnects abruptly (browser close, network drop) — their position is still saved and restored on next login
   4. Server restart does not reset player positions — positions persist in database and survive process restarts
-**Plans**: TBD
+**Plans:** 2 plans (Wave 1 parallel)
 
 Plans:
 - [ ] 51-01-PLAN.md — Save player position to database on disconnect
