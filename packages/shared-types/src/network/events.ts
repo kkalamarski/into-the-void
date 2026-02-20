@@ -71,7 +71,9 @@ export type ServerEventType =
   | 'trade:result'
   | 'credits:update'
   | 'ability:result'
-  | 'ability:cooldown';
+  | 'ability:cooldown'
+  | 'buff:apply'
+  | 'buff:expire';
 
 /**
  * Socket.io event map for type safety
@@ -208,6 +210,17 @@ export interface ServerEvents {
   'ability:cooldown': {
     abilityId: string;
     cooldownEndsAt: number;
+  };
+  'buff:apply': {
+    buffId: string;
+    displayName: string;
+    stat: string;
+    amount: number;
+    expiresAt: number;
+    iconColor: number;
+  };
+  'buff:expire': {
+    buffId: string;
   };
 }
 
