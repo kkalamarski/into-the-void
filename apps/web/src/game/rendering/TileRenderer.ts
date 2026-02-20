@@ -10,6 +10,12 @@ const ELEVATION_HEIGHT_STEP = 128; // Pixels per elevation level (1.0 × diamond
 const ELEVATION_TINT_BASE = 0.55;
 const ELEVATION_TINT_STEP = 0.15;
 
+// Elevation edge highlight for visual depth cues
+const EDGE_HIGHLIGHT_COLOR = 0xffffff; // White highlight
+const EDGE_HIGHLIGHT_ALPHA = 0.3;      // 30% opacity
+const EDGE_HIGHLIGHT_WIDTH = 3;        // 3px line width
+const MIN_ELEVATION_FOR_EDGE = 1;      // Only highlight elevation >= 1
+
 // Sprite dimensions for the new isometric cube sprites
 const SPRITE_SIZE = 256;
 // The top diamond's center is at (128, 64) in a 256x256 cube sprite
@@ -177,6 +183,9 @@ export class TileRenderer {
     // Apply height-based tinting for visual depth
     this.applyElevationTint(cubeSprite, elevation);
 
+    // Add edge highlight for elevated tiles
+    this.drawElevationEdge(container, elevation);
+
     // Set depth using composite depth calculation
     const depth = this.isoTransform.calculateDepth(x, y, elevation);
     container.setDepth(depth);
@@ -223,6 +232,9 @@ export class TileRenderer {
     // Lower elevations appear darker, higher elevations appear normal/brighter
     this.applyElevationTint(cubeSprite, elevation);
 
+    // Add edge highlight for elevated tiles
+    this.drawElevationEdge(container, elevation);
+
     // Set depth using WORLD coordinates for global sorting
     const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation);
     container.setDepth(depth);
@@ -245,6 +257,35 @@ export class TileRenderer {
     const tintValue = Math.floor(brightness * 255);
     const tint = (tintValue << 16) | (tintValue << 8) | tintValue;
     sprite.setTint(tint);
+  }
+
+  /**
+   * Draw edge highlight on elevated tiles for visual depth cues.
+   * Draws a semi-transparent white line along the top-left and top-right edges
+   * of the diamond to indicate elevation. Only draws for elevation >= 1.
+   */
+  private drawElevationEdge(container: Phaser.GameObjects.Container, elevation: number): void {
+    if (elevation < MIN_ELEVATION_FOR_EDGE) return;
+
+    const halfWidth = this.isoTransform.tileWidth / 2;  // 128
+    const halfHeight = this.isoTransform.tileHeight / 2; // 64
+
+    const graphics = this.scene.add.graphics();
+    graphics.lineStyle(EDGE_HIGHLIGHT_WIDTH, EDGE_HIGHLIGHT_COLOR, EDGE_HIGHLIGHT_ALPHA);
+
+    // Draw top-left edge (from top point to left point of diamond)
+    graphics.beginPath();
+    graphics.moveTo(0, -halfHeight);        // Top point
+    graphics.lineTo(-halfWidth, 0);         // Left point
+    graphics.strokePath();
+
+    // Draw top-right edge (from top point to right point of diamond)
+    graphics.beginPath();
+    graphics.moveTo(0, -halfHeight);        // Top point
+    graphics.lineTo(halfWidth, 0);          // Right point
+    graphics.strokePath();
+
+    container.add(graphics);
   }
 
   /**
