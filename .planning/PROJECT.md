@@ -4,7 +4,7 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, and a complete auth-to-gameplay flow.
 
-## Current State (v1.9 shipped)
+## Current State (v1.11 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
@@ -14,6 +14,9 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Stats: 8 primary stats with equipment bonuses, level scaling
 - Entities: 35 definitions, fertility-based spawning, creature AI, tool interaction, loot, respawn
 - Combat: Auto-attack loop, creature aggro AI, player death/respawn, damage numbers, combat indicator
+- NPCs: Definition system, 5 types (Trader/Guard/Rep/Ambient/Service), interaction modal, dialogue
+- Trading: Buy/sell with credits, trader inventory, credit balance in HUD
+- Hubs: 4 orbital faction stations, portal travel, H key recall
 
 **Tech stack:**
 - Frontend: React 18, Phaser 3, Zustand, React Router v7
@@ -23,19 +26,15 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~15,000+ LOC TypeScript
 
-## Current Milestone: v1.11 NPCs & Trading
+## Current Milestone: v1.12 Bug Fixes & Content Polish
 
-**Goal:** Implement NPC system with faction orbital hubs, interaction window, simple dialogue, and trading for buy/sell commerce.
+**Goal:** Fix persistence and spawning bugs, improve new player experience with starter kit, and expand content variety.
 
 **Target features:**
-- Currency system (credits)
-- Orbital faction hubs (4 instanced stations: Verdant, Helix, Nexus, Unaffiliated)
-- Hub travel via portal structures + recall ability
-- NPC definition system with types and fixed spawns
-- Core NPC types: Trader, Guard, Faction Rep, Ambient, Service
-- Interaction window (click NPC → modal with portrait, dialogue, actions)
-- Simple linear dialogue
-- Trading system (buy/sell with credit prices)
+- Player location persistence (save/restore position across sessions)
+- NPC spawning fix (NPCs loading correctly in hubs)
+- New player starter kit (basic suit + basic tool)
+- Content expansion: 5-10 new creatures, 10-20 new items
 
 ## Core Value
 
@@ -113,15 +112,20 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Per-tool attack ranges: melee tools 1 tile, ranged tools 3-5 tiles — v1.10
 - ✓ Target selection UI: visual highlight/indicator on targeted entity — v1.10
 - ✓ Combat log panel: scrollable text log of damage events with timestamps — v1.10
+- ✓ Currency system with credits — v1.11
+- ✓ Orbital faction hubs (4 instanced stations) — v1.11
+- ✓ Hub travel via portals + recall ability — v1.11
+- ✓ NPC definition system with types and spawns — v1.11
+- ✓ NPC interaction window with portrait and dialogue — v1.11
+- ✓ Trading system with buy/sell interface — v1.11
 
 ### Active
 
-- [ ] Currency system with credits
-- [ ] Orbital faction hubs (4 instanced stations)
-- [ ] Hub travel via portals + recall ability
-- [ ] NPC definition system with types and spawns
-- [ ] NPC interaction window with portrait and dialogue
-- [ ] Trading system with buy/sell interface
+- [ ] Player location persistence across sessions
+- [ ] NPC spawning in hubs (bug fix)
+- [ ] New player starter kit (basic suit + tool)
+- [ ] Content expansion: new creatures (5-10)
+- [ ] Content expansion: new items (10-20)
 
 ### Out of Scope
 
@@ -135,8 +139,8 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - Mobile controls — web-first
 - Surface faction HQs (Canopy, Ironhold, Meridian) — orbital first, surface later
 - Shared city at 0,0 — designed in future milestone
-- Quest/mission system — v1.12+ (NPC framework first)
-- Branching dialogue — simple linear for v1.11
+- Quest/mission system — v1.13+ (after bug fixes and polish)
+- Branching dialogue — simple linear sufficient for now
 
 ## Constraints
 
@@ -165,6 +169,8 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 - Adjacent chunk loading times out (server zone:request not implemented)
 - WebSocket auth without handshake validation (guards on all handlers)
+- Player position not persisting across login sessions (v1.12 target)
+- NPCs not loading in hubs, creatures appearing instead (v1.12 target)
 
 ---
-*Last updated: 2026-02-19 after v1.11 milestone start*
+*Last updated: 2026-02-20 after v1.12 milestone start*

@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-19)
+See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.11 NPCs & Trading — MILESTONE COMPLETE
+**Current focus:** v1.12 Bug Fixes & Content Polish — Defining requirements
 
 ## Current Position
 
-Phase: 50 of 50 (Trading System)
-Plan: 4 of 4 in current phase
-Status: Complete
-Last activity: 2026-02-20 — Phase 50 complete (Trading System)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-20 — Milestone v1.12 started
 
-Progress: [██████████] 100% (v1.11 milestone complete)
+Progress: [░░░░░░░░░░] 0% (v1.12 milestone — requirements phase)
 
 ## Performance Metrics
 
@@ -40,15 +40,6 @@ Progress: [██████████] 100% (v1.11 milestone complete)
 | v1.10 | 43-45 | 5 | 1 day |
 | v1.11 | 46-50 | 18 | 2 days |
 
-**Recent Plan Metrics:**
-
-| Plan | Duration | Tasks | Files |
-|------|----------|-------|-------|
-| 50-01 | ~60s | 3 | 3 |
-| 50-02 | 191s | 3 | 3 |
-| 50-03 | 190s | 4 | 5 |
-| 50-04 | ~30s | 1 | 1 |
-
 ## Accumulated Context
 
 ### Decisions
@@ -56,53 +47,9 @@ Progress: [██████████] 100% (v1.11 milestone complete)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [v1.11]: Orbital stations as faction hubs (not surface HQs)
-- [v1.11]: Credits as currency
-- [v1.11]: Portal structures + recall (H key) for hub travel
-- [v1.11]: Simple linear dialogue (no branching)
-- [v1.11]: NPCs are static at fixed hub positions (no schedules)
-- [46-02]: Hub zones use hub_ prefix; BiomeType mapped to valid values (fungal_forest, volcanic_ridge, void_plains)
-- [46-02]: hub_neutral respawns to hub_nexus (Meridian Station — neutral welcome)
-- [46-03]: isHubZone guard pattern: add early-return to any system that must be skipped for hubs
-- [46-03]: Safe Zone indicator positioned top-right (mutually exclusive with combat indicator)
-- [Phase 46]: Credits added to PlayerPublic (not kept private) - balance visible to other clients at this stage
-- [Phase 46]: Default 1000 credits set at DB schema level to ensure consistency
-- [47-01]: Portal numeric ID = 16 (next after CRATER_DEBRIS = 15 in TileId enum)
-- [47-01]: 1 portal per open-world chunk; hub chunks unaffected (generateHubChunk returns structures: [])
-- [47-01]: Portal placement range x/y 20-44 (center third of 64x64 chunk)
-- [47-01]: tile_portal sprite key reserved; renderer falls back gracefully until sprite added
-- [47-02]: Server validates player stands on TileId.PORTAL (=16) before allowing hub teleport
-- [47-02]: lastWorldPosition saved both in-memory (ConnectedPlayer) and to DB on hub entry; restored from DB on authenticate()
-- [47-02]: Hub AI activated (aiService.activateZone) after portal teleport, matching handleAuth pattern
-- [47-03]: H key recall delegates to teleportToHub (same as portal:use) — saves position and teleports to faction hub
-- [47-03]: teleportFromHub clears saved position after use — one-way trip, returning to hub re-saves
-- [47-03]: portal:use in hub delegates to handleHubLeave via method call (no code duplication)
-- [47-04]: Portal check in WorldScene runs on reconciling=false only; debounced by position key (clears on non-portal)
-- [47-04]: Portal travel fully wired end-to-end (open world <-> hub) via tile 16 detection + portal:use emit
-- [47-05]: Portal tile placed at hub center (32,32); hub exit chain complete (tile 16 -> portal:use -> handleHubLeave -> lastWorldPosition)
-- [48-01]: npcs package uses commonjs type + src/index.ts main (matching entities/items pattern, not esm/dist)
-- [48-01]: NpcFaction: 'verdant' | 'helix' | 'nexus' | 'neutral' matching lore factions
-- [48-01]: UNKNOWN_NPC fallback is ambient type with magenta color (0xff00ff) — consistent with EntityRegistry
-- [48-02]: 5-NPC hub layout: trader NW (20,20), guard N (32,15), rep NE (44,20), ambient SW (20,44), service SE (44,44)
-- [48-02]: NpcRegistry.registerAll(ALL_NPCS) called on module load in packages/npcs/src/index.ts
-- [48-02]: NpcSpawn exported from world-gen (not npcs) since it describes world position, not NPC identity
-- [48-03]: NPC fallback texture is 'player' sprite until NPC sprites are created; NPC scale set to 2.2 (slightly smaller than creatures at 2.5)
-- [48-03]: spawnHubNpcs uses NpcRegistry.get() which returns UNKNOWN_NPC fallback — no null guard needed
-- [48-03]: NPC entities included in hub zone entity map from load time — appear in zone:state on hub entry without extra events
-- [48-03]: NPC click handler suppresses pathfinding (lastClickedEntity) but does not emit combat:start — placeholder for Phase 49 interaction
-- [49-01]: npcStore socket wiring at module level follows combatStore pattern — consistent, no lifecycle issues
-- [49-01]: GameGateway uses zonesService.getEntity + NpcRegistry.get() for NPC interaction response
-- [49-01]: Type-specific NPC fields (inventory, serviceType, title, role) conditionally added to npc:interact:response payload
-- [49-02]: NpcInteractionModal follows EquipmentPanel pattern: useDraggablePanel, useEffect keyboard disable/enable, ui-panel class
-- [49-02]: Portrait rendered as colored div (NPC definition hex color) — placeholder until NPC sprites exist
-- [49-02]: Greeting dialogue: condition=greeting line or first dialogue line, fallback to '...'
-- [Phase 49]: Guard and Ambient NPCs render no action buttons (dialogue-only interaction)
-- [Phase 49]: Trade/service/faction_rep action buttons are placeholders with console.log — to be wired in Phase 50
-- [Phase 50]: TradeService validates NPC type, item availability, credits, and inventory space before executing atomic transactions
-- [Phase 50]: buy() uses atomic deductCredits with addCredits refund if addItem fails
-- [50-03]: Escape key uses capture phase + stopPropagation to close TradingPanel without closing NpcInteractionModal
-- [50-03]: TradingPanel stays open alongside NpcInteractionModal (no mutual exclusion)
-- [50-04]: credits:update socket listener updates player.credits in gameStore for reactive HUD/panel updates
+- [v1.12]: Player position persists across sessions (save on disconnect, restore on login)
+- [v1.12]: Starter kit = basic suit + basic tool (Common rarity)
+- [v1.12]: Content expansion: 5-10 creatures, 10-20 items
 
 ### Pending Todos
 
@@ -118,13 +65,17 @@ None.
 - Server-side elevation validation not wired (client-side complete, server uses old validation)
 - Low priority — only relevant if elevation interacts with item pickup range
 
+**v1.12 bugs to fix:**
+- Player position not persisting across login sessions
+- NPCs not loading in hubs (creatures appearing instead)
+
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Phase 50 complete — v1.11 NPCs & Trading milestone complete
+Stopped at: v1.12 milestone initialization — defining requirements
 Resume file: None
 
-**Next action:** Run /gsd:complete-milestone to archive v1.11 and start v1.12 planning
+**Next action:** Define requirements and create roadmap
 
 ---
-*Last updated: 2026-02-20 after Phase 50 execution complete*
+*Last updated: 2026-02-20 after v1.12 milestone start*
