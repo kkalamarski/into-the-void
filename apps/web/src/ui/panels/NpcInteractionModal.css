@@ -1,0 +1,140 @@
+.npc-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 360px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+}
+
+.npc-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-bg-tertiary);
+  margin-bottom: 10px;
+}
+
+.npc-modal-header span {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.npc-modal-header .close-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+.npc-modal-header .close-btn:hover {
+  color: var(--color-text-primary);
+}
+
+.npc-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Portrait section */
+.npc-portrait-section {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.npc-portrait {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  border: 2px solid var(--color-bg-tertiary);
+  flex-shrink: 0;
+}
+
+.npc-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.npc-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.npc-type {
+  font-size: 12px;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.npc-title,
+.npc-role {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* Dialogue section */
+.npc-dialogue {
+  background: var(--color-bg-tertiary);
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+.npc-dialogue-text {
+  font-size: 13px;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Action buttons */
+.npc-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.npc-action-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.npc-action-btn:hover {
+  transform: translateY(-1px);
+}
+
+.npc-action-btn--primary {
+  background: var(--color-accent);
+  color: var(--color-bg-primary);
+}
+
+.npc-action-btn--primary:hover {
+  background: var(--color-accent-hover, var(--color-accent));
+}
+
+.npc-action-btn--secondary {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.npc-action-btn--secondary:hover {
+  background: var(--color-bg-secondary);
+}
