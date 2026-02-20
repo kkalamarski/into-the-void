@@ -3,55 +3,86 @@
 **Defined:** 2026-02-17
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.11 Requirements
+## v1.12 Requirements
 
-Requirements for NPCs & Trading milestone. Each maps to roadmap phases.
+Requirements for Bug Fixes & Content Polish milestone.
+
+### Persistence
+
+- [ ] **PERS-01**: Player position saved to database on disconnect
+- [ ] **PERS-02**: Player position restored on login (exact tile)
+
+### Bug Fixes
+
+- [ ] **FIX-01**: NPCs spawn correctly in hub zones (not creatures)
+- [ ] **FIX-02**: Hub zones show only NPCs, no creature spawns
+
+### New Player Experience
+
+- [ ] **NPE-01**: New characters receive basic exo-suit on creation
+- [ ] **NPE-02**: New characters receive basic tool on creation
+
+### Content - Creatures
+
+- [ ] **CONT-01**: 5-10 new creature definitions added to entity registry
+- [ ] **CONT-02**: New creatures distributed across biomes with spawn rules
+- [ ] **CONT-03**: New creatures have appropriate loot tables
+
+### Content - Items
+
+- [ ] **CONT-04**: 10-20 new item definitions added to item registry
+- [ ] **CONT-05**: New items span equipment, consumables, and materials
+- [ ] **CONT-06**: New items have appropriate rarity distribution
+
+## v1.11 Requirements (Complete)
+
+Requirements for NPCs & Trading milestone. All complete.
 
 ### Currency
 
-- [ ] **CURR-01**: Player has credits balance visible in HUD
-- [ ] **CURR-02**: Credits persist across sessions (stored in database)
-- [ ] **CURR-03**: Player earns credits by selling items to traders
-- [ ] **CURR-04**: Player spends credits when buying items from traders
+- [x] **CURR-01**: Player has credits balance visible in HUD
+- [x] **CURR-02**: Credits persist across sessions (stored in database)
+- [x] **CURR-03**: Player earns credits by selling items to traders
+- [x] **CURR-04**: Player spends credits when buying items from traders
 
 ### Hubs
 
-- [ ] **HUB-01**: Each faction has an orbital station hub (4 total: Verdant, Helix, Nexus, Unaffiliated)
-- [ ] **HUB-02**: Hubs are instanced areas separate from the open world
-- [ ] **HUB-03**: Hubs are safe zones (no combat, no hostile creatures)
-- [ ] **HUB-04**: NPCs spawn at fixed positions within hubs
-- [ ] **HUB-05**: Player can walk around hub using existing movement system
+- [x] **HUB-01**: Each faction has an orbital station hub (4 total: Verdant, Helix, Nexus, Unaffiliated)
+- [x] **HUB-02**: Hubs are instanced areas separate from the open world
+- [x] **HUB-03**: Hubs are safe zones (no combat, no hostile creatures)
+- [x] **HUB-04**: NPCs spawn at fixed positions within hubs
+- [x] **HUB-05**: Player can walk around hub using existing movement system
 
 ### Travel
 
-- [ ] **TRVL-01**: Portal structures exist in open world zones
-- [ ] **TRVL-02**: Interacting with portal teleports player to their faction's hub
-- [ ] **TRVL-03**: Player has recall ability (hotkey) to return to home hub from anywhere
-- [ ] **TRVL-04**: Player can leave hub to return to their last world position
+- [x] **TRVL-01**: Portal structures exist in open world zones
+- [x] **TRVL-02**: Interacting with portal teleports player to their faction's hub
+- [x] **TRVL-03**: Player has recall ability (hotkey) to return to home hub from anywhere
+- [x] **TRVL-04**: Player can leave hub to return to their last world position
 
 ### NPC Definition
 
-- [ ] **NPCD-01**: NPC definition system with type, name, dialogue, inventory
-- [ ] **NPCD-02**: 5 NPC types implemented: Trader, Guard, Faction Rep, Ambient, Service
-- [ ] **NPCD-03**: NPCs have visual representation (sprite or color placeholder)
-- [ ] **NPCD-04**: NPCs are non-hostile and cannot be attacked
+- [x] **NPCD-01**: NPC definition system with type, name, dialogue, inventory
+- [x] **NPCD-02**: 5 NPC types implemented: Trader, Guard, Faction Rep, Ambient, Service
+- [x] **NPCD-03**: NPCs have visual representation (sprite or color placeholder)
+- [x] **NPCD-04**: NPCs are non-hostile and cannot be attacked
 
 ### NPC Interaction
 
-- [ ] **NPCI-01**: Clicking NPC opens interaction window (modal)
-- [ ] **NPCI-02**: Interaction window shows NPC portrait, name, and type
-- [ ] **NPCI-03**: Interaction window shows dialogue text
-- [ ] **NPCI-04**: Action buttons appear based on NPC type (Trade for Traders, etc.)
-- [ ] **NPCI-05**: Player can close interaction window to resume gameplay
+- [x] **NPCI-01**: Clicking NPC opens interaction window (modal)
+- [x] **NPCI-02**: Interaction window shows NPC portrait, name, and type
+- [x] **NPCI-03**: Interaction window shows dialogue text
+- [x] **NPCI-04**: Action buttons appear based on NPC type (Trade for Traders, etc.)
+- [x] **NPCI-05**: Player can close interaction window to resume gameplay
 
 ### Trading
 
-- [ ] **TRAD-01**: Trader NPCs have inventory of items for sale
-- [ ] **TRAD-02**: Player can view trader's inventory with credit prices
-- [ ] **TRAD-03**: Player can buy items (credits deducted, item added to inventory)
-- [ ] **TRAD-04**: Player can sell items from inventory (item removed, credits added)
-- [ ] **TRAD-05**: Buy and sell prices differ (sell price lower than buy price)
-- [ ] **TRAD-06**: Transactions validate sufficient credits and inventory space
+- [x] **TRAD-01**: Trader NPCs have inventory of items for sale
+- [x] **TRAD-02**: Player can view trader's inventory with credit prices
+- [x] **TRAD-03**: Player can buy items (credits deducted, item added to inventory)
+- [x] **TRAD-04**: Player can sell items from inventory (item removed, credits added)
+- [x] **TRAD-05**: Buy and sell prices differ (sell price lower than buy price)
+- [x] **TRAD-06**: Transactions validate sufficient credits and inventory space
 
 ## v1.10 Requirements (Complete)
 
@@ -416,43 +447,65 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-### v1.11 NPCs & Trading
+### v1.12 Bug Fixes & Content Polish
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| PERS-01 | TBD | Pending |
+| PERS-02 | TBD | Pending |
+| FIX-01 | TBD | Pending |
+| FIX-02 | TBD | Pending |
+| NPE-01 | TBD | Pending |
+| NPE-02 | TBD | Pending |
+| CONT-01 | TBD | Pending |
+| CONT-02 | TBD | Pending |
+| CONT-03 | TBD | Pending |
+| CONT-04 | TBD | Pending |
+| CONT-05 | TBD | Pending |
+| CONT-06 | TBD | Pending |
+
+**Coverage:**
+- v1.12 requirements: 12 total
+- Mapped to phases: 0
+- Unmapped: 12 ⚠️
+
+### v1.11 NPCs & Trading (Complete)
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CURR-01 | Phase 46 | Complete |
 | CURR-02 | Phase 46 | Complete |
-| CURR-03 | Phase 50 | Pending |
-| CURR-04 | Phase 50 | Pending |
+| CURR-03 | Phase 50 | Complete |
+| CURR-04 | Phase 50 | Complete |
 | HUB-01 | Phase 46 | Complete |
 | HUB-02 | Phase 46 | Complete |
 | HUB-03 | Phase 46 | Complete |
-| HUB-04 | Phase 48 | Pending |
+| HUB-04 | Phase 48 | Complete |
 | HUB-05 | Phase 46 | Complete |
-| TRVL-01 | Phase 47 | Pending |
-| TRVL-02 | Phase 47 | Pending |
-| TRVL-03 | Phase 47 | Pending |
-| TRVL-04 | Phase 47 | Pending |
-| NPCD-01 | Phase 48 | Pending |
-| NPCD-02 | Phase 48 | Pending |
-| NPCD-03 | Phase 48 | Pending |
-| NPCD-04 | Phase 48 | Pending |
-| NPCI-01 | Phase 49 | Pending |
-| NPCI-02 | Phase 49 | Pending |
-| NPCI-03 | Phase 49 | Pending |
-| NPCI-04 | Phase 49 | Pending |
-| NPCI-05 | Phase 49 | Pending |
-| TRAD-01 | Phase 50 | Pending |
-| TRAD-02 | Phase 50 | Pending |
-| TRAD-03 | Phase 50 | Pending |
-| TRAD-04 | Phase 50 | Pending |
-| TRAD-05 | Phase 50 | Pending |
-| TRAD-06 | Phase 50 | Pending |
+| TRVL-01 | Phase 47 | Complete |
+| TRVL-02 | Phase 47 | Complete |
+| TRVL-03 | Phase 47 | Complete |
+| TRVL-04 | Phase 47 | Complete |
+| NPCD-01 | Phase 48 | Complete |
+| NPCD-02 | Phase 48 | Complete |
+| NPCD-03 | Phase 48 | Complete |
+| NPCD-04 | Phase 48 | Complete |
+| NPCI-01 | Phase 49 | Complete |
+| NPCI-02 | Phase 49 | Complete |
+| NPCI-03 | Phase 49 | Complete |
+| NPCI-04 | Phase 49 | Complete |
+| NPCI-05 | Phase 49 | Complete |
+| TRAD-01 | Phase 50 | Complete |
+| TRAD-02 | Phase 50 | Complete |
+| TRAD-03 | Phase 50 | Complete |
+| TRAD-04 | Phase 50 | Complete |
+| TRAD-05 | Phase 50 | Complete |
+| TRAD-06 | Phase 50 | Complete |
 
 **Coverage:**
 - v1.11 requirements: 28 total
 - Mapped to phases: 28
-- Unmapped: 0
+- Complete: 28 ✓
 
 ### v1.10 Combat UX (Complete)
 
@@ -570,4 +623,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-19 after v1.11 roadmap created — 28 requirements mapped to phases 46-50*
+*Last updated: 2026-02-20 after v1.12 requirements defined — 12 requirements for bug fixes & content*
