@@ -4,6 +4,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { CreateCharacterDto } from './dto/character.dto';
 import { DatabaseService } from '../database/database.service';
 import {
@@ -17,6 +18,10 @@ import {
 } from '@into-the-void/database';
 
 const MAX_CHARACTERS_PER_ACCOUNT = 5;
+
+// Starter kit item definitions (Common rarity, Level 1)
+const STARTER_SUIT_ID = 'suit_basic_common';
+const STARTER_TOOL_ID = 'tool_combat_common';
 
 @Injectable()
 export class CharactersService {
@@ -89,9 +94,26 @@ export class CharactersService {
       factionId: dto.faction,
     });
 
-    // Create inventory for character
+    // Create inventory for character with starter kit
     await createInventory(db, {
       characterId: character.id,
+      equipment: {
+        exosuit: {
+          instanceId: randomUUID(),
+          itemId: STARTER_SUIT_ID,
+          quantity: 1,
+          slot: -1, // equipped, not in inventory grid
+          properties: {},
+        },
+        modules: [],
+        tool: {
+          instanceId: randomUUID(),
+          itemId: STARTER_TOOL_ID,
+          quantity: 1,
+          slot: -1, // equipped, not in inventory grid
+          properties: {},
+        },
+      },
     });
 
     return {
