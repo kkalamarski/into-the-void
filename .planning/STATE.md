@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 50 of 50 (Trading System)
-Plan: 2 of 4 in current phase
+Plan: 3 of 4 in current phase
 Status: In Progress
-Last activity: 2026-02-20 — Plan 50-02 complete
+Last activity: 2026-02-20 — Plan 50-03 complete (Trading Panel UI)
 
-Progress: [████████░░] 82% (v1.11 milestone — 4.5/5 phases)
+Progress: [█████████░] 90% (v1.11 milestone — Phase 50 in progress)
 
 ## Performance Metrics
 
@@ -45,6 +45,7 @@ Progress: [████████░░] 82% (v1.11 milestone — 4.5/5 phases
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | 50-02 | 191s | 3 | 3 |
+| 50-03 | 190s | 4 | 5 |
 
 ## Accumulated Context
 
@@ -97,6 +98,8 @@ Recent decisions affecting current work:
 - [Phase 49]: Trade/service/faction_rep action buttons are placeholders with console.log — to be wired in Phase 50
 - [Phase 50]: TradeService validates NPC type, item availability, credits, and inventory space before executing atomic transactions
 - [Phase 50]: buy() uses atomic deductCredits with addCredits refund if addItem fails
+- [50-03]: Escape key uses capture phase + stopPropagation to close TradingPanel without closing NpcInteractionModal
+- [50-03]: TradingPanel stays open alongside NpcInteractionModal (no mutual exclusion)
 
 ### Pending Todos
 
@@ -115,10 +118,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 50-trading-system/50-02-PLAN.md — TradeService and trade socket handlers
+Stopped at: Completed 50-trading-system/50-03-PLAN.md — Trading Panel UI with buy/sell sections
 Resume file: None
 
-**Next action:** Execute Plan 50-03 (Trading UI)
+**Next action:** Execute Plan 50-04 (credits:update client wiring)
 
 ---
-*Last updated: 2026-02-20 after Plan 50-02 execution complete*
+*Last updated: 2026-02-20 after Plan 50-03 execution complete*
