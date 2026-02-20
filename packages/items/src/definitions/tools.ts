@@ -356,6 +356,94 @@ export const TOOL_RESEARCH_LEGENDARY: ItemDefinition = {
 };
 
 // ============================================================
+// HYBRID/SPECIALIZED TOOLS (4) — unique ability combinations
+// ============================================================
+
+export const TOOL_BIO_PROBE_RARE: ItemDefinition = {
+  id: 'tool_bio_probe_rare',
+  displayName: 'Verdant Bio-Probe',
+  description:
+    'Verdant Dynamics field biology instrument for studying Terminus lifeforms. Integrates bio-scanning with defensive protocols — research specimens don\'t always cooperate.',
+  category: 'tool',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.5,
+  baseValue: 2500,
+  requiredLevel: 8,
+  ilvl: computeIlvl(1, 'rare'),
+  textureKey: 'item_tool_research',
+  color: 0x44aa44,
+  equipSlot: 'tool',
+  toolType: 'bio',
+  effects: [],
+  range: 2,
+  grantedAbilities: ['energy_pulse', 'analyze_specimen', 'nano_repair'],
+};
+
+export const TOOL_DEMOLITION_EPIC: ItemDefinition = {
+  id: 'tool_demolition_epic',
+  displayName: 'Helix Seismic Disruptor',
+  description:
+    'Helix Extraction heavy demolition instrument for breaking through stubborn formations. The shockwave feature was originally an accident — now it\'s a selling point.',
+  category: 'tool',
+  rarity: 'epic',
+  maxStack: 1,
+  weight: 3.0,
+  baseValue: 12000,
+  requiredLevel: 18,
+  ilvl: computeIlvl(2, 'epic'),
+  textureKey: 'item_tool_mining',
+  color: 0xaa4400,
+  equipSlot: 'tool',
+  toolType: 'demolition',
+  effects: [],
+  range: 1,
+  grantedAbilities: ['basic_strike', 'concussive_strike', 'overload_pulse', 'cryo_blast'],
+};
+
+export const TOOL_STEALTH_EXOTIC: ItemDefinition = {
+  id: 'tool_stealth_exotic',
+  displayName: 'Nexus Infiltrator Module',
+  description:
+    'Nexus Frontiers covert operations instrument. Officially classified as a "survey device." The energy drain capability and combat features are not mentioned in the manual.',
+  category: 'tool',
+  rarity: 'exotic',
+  maxStack: 1,
+  weight: 1.8,
+  baseValue: 35000,
+  requiredLevel: 28,
+  ilvl: computeIlvl(3, 'exotic'),
+  textureKey: 'item_tool_combat',
+  color: 0x444488,
+  equipSlot: 'tool',
+  toolType: 'stealth',
+  effects: [],
+  range: 4,
+  grantedAbilities: ['precision_shot', 'void_drain', 'overclock', 'resource_scan'],
+};
+
+export const TOOL_ANOMALY_EXOTIC: ItemDefinition = {
+  id: 'tool_anomaly_exotic',
+  displayName: 'Anomaly Harmonizer',
+  description:
+    'An instrument of uncertain origin, found in the border regions of Anomaly Zones. It appears to channel spatial distortion effects. Using it feels wrong — but it works.',
+  category: 'tool',
+  rarity: 'exotic',
+  maxStack: 1,
+  weight: 2.0,
+  baseValue: 35000,
+  requiredLevel: 30,
+  ilvl: computeIlvl(3, 'exotic'),
+  textureKey: 'item_tool_universal',
+  color: 0x8800aa,
+  equipSlot: 'tool',
+  toolType: 'anomaly',
+  effects: [],
+  range: 2,
+  grantedAbilities: ['void_drain', 'cryo_blast', 'plasma_burst', 'power_surge'],
+};
+
+// ============================================================
 // ALL TOOLS
 // ============================================================
 
@@ -376,4 +464,8 @@ export const ALL_TOOLS: readonly ItemDefinition[] = [
   TOOL_RESEARCH_EPIC,
   TOOL_RESEARCH_EXOTIC,
   TOOL_RESEARCH_LEGENDARY,
+  TOOL_BIO_PROBE_RARE,
+  TOOL_DEMOLITION_EPIC,
+  TOOL_STEALTH_EXOTIC,
+  TOOL_ANOMALY_EXOTIC,
 ];

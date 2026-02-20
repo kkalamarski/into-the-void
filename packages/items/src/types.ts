@@ -47,7 +47,7 @@ export type ItemEffect =
 /**
  * Tool specialization types
  */
-export type ToolType = 'universal' | 'mining' | 'combat' | 'research';
+export type ToolType = 'universal' | 'mining' | 'combat' | 'research' | 'bio' | 'demolition' | 'stealth' | 'anomaly';
 
 /**
  * Complete item definition - single source of truth for item data
