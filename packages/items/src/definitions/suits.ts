@@ -21,7 +21,11 @@ export const SUIT_BASIC_COMMON: ItemDefinition = {
   color: 0x666666,
   equipSlot: 'exosuit',
   moduleSlots: 3,
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'armor', value: 5 } },
+    { trigger: 'on_equip', effect: { type: 'stat_buff', stat: 'durability', amount: 20, duration: 0 } },
+  ],
+  grantedAbilities: ['nano_repair'],
 };
 
 export const SUIT_SALVAGED_COMMON: ItemDefinition = {
@@ -41,6 +45,7 @@ export const SUIT_SALVAGED_COMMON: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 3,
   effects: [],
+  grantedAbilities: ['emergency_shield'],
 };
 
 // ============================================================
@@ -64,6 +69,7 @@ export const SUIT_REINFORCED_RARE: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 4,
   effects: [],
+  grantedAbilities: ['nano_repair', 'magnetic_field'],
 };
 
 export const SUIT_SCOUT_RARE: ItemDefinition = {
@@ -83,6 +89,7 @@ export const SUIT_SCOUT_RARE: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 4,
   effects: [],
+  grantedAbilities: ['nano_repair', 'overclock'],
 };
 
 // ============================================================
@@ -106,6 +113,7 @@ export const SUIT_TACTICAL_EPIC: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 4,
   effects: [],
+  grantedAbilities: ['nano_repair', 'magnetic_field', 'fortify_systems'],
 };
 
 export const SUIT_ENVIRONMENTAL_EPIC: ItemDefinition = {
@@ -125,6 +133,7 @@ export const SUIT_ENVIRONMENTAL_EPIC: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 4,
   effects: [],
+  grantedAbilities: ['nano_repair', 'energy_barrier', 'regeneration_protocol'],
 };
 
 // ============================================================
@@ -148,6 +157,7 @@ export const SUIT_NEXUS_COMBAT_FRAME_EXOTIC: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 5,
   effects: [],
+  grantedAbilities: ['nano_repair', 'magnetic_field', 'fortify_systems', 'emergency_shield'],
 };
 
 export const SUIT_HELIX_RESEARCH_FRAME_EXOTIC: ItemDefinition = {
@@ -167,6 +177,7 @@ export const SUIT_HELIX_RESEARCH_FRAME_EXOTIC: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 5,
   effects: [],
+  grantedAbilities: ['nano_repair', 'energy_barrier', 'regeneration_protocol', 'resource_scan'],
 };
 
 // ============================================================
@@ -190,6 +201,7 @@ export const SUIT_VOID_WALKER_LEGENDARY: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 6,
   effects: [],
+  grantedAbilities: ['nano_repair', 'magnetic_field', 'fortify_systems', 'emergency_shield', 'power_surge'],
 };
 
 export const SUIT_ANCIENT_PROTOTYPE_LEGENDARY: ItemDefinition = {
@@ -209,6 +221,7 @@ export const SUIT_ANCIENT_PROTOTYPE_LEGENDARY: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 6,
   effects: [],
+  grantedAbilities: ['nano_repair', 'regeneration_protocol', 'energy_barrier', 'overclock', 'analyze_specimen'],
 };
 
 // ============================================================
