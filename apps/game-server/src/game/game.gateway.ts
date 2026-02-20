@@ -18,6 +18,7 @@ import { ZonesService } from '../zones/zones.service';
 import { AiService } from './ai.service';
 import { CombatService } from './combat.service';
 import { TradeService } from './trade.service';
+import { AbilityService } from './ability.service';
 import {
   ClientEvents,
   Direction,
@@ -57,6 +58,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly aiService: AiService,
     private readonly combatService: CombatService,
     private readonly tradeService: TradeService,
+    private readonly abilityService: AbilityService,
   ) {}
 
   afterInit(server: Server) {
@@ -64,10 +66,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.aiService.setServer(server);
     this.combatService.setServer(server);
     this.playerService.setServer(server);
+    this.abilityService.setServer(server);
     this.playerService.setZoneStateProvider((zoneId) => this.gameService.getZoneState(zoneId));
     // Wire aggro checker to ZonesService for immediate aggro on creature respawn
     this.zonesService.setAggroChecker(this.aiService);
-    console.log('[GameGateway] WebSocket server initialized, ZonesService, AiService, CombatService, and PlayerService connected');
+    console.log('[GameGateway] WebSocket server initialized, ZonesService, AiService, CombatService, AbilityService, and PlayerService connected');
   }
 
   async handleConnection(client: Socket) {
@@ -98,6 +101,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     // Clean up combat state before removing player
     if (player) {
       this.combatService.handleDisconnect(player.id);
+      this.abilityService.handleDisconnect(player.id);
     }
 
     await this.playerService.handleDisconnect(client.id);
@@ -670,6 +674,38 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
   }
 
+  @SubscribeMessage('ability:use')
+  async handleAbilityUse(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { abilityId: string; targetEntityId?: string },
+  ): Promise<void> {
+    const result = await this.abilityService.useAbility(
+      client.id,
+      data.abilityId,
+      data.targetEntityId,
+    );
+
+    // Send result to the player who used the ability
+    client.emit('ability:result', {
+      success: result.success,
+      abilityId: data.abilityId,
+      error: result.error,
+      damage: result.damage,
+      targetHealth: result.targetHealth,
+      targetMaxHealth: result.targetMaxHealth,
+      energyRemaining: result.energyRemaining,
+      cooldownEndsAt: result.cooldownEndsAt,
+    });
+
+    // If successful, also emit the cooldown event
+    if (result.success && result.cooldownEndsAt) {
+      client.emit('ability:cooldown', {
+        abilityId: data.abilityId,
+        cooldownEndsAt: result.cooldownEndsAt,
+      });
+    }
+  }
+
   @SubscribeMessage('respawn:sos')
   async handleRespawnSOS(
     @ConnectedSocket() client: Socket,
@@ -1133,6 +1169,23 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     const payload: CharStatsPayload = { total, base, equipment };
     client.emit('stats:update', payload);
+
+    // Update player's maxHealth based on durability stat
+    // Durability directly translates to max health
+    const newMaxHealth = total.durability;
+    if (player.maxHealth !== newMaxHealth) {
+      this.playerService.updateMaxHealth(playerId, newMaxHealth);
+      // If current health exceeds new max, cap it
+      if (player.health > newMaxHealth) {
+        this.playerService.updateHealth(playerId, newMaxHealth);
+      }
+      // Emit health update to client
+      client.emit('player:health', {
+        playerId,
+        health: Math.min(player.health, newMaxHealth),
+        maxHealth: newMaxHealth,
+      });
+    }
   }
 
   /**
