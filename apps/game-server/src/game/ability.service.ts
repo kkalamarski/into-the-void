@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Server } from 'socket.io';
+import * as crypto from 'crypto';
 import { PlayerService } from './player.service';
 import { ZonesService } from '../zones/zones.service';
 import { InventoryService } from './inventory.service';
@@ -217,7 +218,8 @@ export class AbilityService {
         // Calculate damage
         const inventory = this.inventoryService.getInventory(player.id);
         const playerEquipment = inventory?.equipment as EquipmentJson ?? { modules: [] };
-        const playerStats = computeCharStats(player.level, playerEquipment, 'player');
+        const playerBuffs = this.getActiveBuffs(player.id);
+        const playerStats = computeCharStats(player.level, playerEquipment, 'player', playerBuffs);
 
         const emptyEquipment: EquipmentJson = { modules: [] };
         const creatureStats = computeCharStats(target.level, emptyEquipment, 'creature');
@@ -253,6 +255,42 @@ export class AbilityService {
           critical: damageResult.critical,
           killed: target.health <= 0,
         });
+      }
+
+      // Handle heal effect (self-heal)
+      if (effect.type === 'heal') {
+        // Calculate heal amount: baseHeal + (scaling * power)
+        const inventory = this.inventoryService.getInventory(player.id);
+        const playerEquipment = inventory?.equipment as EquipmentJson ?? { modules: [] };
+        const playerBuffs = this.getActiveBuffs(player.id);
+        const playerStats = computeCharStats(player.level, playerEquipment, 'player', playerBuffs);
+
+        const healAmount = Math.floor(effect.baseHeal + (effect.scaling * playerStats.power));
+        const newHealth = Math.min(player.maxHealth, player.health + healAmount);
+
+        this.playerService.updateHealth(player.id, newHealth);
+
+        // Emit heal event to zone for visual feedback
+        this.server?.to(player.position.zoneId).emit('player:health', {
+          playerId: player.id,
+          health: newHealth,
+          maxHealth: player.maxHealth,
+        });
+      }
+
+      // Handle buff effect (apply duration buff to self)
+      if (effect.type === 'buff') {
+        const buff: Buff = {
+          id: crypto.randomUUID(),
+          abilityId: ability.id,
+          stat: effect.stat,
+          amount: effect.amount,
+          expiresAt: Date.now() + effect.duration,
+          displayName: ability.displayName,
+          iconColor: ability.iconColor,
+        };
+
+        this.applyBuff(player.id, buff);
       }
     }
 
