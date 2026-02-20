@@ -80,6 +80,7 @@ export class ZonesService implements OnModuleInit {
     // Start respawn tick loop (10 second interval)
     setInterval(() => this.processRespawnTick(), 10_000);
     console.log('[ZonesService] Respawn tick loop started (10s interval)');
+    console.log(`[ZonesService] NpcRegistry initialized: ${NpcRegistry.size} NPCs registered`);
   }
 
   /**
@@ -99,7 +100,7 @@ export class ZonesService implements OnModuleInit {
   }
 
   private async loadZone(zoneId: string): Promise<ZoneState> {
-    // Hub zones use static generation, not procedural world-gen
+    // Hub zones are safe areas — no creature spawning, only NPCs via loadHubZone()
     if (isHubZone(zoneId)) {
       return this.loadHubZone(zoneId);
     }
@@ -182,6 +183,7 @@ export class ZonesService implements OnModuleInit {
       throw new Error(`Unknown hub zone: ${zoneId}`);
     }
 
+    console.log(`[ZonesService] Loading hub zone: ${zoneId}`);
     const chunk = generateHubChunk(zoneId);
 
     // Hub zones start with NPC entities from hub configuration
@@ -211,6 +213,12 @@ export class ZonesService implements OnModuleInit {
     const hubConfig = getHubConfig(zoneId);
     if (!hubConfig) return npcs;
 
+    if (NpcRegistry.size === 0) {
+      console.error(`[ZonesService] CRITICAL: NpcRegistry is empty when spawning hub NPCs for ${zoneId}`);
+      // Force import to ensure module side-effect runs
+      // This should never happen with correct import order
+    }
+
     for (const spawn of hubConfig.npcSpawns) {
       const def = NpcRegistry.get(spawn.npcId);
 
@@ -232,6 +240,7 @@ export class ZonesService implements OnModuleInit {
       npcs.set(npcEntity.id, npcEntity);
     }
 
+    console.log(`[ZonesService] Spawned ${npcs.size} NPCs for ${hubConfig.displayName}`);
     return npcs;
   }
 
