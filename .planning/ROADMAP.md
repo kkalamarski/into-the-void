@@ -202,21 +202,16 @@ Plans:
 Plans:
 - [x] 52-01-PLAN.md — Diagnose and fix hub NPC spawning with validation
 
-#### Phase 53: Rendering & Depth Fixes
+#### Phase 53: Rendering & Depth Fixes ✓
 
 **Goal**: Fix entity/terrain depth sorting issues and improve elevation visibility so terrain levels are clearly distinguishable
 **Depends on**: Phase 52 (hub spawning fixed)
 **Requirements**: REND-01, REND-02, REND-03
-**Success Criteria** (what must be TRUE):
-  1. Entities never appear below terrain — depth sorting correctly places entities above their ground tile
-  2. During player movement, terrain never briefly overlaps entities — smooth depth transitions
-  3. Elevation level changes are visually distinct — player can clearly see when terrain goes up or down
-  4. Elevation indicators work across all biomes and lighting conditions
-**Plans**: 2 plans
+**Status**: Complete (2026-02-20)
 
 Plans:
-- [ ] 53-01-PLAN.md — Fix entity depth sorting with layer offset and reduce throttle for smooth movement
-- [ ] 53-02-PLAN.md — Add elevation edge highlighting and shadow effects for visual depth
+- [x] 53-01-PLAN.md — Fix entity depth sorting with layer offset and reduce throttle for smooth movement
+- [x] 53-02-PLAN.md — Add elevation edge highlighting and shadow effects for visual depth
 
 #### Phase 54: New Player Starter Kit
 
@@ -311,11 +306,11 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55
 | 50. Trading System | v1.11 | 4/4 | Complete | 2026-02-20 |
 | 51. Player Position Persistence | v1.12 | 1/1 | Complete | 2026-02-20 |
 | 52. Hub NPC Spawning Fix | v1.12 | 1/1 | Complete | 2026-02-20 |
-| 53. Rendering & Depth Fixes | v1.12 | 0/2 | Not started | - |
+| 53. Rendering & Depth Fixes | v1.12 | 2/2 | Complete | 2026-02-20 |
 | 54. New Player Starter Kit | v1.12 | 0/1 | Not started | - |
 | 55. Content Expansion | v1.12 | 0/3 | Not started | - |
 
-**Total:** 55 phases (52 complete, 3 remaining)
+**Total:** 55 phases (53 complete, 2 remaining)
 
 ---
 *Last updated: 2026-02-20 after v1.12 roadmap created*
