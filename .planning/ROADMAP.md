@@ -213,20 +213,15 @@ Plans:
 - [x] 53-01-PLAN.md — Fix entity depth sorting with layer offset and reduce throttle for smooth movement
 - [x] 53-02-PLAN.md — Add elevation edge highlighting and shadow effects for visual depth
 
-#### Phase 54: New Player Starter Kit
+#### Phase 54: New Player Starter Kit ✓
 
 **Goal**: New characters receive a basic exo-suit and basic tool on creation so they can immediately interact with the world
 **Depends on**: Phase 53 (rendering fixes complete)
 **Requirements**: NPE-01, NPE-02
-**Success Criteria** (what must be TRUE):
-  1. Player creates a new character — the character starts with a basic exo-suit already equipped
-  2. Player creates a new character — the character starts with a basic tool in their inventory or equipped
-  3. The starter items are Common rarity and level 1 requirement — any new character can use them immediately
-  4. Existing characters are not affected — only newly created characters receive the starter kit
-**Plans**: 1 plan
+**Status**: Complete (2026-02-20)
 
 Plans:
-- [ ] 54-01-PLAN.md — Grant basic exo-suit and combat tool on character creation
+- [x] 54-01-PLAN.md — Grant basic exo-suit and universal Multi-Tool on character creation
 
 #### Phase 55: Content Expansion
 
@@ -307,10 +302,10 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55
 | 51. Player Position Persistence | v1.12 | 1/1 | Complete | 2026-02-20 |
 | 52. Hub NPC Spawning Fix | v1.12 | 1/1 | Complete | 2026-02-20 |
 | 53. Rendering & Depth Fixes | v1.12 | 2/2 | Complete | 2026-02-20 |
-| 54. New Player Starter Kit | v1.12 | 0/1 | Not started | - |
+| 54. New Player Starter Kit | v1.12 | 1/1 | Complete | 2026-02-20 |
 | 55. Content Expansion | v1.12 | 0/3 | Not started | - |
 
-**Total:** 55 phases (53 complete, 2 remaining)
+**Total:** 55 phases (54 complete, 1 remaining)
 
 ---
 *Last updated: 2026-02-20 after v1.12 roadmap created*
