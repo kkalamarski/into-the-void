@@ -36,7 +36,8 @@ export type ClientEventType =
   | 'hub:recall'
   | 'hub:leave'
   | 'trade:buy'
-  | 'trade:sell';
+  | 'trade:sell'
+  | 'ability:use';
 
 /**
  * Server-to-client event types
@@ -52,6 +53,10 @@ export type ServerEventType =
   | 'player:joined'
   | 'player:left'
   | 'player:moved'
+  | 'player:xp'
+  | 'player:level'
+  | 'player:health'
+  | 'player:regen'
   | 'combat:start'
   | 'combat:damage'
   | 'combat:result'
@@ -64,7 +69,9 @@ export type ServerEventType =
   | 'player:respawn'
   | 'error'
   | 'trade:result'
-  | 'credits:update';
+  | 'credits:update'
+  | 'ability:result'
+  | 'ability:cooldown';
 
 /**
  * Socket.io event map for type safety
@@ -95,6 +102,7 @@ export interface ClientEvents {
   'npc:interact': { entityId: string };
   'trade:buy': { npcId: string; itemId: string; quantity: number };
   'trade:sell': { npcId: string; itemInstanceId: string; quantity: number };
+  'ability:use': { abilityId: string; targetEntityId?: string };
 }
 
 /**
@@ -149,6 +157,31 @@ export interface ServerEvents {
     error?: string;
   };
   'credits:update': { credits: number };
+  'player:xp': {
+    playerId: string;
+    xp: number;
+    xpToNextLevel: number;
+    level: number;
+    leveledUp: boolean;
+  };
+  'player:level': {
+    playerId: string;
+    level: number;
+    health: number;
+    maxHealth: number;
+  };
+  'player:health': {
+    playerId: string;
+    health: number;
+    maxHealth: number;
+  };
+  'player:regen': {
+    playerId: string;
+    health: number;
+    maxHealth: number;
+    energy: number;
+    maxEnergy: number;
+  };
   'npc:interact:response': {
     npcId: string;
     displayName: string;
@@ -161,6 +194,20 @@ export interface ServerEvents {
     serviceType?: 'repair' | 'storage' | 'transport' | 'medical';
     title?: string;
     role?: string;
+  };
+  'ability:result': {
+    success: boolean;
+    abilityId: string;
+    error?: string;
+    damage?: number;
+    targetHealth?: number;
+    targetMaxHealth?: number;
+    energyRemaining?: number;
+    cooldownEndsAt?: number; // timestamp when cooldown expires
+  };
+  'ability:cooldown': {
+    abilityId: string;
+    cooldownEndsAt: number;
   };
 }
 
