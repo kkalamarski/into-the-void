@@ -354,6 +354,13 @@ export class WorldScene extends Phaser.Scene {
         return; // Do not proceed to combat
       }
 
+      // Item pickup: emit inventory:pickup to server
+      if (entityType === 'item') {
+        this.lastClickedEntity = entityId;
+        gameSocket.emit('inventory:pickup', { entityId });
+        return;
+      }
+
       if (entityType !== 'creature') return;
 
       // Track that we clicked an entity to suppress pathfinding
@@ -461,47 +468,13 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /**
-   * Handle click on entity creature — attempt to start combat.
-   * Implements CATK-01 (initiate combat on click) and CATK-02 (range pre-check).
+   * Handle click on entity creature — select target without auto-attacking.
+   * Player will use abilities via hotkeys on the selected target.
    */
   private handleEntityClick(entityId: string): void {
-    const { addAlert } = useAlertStore.getState();
-
-    // Get player's equipped tool from inventory store
-    const inventoryStore = useInventoryStore.getState();
-    const tool = inventoryStore.inventory?.equipment.tool;
-
-    if (!tool) {
-      addAlert('No weapon equipped', 'warning');
-      return;
-    }
-
-    const toolDef = ItemRegistry.get(tool.itemId);
-    if (!toolDef || toolDef.toolType !== 'combat') {
-      addAlert('Equipped tool is not a weapon', 'warning');
-      return;
-    }
-
-    // Get tool range
-    const toolRange = toolDef.range ?? 1;
-
-    // Get entity position from entityStore
+    // Get entity from entityStore
     const entity = useEntityStore.getState().entities.get(entityId);
     if (!entity || entity.type !== 'creature') {
-      return;
-    }
-
-    // Get player position from gameStore
-    const player = useGameStore.getState().player;
-    if (!player) return;
-
-    // Check range using Chebyshev distance (matches server logic)
-    const dx = Math.abs(entity.position.x - player.position.x);
-    const dy = Math.abs(entity.position.y - player.position.y);
-    const distance = Math.max(dx, dy);
-
-    if (distance > toolRange) {
-      addAlert('Target out of range', 'warning');
       return;
     }
 
@@ -512,8 +485,8 @@ export class WorldScene extends Phaser.Scene {
       this.targetHighlight?.show(entityId, targetContainer, creatureEntity.behavior ?? 'herbivore');
     }
 
-    // Emit combat:start to server
-    gameSocket.emit('combat:start', { targetEntityId: entityId });
+    // Select target for ability use (does NOT auto-attack)
+    useCombatStore.getState().selectTarget(entityId);
   }
 
   /**
@@ -1269,6 +1242,12 @@ export class WorldScene extends Phaser.Scene {
     const container = this.entitySprites.get(entityId);
     if (!container || !this.isoTransform || !this.entityRenderer) return;
 
+    // Despawn entity if marked inactive (creature died, resource depleted, etc.)
+    if ('active' in changes && changes.active === false) {
+      this.despawnEntity(entityId);
+      return;
+    }
+
     // Update position with smooth movement animation
     if (changes.position) {
       // Check if entity moved out of visibility range
@@ -1588,8 +1567,14 @@ export class WorldScene extends Phaser.Scene {
    * @param defenderId - Entity or player ID that took damage
    * @param damage - Amount of damage dealt
    * @param isLocalPlayer - True if the local player took the damage (shows red)
+   * @param fallbackPosition - Server-provided position for when entity has despawned
    */
-  showDamageNumber(defenderId: string, damage: number, isLocalPlayer: boolean): void {
+  showDamageNumber(
+    defenderId: string,
+    damage: number,
+    isLocalPlayer: boolean,
+    fallbackPosition?: { x: number; y: number },
+  ): void {
     let targetX: number;
     let targetY: number;
 
@@ -1609,8 +1594,20 @@ export class WorldScene extends Phaser.Scene {
         if (playerSprite) {
           targetX = playerSprite.x;
           targetY = playerSprite.y;
+        } else if (fallbackPosition && this.isoTransform) {
+          // Entity despawned but we have position from server - convert to screen coords
+          const player = useGameStore.getState().player;
+          if (player) {
+            const worldX = fallbackPosition.x - player.position.x;
+            const worldY = fallbackPosition.y - player.position.y;
+            const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
+            targetX = screenPos.x;
+            targetY = screenPos.y; // Skip elevation for fallback - damage numbers just need approximate position
+          } else {
+            return;
+          }
         } else {
-          // Entity not found (may have despawned) - skip
+          // Entity not found and no fallback position - skip
           return;
         }
       }

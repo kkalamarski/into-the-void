@@ -5,32 +5,60 @@ import { useGameStore } from './gameStore';
 interface CombatState {
   inCombat: boolean;
   targetEntityId: string | null;
+  /** Selected target for ability use (does NOT auto-attack) */
+  selectedTarget: string | null;
   setInCombat: (inCombat: boolean, targetEntityId?: string | null) => void;
+  /** Select a target for ability use without starting combat */
+  selectTarget: (entityId: string | null) => void;
 }
 
 export const useCombatStore = create<CombatState>((set) => ({
   inCombat: false,
   targetEntityId: null,
-  setInCombat: (inCombat, targetEntityId = null) => set({ inCombat, targetEntityId }),
+  selectedTarget: null,
+
+  setInCombat: (inCombat, targetEntityId = null) =>
+    set({ inCombat, targetEntityId }),
+
+  selectTarget: (entityId) =>
+    set({ selectedTarget: entityId, targetEntityId: entityId }),
 }));
 
 // Listen for combat:start - player entered combat
-// Payload shape: CombatState { active, turn, participants[], currentActorId, startedAt }
-// Player-initiated: currentActorId === playerId
-// Creature aggro: participants includes player as defender
+// Two payload shapes:
+// 1. Player-initiated (from gateway): { active, turn, participants[], currentActorId, startedAt }
+// 2. Creature aggro (from combat.service): { attackerId, defenderId, timestamp }
 gameSocket.on('combat:start', (data) => {
   const currentPlayer = useGameStore.getState().player;
   if (!currentPlayer) return;
 
-  // Check if this combat involves the local player
-  const isPlayerInvolved =
-    data.currentActorId === currentPlayer.id || // Player initiated attack
-    data.participants.some((p) => p.id === currentPlayer.id); // Player is a participant
+  // Handle creature aggro payload (attackerId/defenderId)
+  if ('attackerId' in data && 'defenderId' in data) {
+    const attackerId = data.attackerId as string;
+    const defenderId = data.defenderId as string;
+    if (defenderId === currentPlayer.id) {
+      // Creature attacked us - we're in combat with the creature
+      useCombatStore.getState().setInCombat(true, attackerId);
+      // Also set as selected target for ability counter-attacks
+      useCombatStore.setState({ selectedTarget: attackerId });
+    }
+    return;
+  }
 
-  if (isPlayerInvolved) {
-    // Find the opponent entity (non-player participant or non-self participant)
-    const opponent = data.participants.find((p) => p.id !== currentPlayer.id);
-    useCombatStore.getState().setInCombat(true, opponent?.id ?? null);
+  // Handle player-initiated payload (participants array)
+  if (data.participants) {
+    const isPlayerInvolved =
+      data.currentActorId === currentPlayer.id ||
+      data.participants.some((p: { id: string }) => p.id === currentPlayer.id);
+
+    if (isPlayerInvolved) {
+      const opponent = data.participants.find((p: { id: string }) => p.id !== currentPlayer.id);
+      const opponentId = opponent?.id ?? null;
+      useCombatStore.getState().setInCombat(true, opponentId);
+      if (opponentId) {
+        useCombatStore.setState({ selectedTarget: opponentId });
+      }
+    }
   }
 });
 
@@ -45,18 +73,23 @@ gameSocket.on('player:death', (data) => {
 // Listen for entity:update with killed creature (active: false on combat target)
 // This handles: creature killed, creature leashed (returns to spawn and disengages)
 gameSocket.on('entity:update', (data) => {
-  const { targetEntityId, inCombat } = useCombatStore.getState();
+  const { targetEntityId, inCombat, selectedTarget } = useCombatStore.getState();
 
   // If the entity we're fighting becomes inactive, combat ends
   if (inCombat && targetEntityId === data.entityId && data.changes.active === false) {
     useCombatStore.getState().setInCombat(false);
+  }
+
+  // Clear selected target if it becomes inactive
+  if (selectedTarget === data.entityId && data.changes.active === false) {
+    useCombatStore.setState({ selectedTarget: null });
   }
 });
 
 // Also handle combat:damage with killed: true for immediate feedback
 gameSocket.on('combat:damage', (data) => {
   const currentPlayer = useGameStore.getState().player;
-  const { targetEntityId, inCombat } = useCombatStore.getState();
+  const { targetEntityId, inCombat, selectedTarget } = useCombatStore.getState();
 
   // If we're in combat but don't have targetEntityId set (player-initiated case),
   // set it from the first damage event where we're the attacker
