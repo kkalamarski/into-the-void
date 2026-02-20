@@ -225,6 +225,90 @@ export const SUIT_ANCIENT_PROTOTYPE_LEGENDARY: ItemDefinition = {
 };
 
 // ============================================================
+// SPECIALIZED SUITS (4) — unique defensive ability combinations
+// ============================================================
+
+export const SUIT_HAZMAT_RARE: ItemDefinition = {
+  id: 'suit_hazmat_rare',
+  displayName: 'Hazmat Response Suit',
+  description:
+    'A sealed containment suit rated for Miasma Marshes and toxic industrial zones. The integrated barrier system was designed after too many extraction teams didn\'t come back.',
+  category: 'suit',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 9.0,
+  baseValue: 3000,
+  requiredLevel: 8,
+  ilvl: computeIlvl(1, 'rare'),
+  textureKey: 'item_suit_environmental',
+  color: 0x88aa44,
+  equipSlot: 'exosuit',
+  moduleSlots: 4,
+  effects: [],
+  grantedAbilities: ['energy_barrier', 'regeneration_protocol'],
+};
+
+export const SUIT_ASSAULT_FRAME_EPIC: ItemDefinition = {
+  id: 'suit_assault_frame_epic',
+  displayName: 'Assault Frame Mk.III',
+  description:
+    'A Nexus Frontiers combat frame optimized for offensive operations. Where most suits emphasize survival, the Assault Frame emphasizes ensuring the other side doesn\'t survive.',
+  category: 'suit',
+  rarity: 'epic',
+  maxStack: 1,
+  weight: 10.0,
+  baseValue: 15000,
+  requiredLevel: 18,
+  ilvl: computeIlvl(2, 'epic'),
+  textureKey: 'item_suit_tactical',
+  color: 0x4444aa,
+  equipSlot: 'exosuit',
+  moduleSlots: 4,
+  effects: [],
+  grantedAbilities: ['emergency_shield', 'power_surge', 'fortify_systems'],
+};
+
+export const SUIT_STALKER_RECON_EPIC: ItemDefinition = {
+  id: 'suit_stalker_recon_epic',
+  displayName: 'Stalker Reconnaissance Suit',
+  description:
+    'Developed for long-range reconnaissance in hostile territory. The enhanced sensors and sustained mobility systems allow operatives to observe without being observed — usually.',
+  category: 'suit',
+  rarity: 'epic',
+  maxStack: 1,
+  weight: 7.0,
+  baseValue: 15000,
+  requiredLevel: 20,
+  ilvl: computeIlvl(2, 'epic'),
+  textureKey: 'item_suit_scout',
+  color: 0x3d5a3d,
+  equipSlot: 'exosuit',
+  moduleSlots: 4,
+  effects: [],
+  grantedAbilities: ['nano_repair', 'overclock', 'resource_scan', 'analyze_specimen'],
+};
+
+export const SUIT_TERMINUS_ADAPTATION_EXOTIC: ItemDefinition = {
+  id: 'suit_terminus_adaptation_exotic',
+  displayName: 'Terminus Adaptation Suit',
+  description:
+    'A suit that seems to respond to Terminus itself. Recovered from a sealed Prior Inhabitant cache, it incorporates materials that resist Anomaly effects. Wearing it produces unusual dreams.',
+  category: 'suit',
+  rarity: 'exotic',
+  maxStack: 1,
+  weight: 8.0,
+  baseValue: 40000,
+  requiredLevel: 28,
+  ilvl: computeIlvl(3, 'exotic'),
+  textureKey: 'item_suit_ancient_prototype',
+  color: 0x2a4a4a,
+  equipSlot: 'exosuit',
+  moduleSlots: 5,
+  effects: [],
+  grantedAbilities: ['nano_repair', 'regeneration_protocol', 'magnetic_field', 'power_surge'],
+};
+
+// ============================================================
 // ALL SUITS
 // ============================================================
 
@@ -239,4 +323,8 @@ export const ALL_SUITS: readonly ItemDefinition[] = [
   SUIT_HELIX_RESEARCH_FRAME_EXOTIC,
   SUIT_VOID_WALKER_LEGENDARY,
   SUIT_ANCIENT_PROTOTYPE_LEGENDARY,
+  SUIT_HAZMAT_RARE,
+  SUIT_ASSAULT_FRAME_EPIC,
+  SUIT_STALKER_RECON_EPIC,
+  SUIT_TERMINUS_ADAPTATION_EXOTIC,
 ];
