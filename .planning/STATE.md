@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 49 of 50 (NPC Interaction Window)
-Plan: 2 of TBD in current phase
+Plan: 3 of 3 in current phase (COMPLETE)
 Status: In progress
-Last activity: 2026-02-20 — 49-02: NpcInteractionModal component created, CSS styled, wired into GameUI
+Last activity: 2026-02-20 — 49-03: NPC modal action buttons and Escape key dismissal complete
 
 Progress: [██░░░░░░░░] 20% (v1.11 milestone — 2/5 phases)
 
@@ -38,7 +38,7 @@ Progress: [██░░░░░░░░] 20% (v1.11 milestone — 2/5 phases)
 | v1.8 | 33-38 | 22 | 2 days |
 | v1.9 | 39-42 | 12 | 1 day |
 | v1.10 | 43-45 | 5 | 1 day |
-| v1.11 | 46-50 | 9/TBD | in progress |
+| v1.11 | 46-50 | 11/TBD | in progress |
 
 ## Accumulated Context
 
@@ -87,6 +87,8 @@ Recent decisions affecting current work:
 - [49-02]: NpcInteractionModal follows EquipmentPanel pattern: useDraggablePanel, useEffect keyboard disable/enable, ui-panel class
 - [49-02]: Portrait rendered as colored div (NPC definition hex color) — placeholder until NPC sprites exist
 - [49-02]: Greeting dialogue: condition=greeting line or first dialogue line, fallback to '...'
+- [Phase 49]: Guard and Ambient NPCs render no action buttons (dialogue-only interaction)
+- [Phase 49]: Trade/service/faction_rep action buttons are placeholders with console.log — to be wired in Phase 50
 
 ### Pending Todos
 
@@ -105,10 +107,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 49-npc-interaction-window/49-02-PLAN.md — NpcInteractionModal component, CSS, and GameUI wiring complete
+Stopped at: Completed 49-npc-interaction-window/49-03-PLAN.md — NPC modal action buttons and Escape key dismissal, Phase 49 complete
 Resume file: None
 
-**Next action:** Execute next plan in Phase 49 (49-03: NPC action buttons / trade interactions)
+**Next action:** Execute Phase 50 (Trading System)
 
 ---
-*Last updated: 2026-02-20 after 49-02 execution complete*
+*Last updated: 2026-02-20 after 49-03 execution complete*
