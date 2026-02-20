@@ -303,7 +303,7 @@ Plans:
 
 **Milestone Goal:** Fix the disconnected equipment stats system so items actually provide meaningful stat bonuses, with clear build identity and rarity progression.
 
-#### Phase 59: Type Foundation
+#### Phase 59: Type Foundation ✓
 
 **Goal**: Stats effect type has working resolver implementation
 **Depends on**: Phase 58 (v1.13 complete)
@@ -313,9 +313,10 @@ Plans:
   2. Item can define multiple stats in single effect (toughness + durability)
   3. Stats effect is documented as canonical pattern for equipment stats
 **Plans**: 1 plan in 1 wave
+**Status**: Complete (2026-02-21)
 
 Plans:
-- [ ] 59-01-PLAN.md — Implement stats effect resolver with multi-stat support and documentation
+- [x] 59-01-PLAN.md — Implement stats effect resolver with multi-stat support and documentation
 
 #### Phase 60: Migration
 
@@ -440,13 +441,13 @@ Phases execute in numeric order: 59 → 60 → 61 → 62 → 63
 | 56. Core Ability System | v1.13 | 3/3 | Complete | 2026-02-20 |
 | 57. Buff System | v1.13 | 3/3 | Complete | 2026-02-20 |
 | 58. Ability Content & Polish | v1.13 | 3/3 | Complete | 2026-02-21 |
-| 59. Type Foundation | v1.14 | 1/1 | Not started | - |
+| 59. Type Foundation | v1.14 | 1/1 | Complete | 2026-02-21 |
 | 60. Migration | v1.14 | 0/1 | Not started | - |
 | 61. Aggregation Rules | v1.14 | 0/1 | Not started | - |
 | 62. Calculation Parity | v1.14 | 0/1 | Not started | - |
 | 63. Content Normalization | v1.14 | 0/1 | Not started | - |
 
-**Total:** 63 phases (58 complete, 5 remaining)
+**Total:** 63 phases (59 complete, 4 remaining)
 
 ---
-*Last updated: 2026-02-21 after Phase 59 planning*
+*Last updated: 2026-02-21 after Phase 59 execution*
