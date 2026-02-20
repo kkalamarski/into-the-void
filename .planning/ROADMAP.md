@@ -202,10 +202,10 @@ Plans:
   2. Hub zones show correct NPC types (Trader, Guard, Faction Rep, Ambient, Service) at their defined spawn positions
   3. Creature spawning logic correctly identifies hub zones and skips creature generation entirely
   4. Existing world creature spawning remains unchanged — creatures still spawn normally in open-world zones
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 52-01-PLAN.md — Fix hub zone entity spawning to use NPC definitions only
+- [ ] 52-01-PLAN.md — Diagnose and fix hub NPC spawning with validation
 
 #### Phase 53: Rendering & Depth Fixes
 
