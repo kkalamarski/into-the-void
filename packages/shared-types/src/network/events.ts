@@ -88,6 +88,7 @@ export interface ClientEvents {
   'hub:leave': Record<string, never>;
   'respawn:sos': Record<string, never>;
   'respawn:reboot': { itemInstanceId: string };
+  'npc:interact': { entityId: string };
 }
 
 /**
@@ -132,6 +133,19 @@ export interface ServerEvents {
     maxHealth: number; // Max health for reference
   };
   'error': { code: string; message: string };
+  'npc:interact:response': {
+    npcId: string;
+    displayName: string;
+    npcType: 'trader' | 'guard' | 'faction_rep' | 'ambient' | 'service';
+    faction: 'verdant' | 'helix' | 'nexus' | 'neutral';
+    description: string;
+    dialogue: Array<{ text: string; condition?: string }>;
+    color: number;
+    inventory?: Array<{ itemId: string; buyPrice: number; sellPrice: number; stock: number }>;
+    serviceType?: 'repair' | 'storage' | 'transport' | 'medical';
+    title?: string;
+    role?: string;
+  };
 }
 
 /**
