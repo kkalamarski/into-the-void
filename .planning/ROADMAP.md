@@ -192,11 +192,10 @@ See: `.planning/milestones/v1.7-ROADMAP.md`
   2. Player logs out in a hub zone and logs back in — they spawn in the same hub zone at the same position
   3. Player disconnects abruptly (browser close, network drop) — their position is still saved and restored on next login
   4. Server restart does not reset player positions — positions persist in database and survive process restarts
-**Plans:** 2 plans (Wave 1 parallel)
+**Plans:** 1 plan
 
 Plans:
-- [ ] 51-01-PLAN.md — Save player position to database on disconnect
-- [ ] 51-02-PLAN.md — Restore player position on login with zone handling
+- [ ] 51-01-PLAN.md — Save player position on disconnect and document restore flow
 
 #### Phase 52: Hub NPC Spawning Fix
 
@@ -320,7 +319,7 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55
 | 48. NPC Definition System and Hub Spawns | v1.11 | 3/3 | Complete | 2026-02-20 |
 | 49. NPC Interaction Window | v1.11 | 3/3 | Complete | 2026-02-20 |
 | 50. Trading System | v1.11 | 4/4 | Complete | 2026-02-20 |
-| 51. Player Position Persistence | v1.12 | 0/2 | Not started | - |
+| 51. Player Position Persistence | v1.12 | 0/1 | Not started | - |
 | 52. Hub NPC Spawning Fix | v1.12 | 0/1 | Not started | - |
 | 53. Rendering & Depth Fixes | v1.12 | 0/2 | Not started | - |
 | 54. New Player Starter Kit | v1.12 | 0/1 | Not started | - |
