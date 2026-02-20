@@ -9,8 +9,8 @@ Requirements for Bug Fixes & Content Polish milestone.
 
 ### Persistence
 
-- [ ] **PERS-01**: Player position saved to database on disconnect
-- [ ] **PERS-02**: Player position restored on login (exact tile)
+- [x] **PERS-01**: Player position saved to database on disconnect
+- [x] **PERS-02**: Player position restored on login (exact tile)
 
 ### Bug Fixes
 

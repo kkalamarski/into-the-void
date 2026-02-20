@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 51 - Player Position Persistence
+**Current focus:** Phase 52 - Hub NPC Spawning Fix
 
 ## Current Position
 
-Phase: 51 of 55 (Player Position Persistence)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-20 — Completed 51-01-PLAN.md
+Phase: 52 of 55 (Hub NPC Spawning Fix)
+Plan: 0 of 1 in current phase
+Status: Ready to plan
+Last activity: 2026-02-20 — Phase 51 complete
 
 Progress: [█░░░░░░░░░] 11% (v1.12 milestone - 1/9 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 160 (Phases 1-50 complete, Phase 51: 1/2)
+- Total plans completed: 160 (Phases 1-51 complete)
 - Average duration: ~3m per plan
 - Total execution time: ~6 hours
 
@@ -39,8 +39,7 @@ Progress: [█░░░░░░░░░] 11% (v1.12 milestone - 1/9 plans)
 | v1.9 | 39-42 | 12 | 1 day |
 | v1.10 | 43-45 | 5 | 1 day |
 | v1.11 | 46-50 | 18 | 2 days |
-| v1.12 | 51-55 | 9 | TBD |
-| Phase 51 P01 | 107 | 2 tasks | 1 files |
+| v1.12 | 51-55 | 1/9 | TBD |
 
 ## Accumulated Context
 
@@ -54,7 +53,7 @@ Recent decisions affecting current work:
 - [v1.12]: Content expansion: 5-10 creatures, 10-20 items
 - [v1.12]: Fix rendering depth sorting and improve elevation visibility
 - [Phase 51]: Position saves before memory cleanup in handleDisconnect to prevent data loss
-- [Phase 51]: Reuse existing updateCharacterPosition instead of creating new position-specific save function
+- [Phase 51]: Reuse existing updateCharacterPosition instead of creating new function
 
 ### Pending Todos
 
@@ -63,7 +62,7 @@ None.
 ### Blockers/Concerns
 
 **v1.12 bugs to fix:**
-- Player position not persisting across login sessions (Phase 51) — IN PROGRESS (disconnect save complete, server restart pending)
+- ~~Player position not persisting across login sessions~~ (Phase 51 complete ✓)
 - NPCs not loading in hubs, creatures appearing instead (Phase 52)
 - Entity/terrain depth sorting issues, elevation blending (Phase 53)
 
@@ -73,10 +72,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 51-01-PLAN.md (Player Position Persistence - disconnect save)
+Stopped at: Phase 51 complete — ready to plan Phase 52
 Resume file: None
 
-**Next action:** `/gsd:execute-phase 51` for plan 51-02 (server restart position restore)
+**Next action:** `/gsd:plan-phase 52`
 
 ---
-*Last updated: 2026-02-20 after completing plan 51-01*
+*Last updated: 2026-02-20 after completing Phase 51*

@@ -182,20 +182,15 @@ See: `.planning/milestones/v1.7-ROADMAP.md`
 **Depth:** Quick (from config)
 **Coverage:** 15/15 requirements mapped
 
-#### Phase 51: Player Position Persistence
+#### Phase 51: Player Position Persistence ✓
 
 **Goal**: Player position saves to database on disconnect and restores on login, so players resume exactly where they left off
 **Depends on**: Phase 50 (v1.11 complete)
 **Requirements**: PERS-01, PERS-02
-**Success Criteria** (what must be TRUE):
-  1. Player disconnects from the game and reconnects — they spawn at the exact tile they were standing on when they disconnected, not at a default spawn point
-  2. Player logs out in a hub zone and logs back in — they spawn in the same hub zone at the same position
-  3. Player disconnects abruptly (browser close, network drop) — their position is still saved and restored on next login
-  4. Server restart does not reset player positions — positions persist in database and survive process restarts
-**Plans:** 1 plan
+**Status**: Complete (2026-02-20)
 
 Plans:
-- [ ] 51-01-PLAN.md — Save player position on disconnect and document restore flow
+- [x] 51-01-PLAN.md — Save player position on disconnect and document restore flow
 
 #### Phase 52: Hub NPC Spawning Fix
 
@@ -319,13 +314,13 @@ Phases execute in numeric order: 51 -> 52 -> 53 -> 54 -> 55
 | 48. NPC Definition System and Hub Spawns | v1.11 | 3/3 | Complete | 2026-02-20 |
 | 49. NPC Interaction Window | v1.11 | 3/3 | Complete | 2026-02-20 |
 | 50. Trading System | v1.11 | 4/4 | Complete | 2026-02-20 |
-| 51. Player Position Persistence | v1.12 | 0/1 | Not started | - |
+| 51. Player Position Persistence | v1.12 | 1/1 | Complete | 2026-02-20 |
 | 52. Hub NPC Spawning Fix | v1.12 | 0/1 | Not started | - |
 | 53. Rendering & Depth Fixes | v1.12 | 0/2 | Not started | - |
 | 54. New Player Starter Kit | v1.12 | 0/1 | Not started | - |
 | 55. Content Expansion | v1.12 | 0/3 | Not started | - |
 
-**Total:** 55 phases (50 complete, 5 remaining)
+**Total:** 55 phases (51 complete, 4 remaining)
 
 ---
 *Last updated: 2026-02-20 after v1.12 roadmap created*
