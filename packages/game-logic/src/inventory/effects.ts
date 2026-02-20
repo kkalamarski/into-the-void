@@ -42,6 +42,9 @@ export function resolveEffect(effect: ItemEffect): EffectResult {
       };
 
     case 'stat_buff':
+      // DEPRECATED for permanent equipment bonuses (duration: 0).
+      // Use 'stats' effect type instead (see Phase 59).
+      // Still valid for temporary consumable buffs with duration > 0.
       return {
         type: 'stat_buff',
         applied: { [effect.stat]: effect.amount },
@@ -87,6 +90,21 @@ export function resolveEffect(effect: ItemEffect): EffectResult {
         applied: { jumpHeight: effect.jumpHeight },
       };
 
+    /**
+     * Stats effect - canonical pattern for equipment stat bonuses
+     *
+     * Provides permanent stat bonuses from equipped items. Items can define
+     * any subset of the 8 CharacterStats (durability, toughness, power, haste,
+     * vigor, recovery, perception, resilience).
+     *
+     * Use this for ALL equipment stat bonuses. The legacy pattern of using
+     * stat_buff with duration: 0 is deprecated and will be removed in Phase 60.
+     *
+     * Examples:
+     * - Tank suit: { type: 'stats', durability: 20, toughness: 15 }
+     * - Combat tool: { type: 'stats', power: 12, haste: 5 }
+     * - Universal module: { type: 'stats', perception: 8 }
+     */
     case 'stats': {
       // Build applied object from defined stats (filter out undefined)
       const applied: Record<string, number> = {};
