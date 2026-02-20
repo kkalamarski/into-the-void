@@ -254,9 +254,9 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 56-01-PLAN.md — Ability Foundation (types, registry, item association)
-- [ ] 56-02-PLAN.md — Server Validation & Execution (AbilityService, socket events)
-- [ ] 56-03-PLAN.md — Client UI & State (action bar abilities, target selection, cooldown display)
+- [x] 56-01-PLAN.md — Ability Foundation (types, registry, item association)
+- [x] 56-02-PLAN.md — Server Validation & Execution (AbilityService, socket events)
+- [x] 56-03-PLAN.md — Client UI & State (action bar abilities, target selection, cooldown display)
 
 #### Phase 57: Buff System
 
@@ -352,11 +352,11 @@ Phases execute in numeric order: 56 → 57 → 58
 | 53. Rendering & Depth Fixes | v1.12 | 2/2 | Complete | 2026-02-20 |
 | 54. New Player Starter Kit | v1.12 | 1/1 | Complete | 2026-02-20 |
 | 55. Content Expansion | v1.12 | 3/3 | Complete | 2026-02-20 |
-| 56. Core Ability System | v1.13 | 0/3 | Planned | - |
+| 56. Core Ability System | v1.13 | 3/3 | Complete | 2026-02-20 |
 | 57. Buff System | v1.13 | 0/2 | Not started | - |
 | 58. Ability Content & Polish | v1.13 | 0/2 | Not started | - |
 
-**Total:** 58 phases (55 complete, 3 remaining)
+**Total:** 58 phases (56 complete, 2 remaining)
 
 ---
-*Last updated: 2026-02-20 after Phase 56 planning*
+*Last updated: 2026-02-20 after Phase 56 execution*
