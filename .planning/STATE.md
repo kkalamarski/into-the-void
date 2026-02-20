@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.11 NPCs & Trading — Phase 49: NPC Interaction Window
+**Current focus:** v1.11 NPCs & Trading — Phase 50: Trading System
 
 ## Current Position
 
-Phase: 49 of 50 (NPC Interaction Window)
-Plan: 3 of 3 in current phase
-Status: Complete
-Last activity: 2026-02-20 — Phase 49 verified and complete
+Phase: 50 of 50 (Trading System)
+Plan: 2 of 4 in current phase
+Status: In Progress
+Last activity: 2026-02-20 — Plan 50-02 complete
 
-Progress: [████████░░] 80% (v1.11 milestone — 4/5 phases)
+Progress: [████████░░] 82% (v1.11 milestone — 4.5/5 phases)
 
 ## Performance Metrics
 
@@ -39,6 +39,12 @@ Progress: [████████░░] 80% (v1.11 milestone — 4/5 phases)
 | v1.9 | 39-42 | 12 | 1 day |
 | v1.10 | 43-45 | 5 | 1 day |
 | v1.11 | 46-50 | 14/TBD | in progress |
+
+**Recent Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| 50-02 | 191s | 3 | 3 |
 
 ## Accumulated Context
 
@@ -89,6 +95,8 @@ Recent decisions affecting current work:
 - [49-02]: Greeting dialogue: condition=greeting line or first dialogue line, fallback to '...'
 - [Phase 49]: Guard and Ambient NPCs render no action buttons (dialogue-only interaction)
 - [Phase 49]: Trade/service/faction_rep action buttons are placeholders with console.log — to be wired in Phase 50
+- [Phase 50]: TradeService validates NPC type, item availability, credits, and inventory space before executing atomic transactions
+- [Phase 50]: buy() uses atomic deductCredits with addCredits refund if addItem fails
 
 ### Pending Todos
 
@@ -107,10 +115,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 49-npc-interaction-window/49-03-PLAN.md — NPC modal action buttons and Escape key dismissal, Phase 49 complete
+Stopped at: Completed 50-trading-system/50-02-PLAN.md — TradeService and trade socket handlers
 Resume file: None
 
-**Next action:** Plan Phase 50 (Trading System) — final phase of v1.11 milestone
+**Next action:** Execute Plan 50-03 (Trading UI)
 
 ---
-*Last updated: 2026-02-20 after Phase 49 execution complete*
+*Last updated: 2026-02-20 after Plan 50-02 execution complete*
