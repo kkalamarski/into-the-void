@@ -25,9 +25,11 @@ import {
   CharStatsPayload,
   CharacterStats,
   isHubZone,
+  Npc,
 } from '@into-the-void/shared-types';
 import { computeCharStats } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
+import { NpcRegistry } from '@into-the-void/npcs';
 import { EquipmentJson } from '@into-the-void/database';
 
 @WebSocketGateway({
@@ -946,6 +948,61 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         message: 'Failed to process hub leave',
       });
     }
+  }
+
+  @SubscribeMessage('npc:interact')
+  async handleNpcInteract(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { entityId: string }
+  ): Promise<void> {
+    const player = this.playerService.getPlayerBySocket(client.id);
+    if (!player) return;
+
+    // Find entity in zone to get npcId
+    const entity = await this.zonesService.getEntity(player.position.zoneId, data.entityId);
+    if (!entity || entity.type !== 'npc') return;
+
+    // Get NPC definition from registry
+    const npcDef = NpcRegistry.get((entity as Npc).npcId);
+
+    // Build response payload from definition
+    const response: {
+      npcId: string;
+      displayName: string;
+      npcType: string;
+      faction: string;
+      description: string;
+      dialogue: Array<{ text: string; condition?: string }>;
+      color: number;
+      inventory?: Array<{ itemId: string; buyPrice: number; sellPrice: number; stock: number }>;
+      serviceType?: string;
+      title?: string;
+      role?: string;
+    } = {
+      npcId: npcDef.id,
+      displayName: npcDef.displayName,
+      npcType: npcDef.npcType,
+      faction: npcDef.faction,
+      description: npcDef.description,
+      dialogue: [...npcDef.dialogue],
+      color: npcDef.color,
+    };
+
+    // Add type-specific fields
+    if (npcDef.npcType === 'trader' && 'inventory' in npcDef) {
+      response.inventory = [...npcDef.inventory];
+    }
+    if (npcDef.npcType === 'service' && 'serviceType' in npcDef) {
+      response.serviceType = npcDef.serviceType;
+    }
+    if (npcDef.npcType === 'faction_rep' && 'title' in npcDef) {
+      response.title = npcDef.title;
+    }
+    if (npcDef.npcType === 'ambient' && 'role' in npcDef) {
+      response.role = npcDef.role;
+    }
+
+    client.emit('npc:interact:response', response);
   }
 
   /**
