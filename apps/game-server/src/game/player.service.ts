@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Server } from 'socket.io';
 import { Player, Position, PlayerPublic, FactionId, ZoneState } from '@into-the-void/shared-types';
 import { DatabaseService } from '../database/database.service';
-import { findCharacterById, isCharacterOwnedByAccount, updateLastPlayed, saveLastWorldPosition, getLastWorldPosition } from '@into-the-void/database';
+import { findCharacterById, isCharacterOwnedByAccount, updateLastPlayed, saveLastWorldPosition, getLastWorldPosition, updateCharacterPosition } from '@into-the-void/database';
 import { isHubZone } from '@into-the-void/shared-types';
 import { InventoryService } from './inventory.service';
 import { getFactionRespawnPosition } from '@into-the-void/game-logic';
@@ -117,8 +117,14 @@ export class PlayerService {
       // Flush inventory to DB before removing player
       await this.inventoryService.flushAndUnload(playerId);
 
+      // Save current position to database
       const player = this.players.get(playerId);
       if (player) {
+        await updateCharacterPosition(
+          this.databaseService.getClient(),
+          playerId,
+          player.position
+        );
         player.online = false;
       }
       this.players.delete(playerId);
