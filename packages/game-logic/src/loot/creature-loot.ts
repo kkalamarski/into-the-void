@@ -103,6 +103,54 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_ancient_fragment', minAmount: 1, maxAmount: 1, chance: 0.08 },
     { itemId: 'reagent_ancient_circuitry', minAmount: 1, maxAmount: 2, chance: 0.15 },
   ]],
+
+  // Tier I — Void Plains (Herbivore, levels 1-4)
+  ['loot_creature_coastal_scuttler', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.75 },
+    { itemId: 'world_crater_dust', minAmount: 1, maxAmount: 2, chance: 0.4 },
+  ]],
+
+  // Tier III — Volcanic Ridge (Omnivore, levels 10-20)
+  ['loot_creature_ash_skimmer', [
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.7 },
+    { itemId: 'world_volcanic_glass', minAmount: 1, maxAmount: 2, chance: 0.5 },
+    { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ]],
+
+  // Tier II — Miasma Marshes (Herbivore, levels 3-10)
+  ['loot_creature_miasma_drifter', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.8 },
+    { itemId: 'world_toxic_residue', minAmount: 1, maxAmount: 1, chance: 0.35 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.08 },
+  ]],
+
+  // Tier III — Frozen Expanse (Predator, levels 12-24)
+  ['loot_creature_ice_burrower', [
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.75 },
+    { itemId: 'world_frozen_shard', minAmount: 2, maxAmount: 4, chance: 0.6 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.12 },
+  ]],
+
+  // Tier II — Crystal Caves (Herbivore, levels 5-12)
+  ['loot_creature_crystal_crawler', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.7 },
+    { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 3, chance: 0.5 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier IV — Ancient Ruins (Predator, levels 18-30)
+  ['loot_creature_ruin_seeker', [
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 2, chance: 0.8 },
+    { itemId: 'reagent_ancient_circuitry', minAmount: 1, maxAmount: 2, chance: 0.3 },
+    { itemId: 'world_ancient_fragment', minAmount: 1, maxAmount: 1, chance: 0.05 },
+  ]],
+
+  // Tier II — Petrified Expanse (Predator, levels 8-18)
+  ['loot_creature_petrified_lurker', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.7 },
+    { itemId: 'world_alien_flora_petrified', minAmount: 1, maxAmount: 2, chance: 0.4 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ]],
 ]);
 
 /**
