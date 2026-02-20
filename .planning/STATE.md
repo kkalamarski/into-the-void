@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 ## Current Position
 
 Phase: 49 of 50 (NPC Interaction Window)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-20 — 49-01: NPC click round-trip wired, npcStore created, GameGateway handler added
+Last activity: 2026-02-20 — 49-02: NpcInteractionModal component created, CSS styled, wired into GameUI
 
 Progress: [██░░░░░░░░] 20% (v1.11 milestone — 2/5 phases)
 
@@ -84,6 +84,9 @@ Recent decisions affecting current work:
 - [49-01]: npcStore socket wiring at module level follows combatStore pattern — consistent, no lifecycle issues
 - [49-01]: GameGateway uses zonesService.getEntity + NpcRegistry.get() for NPC interaction response
 - [49-01]: Type-specific NPC fields (inventory, serviceType, title, role) conditionally added to npc:interact:response payload
+- [49-02]: NpcInteractionModal follows EquipmentPanel pattern: useDraggablePanel, useEffect keyboard disable/enable, ui-panel class
+- [49-02]: Portrait rendered as colored div (NPC definition hex color) — placeholder until NPC sprites exist
+- [49-02]: Greeting dialogue: condition=greeting line or first dialogue line, fallback to '...'
 
 ### Pending Todos
 
@@ -102,10 +105,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 49-npc-interaction-window/49-01-PLAN.md — NPC click round-trip wired, npcStore created, shared-types updated, GameGateway handler added
+Stopped at: Completed 49-npc-interaction-window/49-02-PLAN.md — NpcInteractionModal component, CSS, and GameUI wiring complete
 Resume file: None
 
-**Next action:** Execute next plan in Phase 49 (49-02: NPC interaction modal UI)
+**Next action:** Execute next plan in Phase 49 (49-03: NPC action buttons / trade interactions)
 
 ---
-*Last updated: 2026-02-20 after 49-01 execution complete*
+*Last updated: 2026-02-20 after 49-02 execution complete*
