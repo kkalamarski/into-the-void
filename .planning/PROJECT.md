@@ -4,7 +4,7 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, and a complete auth-to-gameplay flow.
 
-## Current State (v1.12 shipped)
+## Current State (v1.13 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
@@ -13,7 +13,8 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Inventory: 100+ items, exo-suit equipment, module slots, action bar, storage
 - Stats: 8 primary stats with equipment bonuses, level scaling
 - Entities: 42 definitions, fertility-based spawning, creature AI, tool interaction, loot, respawn
-- Combat: Auto-attack loop, creature aggro AI, player death/respawn, damage numbers, combat indicator
+- Combat: Ability-based system with energy costs and cooldowns, creature aggro AI, player death/respawn
+- Abilities: 21 abilities across offensive/defensive/utility, item-granted, buff system with durations
 - NPCs: Definition system, 5 types (Trader/Guard/Rep/Ambient/Service), interaction modal, dialogue
 - Trading: Buy/sell with credits, trader inventory, credit balance in HUD
 - Hubs: 4 orbital faction stations, portal travel, H key recall
@@ -27,19 +28,19 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~15,000+ LOC TypeScript
 
-## Current Milestone: v1.13 Active Combat Abilities
+## Current Milestone: v1.14 Equipment Stats Overhaul
 
-**Goal:** Replace auto-attack with a manual ability system where items grant abilities that players use via action bar hotkeys.
+**Goal:** Fix the disconnected equipment stats system so items actually provide meaningful stat bonuses, with clear build identity and rarity progression.
 
 **Target features:**
-- Ability definition system with energy cost and cooldown
-- Items (suits, tools, modules) grant abilities
-- Click-to-select targeting (decoupled from attacking)
-- Action bar auto-populates from equipped items, manual rearrangement
-- Cooldown UI with radial sweep overlay
-- Buff system with instant and duration-based effects
-- 20+ abilities across Offensive, Defensive, Utility categories
-- Existing items updated with abilities, new items added
+- New `stats` effect type for clean equipment stat bonuses
+- Effects resolver updated to aggregate stats from equipment
+- All suits updated with stat profiles (tank/scout/combat/utility)
+- All tools updated with appropriate stat bonuses
+- All modules updated with stat bonuses
+- Rarity scaling: higher rarity = stronger stats
+- Stats UI shows equipment bonuses clearly
+- Combat feels different based on equipment choice
 
 ## Core Value
 
@@ -129,19 +130,26 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Elevation visibility improvements (edge highlights, shadows) — v1.12
 - ✓ New player starter kit (basic suit + tool) — v1.12
 - ✓ Content expansion: 7 new creatures, 15 new items — v1.12
+- ✓ Ability definition system with energy cost, cooldown, effects — v1.13
+- ✓ Item-ability associations (suits, tools, modules grant abilities) — v1.13
+- ✓ Click-to-select targeting decoupled from auto-attack — v1.13
+- ✓ Action bar ability management with drag-to-rearrange — v1.13
+- ✓ Ability execution with energy drain and cooldown — v1.13
+- ✓ Cooldown UI with radial sweep overlay — v1.13
+- ✓ Buff system with instant and duration-based effects — v1.13
+- ✓ 21 abilities across Offensive, Defensive, Utility categories — v1.13
+- ✓ 20 tools and 14 suits with ability grants — v1.13
 
 ### Active
 
-- [ ] Ability definition system (id, name, category, energy cost, cooldown, effects)
-- [ ] Item-ability associations (suits, tools, modules grant abilities)
-- [ ] Click-to-select targeting without auto-attack
-- [ ] Action bar ability management (auto-populate, rearrange, remove)
-- [ ] Ability execution with energy drain and cooldown
-- [ ] Cooldown UI with radial sweep overlay
-- [ ] Buff system (instant effects and duration-based buffs with timers)
-- [ ] 20+ abilities: Offensive (Attack, Electrocute, Charge, etc.), Defensive (Magnetic Field, Toughen, Nano Repair, etc.), Utility (Gather, etc.)
-- [ ] Update existing items with ability grants
-- [ ] New items with unique abilities
+- [ ] New `stats` effect type for equipment stat bonuses
+- [ ] Effects resolver aggregates stats from equipped items
+- [ ] Suits with stat profiles by archetype (tank/scout/combat/utility)
+- [ ] Tools with stat bonuses appropriate to tool type
+- [ ] Modules with stat bonuses
+- [ ] Rarity scaling: higher rarity = stronger stat values
+- [ ] Stats UI displays equipment bonuses
+- [ ] Combat reflects equipment choice (tank survives longer, combat hits harder)
 
 ### Out of Scope
 
@@ -154,7 +162,7 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - Mobile controls — web-first
 - Surface faction HQs (Canopy, Ironhold, Meridian) — orbital first, surface later
 - Shared city at 0,0 — designed in future milestone
-- Quest/mission system — v1.14+ (after abilities)
+- Quest/mission system — v1.15+ (after equipment stats)
 - Branching dialogue — simple linear sufficient for now
 
 ## Constraints
@@ -186,4 +194,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-20 after v1.13 milestone start*
+*Last updated: 2026-02-21 after v1.14 milestone start*
