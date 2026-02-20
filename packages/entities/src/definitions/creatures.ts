@@ -160,6 +160,118 @@ export const CREATURE_VOID_HORROR: CreatureDefinition = {
   respawnSeconds: 900,
 };
 
+export const CREATURE_COASTAL_SCUTTLER: CreatureDefinition = {
+  id: 'creature_coastal_scuttler',
+  displayName: 'Coastal Scuttler',
+  description: 'Small crustacean-like creature that feeds on exposed minerals. Docile unless stepped on — at which point it becomes surprisingly aggressive for its size.',
+  entityClass: 'creature',
+  biomes: ['void_plains'],
+  textureKey: 'creature_coastal_scuttler',
+  color: 0x6b7280,
+  lootTableId: 'loot_creature_coastal_scuttler',
+  behavior: 'herbivore',
+  baseHealth: 40,
+  levelRange: [1, 4],
+  baseXp: 12,
+  respawnSeconds: 180,
+};
+
+export const CREATURE_ASH_SKIMMER: CreatureDefinition = {
+  id: 'creature_ash_skimmer',
+  displayName: 'Ash Skimmer',
+  description: 'A heat-adapted flyer that glides on thermal updrafts in volcanic regions. Feeds on thermal vent bacteria and unwary smaller creatures.',
+  entityClass: 'creature',
+  biomes: ['volcanic_ridge'],
+  textureKey: 'creature_ash_skimmer',
+  color: 0xdc2626,
+  lootTableId: 'loot_creature_ash_skimmer',
+  behavior: 'omnivore',
+  baseHealth: 100,
+  levelRange: [10, 20],
+  baseXp: 45,
+  respawnSeconds: 360,
+};
+
+export const CREATURE_MIASMA_DRIFTER: CreatureDefinition = {
+  id: 'creature_miasma_drifter',
+  displayName: 'Miasma Drifter',
+  description: 'A buoyant organism that floats through the toxic marshes, filtering nutrients from the chemical-laden air. Harmless unless cornered.',
+  entityClass: 'creature',
+  biomes: ['miasma_marshes'],
+  textureKey: 'creature_miasma_drifter',
+  color: 0x84cc16,
+  lootTableId: 'loot_creature_miasma_drifter',
+  behavior: 'herbivore',
+  baseHealth: 70,
+  levelRange: [3, 10],
+  baseXp: 22,
+  respawnSeconds: 240,
+};
+
+export const CREATURE_ICE_BURROWER: CreatureDefinition = {
+  id: 'creature_ice_burrower',
+  displayName: 'Ice Burrower',
+  description: 'An armored predator that tunnels through permafrost to ambush prey from below. The only warning is a faint vibration before it strikes.',
+  entityClass: 'creature',
+  biomes: ['frozen_expanse'],
+  textureKey: 'creature_ice_burrower',
+  color: 0x3b82f6,
+  lootTableId: 'loot_creature_ice_burrower',
+  behavior: 'predator',
+  baseHealth: 160,
+  levelRange: [12, 24],
+  baseXp: 60,
+  respawnSeconds: 480,
+};
+
+export const CREATURE_CRYSTAL_CRAWLER: CreatureDefinition = {
+  id: 'creature_crystal_crawler',
+  displayName: 'Crystal Crawler',
+  description: 'A slow-moving grazer that consumes crystalline lattice-moss. Its shell is composed of absorbed silicon, making it surprisingly durable.',
+  entityClass: 'creature',
+  biomes: ['crystal_caves'],
+  textureKey: 'creature_crystal_crawler',
+  color: 0xa78bfa,
+  lootTableId: 'loot_creature_crystal_crawler',
+  behavior: 'herbivore',
+  baseHealth: 65,
+  levelRange: [5, 12],
+  baseXp: 25,
+  respawnSeconds: 300,
+};
+
+export const CREATURE_RUIN_SEEKER: CreatureDefinition = {
+  id: 'creature_ruin_seeker',
+  displayName: 'Ruin Seeker',
+  description: 'A creature drawn to Ancient technology for unknown reasons. Highly territorial around ruins and far more intelligent than its appearance suggests.',
+  entityClass: 'creature',
+  biomes: ['ancient_ruins'],
+  textureKey: 'creature_ruin_seeker',
+  color: 0x78716c,
+  lootTableId: 'loot_creature_ruin_seeker',
+  behavior: 'predator',
+  baseHealth: 200,
+  levelRange: [18, 30],
+  baseXp: 90,
+  respawnSeconds: 600,
+};
+
+export const CREATURE_PETRIFIED_LURKER: CreatureDefinition = {
+  id: 'creature_petrified_lurker',
+  displayName: 'Petrified Lurker',
+  description: 'A camouflaged ambush predator that remains motionless among stone trees, waiting for prey. It can suppress the calcification process through unknown biological means.',
+  entityClass: 'creature',
+  biomes: ['petrified_expanse'],
+  textureKey: 'creature_petrified_lurker',
+  color: 0x57534e,
+  lootTableId: 'loot_creature_petrified_lurker',
+  behavior: 'predator',
+  baseHealth: 110,
+  levelRange: [8, 18],
+  baseXp: 42,
+  respawnSeconds: 360,
+};
+
 export const ALL_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_VOID_CRAWLER,
   CREATURE_CANOPY_GRAZER,
@@ -171,4 +283,11 @@ export const ALL_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_MAGMA_BEAST,
   CREATURE_TOXIC_LURKER,
   CREATURE_VOID_HORROR,
+  CREATURE_COASTAL_SCUTTLER,
+  CREATURE_ASH_SKIMMER,
+  CREATURE_MIASMA_DRIFTER,
+  CREATURE_ICE_BURROWER,
+  CREATURE_CRYSTAL_CRAWLER,
+  CREATURE_RUIN_SEEKER,
+  CREATURE_PETRIFIED_LURKER,
 ];

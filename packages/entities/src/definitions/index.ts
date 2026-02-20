@@ -34,6 +34,13 @@ export const ENTITY_IDS = {
   CREATURE_MAGMA_BEAST: 'creature_magma_beast',
   CREATURE_TOXIC_LURKER: 'creature_toxic_lurker',
   CREATURE_VOID_HORROR: 'creature_void_horror',
+  CREATURE_COASTAL_SCUTTLER: 'creature_coastal_scuttler',
+  CREATURE_ASH_SKIMMER: 'creature_ash_skimmer',
+  CREATURE_MIASMA_DRIFTER: 'creature_miasma_drifter',
+  CREATURE_ICE_BURROWER: 'creature_ice_burrower',
+  CREATURE_CRYSTAL_CRAWLER: 'creature_crystal_crawler',
+  CREATURE_RUIN_SEEKER: 'creature_ruin_seeker',
+  CREATURE_PETRIFIED_LURKER: 'creature_petrified_lurker',
 
   // ---- PLANTS ----
   PLANT_LUMINOUS_VINE: 'plant_luminous_vine',
