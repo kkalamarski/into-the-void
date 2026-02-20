@@ -887,3 +887,581 @@ Creature AI phase — Dynamic occupancy check must be part of the AI movement va
 ---
 *Pitfalls research for: Entity System — spawning, loot, AI, interaction, perception, respawn, fertility*
 *Researched: 2026-02-18*
+
+---
+
+# Part 5: Active Combat Ability System Pitfalls
+
+**Scope:** Adding active combat abilities to existing auto-attack combat system in a server-authoritative 2D multiplayer MMO.
+
+**Current system (from codebase analysis):**
+- `CombatService` manages player-to-creature combat sessions with auto-attack
+- `attackTick()` uses `calculateAttackInterval()` based on haste stat
+- `energy` and `maxEnergy` exist in Player type but currently hardcoded (100/100)
+- Items grant passive stat bonuses via `on_equip` and `passive` effect triggers
+- Server-authoritative movement with client prediction and reconciliation
+- Socket.IO events: `combat:start`, `combat:damage`, `combat:end`
+
+---
+
+## Critical Pitfalls
+
+### Pitfall 1: Client Prediction vs Server Authority Mismatch
+**What goes wrong:** Players with low cooldown abilities experience different rates of fire based on their latency. Players with 300ms ping can fire 20-30% slower than players with 20ms ping because cooldown prediction isn't synchronized.
+
+**Why it happens:** Server is authoritative for ability execution, but client predicts cooldown locally. When server rejects an ability activation (still on cooldown server-side), the client has already shown the ability as available.
+
+**Consequences:**
+- Unplayable experience for high-latency players
+- Competitive imbalance in PvP
+- Frequent rollbacks causing visual glitches (abilities appear to fire, then undo)
+- Player frustration and churn
+
+**Prevention:**
+- Implement cooldown prediction with server-sent cooldown start times
+- Use server timestamps for all cooldown calculations
+- Add latency compensation: `effectiveCooldownEnd = serverCooldownEnd + estimatedLatency`
+- Display cooldown state with visual buffer zone (90% = "almost ready" vs 100% = "can cast")
+- Server should send `abilityReady` confirmations for critical abilities
+
+**Detection:**
+- Monitor ability activation rejection rates per player
+- Track correlation between player latency and ability usage frequency
+- Log desync events where client predicted success but server rejected
+
+**Phase assignment:** Phase 1 (Network Foundation) - must be architected from day one
+
+**Sources:**
+- [Gameplay Abilities and You | UE4: Guidebook](https://unreal.gg-labs.com/wiki-archives/networking/gameplay-abilities-and-you) - GameplayEffect latency reconciliation issues
+
+---
+
+### Pitfall 2: Rollback Re-simulation Overhead
+**What goes wrong:** With 300ms connection, the server must re-simulate approximately 22 frames of game state every time a correction happens. With 20+ abilities, each with different effects, buffs, and debuffs, re-simulation becomes computationally expensive and causes server lag spikes.
+
+**Why it happens:** Rollback netcode requires saving every predicted frame and replaying from confirmed state. Ability systems with complex effects (DoT, buffs, stat modifications) multiply the computational cost of each frame replay.
+
+**Consequences:**
+- Server performance degrades with player count
+- Ability spam causes server lag affecting all players in zone
+- Increased hosting costs or forced player count limits
+- Cascading delays as server falls behind
+
+**Prevention:**
+- Limit prediction depth (only predict 10-15 frames, not full RTT)
+- Use simplified simulation for rollback (stat snapshots vs full recalculation)
+- Implement ability rate limiting per player (global cooldown + per-ability cooldown)
+- Cache frequently used stat calculations rather than recomputing
+- Consider snapshot interpolation instead of full rollback for non-critical abilities
+
+**Detection:**
+- Monitor server tick processing time
+- Track re-simulation frequency per zone
+- Alert when tick processing exceeds budget (16ms for 60Hz)
+
+**Phase assignment:** Phase 2 (Core Ability Execution) - architecture decision affects all abilities
+
+**Sources:**
+- [Prediction | Netcode for Entities](https://docs.unity3d.com/Packages/com.unity.netcode@1.0/manual/prediction.html) - Prediction errors and rollback overhead
+- [Determinism, Prediction and Rollback | coherence Documentation](https://docs.coherence.io/manual/advanced-topics/competitive-games/determinism-prediction-rollback) - Re-simulation costs
+
+---
+
+### Pitfall 3: Buff/Debuff Duration Desync
+**What goes wrong:** Buff timer shows 2.3s remaining on client, but server expired it at 2.0s. Player casts ability expecting buff bonus, server calculates damage without buff, client shows wrong damage numbers. Or worse: player dies because server calculated incoming damage with debuff they thought expired.
+
+**Why it happens:** Client and server clocks drift over time (50ms drift over 10 minutes is common). Buffs applied mid-frame have different timestamps. Network packet delays mean buff application arrives late. Duration rounding differences between client/server.
+
+**Consequences:**
+- Player sees wrong damage numbers (kills trust)
+- Tactical decisions based on false information (thought they were buffed)
+- Exploits: players manipulate local clock to extend buff durations
+- Death feels unfair ("I wasn't poisoned anymore!")
+
+**Prevention:**
+- All buff durations are server timestamps, not client-relative
+- Server sends buff state with every relevant event (not just on change)
+- Client displays buffs with safety margin: show "expiring soon" at 90% duration
+- Server sends explicit buff expiration events (don't rely on client timers)
+- Periodic full buff state sync (every 5-10 seconds)
+- Use server tick counts instead of milliseconds for duration tracking
+
+**Detection:**
+- Log buff state mismatches between client predictions and server corrections
+- Monitor player reports of "buff expired early" or "debuff lasted too long"
+- Compare client-predicted damage vs server-calculated damage
+
+**Phase assignment:** Phase 3 (Buff System) - architectural decision before implementing buffs
+
+**Sources:**
+- [Timers on buffs - server or client timer? - GameDev.net](https://gamedev.net/forums/topic/496780-timers-on-buffs---server-or-client-timer/) - Duration tracking approaches
+- [Client/server clock sync issue - GameDev.net](https://www.gamedev.net/forums/topic/707830-clientserver-clock-sync-issue-confirmation-and-solutions/) - Clock drift and synchronization
+- [Arena Breakout Desync Fix 2026](https://news.bittopup.com/news/arena-breakout-desync-fix-2026-audio-network-guide) - Server tick rates and desync (2026 example)
+
+---
+
+### Pitfall 4: Equipment Swap Ability Loss/Duplication
+**What goes wrong:** Player swaps from Tool A (grants Ability X) to Tool B (grants Ability Y). Ability X remains usable. Player fires Ability X while Tool B equipped, causing either: server crash (ability not found), ability executing with wrong stats, or ability executing with Tool A stats despite not equipped.
+
+**Why it happens:** Abilities are granted by items but not properly removed when item is unequipped. Client caches ability list and doesn't update on equipment change. Server doesn't validate that player still has item granting the ability.
+
+**Consequences:**
+- Players can exploit to use all abilities they've ever equipped
+- Balance completely breaks (use 10 different weapon abilities simultaneously)
+- Item swap exploits in PvP (instant weapon swap for burst damage)
+- Server crashes or undefined behavior when ability references non-existent item
+
+**Prevention:**
+- Recalculate full ability list on every equipment change (server authoritative)
+- Server validates item ownership AND equipment state before ability execution
+- Abilities store reference to granting item, checked on cast
+- Clear client ability bar and rebuild from server state on equipment change
+- Add cooldown penalty for equipment swaps (prevent rapid switching)
+- Emit `abilities:update` event after equipment changes
+
+**Detection:**
+- Server logs ability casts with item validation checks
+- Monitor for abilities used without corresponding equipped item
+- Track rapid equipment swap patterns (exploit detection)
+- Log client-server ability list mismatches
+
+**Phase assignment:** Phase 2 (Ability Execution) - validation required before item-granted abilities
+
+**Sources:**
+- [Attribute swapping not fully prevented · Issue #13588 · PaperMC/Paper](https://github.com/PaperMC/Paper/issues/13588) - Equipment swap exploits in PvP (2026)
+- [Major Equipment bug - Larian Studios](https://forums.larian.com/ubbthreads.php?ubb=showflat&Number=929387) - Equipment swap ability bugs
+
+---
+
+### Pitfall 5: Energy Regeneration Host/Non-Host Desync
+**What goes wrong:** In multiplayer sessions, non-host players experience energy regeneration bugs where regen rate drops dramatically over time (from 42.9/sec to 16/sec) and never recovers. Players can't use abilities because energy doesn't regenerate fast enough.
+
+**Why it happens:** Energy regeneration uses delta time that accumulates rounding errors differently on host vs non-host. Network updates to energy state conflict with local regeneration. Server and client both try to manage energy, causing interference.
+
+**Consequences:**
+- Non-host players feel sluggish and underpowered
+- Ability-based gameplay becomes impossible for non-host
+- Players refuse to join games unless they're host
+- Multiplayer becomes effectively unplayable
+
+**Prevention:**
+- Server is single source of truth for energy regeneration (client only displays)
+- Send energy updates with regeneration rate, not absolute values
+- Client predicts energy locally but corrects to server state on sync
+- Use server-authoritative tick for regeneration (not delta time)
+- Send full energy state every N seconds to correct drift
+- Avoid fractional energy accumulation - work in integer ticks
+
+**Detection:**
+- Monitor energy regeneration rate over time per player
+- Log energy state corrections (server overriding client)
+- Track player complaints about "slow energy regen"
+- Automated tests comparing host vs non-host energy over 10 minutes
+
+**Phase assignment:** Phase 1 (Resource System Foundation) - energy system must be server-authoritative from start
+
+**Sources:**
+- [Mana Regen Bug for Non-Host Players - Titan Quest II](https://steamcommunity.com/app/1154030/discussions/2/591779267908571790/) - Mana regeneration desync in multiplayer (2026)
+
+---
+
+### Pitfall 6: Animation Lock Exploits
+**What goes wrong:** Players discover they can animation cancel abilities by rapidly swapping equipment, moving, or triggering other actions. This lets them fire abilities 2-3x faster than intended, breaking combat balance. Or conversely: players get locked in animations and can't move despite ability finishing server-side.
+
+**Why it happens:** Client animation duration doesn't match server ability execution time. Player can queue new actions before server finishes processing ability. Movement interrupts abilities client-side but server still executes them. No movement lockout period after ability cast.
+
+**Consequences:**
+- PvP becomes dominated by animation canceling techniques
+- Casual players can't compete with exploiters
+- Balance designed around 1s cast time becomes 0.3s with canceling
+- Or: players stuck unable to move while ability is "casting" (already finished server-side)
+
+**Prevention:**
+- Server enforces movement lockout period: `movementBlockedUntil = now + abilityLockDuration`
+- Client cannot send movement commands during server-side lockout
+- Ability animations match server timing exactly
+- Equipment swap triggers ability cast interruption (if desired) or is blocked during cast
+- Server rejects movement/action commands during cast lock period
+- Make animation canceling a deliberate feature or explicitly prevent it
+
+**Detection:**
+- Monitor ability cast rates vs expected rates per ability
+- Track movement commands rejected due to lockout
+- Log rapid action sequences (ability -> move -> ability in <100ms)
+- PvP analytics: abilities per minute comparison
+
+**Phase assignment:** Phase 2 (Ability Execution) - lockout system required before abilities go live
+
+**Sources:**
+- [Animation Lock | XIV Dev Wiki](https://xiv.dev/game-internals/actions/animation-lock) - Animation lock mechanics
+- [Animation canceling and how it's exploited in pvp - Homecoming](https://forums.homecomingservers.com/topic/21727-animation-canceling-and-how-its-exploited-in-pvp/) - Animation cancel exploits
+
+---
+
+## Moderate Pitfalls
+
+### Pitfall 7: No Input Buffering/Queueing
+**What goes wrong:** Player presses Ability B while Ability A is still executing. Input is lost. Player must wait for animation to finish, then press again. Feels unresponsive and clunky.
+
+**Why it happens:** Game only processes inputs when player is in "idle" state. Inputs during cast/lockout are ignored rather than queued.
+
+**Prevention:**
+- Implement ability queue (buffer next ability during current cast)
+- Queue depth of 1 is sufficient (queue next action only)
+- Display queued ability visually (highlight next ability icon)
+- Clear queue on movement or manual cancel
+- Server validates queued ability is still valid when it executes
+
+**Detection:**
+- Player feedback about "abilities not responding"
+- High rate of duplicate ability activations (player mashing key)
+
+**Phase assignment:** Phase 4 (UX Polish) - quality of life improvement after core works
+
+**Sources:**
+- [Ability Queue System - GAS Companion](https://gascompanion.github.io/ability-queue-system/) - Input buffering implementation
+
+---
+
+### Pitfall 8: Visual Feedback Clarity in Multiplayer
+**What goes wrong:** Player doesn't see ability telegraph from enemy player. Gets hit by abilities that were "invisible". Can't tell which abilities are being cast or which buffs are active on enemies.
+
+**Why it happens:** Visual effects not networked properly. Client prioritizes local player VFX over remote players. Render culling removes VFX too aggressively. No standardized visual language for ability states.
+
+**Prevention:**
+- Network ability cast events with target position/direction
+- Standardized telegraph system: ground circles for AoE, directional cones, etc.
+- Enemy cast bars visible to all players in range
+- Buff/debuff icons above character nameplate
+- Visual priority system: don't cull combat-critical VFX
+
+**Detection:**
+- Player reports of "unfair" deaths (didn't see attack coming)
+- Spectator mode reveals abilities not visible to victims
+- A/B test with enhanced telegraphs
+
+**Phase assignment:** Phase 5 (Visual Polish) - after core abilities work
+
+**Sources:**
+- [How Dominate Multiplayer FPS Games in 2026](https://www.solutiontipster.com/2025/12/fps-games-in-2026/) - Visual clarity and readability in competitive games (2026)
+
+---
+
+### Pitfall 9: Ability Spam Griefing
+**What goes wrong:** Players spam abilities continuously to create visual noise, cause server lag, or harass other players. Low-cooldown abilities become grief tools.
+
+**Why it happens:** No global cooldown between abilities. No resource cost limits spam. No detection of repeated identical actions.
+
+**Prevention:**
+- Global cooldown (0.5-1s) after any ability
+- Energy cost prevents infinite spam
+- Rate limiting: max N abilities per M seconds server-side
+- Diminishing returns: repeated ability use increases energy cost or cooldown
+- AoE abilities can't affect friendly players (prevent team griefing)
+
+**Detection:**
+- Monitor ability usage patterns (10+ activations in 1 second = suspicious)
+- Player reports for ability spam
+- Server performance correlation with specific players' ability usage
+
+**Phase assignment:** Phase 2 (Ability Execution) - rate limiting built into execution system
+
+**Sources:**
+- [How Anti-Spam Works - Grief Prevention](https://dev.bukkit.org/projects/grief-prevention/pages/how-anti-spam-works) - Rate limiting and spam prevention
+
+---
+
+### Pitfall 10: Target Validation Exploits
+**What goes wrong:** Players cast abilities at targets out of range by exploiting latency, prediction, or packet manipulation. Abilities hit enemies through walls or across the map.
+
+**Why it happens:** Client sends ability with target ID, server doesn't re-validate range/LoS at execution time. Server trusts client-provided target position. Lag compensation overcompensates.
+
+**Prevention:**
+- Server re-validates range at ability execution time (not just when requested)
+- Line-of-sight checks for targeted abilities (raycast on server)
+- Max range hard-coded server-side, not client-configurable
+- Reject ability if target moved out of range between request and execution
+- Log suspicious activations (target was never in range based on server state)
+
+**Detection:**
+- Automated detection: ability hit at distance > max_range + latency_buffer
+- Player reports of being hit "through walls" or "from downtown"
+- Server logs of rejected abilities due to range validation
+
+**Phase assignment:** Phase 2 (Ability Execution) - validation required for every targeted ability
+
+**Sources:**
+- [Cheating in online games - Wikipedia](https://en.wikipedia.org/wiki/Cheating_in_online_games) - Server validation importance
+- [Exploits, Cheats, and the Fragile Balance of Online Gaming](https://www.designthegame.com/learning/tutorial/exploits-cheats-fragile-balance-online-gaming) - Game mechanics exploits
+
+---
+
+## Minor Pitfalls
+
+### Pitfall 11: Buff Stacking Precedence Bugs
+**What goes wrong:** Player has +20% power buff from Ability A and +15% power buff from Ability B. What's the actual power bonus? 35%? 38% (multiplicative)? Which buff applies first? Buff expires but stats don't update.
+
+**Why it happens:** No defined stacking rules. Multiple systems modify same stats without coordination. Stat recalculation doesn't happen on buff expiry.
+
+**Prevention:**
+- Define stacking rules: additive vs multiplicative, unique vs stacking
+- Buffs with same name don't stack (refresh duration instead)
+- Stat recalculation triggered on buff add/remove/expire
+- Server maintains buff stack and recalculates stats atomically
+- Document stacking rules in buff definitions
+
+**Detection:**
+- Player reports of "stats not updating"
+- Automated testing: apply buffs, verify stat values, remove buffs, verify revert
+
+**Phase assignment:** Phase 3 (Buff System) - rules defined when buff system created
+
+**Sources:**
+- [Complete list of buffs and debuffs with stacking issues · Issue #7667 · TrinityCore](https://github.com/TrinityCore/TrinityCore/issues/7667) - Buff stacking bugs
+- [Buffs And Debuffs Explained – Destiny 2](https://www.thegamer.com/destiny-2-buffs-debuffs-stacking-explained/) - Stacking mechanics
+
+---
+
+### Pitfall 12: Learning Curve Too Steep
+**What goes wrong:** Existing players using auto-attack suddenly have 20 abilities. Don't know which to use when. Overwhelmed, stop playing.
+
+**Why it happens:** All abilities unlocked at once. No gradual introduction. No tutorial explaining new system.
+
+**Prevention:**
+- Phase rollout: start with 3-5 core abilities, unlock more over time
+- Tutorial quest: "learn to use abilities" with guided practice
+- Ability tooltips with usage hints ("use when enemy at low health")
+- Default keybinds that make sense (1-5 for main rotation)
+- Visual prompts: "Ability X is ready!" when situation is right
+
+**Detection:**
+- Player retention drops after ability system launches
+- Support tickets asking "how do I use abilities?"
+- Analytics: % players who never use abilities
+
+**Phase assignment:** Phase 6 (Onboarding) - after abilities work, before wide release
+
+**Sources:**
+- [Game Progression and Progression Systems](https://gamedesignskills.com/game-design/game-progression/) - Managing learning curve complexity
+- [Mobile Retention Trends for 2026](https://blog.playio.co/mobile-retention-trends-2026) - Player retention and learning curves
+
+---
+
+### Pitfall 13: Cooldown Display Ambiguity
+**What goes wrong:** Ability icon shows "2.3s" but player doesn't know if that's "ready in 2.3s" or "2.3s duration remaining". Or cooldown looks ready (circular fill complete) but clicking does nothing because server-side it's still locked.
+
+**Why it happens:** UI doesn't distinguish between client prediction and server state. Visual representation ambiguous.
+
+**Prevention:**
+- Clear visual states: grayed = on cooldown, glowing = ready, pulsing = queued
+- Numeric display: "2.3s" with context (cooldown vs duration)
+- Visual buffer: show "almost ready" state 100ms before server confirms
+- Error feedback: "Not ready yet" message if clicked too early
+
+**Detection:**
+- Player reports of "button not working"
+- High rate of rejected ability activations due to cooldown
+
+**Phase assignment:** Phase 5 (UI Polish) - after core functionality works
+
+---
+
+### Pitfall 14: Computational Cost at Scale
+**What goes wrong:** Server handles 50 players in a zone, each casting 2-3 abilities per second, each ability checking targets, calculating damage, applying buffs, triggering effects. Server tick time spikes from 16ms to 200ms. Game becomes slideshow.
+
+**Why it happens:** Ability system not optimized for scale. Every ability does expensive lookups (find targets, compute stats, validate conditions). No batching or caching.
+
+**Prevention:**
+- Spatial partitioning for target acquisition (quadtree/grid)
+- Cache stat calculations per tick (don't recalculate 50x per frame)
+- Batch similar abilities (all projectiles calculated together)
+- Ability budgeting: limit total abilities per zone per tick
+- Async processing for non-critical effects (buffs can be eventual)
+- Profile and optimize hot paths before launch
+
+**Detection:**
+- Server tick time monitoring per zone
+- Correlate tick time spikes with ability usage
+- Load testing: simulate 50 players spamming abilities
+
+**Phase assignment:** Phase 7 (Performance Optimization) - after system works, before scaling up
+
+**Sources:**
+- [Game Server Optimization - FasterCapital](https://fastercapital.com/services/Game-Server-Optimization.html) - Resource allocation optimization
+- [Running your game servers at scale - AWS](https://aws.amazon.com/blogs/compute/running-your-game-servers-at-scale-for-up-to-90-lower-compute-cost/) - Compute efficiency
+
+---
+
+### Pitfall 15: Energy Display Lag
+**What goes wrong:** Player casts ability costing 30 energy. Energy bar doesn't update for 200ms. Player thinks cast failed, tries again, now has -10 energy and second cast rejected. Confusing and frustrating.
+
+**Why it happens:** Energy cost applied server-side, client waits for confirmation. No optimistic update client-side.
+
+**Prevention:**
+- Optimistic energy update: client predicts energy cost immediately
+- Server confirmation corrects if needed
+- Visual feedback: flash energy bar on cost
+- Energy cost displayed on ability tooltip
+- Disable abilities if energy too low (don't wait for server rejection)
+
+**Detection:**
+- Player reports of "abilities not working"
+- High rate of rejected abilities due to insufficient energy
+- Analytics: duplicate ability activations
+
+**Phase assignment:** Phase 4 (UX Polish) - optimization after core works
+
+---
+
+## Phase-Specific Warnings
+
+| Phase Topic | Likely Pitfall | Mitigation |
+|-------------|---------------|------------|
+| Network Protocol Design | Client prediction vs server authority (#1) | Architect cooldown sync from day one, use server timestamps |
+| Ability Execution Core | Rollback overhead (#2), Equipment swap exploits (#4) | Limit prediction depth, validate item ownership on cast |
+| Resource System (Energy) | Energy regen desync (#5) | Server-authoritative regeneration with periodic sync |
+| Buff/Debuff System | Duration desync (#3), Stacking bugs (#11) | Server timestamps for all durations, define stacking rules up front |
+| Animation System | Animation lock exploits (#6) | Server enforces movement lockout, match animation to server timing |
+| Targeting System | Range validation exploits (#10) | Server re-validates range and LoS at execution time |
+| Visual Effects | Multiplayer VFX clarity (#8) | Network ability casts, standardized telegraphs |
+| Anti-Cheat | Rate limiting (#9), Ability spam | Global cooldown + energy cost + server-side rate limiting |
+| Player Onboarding | Learning curve (#12) | Gradual unlock, tutorial, contextual prompts |
+| UI/UX Polish | Input buffering (#7), Cooldown display (#13), Energy lag (#15) | Queue system, clear visual states, optimistic updates |
+| Performance Optimization | Computational cost at scale (#14) | Spatial partitioning, caching, batching, profiling |
+
+---
+
+## Integration-Specific Warnings
+
+Since this is adding abilities to an existing game:
+
+### Existing Auto-Attack System
+**Risk:** Auto-attack and ability system run simultaneously, causing double damage or conflicting state.
+**Mitigation:** Disable auto-attack when ability system activates. Add migration flag in database: `usesAbilitySystem: boolean`. Provide opt-in testing period.
+
+### Existing Combat Session Management
+**Risk:** Current `CombatSession` tracks `lastAttackAt` for auto-attack intervals. Abilities need per-ability cooldowns.
+**Mitigation:** Extend session to include `activeAbilities: Map<abilityId, { lastUsed, onCooldownUntil }>`. Keep auto-attack logic for fallback.
+
+### Existing Equipment System
+**Risk:** Items currently grant passive stats. Adding active abilities changes item power budget and balance.
+**Mitigation:** New item property `grantsAbilities: string[]`. Recalculate available abilities on equipment change. Phase rollout: start with new items only.
+
+### Existing Health/Energy Stats
+**Risk:** Current code has `energy: 100, maxEnergy: 100` as hardcoded defaults. Abilities need real energy consumption.
+**Mitigation:** Add energy regeneration to AI tick loop (mirrors health regen). Energy cost in ability definitions. Server validates energy before cast.
+
+### Existing Network Events
+**Risk:** Current events are `combat:start`, `combat:damage`. Abilities need `ability:cast`, `ability:hit`, `ability:cooldown`, `buff:apply`, `buff:expire`.
+**Mitigation:** Add new event types incrementally. Keep combat events for auto-attack fallback during migration.
+
+---
+
+## Technical Debt Patterns
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Client-side cooldown tracking only | Simpler server code | Prediction desync, latency advantage exploits | Never |
+| No global cooldown between abilities | Easier implementation | Ability spam griefing, server overload | Never |
+| Buff durations use client timestamps | Simpler client code | Clock manipulation exploits, desync on lag | Never |
+| Equipment change doesn't rebuild ability list | Simpler event handler | Ability duplication/loss exploits | Never |
+| Energy regen on client with server sync | Responsive UI | Host/non-host desync bugs | Never |
+| No animation lockout period | Simpler state machine | Animation cancel exploits | Never |
+| Full rollback prediction for all abilities | Most responsive feel | Server performance degradation | Only for very low player counts (<10) |
+
+---
+
+## "Looks Done But Isn't" Checklist
+
+- [ ] **Cooldown latency compensation**: High-ping players can use abilities at same rate as low-ping players — verify with 300ms artificial lag
+- [ ] **Equipment swap validation**: Using ability from unequipped item is rejected — verify by swapping tools mid-combat
+- [ ] **Energy regen consistency**: Non-host players regenerate energy at same rate as host over 10 minutes — verify in multiplayer session
+- [ ] **Buff duration sync**: Buff expiry matches between client display and server calculation — verify by monitoring buff state corrections
+- [ ] **Animation lockout**: Player cannot move during ability cast lockout period — verify with movement input during cast
+- [ ] **Ability rate limiting**: Spamming abilities triggers server-side rate limit — verify by rapid ability activation
+- [ ] **Target range validation**: Ability cast at out-of-range target is rejected by server — verify with crafted packet
+- [ ] **Buff stacking rules**: Multiple buffs of same type behave according to defined rules — verify with overlapping buff applications
+- [ ] **Energy display optimistic**: Energy bar updates immediately on ability use, corrects on server response — verify with network throttling
+- [ ] **Input buffering**: Queuing ability during current cast executes it after cast completes — verify with rapid key presses
+
+---
+
+## Recovery Strategies
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Cooldown prediction desync shipped | MEDIUM | Add server-timestamp cooldown sync; force client update; add latency compensation |
+| Energy regen desync in production | HIGH | Refactor to server-authoritative regen; requires client + server deploy; existing save data unaffected |
+| Animation cancel exploit discovered | LOW-MEDIUM | Add server-side lockout validation; server-only deploy; log existing exploiters |
+| Equipment swap ability duplication | HIGH | Add item validation on ability cast; audit player inventories for impossible ability counts; ban exploiters |
+| Buff duration desync causing wrong damage | MEDIUM | Switch to server-tick-based duration; force buff state resync on next login |
+| No input buffering causing poor UX | LOW | Add queue system; client-only update; no server changes needed |
+| Ability spam causing server lag | LOW | Add global cooldown + rate limiting; server-only deploy |
+
+---
+
+## Sources
+
+**Multiplayer Ability Systems:**
+- [Understanding the Unreal Engine Gameplay Ability System](https://dev.epicgames.com/documentation/en-us/unreal-engine/understanding-the-unreal-engine-gameplay-ability-system) - GAS networking challenges
+- [Unreal Engine 5 - The truth of the Gameplay Ability System](https://vorixo.github.io/devtricks/gas/) - Learning curve and setup complexity
+- [GitHub - tranek/GASDocumentation](https://github.com/tranek/GASDocumentation) - Multiplayer ability system implementation guide
+
+**Server Authority & Synchronization:**
+- [Synchronize Skills & Abilities between Server and Client - GameDev.net](https://www.gamedev.net/forums/topic/706727-synchronize-skills-amp-abilities-between-server-and-client/) - State mutation sync issues
+- [How do Multiplayer Game sync their state? Part 2](https://medium.com/@qingweilim/how-do-multiplayer-game-sync-their-state-part-2-d746fa303950) - Server authority patterns
+
+**Client Prediction & Rollback:**
+- [Prediction | Netcode for Entities](https://docs.unity3d.com/Packages/com.unity.netcode@1.0/manual/prediction.html) - Prediction accuracy degradation
+- [Determinism, Prediction and Rollback | coherence Documentation](https://docs.coherence.io/manual/advanced-topics/competitive-games/determinism-prediction-rollback) - Rollback overhead and visual glitches
+
+**Animation & Input Systems:**
+- [Animation Lock | XIV Dev Wiki](https://xiv.dev/game-internals/actions/animation-lock) - Animation lock mechanics
+- [Animation canceling in pvp - Homecoming](https://forums.homecomingservers.com/topic/21727-animation-canceling-and-how-its-exploited-in-pvp/) - Animation cancel exploits
+- [Ability Queue System - GAS Companion](https://gascompanion.github.io/ability-queue-system/) - Input buffering implementation
+
+**Equipment & Resource Systems:**
+- [Attribute swapping · Issue #13588 · PaperMC/Paper](https://github.com/PaperMC/Paper/issues/13588) - Equipment swap exploits (2026)
+- [Mana Regen Bug - Titan Quest II](https://steamcommunity.com/app/1154030/discussions/2/591779267908571790/) - Energy regen desync (2026)
+
+**Buff/Debuff Systems:**
+- [Timers on buffs - GameDev.net](https://gamedev.net/forums/topic/496780-timers-on-buffs---server-or-client-timer/) - Duration tracking
+- [Client/server clock sync - GameDev.net](https://www.gamedev.net/forums/topic/707830-clientserver-clock-sync-issue-confirmation-and-solutions/) - Clock drift
+- [Arena Breakout Desync Fix 2026](https://news.bittopup.com/news/arena-breakout-desync-fix-2026-audio-network-guide) - Server tick desync (2026)
+- [Buffs and debuffs stacking · Issue #7667 · TrinityCore](https://github.com/TrinityCore/TrinityCore/issues/7667) - Stacking bugs
+
+**Player Experience:**
+- [Action Mode feedback - Ashes of Creation](https://forums.ashesofcreation.com/discussion/63204/feedback-action-mode-auto-attack-vs-manual-click-and-more) - Auto-attack vs manual
+- [Game Progression Systems](https://gamedesignskills.com/game-design/game-progression/) - Learning curve management
+- [Mobile Retention Trends 2026](https://blog.playio.co/mobile-retention-trends-2026) - Player retention
+
+**Performance & Anti-Cheat:**
+- [Game Server Optimization - FasterCapital](https://fastercapital.com/services/Game-Server-Optimization.html) - Resource optimization
+- [Anti-Spam - Grief Prevention](https://dev.bukkit.org/projects/grief-prevention/pages/how-anti-spam-works) - Rate limiting
+- [Cheating in online games - Wikipedia](https://en.wikipedia.org/wiki/Cheating_in_online_games) - Server validation
+
+---
+
+## Confidence Assessment
+
+**Overall confidence:** MEDIUM
+
+| Area | Confidence | Rationale |
+|------|------------|-----------|
+| Client prediction pitfalls | HIGH | Well-documented in GAS documentation and Unity netcode guides |
+| Equipment swap issues | HIGH | Recent 2026 Minecraft bug report provides concrete example |
+| Energy regen desync | HIGH | Titan Quest II 2026 bug report documents exact issue |
+| Buff duration sync | MEDIUM | Gamedev forums + theoretical knowledge, sparse 2026 data |
+| Animation exploits | MEDIUM | Historical evidence from multiple games, ongoing issue |
+| Rollback overhead | MEDIUM | Technical documentation available, game-specific impact varies |
+| Target validation | MEDIUM | General anti-cheat knowledge, not ability-system-specific |
+| Learning curve | MEDIUM | Mobile gaming research + game design theory, not ability-specific |
+| Performance at scale | LOW | General optimization knowledge, no 2D MMO ability benchmarks |
+
+**Methodology:** Searched for 2026-specific examples, cross-referenced multiple sources for critical pitfalls, prioritized multiplayer-specific issues, emphasized server-authoritative patterns.
+
+**Gaps:** Limited 2D-specific ability system case studies, few post-mortems about ability system migrations, performance benchmarks cloud gaming focused not MMO focused, no direct Socket.IO + ability system references.
+
+---
+*Pitfalls research for: Active Combat Ability System (replacing auto-attack in 2D MMO)*
+*Researched: 2026-02-20*

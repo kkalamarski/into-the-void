@@ -1,0 +1,159 @@
+ACTIVE COMBAT ABILITIES SYSTEM - STACK RESEARCH SUMMARY
+========================================================
+
+Date: 2026-02-20
+Researcher: Claude Code (GSD Research Agent)
+Confidence: HIGH
+
+KEY FINDING: ZERO NEW NPM PACKAGES REQUIRED
+--------------------------------------------
+
+All capabilities needed for active abilities with energy costs, cooldowns,
+and buff effects are available in the existing stack:
+
+✓ Phaser 3.80.0        — Graphics.slice() for radial cooldown UI
+✓ Zustand 4.5.0        — State management for cooldowns/buffs  
+✓ NestJS 10.3.0        — Service layer for buff tracking
+✓ Socket.IO 4.7.0      — Real-time ability cast events
+✓ TypeScript 5.4.0     — Discriminated unions for ability effects
+✓ immer 11.1.4         — Nested buff state updates
+
+WHAT ALREADY EXISTS
+-------------------
+
+✓ Action bar with hotkeys (ActionBar.tsx binds 1-8 keys)
+✓ Item effect system (ItemEffect discriminated union)
+✓ Energy tracking (Player.energy, HUD energy bar)
+✓ Combat damage calculation (combat.service.ts)
+✓ Real-time event broadcasting (Socket.IO)
+✓ Timer infrastructure (Phaser.Time, @Interval decorator)
+
+WHAT'S GENUINELY NEW
+--------------------
+
+1. Cooldown state tracking in actionBarStore (Map<abilityId, Cooldown>)
+2. Radial cooldown overlay (Phaser Graphics.slice())
+3. BuffService (server-side buff duration tracking with @Interval)
+4. Ability effect types (extend ItemEffect with deal_damage, apply_buff, energy_cost)
+5. Energy deduction method in PlayerService
+
+IMPLEMENTATION PATTERNS
+-----------------------
+
+Cooldowns:
+  - Client: Zustand store with timestamp-based expiration
+  - Visual: Phaser Graphics.slice() for pie-slice overlay
+  - Server: Cooldown tracking for anti-cheat validation
+
+Buffs:
+  - Server: Map<playerId, Buff[]> with 10Hz tick expiration
+  - Client: buffStore for UI display (buff icons)
+  - Broadcast: Socket.IO events (buff:apply, buff:remove)
+
+Energy:
+  - Validation: Server checks energy before ability execution
+  - Deduction: playerService.consumeEnergy(playerId, cost)
+  - Broadcast: player:energy event updates client HUD
+
+Abilities:
+  - Definition: Items with effects array (energy_cost + deal_damage + cooldown)
+  - Execution: AbilityService validates and broadcasts results
+  - Flow: Client emit → Server validate → Broadcast results → Client render
+
+DATA FLOW
+---------
+
+[Action Bar] → keypress
+    ↓ check cooldown/energy
+[ActionBarStore] → valid
+    ↓ emit ability:use
+[Socket.IO Client]
+    ↓
+[GameGateway] → validate
+    ↓
+[AbilityService] → execute (damage calc, buff apply)
+    ↓
+[PlayerService/BuffService] → update state
+    ↓
+[Socket.IO Server] → broadcast results
+    ↓
+[Client Stores] → update UI
+    ↓
+[Phaser Scene] → render effects
+
+VERSION COMPATIBILITY
+---------------------
+
+All APIs used are stable and battle-tested:
+
+- Graphics.slice()      → stable since Phaser 3.0 (2018)
+- Zustand Map support   → stable since 4.0 (2022)
+- @Interval decorator   → stable since NestJS 6.0 (2019)
+- Socket.IO rooms       → stable since 2.0 (2016)
+- Discriminated unions  → stable since TypeScript 2.0 (2016)
+
+No version upgrades required. No breaking changes.
+
+WHAT NOT TO ADD
+---------------
+
+❌ Animation libraries (Framer Motion, GSAP)
+   → Phaser tweens handle all animations
+
+❌ State management libs (Redux, Jotai)  
+   → Zustand already covers all needs
+
+❌ Timer libraries (use-interval)
+   → Phaser.Time + @Interval() sufficient
+
+❌ Validation libs beyond class-validator
+   → Runtime validation in service methods
+
+❌ WebGL shader libraries
+   → Canvas2D Graphics.slice() is performant enough
+
+INSTALLATION COMMANDS
+---------------------
+
+NONE. All dependencies already in package.json.
+
+CONFIDENCE ASSESSMENT
+---------------------
+
+HIGH — All recommendations verified against:
+  ✓ Existing codebase patterns (combat.service.ts, actionBarStore.ts)
+  ✓ Library documentation (Phaser, Zustand, NestJS)
+  ✓ Community best practices (Zustand discussions, Phaser forums)
+  ✓ Version compatibility (no upgrades needed)
+
+SOURCES
+-------
+
+Cooldown Visuals:
+- Phaser radial cooldown discussion (phaser.discourse.group)
+- Pie timer Phaser example (gist.github.com/chewax)
+- Phaser Timer Events docs (phaser.io)
+
+State Management:
+- Zustand time-based state (github.com/pmndrs/zustand/discussions/2150)
+- React state management 2026 (syncfusion.com)
+
+Server Architecture:
+- NestJS WebSocket 2026 guide (oneuptime.com)
+- NestJS task scheduling (docs.nestjs.com)
+- Gameplay Ability System reference (github.com/tranek/GASDocumentation)
+
+NEXT STEPS FOR REQUIREMENTS PHASE
+----------------------------------
+
+Requirements phase should specify:
+  1. Ability effect types needed (20+ abilities → which effect combos?)
+  2. Cooldown durations per ability tier (common: 3s, rare: 5s, epic: 10s?)
+  3. Energy cost scaling (fixed cost vs level-scaled?)
+  4. Buff stacking rules (same buff stacks? max stack count?)
+  5. Cooldown reduction mechanics (Haste stat affects cooldown duration?)
+  6. Ability targeting (self-cast, target-required, AOE?)
+
+All technical capabilities exist. Design decisions drive implementation details.
+
+========================================================

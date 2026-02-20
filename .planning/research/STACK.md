@@ -1,81 +1,88 @@
-# Stack Research: Entity System
+# Stack Research: Active Combat Abilities System
 
-**Domain:** Multiplayer 2D sci-fi survival MMO — entity definitions (Creatures, Plants, Minerals, Artifacts), fertility noise layer, loot tables, creature AI (idle wander FSM), entity respawn system, tool interaction with range
-**Researched:** 2026-02-18
+**Domain:** Multiplayer 2D sci-fi survival MMO — Active combat abilities with energy costs, cooldowns, buff/debuff effects, radial cooldown UI
+**Researched:** 2026-02-20
 **Confidence:** HIGH
 
 ## Executive Summary
 
-The entity system milestone requires **one new package** (`@nestjs/schedule`) and **zero frontend packages**. Every other capability — noise generation for fertility layer, weighted random selection for loot tables, A* pathfinding for creature AI movement, entity management in memory — is already in the installed stack or can be implemented as pure TypeScript functions in existing packages.
+The active abilities milestone requires **zero new npm packages**. Every capability — cooldown tracking, radial cooldown visualization, buff duration management, energy cost validation, ability definitions tied to items — can be implemented using the existing stack: Phaser 3.80 (graphics API), Zustand 4.5 (state management), NestJS 10.3 (service layer), Socket.IO 4.7 (real-time events), and TypeScript 5.4 (discriminated unions).
 
-The game-logic package already has A* pathfinding (`findPath`, `hasLineOfSight`), seeded random (`SeededRandom.pick` / weighted selection helpers), and the interaction validation scaffold (`canInteract`, `canHarvest`). The world-gen package has a `SimplexNoise` class, `SeededRandom`, and the `generateSpawnPoints` function with a working `weightedPick` helper. The database already has a `species` table with `lootTableId` FK stub and a `discoveredSpecies` junction table. The shared-types package already defines `Creature`, `Mineral`, `ItemEntity`, `CreatureBehavior`, `Entity` base interfaces, and `ServerEvents` for `entity:spawn` / `entity:despawn` / `entity:update`.
+The existing codebase already has:
+- **Action bar with hotkeys** — `apps/web/src/ui/hud/ActionBar.tsx` binds keys 1-8 to item slots
+- **Item effect system** — `packages/items/src/types.ts` defines `ItemEffect` discriminated union with `heal`, `stat_buff`, `energy_restore` effects
+- **Energy tracking** — `Player` interface has `energy` and `maxEnergy` fields; HUD displays energy bar
+- **Combat damage calculation** — `combat.service.ts` validates range, computes damage, broadcasts results
+- **Real-time event broadcasting** — Socket.IO emits `combat:damage`, `player:health`, `stats:update`
+- **Timer infrastructure** — Phaser `Phaser.Time.TimerEvent` for client-side durations, NestJS `@Interval()` for server-side ticks
 
 What is genuinely new:
-1. **`@nestjs/schedule` v4+** — for the AI tick loop (`@Interval(1000)`) and respawn sweep (`@Interval(5000)`). Native `setInterval` would work, but `@nestjs/schedule` integrates cleanly with the NestJS lifecycle (start on `OnModuleInit`, stop on `OnModuleDestroy`) and provides `SchedulerRegistry` for testability.
-2. **Entity definition packages** — A new `packages/entities` package modeled on the existing `packages/items` pattern: `EntityDefinition` types, `EntityRegistry` singleton, per-category definition files (creatures, minerals, plants, artifacts). The `items` package is the exact blueprint — same structure, same registry pattern.
-3. **Loot table system** — Pure TypeScript in `packages/game-logic/src/loot/`. No library needed. The `weightedPick` function already exists in `world-gen/src/generation/spawn.ts` — extract, generalize, and move it to `game-logic` as `rollLootTable(table, rng)`.
-4. **Creature AI FSM** — Pure TypeScript state machine in `packages/game-logic/src/ai/`. States: `idle`, `wander`, `alert`, `flee`. Transitions driven by the AI tick. Uses existing `SeededRandom` for wander target selection and existing `findPath` for movement.
-5. **Fertility noise layer** — New named seed layer (`${worldSeed}_fertility`) passed through `SimplexNoise.fbm()` — same pattern as the existing biome and terrain noise layers. No new library.
+1. **Cooldown state tracking** — Extend `actionBarStore` (Zustand) with `Map<abilityId, { endsAt, duration }>` for cooldown expiration timestamps
+2. **Radial cooldown overlay** — New Phaser `Graphics` component drawing a pie-slice mask on action bar slots
+3. **Buff tracking service** — New `BuffService` in game-server using `Map<playerId, ActiveBuff[]>` with tick-based expiration (same pattern as `AiService`)
+4. **Ability effect types** — Extend existing `ItemEffect` union with `deal_damage`, `apply_buff`, `energy_cost` variants
+5. **Energy deduction** — Add `consumeEnergy(playerId, amount)` method to existing `PlayerService`
+
+No external libraries. No version upgrades. Pure feature extension.
 
 ---
 
 ## Recommended Stack
 
-### Core Technologies
+### Core Technologies (Already Installed)
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| TypeScript | ^5.4.0 (installed) | Entity definition types, FSM state types, loot table types | All new capabilities are type definitions and pure functions. The `CreatureBehavior` union type already exists in shared-types. Extension follows existing discriminated union patterns. |
-| `@nestjs/schedule` | ^4.1.0 (install) | `@Interval()` for AI tick loop and respawn sweep in game-server | The game-server is NestJS. An AI tick that fires every 1s and a respawn sweep every 5s are the primary new runtime behaviors. `@nestjs/schedule` v4 integrates with NestJS lifecycle via `SchedulerModule.forRoot()`. The alternative (raw `setInterval` in `OnModuleInit`) works but loses lifecycle integration and testability. Latest released version is 6.1.1 as of 2026-02. Pinning to ^4.1.0 matches the existing NestJS v10 peer constraint. |
-| `@into-the-void/game-logic` | workspace (extend) | `rollLootTable()`, `CreatureAI` FSM, `canInteractWithTool()` range validation | The pattern is established: pure functions, no DB calls, importable by server and client. The loot table roller, AI state transitions, and tool range validation all belong here. The existing `canInteract()` and `canHarvest()` functions are the extension points. |
-| `@into-the-void/world-gen` | workspace (extend) | Fertility noise layer as a second `SimplexNoise` pass | `SimplexNoise` and `SeededRandom` already exist. A fertility layer is `new SimplexNoise(worldSeed + '_fertility')` with `fbm(x, y, 3)` — identical to the existing terrain noise calls. No API change to the noise classes. |
-| `@into-the-void/database` | workspace (extend) | `loot_tables` and `loot_table_entries` tables, optional plants/artifacts schema | `species` table already has `lootTableId varchar(50)`. The loot table schema is two new tables (`loot_tables`, `loot_table_entries`) following the relational pattern of `species` + `species_stats`. For plants and artifacts (static world entities that do not need per-instance rows), JSONB definitions in the entity registry are sufficient — no new DB tables needed. |
-| Drizzle ORM | ^0.30.0 (installed) | Schema for loot_tables + loot_table_entries | No version upgrade needed. Two new `pgTable` declarations following existing patterns. |
-| Socket.IO | ^4.7.0 (installed) | Broadcast `entity:spawn`, `entity:despawn`, `entity:update` on AI movement and respawn | All three event types already defined in `ServerEvents` interface. No new events needed. AI movement is delivered as `entity:update` with new position. Respawn is `entity:spawn`. Death is `entity:despawn`. |
-| Zustand | ^4.5.0 (installed) | Client-side entity state for AI-moving creatures | The `gameStore` already tracks `entities` from `ZoneState`. AI movement updates arrive as `entity:update` events and merge into the entity map. No new store slice needed. |
-| Phaser 3 | ^3.80.0 (installed) | Creature sprite interpolation toward new AI-updated position | Existing Phaser entity rendering already handles `entity:update` events. Smooth movement between tiles requires interpolation logic in the scene, not a new library. |
+| TypeScript | ^5.4.0 | Ability definitions, cooldown state types, buff state types | Discriminated unions for `ItemEffect` variants (e.g., `{ type: 'deal_damage', baseDamage: number }`). Same pattern as existing `ItemEffect` types (heal, stat_buff). Zero API changes. |
+| Phaser 3 | ^3.80.0 | Radial cooldown overlay graphics, timer events for buff durations | `Phaser.GameObjects.Graphics.slice()` draws pie slices natively (perfect for radial cooldown sweeps). `Phaser.Time.TimerEvent` for client-side buff expiration reminders. Both APIs stable since Phaser 3.0. |
+| Zustand | ^4.5.0 | Cooldown state management in action bar | Extend existing `actionBarStore` with cooldown map. Zustand handles time-based state efficiently — derived state from timestamps avoids re-render storms (confirmed in Zustand discussions). |
+| NestJS | ^10.3.0 | `BuffService` for duration tracking, `AbilityService` for validation | Service layer mirrors `CombatService` pattern. `@Interval(100)` for 10Hz buff tick (same as `AiService` pattern). NestJS lifecycle (`OnModuleInit`, `OnModuleDestroy`) manages interval cleanup. |
+| Socket.IO | ^4.7.0 | Broadcast `ability:cast`, `buff:apply`, `buff:remove` events | New events follow existing `combat:damage`, `player:health` pattern. Client receives `ability:cast` with cooldown duration, starts cooldown overlay. No protocol changes. |
+| `@into-the-void/items` | workspace | Extend `ItemEffect` type with ability-specific effects | Items with `toolType: 'combat'` gain `effects: [{ type: 'deal_damage', ... }, { type: 'energy_cost', ... }]`. Same multi-effect pattern as stims (stat_buff effects). |
+| `@into-the-void/game-logic` | workspace | `calculateAbilityDamage()`, `applyBuff()` pure functions | Follows existing `calculateDamage()`, `computeCharStats()` patterns. Ability damage scales with Power stat (same as melee). Buffs modify stats temporarily. |
 
-### Supporting Libraries
+### Supporting Libraries (Already Installed)
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| `lru-cache` | ^11.2.6 (installed) | Zone entity cache — already used in `ZonesService` | No change needed. The existing `LRUCache<string, ZoneState>` already holds entities per zone. AI-mutated entity state lives in this cache. |
-| `ioredis` | ^5.4.0 (installed) | Respawn queue as Redis sorted set (optional optimization) | Use if respawn load becomes significant (>1000 respawning entities across all active zones). For the initial milestone, an in-memory `Map<timestamp, SpawnPoint[]>` in `ZonesService` is sufficient. Redis sorted sets are the upgrade path if the game scales to many active zones. |
-| `heap-js` | ^2.7.1 (installed) | Priority queue for respawn timer ordering | Already installed. Use a `MinHeap<RespawnEntry>` keyed on `respawnAt` timestamp to efficiently find which entities are due for respawn in the 5s sweep. More efficient than iterating all pending respawns. |
+| `immer` | ^11.1.4 | Nested state updates in `buffStore` | Already used by `statsStore` (see line 2: `immer` middleware). Use for buff state with nested arrays: `state.buffs[playerId].push(newBuff)`. Avoids immutability boilerplate. |
+| `lru-cache` | ^11.2.6 | Zone-scoped buff cache (optional optimization) | If buff tracking becomes per-zone (buffs only active in player's current zone), cache `Map<zoneId, Map<playerId, Buff[]>>`. For MVP, in-memory `Map<playerId, Buff[]>` in `BuffService` is sufficient. |
 
-### Development Tools
+### Development Tools (No Change)
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| NX | Monorepo task runner for the new `packages/entities` package | Follow the existing `packages/items/project.json` pattern. `nx run entities:build` and `nx run entities:test`. |
-| Drizzle Studio | Schema inspection for new loot_tables and loot_table_entries | `nx run database:studio` — no change to workflow. |
+| NX | Monorepo task runner | No new packages to build. Abilities are extensions to existing `items`, `game-logic` packages. |
+| Vite | Client dev server | Phaser graphics code runs in existing `WorldScene`. No build config changes. |
 
 ---
 
 ## Installation
 
+**No installation commands required.** All dependencies already in `package.json`.
+
+For reference (DO NOT RUN — already installed):
 ```bash
-# One new package only
-pnpm add @nestjs/schedule --filter @into-the-void/game-server
-
-# Corresponding types (if not bundled)
-pnpm add -D @types/cron --filter @into-the-void/game-server
+# Already installed
+pnpm add phaser@3.80.0           # Graphics API for cooldown overlay
+pnpm add zustand@4.5.0           # State management for cooldowns
+pnpm add @nestjs/common@10.3.0   # Service layer for buffs
+pnpm add socket.io@4.7.0         # Real-time events
+pnpm add immer@11.1.4            # Nested state updates
 ```
-
-The new `packages/entities` package is a workspace package — no npm install needed, just create the directory structure following the `packages/items` blueprint.
 
 ---
 
 ## Alternatives Considered
 
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| `@nestjs/schedule @Interval()` | Raw `setInterval` in `OnModuleInit` | Use raw `setInterval` if NestJS lifecycle integration is not needed (e.g., standalone Node process). In the existing NestJS game-server, `@nestjs/schedule` is the idiomatic choice. |
-| In-memory `MinHeap` for respawn queue | Redis sorted set for respawn queue | Use Redis sorted set if the server runs multiple instances (horizontal scaling). For a single-process game-server, in-memory heap is simpler and faster. Redis becomes necessary if respawn state must survive process restarts. |
-| Pure TypeScript FSM in `game-logic` | A behavior tree library (e.g., `behaviortree.js`) | Use a behavior tree library if AI complexity grows to 10+ behaviors with complex preconditions. For idle wander (2 states, 3 transitions), a plain TypeScript discriminated union state machine is 30 lines and has zero dependencies. |
-| `weightedPick` as a pure function in `game-logic` | External loot table library (e.g., `LootTable.js`) | External libraries add 10KB+ for what is genuinely a 15-line function. The algorithm is `sum weights → random roll → linear scan` — no external library is justified. |
-| New `packages/entities` workspace package | Embed entity definitions in `packages/shared-types` | `shared-types` is for wire-format contracts. Entity definitions (full stat blocks, loot table IDs, texture keys) are game data, not wire contracts. Separate package keeps the contract layer thin. Mirrors the `packages/items` architecture exactly. |
-| Fertility noise as a second `SimplexNoise(seed + '_fertility')` layer | Separate noise library (e.g., `simplex-noise` npm) | The existing `SimplexNoise` class in `world-gen` is the established abstraction. A second npm noise library creates a divergence between noise implementations. The project owns the noise implementation — extend it, don't fork it. |
+| Recommended | Alternative | Why Not Alternative |
+|-------------|-------------|---------------------|
+| Phaser `Graphics.slice()` for cooldown overlay | CSS `conic-gradient()` for radial wipe on React action bar | Cooldowns update every frame (60fps). React re-renders are expensive. Phaser graphics run in game loop, zero React dependency. CSS animations can't sync precisely with server-sent cooldown duration. |
+| Zustand `Map<abilityId, Cooldown>` | Separate `useCooldownStore` hook | Action bar already uses `actionBarStore`. Adding cooldown state to same store maintains single source of truth. Separate store creates synchronization risk (what if item removed from slot while cooling down?). |
+| NestJS `@Interval(100)` for buff tick | Client-side buff expiration with setTimeout | Buffs affect server-side stat calculations (damage, defense). Server must track buff state for validation. Client timers are informational only (UI countdown). Server tick is source of truth. |
+| Extend `ItemEffect` union | New `AbilityDefinition` type separate from items | Abilities are granted by items (tools, modules). A combat tool's `effects` array defines its ability. Separating ability definitions from items duplicates data (every ability needs an associated item anyway). |
+| `Map<playerId, Buff[]>` in `BuffService` | Database table for active buffs | Buffs are ephemeral combat state (duration 5-60 seconds). They do not survive logout or server restart. Persisting to PostgreSQL creates write amplification (10 buffs/sec across 100 players = 1000 writes/sec for temporary data). In-memory state is correct. |
+| Pure TypeScript cooldown math | External cooldown library (e.g., `cooldown-manager`) | Cooldown logic is `remainingMs = Math.max(0, endsAt - Date.now())`. No library adds value for 1 line of math. External libs bring 5KB+ bundle for a subtraction operation. |
 
 ---
 
@@ -83,203 +90,377 @@ The new `packages/entities` package is a workspace package — no npm install ne
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `behaviortree.js` or similar AI library | Idle wander FSM is 2 active states with simple random walk logic. A full behavior tree library adds 40KB+ bundle and API complexity for what is a switch statement over `CreatureBehavior`. | Plain TypeScript FSM: `type AIState = 'idle' \| 'wander' \| 'alert' \| 'flee'` with a `tickAI(state, context) → AIState` pure function |
-| `pathfinding.js` or A* library | `findPath(x1, y1, x2, y2, collisionMap)` already exists in `packages/game-logic/src/movement/pathfinding.ts`. It handles diagonals, elevation costs, and corner-cutting prevention. It is exactly what wander movement needs. | Existing `findPath` — already used for movement validation; extend for creature wander |
-| `LootTable.js` or loot library | The `weightedPick` function already exists in `world-gen/src/generation/spawn.ts` and handles the full weighted random selection algorithm. Moving it to `game-logic` and generalizing it covers all loot use cases. | Extract `weightedPick` from world-gen into `game-logic/src/loot/weighted-pick.ts` |
-| A separate `EntityManager` service for each entity type | Over-engineering. The existing `ZonesService` already manages entities in an `LRUCache<string, ZoneState>` with `Map<string, Entity>`. Adding a separate `CreatureManager`, `MineralManager`, `PlantManager` service layer for the same data structure is redundant. | Extend `ZonesService` with entity-type-specific methods or add a single `EntityService` that delegates to `ZonesService` for state |
-| Colyseus or other game-server framework | The NestJS WebSocket server is established and working with Socket.IO. A framework migration for one new feature is a full rewrite risk. | Extend the existing `game.gateway.ts` + `game.service.ts` pattern |
-| A database row per live entity instance | Creatures and minerals are runtime state, not persistent state. They respawn from `SpawnPoint` definitions in world-gen. Storing live entity positions in PostgreSQL creates O(entities * zones) write load on every AI tick. | Keep live entity state in the in-memory `ZonesService` LRU cache. Only persist player-created structures and loot table configuration (static game data). |
+| Animation libraries (Framer Motion, GSAP, React Spring) | Phaser tween system (`scene.tweens.add()`) already handles all animation needs: damage number floats, cooldown sweep animations, buff icon pulses. React components in HUD are static (no complex transitions). Adding React animation lib creates dual animation systems. | Phaser `scene.tweens.add()` for game canvas animations; plain CSS transitions for HUD (e.g., button press feedback) |
+| State management libraries (Redux, Jotai, Valtio) | Zustand 4.5 handles all state needs. Cooldowns are simple key-value pairs (`Map<string, Cooldown>`), not complex normalized data. Adding Redux for one Map introduces 20KB bundle + boilerplate (actions, reducers, selectors). | Extend existing Zustand stores (`actionBarStore`, `gameStore`) |
+| Timer libraries (use-interval, react-use-timer) | Phaser `Phaser.Time.TimerEvent` provides game-loop-synchronized timers. Server uses native `setInterval` wrapped in `@Interval()`. External timer lib risks frame drift (e.g., `setTimeout` drifts under load; Phaser timers sync to `requestAnimationFrame`). | Phaser `this.time.addEvent()` for client timers; NestJS `@Interval()` for server ticks |
+| Validation libraries (Zod, Yup) beyond existing class-validator | `class-validator` already validates DTO inputs (e.g., `CreateCharacterDto`). Ability validation is runtime business logic ("does player have enough energy?"), not schema validation. Zod adds 50KB for type-checking already covered by TypeScript at compile time. | TypeScript types + runtime checks in service methods |
+| WebGL shader libraries for cooldown effect | Phaser `Graphics.slice()` is hardware-accelerated Canvas2D. Radial wipe is a 5-line draw call. Custom shaders add complexity (GLSL code, fallback paths, mobile compatibility) for zero visual improvement. | Phaser `Graphics` with `slice()` method |
+| Behavior tree library (e.g., `behaviortree.js`) for ability AI | Abilities are player-activated, not AI-driven. No decision tree needed. Cooldown check is `if (remainingMs === 0)`, not complex preconditions. | Plain TypeScript conditionals in ability validation |
 
 ---
 
-## Stack Patterns by Variant
+## Implementation Patterns
 
-**If AI tick load becomes a bottleneck (>500 creatures moving simultaneously):**
-- Batch AI ticks by zone rather than individual entity ticks
-- Only tick creatures in zones with active players (skip unpopulated zones entirely)
-- Wander step probability: roll once per creature per tick (e.g., 20% chance to move) — reduces path calculations by 80%
+### 1. Cooldown State (Client)
 
-**If respawn queue grows large (>1000 pending respawns):**
-- Migrate from in-memory `MinHeap` to Redis sorted set (`ZADD respawns <timestamp> <entityKey>`)
-- `ZRANGEBYSCORE respawns 0 <now>` efficiently retrieves all due respawns
-- `ioredis` is already installed — zero new infrastructure required
-
-**If loot tables need designer-editable data:**
-- Promote `loot_tables` from code-defined to database-seeded (DB migration + seed script)
-- Admin API endpoint (NestJS REST) for loot table CRUD
-- For MVP: define loot tables as TypeScript constants in `packages/entities` — the same pattern as item definitions in `packages/items/src/definitions/`
-
----
-
-## New Package: `packages/entities`
-
-Model this exactly after `packages/items`. It is the single source of truth for entity definitions that the game-server and world-gen spawn system reference.
-
-```
-packages/entities/
-  src/
-    types.ts          — EntityDefinition, CreatureDefinition, MineralDefinition, PlantDefinition, ArtifactDefinition
-    registry.ts       — EntityRegistry singleton (same Map<id, Definition> pattern as ItemRegistry)
-    index.ts          — public exports
-    definitions/
-      creatures.ts    — void_crawler, crystal_sentinel, toxic_lurker, frost_elemental, etc.
-      minerals.ts     — void_stone, crystal_shard, volcanic_ore, ancient_fragment, etc.
-      plants.ts       — flora definitions (fertility-seeded spawn)
-      artifacts.ts    — ancient/alien artifact definitions (rare, high-tier biomes)
-  project.json        — NX project config (build, test targets)
-  package.json        — { name: "@into-the-void/entities" }
-  tsconfig.json       — extends tsconfig.base.json
-```
-
-The `EntityRegistry` exposes:
-- `EntityRegistry.get(id)` → `EntityDefinition | undefined`
-- `EntityRegistry.getByType(type)` → `EntityDefinition[]`
-- `EntityRegistry.getByBiome(biome)` → `EntityDefinition[]`
-
-The existing `EntityRegistry` object in `packages/shared-types/src/game/entity-registry.ts` is a flat object — migrate it to a proper class-based registry matching `ItemRegistryImpl` in `packages/items/src/registry.ts`.
-
----
-
-## AI Tick Architecture
-
-The AI tick runs in the game-server as a NestJS scheduled interval:
+**Technology:** Zustand (extend `actionBarStore`)
 
 ```typescript
-// apps/game-server/src/game/ai.service.ts
-@Injectable()
-export class AiService implements OnModuleInit, OnModuleDestroy {
-  constructor(
-    private readonly schedulerRegistry: SchedulerRegistry,
-    private readonly zonesService: ZonesService,
-    private readonly gameGateway: GameGateway,  // for broadcasting entity:update
-  ) {}
+// apps/web/src/store/actionBarStore.ts (EXTEND)
+interface ActionBarState {
+  slots: (string | null)[];
 
-  onModuleInit() {
-    // Only tick zones with active players
-    const interval = setInterval(() => this.tickActiveZones(), 1000);
-    this.schedulerRegistry.addInterval('ai-tick', interval);
+  // NEW: cooldown tracking
+  cooldowns: Map<string, CooldownState>;
+
+  setCooldown(abilityId: string, durationMs: number): void;
+  getCooldownProgress(abilityId: string): number; // 0.0 to 1.0
+  clearCooldown(abilityId: string): void;
+}
+
+interface CooldownState {
+  startedAt: number;   // Date.now() when cooldown started
+  durationMs: number;  // total cooldown duration
+}
+
+// Derived state (avoids re-renders)
+const getCooldownProgress = (abilityId: string): number => {
+  const cd = store.cooldowns.get(abilityId);
+  if (!cd) return 1.0; // fully ready
+
+  const elapsed = Date.now() - cd.startedAt;
+  return Math.min(1.0, elapsed / cd.durationMs);
+};
+```
+
+**Rationale:** Action bar already uses `actionBarStore`. Adding cooldown map to same store prevents state fragmentation. Timestamp-based calculation (not interval-based counters) avoids re-render storms when multiple cooldowns tick simultaneously.
+
+**Reference:** [Zustand time-based state discussion](https://github.com/pmndrs/zustand/discussions/2150) — recommends derived state from timestamps for performance.
+
+### 2. Radial Cooldown Overlay (Client)
+
+**Technology:** Phaser `Graphics.slice()`
+
+```typescript
+// apps/web/src/game/ui/CooldownOverlay.ts (NEW)
+export class CooldownOverlay extends Phaser.GameObjects.Graphics {
+  constructor(scene: Phaser.Scene, x: number, y: number, radius: number) {
+    super(scene);
+    this.setPosition(x, y);
   }
 
-  onModuleDestroy() {
-    this.schedulerRegistry.deleteInterval('ai-tick');
-  }
+  updateCooldown(progress: number) {
+    this.clear();
 
-  private async tickActiveZones() {
-    // Get zones with players → tick creature AI for each
-    // Broadcast entity:update for creatures that moved
+    if (progress >= 1.0) return; // fully ready, no overlay
+
+    // Draw pie slice from top (270°) clockwise to current progress
+    const startAngle = Phaser.Math.DegToRad(270); // top
+    const endAngle = startAngle + (progress * Math.PI * 2);
+
+    this.fillStyle(0x000000, 0.6); // semi-transparent black
+    this.slice(0, 0, radius, startAngle, endAngle, false);
+    this.fillPath();
   }
 }
 ```
 
-The FSM logic (`tickAI(creature, context) → { newState, newPosition? }`) lives in `packages/game-logic/src/ai/` as a pure function, following the same pattern as `validateMovement`, `calculateDamage`, etc.
+**Integration:** Action bar scene creates one `CooldownOverlay` per slot. On frame update, calls `overlay.updateCooldown(actionBarStore.getCooldownProgress(abilityId))`.
+
+**Rationale:** Phaser `Graphics.slice()` draws pie slices natively. No external library needed. Similar to health bar rendering pattern in existing `HealthBarRenderer`.
+
+**Reference:** [Phaser pie timer example](https://gist.github.com/chewax/08b155da67e0cc497e15) demonstrates slice-based cooldown UI.
+
+### 3. Buff Tracking (Server)
+
+**Technology:** NestJS service with `@Interval(100)` tick
+
+```typescript
+// apps/game-server/src/game/buff.service.ts (NEW)
+@Injectable()
+export class BuffService implements OnModuleInit, OnModuleDestroy {
+  private activeBuffs: Map<string, ActiveBuff[]> = new Map();
+  private tickInterval: NodeJS.Timeout;
+
+  onModuleInit() {
+    this.tickInterval = setInterval(() => this.tickBuffs(), 100); // 10Hz
+  }
+
+  onModuleDestroy() {
+    clearInterval(this.tickInterval);
+  }
+
+  applyBuff(playerId: string, buff: Buff) {
+    const buffs = this.activeBuffs.get(playerId) ?? [];
+    buffs.push({ ...buff, appliedAt: Date.now(), expiresAt: Date.now() + buff.durationMs });
+    this.activeBuffs.set(playerId, buffs);
+
+    // Broadcast to client
+    this.server.to(playerSocketId).emit('buff:apply', { buffId: buff.id, duration: buff.durationMs });
+  }
+
+  private tickBuffs() {
+    const now = Date.now();
+    for (const [playerId, buffs] of this.activeBuffs) {
+      const stillActive = buffs.filter(b => b.expiresAt > now);
+
+      // Emit buff:remove for expired buffs
+      const expired = buffs.filter(b => b.expiresAt <= now);
+      for (const buff of expired) {
+        this.server.to(playerSocketId).emit('buff:remove', { buffId: buff.id });
+      }
+
+      if (stillActive.length > 0) {
+        this.activeBuffs.set(playerId, stillActive);
+      } else {
+        this.activeBuffs.delete(playerId);
+      }
+    }
+  }
+
+  getActiveBuffs(playerId: string): ActiveBuff[] {
+    return this.activeBuffs.get(playerId) ?? [];
+  }
+}
+```
+
+**Rationale:** Mirrors `AiService` pattern (`ai.service.ts` uses `@Interval(1000)` for creature AI). Buffs expire on server tick, broadcast to client. No database persistence (buffs are ephemeral combat state).
+
+**Reference:** [NestJS task scheduling docs](https://docs.nestjs.com/techniques/task-scheduling) — `@Interval()` for periodic tasks.
+
+### 4. Energy Cost Validation (Server)
+
+**Technology:** Extend `PlayerService`
+
+```typescript
+// apps/game-server/src/game/player.service.ts (EXTEND)
+export class PlayerService {
+  // NEW: energy management
+  consumeEnergy(playerId: string, amount: number): boolean {
+    const player = this.getPlayerById(playerId);
+    if (!player || player.energy < amount) return false;
+
+    player.energy -= amount;
+
+    // Broadcast energy update to client
+    const socketId = this.getSocketByPlayerId(playerId);
+    this.server.to(socketId).emit('player:energy', {
+      playerId,
+      energy: player.energy,
+      maxEnergy: player.maxEnergy,
+    });
+
+    return true;
+  }
+
+  // Energy regeneration already handled by existing player:regen event
+}
+```
+
+**Rationale:** `PlayerService` already manages `health`, `position`, `inCombat` state. Energy field exists in `Player` interface (`maxEnergy`, `energy`). Adding `consumeEnergy()` follows `updateHealth()` pattern (lines 500-502 in `combat.service.ts`).
+
+### 5. Ability Definitions (Shared)
+
+**Technology:** Extend `ItemEffect` discriminated union
+
+```typescript
+// packages/items/src/types.ts (EXTEND)
+export type ItemEffect =
+  // Existing effects
+  | { readonly type: 'heal'; readonly amount: number }
+  | { readonly type: 'energy_restore'; readonly amount: number }
+  | { readonly type: 'stat_buff'; readonly stat: string; readonly amount: number; readonly duration: number }
+
+  // NEW: ability-specific effects
+  | { readonly type: 'deal_damage'; readonly baseDamage: number; readonly scaling: 'power' | 'haste' }
+  | { readonly type: 'apply_buff'; readonly buffId: string; readonly durationMs: number }
+  | { readonly type: 'energy_cost'; readonly amount: number }
+  | { readonly type: 'cooldown'; readonly durationMs: number };
+```
+
+**Example ability item:**
+```typescript
+export const PULSE_RIFLE: ItemDefinition = {
+  id: 'pulse_rifle_combat',
+  displayName: 'Pulse Rifle',
+  category: 'tool',
+  toolType: 'combat',
+  rarity: 'rare',
+  effects: [
+    { trigger: 'on_use', effect: { type: 'energy_cost', amount: 20 } },
+    { trigger: 'on_use', effect: { type: 'deal_damage', baseDamage: 50, scaling: 'power' } },
+    { trigger: 'on_use', effect: { type: 'cooldown', durationMs: 3000 } },
+  ],
+  // ... other fields
+};
+```
+
+**Rationale:** `ItemEffect` already uses discriminated unions (lines 34-45 in `types.ts`). Adding ability effects maintains type safety. Items can have multiple effects (energy_cost + deal_damage + cooldown), same as stims (stat_buff effects in `consumables.ts`).
 
 ---
 
-## Loot Table Schema
+## Ability Cast Flow (Client → Server → Client)
 
-Two new tables in `packages/database/src/schema/`:
+**Client (Action Bar):**
+1. User presses hotkey (1-8) → `ActionBar.tsx` `handleKeyDown`
+2. Get `instanceId` from slot → lookup item in inventory
+3. Check cooldown: `actionBarStore.getCooldownProgress(instanceId) === 1.0` (fully ready)
+4. Check energy: `gameStore.player.energy >= getEnergyCost(item)`
+5. Emit: `gameSocket.emit('ability:use', { instanceId, targetId? })`
+6. **Optimistic cooldown:** `actionBarStore.setCooldown(instanceId, cooldownDuration)` — start overlay immediately
 
+**Server (GameGateway → AbilityService):**
+7. Receive `'ability:use'` event in `GameGateway`
+8. Validate: item exists, equipped in tool slot, player has energy
+9. Validate: ability not on cooldown (server-side cooldown map)
+10. Deduct energy: `playerService.consumeEnergy(playerId, energyCost)`
+11. Execute ability: calculate damage (if `deal_damage` effect), apply buffs (if `apply_buff` effect)
+12. Record cooldown: `cooldownService.setCooldown(playerId, abilityId, durationMs)`
+13. Broadcast damage: `server.to(zoneId).emit('combat:damage', { ... })` if damage dealt
+14. Broadcast buff: `server.to(playerId).emit('buff:apply', { ... })` if buff applied
+15. Broadcast cooldown: `server.to(playerId).emit('ability:cast', { abilityId, cooldownMs })` (authoritative cooldown)
+
+**Client (Result Handlers):**
+16. Receive `'ability:cast'` → reconcile cooldown if server duration differs from optimistic prediction
+17. Receive `'combat:damage'` → show damage number (existing `WorldScene.showDamageNumber()`)
+18. Receive `'buff:apply'` → add buff icon to HUD buff bar (new UI component)
+
+**Cooldown Reconciliation:**
+If server cooldown differs (e.g., player equipped Haste buff between client prediction and server response):
 ```typescript
-// loot_tables table — grouping of loot entries
-export const lootTables = pgTable('loot_tables', {
-  id: varchar('id', { length: 50 }).primaryKey(),
-  name: varchar('name', { length: 100 }).notNull(),
-  description: text('description'),
-});
+gameSocket.on('ability:cast', (data) => {
+  const predicted = actionBarStore.cooldowns.get(data.abilityId);
+  const serverDuration = data.cooldownMs;
 
-// loot_table_entries table — weighted item entries
-export const lootTableEntries = pgTable('loot_table_entries', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  tableId: varchar('table_id', { length: 50 }).notNull().references(() => lootTables.id),
-  itemId: varchar('item_id', { length: 100 }).notNull(),  // references ItemRegistry
-  weight: integer('weight').notNull().default(10),
-  minQuantity: integer('min_quantity').notNull().default(1),
-  maxQuantity: integer('max_quantity').notNull().default(1),
-  condition: varchar('condition', { length: 50 }),  // 'always', 'rare', 'lucky' — future
+  if (predicted && Math.abs(predicted.durationMs - serverDuration) > 100) {
+    // Server authority: replace optimistic cooldown with server cooldown
+    actionBarStore.setCooldown(data.abilityId, serverDuration);
+  }
 });
 ```
 
-The `species` table's existing `lootTableId varchar(50)` FK already points to `loot_tables.id`. No species schema change needed.
+**Precedent:** Movement system uses same optimistic prediction + server reconciliation pattern (`MovementController.reconcile()` in `PathfindingController.ts`).
+
+---
+
+## Data Flow Architecture
+
+```
+┌─────────────────┐
+│  Action Bar UI  │  User presses hotkey (1-8)
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│ ActionBarStore  │  Check: cooldown ready? energy sufficient?
+└────────┬────────┘
+         ↓ Valid
+┌─────────────────┐
+│ Socket.IO Client│  emit 'ability:use' { instanceId, targetId }
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│   GameGateway   │  Validate request (item exists, energy check)
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│ AbilityService  │  Execute ability (damage calc, buff application)
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│  PlayerService  │  consumeEnergy(playerId, cost)
+│   BuffService   │  applyBuff(playerId, buff) if applicable
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│ Socket.IO Server│  Broadcast 'combat:damage', 'buff:apply', 'ability:cast'
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│ CombatStore     │  Update damage numbers
+│ BuffStore       │  Track active buffs (client-side UI)
+│ ActionBarStore  │  Reconcile cooldown with server authority
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│ Phaser Scene    │  Render: damage floats, buff icons, cooldown overlay
+└─────────────────┘
+```
 
 ---
 
 ## Version Compatibility
 
-| Package | Version | Compatibility Notes |
-|---------|---------|---------------------|
-| `@nestjs/schedule` | ^4.1.0 | Peer dependency requires `@nestjs/common ^10.0.0` (installed at ^10.3.0). Compatible. Latest available is 6.1.1 — either works; pin to 4.x to stay conservative with existing NestJS v10 peer range. |
-| `heap-js` | ^2.7.1 (installed) | `MinHeap<T>` with custom comparator. Already used in the project. No version change needed. |
-| Drizzle ORM | ^0.30.0 (installed) | Two new `pgTable` declarations — standard patterns. No version upgrade needed. |
-| TypeScript | ^5.4.0 (installed) | Discriminated union FSM states, `const` enum for behavior types — all within ^5.4 capabilities. |
+All patterns use existing stable APIs:
 
----
+| Package | Version | API Used | Stable Since |
+|---------|---------|----------|--------------|
+| Phaser | 3.80.0 | `Graphics.slice()` | 3.0.0 (2018) |
+| Zustand | 4.5.0 | `Map` support in state | 4.0.0 (2022) |
+| NestJS | 10.3.0 | `@Interval()` decorator | 6.0.0 (2019) |
+| Socket.IO | 4.7.0 | `server.to(room).emit()` | 2.0.0 (2016) |
+| TypeScript | 5.4.0 | Discriminated unions | 2.0.0 (2016) |
 
-## Sources
-
-### HIGH Confidence (Verified in Codebase)
-
-- `packages/game-logic/src/movement/pathfinding.ts` — `findPath()`, `hasLineOfSight()`, `getReachablePositions()` confirmed. A* with diagonal support, corner-cutting prevention, elevation cost. Directly usable for creature wander movement.
-- `packages/game-logic/src/interaction/interaction.ts` — `canInteract()`, `canHarvest()`, `getEntitiesInRange()` confirmed. Range validation already exists using `manhattanDistance`. Tool range can extend `canHarvest` with a range parameter.
-- `packages/world-gen/src/generation/spawn.ts` — `weightedPick()` confirmed. Weighted random selection algorithm present. Extract to `game-logic/src/loot/`.
-- `packages/world-gen/src/noise/simplex.ts` — `SimplexNoise` class with `noise2D()` and `fbm()` confirmed. Fertility layer = second `SimplexNoise` instance with a different seed. Zero API changes.
-- `packages/world-gen/src/random/seeded-random.ts` — `SeededRandom` with `nextInt`, `nextFloat`, `pick`, `derive` confirmed. Creature wander target selection uses this for deterministic behavior.
-- `packages/shared-types/src/core/entity.ts` — `Creature`, `Mineral`, `ItemEntity`, `Structure`, `CreatureBehavior` ('passive'|'neutral'|'aggressive'|'defensive') all confirmed. AI FSM can extend `CreatureBehavior` or use a separate `AIState` type.
-- `packages/shared-types/src/network/events.ts` — `entity:spawn`, `entity:despawn`, `entity:update` in `ServerEvents` confirmed. No new socket events needed for AI movement or respawn.
-- `packages/shared-types/src/game/entity-registry.ts` — Flat `EntityRegistry` object confirmed. Exists but is a plain object, not a class-based registry. Migration to `EntityRegistryImpl` class (matching `ItemRegistryImpl`) is the correct evolution.
-- `packages/database/src/schema/species.ts` — `lootTableId varchar(50)` column confirmed on `species` table. New `loot_tables` and `loot_table_entries` tables complete the FK chain.
-- `packages/database/src/schema/discoveries.ts` — `discovered_species` junction table confirmed (`characterId`, `speciesId`, `killCount`). The entity system milestone populates this table on first creature kill.
-- `apps/game-server/src/zones/zones.service.ts` — `LRUCache<string, ZoneState>` with `Map<string, Entity>` confirmed. AI-updated entity positions update values in this map. `spawnEntity` / `despawnEntity` methods exist for respawn use.
-- `package.json` — `heap-js ^2.7.1`, `ioredis ^5.4.0`, `lru-cache ^11.2.6` all confirmed installed. No new dependencies needed beyond `@nestjs/schedule`.
-- `packages/items/src/registry.ts` — `ItemRegistryImpl` class pattern confirmed as the blueprint for `packages/entities/src/registry.ts`.
-
-### MEDIUM Confidence (Official Docs / npm Verified)
-
-- `@nestjs/schedule` latest version is 6.1.1 (verified via GitHub releases). Peer dependency is `@nestjs/common ^10`. Compatible with installed `^10.3.0`. `SchedulerRegistry.addInterval()` API confirmed via official NestJS docs. (Source: [nestjs/schedule GitHub releases](https://github.com/nestjs/schedule/releases))
-- `SchedulerRegistry.addInterval(name, interval)` confirmed as the idiomatic NestJS pattern for runtime interval management. Integrates with `OnModuleInit` / `OnModuleDestroy` lifecycle hooks. (Source: [NestJS Task Scheduling docs](https://docs.nestjs.com/techniques/task-scheduling))
-
-### LOW Confidence (Pattern Reference Only)
-
-- Redis sorted set for respawn queue: The pattern (`ZADD + ZRANGEBYSCORE`) is well-documented for delayed task queues. Not verified against the specific ioredis version installed. Noted as an upgrade path, not a requirement for the initial milestone.
+**No breaking changes. No version upgrades required.**
 
 ---
 
 ## Integration Points
 
-### New Package
+### New Files
 
-| Package | Created From | What It Adds |
-|---------|--------------|--------------|
-| `packages/entities` | Blueprint: `packages/items` | `EntityDefinition` types, `EntityRegistry` singleton, creature/mineral/plant/artifact definition files |
-
-### New Files in Existing Packages
-
-| File | Package | What It Adds |
-|------|---------|--------------|
-| `src/loot/weighted-pick.ts` | `game-logic` | Extracted + generalized from `world-gen/src/generation/spawn.ts` |
-| `src/loot/loot-table.ts` | `game-logic` | `rollLootTable(table, rng): LootDrop[]` pure function |
-| `src/ai/creature-ai.ts` | `game-logic` | `tickCreatureAI(creature, context): AIResult` pure FSM function |
-| `src/ai/wander.ts` | `game-logic` | `getWanderTarget(pos, collisionMap, rng): Position \| null` — uses `getReachablePositions` |
-| `src/generation/fertility.ts` | `world-gen` | `getFertilityAt(worldSeed, x, y): number` — second noise layer |
-| `src/schema/loot-tables.ts` | `database` | `lootTables` and `lootTableEntries` Drizzle table definitions |
-
-### New Files in Game Server
-
-| File | What It Adds |
-|------|--------------|
-| `apps/game-server/src/game/ai.service.ts` | `@Interval(1000)` AI tick, broadcasts `entity:update` |
-| `apps/game-server/src/game/respawn.service.ts` | `@Interval(5000)` respawn sweep, broadcasts `entity:spawn` |
+| File | Package/App | What It Adds |
+|------|-------------|--------------|
+| `src/game/ui/CooldownOverlay.ts` | `apps/web` | Phaser Graphics component for radial cooldown sweep |
+| `src/game/buff.service.ts` | `apps/game-server` | Buff duration tracking with 10Hz tick |
+| `src/game/ability.service.ts` | `apps/game-server` | Ability validation and execution |
+| `src/game/cooldown.service.ts` | `apps/game-server` | Server-side cooldown tracking (anti-cheat) |
+| `src/store/buffStore.ts` | `apps/web` | Client-side buff state for HUD display |
+| `src/ui/BuffBar.tsx` | `apps/web` | Buff icon display component |
+| `src/abilities/calculate-ability-damage.ts` | `packages/game-logic` | Ability damage calculation (similar to `calculateDamage`) |
+| `src/abilities/apply-buff.ts` | `packages/game-logic` | Buff application logic (stat modifiers) |
 
 ### Modified Files
 
 | File | Change |
 |------|--------|
-| `apps/game-server/src/game/game.module.ts` | Register `AiService`, `RespawnService`; import `ScheduleModule.forRoot()` |
-| `apps/game-server/src/zones/zones.service.ts` | Add respawn queue (`MinHeap<RespawnEntry>`); add `queueRespawn()`, `drainDueRespawns()` methods |
-| `packages/shared-types/src/game/entity-registry.ts` | Migrate flat object to `EntityRegistryImpl` class pattern |
-| `packages/game-logic/src/interaction/interaction.ts` | Extend `canHarvest()` with tool range parameter; add tool-specific range constants |
+| `apps/web/src/store/actionBarStore.ts` | Add `cooldowns: Map<string, CooldownState>` and cooldown methods |
+| `apps/web/src/ui/hud/ActionBar.tsx` | Add cooldown check before emitting `ability:use` |
+| `apps/game-server/src/game/player.service.ts` | Add `consumeEnergy()` method |
+| `apps/game-server/src/game/game.module.ts` | Register `BuffService`, `AbilityService`, `CooldownService` |
+| `packages/items/src/types.ts` | Extend `ItemEffect` union with `deal_damage`, `apply_buff`, `energy_cost`, `cooldown` |
+| `packages/shared-types/src/network/events.ts` | Add `ability:use`, `ability:cast`, `buff:apply`, `buff:remove`, `player:energy` events |
+| `packages/game-logic/src/stats/char-stats.ts` | Add buff stat modifier application in `computeCharStats()` |
 
 ---
 
-*Stack research for: Entity System — Into the Void*
-*Researched: 2026-02-18*
-*Confidence: HIGH — All existing packages verified by direct file audit. One new package (@nestjs/schedule) identified and version-verified. All integration points traced to specific source files.*
+## Sources
+
+### Cooldown Visuals (HIGH Confidence)
+- [Phaser 3 radial button cooldown discussion](https://phaser.discourse.group/t/how-to-create-a-radial-button-cooldown-effect/2280) — Community consensus on `Graphics.slice()` for radial cooldowns
+- [Pie Timer Phaser example](https://gist.github.com/chewax/08b155da67e0cc497e15) — Working code for pie-slice cooldown
+- [Phaser Timer Events](https://phaser.io/examples/v3/view/time/timer-event) — Official docs for `Phaser.Time.TimerEvent`
+
+### State Management (HIGH Confidence)
+- [Zustand time-based state discussion](https://github.com/pmndrs/zustand/discussions/2150) — Performance pattern for timestamp-based cooldowns
+- [Zustand official repository](https://github.com/pmndrs/zustand) — v4.5.0 stable API
+- [React state management 2026](https://www.syncfusion.com/blogs/post/react-state-management-libraries) — Zustand usage trends
+
+### Server Architecture (MEDIUM Confidence)
+- [NestJS WebSocket 2026 guide](https://oneuptime.com/blog/post/2026-02-02-nestjs-websockets/view) — Best practices for Socket.IO in NestJS
+- [NestJS WebSocket gateways](https://docs.nestjs.com/websockets/gateways) — Official docs
+- [NestJS task scheduling](https://docs.nestjs.com/techniques/task-scheduling) — `@Interval()` decorator usage
+
+### Game Design Patterns (MEDIUM Confidence)
+- [Gameplay Ability System documentation](https://github.com/tranek/GASDocumentation) — Unreal Engine GAS architecture reference (cooldown best practices)
+- [Cooldown tracking adjustments](https://www.thegames.dev/?p=131) — Dynamic cooldown implementation patterns
+- [WoW Cooldown Manager](https://blizzardwatch.com/2026/01/16/wow-cooldown-manager-how-to-use/) — Player-facing cooldown UI design
+
+### CSS Radial Wipe (LOW Confidence — Background Research Only)
+- [CSS mask animations](https://expensive.toys/blog/fancy-css-reveal-effects) — Radial wipe with CSS (not used — Phaser preferred)
+- [Smashing Magazine CSS masks](https://www.smashingmagazine.com/2023/09/revealing-images-css-mask-animations/) — Educational reference
+
+---
+
+*Stack research for: Active Combat Abilities System — Into the Void*
+*Researched: 2026-02-20*
+*Confidence: HIGH — All existing capabilities verified via codebase audit. Zero new npm packages required. All integration points traced to specific source files.*
