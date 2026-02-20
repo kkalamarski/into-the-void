@@ -50,6 +50,7 @@ export const TOOL_MINING_COMMON: ItemDefinition = {
   toolType: 'mining',
   effects: [],
   range: 1,
+  grantedAbilities: ['basic_strike'],
 };
 
 export const TOOL_MINING_RARE: ItemDefinition = {
@@ -70,6 +71,7 @@ export const TOOL_MINING_RARE: ItemDefinition = {
   toolType: 'mining',
   effects: [],
   range: 2,
+  grantedAbilities: ['basic_strike', 'thermal_lance'],
 };
 
 export const TOOL_MINING_EPIC: ItemDefinition = {
@@ -90,6 +92,7 @@ export const TOOL_MINING_EPIC: ItemDefinition = {
   toolType: 'mining',
   effects: [],
   range: 3,
+  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst'],
 };
 
 export const TOOL_MINING_EXOTIC: ItemDefinition = {
@@ -110,6 +113,7 @@ export const TOOL_MINING_EXOTIC: ItemDefinition = {
   toolType: 'mining',
   effects: [],
   range: 4,
+  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'void_drain'],
 };
 
 export const TOOL_MINING_LEGENDARY: ItemDefinition = {
@@ -130,6 +134,7 @@ export const TOOL_MINING_LEGENDARY: ItemDefinition = {
   toolType: 'mining',
   effects: [],
   range: 5,
+  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'void_drain', 'overload_pulse'],
 };
 
 // ============================================================
@@ -175,6 +180,7 @@ export const TOOL_COMBAT_RARE: ItemDefinition = {
   toolType: 'combat',
   effects: [],
   range: 2,
+  grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute'],
 };
 
 export const TOOL_COMBAT_EPIC: ItemDefinition = {
@@ -195,6 +201,7 @@ export const TOOL_COMBAT_EPIC: ItemDefinition = {
   toolType: 'combat',
   effects: [],
   range: 3,
+  grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike'],
 };
 
 export const TOOL_COMBAT_EXOTIC: ItemDefinition = {
@@ -215,6 +222,7 @@ export const TOOL_COMBAT_EXOTIC: ItemDefinition = {
   toolType: 'combat',
   effects: [],
   range: 4,
+  grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike', 'precision_shot'],
 };
 
 export const TOOL_COMBAT_LEGENDARY: ItemDefinition = {
@@ -235,6 +243,7 @@ export const TOOL_COMBAT_LEGENDARY: ItemDefinition = {
   toolType: 'combat',
   effects: [],
   range: 5,
+  grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike', 'precision_shot', 'cryo_blast'],
 };
 
 // ============================================================
@@ -280,6 +289,7 @@ export const TOOL_RESEARCH_RARE: ItemDefinition = {
   toolType: 'research',
   effects: [],
   range: 2,
+  grantedAbilities: ['energy_pulse', 'resource_scan'],
 };
 
 export const TOOL_RESEARCH_EPIC: ItemDefinition = {
@@ -300,6 +310,7 @@ export const TOOL_RESEARCH_EPIC: ItemDefinition = {
   toolType: 'research',
   effects: [],
   range: 3,
+  grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen'],
 };
 
 export const TOOL_RESEARCH_EXOTIC: ItemDefinition = {
@@ -320,6 +331,7 @@ export const TOOL_RESEARCH_EXOTIC: ItemDefinition = {
   toolType: 'research',
   effects: [],
   range: 4,
+  grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen', 'overclock'],
 };
 
 export const TOOL_RESEARCH_LEGENDARY: ItemDefinition = {
@@ -340,6 +352,7 @@ export const TOOL_RESEARCH_LEGENDARY: ItemDefinition = {
   toolType: 'research',
   effects: [],
   range: 5,
+  grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen', 'overclock', 'void_drain'],
 };
 
 // ============================================================
