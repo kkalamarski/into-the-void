@@ -160,7 +160,7 @@ export class EntityRenderer {
     container.setData('elevationOffset', this.elevationOffset);
 
     // Initial depth: Y-position with X-tiebreaker and elevation (use world coordinates)
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation);
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 0, true);
     container.setDepth(depth);
 
     return container;
@@ -506,7 +506,7 @@ export class EntityRenderer {
     container.setData('elevation', elevation);
 
     // Update depth
-    const depth = this.isoTransform.calculateDepth(gridX, gridY, elevation);
+    const depth = this.isoTransform.calculateDepth(gridX, gridY, elevation, 0, true);
     container.setDepth(depth);
   }
 

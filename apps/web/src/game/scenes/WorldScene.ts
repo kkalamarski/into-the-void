@@ -613,7 +613,7 @@ export class WorldScene extends Phaser.Scene {
     this.localPlayer = container as unknown as Phaser.GameObjects.Sprite; // Type hack for compatibility
 
     // Set depth with priority boost to ensure player renders above terrain
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 10);
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 10, true);
     container.setDepth(depth);
 
     if (this.depthSorter) {
@@ -1314,7 +1314,7 @@ export class WorldScene extends Phaser.Scene {
           container.setData('gridX', worldX);
           container.setData('gridY', worldY);
           container.setData('elevation', elevation);
-          const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevation);
+          const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevation, 0, true);
           container.setDepth(depth);
         },
       });
@@ -1397,7 +1397,7 @@ export class WorldScene extends Phaser.Scene {
     sprite.setTint(this.getFactionColor(player.faction));
     container.add(sprite);
 
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation);
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 0, true);
     container.setDepth(depth);
 
     this.playerSprites.set(player.id, container as unknown as Phaser.GameObjects.Sprite);
@@ -1438,7 +1438,7 @@ export class WorldScene extends Phaser.Scene {
         sprite.setData('gridX', worldX);
         sprite.setData('gridY', worldY);
         sprite.setData('elevation', elevation);
-        const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevation);
+        const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevation, 0, true);
         sprite.setDepth(depth);
       }
     });
@@ -1459,8 +1459,7 @@ export class WorldScene extends Phaser.Scene {
     // sprite.y is visual position (elevated up by elevationOffset). Add it back to get
     // logical screen Y matching gridToScreen output for proper depth sorting.
     const updateDepthFromSpriteY = () => {
-      const depthY = this.localPlayer!.y + elevationOffset;
-      const depth = depthY + (worldX * 0.0001) + (elevation * 0.1) + 10;
+      const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevation, 10, true);
       this.localPlayer!.setDepth(depth);
     };
 
