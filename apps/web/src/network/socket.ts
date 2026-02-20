@@ -6,6 +6,7 @@ import {
   Player,
 } from '@into-the-void/shared-types';
 import { useGameStore } from '../store/gameStore';
+import { useBuffStore } from '../store/buffStore';
 
 type ServerEventHandler<K extends keyof ServerEvents> = (data: ServerEvents[K]) => void;
 
@@ -98,6 +99,8 @@ class GameSocket {
       'npc:interact:response',
       'ability:result',
       'ability:cooldown',
+      'buff:apply',
+      'buff:expire',
     ];
 
     for (const event of serverEvents) {

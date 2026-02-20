@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { gameSocket } from '../network/socket';
 
 /**
  * Client-side buff representation for UI display.
@@ -56,3 +57,23 @@ export const useBuffStore = create<BuffState>((set, get) => ({
 
   clearBuffs: () => set({ buffs: new Map() }),
 }));
+
+// Wire socket events at module level
+gameSocket.on('buff:apply', (data) => {
+  useBuffStore.getState().addBuff({
+    id: data.buffId,
+    displayName: data.displayName,
+    stat: data.stat,
+    amount: data.amount,
+    expiresAt: data.expiresAt,
+    iconColor: data.iconColor,
+  });
+});
+
+gameSocket.on('buff:expire', (data) => {
+  useBuffStore.getState().removeBuff(data.buffId);
+});
+
+gameSocket.on('player:death', () => {
+  useBuffStore.getState().clearBuffs();
+});
