@@ -3,6 +3,7 @@ import { immer } from 'zustand/middleware/immer';
 import { useInventoryStore } from './inventoryStore';
 
 const STORAGE_KEY = 'action_bar_assignments';
+const ABILITY_ORDER_STORAGE_KEY = 'action_bar_ability_order';
 const SLOT_COUNT = 8;
 
 function loadFromStorage(): (string | null)[] {
@@ -31,11 +32,42 @@ function saveToStorage(slots: (string | null)[]): void {
   }
 }
 
+function loadAbilityOrderFromStorage(): (string | null)[] {
+  try {
+    const raw = localStorage.getItem(ABILITY_ORDER_STORAGE_KEY);
+    if (!raw) return Array(SLOT_COUNT).fill(null);
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return Array(SLOT_COUNT).fill(null);
+    // Normalize to exactly 8 slots
+    const normalized: (string | null)[] = Array(SLOT_COUNT).fill(null);
+    for (let i = 0; i < SLOT_COUNT; i++) {
+      const val = parsed[i];
+      normalized[i] = typeof val === 'string' ? val : null;
+    }
+    return normalized;
+  } catch {
+    return Array(SLOT_COUNT).fill(null);
+  }
+}
+
+function saveAbilityOrderToStorage(order: (string | null)[]): void {
+  try {
+    localStorage.setItem(ABILITY_ORDER_STORAGE_KEY, JSON.stringify(order));
+  } catch {
+    // Silently fail if localStorage is unavailable
+  }
+}
+
 interface ActionBarState {
   slots: (string | null)[];
   assign: (slotIndex: number, instanceId: string) => void;
   unassign: (slotIndex: number) => void;
   invalidateOrphans: (activeInstanceIds: Set<string>) => void;
+
+  // Ability ordering for drag-to-rearrange
+  abilityOrder: (string | null)[];
+  setAbilityOrder: (order: (string | null)[]) => void;
+  swapAbilitySlots: (fromIndex: number, toIndex: number) => void;
 }
 
 export const useActionBarStore = create<ActionBarState>()(
@@ -69,6 +101,29 @@ export const useActionBarStore = create<ActionBarState>()(
         if (changed) {
           saveToStorage(state.slots as (string | null)[]);
         }
+      }),
+
+    // Ability ordering state and actions
+    abilityOrder: loadAbilityOrderFromStorage(),
+
+    setAbilityOrder: (order: (string | null)[]) =>
+      set((state) => {
+        state.abilityOrder = order;
+        saveAbilityOrderToStorage(order);
+      }),
+
+    swapAbilitySlots: (fromIndex: number, toIndex: number) =>
+      set((state) => {
+        if (fromIndex < 0 || fromIndex >= SLOT_COUNT) return;
+        if (toIndex < 0 || toIndex >= SLOT_COUNT) return;
+        if (fromIndex === toIndex) return;
+
+        // Swap slot contents
+        const temp = state.abilityOrder[fromIndex];
+        state.abilityOrder[fromIndex] = state.abilityOrder[toIndex];
+        state.abilityOrder[toIndex] = temp;
+
+        saveAbilityOrderToStorage(state.abilityOrder as (string | null)[]);
       }),
   }))
 );
