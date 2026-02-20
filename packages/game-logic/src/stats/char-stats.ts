@@ -1,4 +1,4 @@
-import type { CharacterStats, StatScaleTarget } from '@into-the-void/shared-types';
+import type { CharacterStats, StatScaleTarget, Buff } from '@into-the-void/shared-types';
 import type { EquipmentJson, InventoryItemJson } from '@into-the-void/database';
 import { ItemRegistry } from '@into-the-void/items';
 import { resolveEffectsForTrigger } from '../inventory/effects';
@@ -67,12 +67,14 @@ const SCALE_CONSTANTS: Record<
  * @param level - Character level (1-based)
  * @param equipment - Equipment JSON from DB (server-authoritative)
  * @param target - Whether to use player or creature scaling constants
+ * @param activeBuffs - Optional array of active buffs to apply stat modifiers
  * @returns Complete 8-stat CharacterStats object
  */
 export function computeCharStats(
   level: number,
   equipment: EquipmentJson,
-  target: StatScaleTarget = 'player'
+  target: StatScaleTarget = 'player',
+  activeBuffs: Buff[] = []
 ): CharacterStats {
   const { base, growth } = SCALE_CONSTANTS[target];
 
@@ -114,6 +116,14 @@ export function computeCharStats(
           (stats as unknown as Record<string, number>)[stat] += value;
         }
       }
+    }
+  }
+
+  // Apply active buff stat modifiers
+  for (const buff of activeBuffs) {
+    // Only apply if buff.stat is a valid CharacterStats key
+    if (buff.stat in stats) {
+      (stats as unknown as Record<string, number>)[buff.stat] += buff.amount;
     }
   }
 
