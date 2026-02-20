@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Phase: 57 of 58 (Buff System)
-Plan: 3 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-20 — Plan 57-03 complete
+Last activity: 2026-02-20 — Plan 57-02 complete
 
 Progress: [█████████████████████████████████████████████████████░░] 97% (56/58 phases complete)
 
@@ -70,6 +70,10 @@ Recent decisions affecting current work:
 - Buff refresh strategy: same abilityId+stat refreshes duration instead of stacking (57-01)
 - Max 15 buffs per player with FIFO eviction to prevent unbounded growth (57-01)
 - 500ms tick interval for buff expiration checks (57-01)
+- Buff stat modifiers apply after equipment bonuses in stat computation (57-02)
+- Heal effects use buffed Power stat for scaling calculations (57-02)
+- Both player offense and defense benefit from active buffs (57-02)
+- crypto.randomUUID() used for buff ID generation (57-02)
 - [Phase 57-03]: Follow abilityStore pattern for socket event wiring (module-level in store file)
 - [Phase 57-03]: 100ms interval for buff duration countdown (10 updates/second)
 - [Phase 57-03]: Expiring animation threshold at 3 seconds for player reaction time
@@ -90,10 +94,10 @@ None. All infrastructure required for ability system exists:
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 57-03-PLAN.md (Client-Side Buff UI)
+Stopped at: Completed 57-02-PLAN.md (Buff Integration)
 Resume file: None
 
 **Next action:** Phase 57 complete (all plans executed). Ready for phase 58 or testing.
 
 ---
-*Last updated: 2026-02-20 after completing plan 57-01*
+*Last updated: 2026-02-20 after completing plan 57-02*
