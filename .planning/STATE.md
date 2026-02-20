@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.12 Milestone Complete
+**Current focus:** v1.13 Active Combat Abilities
 
 ## Current Position
 
-Phase: 55 of 55 (Content Expansion)
-Plan: 3 of 3 in current phase
-Status: Milestone complete
-Last activity: 2026-02-20 — Phase 55 verified and milestone complete
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-20 — Milestone v1.13 started
 
-Progress: [██████████] 100% (v1.12 milestone - 9/9 plans)
+Progress: [░░░░░░░░░░] 0% (v1.13 milestone)
 
 ## Performance Metrics
 
@@ -91,10 +91,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: v1.12 Milestone complete — all 55 phases executed
+Stopped at: Defining v1.13 requirements
 Resume file: None
 
-**Next action:** `/gsd:complete-milestone` or define v1.13 requirements
+**Next action:** Complete requirements definition → roadmap creation
 
 ---
-*Last updated: 2026-02-20 after Phase 55 verification and milestone completion*
+*Last updated: 2026-02-20 after v1.13 milestone start*

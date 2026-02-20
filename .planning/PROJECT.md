@@ -4,19 +4,20 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, and a complete auth-to-gameplay flow.
 
-## Current State (v1.11 shipped)
+## Current State (v1.12 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
 - World: Procedural biomes, elevation, structures, seamless chunk streaming
 - Movement: 8-directional WASD, click-to-move pathfinding, client prediction
-- Inventory: 100 items, exo-suit equipment, module slots, action bar, storage
+- Inventory: 100+ items, exo-suit equipment, module slots, action bar, storage
 - Stats: 8 primary stats with equipment bonuses, level scaling
-- Entities: 35 definitions, fertility-based spawning, creature AI, tool interaction, loot, respawn
+- Entities: 42 definitions, fertility-based spawning, creature AI, tool interaction, loot, respawn
 - Combat: Auto-attack loop, creature aggro AI, player death/respawn, damage numbers, combat indicator
 - NPCs: Definition system, 5 types (Trader/Guard/Rep/Ambient/Service), interaction modal, dialogue
 - Trading: Buy/sell with credits, trader inventory, credit balance in HUD
 - Hubs: 4 orbital faction stations, portal travel, H key recall
+- Persistence: Player position saves across sessions, starter kit for new players
 
 **Tech stack:**
 - Frontend: React 18, Phaser 3, Zustand, React Router v7
@@ -26,15 +27,19 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~15,000+ LOC TypeScript
 
-## Current Milestone: v1.12 Bug Fixes & Content Polish
+## Current Milestone: v1.13 Active Combat Abilities
 
-**Goal:** Fix persistence and spawning bugs, improve new player experience with starter kit, and expand content variety.
+**Goal:** Replace auto-attack with a manual ability system where items grant abilities that players use via action bar hotkeys.
 
 **Target features:**
-- Player location persistence (save/restore position across sessions)
-- NPC spawning fix (NPCs loading correctly in hubs)
-- New player starter kit (basic suit + basic tool)
-- Content expansion: 5-10 new creatures, 10-20 new items
+- Ability definition system with energy cost and cooldown
+- Items (suits, tools, modules) grant abilities
+- Click-to-select targeting (decoupled from attacking)
+- Action bar auto-populates from equipped items, manual rearrangement
+- Cooldown UI with radial sweep overlay
+- Buff system with instant and duration-based effects
+- 20+ abilities across Offensive, Defensive, Utility categories
+- Existing items updated with abilities, new items added
 
 ## Core Value
 
@@ -118,30 +123,38 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ NPC definition system with types and spawns — v1.11
 - ✓ NPC interaction window with portrait and dialogue — v1.11
 - ✓ Trading system with buy/sell interface — v1.11
+- ✓ Player location persistence across sessions — v1.12
+- ✓ NPC spawning observability in hubs — v1.12
+- ✓ Rendering depth sorting fix (entity layer separation) — v1.12
+- ✓ Elevation visibility improvements (edge highlights, shadows) — v1.12
+- ✓ New player starter kit (basic suit + tool) — v1.12
+- ✓ Content expansion: 7 new creatures, 15 new items — v1.12
 
 ### Active
 
-- [ ] Player location persistence across sessions
-- [ ] NPC spawning in hubs (bug fix)
-- [ ] Rendering depth sorting fix (entities below terrain)
-- [ ] Elevation visibility improvements
-- [ ] New player starter kit (basic suit + tool)
-- [ ] Content expansion: new creatures (5-10)
-- [ ] Content expansion: new items (10-20)
+- [ ] Ability definition system (id, name, category, energy cost, cooldown, effects)
+- [ ] Item-ability associations (suits, tools, modules grant abilities)
+- [ ] Click-to-select targeting without auto-attack
+- [ ] Action bar ability management (auto-populate, rearrange, remove)
+- [ ] Ability execution with energy drain and cooldown
+- [ ] Cooldown UI with radial sweep overlay
+- [ ] Buff system (instant effects and duration-based buffs with timers)
+- [ ] 20+ abilities: Offensive (Attack, Electrocute, Charge, etc.), Defensive (Magnetic Field, Toughen, Nano Repair, etc.), Utility (Gather, etc.)
+- [ ] Update existing items with ability grants
+- [ ] New items with unique abilities
 
 ### Out of Scope
 
 - OAuth/social login — email/password sufficient
 - Sprite-based rendering — color tiles only until art pipeline ready
 - PvP combat — PvE first, PvP in future milestone
-- Active combat abilities — auto-attack only, abilities in v2.0
-- Status effects / debuffs — future expansion
+- Status effects / debuffs — future expansion (v1.13 buffs are simple duration-based, no stacking/complex interactions)
 - Chat system — separate milestone
 - Sound/music — polish phase
 - Mobile controls — web-first
 - Surface faction HQs (Canopy, Ironhold, Meridian) — orbital first, surface later
 - Shared city at 0,0 — designed in future milestone
-- Quest/mission system — v1.13+ (after bug fixes and polish)
+- Quest/mission system — v1.14+ (after abilities)
 - Branching dialogue — simple linear sufficient for now
 
 ## Constraints
@@ -171,10 +184,6 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 - Adjacent chunk loading times out (server zone:request not implemented)
 - WebSocket auth without handshake validation (guards on all handlers)
-- Player position not persisting across login sessions (v1.12 target)
-- NPCs not loading in hubs, creatures appearing instead (v1.12 target)
-- Entity depth sorting issues (entities appearing below terrain) (v1.12 target)
-- Elevation transitions not visually distinct (textures blend) (v1.12 target)
 
 ---
-*Last updated: 2026-02-20 after v1.12 milestone start*
+*Last updated: 2026-02-20 after v1.13 milestone start*
