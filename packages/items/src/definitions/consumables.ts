@@ -269,6 +269,96 @@ export const SUIT_REPAIR_KIT_LEGENDARY: ItemDefinition = {
 };
 
 // ============================================================
+// EMERGENCY REBOOT KITS (5) — on_use emergency_reboot effect
+// For reviving from Emergency Lockdown Mode ("death" state)
+// ============================================================
+
+export const EMERGENCY_REBOOT_KIT_COMMON: ItemDefinition = {
+  id: 'emergency_reboot_kit_common',
+  displayName: 'Emergency Reboot Kit',
+  description:
+    'Basic field-deployable system restoration tool. Bypasses Emergency Lockdown protocols and restores 25% suit integrity. Standard issue for deep-site expeditions. Better than nothing.',
+  category: 'consumable',
+  rarity: 'common',
+  maxStack: 5,
+  weight: 1.0,
+  baseValue: 500,
+  requiredLevel: 1,
+  ilvl: computeIlvl(1, 'common'),
+  textureKey: 'item_reboot_kit',
+  color: 0x886644,
+  effects: [{ trigger: 'on_use', effect: { type: 'emergency_reboot', healPercent: 25 } }],
+};
+
+export const EMERGENCY_REBOOT_KIT_RARE: ItemDefinition = {
+  id: 'emergency_reboot_kit_rare',
+  displayName: 'Advanced Reboot Kit',
+  description:
+    'Enhanced system restoration with secondary power cell integration. Bypasses Emergency Lockdown and restores 50% suit integrity. Preferred by experienced operatives who understand the value of field independence.',
+  category: 'consumable',
+  rarity: 'rare',
+  maxStack: 5,
+  weight: 0.8,
+  baseValue: 2000,
+  requiredLevel: 10,
+  ilvl: computeIlvl(2, 'rare'),
+  textureKey: 'item_reboot_kit',
+  color: 0x4488ff,
+  effects: [{ trigger: 'on_use', effect: { type: 'emergency_reboot', healPercent: 50 } }],
+};
+
+export const EMERGENCY_REBOOT_KIT_EPIC: ItemDefinition = {
+  id: 'emergency_reboot_kit_epic',
+  displayName: 'Helix Crisis Kit',
+  description:
+    'Industrial-grade system restoration rated for Tier III environments. Bypasses Emergency Lockdown and restores 75% suit integrity. Helix deep-site teams carry these as standard equipment. The survival rate improvement is statistically significant.',
+  category: 'consumable',
+  rarity: 'epic',
+  maxStack: 5,
+  weight: 0.6,
+  baseValue: 7500,
+  requiredLevel: 20,
+  ilvl: computeIlvl(3, 'epic'),
+  textureKey: 'item_reboot_kit',
+  color: 0xaa44ff,
+  effects: [{ trigger: 'on_use', effect: { type: 'emergency_reboot', healPercent: 75 } }],
+};
+
+export const EMERGENCY_REBOOT_KIT_EXOTIC: ItemDefinition = {
+  id: 'emergency_reboot_kit_exotic',
+  displayName: 'Verdant Biotech Reboot',
+  description:
+    'A Verdant Dynamics research-grade restoration system using living organisms as repair and reboot agents. Bypasses Emergency Lockdown and restores 90% suit integrity. The organisms continue working after application, ensuring maximum system recovery.',
+  category: 'consumable',
+  rarity: 'exotic',
+  maxStack: 5,
+  weight: 0.4,
+  baseValue: 25000,
+  requiredLevel: 30,
+  ilvl: computeIlvl(4, 'exotic'),
+  textureKey: 'item_reboot_kit',
+  color: 0x44ff88,
+  effects: [{ trigger: 'on_use', effect: { type: 'emergency_reboot', healPercent: 90 } }],
+};
+
+export const EMERGENCY_REBOOT_KIT_LEGENDARY: ItemDefinition = {
+  id: 'emergency_reboot_kit_legendary',
+  displayName: 'Ancient Override Key',
+  description:
+    'A Prior Inhabitant device that interfaces directly with exo-suit firmware at a level human engineers cannot replicate. Bypasses Emergency Lockdown and restores 100% suit integrity. How it recognizes human technology as compatible remains unexplained.',
+  category: 'consumable',
+  rarity: 'legendary',
+  maxStack: 5,
+  weight: 0.2,
+  baseValue: 100000,
+  requiredLevel: 40,
+  ilvl: computeIlvl(4, 'legendary'),
+  textureKey: 'item_reboot_kit',
+  color: 0xffcc00,
+  effects: [{ trigger: 'on_use', effect: { type: 'emergency_reboot', healPercent: 100 } }],
+};
+
+// ============================================================
 // BUFF ITEMS (5) — on_use stat_buff effect
 // ============================================================
 
@@ -358,6 +448,95 @@ export const STIM_VOID_TOUCHED_LEGENDARY: ItemDefinition = {
 };
 
 // ============================================================
+// ANTITOXINS (5) — on_use stat_buff for hazard_resistance
+// ============================================================
+
+export const ANTITOXIN_COMMON: ItemDefinition = {
+  id: 'antitoxin_common',
+  displayName: 'Basic Antitoxin',
+  description:
+    'Standard-issue detoxification compound for operations in Miasma Marshes and Toxic Wastes. Provides 30 seconds of improved toxin resistance. Better than nothing.',
+  category: 'consumable',
+  rarity: 'common',
+  maxStack: 20,
+  weight: 0.2,
+  baseValue: 60,
+  requiredLevel: 1,
+  ilvl: computeIlvl(1, 'common'),
+  textureKey: 'item_antitoxin',
+  color: 0x88cc44,
+  effects: [{ trigger: 'on_use', effect: { type: 'stat_buff', stat: 'hazard_resistance', amount: 20, duration: 30 } }],
+};
+
+export const ANTITOXIN_RARE: ItemDefinition = {
+  id: 'antitoxin_rare',
+  displayName: 'Filtered Antitoxin',
+  description:
+    'An improved detoxification compound with extended duration. Provides 60 seconds of toxin resistance. Recommended for Tier II hazardous zones.',
+  category: 'consumable',
+  rarity: 'rare',
+  maxStack: 20,
+  weight: 0.2,
+  baseValue: 250,
+  requiredLevel: 5,
+  ilvl: computeIlvl(1, 'rare'),
+  textureKey: 'item_antitoxin',
+  color: 0x99dd55,
+  effects: [{ trigger: 'on_use', effect: { type: 'stat_buff', stat: 'hazard_resistance', amount: 35, duration: 60 } }],
+};
+
+export const ANTITOXIN_EPIC: ItemDefinition = {
+  id: 'antitoxin_epic',
+  displayName: 'Verdant Bio-Filter',
+  description:
+    'A Verdant Dynamics detoxification compound using synthesized Terminus organisms. Provides 90 seconds of enhanced toxin resistance. The organisms neutralize toxins as they enter the system.',
+  category: 'consumable',
+  rarity: 'epic',
+  maxStack: 20,
+  weight: 0.2,
+  baseValue: 800,
+  requiredLevel: 15,
+  ilvl: computeIlvl(2, 'epic'),
+  textureKey: 'item_antitoxin',
+  color: 0xaaee66,
+  effects: [{ trigger: 'on_use', effect: { type: 'stat_buff', stat: 'hazard_resistance', amount: 50, duration: 90 } }],
+};
+
+export const ANTITOXIN_EXOTIC: ItemDefinition = {
+  id: 'antitoxin_exotic',
+  displayName: 'Adaptive Immunity Compound',
+  description:
+    'An advanced compound that temporarily rewrites immune response patterns. Provides 120 seconds of near-complete toxin immunity. Side effects are... being studied.',
+  category: 'consumable',
+  rarity: 'exotic',
+  maxStack: 20,
+  weight: 0.15,
+  baseValue: 3000,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'exotic'),
+  textureKey: 'item_antitoxin',
+  color: 0xccff88,
+  effects: [{ trigger: 'on_use', effect: { type: 'stat_buff', stat: 'hazard_resistance', amount: 75, duration: 120 } }],
+};
+
+export const ANTITOXIN_LEGENDARY: ItemDefinition = {
+  id: 'antitoxin_legendary',
+  displayName: 'Ancient Purification Serum',
+  description:
+    'A Prior Inhabitant compound that appears to render the user completely immune to all known Terminus toxins for 180 seconds. How they knew human biochemistry would be compatible remains unexplained.',
+  category: 'consumable',
+  rarity: 'legendary',
+  maxStack: 20,
+  weight: 0.1,
+  baseValue: 12000,
+  requiredLevel: 35,
+  ilvl: computeIlvl(4, 'legendary'),
+  textureKey: 'item_antitoxin',
+  color: 0xeeffaa,
+  effects: [{ trigger: 'on_use', effect: { type: 'stat_buff', stat: 'hazard_resistance', amount: 100, duration: 180 } }],
+};
+
+// ============================================================
 // ALL CONSUMABLES
 // ============================================================
 
@@ -377,9 +556,19 @@ export const ALL_CONSUMABLES: readonly ItemDefinition[] = [
   SUIT_REPAIR_KIT_EPIC,
   SUIT_REPAIR_KIT_EXOTIC,
   SUIT_REPAIR_KIT_LEGENDARY,
+  EMERGENCY_REBOOT_KIT_COMMON,
+  EMERGENCY_REBOOT_KIT_RARE,
+  EMERGENCY_REBOOT_KIT_EPIC,
+  EMERGENCY_REBOOT_KIT_EXOTIC,
+  EMERGENCY_REBOOT_KIT_LEGENDARY,
   STIM_FOCUS_COMMON,
   STIM_ENDURANCE_RARE,
   STIM_COMBAT_EPIC,
   STIM_VERDANT_ADAPTIVE_EXOTIC,
   STIM_VOID_TOUCHED_LEGENDARY,
+  ANTITOXIN_COMMON,
+  ANTITOXIN_RARE,
+  ANTITOXIN_EPIC,
+  ANTITOXIN_EXOTIC,
+  ANTITOXIN_LEGENDARY,
 ];

@@ -122,12 +122,26 @@ export const ITEM_IDS = {
   SUIT_REPAIR_KIT_EXOTIC: 'suit_repair_kit_exotic',
   SUIT_REPAIR_KIT_LEGENDARY: 'suit_repair_kit_legendary',
 
+  // ---- CONSUMABLES: EMERGENCY REBOOT KITS ----
+  EMERGENCY_REBOOT_KIT_COMMON: 'emergency_reboot_kit_common',
+  EMERGENCY_REBOOT_KIT_RARE: 'emergency_reboot_kit_rare',
+  EMERGENCY_REBOOT_KIT_EPIC: 'emergency_reboot_kit_epic',
+  EMERGENCY_REBOOT_KIT_EXOTIC: 'emergency_reboot_kit_exotic',
+  EMERGENCY_REBOOT_KIT_LEGENDARY: 'emergency_reboot_kit_legendary',
+
   // ---- CONSUMABLES: STIMS ----
   STIM_FOCUS_COMMON: 'stim_focus_common',
   STIM_ENDURANCE_RARE: 'stim_endurance_rare',
   STIM_COMBAT_EPIC: 'stim_combat_epic',
   STIM_VERDANT_ADAPTIVE_EXOTIC: 'stim_verdant_adaptive_exotic',
   STIM_VOID_TOUCHED_LEGENDARY: 'stim_void_touched_legendary',
+
+  // ---- CONSUMABLES: ANTITOXINS ----
+  ANTITOXIN_COMMON: 'antitoxin_common',
+  ANTITOXIN_RARE: 'antitoxin_rare',
+  ANTITOXIN_EPIC: 'antitoxin_epic',
+  ANTITOXIN_EXOTIC: 'antitoxin_exotic',
+  ANTITOXIN_LEGENDARY: 'antitoxin_legendary',
 
   // ---- WORLD ITEMS ----
   WORLD_VOID_CRYSTAL: 'world_void_crystal',
