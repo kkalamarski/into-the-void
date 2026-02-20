@@ -1,6 +1,12 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { DbClient } from '../client';
 import { characters, Character, NewCharacter } from '../schema/characters';
+
+interface CreditOperationResult {
+  success: boolean;
+  newBalance?: number;
+  error?: string;
+}
 
 /**
  * Create a new character
@@ -133,4 +139,55 @@ export async function isCharacterOwnedByAccount(
     .where(and(eq(characters.id, characterId), eq(characters.accountId, accountId)))
     .limit(1);
   return !!character;
+}
+
+/**
+ * Deduct credits from a character's balance atomically.
+ * Uses WHERE clause to ensure sufficient balance before deduction.
+ */
+export async function deductCredits(
+  db: DbClient,
+  characterId: string,
+  amount: number
+): Promise<CreditOperationResult> {
+  if (amount <= 0) {
+    return { success: false, error: 'Amount must be positive' };
+  }
+
+  const result = await db
+    .update(characters)
+    .set({ credits: sql`${characters.credits} - ${amount}` })
+    .where(and(eq(characters.id, characterId), sql`${characters.credits} >= ${amount}`))
+    .returning({ credits: characters.credits });
+
+  if (result.length === 0) {
+    return { success: false, error: 'Insufficient credits' };
+  }
+
+  return { success: true, newBalance: result[0].credits };
+}
+
+/**
+ * Add credits to a character's balance atomically.
+ */
+export async function addCredits(
+  db: DbClient,
+  characterId: string,
+  amount: number
+): Promise<CreditOperationResult> {
+  if (amount <= 0) {
+    return { success: false, error: 'Amount must be positive' };
+  }
+
+  const result = await db
+    .update(characters)
+    .set({ credits: sql`${characters.credits} + ${amount}` })
+    .where(eq(characters.id, characterId))
+    .returning({ credits: characters.credits });
+
+  if (result.length === 0) {
+    return { success: false, error: 'Character not found' };
+  }
+
+  return { success: true, newBalance: result[0].credits };
 }

@@ -34,7 +34,9 @@ export type ClientEventType =
   | 'entity:tool_use'
   | 'portal:use'
   | 'hub:recall'
-  | 'hub:leave';
+  | 'hub:leave'
+  | 'trade:buy'
+  | 'trade:sell';
 
 /**
  * Server-to-client event types
@@ -60,7 +62,9 @@ export type ServerEventType =
   | 'stats:update'
   | 'player:death'
   | 'player:respawn'
-  | 'error';
+  | 'error'
+  | 'trade:result'
+  | 'credits:update';
 
 /**
  * Socket.io event map for type safety
@@ -89,6 +93,8 @@ export interface ClientEvents {
   'respawn:sos': Record<string, never>;
   'respawn:reboot': { itemInstanceId: string };
   'npc:interact': { entityId: string };
+  'trade:buy': { npcId: string; itemId: string; quantity: number };
+  'trade:sell': { npcId: string; itemInstanceId: string; quantity: number };
 }
 
 /**
@@ -133,6 +139,16 @@ export interface ServerEvents {
     maxHealth: number; // Max health for reference
   };
   'error': { code: string; message: string };
+  'trade:result': {
+    success: boolean;
+    action: 'buy' | 'sell';
+    itemId?: string;
+    quantity?: number;
+    totalPrice?: number;
+    newBalance?: number;
+    error?: string;
+  };
+  'credits:update': { credits: number };
   'npc:interact:response': {
     npcId: string;
     displayName: string;
