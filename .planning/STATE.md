@@ -40,7 +40,8 @@ Progress: [████░░░░░░] 44% (v1.12 milestone - 4/9 plans)
 | v1.10 | 43-45 | 5 | 1 day |
 | v1.11 | 46-50 | 18 | 2 days |
 | v1.12 | 51-55 | 4/9 | TBD |
-| Phase 53 P02 | 187 | 2 tasks | 1 files |
+| Phase 53 P01 | 198s | 3 tasks | 4 files |
+| Phase 53 P02 | 187s | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -58,6 +59,8 @@ Recent decisions affecting current work:
 - [Phase 52]: Permanent INFO-level logs for NPC spawning for production observability
 - [Phase 52]: Defensive guard with CRITICAL error log for empty NpcRegistry
 - [Phase 52]: Registry verification pattern at module init for startup debugging
+- [Phase 53-01]: Entity layer offset of 1000 chosen to guarantee separation from terrain
+- [Phase 53-01]: DepthSorter throttle reduced from 100ms to 33ms (~30fps) for smoother movement
 - [Phase 53-02]: Edge highlight uses white at 30% opacity for universal visibility across all biome colors
 - [Phase 53-02]: Shadow checks north and west neighbors (light source direction in isometric view)
 
@@ -70,7 +73,7 @@ None.
 **v1.12 bugs to fix:**
 - ~~Player position not persisting across login sessions~~ (Phase 51 complete ✓)
 - ~~NPCs not loading in hubs, creatures appearing instead~~ (Phase 52 complete ✓ - observability added)
-- Entity/terrain depth sorting issues, elevation blending (Phase 53)
+- ~~Entity/terrain depth sorting issues, elevation blending~~ (Phase 53 complete ✓)
 
 **Carried from v1.3 (low priority):**
 - Server-side elevation validation not wired (client-side complete)
@@ -78,10 +81,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 53-02-PLAN.md — Phase 53 complete
+Stopped at: Completed 53-01-PLAN.md — Phase 53 complete (both plans executed)
 Resume file: None
 
 **Next action:** Continue to Phase 54
 
 ---
-*Last updated: 2026-02-20 after Phase 53 Plan 02 execution*
+*Last updated: 2026-02-20 after Phase 53 Plan 01 execution*
