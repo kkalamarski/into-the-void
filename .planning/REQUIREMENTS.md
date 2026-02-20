@@ -3,9 +3,51 @@
 **Defined:** 2026-02-17
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.12 Requirements
+## v1.13 Requirements
 
-Requirements for Bug Fixes & Content Polish milestone.
+Requirements for Active Combat Abilities milestone.
+
+### Ability Core
+
+- [ ] **ABIL-01**: Ability definition system with id, name, description, category, energy cost, cooldown, range, and effects
+- [ ] **ABIL-02**: Items (suits, tools, modules) define which abilities they grant via grantedAbilities field
+- [ ] **ABIL-03**: Player can click entity to select target without starting auto-attack
+- [ ] **ABIL-04**: Player can use ability via action bar hotkey on selected target
+- [ ] **ABIL-05**: Server validates ability use (range check, energy check, cooldown check, target validity)
+- [ ] **ABIL-06**: Abilities consume energy on successful use
+- [ ] **ABIL-07**: Energy regenerates over time (configurable rate)
+- [ ] **ABIL-08**: Global cooldown (GCD) prevents ability spam (brief lockout after any ability)
+
+### Ability UI
+
+- [ ] **ABUI-01**: Action bar auto-populates with abilities from equipped items
+- [ ] **ABUI-02**: Cooldown displays as radial sweep overlay on ability icon
+- [ ] **ABUI-03**: Ability tooltip shows name, energy cost, cooldown, range, description on hover
+- [ ] **ABUI-04**: Player can drag abilities to rearrange action bar slots
+- [ ] **ABUI-05**: Ability use triggers visual effect/animation on caster and/or target
+- [ ] **ABUI-06**: Insufficient energy or on-cooldown abilities show visual disabled state
+
+### Buff System
+
+- [ ] **BUFF-01**: Abilities can apply instant effects (immediate heal, damage, stat change)
+- [ ] **BUFF-02**: Abilities can apply duration buffs (temporary stat modification with timer)
+- [ ] **BUFF-03**: Active buffs display as icons near health bar with remaining duration
+- [ ] **BUFF-04**: Buff stat modifiers apply to combat calculations (Power, Toughness, etc.)
+- [ ] **BUFF-05**: Buffs expire after duration and remove their stat modifications
+- [ ] **BUFF-06**: Server tracks buff state and broadcasts buff apply/expire events
+
+### Content
+
+- [ ] **CONT-01**: 20 ability definitions across Offensive, Defensive, and Utility categories
+- [ ] **CONT-02**: Offensive abilities include Attack, Electrocute, Charge, and similar damage abilities
+- [ ] **CONT-03**: Defensive abilities include Magnetic Field, Toughen, Nano Repair, and similar
+- [ ] **CONT-04**: Utility abilities include Gather and similar non-combat abilities
+- [ ] **CONT-05**: Existing items (suits, tools) updated with grantedAbilities
+- [ ] **CONT-06**: New items added with unique ability combinations
+
+## v1.12 Requirements (Complete)
+
+Requirements for Bug Fixes & Content Polish milestone. All complete.
 
 ### Persistence
 
@@ -14,31 +56,31 @@ Requirements for Bug Fixes & Content Polish milestone.
 
 ### Bug Fixes
 
-- [ ] **FIX-01**: NPCs spawn correctly in hub zones (not creatures)
-- [ ] **FIX-02**: Hub zones show only NPCs, no creature spawns
+- [x] **FIX-01**: NPCs spawn correctly in hub zones (not creatures)
+- [x] **FIX-02**: Hub zones show only NPCs, no creature spawns
 
 ### Rendering Fixes
 
-- [ ] **REND-01**: Entity depth sorting fixed (entities never appear below terrain)
-- [ ] **REND-02**: Terrain/entity overlap during movement eliminated
-- [ ] **REND-03**: Elevation transitions visually distinct (clearer level changes)
+- [x] **REND-01**: Entity depth sorting fixed (entities never appear below terrain)
+- [x] **REND-02**: Terrain/entity overlap during movement eliminated
+- [x] **REND-03**: Elevation transitions visually distinct (clearer level changes)
 
 ### New Player Experience
 
-- [ ] **NPE-01**: New characters receive basic exo-suit on creation
-- [ ] **NPE-02**: New characters receive basic tool on creation
+- [x] **NPE-01**: New characters receive basic exo-suit on creation
+- [x] **NPE-02**: New characters receive basic tool on creation
 
 ### Content - Creatures
 
-- [ ] **CONT-01**: 5-10 new creature definitions added to entity registry
-- [ ] **CONT-02**: New creatures distributed across biomes with spawn rules
-- [ ] **CONT-03**: New creatures have appropriate loot tables
+- [x] **CONT-01**: 5-10 new creature definitions added to entity registry
+- [x] **CONT-02**: New creatures distributed across biomes with spawn rules
+- [x] **CONT-03**: New creatures have appropriate loot tables
 
 ### Content - Items
 
-- [ ] **CONT-04**: 10-20 new item definitions added to item registry
-- [ ] **CONT-05**: New items span equipment, consumables, and materials
-- [ ] **CONT-06**: New items have appropriate rarity distribution
+- [x] **CONT-04**: 10-20 new item definitions added to item registry
+- [x] **CONT-05**: New items span equipment, consumables, and materials
+- [x] **CONT-06**: New items have appropriate rarity distribution
 
 ## v1.11 Requirements (Complete)
 
@@ -360,11 +402,13 @@ Deferred to future releases. Not in current roadmap.
 - **NPCE-02**: Reputation system affecting prices/dialogue
 - **NPCE-03**: Rare world NPCs (event spawns)
 
-### Combat Abilities (v2.0+)
+### Combat Abilities (v1.14+)
 
-- **CABI-01**: Active combat abilities (power strike, block, etc.)
-- **CABI-02**: Ability cooldowns and resource costs
-- **CABI-03**: PvP combat between players
+- **CABI-01**: Ability queuing (input buffer during GCD)
+- **CABI-02**: Combo system (bonus damage for ability sequences)
+- **CABI-03**: Ability upgrade system (abilities level up through use)
+- **CABI-04**: AOE/ground-targeted abilities
+- **CABI-05**: PvP combat between players
 
 ### Advanced AI
 
@@ -441,7 +485,11 @@ Explicitly excluded. Documented to prevent scope creep.
 | Free-movement (non-grid) WASD | Breaks client-side prediction model |
 | Camera rotation | Sprites drawn for fixed angle |
 | Cross-zone pathfinding | Requires multi-zone graph |
-| Quest/mission system | NPC framework first, quests in v1.13+ |
+| Quest/mission system | NPC framework first, quests in v1.14+ |
+| Cast times / channeling | Poor fit for 2D real-time combat |
+| Ability trees / skill points | Item-granted abilities is the differentiator |
+| Cooldown reduction mechanics | Adds balance complexity, defer to post-MVP |
+| Ability macros | Automation concerns, manual control preferred |
 | Branching dialogue | Simple linear for v1.11, complex later |
 | Surface faction HQs | Orbital stations first, surface later |
 | Shared city at 0,0 | Future milestone |
@@ -453,30 +501,66 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-### v1.12 Bug Fixes & Content Polish
+### v1.13 Active Combat Abilities
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERS-01 | Phase 51 | Pending |
-| PERS-02 | Phase 51 | Pending |
-| FIX-01 | Phase 52 | Pending |
-| FIX-02 | Phase 52 | Pending |
-| REND-01 | Phase 53 | Pending |
-| REND-02 | Phase 53 | Pending |
-| REND-03 | Phase 53 | Pending |
-| NPE-01 | Phase 54 | Pending |
-| NPE-02 | Phase 54 | Pending |
-| CONT-01 | Phase 55 | Pending |
-| CONT-02 | Phase 55 | Pending |
-| CONT-03 | Phase 55 | Pending |
-| CONT-04 | Phase 55 | Pending |
-| CONT-05 | Phase 55 | Pending |
-| CONT-06 | Phase 55 | Pending |
+| ABIL-01 | — | Pending |
+| ABIL-02 | — | Pending |
+| ABIL-03 | — | Pending |
+| ABIL-04 | — | Pending |
+| ABIL-05 | — | Pending |
+| ABIL-06 | — | Pending |
+| ABIL-07 | — | Pending |
+| ABIL-08 | — | Pending |
+| ABUI-01 | — | Pending |
+| ABUI-02 | — | Pending |
+| ABUI-03 | — | Pending |
+| ABUI-04 | — | Pending |
+| ABUI-05 | — | Pending |
+| ABUI-06 | — | Pending |
+| BUFF-01 | — | Pending |
+| BUFF-02 | — | Pending |
+| BUFF-03 | — | Pending |
+| BUFF-04 | — | Pending |
+| BUFF-05 | — | Pending |
+| BUFF-06 | — | Pending |
+| CONT-01 | — | Pending |
+| CONT-02 | — | Pending |
+| CONT-03 | — | Pending |
+| CONT-04 | — | Pending |
+| CONT-05 | — | Pending |
+| CONT-06 | — | Pending |
+
+**Coverage:**
+- v1.13 requirements: 26 total
+- Mapped to phases: 0
+- Unmapped: 26 ⚠️
+
+### v1.12 Bug Fixes & Content Polish (Complete)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| PERS-01 | Phase 51 | Complete |
+| PERS-02 | Phase 51 | Complete |
+| FIX-01 | Phase 52 | Complete |
+| FIX-02 | Phase 52 | Complete |
+| REND-01 | Phase 53 | Complete |
+| REND-02 | Phase 53 | Complete |
+| REND-03 | Phase 53 | Complete |
+| NPE-01 | Phase 54 | Complete |
+| NPE-02 | Phase 54 | Complete |
+| CONT-01 | Phase 55 | Complete |
+| CONT-02 | Phase 55 | Complete |
+| CONT-03 | Phase 55 | Complete |
+| CONT-04 | Phase 55 | Complete |
+| CONT-05 | Phase 55 | Complete |
+| CONT-06 | Phase 55 | Complete |
 
 **Coverage:**
 - v1.12 requirements: 15 total
 - Mapped to phases: 15
-- Unmapped: 0 ✓
+- Complete: 15 ✓
 
 ### v1.11 NPCs & Trading (Complete)
 
@@ -632,4 +716,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-20 after v1.12 roadmap created — 12/12 requirements mapped*
+*Last updated: 2026-02-20 after v1.13 requirements defined — 26 new requirements*
