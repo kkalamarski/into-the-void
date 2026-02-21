@@ -349,7 +349,7 @@ Plans:
 Plans:
 - [x] 61-01-PLAN.md — Document aggregation order and add order-independence tests
 
-#### Phase 62: Calculation Parity
+#### Phase 62: Calculation Parity ✓
 
 **Goal**: Client tooltips show accurate stat deltas using shared calculation code
 **Depends on**: Phase 61
@@ -375,10 +375,12 @@ Plans:
   3. All equippable items have at least one stat effect (no empty effects arrays)
   4. Tools provide stats appropriate to their role (combat tools give power, mining tools give perception)
   5. Modules provide focused stat bonuses based on module type
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 63-01: Implementation TBD
+- [ ] 63-01-PLAN.md — Normalize suits with archetype profiles and rarity scaling (Wave 1)
+- [ ] 63-02-PLAN.md — Normalize tools and modules with role-based stats (Wave 1)
+- [ ] 63-03-PLAN.md — Create validation test suite for CONT-01 to CONT-05 (Wave 2)
 
 ## Progress
 
@@ -449,9 +451,9 @@ Phases execute in numeric order: 59 → 60 → 61 → 62 → 63
 | 60. Migration | v1.14 | 2/2 | Complete | 2026-02-21 |
 | 61. Aggregation Rules | v1.14 | 1/1 | Complete | 2026-02-21 |
 | 62. Calculation Parity | v1.14 | 1/1 | Complete | 2026-02-21 |
-| 63. Content Normalization | v1.14 | 0/1 | Not started | - |
+| 63. Content Normalization | v1.14 | 0/3 | Not started | - |
 
-**Total:** 63 phases (61 complete, 2 remaining)
+**Total:** 63 phases (62 complete, 1 remaining)
 
 ---
-*Last updated: 2026-02-21 after Phase 62 planning*
+*Last updated: 2026-02-21 after Phase 63 planning*
