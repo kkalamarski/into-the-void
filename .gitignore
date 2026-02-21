@@ -4,6 +4,8 @@ node_modules/
 
 # Build outputs
 dist/
+# Exception: ESLint custom rules need to be compiled and committed
+!eslint-rules/dist/
 build/
 .nx/
 
