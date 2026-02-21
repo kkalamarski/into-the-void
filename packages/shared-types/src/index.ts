@@ -17,6 +17,7 @@ export * from './game/stats';
 export * from './game/entity-registry';
 export * from './game/ability';
 export * from './game/buff';
+export * from './game/quest';
 
 // Network types
 export * from './network/events';

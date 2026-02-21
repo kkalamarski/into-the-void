@@ -36,3 +36,6 @@ export * from './ai/creature-ai';
 
 // Abilities
 export { AbilityRegistry } from './ability/ability-registry';
+
+// Quest
+export * from './quest';
