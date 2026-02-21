@@ -226,8 +226,8 @@ See: `.planning/milestones/v1.7-ROADMAP.md`
 **Plans:** 2 plans
 
 Plans:
-- [ ] 64-01-PLAN.md — Quest type foundation, registry, and definitions
-- [ ] 64-02-PLAN.md — Database schema and query functions
+- [x] 64-01-PLAN.md — Quest type foundation, registry, and definitions
+- [x] 64-02-PLAN.md — Database schema and query functions
 
 **Success Criteria** (what must be TRUE):
   1. Player can look up any quest by ID from QuestRegistry singleton
@@ -423,14 +423,14 @@ Phases execute in numeric order: 64 -> 65 -> 66 -> 67 -> 68 -> 69
 | 61. Aggregation Rules | v1.14 | 1/1 | Complete | 2026-02-21 |
 | 62. Calculation Parity | v1.14 | 1/1 | Complete | 2026-02-21 |
 | 63. Content Normalization | v1.14 | 3/3 | Complete | 2026-02-21 |
-| 64. Quest Foundations | v1.15 | 0/2 | Pending | - |
+| 64. Quest Foundations | v1.15 | 2/2 | Complete | 2026-02-22 |
 | 65. Objective Tracking | v1.15 | 0/? | Pending | - |
 | 66. Quest Completion & Rewards | v1.15 | 0/? | Pending | - |
 | 67. NPC Quest Givers | v1.15 | 0/? | Pending | - |
 | 68. Quest UI | v1.15 | 0/? | Pending | - |
 | 69. Quest Chains & Bounties | v1.15 | 0/? | Pending | - |
 
-**Total:** 69 phases (63 complete, 6 pending)
+**Total:** 69 phases (64 complete, 5 pending)
 
 ---
-*Last updated: 2026-02-22 after Phase 64 planning*
+*Last updated: 2026-02-22 after Phase 64 complete*
