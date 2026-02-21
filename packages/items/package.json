@@ -4,6 +4,10 @@
   "type": "commonjs",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
   "dependencies": {
     "@into-the-void/shared-types": "workspace:*"
   }
