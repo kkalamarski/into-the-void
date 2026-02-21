@@ -26,3 +26,6 @@ export * from './ground-items';
 
 // Loot tables (LOOT-01)
 export * from './loot-tables';
+
+// Quest progress (QUEST-03)
+export * from './quest-progress';
