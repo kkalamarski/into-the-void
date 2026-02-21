@@ -16,7 +16,7 @@
 - ✅ **v1.11 NPCs & Trading** - Phases 46-50 (shipped 2026-02-20)
 - ✅ **v1.12 Bug Fixes & Content Polish** - Phases 51-55 (shipped 2026-02-20)
 - ✅ **v1.13 Active Combat Abilities** - Phases 56-58 (shipped 2026-02-21)
-- 🚧 **v1.14 Equipment Stats Overhaul** - Phases 59-63 (in progress)
+- ✅ **v1.14 Equipment Stats Overhaul** - Phases 59-63 (shipped 2026-02-21)
 
 ## Phases
 
@@ -376,11 +376,12 @@ Plans:
   4. Tools provide stats appropriate to their role (combat tools give power, mining tools give perception)
   5. Modules provide focused stat bonuses based on module type
 **Plans**: 3 plans in 2 waves
+**Status**: Complete (2026-02-21)
 
 Plans:
-- [ ] 63-01-PLAN.md — Normalize suits with archetype profiles and rarity scaling (Wave 1)
-- [ ] 63-02-PLAN.md — Normalize tools and modules with role-based stats (Wave 1)
-- [ ] 63-03-PLAN.md — Create validation test suite for CONT-01 to CONT-05 (Wave 2)
+- [x] 63-01-PLAN.md — Normalize suits with archetype profiles and rarity scaling (Wave 1)
+- [x] 63-02-PLAN.md — Normalize tools and modules with role-based stats (Wave 1)
+- [x] 63-03-PLAN.md — Create validation test suite for CONT-01 to CONT-05 (Wave 2)
 
 ## Progress
 
@@ -451,7 +452,7 @@ Phases execute in numeric order: 59 → 60 → 61 → 62 → 63
 | 60. Migration | v1.14 | 2/2 | Complete | 2026-02-21 |
 | 61. Aggregation Rules | v1.14 | 1/1 | Complete | 2026-02-21 |
 | 62. Calculation Parity | v1.14 | 1/1 | Complete | 2026-02-21 |
-| 63. Content Normalization | v1.14 | 0/3 | Not started | - |
+| 63. Content Normalization | v1.14 | 3/3 | Complete | 2026-02-21 |
 
 **Total:** 63 phases (62 complete, 1 remaining)
 
