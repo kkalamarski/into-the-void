@@ -223,6 +223,11 @@ See: `.planning/milestones/v1.7-ROADMAP.md`
 **Goal**: Quest definitions exist in code with typed registry and database persistence layer
 **Depends on**: Phase 63 (v1.14 complete)
 **Requirements**: QUEST-01, QUEST-02, QUEST-03
+**Plans:** 2 plans
+
+Plans:
+- [ ] 64-01-PLAN.md — Quest type foundation, registry, and definitions
+- [ ] 64-02-PLAN.md — Database schema and query functions
 
 **Success Criteria** (what must be TRUE):
   1. Player can look up any quest by ID from QuestRegistry singleton
@@ -418,7 +423,7 @@ Phases execute in numeric order: 64 -> 65 -> 66 -> 67 -> 68 -> 69
 | 61. Aggregation Rules | v1.14 | 1/1 | Complete | 2026-02-21 |
 | 62. Calculation Parity | v1.14 | 1/1 | Complete | 2026-02-21 |
 | 63. Content Normalization | v1.14 | 3/3 | Complete | 2026-02-21 |
-| 64. Quest Foundations | v1.15 | 0/? | Pending | - |
+| 64. Quest Foundations | v1.15 | 0/2 | Pending | - |
 | 65. Objective Tracking | v1.15 | 0/? | Pending | - |
 | 66. Quest Completion & Rewards | v1.15 | 0/? | Pending | - |
 | 67. NPC Quest Givers | v1.15 | 0/? | Pending | - |
@@ -428,4 +433,4 @@ Phases execute in numeric order: 64 -> 65 -> 66 -> 67 -> 68 -> 69
 **Total:** 69 phases (63 complete, 6 pending)
 
 ---
-*Last updated: 2026-02-22 after v1.15 roadmap creation*
+*Last updated: 2026-02-22 after Phase 64 planning*
