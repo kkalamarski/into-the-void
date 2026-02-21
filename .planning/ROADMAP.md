@@ -343,10 +343,10 @@ Plans:
   1. Equipping items in different order produces same final stats
   2. Equipment stats and buff stats combine correctly (documented order)
   3. Test suite validates known equipment combinations match expected totals
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 61-01: Implementation TBD
+- [ ] 61-01-PLAN.md — Document aggregation order and add order-independence tests
 
 #### Phase 62: Calculation Parity
 
@@ -452,4 +452,4 @@ Phases execute in numeric order: 59 → 60 → 61 → 62 → 63
 **Total:** 63 phases (60 complete, 3 remaining)
 
 ---
-*Last updated: 2026-02-21 after Phase 60 execution*
+*Last updated: 2026-02-21 after Phase 61 planning*
