@@ -60,9 +60,17 @@ const SCALE_CONSTANTS: Record<
 /**
  * Compute character stats from level and equipped items.
  *
- * Pure function — no DB calls, no side effects.
- * Linear scaling: stat = base + (level - 1) * growth
- * Equipment bonuses are aggregated on top of the scaled base.
+ * AGGREGATION ORDER (base -> equipment -> buffs):
+ * 1. Base stats: computed from level using linear scaling (base + (level-1) * growth)
+ * 2. Equipment bonuses: additive bonuses from all equipped items (on_equip + passive effects)
+ * 3. Buff modifiers: temporary stat changes from active abilities (additive)
+ *
+ * All layers use ADDITIVE aggregation (stats[key] += value), making the result:
+ * - Commutative: equipping items in different order produces same result
+ * - Associative: grouping doesn't matter ((a+b)+c = a+(b+c))
+ * - Deterministic: same inputs always produce same outputs
+ *
+ * Pure function - no DB calls, no side effects.
  *
  * @param level - Character level (1-based)
  * @param equipment - Equipment JSON from DB (server-authoritative)
