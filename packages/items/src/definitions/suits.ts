@@ -1,8 +1,20 @@
 import type { ItemDefinition } from '../types';
-import { computeIlvl } from '../utils';
+import { computeIlvl, generateSuitStats } from '../utils';
+
+/**
+ * Suit Archetype Classifications (Phase 63)
+ *
+ * tank: Heavy protection focus (durability/toughness/resilience)
+ * scout: Mobility and awareness (haste/perception/vigor)
+ * combat: Offensive capability (power/haste/toughness)
+ * balanced: Even distribution across all stats
+ * hazmat: Environmental survival (resilience/recovery/durability)
+ * assault: Glass cannon offense (power/durability/haste)
+ * recon: Scout variant with perception focus
+ */
 
 // ============================================================
-// COMMON SUITS (2)
+// COMMON SUITS (6)
 // ============================================================
 
 export const SUIT_BASIC_COMMON: ItemDefinition = {
@@ -22,7 +34,7 @@ export const SUIT_BASIC_COMMON: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 3,
   effects: [
-    { trigger: 'on_equip', effect: { type: 'stats', toughness: 5, durability: 20 } },
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('balanced', 'common', 1) } },
   ],
   grantedAbilities: ['nano_repair'],
 };
@@ -44,12 +56,12 @@ export const SUIT_SALVAGED_COMMON: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 3,
   effects: [
-    { trigger: 'on_equip', effect: { type: 'stats', toughness: 3, vigor: 10 } },
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('balanced', 'common', 1) } },
   ],
   grantedAbilities: ['emergency_shield'],
 };
 
-// Level 10 common suit
+// Level 10 common suit (tier 1 - levels 1-10)
 export const SUIT_WORKER_COMMON: ItemDefinition = {
   id: 'suit_worker_common',
   displayName: "Worker's Exo-Suit",
@@ -67,12 +79,12 @@ export const SUIT_WORKER_COMMON: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 3,
   effects: [
-    { trigger: 'on_equip', effect: { type: 'stats', toughness: 12, durability: 25 } },
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('balanced', 'common', 1) } },
   ],
   grantedAbilities: ['nano_repair'],
 };
 
-// Level 20 common suit
+// Level 20 common suit (tier 2 - levels 11-20)
 export const SUIT_INDUSTRIAL_COMMON: ItemDefinition = {
   id: 'suit_industrial_common',
   displayName: 'Industrial Exo-Suit',
@@ -90,12 +102,12 @@ export const SUIT_INDUSTRIAL_COMMON: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 4,
   effects: [
-    { trigger: 'on_equip', effect: { type: 'stats', toughness: 22, durability: 35, resilience: 8 } },
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('tank', 'common', 2) } },
   ],
   grantedAbilities: ['nano_repair', 'emergency_shield'],
 };
 
-// Level 30 common suit
+// Level 30 common suit (tier 3 - levels 21-30)
 export const SUIT_VETERAN_COMMON: ItemDefinition = {
   id: 'suit_veteran_common',
   displayName: "Veteran's Exo-Suit",
@@ -113,12 +125,12 @@ export const SUIT_VETERAN_COMMON: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 4,
   effects: [
-    { trigger: 'on_equip', effect: { type: 'stats', toughness: 35, durability: 50, recovery: 10 } },
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('balanced', 'common', 3) } },
   ],
   grantedAbilities: ['nano_repair', 'emergency_shield', 'magnetic_field'],
 };
 
-// Level 40 common suit
+// Level 40 common suit (tier 4 - levels 31-40)
 export const SUIT_HARDENED_COMMON: ItemDefinition = {
   id: 'suit_hardened_common',
   displayName: 'Hardened Exo-Suit',
@@ -136,13 +148,13 @@ export const SUIT_HARDENED_COMMON: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 5,
   effects: [
-    { trigger: 'on_equip', effect: { type: 'stats', toughness: 50, durability: 70, resilience: 15, recovery: 12 } },
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('tank', 'common', 4) } },
   ],
   grantedAbilities: ['nano_repair', 'emergency_shield', 'magnetic_field', 'fortify_systems'],
 };
 
 // ============================================================
-// RARE SUITS (2)
+// RARE SUITS (7)
 // ============================================================
 
 export const SUIT_REINFORCED_RARE: ItemDefinition = {
@@ -162,7 +174,7 @@ export const SUIT_REINFORCED_RARE: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 4,
   effects: [
-    { trigger: 'on_equip', effect: { type: 'stats', toughness: 10, durability: 15, resilience: 5 } },
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('tank', 'rare', 1) } },
   ],
   grantedAbilities: ['nano_repair', 'magnetic_field'],
 };
@@ -184,12 +196,12 @@ export const SUIT_SCOUT_RARE: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 4,
   effects: [
-    { trigger: 'on_equip', effect: { type: 'stats', haste: 8, perception: 10, vigor: 12 } },
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('scout', 'rare', 1) } },
   ],
   grantedAbilities: ['nano_repair', 'overclock'],
 };
 
-// Level 15 rare suit
+// Level 15 rare suit (tier 2 - levels 11-20)
 export const SUIT_FIELD_OPERATIVE_RARE: ItemDefinition = {
   id: 'suit_field_operative_rare',
   displayName: 'Field Operative Suit',
@@ -207,12 +219,12 @@ export const SUIT_FIELD_OPERATIVE_RARE: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 4,
   effects: [
-    { trigger: 'on_equip', effect: { type: 'stats', toughness: 18, haste: 10, durability: 25 } },
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('balanced', 'rare', 2) } },
   ],
   grantedAbilities: ['nano_repair', 'overclock'],
 };
 
-// Level 25 rare suit
+// Level 25 rare suit (tier 3 - levels 21-30)
 export const SUIT_EXPEDITION_RARE: ItemDefinition = {
   id: 'suit_expedition_rare',
   displayName: 'Expedition Exo-Suit',
@@ -230,12 +242,12 @@ export const SUIT_EXPEDITION_RARE: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 4,
   effects: [
-    { trigger: 'on_equip', effect: { type: 'stats', toughness: 30, durability: 45, recovery: 12, resilience: 10 } },
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('tank', 'rare', 3) } },
   ],
   grantedAbilities: ['nano_repair', 'energy_barrier', 'regeneration_protocol'],
 };
 
-// Level 35 rare suit
+// Level 35 rare suit (tier 4 - levels 31-40)
 export const SUIT_ELITE_FIELD_RARE: ItemDefinition = {
   id: 'suit_elite_field_rare',
   displayName: 'Elite Field Suit',
@@ -253,12 +265,12 @@ export const SUIT_ELITE_FIELD_RARE: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 5,
   effects: [
-    { trigger: 'on_equip', effect: { type: 'stats', toughness: 45, durability: 60, power: 15, resilience: 12 } },
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('combat', 'rare', 4) } },
   ],
   grantedAbilities: ['nano_repair', 'magnetic_field', 'fortify_systems'],
 };
 
-// Level 45 rare suit
+// Level 45 rare suit (tier 5 - levels 41-50)
 export const SUIT_MASTER_RARE: ItemDefinition = {
   id: 'suit_master_rare',
   displayName: "Master's Exo-Suit",
@@ -276,13 +288,13 @@ export const SUIT_MASTER_RARE: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 5,
   effects: [
-    { trigger: 'on_equip', effect: { type: 'stats', toughness: 60, durability: 80, power: 18, recovery: 15, resilience: 15 } },
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('combat', 'rare', 5) } },
   ],
   grantedAbilities: ['nano_repair', 'magnetic_field', 'fortify_systems', 'emergency_shield'],
 };
 
 // ============================================================
-// EPIC SUITS (2)
+// EPIC SUITS (4)
 // ============================================================
 
 export const SUIT_TACTICAL_EPIC: ItemDefinition = {
@@ -302,7 +314,7 @@ export const SUIT_TACTICAL_EPIC: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 4,
   effects: [
-    { trigger: 'on_equip', effect: { type: 'stats', toughness: 25, power: 20, haste: 12, durability: 35 } },
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('combat', 'epic', 2) } },
   ],
   grantedAbilities: ['nano_repair', 'magnetic_field', 'fortify_systems'],
 };
@@ -323,12 +335,14 @@ export const SUIT_ENVIRONMENTAL_EPIC: ItemDefinition = {
   color: 0x2a5a2a,
   equipSlot: 'exosuit',
   moduleSlots: 4,
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('hazmat', 'epic', 2) } },
+  ],
   grantedAbilities: ['nano_repair', 'energy_barrier', 'regeneration_protocol'],
 };
 
 // ============================================================
-// EXOTIC SUITS (2)
+// EXOTIC SUITS (3)
 // ============================================================
 
 export const SUIT_NEXUS_COMBAT_FRAME_EXOTIC: ItemDefinition = {
@@ -347,7 +361,9 @@ export const SUIT_NEXUS_COMBAT_FRAME_EXOTIC: ItemDefinition = {
   color: 0x1a2a4a,
   equipSlot: 'exosuit',
   moduleSlots: 5,
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('combat', 'exotic', 3) } },
+  ],
   grantedAbilities: ['nano_repair', 'magnetic_field', 'fortify_systems', 'emergency_shield'],
 };
 
@@ -367,7 +383,9 @@ export const SUIT_HELIX_RESEARCH_FRAME_EXOTIC: ItemDefinition = {
   color: 0x4a1a1a,
   equipSlot: 'exosuit',
   moduleSlots: 5,
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('recon', 'exotic', 3) } },
+  ],
   grantedAbilities: ['nano_repair', 'energy_barrier', 'regeneration_protocol', 'resource_scan'],
 };
 
@@ -391,7 +409,9 @@ export const SUIT_VOID_WALKER_LEGENDARY: ItemDefinition = {
   color: 0x0a0a2a,
   equipSlot: 'exosuit',
   moduleSlots: 6,
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('scout', 'legendary', 4) } },
+  ],
   grantedAbilities: ['nano_repair', 'magnetic_field', 'fortify_systems', 'emergency_shield', 'power_surge'],
 };
 
@@ -411,7 +431,9 @@ export const SUIT_ANCIENT_PROTOTYPE_LEGENDARY: ItemDefinition = {
   color: 0x1a3a3a,
   equipSlot: 'exosuit',
   moduleSlots: 6,
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('balanced', 'legendary', 4) } },
+  ],
   grantedAbilities: ['nano_repair', 'regeneration_protocol', 'energy_barrier', 'overclock', 'analyze_specimen'],
 };
 
@@ -435,7 +457,9 @@ export const SUIT_HAZMAT_RARE: ItemDefinition = {
   color: 0x88aa44,
   equipSlot: 'exosuit',
   moduleSlots: 4,
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('hazmat', 'rare', 1) } },
+  ],
   grantedAbilities: ['energy_barrier', 'regeneration_protocol'],
 };
 
@@ -455,7 +479,9 @@ export const SUIT_ASSAULT_FRAME_EPIC: ItemDefinition = {
   color: 0x4444aa,
   equipSlot: 'exosuit',
   moduleSlots: 4,
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('assault', 'epic', 2) } },
+  ],
   grantedAbilities: ['emergency_shield', 'power_surge', 'fortify_systems'],
 };
 
@@ -475,7 +501,9 @@ export const SUIT_STALKER_RECON_EPIC: ItemDefinition = {
   color: 0x3d5a3d,
   equipSlot: 'exosuit',
   moduleSlots: 4,
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('recon', 'epic', 2) } },
+  ],
   grantedAbilities: ['nano_repair', 'overclock', 'resource_scan', 'analyze_specimen'],
 };
 
@@ -495,7 +523,9 @@ export const SUIT_TERMINUS_ADAPTATION_EXOTIC: ItemDefinition = {
   color: 0x2a4a4a,
   equipSlot: 'exosuit',
   moduleSlots: 5,
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('balanced', 'exotic', 3) } },
+  ],
   grantedAbilities: ['nano_repair', 'regeneration_protocol', 'magnetic_field', 'power_surge'],
 };
 
