@@ -249,6 +249,11 @@ Plans:
 **Goal**: Quest objectives update in real-time as players kill creatures, collect items, or enter areas
 **Depends on**: Phase 64
 **Requirements**: QUEST-04, QUEST-10, QUEST-11, QUEST-12
+**Plans:** 2 plans
+
+Plans:
+- [ ] 65-01-PLAN.md — Event infrastructure and QuestService with @OnEvent listeners
+- [ ] 65-02-PLAN.md — Domain event emission from AbilityService, InventoryService, GameGateway
 
 **Success Criteria** (what must be TRUE):
   1. Player sees "3/5 kills" update immediately when killing quest target creature
@@ -259,7 +264,7 @@ Plans:
 **Delivers:**
 - QuestService with objective tracking logic
 - @nestjs/event-emitter integration (entity.killed, item.collected, zone.entered events)
-- Modified CombatService, InventoryService, ZoneService to emit events
+- Modified AbilityService, InventoryService, GameGateway to emit events
 - quest:progress WebSocket event with full objective state
 - Database queries for quest CRUD operations
 
@@ -424,7 +429,7 @@ Phases execute in numeric order: 64 -> 65 -> 66 -> 67 -> 68 -> 69
 | 62. Calculation Parity | v1.14 | 1/1 | Complete | 2026-02-21 |
 | 63. Content Normalization | v1.14 | 3/3 | Complete | 2026-02-21 |
 | 64. Quest Foundations | v1.15 | 2/2 | Complete | 2026-02-22 |
-| 65. Objective Tracking | v1.15 | 0/? | Pending | - |
+| 65. Objective Tracking | v1.15 | 0/2 | Pending | - |
 | 66. Quest Completion & Rewards | v1.15 | 0/? | Pending | - |
 | 67. NPC Quest Givers | v1.15 | 0/? | Pending | - |
 | 68. Quest UI | v1.15 | 0/? | Pending | - |
@@ -433,4 +438,4 @@ Phases execute in numeric order: 64 -> 65 -> 66 -> 67 -> 68 -> 69
 **Total:** 69 phases (64 complete, 5 pending)
 
 ---
-*Last updated: 2026-02-22 after Phase 64 complete*
+*Last updated: 2026-02-22 after Phase 65 planning*
