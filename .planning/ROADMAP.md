@@ -327,10 +327,11 @@ Plans:
   1. All equipped items provide stats via stats effect, not stat_buff with duration 0
   2. New item definitions cannot use stat_buff with duration 0 (schema validation fails)
   3. Migration can be rolled back if issues discovered
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 60-01: Implementation TBD
+- [ ] 60-01-PLAN.md — Migrate suits.ts and tools.ts from stat_buff to stats effect (Wave 1)
+- [ ] 60-02-PLAN.md — Add ESLint rule for compile-time validation and document rollback (Wave 2)
 
 #### Phase 61: Aggregation Rules
 
@@ -442,7 +443,7 @@ Phases execute in numeric order: 59 → 60 → 61 → 62 → 63
 | 57. Buff System | v1.13 | 3/3 | Complete | 2026-02-20 |
 | 58. Ability Content & Polish | v1.13 | 3/3 | Complete | 2026-02-21 |
 | 59. Type Foundation | v1.14 | 1/1 | Complete | 2026-02-21 |
-| 60. Migration | v1.14 | 0/1 | Not started | - |
+| 60. Migration | v1.14 | 0/2 | Not started | - |
 | 61. Aggregation Rules | v1.14 | 0/1 | Not started | - |
 | 62. Calculation Parity | v1.14 | 0/1 | Not started | - |
 | 63. Content Normalization | v1.14 | 0/1 | Not started | - |
@@ -450,4 +451,4 @@ Phases execute in numeric order: 59 → 60 → 61 → 62 → 63
 **Total:** 63 phases (59 complete, 4 remaining)
 
 ---
-*Last updated: 2026-02-21 after Phase 59 execution*
+*Last updated: 2026-02-21 after Phase 60 planning*
