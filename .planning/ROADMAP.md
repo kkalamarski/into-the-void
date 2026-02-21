@@ -359,9 +359,10 @@ Plans:
   2. Client and server use same calculation functions from game-logic package
   3. Integration test asserts server stats equal client stats for same equipment
 **Plans**: 1 plan in 1 wave
+**Status**: Complete (2026-02-21)
 
 Plans:
-- [ ] 62-01-PLAN.md — Create shared stat helpers and refactor client tooltip
+- [x] 62-01-PLAN.md — Create shared stat helpers and refactor client tooltip
 
 #### Phase 63: Content Normalization
 
@@ -447,7 +448,7 @@ Phases execute in numeric order: 59 → 60 → 61 → 62 → 63
 | 59. Type Foundation | v1.14 | 1/1 | Complete | 2026-02-21 |
 | 60. Migration | v1.14 | 2/2 | Complete | 2026-02-21 |
 | 61. Aggregation Rules | v1.14 | 1/1 | Complete | 2026-02-21 |
-| 62. Calculation Parity | v1.14 | 0/1 | Not started | - |
+| 62. Calculation Parity | v1.14 | 1/1 | Complete | 2026-02-21 |
 | 63. Content Normalization | v1.14 | 0/1 | Not started | - |
 
 **Total:** 63 phases (61 complete, 2 remaining)
