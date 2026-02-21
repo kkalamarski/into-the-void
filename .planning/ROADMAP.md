@@ -334,7 +334,7 @@ Plans:
 - [x] 60-01-PLAN.md — Migrate suits.ts and tools.ts from stat_buff to stats effect (Wave 1)
 - [x] 60-02-PLAN.md — Add ESLint rule for compile-time validation and document rollback (Wave 2)
 
-#### Phase 61: Aggregation Rules
+#### Phase 61: Aggregation Rules ✓
 
 **Goal**: Stat aggregation is deterministic regardless of equipment order
 **Depends on**: Phase 60
@@ -344,9 +344,10 @@ Plans:
   2. Equipment stats and buff stats combine correctly (documented order)
   3. Test suite validates known equipment combinations match expected totals
 **Plans**: 1 plan in 1 wave
+**Status**: Complete (2026-02-21)
 
 Plans:
-- [ ] 61-01-PLAN.md — Document aggregation order and add order-independence tests
+- [x] 61-01-PLAN.md — Document aggregation order and add order-independence tests
 
 #### Phase 62: Calculation Parity
 
@@ -445,11 +446,11 @@ Phases execute in numeric order: 59 → 60 → 61 → 62 → 63
 | 58. Ability Content & Polish | v1.13 | 3/3 | Complete | 2026-02-21 |
 | 59. Type Foundation | v1.14 | 1/1 | Complete | 2026-02-21 |
 | 60. Migration | v1.14 | 2/2 | Complete | 2026-02-21 |
-| 61. Aggregation Rules | v1.14 | 0/1 | Not started | - |
+| 61. Aggregation Rules | v1.14 | 1/1 | Complete | 2026-02-21 |
 | 62. Calculation Parity | v1.14 | 0/1 | Not started | - |
 | 63. Content Normalization | v1.14 | 0/1 | Not started | - |
 
-**Total:** 63 phases (60 complete, 3 remaining)
+**Total:** 63 phases (61 complete, 2 remaining)
 
 ---
-*Last updated: 2026-02-21 after Phase 61 planning*
+*Last updated: 2026-02-21 after Phase 61 execution*
