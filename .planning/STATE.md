@@ -9,17 +9,17 @@ See: .planning/PROJECT.md (updated 2026-02-21)
 
 ## Current Position
 
-Phase: 60 of 63 (Migration)
-Plan: 2 of 2 complete
-Status: Phase 60 complete
-Last activity: 2026-02-21 — Completed 60-02: Compile-Time Validation
+Phase: 61 of 63 (Aggregation Rules)
+Plan: 1 of 1 complete
+Status: Phase 61 complete
+Last activity: 2026-02-21 — Completed 61-01: Document aggregation order and prove order-independence
 
-Progress: [████████████████████████████████████████████████████████████████████████████████░░░░░░░░] 94%
+Progress: [████████████████████████████████████████████████████████████████████████████████░░░░░░░░] 95%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 179
+- Total plans completed: 180
 - Average duration: ~3 min per plan
 - Total execution time: ~8.9 hours across 14 milestones
 
@@ -41,14 +41,14 @@ Progress: [███████████████████████
 | v1.11 | 46-50 | 18 | 2 days |
 | v1.12 | 51-55 | 9 | 1 day |
 | v1.13 | 56-58 | 9 | Complete |
-| v1.14 | 59-63 | 2/5 | In progress |
+| v1.14 | 59-63 | 3/5 | In progress |
 
 **Recent Trend:**
 Stable velocity. Milestone v1.13 complete. v1.14 Equipment Stats Overhaul in progress.
 | Phase 59 P01 | 4 | 3 tasks | 2 files |
 | Phase 60 P01 | 149 | 3 tasks | 2 files |
 | Phase 60 P02 | 255 | 3 tasks | 4 files |
-| Phase 60 P02 | 255 | 3 tasks | 4 files |
+| Phase 61 P01 | 3 | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -57,13 +57,13 @@ Stable velocity. Milestone v1.13 complete. v1.14 Equipment Stats Overhaul in pro
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- Phase 61-01: Documented additive aggregation properties explicitly in JSDoc
 - Phase 60-02: Custom ESLint rules for compile-time migration validation
 - Phase 59-01: Stats effect is canonical pattern for all equipment stat bonuses
 - Phase 59-01: Stat_buff with duration=0 deprecated, scheduled for removal in Phase 60
 - Phase 56-58: Ability system with item-granted abilities (not skill trees)
 - Phase 30-32: 8-stat character system with server-authoritative computation
 - Phase 25-29: Item definition system with strategy pattern and effects array
-- [Phase 60-02]: Custom ESLint rules for compile-time migration validation
 
 ### Pending Todos
 
@@ -73,14 +73,14 @@ None.
 
 **Known issues from previous milestones:**
 - ~~Legacy stat_buff with duration: 0 pattern exists in 43+ item definitions (needs migration)~~ ✅ Resolved in Phase 60-01
+- ~~Stat aggregation order not explicitly defined (needs documentation)~~ ✅ Resolved in Phase 61-01
 - Client tooltip calculations may diverge from server (no shared code yet)
-- Stat aggregation order not explicitly defined (needs documentation)
 
 ## Session Continuity
 
 Last session: 2026-02-21
-Stopped at: Completed 60-02-PLAN.md: Compile-Time Validation
+Stopped at: Completed 61-01-PLAN.md: Document aggregation order and prove order-independence
 Resume file: None
 
 ---
-*Last updated: 2026-02-21 after completing Phase 60-02*
+*Last updated: 2026-02-21 after completing Phase 61-01*
