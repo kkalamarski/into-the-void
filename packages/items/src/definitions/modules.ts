@@ -1,5 +1,48 @@
-import type { ItemDefinition } from '../types';
-import { computeIlvl } from '../utils';
+import type { ItemDefinition, ItemRarity } from '../types';
+import { computeIlvl, STAT_RARITY_MULTIPLIERS, TIER_MULTIPLIERS } from '../utils';
+
+/**
+ * Module Stat Conventions (Phase 63)
+ *
+ * Modules provide focused stat bonuses alongside legacy effects:
+ * - armor: toughness (damage reduction synergy)
+ * - speed: haste (movement synergy)
+ * - life_support: resilience + recovery (environmental survival)
+ * - sensor: perception (detection synergy)
+ * - power_core: vigor + recovery (energy/stamina synergy)
+ * - mobility: haste + vigor (movement/stamina synergy)
+ *
+ * Stat Formula: base(20) * rarity_mult * tier_mult
+ * Legacy effects (armor value, speed multiplier, etc.) are preserved.
+ */
+
+/**
+ * Generate stat bonuses for a module based on moduleType, rarity, and tier
+ * Returns stats effect to be added alongside legacy effects
+ */
+function getModuleStats(moduleType: string, rarity: ItemRarity, tier: 1 | 2 | 3 | 4 | 5): { type: 'stats'; [key: string]: number | string } {
+  const base = 20;
+  const rarityMult = STAT_RARITY_MULTIPLIERS[rarity];
+  const tierMult = TIER_MULTIPLIERS[tier];
+  const value = Math.round(base * rarityMult * tierMult);
+
+  switch (moduleType) {
+    case 'armor':
+      return { type: 'stats', toughness: value };
+    case 'speed':
+      return { type: 'stats', haste: value };
+    case 'life_support':
+      return { type: 'stats', resilience: Math.round(value * 0.6), recovery: Math.round(value * 0.4) };
+    case 'sensor':
+      return { type: 'stats', perception: value };
+    case 'power_core':
+      return { type: 'stats', vigor: Math.round(value * 0.6), recovery: Math.round(value * 0.4) };
+    case 'mobility':
+      return { type: 'stats', haste: Math.round(value * 0.6), vigor: Math.round(value * 0.4) };
+    default:
+      return { type: 'stats', durability: value };
+  }
+}
 
 // ============================================================
 // ARMOR MODULES (5) — increase suit durability
@@ -19,7 +62,10 @@ export const MODULE_ARMOR_COMMON: ItemDefinition = {
   textureKey: 'item_module_armor',
   color: 0x888888,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 10 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'armor', value: 10 } },
+    { trigger: 'on_equip', effect: getModuleStats('armor', 'common', 1) },
+  ],
 };
 
 export const MODULE_ARMOR_RARE: ItemDefinition = {
@@ -36,7 +82,10 @@ export const MODULE_ARMOR_RARE: ItemDefinition = {
   textureKey: 'item_module_armor',
   color: 0x6a6aaa,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 22 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'armor', value: 22 } },
+    { trigger: 'on_equip', effect: getModuleStats('armor', 'rare', 1) },
+  ],
 };
 
 export const MODULE_ARMOR_EPIC: ItemDefinition = {
@@ -53,7 +102,10 @@ export const MODULE_ARMOR_EPIC: ItemDefinition = {
   textureKey: 'item_module_armor',
   color: 0x4a4aee,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 45 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'armor', value: 45 } },
+    { trigger: 'on_equip', effect: getModuleStats('armor', 'epic', 2) },
+  ],
 };
 
 export const MODULE_ARMOR_EXOTIC: ItemDefinition = {
@@ -70,7 +122,10 @@ export const MODULE_ARMOR_EXOTIC: ItemDefinition = {
   textureKey: 'item_module_armor',
   color: 0x2a2aff,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 81 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'armor', value: 81 } },
+    { trigger: 'on_equip', effect: getModuleStats('armor', 'exotic', 3) },
+  ],
 };
 
 export const MODULE_ARMOR_LEGENDARY: ItemDefinition = {
@@ -87,7 +142,10 @@ export const MODULE_ARMOR_LEGENDARY: ItemDefinition = {
   textureKey: 'item_module_armor',
   color: 0x8888ff,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 176 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'armor', value: 176 } },
+    { trigger: 'on_equip', effect: getModuleStats('armor', 'legendary', 4) },
+  ],
 };
 
 // ============================================================
@@ -108,7 +166,10 @@ export const MODULE_SPEED_COMMON: ItemDefinition = {
   textureKey: 'item_module_speed',
   color: 0xaaaa44,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.05 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.05 } },
+    { trigger: 'on_equip', effect: getModuleStats('speed', 'common', 1) },
+  ],
 };
 
 export const MODULE_SPEED_RARE: ItemDefinition = {
@@ -125,7 +186,10 @@ export const MODULE_SPEED_RARE: ItemDefinition = {
   textureKey: 'item_module_speed',
   color: 0xcccc44,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.12 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.12 } },
+    { trigger: 'on_equip', effect: getModuleStats('speed', 'rare', 1) },
+  ],
 };
 
 export const MODULE_SPEED_EPIC: ItemDefinition = {
@@ -142,7 +206,10 @@ export const MODULE_SPEED_EPIC: ItemDefinition = {
   textureKey: 'item_module_speed',
   color: 0xeeee22,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.25 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.25 } },
+    { trigger: 'on_equip', effect: getModuleStats('speed', 'epic', 2) },
+  ],
 };
 
 export const MODULE_SPEED_EXOTIC: ItemDefinition = {
@@ -159,7 +226,10 @@ export const MODULE_SPEED_EXOTIC: ItemDefinition = {
   textureKey: 'item_module_speed',
   color: 0xffff00,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.44 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.44 } },
+    { trigger: 'on_equip', effect: getModuleStats('speed', 'exotic', 3) },
+  ],
 };
 
 export const MODULE_SPEED_LEGENDARY: ItemDefinition = {
@@ -176,7 +246,10 @@ export const MODULE_SPEED_LEGENDARY: ItemDefinition = {
   textureKey: 'item_module_speed',
   color: 0xffff88,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.76 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'speed', multiplier: 1.76 } },
+    { trigger: 'on_equip', effect: getModuleStats('speed', 'legendary', 4) },
+  ],
 };
 
 // ============================================================
@@ -197,7 +270,9 @@ export const MODULE_LIFE_SUPPORT_COMMON: ItemDefinition = {
   textureKey: 'item_module_life_support',
   color: 0x44aa44,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 10 } }],
+  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 10 } },
+    { trigger: 'on_equip', effect: getModuleStats('life_support', 'common', 1) },
+  ],
 };
 
 export const MODULE_LIFE_SUPPORT_RARE: ItemDefinition = {
@@ -214,7 +289,9 @@ export const MODULE_LIFE_SUPPORT_RARE: ItemDefinition = {
   textureKey: 'item_module_life_support',
   color: 0x44cc44,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 22 } }],
+  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 22 } },
+    { trigger: 'on_equip', effect: getModuleStats('life_support', 'rare', 1) },
+  ],
 };
 
 export const MODULE_LIFE_SUPPORT_EPIC: ItemDefinition = {
@@ -231,7 +308,9 @@ export const MODULE_LIFE_SUPPORT_EPIC: ItemDefinition = {
   textureKey: 'item_module_life_support',
   color: 0x22ee22,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 45 } }],
+  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 45 } },
+    { trigger: 'on_equip', effect: getModuleStats('life_support', 'epic', 2) },
+  ],
 };
 
 export const MODULE_LIFE_SUPPORT_EXOTIC: ItemDefinition = {
@@ -248,7 +327,9 @@ export const MODULE_LIFE_SUPPORT_EXOTIC: ItemDefinition = {
   textureKey: 'item_module_life_support',
   color: 0x00ff44,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 81 } }],
+  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 81 } },
+    { trigger: 'on_equip', effect: getModuleStats('life_support', 'exotic', 3) },
+  ],
 };
 
 export const MODULE_LIFE_SUPPORT_LEGENDARY: ItemDefinition = {
@@ -265,7 +346,9 @@ export const MODULE_LIFE_SUPPORT_LEGENDARY: ItemDefinition = {
   textureKey: 'item_module_life_support',
   color: 0x88ff88,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 176 } }],
+  effects: [{ trigger: 'on_equip', effect: { type: 'life_support', hazardResistance: 176 } },
+    { trigger: 'on_equip', effect: getModuleStats('life_support', 'legendary', 4) },
+  ],
 };
 
 // ============================================================
@@ -286,7 +369,10 @@ export const MODULE_SENSOR_COMMON: ItemDefinition = {
   textureKey: 'item_module_sensor',
   color: 0x44aaaa,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 15 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 15 } },
+    { trigger: 'on_equip', effect: getModuleStats('sensor', 'common', 1) },
+  ],
 };
 
 export const MODULE_SENSOR_RARE: ItemDefinition = {
@@ -303,7 +389,10 @@ export const MODULE_SENSOR_RARE: ItemDefinition = {
   textureKey: 'item_module_sensor',
   color: 0x44cccc,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 25 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 25 } },
+    { trigger: 'on_equip', effect: getModuleStats('sensor', 'rare', 1) },
+  ],
 };
 
 export const MODULE_SENSOR_EPIC: ItemDefinition = {
@@ -320,7 +409,10 @@ export const MODULE_SENSOR_EPIC: ItemDefinition = {
   textureKey: 'item_module_sensor',
   color: 0x22eeee,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 40 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 40 } },
+    { trigger: 'on_equip', effect: getModuleStats('sensor', 'epic', 2) },
+  ],
 };
 
 export const MODULE_SENSOR_EXOTIC: ItemDefinition = {
@@ -337,7 +429,10 @@ export const MODULE_SENSOR_EXOTIC: ItemDefinition = {
   textureKey: 'item_module_sensor',
   color: 0x00ffff,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 60 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 60 } },
+    { trigger: 'on_equip', effect: getModuleStats('sensor', 'exotic', 3) },
+  ],
 };
 
 export const MODULE_SENSOR_LEGENDARY: ItemDefinition = {
@@ -354,7 +449,10 @@ export const MODULE_SENSOR_LEGENDARY: ItemDefinition = {
   textureKey: 'item_module_sensor',
   color: 0x88ffff,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 88 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'sensor', detectionRange: 88 } },
+    { trigger: 'on_equip', effect: getModuleStats('sensor', 'legendary', 4) },
+  ],
 };
 
 // ============================================================
@@ -375,7 +473,10 @@ export const MODULE_POWER_CORE_COMMON: ItemDefinition = {
   textureKey: 'item_module_power_core',
   color: 0xaaaa44,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 100, rechargeRate: 5 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 100, rechargeRate: 5 } },
+    { trigger: 'on_equip', effect: getModuleStats('power_core', 'common', 1) },
+  ],
 };
 
 export const MODULE_POWER_CORE_RARE: ItemDefinition = {
@@ -392,7 +493,10 @@ export const MODULE_POWER_CORE_RARE: ItemDefinition = {
   textureKey: 'item_module_power_core',
   color: 0xcccc44,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 200, rechargeRate: 9 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 200, rechargeRate: 9 } },
+    { trigger: 'on_equip', effect: getModuleStats('power_core', 'rare', 1) },
+  ],
 };
 
 export const MODULE_POWER_CORE_EPIC: ItemDefinition = {
@@ -409,7 +513,10 @@ export const MODULE_POWER_CORE_EPIC: ItemDefinition = {
   textureKey: 'item_module_power_core',
   color: 0xeeee22,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 375, rechargeRate: 18 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 375, rechargeRate: 18 } },
+    { trigger: 'on_equip', effect: getModuleStats('power_core', 'epic', 2) },
+  ],
 };
 
 export const MODULE_POWER_CORE_EXOTIC: ItemDefinition = {
@@ -426,7 +533,10 @@ export const MODULE_POWER_CORE_EXOTIC: ItemDefinition = {
   textureKey: 'item_module_power_core',
   color: 0xffff00,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 648, rechargeRate: 32 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 648, rechargeRate: 32 } },
+    { trigger: 'on_equip', effect: getModuleStats('power_core', 'exotic', 3) },
+  ],
 };
 
 export const MODULE_POWER_CORE_LEGENDARY: ItemDefinition = {
@@ -443,7 +553,10 @@ export const MODULE_POWER_CORE_LEGENDARY: ItemDefinition = {
   textureKey: 'item_module_power_core',
   color: 0xffff88,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 1408, rechargeRate: 70 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 1408, rechargeRate: 70 } },
+    { trigger: 'on_equip', effect: getModuleStats('power_core', 'legendary', 4) },
+  ],
 };
 
 // ============================================================
@@ -464,7 +577,10 @@ export const MODULE_MOBILITY_COMMON: ItemDefinition = {
   textureKey: 'item_module_mobility',
   color: 0xaa44aa,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 1.2 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 1.2 } },
+    { trigger: 'on_equip', effect: getModuleStats('mobility', 'common', 1) },
+  ],
 };
 
 export const MODULE_MOBILITY_RARE: ItemDefinition = {
@@ -481,7 +597,10 @@ export const MODULE_MOBILITY_RARE: ItemDefinition = {
   textureKey: 'item_module_mobility',
   color: 0xcc44cc,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 1.5 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 1.5 } },
+    { trigger: 'on_equip', effect: getModuleStats('mobility', 'rare', 1) },
+  ],
 };
 
 export const MODULE_MOBILITY_EPIC: ItemDefinition = {
@@ -498,7 +617,10 @@ export const MODULE_MOBILITY_EPIC: ItemDefinition = {
   textureKey: 'item_module_mobility',
   color: 0xee22ee,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 2.0 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 2.0 } },
+    { trigger: 'on_equip', effect: getModuleStats('mobility', 'epic', 2) },
+  ],
 };
 
 export const MODULE_MOBILITY_EXOTIC: ItemDefinition = {
@@ -515,7 +637,10 @@ export const MODULE_MOBILITY_EXOTIC: ItemDefinition = {
   textureKey: 'item_module_mobility',
   color: 0xff00ff,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 2.8 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 2.8 } },
+    { trigger: 'on_equip', effect: getModuleStats('mobility', 'exotic', 3) },
+  ],
 };
 
 export const MODULE_MOBILITY_LEGENDARY: ItemDefinition = {
@@ -532,7 +657,324 @@ export const MODULE_MOBILITY_LEGENDARY: ItemDefinition = {
   textureKey: 'item_module_mobility',
   color: 0xff88ff,
   equipSlot: 'module',
-  effects: [{ trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 4.4 } }],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'mobility', jumpHeight: 4.4 } },
+    { trigger: 'on_equip', effect: getModuleStats('mobility', 'legendary', 4) },
+  ],
+};
+
+// ============================================================
+// INTERMEDIATE ARMOR MODULES — scaling progression
+// ============================================================
+
+export const MODULE_ARMOR_COMMON_MK2: ItemDefinition = {
+  id: 'module_armor_common_mk2',
+  displayName: 'Armor Plating Mk.II',
+  description: 'Improved composite plating with better impact distribution.',
+  category: 'module',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.3,
+  baseValue: 500,
+  requiredLevel: 10,
+  ilvl: computeIlvl(2, 'common'),
+  textureKey: 'item_module_armor',
+  color: 0x999988,
+  equipSlot: 'module',
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'armor', value: 16 } },
+    { trigger: 'on_equip', effect: getModuleStats('armor', 'common', 2) },
+  ],
+};
+
+export const MODULE_ARMOR_COMMON_MK3: ItemDefinition = {
+  id: 'module_armor_common_mk3',
+  displayName: 'Armor Plating Mk.III',
+  description: 'Industrial-grade protection for harsh environments.',
+  category: 'module',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.4,
+  baseValue: 1500,
+  requiredLevel: 20,
+  ilvl: computeIlvl(3, 'common'),
+  textureKey: 'item_module_armor',
+  color: 0xaaa999,
+  equipSlot: 'module',
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'armor', value: 28 } },
+    { trigger: 'on_equip', effect: getModuleStats('armor', 'common', 3) },
+  ],
+};
+
+export const MODULE_ARMOR_COMMON_MK4: ItemDefinition = {
+  id: 'module_armor_common_mk4',
+  displayName: 'Armor Plating Mk.IV',
+  description: 'Professional-grade defensive plating for experienced operatives.',
+  category: 'module',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.5,
+  baseValue: 4000,
+  requiredLevel: 30,
+  ilvl: computeIlvl(4, 'common'),
+  textureKey: 'item_module_armor',
+  color: 0xbbbaaa,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 38 } },
+    { trigger: 'on_equip', effect: getModuleStats('armor', 'common', 4) },
+  ],
+};
+
+export const MODULE_ARMOR_COMMON_MK5: ItemDefinition = {
+  id: 'module_armor_common_mk5',
+  displayName: 'Armor Plating Mk.V',
+  description: 'Top-tier conventional armor plating. Maximum protection within standard parameters.',
+  category: 'module',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.6,
+  baseValue: 10000,
+  requiredLevel: 40,
+  ilvl: computeIlvl(5, 'common'),
+  textureKey: 'item_module_armor',
+  color: 0xcccbbb,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 55 } },
+    { trigger: 'on_equip', effect: getModuleStats('armor', 'common', 5) },
+  ],
+};
+
+export const MODULE_ARMOR_RARE_MK2: ItemDefinition = {
+  id: 'module_armor_rare_mk2',
+  displayName: 'Reinforced Plating Mk.II',
+  description: 'Enhanced protective plating with reactive components.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.6,
+  baseValue: 2500,
+  requiredLevel: 15,
+  ilvl: computeIlvl(2, 'rare'),
+  textureKey: 'item_module_armor',
+  color: 0x7a7abb,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 30 } },
+    { trigger: 'on_equip', effect: getModuleStats('armor', 'rare', 2) },
+  ],
+};
+
+export const MODULE_ARMOR_RARE_MK3: ItemDefinition = {
+  id: 'module_armor_rare_mk3',
+  displayName: 'Reinforced Plating Mk.III',
+  description: 'High-density defensive module for dangerous operations.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.7,
+  baseValue: 7000,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'rare'),
+  textureKey: 'item_module_armor',
+  color: 0x6a6acc,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 52 } },
+    { trigger: 'on_equip', effect: getModuleStats('armor', 'rare', 3) },
+  ],
+};
+
+export const MODULE_ARMOR_RARE_MK4: ItemDefinition = {
+  id: 'module_armor_rare_mk4',
+  displayName: 'Reinforced Plating Mk.IV',
+  description: 'Elite armor module for senior corporate operatives.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.8,
+  baseValue: 15000,
+  requiredLevel: 35,
+  ilvl: computeIlvl(4, 'rare'),
+  textureKey: 'item_module_armor',
+  color: 0x5a5add,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 68 } },
+    { trigger: 'on_equip', effect: getModuleStats('armor', 'rare', 4) },
+  ],
+};
+
+export const MODULE_ARMOR_RARE_MK5: ItemDefinition = {
+  id: 'module_armor_rare_mk5',
+  displayName: 'Reinforced Plating Mk.V',
+  description: 'The finest conventional armor available. Reserved for essential personnel.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.9,
+  baseValue: 30000,
+  requiredLevel: 45,
+  ilvl: computeIlvl(5, 'rare'),
+  textureKey: 'item_module_armor',
+  color: 0x4a4aee,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'armor', value: 90 } },
+    { trigger: 'on_equip', effect: getModuleStats('armor', 'rare', 5) },
+  ],
+};
+
+// ============================================================
+// INTERMEDIATE POWER CORE MODULES — scaling progression
+// ============================================================
+
+export const MODULE_POWER_CORE_COMMON_MK2: ItemDefinition = {
+  id: 'module_power_core_common_mk2',
+  displayName: 'Power Cell Mk.II',
+  description: 'Improved energy storage with faster charge cycling.',
+  category: 'module',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.6,
+  baseValue: 500,
+  requiredLevel: 10,
+  ilvl: computeIlvl(2, 'common'),
+  textureKey: 'item_module_power_core',
+  color: 0xbbbb55,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 150, rechargeRate: 7 } },
+    { trigger: 'on_equip', effect: getModuleStats('power_core', 'common', 2) },
+  ],
+};
+
+export const MODULE_POWER_CORE_COMMON_MK3: ItemDefinition = {
+  id: 'module_power_core_common_mk3',
+  displayName: 'Power Cell Mk.III',
+  description: 'Industrial energy module for extended operations.',
+  category: 'module',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.7,
+  baseValue: 1500,
+  requiredLevel: 20,
+  ilvl: computeIlvl(3, 'common'),
+  textureKey: 'item_module_power_core',
+  color: 0xcccc55,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 250, rechargeRate: 12 } },
+    { trigger: 'on_equip', effect: getModuleStats('power_core', 'common', 3) },
+  ],
+};
+
+export const MODULE_POWER_CORE_COMMON_MK4: ItemDefinition = {
+  id: 'module_power_core_common_mk4',
+  displayName: 'Power Cell Mk.IV',
+  description: 'Professional energy system for demanding field work.',
+  category: 'module',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.8,
+  baseValue: 4000,
+  requiredLevel: 30,
+  ilvl: computeIlvl(4, 'common'),
+  textureKey: 'item_module_power_core',
+  color: 0xdddd44,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 400, rechargeRate: 20 } },
+    { trigger: 'on_equip', effect: getModuleStats('power_core', 'common', 4) },
+  ],
+};
+
+export const MODULE_POWER_CORE_COMMON_MK5: ItemDefinition = {
+  id: 'module_power_core_common_mk5',
+  displayName: 'Power Cell Mk.V',
+  description: 'Maximum conventional energy capacity. Reliable power for any situation.',
+  category: 'module',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.9,
+  baseValue: 10000,
+  requiredLevel: 40,
+  ilvl: computeIlvl(5, 'common'),
+  textureKey: 'item_module_power_core',
+  color: 0xeeee33,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 550, rechargeRate: 28 } },
+    { trigger: 'on_equip', effect: getModuleStats('power_core', 'common', 5) },
+  ],
+};
+
+export const MODULE_POWER_CORE_RARE_MK2: ItemDefinition = {
+  id: 'module_power_core_rare_mk2',
+  displayName: 'High-Capacity Cell Mk.II',
+  description: 'Enhanced power storage with improved efficiency.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.7,
+  baseValue: 2500,
+  requiredLevel: 15,
+  ilvl: computeIlvl(2, 'rare'),
+  textureKey: 'item_module_power_core',
+  color: 0xdddd55,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 280, rechargeRate: 14 } },
+    { trigger: 'on_equip', effect: getModuleStats('power_core', 'rare', 2) },
+  ],
+};
+
+export const MODULE_POWER_CORE_RARE_MK3: ItemDefinition = {
+  id: 'module_power_core_rare_mk3',
+  displayName: 'High-Capacity Cell Mk.III',
+  description: 'High-output energy module for intensive operations.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.8,
+  baseValue: 7000,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'rare'),
+  textureKey: 'item_module_power_core',
+  color: 0xeeee44,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 480, rechargeRate: 24 } },
+    { trigger: 'on_equip', effect: getModuleStats('power_core', 'rare', 3) },
+  ],
+};
+
+export const MODULE_POWER_CORE_RARE_MK4: ItemDefinition = {
+  id: 'module_power_core_rare_mk4',
+  displayName: 'High-Capacity Cell Mk.IV',
+  description: 'Elite power system for extended deep-site operations.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.9,
+  baseValue: 15000,
+  requiredLevel: 35,
+  ilvl: computeIlvl(4, 'rare'),
+  textureKey: 'item_module_power_core',
+  color: 0xffff33,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 700, rechargeRate: 35 } },
+    { trigger: 'on_equip', effect: getModuleStats('power_core', 'rare', 4) },
+  ],
+};
+
+export const MODULE_POWER_CORE_RARE_MK5: ItemDefinition = {
+  id: 'module_power_core_rare_mk5',
+  displayName: 'High-Capacity Cell Mk.V',
+  description: 'Top-tier conventional power system. Energy to spare.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.8,
+  baseValue: 30000,
+  requiredLevel: 45,
+  ilvl: computeIlvl(5, 'rare'),
+  textureKey: 'item_module_power_core',
+  color: 0xffff22,
+  equipSlot: 'module',
+  effects: [{ trigger: 'on_equip', effect: { type: 'power_core', energyCapacity: 950, rechargeRate: 48 } },
+    { trigger: 'on_equip', effect: getModuleStats('power_core', 'rare', 5) },
+  ],
 };
 
 // ============================================================
@@ -540,31 +982,53 @@ export const MODULE_MOBILITY_LEGENDARY: ItemDefinition = {
 // ============================================================
 
 export const ALL_MODULES: readonly ItemDefinition[] = [
+  // Armor modules
   MODULE_ARMOR_COMMON,
+  MODULE_ARMOR_COMMON_MK2,
+  MODULE_ARMOR_COMMON_MK3,
+  MODULE_ARMOR_COMMON_MK4,
+  MODULE_ARMOR_COMMON_MK5,
   MODULE_ARMOR_RARE,
+  MODULE_ARMOR_RARE_MK2,
+  MODULE_ARMOR_RARE_MK3,
+  MODULE_ARMOR_RARE_MK4,
+  MODULE_ARMOR_RARE_MK5,
   MODULE_ARMOR_EPIC,
   MODULE_ARMOR_EXOTIC,
   MODULE_ARMOR_LEGENDARY,
+  // Speed modules
   MODULE_SPEED_COMMON,
   MODULE_SPEED_RARE,
   MODULE_SPEED_EPIC,
   MODULE_SPEED_EXOTIC,
   MODULE_SPEED_LEGENDARY,
+  // Life support modules
   MODULE_LIFE_SUPPORT_COMMON,
   MODULE_LIFE_SUPPORT_RARE,
   MODULE_LIFE_SUPPORT_EPIC,
   MODULE_LIFE_SUPPORT_EXOTIC,
   MODULE_LIFE_SUPPORT_LEGENDARY,
+  // Sensor modules
   MODULE_SENSOR_COMMON,
   MODULE_SENSOR_RARE,
   MODULE_SENSOR_EPIC,
   MODULE_SENSOR_EXOTIC,
   MODULE_SENSOR_LEGENDARY,
+  // Power core modules
   MODULE_POWER_CORE_COMMON,
+  MODULE_POWER_CORE_COMMON_MK2,
+  MODULE_POWER_CORE_COMMON_MK3,
+  MODULE_POWER_CORE_COMMON_MK4,
+  MODULE_POWER_CORE_COMMON_MK5,
   MODULE_POWER_CORE_RARE,
+  MODULE_POWER_CORE_RARE_MK2,
+  MODULE_POWER_CORE_RARE_MK3,
+  MODULE_POWER_CORE_RARE_MK4,
+  MODULE_POWER_CORE_RARE_MK5,
   MODULE_POWER_CORE_EPIC,
   MODULE_POWER_CORE_EXOTIC,
   MODULE_POWER_CORE_LEGENDARY,
+  // Mobility modules
   MODULE_MOBILITY_COMMON,
   MODULE_MOBILITY_RARE,
   MODULE_MOBILITY_EPIC,
