@@ -1,5 +1,48 @@
-import type { ItemDefinition } from '../types';
-import { computeIlvl } from '../utils';
+import type { ItemDefinition, ItemRarity, ToolType } from '../types';
+import { computeIlvl, STAT_RARITY_MULTIPLIERS, TIER_MULTIPLIERS } from '../utils';
+
+/**
+ * Tool Stat Conventions (Phase 63)
+ *
+ * Tools provide role-appropriate stat bonuses:
+ * - combat, demolition, universal: power (offensive capability)
+ * - mining, research: perception (resource/specimen detection)
+ * - bio: vigor (biological interaction)
+ * - stealth: perception + haste (awareness and quick movement)
+ * - anomaly: resilience (anomaly resistance)
+ *
+ * Stat Formula: base(15) * rarity_mult * tier_mult
+ * Rarity: common=1.0, rare=1.4, epic=2.0, exotic=2.8, legendary=4.0
+ * Tier: 1=1.0, 2=2.0, 3=3.5, 4=5.5, 5=8.0
+ */
+
+/**
+ * Generate stat bonuses for a tool based on toolType, rarity, and tier
+ */
+function getToolStats(toolType: ToolType, rarity: ItemRarity, tier: 1 | 2 | 3 | 4 | 5): { type: 'stats'; [key: string]: number | string } {
+  const base = 15;
+  const rarityMult = STAT_RARITY_MULTIPLIERS[rarity];
+  const tierMult = TIER_MULTIPLIERS[tier];
+  const value = Math.round(base * rarityMult * tierMult);
+
+  switch (toolType) {
+    case 'combat':
+    case 'demolition':
+    case 'universal':
+      return { type: 'stats', power: value };
+    case 'mining':
+    case 'research':
+      return { type: 'stats', perception: value };
+    case 'bio':
+      return { type: 'stats', vigor: value };
+    case 'stealth':
+      return { type: 'stats', perception: Math.round(value * 0.6), haste: Math.round(value * 0.4) };
+    case 'anomaly':
+      return { type: 'stats', resilience: value };
+    default:
+      return { type: 'stats', power: value };
+  }
+}
 
 // ============================================================
 // UNIVERSAL TOOLS (1) — starter multi-purpose tool
@@ -48,7 +91,9 @@ export const TOOL_MINING_COMMON: ItemDefinition = {
   color: 0xcc8844,
   equipSlot: 'tool',
   toolType: 'mining',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('mining', 'common', 1) },
+  ],
   range: 1,
   grantedAbilities: ['basic_strike'],
 };
@@ -69,7 +114,9 @@ export const TOOL_MINING_RARE: ItemDefinition = {
   color: 0xdd9944,
   equipSlot: 'tool',
   toolType: 'mining',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('mining', 'rare', 1) },
+  ],
   range: 2,
   grantedAbilities: ['basic_strike', 'thermal_lance'],
 };
@@ -90,7 +137,9 @@ export const TOOL_MINING_EPIC: ItemDefinition = {
   color: 0xee5500,
   equipSlot: 'tool',
   toolType: 'mining',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('mining', 'epic', 2) },
+  ],
   range: 3,
   grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst'],
 };
@@ -111,7 +160,9 @@ export const TOOL_MINING_EXOTIC: ItemDefinition = {
   color: 0xff2200,
   equipSlot: 'tool',
   toolType: 'mining',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('mining', 'exotic', 3) },
+  ],
   range: 4,
   grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'void_drain'],
 };
@@ -132,7 +183,9 @@ export const TOOL_MINING_LEGENDARY: ItemDefinition = {
   color: 0xff8800,
   equipSlot: 'tool',
   toolType: 'mining',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('mining', 'legendary', 4) },
+  ],
   range: 5,
   grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'void_drain', 'overload_pulse'],
 };
@@ -157,7 +210,9 @@ export const TOOL_COMBAT_COMMON: ItemDefinition = {
   color: 0x4488cc,
   equipSlot: 'tool',
   toolType: 'combat',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('combat', 'common', 1) },
+  ],
   range: 1,
   grantedAbilities: ['basic_strike', 'shield_bash'],
 };
@@ -178,7 +233,9 @@ export const TOOL_COMBAT_RARE: ItemDefinition = {
   color: 0x5599dd,
   equipSlot: 'tool',
   toolType: 'combat',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('combat', 'rare', 1) },
+  ],
   range: 2,
   grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute'],
 };
@@ -199,7 +256,9 @@ export const TOOL_COMBAT_EPIC: ItemDefinition = {
   color: 0x2266ff,
   equipSlot: 'tool',
   toolType: 'combat',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('combat', 'epic', 2) },
+  ],
   range: 3,
   grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike'],
 };
@@ -220,7 +279,9 @@ export const TOOL_COMBAT_EXOTIC: ItemDefinition = {
   color: 0x1133ff,
   equipSlot: 'tool',
   toolType: 'combat',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('combat', 'exotic', 3) },
+  ],
   range: 4,
   grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike', 'precision_shot'],
 };
@@ -241,7 +302,9 @@ export const TOOL_COMBAT_LEGENDARY: ItemDefinition = {
   color: 0x0000ff,
   equipSlot: 'tool',
   toolType: 'combat',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('combat', 'legendary', 4) },
+  ],
   range: 5,
   grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike', 'precision_shot', 'cryo_blast'],
 };
@@ -266,7 +329,9 @@ export const TOOL_RESEARCH_COMMON: ItemDefinition = {
   color: 0x44cccc,
   equipSlot: 'tool',
   toolType: 'research',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('research', 'common', 1) },
+  ],
   range: 1,
   grantedAbilities: ['energy_pulse'],
 };
@@ -287,7 +352,9 @@ export const TOOL_RESEARCH_RARE: ItemDefinition = {
   color: 0x44dddd,
   equipSlot: 'tool',
   toolType: 'research',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('research', 'rare', 1) },
+  ],
   range: 2,
   grantedAbilities: ['energy_pulse', 'resource_scan'],
 };
@@ -308,7 +375,9 @@ export const TOOL_RESEARCH_EPIC: ItemDefinition = {
   color: 0x22eeee,
   equipSlot: 'tool',
   toolType: 'research',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('research', 'epic', 2) },
+  ],
   range: 3,
   grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen'],
 };
@@ -329,7 +398,9 @@ export const TOOL_RESEARCH_EXOTIC: ItemDefinition = {
   color: 0x00ffff,
   equipSlot: 'tool',
   toolType: 'research',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('research', 'exotic', 3) },
+  ],
   range: 4,
   grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen', 'overclock'],
 };
@@ -350,7 +421,9 @@ export const TOOL_RESEARCH_LEGENDARY: ItemDefinition = {
   color: 0x88ffff,
   equipSlot: 'tool',
   toolType: 'research',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('research', 'legendary', 4) },
+  ],
   range: 5,
   grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen', 'overclock', 'void_drain'],
 };
@@ -376,7 +449,9 @@ export const TOOL_MINING_COMMON_MK2: ItemDefinition = {
   color: 0xdd9955,
   equipSlot: 'tool',
   toolType: 'mining',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('mining', 'common', 2) },
+  ],
   range: 1,
   grantedAbilities: ['basic_strike', 'thermal_lance'],
 };
@@ -397,7 +472,9 @@ export const TOOL_COMBAT_COMMON_MK2: ItemDefinition = {
   color: 0x5599dd,
   equipSlot: 'tool',
   toolType: 'combat',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('combat', 'common', 2) },
+  ],
   range: 1,
   grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute'],
 };
@@ -418,7 +495,9 @@ export const TOOL_RESEARCH_COMMON_MK2: ItemDefinition = {
   color: 0x55dddd,
   equipSlot: 'tool',
   toolType: 'research',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('research', 'common', 2) },
+  ],
   range: 2,
   grantedAbilities: ['energy_pulse', 'resource_scan'],
 };
@@ -440,7 +519,9 @@ export const TOOL_MINING_COMMON_MK3: ItemDefinition = {
   color: 0xee8844,
   equipSlot: 'tool',
   toolType: 'mining',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('mining', 'common', 3) },
+  ],
   range: 2,
   grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst'],
 };
@@ -461,7 +542,9 @@ export const TOOL_COMBAT_COMMON_MK3: ItemDefinition = {
   color: 0x4488ee,
   equipSlot: 'tool',
   toolType: 'combat',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('combat', 'common', 3) },
+  ],
   range: 3,
   grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike'],
 };
@@ -482,7 +565,9 @@ export const TOOL_RESEARCH_COMMON_MK3: ItemDefinition = {
   color: 0x44eeee,
   equipSlot: 'tool',
   toolType: 'research',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('research', 'common', 3) },
+  ],
   range: 3,
   grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen'],
 };
@@ -504,7 +589,9 @@ export const TOOL_MINING_COMMON_MK4: ItemDefinition = {
   color: 0xff7733,
   equipSlot: 'tool',
   toolType: 'mining',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('mining', 'common', 4) },
+  ],
   range: 3,
   grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse'],
 };
@@ -525,7 +612,9 @@ export const TOOL_COMBAT_COMMON_MK4: ItemDefinition = {
   color: 0x3377ff,
   equipSlot: 'tool',
   toolType: 'combat',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('combat', 'common', 4) },
+  ],
   range: 4,
   grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike', 'precision_shot'],
 };
@@ -546,7 +635,9 @@ export const TOOL_RESEARCH_COMMON_MK4: ItemDefinition = {
   color: 0x33ffff,
   equipSlot: 'tool',
   toolType: 'research',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('research', 'common', 4) },
+  ],
   range: 4,
   grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen', 'overclock'],
 };
@@ -568,7 +659,9 @@ export const TOOL_MINING_COMMON_MK5: ItemDefinition = {
   color: 0xff6622,
   equipSlot: 'tool',
   toolType: 'mining',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('mining', 'common', 5) },
+  ],
   range: 4,
   grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse', 'void_drain'],
 };
@@ -589,7 +682,9 @@ export const TOOL_COMBAT_COMMON_MK5: ItemDefinition = {
   color: 0x2266ff,
   equipSlot: 'tool',
   toolType: 'combat',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('combat', 'common', 5) },
+  ],
   range: 5,
   grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike', 'precision_shot', 'cryo_blast'],
 };
@@ -610,7 +705,9 @@ export const TOOL_RESEARCH_COMMON_MK5: ItemDefinition = {
   color: 0x22ffff,
   equipSlot: 'tool',
   toolType: 'research',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('research', 'common', 5) },
+  ],
   range: 5,
   grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen', 'overclock', 'void_drain'],
 };
@@ -636,7 +733,9 @@ export const TOOL_MINING_RARE_MK2: ItemDefinition = {
   color: 0xee6633,
   equipSlot: 'tool',
   toolType: 'mining',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('mining', 'rare', 2) },
+  ],
   range: 2,
   grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst'],
 };
@@ -657,7 +756,9 @@ export const TOOL_COMBAT_RARE_MK2: ItemDefinition = {
   color: 0x4477ee,
   equipSlot: 'tool',
   toolType: 'combat',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('combat', 'rare', 2) },
+  ],
   range: 3,
   grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike'],
 };
@@ -678,7 +779,9 @@ export const TOOL_RESEARCH_RARE_MK2: ItemDefinition = {
   color: 0x44ddee,
   equipSlot: 'tool',
   toolType: 'research',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('research', 'rare', 2) },
+  ],
   range: 3,
   grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen'],
 };
@@ -700,7 +803,9 @@ export const TOOL_MINING_RARE_MK3: ItemDefinition = {
   color: 0xff5522,
   equipSlot: 'tool',
   toolType: 'mining',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('mining', 'rare', 3) },
+  ],
   range: 3,
   grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse'],
 };
@@ -721,7 +826,9 @@ export const TOOL_COMBAT_RARE_MK3: ItemDefinition = {
   color: 0x3366ff,
   equipSlot: 'tool',
   toolType: 'combat',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('combat', 'rare', 3) },
+  ],
   range: 4,
   grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike', 'precision_shot'],
 };
@@ -742,7 +849,9 @@ export const TOOL_RESEARCH_RARE_MK3: ItemDefinition = {
   color: 0x33eeff,
   equipSlot: 'tool',
   toolType: 'research',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('research', 'rare', 3) },
+  ],
   range: 4,
   grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen', 'overclock'],
 };
@@ -764,7 +873,9 @@ export const TOOL_MINING_RARE_MK4: ItemDefinition = {
   color: 0xff4411,
   equipSlot: 'tool',
   toolType: 'mining',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('mining', 'rare', 4) },
+  ],
   range: 4,
   grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse', 'void_drain'],
 };
@@ -785,7 +896,9 @@ export const TOOL_COMBAT_RARE_MK4: ItemDefinition = {
   color: 0x2255ff,
   equipSlot: 'tool',
   toolType: 'combat',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('combat', 'rare', 4) },
+  ],
   range: 5,
   grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike', 'precision_shot', 'cryo_blast'],
 };
@@ -806,7 +919,9 @@ export const TOOL_RESEARCH_RARE_MK4: ItemDefinition = {
   color: 0x22eeff,
   equipSlot: 'tool',
   toolType: 'research',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('research', 'rare', 4) },
+  ],
   range: 5,
   grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen', 'overclock', 'void_drain'],
 };
@@ -828,7 +943,9 @@ export const TOOL_MINING_RARE_MK5: ItemDefinition = {
   color: 0xff3300,
   equipSlot: 'tool',
   toolType: 'mining',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('mining', 'rare', 5) },
+  ],
   range: 5,
   grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse', 'void_drain', 'cryo_blast'],
 };
@@ -849,7 +966,9 @@ export const TOOL_COMBAT_RARE_MK5: ItemDefinition = {
   color: 0x1144ff,
   equipSlot: 'tool',
   toolType: 'combat',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('combat', 'rare', 5) },
+  ],
   range: 5,
   grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike', 'precision_shot', 'cryo_blast', 'power_surge'],
 };
@@ -870,7 +989,9 @@ export const TOOL_RESEARCH_RARE_MK5: ItemDefinition = {
   color: 0x11eeff,
   equipSlot: 'tool',
   toolType: 'research',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('research', 'rare', 5) },
+  ],
   range: 5,
   grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen', 'overclock', 'void_drain', 'power_surge'],
 };
@@ -895,7 +1016,9 @@ export const TOOL_BIO_PROBE_RARE: ItemDefinition = {
   color: 0x44aa44,
   equipSlot: 'tool',
   toolType: 'bio',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('bio', 'rare', 1) },
+  ],
   range: 2,
   grantedAbilities: ['energy_pulse', 'analyze_specimen', 'nano_repair'],
 };
@@ -916,7 +1039,9 @@ export const TOOL_DEMOLITION_EPIC: ItemDefinition = {
   color: 0xaa4400,
   equipSlot: 'tool',
   toolType: 'demolition',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('demolition', 'epic', 2) },
+  ],
   range: 1,
   grantedAbilities: ['basic_strike', 'concussive_strike', 'overload_pulse', 'cryo_blast'],
 };
@@ -937,7 +1062,9 @@ export const TOOL_STEALTH_EXOTIC: ItemDefinition = {
   color: 0x444488,
   equipSlot: 'tool',
   toolType: 'stealth',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('stealth', 'exotic', 3) },
+  ],
   range: 4,
   grantedAbilities: ['precision_shot', 'void_drain', 'overclock', 'resource_scan'],
 };
@@ -958,7 +1085,9 @@ export const TOOL_ANOMALY_EXOTIC: ItemDefinition = {
   color: 0x8800aa,
   equipSlot: 'tool',
   toolType: 'anomaly',
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: getToolStats('anomaly', 'exotic', 4) },
+  ],
   range: 2,
   grantedAbilities: ['void_drain', 'cryo_blast', 'plasma_burst', 'power_surge'],
 };
