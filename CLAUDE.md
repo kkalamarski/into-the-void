@@ -81,10 +81,46 @@ Use these for imports across packages:
 - `@into-the-void/database`
 - `@into-the-void/world-gen`
 
+## Migration Rollback Procedures
+
+### Phase 60: Equipment Stats Migration Rollback
+
+If issues discovered with the stats effect migration (Phase 59-60), use this rollback procedure:
+
+**1. Revert item definitions to pre-migration state:**
+```bash
+git checkout pre-phase-60-migration -- packages/items/src/definitions/suits.ts packages/items/src/definitions/tools.ts
+```
+
+**2. Disable ESLint rule (temporarily or permanently):**
+```bash
+# In eslint.config.mjs, comment out or remove the rule:
+# 'custom-rules/no-legacy-stat-buff': 'error',
+
+# Or remove the entire configuration block if fully rolling back
+```
+
+**3. Verify rollback:**
+```bash
+# Check that old pattern is present
+grep "stat_buff" packages/items/src/definitions/suits.ts | head -3
+
+# Run tests to ensure compatibility
+npx nx run game-logic:test
+```
+
+**4. Commit rollback:**
+```bash
+git add packages/items/src/definitions/suits.ts packages/items/src/definitions/tools.ts eslint.config.mjs
+git commit -m "rollback(60): revert stat_buff to stats migration"
+```
+
+**Pre-migration tag:** `pre-phase-60-migration` (created before Phase 60-01)
+
 ## IMPORTANT
 * Always check if the implemented feature is compatible with /lore directory. The information there is non-negotiable, and are the source of truth.
 
-* Whenever it makes sense, use strategy pattern, to easily add variant implementation 
+* Whenever it makes sense, use strategy pattern, to easily add variant implementation
 
 * If any change to lore is needed (expanding, adding more details or changing something) ask. Always ask about lore changes.
 
@@ -94,4 +130,4 @@ Use these for imports across packages:
 
 * do not start dev servers, unless you want to see the output or test it. If you start one, kill it after you used it
 
-* sprite size is 96x96
+* tile sprites are 256x256 isometric cubes (top face + south/east sides pre-rendered)
