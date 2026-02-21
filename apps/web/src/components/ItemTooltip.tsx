@@ -13,52 +13,21 @@ import {
   FloatingPortal,
 } from '@floating-ui/react';
 import type { ItemDefinition } from '@into-the-void/items';
-import { resolveEffectsForTrigger } from '@into-the-void/game-logic';
+import { extractItemStats, computeEquipmentDelta, AbilityRegistry } from '@into-the-void/game-logic';
 import { RARITY_COLORS } from '../ui/constants';
 import './ItemTooltip.css';
+
+const ABILITY_CATEGORY_COLORS: Record<string, string> = {
+  offensive: '#cc4444',
+  defensive: '#4488cc',
+  utility: '#44cc88',
+};
 
 interface ItemTooltipProps {
   children: React.ReactNode;
   item: ItemDefinition;
   disabled?: boolean;
   equippedItem?: ItemDefinition; // Item currently equipped in same slot for comparison
-}
-
-function extractStatBonuses(item: ItemDefinition): Record<string, number> {
-  const equipEffects = resolveEffectsForTrigger(item.effects, 'on_equip');
-  const passiveEffects = resolveEffectsForTrigger(item.effects, 'passive');
-  const bonuses: Record<string, number> = {};
-
-  for (const result of [...equipEffects, ...passiveEffects]) {
-    for (const [key, value] of Object.entries(result.applied)) {
-      if (typeof value === 'number') {
-        bonuses[key] = (bonuses[key] ?? 0) + value;
-      }
-    }
-  }
-  return bonuses;
-}
-
-function computeStatDeltas(
-  hoveredItem: ItemDefinition,
-  equippedItem: ItemDefinition | undefined
-): Array<{ stat: string; delta: number }> {
-  const hoveredBonuses = extractStatBonuses(hoveredItem);
-  const equippedBonuses = equippedItem ? extractStatBonuses(equippedItem) : {};
-
-  const allStats = new Set([...Object.keys(hoveredBonuses), ...Object.keys(equippedBonuses)]);
-  const deltas: Array<{ stat: string; delta: number }> = [];
-
-  for (const stat of allStats) {
-    const hoveredVal = hoveredBonuses[stat] ?? 0;
-    const equippedVal = equippedBonuses[stat] ?? 0;
-    const delta = hoveredVal - equippedVal;
-    if (delta !== 0) {
-      deltas.push({ stat, delta });
-    }
-  }
-
-  return deltas;
 }
 
 export const ItemTooltip: React.FC<ItemTooltipProps> = ({
@@ -84,8 +53,11 @@ export const ItemTooltip: React.FC<ItemTooltipProps> = ({
 
   const rarityColor = RARITY_COLORS[item.rarity];
 
-  // Compute deltas only when hovering an equippable item
-  const statDeltas = item.equipSlot ? computeStatDeltas(item, equippedItem) : [];
+  // Extract this item's stat bonuses to display
+  const itemStatBonuses = extractItemStats(item);
+
+  // Compute deltas only when hovering an equippable item AND there's an equipped item to compare against
+  const statDeltas = item.equipSlot && equippedItem ? computeEquipmentDelta(item, equippedItem) : [];
 
   return (
     <>
@@ -114,6 +86,15 @@ export const ItemTooltip: React.FC<ItemTooltipProps> = ({
                 <span>Requires Level {item.requiredLevel}</span>
               )}
             </div>
+            {Object.keys(itemStatBonuses).length > 0 && (
+              <div className="tooltip-bonuses">
+                {Object.entries(itemStatBonuses).map(([stat, value]) => (
+                  <div key={stat} className="tooltip-bonus">
+                    +{value} {stat}
+                  </div>
+                ))}
+              </div>
+            )}
             {statDeltas.length > 0 && (
               <div className="tooltip-comparison">
                 <div className="tooltip-comparison-header">vs Equipped</div>
@@ -125,6 +106,21 @@ export const ItemTooltip: React.FC<ItemTooltipProps> = ({
                     {delta > 0 ? '+' : ''}{delta} {stat}
                   </div>
                 ))}
+              </div>
+            )}
+            {item.grantedAbilities && item.grantedAbilities.length > 0 && (
+              <div className="tooltip-abilities">
+                <div className="tooltip-abilities-header">Granted Abilities</div>
+                {item.grantedAbilities.map((abilityId) => {
+                  const ability = AbilityRegistry.get(abilityId);
+                  if (!ability) return null;
+                  const color = ABILITY_CATEGORY_COLORS[ability.category] ?? '#888888';
+                  return (
+                    <div key={abilityId} className="tooltip-ability" style={{ color }}>
+                      {ability.displayName}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
