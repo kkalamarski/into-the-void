@@ -22,8 +22,7 @@ export const SUIT_BASIC_COMMON: ItemDefinition = {
   equipSlot: 'exosuit',
   moduleSlots: 3,
   effects: [
-    { trigger: 'on_equip', effect: { type: 'armor', value: 5 } },
-    { trigger: 'on_equip', effect: { type: 'stat_buff', stat: 'durability', amount: 20, duration: 0 } },
+    { trigger: 'on_equip', effect: { type: 'stats', toughness: 5, durability: 20 } },
   ],
   grantedAbilities: ['nano_repair'],
 };
@@ -44,8 +43,102 @@ export const SUIT_SALVAGED_COMMON: ItemDefinition = {
   color: 0x7a6040,
   equipSlot: 'exosuit',
   moduleSlots: 3,
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', toughness: 3, vigor: 10 } },
+  ],
   grantedAbilities: ['emergency_shield'],
+};
+
+// Level 10 common suit
+export const SUIT_WORKER_COMMON: ItemDefinition = {
+  id: 'suit_worker_common',
+  displayName: "Worker's Exo-Suit",
+  description:
+    'A rugged suit designed for extended field operations. Popular among independent contractors who need reliability over features.',
+  category: 'suit',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 9.0,
+  baseValue: 1200,
+  requiredLevel: 10,
+  ilvl: computeIlvl(2, 'common'),
+  textureKey: 'item_suit_basic',
+  color: 0x777766,
+  equipSlot: 'exosuit',
+  moduleSlots: 3,
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', toughness: 12, durability: 25 } },
+  ],
+  grantedAbilities: ['nano_repair'],
+};
+
+// Level 20 common suit
+export const SUIT_INDUSTRIAL_COMMON: ItemDefinition = {
+  id: 'suit_industrial_common',
+  displayName: 'Industrial Exo-Suit',
+  description:
+    'Heavy-duty corporate work suit. Built to withstand the rigors of Terminus industrial operations without expensive maintenance.',
+  category: 'suit',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 10.0,
+  baseValue: 3500,
+  requiredLevel: 20,
+  ilvl: computeIlvl(3, 'common'),
+  textureKey: 'item_suit_reinforced',
+  color: 0x666655,
+  equipSlot: 'exosuit',
+  moduleSlots: 4,
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', toughness: 22, durability: 35, resilience: 8 } },
+  ],
+  grantedAbilities: ['nano_repair', 'emergency_shield'],
+};
+
+// Level 30 common suit
+export const SUIT_VETERAN_COMMON: ItemDefinition = {
+  id: 'suit_veteran_common',
+  displayName: "Veteran's Exo-Suit",
+  description:
+    'A proven design favored by experienced operatives. Nothing flashy, but it keeps you alive in situations that would kill a rookie.',
+  category: 'suit',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 9.5,
+  baseValue: 8000,
+  requiredLevel: 30,
+  ilvl: computeIlvl(4, 'common'),
+  textureKey: 'item_suit_tactical',
+  color: 0x555544,
+  equipSlot: 'exosuit',
+  moduleSlots: 4,
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', toughness: 35, durability: 50, recovery: 10 } },
+  ],
+  grantedAbilities: ['nano_repair', 'emergency_shield', 'magnetic_field'],
+};
+
+// Level 40 common suit
+export const SUIT_HARDENED_COMMON: ItemDefinition = {
+  id: 'suit_hardened_common',
+  displayName: 'Hardened Exo-Suit',
+  description:
+    'The pinnacle of standard-issue suit technology. Mass-produced but effective — corporations issue these to their most valuable non-specialist personnel.',
+  category: 'suit',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 9.0,
+  baseValue: 18000,
+  requiredLevel: 40,
+  ilvl: computeIlvl(5, 'common'),
+  textureKey: 'item_suit_tactical',
+  color: 0x444433,
+  equipSlot: 'exosuit',
+  moduleSlots: 5,
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', toughness: 50, durability: 70, resilience: 15, recovery: 12 } },
+  ],
+  grantedAbilities: ['nano_repair', 'emergency_shield', 'magnetic_field', 'fortify_systems'],
 };
 
 // ============================================================
@@ -68,7 +161,9 @@ export const SUIT_REINFORCED_RARE: ItemDefinition = {
   color: 0x4a6080,
   equipSlot: 'exosuit',
   moduleSlots: 4,
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', toughness: 10, durability: 15, resilience: 5 } },
+  ],
   grantedAbilities: ['nano_repair', 'magnetic_field'],
 };
 
@@ -88,8 +183,102 @@ export const SUIT_SCOUT_RARE: ItemDefinition = {
   color: 0x3d5a3d,
   equipSlot: 'exosuit',
   moduleSlots: 4,
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', haste: 8, perception: 10, vigor: 12 } },
+  ],
   grantedAbilities: ['nano_repair', 'overclock'],
+};
+
+// Level 15 rare suit
+export const SUIT_FIELD_OPERATIVE_RARE: ItemDefinition = {
+  id: 'suit_field_operative_rare',
+  displayName: 'Field Operative Suit',
+  description:
+    'Standard field equipment for corporate operatives. Balanced protection and mobility for personnel expected to handle varied situations.',
+  category: 'suit',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 8.5,
+  baseValue: 4500,
+  requiredLevel: 15,
+  ilvl: computeIlvl(2, 'rare'),
+  textureKey: 'item_suit_scout',
+  color: 0x4a5a6a,
+  equipSlot: 'exosuit',
+  moduleSlots: 4,
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', toughness: 18, haste: 10, durability: 25 } },
+  ],
+  grantedAbilities: ['nano_repair', 'overclock'],
+};
+
+// Level 25 rare suit
+export const SUIT_EXPEDITION_RARE: ItemDefinition = {
+  id: 'suit_expedition_rare',
+  displayName: 'Expedition Exo-Suit',
+  description:
+    'Designed for extended operations in Tier II-III zones. Self-contained life support and reinforced joints for rough terrain navigation.',
+  category: 'suit',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 10.0,
+  baseValue: 12000,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'rare'),
+  textureKey: 'item_suit_environmental',
+  color: 0x5a6a5a,
+  equipSlot: 'exosuit',
+  moduleSlots: 4,
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', toughness: 30, durability: 45, recovery: 12, resilience: 10 } },
+  ],
+  grantedAbilities: ['nano_repair', 'energy_barrier', 'regeneration_protocol'],
+};
+
+// Level 35 rare suit
+export const SUIT_ELITE_FIELD_RARE: ItemDefinition = {
+  id: 'suit_elite_field_rare',
+  displayName: 'Elite Field Suit',
+  description:
+    'Top-tier field equipment issued to senior corporate personnel. Represents the best that mass production can achieve.',
+  category: 'suit',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 9.0,
+  baseValue: 25000,
+  requiredLevel: 35,
+  ilvl: computeIlvl(4, 'rare'),
+  textureKey: 'item_suit_tactical',
+  color: 0x4a5a7a,
+  equipSlot: 'exosuit',
+  moduleSlots: 5,
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', toughness: 45, durability: 60, power: 15, resilience: 12 } },
+  ],
+  grantedAbilities: ['nano_repair', 'magnetic_field', 'fortify_systems'],
+};
+
+// Level 45 rare suit
+export const SUIT_MASTER_RARE: ItemDefinition = {
+  id: 'suit_master_rare',
+  displayName: "Master's Exo-Suit",
+  description:
+    'The finest conventional suit available through standard corporate channels. Only issued to operatives with proven track records.',
+  category: 'suit',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 8.5,
+  baseValue: 45000,
+  requiredLevel: 45,
+  ilvl: computeIlvl(5, 'rare'),
+  textureKey: 'item_suit_tactical',
+  color: 0x3a4a6a,
+  equipSlot: 'exosuit',
+  moduleSlots: 5,
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', toughness: 60, durability: 80, power: 18, recovery: 15, resilience: 15 } },
+  ],
+  grantedAbilities: ['nano_repair', 'magnetic_field', 'fortify_systems', 'emergency_shield'],
 };
 
 // ============================================================
@@ -112,7 +301,9 @@ export const SUIT_TACTICAL_EPIC: ItemDefinition = {
   color: 0x2a3a5a,
   equipSlot: 'exosuit',
   moduleSlots: 4,
-  effects: [],
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', toughness: 25, power: 20, haste: 12, durability: 35 } },
+  ],
   grantedAbilities: ['nano_repair', 'magnetic_field', 'fortify_systems'],
 };
 
@@ -315,16 +506,24 @@ export const SUIT_TERMINUS_ADAPTATION_EXOTIC: ItemDefinition = {
 export const ALL_SUITS: readonly ItemDefinition[] = [
   SUIT_BASIC_COMMON,
   SUIT_SALVAGED_COMMON,
+  SUIT_WORKER_COMMON,
+  SUIT_INDUSTRIAL_COMMON,
+  SUIT_VETERAN_COMMON,
+  SUIT_HARDENED_COMMON,
   SUIT_REINFORCED_RARE,
   SUIT_SCOUT_RARE,
+  SUIT_HAZMAT_RARE,
+  SUIT_FIELD_OPERATIVE_RARE,
+  SUIT_EXPEDITION_RARE,
+  SUIT_ELITE_FIELD_RARE,
+  SUIT_MASTER_RARE,
   SUIT_TACTICAL_EPIC,
   SUIT_ENVIRONMENTAL_EPIC,
-  SUIT_NEXUS_COMBAT_FRAME_EXOTIC,
-  SUIT_HELIX_RESEARCH_FRAME_EXOTIC,
-  SUIT_VOID_WALKER_LEGENDARY,
-  SUIT_ANCIENT_PROTOTYPE_LEGENDARY,
-  SUIT_HAZMAT_RARE,
   SUIT_ASSAULT_FRAME_EPIC,
   SUIT_STALKER_RECON_EPIC,
+  SUIT_NEXUS_COMBAT_FRAME_EXOTIC,
+  SUIT_HELIX_RESEARCH_FRAME_EXOTIC,
   SUIT_TERMINUS_ADAPTATION_EXOTIC,
+  SUIT_VOID_WALKER_LEGENDARY,
+  SUIT_ANCIENT_PROTOTYPE_LEGENDARY,
 ];
