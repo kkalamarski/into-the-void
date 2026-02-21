@@ -358,10 +358,10 @@ Plans:
   1. Item tooltip delta matches actual stat change when equipped
   2. Client and server use same calculation functions from game-logic package
   3. Integration test asserts server stats equal client stats for same equipment
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 62-01: Implementation TBD
+- [ ] 62-01-PLAN.md — Create shared stat helpers and refactor client tooltip
 
 #### Phase 63: Content Normalization
 
@@ -453,4 +453,4 @@ Phases execute in numeric order: 59 → 60 → 61 → 62 → 63
 **Total:** 63 phases (61 complete, 2 remaining)
 
 ---
-*Last updated: 2026-02-21 after Phase 61 execution*
+*Last updated: 2026-02-21 after Phase 62 planning*
