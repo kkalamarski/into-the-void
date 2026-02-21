@@ -1,10 +1,114 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { computeCharStats } from './char-stats';
-import type { EquipmentJson } from '@into-the-void/database';
+import type { EquipmentJson, InventoryItemJson } from '@into-the-void/database';
 import { ItemRegistry } from '@into-the-void/items';
 import type { ItemDefinition } from '@into-the-void/items';
+import type { CharacterStats, Buff } from '@into-the-void/shared-types';
 
 const emptyEquipment: EquipmentJson = { modules: [] };
+
+// Test helper: create mock module definition
+function createMockModule(id: string, stat: keyof CharacterStats, amount: number): ItemDefinition {
+  return {
+    id,
+    displayName: `Test ${stat} Module`,
+    description: `Test module that boosts ${stat} by ${amount}`,
+    category: 'module',
+    rarity: 'common',
+    maxStack: 1,
+    weight: 1,
+    baseValue: 0,
+    requiredLevel: 1,
+    ilvl: 1,
+    textureKey: 'item_unknown',
+    color: 0xffffff,
+    equipSlot: 'module',
+    effects: [
+      {
+        trigger: 'on_equip',
+        effect: { type: 'stats', [stat]: amount } as any,
+      },
+    ],
+  };
+}
+
+// Test helper: create mock suit definition
+function createMockSuit(id: string, stat: keyof CharacterStats, amount: number): ItemDefinition {
+  return {
+    id,
+    displayName: `Test ${stat} Suit`,
+    description: `Test suit that boosts ${stat} by ${amount}`,
+    category: 'suit',
+    rarity: 'common',
+    maxStack: 1,
+    weight: 5,
+    baseValue: 0,
+    requiredLevel: 1,
+    ilvl: 1,
+    textureKey: 'item_unknown',
+    color: 0xffffff,
+    equipSlot: 'exosuit',
+    moduleSlots: 3,
+    effects: [
+      {
+        trigger: 'on_equip',
+        effect: { type: 'stats', [stat]: amount } as any,
+      },
+    ],
+  };
+}
+
+// Test helper: create mock item with multiple stats
+function createMockItemWithMultiStats(
+  id: string,
+  category: 'suit' | 'tool' | 'module',
+  stats: Partial<CharacterStats>
+): ItemDefinition {
+  return {
+    id,
+    displayName: `Test ${category}`,
+    description: 'Test item with multiple stat bonuses',
+    category,
+    rarity: 'common',
+    maxStack: 1,
+    weight: category === 'suit' ? 5 : 1,
+    baseValue: 0,
+    requiredLevel: 1,
+    ilvl: 1,
+    textureKey: 'item_unknown',
+    color: 0xffffff,
+    equipSlot: category === 'suit' ? 'exosuit' : category === 'tool' ? 'tool' : 'module',
+    moduleSlots: category === 'suit' ? 3 : undefined,
+    effects: [
+      {
+        trigger: 'on_equip',
+        effect: { type: 'stats', ...stats } as any,
+      },
+    ],
+  };
+}
+
+// Test helper: create module inventory item
+function createModuleItem(itemId: string, slot: number): InventoryItemJson {
+  return {
+    instanceId: `test-${itemId}-${slot}`,
+    itemId,
+    quantity: 1,
+    slot,
+    properties: {},
+  };
+}
+
+// Test helper: create generic inventory item
+function createInventoryItem(itemId: string): InventoryItemJson {
+  return {
+    instanceId: `test-${itemId}`,
+    itemId,
+    quantity: 1,
+    slot: 0,
+    properties: {},
+  };
+}
 
 describe('computeCharStats', () => {
   afterEach(() => {
@@ -94,5 +198,126 @@ describe('computeCharStats', () => {
       expect(typeof stats[key]).toBe('number');
       expect(stats[key]).toBeGreaterThan(0);
     }
+  });
+
+  it('module array permutations produce same stats (AGGR-02)', () => {
+    // Create 3 distinct modules with different stat bonuses
+    const module1Id = 'test_module_durability';
+    const module2Id = 'test_module_power';
+    const module3Id = 'test_module_toughness';
+
+    const modules: Record<string, ItemDefinition> = {
+      [module1Id]: createMockModule(module1Id, 'durability', 15),
+      [module2Id]: createMockModule(module2Id, 'power', 10),
+      [module3Id]: createMockModule(module3Id, 'toughness', 8),
+    };
+
+    vi.spyOn(ItemRegistry, 'get').mockImplementation((id) => modules[id]);
+
+    // Generate all 6 permutations of module order
+    const moduleItems = [
+      createModuleItem(module1Id, 0),
+      createModuleItem(module2Id, 1),
+      createModuleItem(module3Id, 2),
+    ];
+
+    const permutations = [
+      [moduleItems[0], moduleItems[1], moduleItems[2]],
+      [moduleItems[0], moduleItems[2], moduleItems[1]],
+      [moduleItems[1], moduleItems[0], moduleItems[2]],
+      [moduleItems[1], moduleItems[2], moduleItems[0]],
+      [moduleItems[2], moduleItems[0], moduleItems[1]],
+      [moduleItems[2], moduleItems[1], moduleItems[0]],
+    ];
+
+    const results = permutations.map((modules) =>
+      computeCharStats(5, { modules })
+    );
+
+    // All permutations should produce identical stats
+    for (let i = 1; i < results.length; i++) {
+      expect(results[i]).toEqual(results[0]);
+    }
+
+    // Verify expected totals (base level 5 stats + bonuses)
+    const baseStats = computeCharStats(5, { modules: [] });
+    expect(results[0].durability).toBe(baseStats.durability + 15);
+    expect(results[0].power).toBe(baseStats.power + 10);
+    expect(results[0].toughness).toBe(baseStats.toughness + 8);
+  });
+
+  it('equipment and buff stats combine correctly in documented order (AGGR-01)', () => {
+    const suitId = 'test_suit_durability';
+    const suitDef = createMockSuit(suitId, 'durability', 25);
+
+    vi.spyOn(ItemRegistry, 'get').mockReturnValue(suitDef);
+
+    const equipment: EquipmentJson = {
+      exosuit: {
+        instanceId: 'suit-1',
+        itemId: suitId,
+        quantity: 1,
+        slot: 0,
+        properties: {},
+      },
+      modules: [],
+    };
+
+    const buff: Buff = {
+      id: 'buff-1',
+      abilityId: 'test_ability',
+      stat: 'durability',
+      amount: 10,
+      expiresAt: Date.now() + 10000,
+      displayName: 'Test Buff',
+      iconColor: 0x00ff00,
+    };
+
+    const baseStats = computeCharStats(5, { modules: [] });
+    const withEquipment = computeCharStats(5, equipment);
+    const withBoth = computeCharStats(5, equipment, 'player', [buff]);
+
+    // Verify aggregation: base -> equipment -> buffs
+    expect(withEquipment.durability).toBe(baseStats.durability + 25);
+    expect(withBoth.durability).toBe(baseStats.durability + 25 + 10);
+  });
+
+  it('known equipment combinations match expected totals (AGGR-03)', () => {
+    const suitId = 'test_full_loadout_suit';
+    const toolId = 'test_full_loadout_tool';
+    const moduleId = 'test_full_loadout_module';
+
+    // Suit: +30 durability, +15 toughness
+    // Tool: +20 power
+    // Module: +10 haste
+
+    const items: Record<string, ItemDefinition> = {
+      [suitId]: createMockItemWithMultiStats(suitId, 'suit', { durability: 30, toughness: 15 }),
+      [toolId]: createMockItemWithMultiStats(toolId, 'tool', { power: 20 }),
+      [moduleId]: createMockItemWithMultiStats(moduleId, 'module', { haste: 10 }),
+    };
+
+    vi.spyOn(ItemRegistry, 'get').mockImplementation((id) => items[id]);
+
+    const equipment: EquipmentJson = {
+      exosuit: createInventoryItem(suitId),
+      tool: createInventoryItem(toolId),
+      modules: [createModuleItem(moduleId, 0)],
+    };
+
+    const baseStats = computeCharStats(5, { modules: [] });
+    const fullLoadout = computeCharStats(5, equipment);
+
+    // Validate exact expected totals
+    expect(fullLoadout.durability).toBe(baseStats.durability + 30);
+    expect(fullLoadout.toughness).toBe(baseStats.toughness + 15);
+    expect(fullLoadout.power).toBe(baseStats.power + 20);
+    expect(fullLoadout.haste).toBe(baseStats.haste + 10);
+
+    // Unchanged stats should match base
+    expect(fullLoadout.vigor).toBe(baseStats.vigor);
+    expect(fullLoadout.recovery).toBe(baseStats.recovery);
+    expect(fullLoadout.perception).toBe(baseStats.perception);
+    expect(fullLoadout.resilience).toBe(baseStats.resilience);
   });
 });
