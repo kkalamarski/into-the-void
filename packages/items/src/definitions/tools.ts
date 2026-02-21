@@ -22,7 +22,7 @@ export const TOOL_UNIVERSAL_COMMON: ItemDefinition = {
   equipSlot: 'tool',
   toolType: 'universal',
   effects: [
-    { trigger: 'on_equip', effect: { type: 'stat_buff', stat: 'power', amount: 3, duration: 0 } },
+    { trigger: 'on_equip', effect: { type: 'stats', power: 3 } },
   ],
   range: 1,
   grantedAbilities: ['basic_strike'],
@@ -356,6 +356,526 @@ export const TOOL_RESEARCH_LEGENDARY: ItemDefinition = {
 };
 
 // ============================================================
+// INTERMEDIATE COMMON TOOLS — scaling progression
+// ============================================================
+
+// Level 10 common tools
+export const TOOL_MINING_COMMON_MK2: ItemDefinition = {
+  id: 'tool_mining_common_mk2',
+  displayName: 'Mining Drill Mk.II',
+  description:
+    'An improved extraction tool with better torque control. Standard upgrade for operatives working deeper sites.',
+  category: 'tool',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 3.2,
+  baseValue: 800,
+  requiredLevel: 10,
+  ilvl: computeIlvl(2, 'common'),
+  textureKey: 'item_tool_mining',
+  color: 0xdd9955,
+  equipSlot: 'tool',
+  toolType: 'mining',
+  effects: [],
+  range: 1,
+  grantedAbilities: ['basic_strike', 'thermal_lance'],
+};
+
+export const TOOL_COMBAT_COMMON_MK2: ItemDefinition = {
+  id: 'tool_combat_common_mk2',
+  displayName: 'Shock Baton Mk.II',
+  description:
+    'Enhanced electrostatic weapon with improved charge capacity. Favored by station security personnel.',
+  category: 'tool',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.7,
+  baseValue: 800,
+  requiredLevel: 10,
+  ilvl: computeIlvl(2, 'common'),
+  textureKey: 'item_tool_combat',
+  color: 0x5599dd,
+  equipSlot: 'tool',
+  toolType: 'combat',
+  effects: [],
+  range: 1,
+  grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute'],
+};
+
+export const TOOL_RESEARCH_COMMON_MK2: ItemDefinition = {
+  id: 'tool_research_common_mk2',
+  displayName: 'Field Scanner Mk.II',
+  description:
+    'Enhanced analysis unit with improved spectrum coverage. Required for accurate Tier II biome cataloging.',
+  category: 'tool',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.2,
+  baseValue: 800,
+  requiredLevel: 10,
+  ilvl: computeIlvl(2, 'common'),
+  textureKey: 'item_tool_research',
+  color: 0x55dddd,
+  equipSlot: 'tool',
+  toolType: 'research',
+  effects: [],
+  range: 2,
+  grantedAbilities: ['energy_pulse', 'resource_scan'],
+};
+
+// Level 20 common tools
+export const TOOL_MINING_COMMON_MK3: ItemDefinition = {
+  id: 'tool_mining_common_mk3',
+  displayName: 'Industrial Drill',
+  description:
+    'Heavy-duty extraction equipment for serious mining operations. Cuts through compressed mineral deposits with ease.',
+  category: 'tool',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 3.5,
+  baseValue: 2500,
+  requiredLevel: 20,
+  ilvl: computeIlvl(3, 'common'),
+  textureKey: 'item_tool_mining',
+  color: 0xee8844,
+  equipSlot: 'tool',
+  toolType: 'mining',
+  effects: [],
+  range: 2,
+  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst'],
+};
+
+export const TOOL_COMBAT_COMMON_MK3: ItemDefinition = {
+  id: 'tool_combat_common_mk3',
+  displayName: 'Pulse Carbine',
+  description:
+    'Standard-issue directed energy weapon. Reliable performance in most combat situations.',
+  category: 'tool',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 2.5,
+  baseValue: 2500,
+  requiredLevel: 20,
+  ilvl: computeIlvl(3, 'common'),
+  textureKey: 'item_tool_combat',
+  color: 0x4488ee,
+  equipSlot: 'tool',
+  toolType: 'combat',
+  effects: [],
+  range: 3,
+  grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike'],
+};
+
+export const TOOL_RESEARCH_COMMON_MK3: ItemDefinition = {
+  id: 'tool_research_common_mk3',
+  displayName: 'Analysis Suite',
+  description:
+    'Comprehensive field laboratory in portable form. Handles most cataloging and research requirements.',
+  category: 'tool',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.5,
+  baseValue: 2500,
+  requiredLevel: 20,
+  ilvl: computeIlvl(3, 'common'),
+  textureKey: 'item_tool_research',
+  color: 0x44eeee,
+  equipSlot: 'tool',
+  toolType: 'research',
+  effects: [],
+  range: 3,
+  grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen'],
+};
+
+// Level 30 common tools
+export const TOOL_MINING_COMMON_MK4: ItemDefinition = {
+  id: 'tool_mining_common_mk4',
+  displayName: 'Deep Core Extractor',
+  description:
+    'Professional-grade mining equipment. Capable of reaching mineral veins that cheaper tools cannot access.',
+  category: 'tool',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 3.8,
+  baseValue: 6000,
+  requiredLevel: 30,
+  ilvl: computeIlvl(4, 'common'),
+  textureKey: 'item_tool_mining',
+  color: 0xff7733,
+  equipSlot: 'tool',
+  toolType: 'mining',
+  effects: [],
+  range: 3,
+  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse'],
+};
+
+export const TOOL_COMBAT_COMMON_MK4: ItemDefinition = {
+  id: 'tool_combat_common_mk4',
+  displayName: 'Heavy Pulse Rifle',
+  description:
+    'High-powered energy weapon for serious combat operations. Standard armament for corporate security forces.',
+  category: 'tool',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 3.0,
+  baseValue: 6000,
+  requiredLevel: 30,
+  ilvl: computeIlvl(4, 'common'),
+  textureKey: 'item_tool_combat',
+  color: 0x3377ff,
+  equipSlot: 'tool',
+  toolType: 'combat',
+  effects: [],
+  range: 4,
+  grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike', 'precision_shot'],
+};
+
+export const TOOL_RESEARCH_COMMON_MK4: ItemDefinition = {
+  id: 'tool_research_common_mk4',
+  displayName: 'Quantum Analyzer',
+  description:
+    'Advanced research equipment for detailed specimen analysis. Required for Tier III+ research operations.',
+  category: 'tool',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.3,
+  baseValue: 6000,
+  requiredLevel: 30,
+  ilvl: computeIlvl(4, 'common'),
+  textureKey: 'item_tool_research',
+  color: 0x33ffff,
+  equipSlot: 'tool',
+  toolType: 'research',
+  effects: [],
+  range: 4,
+  grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen', 'overclock'],
+};
+
+// Level 40 common tools
+export const TOOL_MINING_COMMON_MK5: ItemDefinition = {
+  id: 'tool_mining_common_mk5',
+  displayName: 'Precision Bore System',
+  description:
+    'The finest conventional mining equipment available. Maximizes yield while minimizing waste.',
+  category: 'tool',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 3.5,
+  baseValue: 15000,
+  requiredLevel: 40,
+  ilvl: computeIlvl(5, 'common'),
+  textureKey: 'item_tool_mining',
+  color: 0xff6622,
+  equipSlot: 'tool',
+  toolType: 'mining',
+  effects: [],
+  range: 4,
+  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse', 'void_drain'],
+};
+
+export const TOOL_COMBAT_COMMON_MK5: ItemDefinition = {
+  id: 'tool_combat_common_mk5',
+  displayName: 'Assault Platform',
+  description:
+    'Top-tier conventional combat equipment. Issued to elite corporate security and veteran operatives.',
+  category: 'tool',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 3.2,
+  baseValue: 15000,
+  requiredLevel: 40,
+  ilvl: computeIlvl(5, 'common'),
+  textureKey: 'item_tool_combat',
+  color: 0x2266ff,
+  equipSlot: 'tool',
+  toolType: 'combat',
+  effects: [],
+  range: 5,
+  grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike', 'precision_shot', 'cryo_blast'],
+};
+
+export const TOOL_RESEARCH_COMMON_MK5: ItemDefinition = {
+  id: 'tool_research_common_mk5',
+  displayName: 'Integrated Research Platform',
+  description:
+    'Comprehensive analysis system for professional researchers. Handles all standard cataloging requirements.',
+  category: 'tool',
+  rarity: 'common',
+  maxStack: 1,
+  weight: 1.4,
+  baseValue: 15000,
+  requiredLevel: 40,
+  ilvl: computeIlvl(5, 'common'),
+  textureKey: 'item_tool_research',
+  color: 0x22ffff,
+  equipSlot: 'tool',
+  toolType: 'research',
+  effects: [],
+  range: 5,
+  grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen', 'overclock', 'void_drain'],
+};
+
+// ============================================================
+// INTERMEDIATE RARE TOOLS — scaling progression
+// ============================================================
+
+// Level 15 rare tools
+export const TOOL_MINING_RARE_MK2: ItemDefinition = {
+  id: 'tool_mining_rare_mk2',
+  displayName: 'Thermal Excavator',
+  description:
+    'High-performance extraction tool with integrated thermal processing. Preferred by Helix deep-site teams.',
+  category: 'tool',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 3.5,
+  baseValue: 3500,
+  requiredLevel: 15,
+  ilvl: computeIlvl(2, 'rare'),
+  textureKey: 'item_tool_mining',
+  color: 0xee6633,
+  equipSlot: 'tool',
+  toolType: 'mining',
+  effects: [],
+  range: 2,
+  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst'],
+};
+
+export const TOOL_COMBAT_RARE_MK2: ItemDefinition = {
+  id: 'tool_combat_rare_mk2',
+  displayName: 'Tactical Sidearm',
+  description:
+    'Military-specification combat weapon. Balanced performance for tactical operations.',
+  category: 'tool',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 2.0,
+  baseValue: 3500,
+  requiredLevel: 15,
+  ilvl: computeIlvl(2, 'rare'),
+  textureKey: 'item_tool_combat',
+  color: 0x4477ee,
+  equipSlot: 'tool',
+  toolType: 'combat',
+  effects: [],
+  range: 3,
+  grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike'],
+};
+
+export const TOOL_RESEARCH_RARE_MK2: ItemDefinition = {
+  id: 'tool_research_rare_mk2',
+  displayName: 'Spectral Analyzer',
+  description:
+    'Enhanced research equipment with expanded detection capabilities. Used by Verdant field scientists.',
+  category: 'tool',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.4,
+  baseValue: 3500,
+  requiredLevel: 15,
+  ilvl: computeIlvl(2, 'rare'),
+  textureKey: 'item_tool_research',
+  color: 0x44ddee,
+  equipSlot: 'tool',
+  toolType: 'research',
+  effects: [],
+  range: 3,
+  grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen'],
+};
+
+// Level 25 rare tools
+export const TOOL_MINING_RARE_MK3: ItemDefinition = {
+  id: 'tool_mining_rare_mk3',
+  displayName: 'Magma Cutter',
+  description:
+    'Industrial extraction tool using superheated plasma. Cuts through any mineral formation.',
+  category: 'tool',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 3.8,
+  baseValue: 10000,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'rare'),
+  textureKey: 'item_tool_mining',
+  color: 0xff5522,
+  equipSlot: 'tool',
+  toolType: 'mining',
+  effects: [],
+  range: 3,
+  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse'],
+};
+
+export const TOOL_COMBAT_RARE_MK3: ItemDefinition = {
+  id: 'tool_combat_rare_mk3',
+  displayName: 'Assault Carbine',
+  description:
+    'High-powered combat weapon for dangerous operations. Standard issue for corporate strike teams.',
+  category: 'tool',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 2.8,
+  baseValue: 10000,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'rare'),
+  textureKey: 'item_tool_combat',
+  color: 0x3366ff,
+  equipSlot: 'tool',
+  toolType: 'combat',
+  effects: [],
+  range: 4,
+  grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike', 'precision_shot'],
+};
+
+export const TOOL_RESEARCH_RARE_MK3: ItemDefinition = {
+  id: 'tool_research_rare_mk3',
+  displayName: 'Molecular Scanner',
+  description:
+    'Advanced analysis equipment for detailed molecular-level research. Required for classified projects.',
+  category: 'tool',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.5,
+  baseValue: 10000,
+  requiredLevel: 25,
+  ilvl: computeIlvl(3, 'rare'),
+  textureKey: 'item_tool_research',
+  color: 0x33eeff,
+  equipSlot: 'tool',
+  toolType: 'research',
+  effects: [],
+  range: 4,
+  grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen', 'overclock'],
+};
+
+// Level 35 rare tools
+export const TOOL_MINING_RARE_MK4: ItemDefinition = {
+  id: 'tool_mining_rare_mk4',
+  displayName: 'Fusion Extractor',
+  description:
+    'Elite extraction equipment using controlled fusion reactions. Reaches deposits other tools cannot.',
+  category: 'tool',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 3.5,
+  baseValue: 22000,
+  requiredLevel: 35,
+  ilvl: computeIlvl(4, 'rare'),
+  textureKey: 'item_tool_mining',
+  color: 0xff4411,
+  equipSlot: 'tool',
+  toolType: 'mining',
+  effects: [],
+  range: 4,
+  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse', 'void_drain'],
+};
+
+export const TOOL_COMBAT_RARE_MK4: ItemDefinition = {
+  id: 'tool_combat_rare_mk4',
+  displayName: 'Precision Rifle',
+  description:
+    'Elite combat weapon with enhanced targeting systems. Favored by Nexus intelligence operatives.',
+  category: 'tool',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 3.0,
+  baseValue: 22000,
+  requiredLevel: 35,
+  ilvl: computeIlvl(4, 'rare'),
+  textureKey: 'item_tool_combat',
+  color: 0x2255ff,
+  equipSlot: 'tool',
+  toolType: 'combat',
+  effects: [],
+  range: 5,
+  grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike', 'precision_shot', 'cryo_blast'],
+};
+
+export const TOOL_RESEARCH_RARE_MK4: ItemDefinition = {
+  id: 'tool_research_rare_mk4',
+  displayName: 'Subatomic Probe',
+  description:
+    'High-precision research equipment for advanced analysis. Classified corporate research standard.',
+  category: 'tool',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.3,
+  baseValue: 22000,
+  requiredLevel: 35,
+  ilvl: computeIlvl(4, 'rare'),
+  textureKey: 'item_tool_research',
+  color: 0x22eeff,
+  equipSlot: 'tool',
+  toolType: 'research',
+  effects: [],
+  range: 5,
+  grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen', 'overclock', 'void_drain'],
+};
+
+// Level 45 rare tools
+export const TOOL_MINING_RARE_MK5: ItemDefinition = {
+  id: 'tool_mining_rare_mk5',
+  displayName: 'Quantum Bore',
+  description:
+    'The finest mining equipment available through standard channels. Maximum efficiency, maximum yield.',
+  category: 'tool',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 3.2,
+  baseValue: 40000,
+  requiredLevel: 45,
+  ilvl: computeIlvl(5, 'rare'),
+  textureKey: 'item_tool_mining',
+  color: 0xff3300,
+  equipSlot: 'tool',
+  toolType: 'mining',
+  effects: [],
+  range: 5,
+  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse', 'void_drain', 'cryo_blast'],
+};
+
+export const TOOL_COMBAT_RARE_MK5: ItemDefinition = {
+  id: 'tool_combat_rare_mk5',
+  displayName: 'Elite Battle Platform',
+  description:
+    'Top-tier conventional combat system. The best that credits can buy through legitimate channels.',
+  category: 'tool',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 3.5,
+  baseValue: 40000,
+  requiredLevel: 45,
+  ilvl: computeIlvl(5, 'rare'),
+  textureKey: 'item_tool_combat',
+  color: 0x1144ff,
+  equipSlot: 'tool',
+  toolType: 'combat',
+  effects: [],
+  range: 5,
+  grantedAbilities: ['basic_strike', 'shield_bash', 'electrocute', 'concussive_strike', 'precision_shot', 'cryo_blast', 'power_surge'],
+};
+
+export const TOOL_RESEARCH_RARE_MK5: ItemDefinition = {
+  id: 'tool_research_rare_mk5',
+  displayName: 'Xenoanalysis Platform',
+  description:
+    'Comprehensive research system for professional xenobiologists. The pinnacle of conventional analysis technology.',
+  category: 'tool',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 1.5,
+  baseValue: 40000,
+  requiredLevel: 45,
+  ilvl: computeIlvl(5, 'rare'),
+  textureKey: 'item_tool_research',
+  color: 0x11eeff,
+  equipSlot: 'tool',
+  toolType: 'research',
+  effects: [],
+  range: 5,
+  grantedAbilities: ['energy_pulse', 'resource_scan', 'analyze_specimen', 'overclock', 'void_drain', 'power_surge'],
+};
+
+// ============================================================
 // HYBRID/SPECIALIZED TOOLS (4) — unique ability combinations
 // ============================================================
 
@@ -448,24 +968,51 @@ export const TOOL_ANOMALY_EXOTIC: ItemDefinition = {
 // ============================================================
 
 export const ALL_TOOLS: readonly ItemDefinition[] = [
+  // Common tools by level
   TOOL_UNIVERSAL_COMMON,
   TOOL_MINING_COMMON,
-  TOOL_MINING_RARE,
-  TOOL_MINING_EPIC,
-  TOOL_MINING_EXOTIC,
-  TOOL_MINING_LEGENDARY,
   TOOL_COMBAT_COMMON,
-  TOOL_COMBAT_RARE,
-  TOOL_COMBAT_EPIC,
-  TOOL_COMBAT_EXOTIC,
-  TOOL_COMBAT_LEGENDARY,
   TOOL_RESEARCH_COMMON,
+  TOOL_MINING_COMMON_MK2,
+  TOOL_COMBAT_COMMON_MK2,
+  TOOL_RESEARCH_COMMON_MK2,
+  TOOL_MINING_COMMON_MK3,
+  TOOL_COMBAT_COMMON_MK3,
+  TOOL_RESEARCH_COMMON_MK3,
+  TOOL_MINING_COMMON_MK4,
+  TOOL_COMBAT_COMMON_MK4,
+  TOOL_RESEARCH_COMMON_MK4,
+  TOOL_MINING_COMMON_MK5,
+  TOOL_COMBAT_COMMON_MK5,
+  TOOL_RESEARCH_COMMON_MK5,
+  // Rare tools by level
+  TOOL_MINING_RARE,
+  TOOL_COMBAT_RARE,
   TOOL_RESEARCH_RARE,
-  TOOL_RESEARCH_EPIC,
-  TOOL_RESEARCH_EXOTIC,
-  TOOL_RESEARCH_LEGENDARY,
   TOOL_BIO_PROBE_RARE,
+  TOOL_MINING_RARE_MK2,
+  TOOL_COMBAT_RARE_MK2,
+  TOOL_RESEARCH_RARE_MK2,
+  TOOL_MINING_RARE_MK3,
+  TOOL_COMBAT_RARE_MK3,
+  TOOL_RESEARCH_RARE_MK3,
+  TOOL_MINING_RARE_MK4,
+  TOOL_COMBAT_RARE_MK4,
+  TOOL_RESEARCH_RARE_MK4,
+  TOOL_MINING_RARE_MK5,
+  TOOL_COMBAT_RARE_MK5,
+  TOOL_RESEARCH_RARE_MK5,
+  // Epic+ tools
+  TOOL_MINING_EPIC,
+  TOOL_COMBAT_EPIC,
+  TOOL_RESEARCH_EPIC,
   TOOL_DEMOLITION_EPIC,
+  TOOL_MINING_EXOTIC,
+  TOOL_COMBAT_EXOTIC,
+  TOOL_RESEARCH_EXOTIC,
   TOOL_STEALTH_EXOTIC,
   TOOL_ANOMALY_EXOTIC,
+  TOOL_MINING_LEGENDARY,
+  TOOL_COMBAT_LEGENDARY,
+  TOOL_RESEARCH_LEGENDARY,
 ];
