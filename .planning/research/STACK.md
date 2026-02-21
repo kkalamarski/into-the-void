@@ -1,29 +1,32 @@
-# Stack Research: Active Combat Abilities System
+# Stack Research: Quest System
 
-**Domain:** Multiplayer 2D sci-fi survival MMO — Active combat abilities with energy costs, cooldowns, buff/debuff effects, radial cooldown UI
-**Researched:** 2026-02-20
+**Domain:** Multiplayer 2D sci-fi survival MMO — Quest definitions, objective tracking, progression states, rewards
+**Researched:** 2026-02-21
 **Confidence:** HIGH
 
 ## Executive Summary
 
-The active abilities milestone requires **zero new npm packages**. Every capability — cooldown tracking, radial cooldown visualization, buff duration management, energy cost validation, ability definitions tied to items — can be implemented using the existing stack: Phaser 3.80 (graphics API), Zustand 4.5 (state management), NestJS 10.3 (service layer), Socket.IO 4.7 (real-time events), and TypeScript 5.4 (discriminated unions).
+The quest system milestone requires **minimal new dependencies**. The existing stack — TypeScript 5.4 (discriminated unions), Drizzle ORM 0.30 (PostgreSQL schema), NestJS 10.3 (service layer), Zustand 4.5 (client state), Socket.IO 4.7 (real-time events) — already provides all core capabilities for quest definitions, objective tracking, state management, and reward distribution.
 
-The existing codebase already has:
-- **Action bar with hotkeys** — `apps/web/src/ui/hud/ActionBar.tsx` binds keys 1-8 to item slots
-- **Item effect system** — `packages/items/src/types.ts` defines `ItemEffect` discriminated union with `heal`, `stat_buff`, `energy_restore` effects
-- **Energy tracking** — `Player` interface has `energy` and `maxEnergy` fields; HUD displays energy bar
-- **Combat damage calculation** — `combat.service.ts` validates range, computes damage, broadcasts results
-- **Real-time event broadcasting** — Socket.IO emits `combat:damage`, `player:health`, `stats:update`
-- **Timer infrastructure** — Phaser `Phaser.Time.TimerEvent` for client-side durations, NestJS `@Interval()` for server-side ticks
+**What already exists:**
+- **Item reward system** — `inventory.service.ts` with `addItem()`, `removeItem()`, credits tracked on `characters` table
+- **NPC dialogue system** — `packages/npcs/src/types.ts` defines NPC dialogue with conditions
+- **Discriminated union patterns** — `ItemEffect`, `NpcDefinition` use TypeScript discriminated unions for type-safe variants
+- **JSONB storage patterns** — `inventories.items`, `characters.stats` store structured data with `.$type<T>()` type safety
+- **Real-time event broadcasting** — Socket.IO emits state changes (`inventory:update`, `player:stats`)
+- **Server-authoritative validation** — All player actions validated server-side before state changes
 
-What is genuinely new:
-1. **Cooldown state tracking** — Extend `actionBarStore` (Zustand) with `Map<abilityId, { endsAt, duration }>` for cooldown expiration timestamps
-2. **Radial cooldown overlay** — New Phaser `Graphics` component drawing a pie-slice mask on action bar slots
-3. **Buff tracking service** — New `BuffService` in game-server using `Map<playerId, ActiveBuff[]>` with tick-based expiration (same pattern as `AiService`)
-4. **Ability effect types** — Extend existing `ItemEffect` union with `deal_damage`, `apply_buff`, `energy_cost` variants
-5. **Energy deduction** — Add `consumeEnergy(playerId, amount)` method to existing `PlayerService`
+**What is genuinely new:**
+1. **Quest definition registry** — New `@into-the-void/quests` package mirroring `@into-the-void/npcs` pattern
+2. **Quest state tracking** — New `quest_progress` database table with JSONB for objective progress
+3. **Quest state machine** — TypeScript discriminated union for quest states (available, active, completed, failed)
+4. **Objective validation service** — New `QuestService` in game-server tracking objective progress via event listeners
+5. **Quest UI components** — React components for quest log, tracker, and rewards display
 
-No external libraries. No version upgrades. Pure feature extension.
+**One optional dependency to consider:**
+- `@nestjs/event-emitter` (v3.0.1) — Enables decoupled objective tracking via internal event bus. Server-side events like `entity:kill`, `item:collect`, `npc:interact` trigger quest objective checks without tight coupling. Alternative: Manual quest check calls in existing services (more coupled, less scalable).
+
+**Recommendation:** Add `@nestjs/event-emitter`. It's the NestJS-native solution for event-driven quest objectives, minimal overhead (built on EventEmitter2), and follows the same architectural pattern as larger MMOs (WoW uses event-driven quest tracking). Zero breaking changes to existing code.
 
 ---
 
@@ -33,43 +36,46 @@ No external libraries. No version upgrades. Pure feature extension.
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| TypeScript | ^5.4.0 | Ability definitions, cooldown state types, buff state types | Discriminated unions for `ItemEffect` variants (e.g., `{ type: 'deal_damage', baseDamage: number }`). Same pattern as existing `ItemEffect` types (heal, stat_buff). Zero API changes. |
-| Phaser 3 | ^3.80.0 | Radial cooldown overlay graphics, timer events for buff durations | `Phaser.GameObjects.Graphics.slice()` draws pie slices natively (perfect for radial cooldown sweeps). `Phaser.Time.TimerEvent` for client-side buff expiration reminders. Both APIs stable since Phaser 3.0. |
-| Zustand | ^4.5.0 | Cooldown state management in action bar | Extend existing `actionBarStore` with cooldown map. Zustand handles time-based state efficiently — derived state from timestamps avoids re-render storms (confirmed in Zustand discussions). |
-| NestJS | ^10.3.0 | `BuffService` for duration tracking, `AbilityService` for validation | Service layer mirrors `CombatService` pattern. `@Interval(100)` for 10Hz buff tick (same as `AiService` pattern). NestJS lifecycle (`OnModuleInit`, `OnModuleDestroy`) manages interval cleanup. |
-| Socket.IO | ^4.7.0 | Broadcast `ability:cast`, `buff:apply`, `buff:remove` events | New events follow existing `combat:damage`, `player:health` pattern. Client receives `ability:cast` with cooldown duration, starts cooldown overlay. No protocol changes. |
-| `@into-the-void/items` | workspace | Extend `ItemEffect` type with ability-specific effects | Items with `toolType: 'combat'` gain `effects: [{ type: 'deal_damage', ... }, { type: 'energy_cost', ... }]`. Same multi-effect pattern as stims (stat_buff effects). |
-| `@into-the-void/game-logic` | workspace | `calculateAbilityDamage()`, `applyBuff()` pure functions | Follows existing `calculateDamage()`, `computeCharStats()` patterns. Ability damage scales with Power stat (same as melee). Buffs modify stats temporarily. |
+| TypeScript | ^5.4.0 | Quest definitions, state machine types, objective types | Discriminated unions for quest states (`{ status: 'active', objectives: [...] }` vs `{ status: 'completed', completedAt: number }`). Same pattern as existing `ItemEffect`, `NpcDefinition`. Exhaustive checking ensures all quest states handled. |
+| Drizzle ORM | ^0.30.0 | Quest progress persistence, objective tracking schema | JSONB columns with `.$type<T>()` provide type-safe quest progress storage. Existing pattern: `inventories.items` stores array of `InventoryItemJson`. Quest objectives use same pattern: `quest_progress.objectives: ObjectiveProgress[]`. Partial indexes on `status` column provide 100x+ query speedup for active quests. |
+| NestJS | ^10.3.0 | `QuestService` for validation, reward distribution, progress tracking | Service layer mirrors `InventoryService` pattern. Quest validation (prerequisite checks, objective completion) follows server-authoritative model. NestJS lifecycle hooks (`OnModuleInit`) register event listeners for objective tracking. |
+| Zustand | ^4.5.0 | Client-side quest state (active quests, tracker UI) | Extend existing `gameStore` with `quests` slice. Quest tracker UI subscribes to `activeQuests` array. Zustand handles derived state efficiently (e.g., "next objective" computed from progress array). |
+| Socket.IO | ^4.7.0 | Broadcast quest updates (`quest:started`, `quest:progress`, `quest:completed`) | New events follow existing pattern (`inventory:update`, `player:stats`). Client receives `quest:progress` with updated objective counts, updates tracker UI. No protocol changes. |
+| `@into-the-void/items` | workspace | Quest reward item definitions | Quest rewards reference existing `ItemDefinition.id`. Reward distribution uses existing `InventoryService.addItem()`. Item definitions already include `baseValue` for credit rewards. |
+| `@into-the-void/npcs` | workspace | Quest giver associations, dialogue integration | NPCs gain `questIds: string[]` field listing offered quests. Dialogue conditions extend with `quest_available`, `quest_completed`. Mirrors existing `condition: 'trade'` pattern. |
+| `@into-the-void/game-logic` | workspace | Quest validation logic, reward calculation | Pure functions: `canAcceptQuest(player, quest)`, `calculateQuestRewards(quest, player)`. Follows existing `calculateDamage()`, `canEquipItem()` patterns. Testable, reusable across server/client. |
 
-### Supporting Libraries (Already Installed)
+### Supporting Libraries
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| `immer` | ^11.1.4 | Nested state updates in `buffStore` | Already used by `statsStore` (see line 2: `immer` middleware). Use for buff state with nested arrays: `state.buffs[playerId].push(newBuff)`. Avoids immutability boilerplate. |
-| `lru-cache` | ^11.2.6 | Zone-scoped buff cache (optional optimization) | If buff tracking becomes per-zone (buffs only active in player's current zone), cache `Map<zoneId, Map<playerId, Buff[]>>`. For MVP, in-memory `Map<playerId, Buff[]>` in `BuffService` is sufficient. |
+| `@nestjs/event-emitter` | ^3.0.1 | Internal event bus for quest objective tracking | **Recommended.** Decouples objective tracking from core services. `CombatService` emits `entity.killed` event → `QuestService` listener checks if kill counts for active quest. Alternative: Direct `questService.checkObjective()` calls in every service (more coupling). |
+| `immer` | ^11.1.4 | Nested objective progress updates | Already used by `statsStore`. Use for quest progress: `state.objectives[i].progress.count++`. Avoids immutability boilerplate when updating objective arrays. |
 
 ### Development Tools (No Change)
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| NX | Monorepo task runner | No new packages to build. Abilities are extensions to existing `items`, `game-logic` packages. |
-| Vite | Client dev server | Phaser graphics code runs in existing `WorldScene`. No build config changes. |
+| NX | Monorepo task runner | New `@into-the-void/quests` package follows existing workspace structure. |
+| Drizzle Kit | Schema migrations | `pnpm db:generate` creates migration for `quest_progress` table. |
 
 ---
 
 ## Installation
 
-**No installation commands required.** All dependencies already in `package.json`.
-
-For reference (DO NOT RUN — already installed):
+**One new package (recommended):**
 ```bash
-# Already installed
-pnpm add phaser@3.80.0           # Graphics API for cooldown overlay
-pnpm add zustand@4.5.0           # State management for cooldowns
-pnpm add @nestjs/common@10.3.0   # Service layer for buffs
-pnpm add socket.io@4.7.0         # Real-time events
-pnpm add immer@11.1.4            # Nested state updates
+pnpm add @nestjs/event-emitter@3.0.1
 ```
+
+**Quest package creation:**
+```bash
+# Create new workspace package (manual — NX generator not configured)
+mkdir -p packages/quests/src
+# Mirror packages/npcs/package.json structure
+```
+
+**All other dependencies already installed.**
 
 ---
 
@@ -77,12 +83,12 @@ pnpm add immer@11.1.4            # Nested state updates
 
 | Recommended | Alternative | Why Not Alternative |
 |-------------|-------------|---------------------|
-| Phaser `Graphics.slice()` for cooldown overlay | CSS `conic-gradient()` for radial wipe on React action bar | Cooldowns update every frame (60fps). React re-renders are expensive. Phaser graphics run in game loop, zero React dependency. CSS animations can't sync precisely with server-sent cooldown duration. |
-| Zustand `Map<abilityId, Cooldown>` | Separate `useCooldownStore` hook | Action bar already uses `actionBarStore`. Adding cooldown state to same store maintains single source of truth. Separate store creates synchronization risk (what if item removed from slot while cooling down?). |
-| NestJS `@Interval(100)` for buff tick | Client-side buff expiration with setTimeout | Buffs affect server-side stat calculations (damage, defense). Server must track buff state for validation. Client timers are informational only (UI countdown). Server tick is source of truth. |
-| Extend `ItemEffect` union | New `AbilityDefinition` type separate from items | Abilities are granted by items (tools, modules). A combat tool's `effects` array defines its ability. Separating ability definitions from items duplicates data (every ability needs an associated item anyway). |
-| `Map<playerId, Buff[]>` in `BuffService` | Database table for active buffs | Buffs are ephemeral combat state (duration 5-60 seconds). They do not survive logout or server restart. Persisting to PostgreSQL creates write amplification (10 buffs/sec across 100 players = 1000 writes/sec for temporary data). In-memory state is correct. |
-| Pure TypeScript cooldown math | External cooldown library (e.g., `cooldown-manager`) | Cooldown logic is `remainingMs = Math.max(0, endsAt - Date.now())`. No library adds value for 1 line of math. External libs bring 5KB+ bundle for a subtraction operation. |
+| `@nestjs/event-emitter` for objective tracking | Direct `QuestService.checkObjective()` calls in services | Direct calls couple quest logic to every service that generates objectives (CombatService, InventoryService, InteractionService). Adding new objective type requires modifying multiple services. Event-driven pattern: emit `entity.killed`, let QuestService subscribe. Same pattern used by WoW, FFXIV, ESO quest systems. |
+| TypeScript discriminated unions for quest state | State machine library (XState 5.28) | Quest states are simple: available → active → (completed \| failed). TypeScript discriminated unions provide type-safe transitions with zero runtime overhead. XState adds 55KB bundle for 4 states. Use XState when states are hierarchical (quest phases with sub-states) — not needed for MVP. |
+| JSONB column for objective progress | Separate `quest_objectives` table (one row per objective) | Quest objectives are bounded (5-10 per quest), progress is ephemeral (cleared on completion), and queries always fetch full objective list ("show all objectives for quest X"). Separate table creates N+1 query problem. JSONB with GIN index provides fast queries on objective state. Same pattern as `inventories.items` (array of items in single JSONB column). |
+| Drizzle ORM with PostgreSQL | Document database (MongoDB) for quest progress | Quests have relational dependencies: quest prerequisites (quest A requires quest B completed), quest chains (linear progression), shared objectives (faction reputation). PostgreSQL foreign keys enforce referential integrity. Drizzle JSONB provides flexibility for objective schema variance without schema-less pitfalls. |
+| Quest definitions in TypeScript package | Quest definitions in database with CMS | Quest content is code-adjacent (NPCs reference quests, items reference quests). TypeScript definitions provide compile-time type safety (can't reference non-existent quest, can't misspell objective type). Database + CMS adds infrastructure (admin UI, migrations, seeding) for 20-50 quests. Use database when quest count exceeds 200+ and non-technical designers author quests. |
+| Zustand `quests` slice in `gameStore` | Separate `useQuestStore` hook | Active quests affect UI beyond quest panel: HUD tracker, NPC markers (quest giver indicators), map icons (quest objectives). Centralizing in `gameStore` prevents prop drilling and subscription fragmentation. Separate store requires syncing quest state across multiple components. |
 
 ---
 
@@ -90,256 +96,212 @@ pnpm add immer@11.1.4            # Nested state updates
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| Animation libraries (Framer Motion, GSAP, React Spring) | Phaser tween system (`scene.tweens.add()`) already handles all animation needs: damage number floats, cooldown sweep animations, buff icon pulses. React components in HUD are static (no complex transitions). Adding React animation lib creates dual animation systems. | Phaser `scene.tweens.add()` for game canvas animations; plain CSS transitions for HUD (e.g., button press feedback) |
-| State management libraries (Redux, Jotai, Valtio) | Zustand 4.5 handles all state needs. Cooldowns are simple key-value pairs (`Map<string, Cooldown>`), not complex normalized data. Adding Redux for one Map introduces 20KB bundle + boilerplate (actions, reducers, selectors). | Extend existing Zustand stores (`actionBarStore`, `gameStore`) |
-| Timer libraries (use-interval, react-use-timer) | Phaser `Phaser.Time.TimerEvent` provides game-loop-synchronized timers. Server uses native `setInterval` wrapped in `@Interval()`. External timer lib risks frame drift (e.g., `setTimeout` drifts under load; Phaser timers sync to `requestAnimationFrame`). | Phaser `this.time.addEvent()` for client timers; NestJS `@Interval()` for server ticks |
-| Validation libraries (Zod, Yup) beyond existing class-validator | `class-validator` already validates DTO inputs (e.g., `CreateCharacterDto`). Ability validation is runtime business logic ("does player have enough energy?"), not schema validation. Zod adds 50KB for type-checking already covered by TypeScript at compile time. | TypeScript types + runtime checks in service methods |
-| WebGL shader libraries for cooldown effect | Phaser `Graphics.slice()` is hardware-accelerated Canvas2D. Radial wipe is a 5-line draw call. Custom shaders add complexity (GLSL code, fallback paths, mobile compatibility) for zero visual improvement. | Phaser `Graphics` with `slice()` method |
-| Behavior tree library (e.g., `behaviortree.js`) for ability AI | Abilities are player-activated, not AI-driven. No decision tree needed. Cooldown check is `if (remainingMs === 0)`, not complex preconditions. | Plain TypeScript conditionals in ability validation |
+| Full state machine library (XState, Robot3) | Quest states are linear: available → active → (completed \| failed). TypeScript discriminated unions handle transitions with exhaustive checking (`switch (quest.status) { ... }`). State machine libs add complexity (actors, services, guards) for simple transitions. Use when quest chains have parallel branches or hierarchical states (not in MVP). | TypeScript discriminated union: `type QuestState = { status: 'available' } \| { status: 'active', objectives: [...] } \| { status: 'completed', completedAt: number }` |
+| Message queue (RabbitMQ, Redis Pub/Sub) | Quest objective events are in-process (player kills entity → check quest, both in same server). `@nestjs/event-emitter` uses EventEmitter2 (in-memory, synchronous). External message queue adds latency (network hop), infrastructure (queue service), and complexity (message serialization). Use when quest progress persists across server instances (distributed quest tracking) — not needed for single-server architecture. | `@nestjs/event-emitter` with `EventEmitter2.emit()` for in-process events |
+| GraphQL for quest queries | Quest data access is server-driven (client receives `quest:started` push, doesn't query). Client fetches quest log on UI open (single `getActiveQuests()` call). GraphQL over-fetching prevention is moot (always fetch full quest + objectives). REST endpoint simpler. Use GraphQL when client customizes quest fields (mobile vs. web different data needs) — not in this codebase. | REST endpoint: `GET /quests/active` returns full quest objects |
+| Cron jobs for quest expiration | Quests don't expire on timer (no time-limited quests in requirements). If added later, use NestJS `@Interval()` for periodic checks (same pattern as `AiService` creature tick). Cron jobs (external scheduler) add deployment dependency. | NestJS `@Interval()` decorator for periodic tasks |
+| Separate database for quest data | Quest progress references `characters.id`, rewards reference `items.id`, objectives reference `entities.id`. Multi-database introduces distributed transactions (two-phase commit), connection pooling complexity, and cross-database join workarounds. Use when quest data exceeds 100GB (not realistic for MMO quest data). | Same PostgreSQL database, new `quest_progress` table with foreign keys |
+| Validation library (Zod, Yup) beyond existing class-validator | `class-validator` already validates DTOs (`AcceptQuestDto`). Quest validation is business logic ("player level >= quest.requiredLevel", "prerequisite quests completed"), not schema validation. Zod adds 50KB for compile-time checks TypeScript already provides. | TypeScript types + runtime checks in `QuestService.canAcceptQuest()` |
+| ORM migration to Prisma/TypeORM | Drizzle ORM already handles JSONB with type safety (`.$type<ObjectiveProgress[]>()`). Migration introduces risk (data migration, query rewrites) for zero feature gain. Drizzle is lighter (8KB vs. Prisma 400KB) and faster (no Prisma Client generation step). | Continue using Drizzle ORM |
 
 ---
 
-## Implementation Patterns
+## Quest System Architecture
 
-### 1. Cooldown State (Client)
-
-**Technology:** Zustand (extend `actionBarStore`)
+### Quest State Machine (TypeScript Discriminated Union)
 
 ```typescript
-// apps/web/src/store/actionBarStore.ts (EXTEND)
-interface ActionBarState {
-  slots: (string | null)[];
+// packages/quests/src/types.ts
+export type QuestState =
+  | { readonly status: 'available' }
+  | { readonly status: 'active'; readonly acceptedAt: number; readonly objectives: ObjectiveProgress[] }
+  | { readonly status: 'completed'; readonly completedAt: number; readonly rewarded: boolean }
+  | { readonly status: 'failed'; readonly failedAt: number; readonly reason: string };
 
-  // NEW: cooldown tracking
-  cooldowns: Map<string, CooldownState>;
+// Type-safe state transitions with exhaustive checking
+function transitionQuest(quest: QuestState, action: QuestAction): QuestState {
+  switch (quest.status) {
+    case 'available':
+      if (action.type === 'accept') {
+        return { status: 'active', acceptedAt: Date.now(), objectives: initObjectives(quest) };
+      }
+      return quest;
+    case 'active':
+      if (action.type === 'complete') {
+        return { status: 'completed', completedAt: Date.now(), rewarded: false };
+      }
+      if (action.type === 'fail') {
+        return { status: 'failed', failedAt: Date.now(), reason: action.reason };
+      }
+      return quest;
+    case 'completed':
+    case 'failed':
+      return quest; // Terminal states
+    default:
+      const _exhaustiveCheck: never = quest; // Compiler error if state unhandled
+      return _exhaustiveCheck;
+  }
+}
+```
 
-  setCooldown(abilityId: string, durationMs: number): void;
-  getCooldownProgress(abilityId: string): number; // 0.0 to 1.0
-  clearCooldown(abilityId: string): void;
+**Rationale:** Same pattern as `ItemEffect` discriminated union (lines 34-46 in `packages/items/src/types.ts`). TypeScript enforces all states handled. No runtime library needed.
+
+### Quest Definition (TypeScript Registry)
+
+```typescript
+// packages/quests/src/definitions/starter-quests.ts
+export interface QuestDefinition {
+  readonly id: string;
+  readonly displayName: string;
+  readonly description: string;
+  readonly questGiverId: string; // References NpcDefinition.id
+  readonly objectives: readonly QuestObjective[];
+  readonly prerequisites?: readonly string[]; // Quest IDs that must be completed first
+  readonly requiredLevel: number;
+  readonly rewards: QuestRewards;
+  readonly category: 'main' | 'side' | 'faction' | 'daily';
 }
 
-interface CooldownState {
-  startedAt: number;   // Date.now() when cooldown started
-  durationMs: number;  // total cooldown duration
+export type QuestObjective =
+  | { readonly type: 'kill'; readonly targetEntityId: string; readonly count: number }
+  | { readonly type: 'collect'; readonly itemId: string; readonly count: number }
+  | { readonly type: 'interact'; readonly npcId: string }
+  | { readonly type: 'discover'; readonly zoneId: string };
+
+export interface QuestRewards {
+  readonly xp: number;
+  readonly credits: number;
+  readonly items?: readonly { itemId: string; quantity: number }[];
 }
 
-// Derived state (avoids re-renders)
-const getCooldownProgress = (abilityId: string): number => {
-  const cd = store.cooldowns.get(abilityId);
-  if (!cd) return 1.0; // fully ready
-
-  const elapsed = Date.now() - cd.startedAt;
-  return Math.min(1.0, elapsed / cd.durationMs);
+// Example quest
+export const FIRST_STEPS: QuestDefinition = {
+  id: 'quest_first_steps',
+  displayName: 'First Steps on Terminus',
+  description: 'Speak with your faction liaison to learn about survival on Terminus.',
+  questGiverId: 'npc_arrival_officer',
+  objectives: [
+    { type: 'interact', npcId: 'npc_verdant_liaison' },
+  ],
+  requiredLevel: 1,
+  rewards: { xp: 100, credits: 50 },
+  category: 'main',
 };
 ```
 
-**Rationale:** Action bar already uses `actionBarStore`. Adding cooldown map to same store prevents state fragmentation. Timestamp-based calculation (not interval-based counters) avoids re-render storms when multiple cooldowns tick simultaneously.
+**Rationale:** Mirrors `NpcDefinition` structure (`packages/npcs/src/types.ts`). Quest objectives use discriminated union (same as `ItemEffect`). Static definitions provide compile-time type safety.
 
-**Reference:** [Zustand time-based state discussion](https://github.com/pmndrs/zustand/discussions/2150) — recommends derived state from timestamps for performance.
-
-### 2. Radial Cooldown Overlay (Client)
-
-**Technology:** Phaser `Graphics.slice()`
+### Quest Progress Database Schema
 
 ```typescript
-// apps/web/src/game/ui/CooldownOverlay.ts (NEW)
-export class CooldownOverlay extends Phaser.GameObjects.Graphics {
-  constructor(scene: Phaser.Scene, x: number, y: number, radius: number) {
-    super(scene);
-    this.setPosition(x, y);
-  }
+// packages/database/src/schema/quests.ts
+import { pgTable, uuid, varchar, jsonb, timestamp, index } from 'drizzle-orm/pg-core';
+import { characters } from './characters';
 
-  updateCooldown(progress: number) {
-    this.clear();
-
-    if (progress >= 1.0) return; // fully ready, no overlay
-
-    // Draw pie slice from top (270°) clockwise to current progress
-    const startAngle = Phaser.Math.DegToRad(270); // top
-    const endAngle = startAngle + (progress * Math.PI * 2);
-
-    this.fillStyle(0x000000, 0.6); // semi-transparent black
-    this.slice(0, 0, radius, startAngle, endAngle, false);
-    this.fillPath();
-  }
+export interface ObjectiveProgress {
+  type: string; // 'kill', 'collect', 'interact', 'discover'
+  currentCount: number;
+  requiredCount: number;
+  completed: boolean;
 }
+
+export const questProgress = pgTable('quest_progress', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  characterId: uuid('character_id')
+    .notNull()
+    .references(() => characters.id, { onDelete: 'cascade' }),
+  questId: varchar('quest_id', { length: 100 }).notNull(), // References QuestDefinition.id
+  status: varchar('status', { length: 20 }).notNull(), // 'active', 'completed', 'failed'
+  objectives: jsonb('objectives').$type<ObjectiveProgress[]>().notNull(),
+  acceptedAt: timestamp('accepted_at', { withTimezone: true }).notNull().defaultNow(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  failedAt: timestamp('failed_at', { withTimezone: true }),
+  rewarded: boolean('rewarded').notNull().default(false),
+}, (table) => ({
+  // Partial index on active quests (100x+ speedup per Drizzle best practices)
+  activeQuestsIdx: index('quest_progress_active_idx').on(table.characterId, table.status).where(sql`status = 'active'`),
+  // Index for quest completion queries
+  questIdIdx: index('quest_progress_quest_id_idx').on(table.questId),
+}));
+
+export type QuestProgress = typeof questProgress.$inferSelect;
+export type NewQuestProgress = typeof questProgress.$inferInsert;
 ```
 
-**Integration:** Action bar scene creates one `CooldownOverlay` per slot. On frame update, calls `overlay.updateCooldown(actionBarStore.getCooldownProgress(abilityId))`.
+**Rationale:** Follows `inventories` table pattern (JSONB for array data with `.$type<T>()`). Partial index on `status = 'active'` provides 100x+ query speedup for "get active quests" (confirmed in Drizzle PostgreSQL best practices). Timestamps with timezone match existing `characters.createdAt` pattern.
 
-**Rationale:** Phaser `Graphics.slice()` draws pie slices natively. No external library needed. Similar to health bar rendering pattern in existing `HealthBarRenderer`.
-
-**Reference:** [Phaser pie timer example](https://gist.github.com/chewax/08b155da67e0cc497e15) demonstrates slice-based cooldown UI.
-
-### 3. Buff Tracking (Server)
-
-**Technology:** NestJS service with `@Interval(100)` tick
+### Quest Objective Tracking (Event-Driven)
 
 ```typescript
-// apps/game-server/src/game/buff.service.ts (NEW)
+// apps/game-server/src/game/quest.service.ts
+import { Injectable } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
+import { QuestProgress, ObjectiveProgress } from '@into-the-void/database';
+
 @Injectable()
-export class BuffService implements OnModuleInit, OnModuleDestroy {
-  private activeBuffs: Map<string, ActiveBuff[]> = new Map();
-  private tickInterval: NodeJS.Timeout;
+export class QuestService {
+  // Event listener for entity kills
+  @OnEvent('entity.killed')
+  async handleEntityKilled(event: { playerId: string; entityId: string }) {
+    const activeQuests = await this.getActiveQuests(event.playerId);
 
-  onModuleInit() {
-    this.tickInterval = setInterval(() => this.tickBuffs(), 100); // 10Hz
-  }
+    for (const quest of activeQuests) {
+      const updated = this.updateKillObjectives(quest, event.entityId);
+      if (updated) {
+        await this.saveQuestProgress(quest);
+        this.broadcastQuestProgress(event.playerId, quest);
 
-  onModuleDestroy() {
-    clearInterval(this.tickInterval);
-  }
-
-  applyBuff(playerId: string, buff: Buff) {
-    const buffs = this.activeBuffs.get(playerId) ?? [];
-    buffs.push({ ...buff, appliedAt: Date.now(), expiresAt: Date.now() + buff.durationMs });
-    this.activeBuffs.set(playerId, buffs);
-
-    // Broadcast to client
-    this.server.to(playerSocketId).emit('buff:apply', { buffId: buff.id, duration: buff.durationMs });
-  }
-
-  private tickBuffs() {
-    const now = Date.now();
-    for (const [playerId, buffs] of this.activeBuffs) {
-      const stillActive = buffs.filter(b => b.expiresAt > now);
-
-      // Emit buff:remove for expired buffs
-      const expired = buffs.filter(b => b.expiresAt <= now);
-      for (const buff of expired) {
-        this.server.to(playerSocketId).emit('buff:remove', { buffId: buff.id });
-      }
-
-      if (stillActive.length > 0) {
-        this.activeBuffs.set(playerId, stillActive);
-      } else {
-        this.activeBuffs.delete(playerId);
+        if (this.allObjectivesComplete(quest)) {
+          await this.completeQuest(event.playerId, quest.questId);
+        }
       }
     }
   }
 
-  getActiveBuffs(playerId: string): ActiveBuff[] {
-    return this.activeBuffs.get(playerId) ?? [];
+  // Event listener for item collection
+  @OnEvent('item.collected')
+  async handleItemCollected(event: { playerId: string; itemId: string; quantity: number }) {
+    // Similar pattern...
+  }
+
+  private updateKillObjectives(quest: QuestProgress, killedEntityId: string): boolean {
+    let updated = false;
+    for (const objective of quest.objectives) {
+      if (objective.type === 'kill' && objective.targetEntityId === killedEntityId && !objective.completed) {
+        objective.currentCount++;
+        if (objective.currentCount >= objective.requiredCount) {
+          objective.completed = true;
+        }
+        updated = true;
+      }
+    }
+    return updated;
   }
 }
 ```
 
-**Rationale:** Mirrors `AiService` pattern (`ai.service.ts` uses `@Interval(1000)` for creature AI). Buffs expire on server tick, broadcast to client. No database persistence (buffs are ephemeral combat state).
-
-**Reference:** [NestJS task scheduling docs](https://docs.nestjs.com/techniques/task-scheduling) — `@Interval()` for periodic tasks.
-
-### 4. Energy Cost Validation (Server)
-
-**Technology:** Extend `PlayerService`
-
+**Emitting Events in Existing Services:**
 ```typescript
-// apps/game-server/src/game/player.service.ts (EXTEND)
-export class PlayerService {
-  // NEW: energy management
-  consumeEnergy(playerId: string, amount: number): boolean {
-    const player = this.getPlayerById(playerId);
-    if (!player || player.energy < amount) return false;
+// apps/game-server/src/game/combat.service.ts (EXTEND)
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
-    player.energy -= amount;
+@Injectable()
+export class CombatService {
+  constructor(private eventEmitter: EventEmitter2) {}
 
-    // Broadcast energy update to client
-    const socketId = this.getSocketByPlayerId(playerId);
-    this.server.to(socketId).emit('player:energy', {
-      playerId,
-      energy: player.energy,
-      maxEnergy: player.maxEnergy,
+  async handleEntityDeath(killerId: string, victimId: string) {
+    // Existing death logic...
+
+    // NEW: Emit event for quest tracking
+    this.eventEmitter.emit('entity.killed', {
+      playerId: killerId,
+      entityId: victimId,
     });
-
-    return true;
   }
-
-  // Energy regeneration already handled by existing player:regen event
 }
 ```
 
-**Rationale:** `PlayerService` already manages `health`, `position`, `inCombat` state. Energy field exists in `Player` interface (`maxEnergy`, `energy`). Adding `consumeEnergy()` follows `updateHealth()` pattern (lines 500-502 in `combat.service.ts`).
-
-### 5. Ability Definitions (Shared)
-
-**Technology:** Extend `ItemEffect` discriminated union
-
-```typescript
-// packages/items/src/types.ts (EXTEND)
-export type ItemEffect =
-  // Existing effects
-  | { readonly type: 'heal'; readonly amount: number }
-  | { readonly type: 'energy_restore'; readonly amount: number }
-  | { readonly type: 'stat_buff'; readonly stat: string; readonly amount: number; readonly duration: number }
-
-  // NEW: ability-specific effects
-  | { readonly type: 'deal_damage'; readonly baseDamage: number; readonly scaling: 'power' | 'haste' }
-  | { readonly type: 'apply_buff'; readonly buffId: string; readonly durationMs: number }
-  | { readonly type: 'energy_cost'; readonly amount: number }
-  | { readonly type: 'cooldown'; readonly durationMs: number };
-```
-
-**Example ability item:**
-```typescript
-export const PULSE_RIFLE: ItemDefinition = {
-  id: 'pulse_rifle_combat',
-  displayName: 'Pulse Rifle',
-  category: 'tool',
-  toolType: 'combat',
-  rarity: 'rare',
-  effects: [
-    { trigger: 'on_use', effect: { type: 'energy_cost', amount: 20 } },
-    { trigger: 'on_use', effect: { type: 'deal_damage', baseDamage: 50, scaling: 'power' } },
-    { trigger: 'on_use', effect: { type: 'cooldown', durationMs: 3000 } },
-  ],
-  // ... other fields
-};
-```
-
-**Rationale:** `ItemEffect` already uses discriminated unions (lines 34-45 in `types.ts`). Adding ability effects maintains type safety. Items can have multiple effects (energy_cost + deal_damage + cooldown), same as stims (stat_buff effects in `consumables.ts`).
-
----
-
-## Ability Cast Flow (Client → Server → Client)
-
-**Client (Action Bar):**
-1. User presses hotkey (1-8) → `ActionBar.tsx` `handleKeyDown`
-2. Get `instanceId` from slot → lookup item in inventory
-3. Check cooldown: `actionBarStore.getCooldownProgress(instanceId) === 1.0` (fully ready)
-4. Check energy: `gameStore.player.energy >= getEnergyCost(item)`
-5. Emit: `gameSocket.emit('ability:use', { instanceId, targetId? })`
-6. **Optimistic cooldown:** `actionBarStore.setCooldown(instanceId, cooldownDuration)` — start overlay immediately
-
-**Server (GameGateway → AbilityService):**
-7. Receive `'ability:use'` event in `GameGateway`
-8. Validate: item exists, equipped in tool slot, player has energy
-9. Validate: ability not on cooldown (server-side cooldown map)
-10. Deduct energy: `playerService.consumeEnergy(playerId, energyCost)`
-11. Execute ability: calculate damage (if `deal_damage` effect), apply buffs (if `apply_buff` effect)
-12. Record cooldown: `cooldownService.setCooldown(playerId, abilityId, durationMs)`
-13. Broadcast damage: `server.to(zoneId).emit('combat:damage', { ... })` if damage dealt
-14. Broadcast buff: `server.to(playerId).emit('buff:apply', { ... })` if buff applied
-15. Broadcast cooldown: `server.to(playerId).emit('ability:cast', { abilityId, cooldownMs })` (authoritative cooldown)
-
-**Client (Result Handlers):**
-16. Receive `'ability:cast'` → reconcile cooldown if server duration differs from optimistic prediction
-17. Receive `'combat:damage'` → show damage number (existing `WorldScene.showDamageNumber()`)
-18. Receive `'buff:apply'` → add buff icon to HUD buff bar (new UI component)
-
-**Cooldown Reconciliation:**
-If server cooldown differs (e.g., player equipped Haste buff between client prediction and server response):
-```typescript
-gameSocket.on('ability:cast', (data) => {
-  const predicted = actionBarStore.cooldowns.get(data.abilityId);
-  const serverDuration = data.cooldownMs;
-
-  if (predicted && Math.abs(predicted.durationMs - serverDuration) > 100) {
-    // Server authority: replace optimistic cooldown with server cooldown
-    actionBarStore.setCooldown(data.abilityId, serverDuration);
-  }
-});
-```
-
-**Precedent:** Movement system uses same optimistic prediction + server reconciliation pattern (`MovementController.reconcile()` in `PathfindingController.ts`).
+**Rationale:** `@nestjs/event-emitter` decouples quest tracking from core services. `CombatService` doesn't know about quests, just emits `entity.killed`. `QuestService` subscribes to events. Same pattern as WoW Lua event system (`COMBAT_LOG_EVENT_UNFILTERED` → addon quest trackers). Adding new quest objective type doesn't modify existing services.
 
 ---
 
@@ -347,42 +309,72 @@ gameSocket.on('ability:cast', (data) => {
 
 ```
 ┌─────────────────┐
-│  Action Bar UI  │  User presses hotkey (1-8)
+│   NPC Dialog    │  Player accepts quest from NPC
 └────────┬────────┘
          ↓
 ┌─────────────────┐
-│ ActionBarStore  │  Check: cooldown ready? energy sufficient?
-└────────┬────────┘
-         ↓ Valid
-┌─────────────────┐
-│ Socket.IO Client│  emit 'ability:use' { instanceId, targetId }
+│ Socket.IO Client│  emit 'quest:accept' { questId }
 └────────┬────────┘
          ↓
 ┌─────────────────┐
-│   GameGateway   │  Validate request (item exists, energy check)
+│   GameGateway   │  Validate: quest available, prerequisites met
 └────────┬────────┘
          ↓
 ┌─────────────────┐
-│ AbilityService  │  Execute ability (damage calc, buff application)
+│  QuestService   │  Create quest_progress row (status: 'active')
 └────────┬────────┘
          ↓
 ┌─────────────────┐
-│  PlayerService  │  consumeEnergy(playerId, cost)
-│   BuffService   │  applyBuff(playerId, buff) if applicable
+│ Socket.IO Server│  Broadcast 'quest:started' { quest }
 └────────┬────────┘
          ↓
 ┌─────────────────┐
-│ Socket.IO Server│  Broadcast 'combat:damage', 'buff:apply', 'ability:cast'
+│  Quest Store    │  Add quest to activeQuests array
+└─────────────────┘
+
+[Player kills entity]
+
+┌─────────────────┐
+│ CombatService   │  Entity dies
 └────────┬────────┘
          ↓
 ┌─────────────────┐
-│ CombatStore     │  Update damage numbers
-│ BuffStore       │  Track active buffs (client-side UI)
-│ ActionBarStore  │  Reconcile cooldown with server authority
+│ EventEmitter2   │  emit 'entity.killed' { playerId, entityId }
 └────────┬────────┘
          ↓
 ┌─────────────────┐
-│ Phaser Scene    │  Render: damage floats, buff icons, cooldown overlay
+│  QuestService   │  @OnEvent('entity.killed') → check kill objectives
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│   Database      │  Update quest_progress.objectives (currentCount++)
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│ Socket.IO Server│  Broadcast 'quest:progress' { questId, objectives }
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│  Quest Tracker  │  Update UI: "Kill Crawlers: 3/5"
+└─────────────────┘
+
+[All objectives complete]
+
+┌─────────────────┐
+│  QuestService   │  Mark quest completed, distribute rewards
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│InventoryService │  Add reward items, credits, XP
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│ Socket.IO Server│  Broadcast 'quest:completed' { quest, rewards }
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│ Quest Complete  │  Show reward UI, remove from active quests
+│     Modal       │
 └─────────────────┘
 ```
 
@@ -392,15 +384,17 @@ gameSocket.on('ability:cast', (data) => {
 
 All patterns use existing stable APIs:
 
-| Package | Version | API Used | Stable Since |
-|---------|---------|----------|--------------|
-| Phaser | 3.80.0 | `Graphics.slice()` | 3.0.0 (2018) |
-| Zustand | 4.5.0 | `Map` support in state | 4.0.0 (2022) |
-| NestJS | 10.3.0 | `@Interval()` decorator | 6.0.0 (2019) |
-| Socket.IO | 4.7.0 | `server.to(room).emit()` | 2.0.0 (2016) |
-| TypeScript | 5.4.0 | Discriminated unions | 2.0.0 (2016) |
+| Package | Version | API Used | Stable Since | Notes |
+|---------|---------|----------|--------------|-------|
+| TypeScript | 5.4.0 | Discriminated unions | 2.0.0 (2016) | Quest state machine uses discriminated unions |
+| Drizzle ORM | 0.30.0 | `.$type<T>()` for JSONB | 0.28.0 (2024) | Type-safe quest objective arrays |
+| NestJS | 10.3.0 | Service layer, lifecycle hooks | 6.0.0 (2019) | `QuestService` follows existing patterns |
+| `@nestjs/event-emitter` | 3.0.1 | `@OnEvent()` decorator | 1.0.0 (2020) | Event-driven objective tracking |
+| Socket.IO | 4.7.0 | `server.to(room).emit()` | 2.0.0 (2016) | Quest update broadcasts |
+| Zustand | 4.5.0 | Nested state updates | 4.0.0 (2022) | Quest store slice in `gameStore` |
+| PostgreSQL | 14+ | JSONB, GIN indexes, partial indexes | 9.4+ (2014) | Quest progress storage |
 
-**No breaking changes. No version upgrades required.**
+**No version upgrades required. One new package: `@nestjs/event-emitter@3.0.1`.**
 
 ---
 
@@ -410,57 +404,267 @@ All patterns use existing stable APIs:
 
 | File | Package/App | What It Adds |
 |------|-------------|--------------|
-| `src/game/ui/CooldownOverlay.ts` | `apps/web` | Phaser Graphics component for radial cooldown sweep |
-| `src/game/buff.service.ts` | `apps/game-server` | Buff duration tracking with 10Hz tick |
-| `src/game/ability.service.ts` | `apps/game-server` | Ability validation and execution |
-| `src/game/cooldown.service.ts` | `apps/game-server` | Server-side cooldown tracking (anti-cheat) |
-| `src/store/buffStore.ts` | `apps/web` | Client-side buff state for HUD display |
-| `src/ui/BuffBar.tsx` | `apps/web` | Buff icon display component |
-| `src/abilities/calculate-ability-damage.ts` | `packages/game-logic` | Ability damage calculation (similar to `calculateDamage`) |
-| `src/abilities/apply-buff.ts` | `packages/game-logic` | Buff application logic (stat modifiers) |
+| `src/types.ts` | `packages/quests` | Quest definition types, state machine types |
+| `src/definitions/*.ts` | `packages/quests` | Static quest definitions (starter quests, faction quests) |
+| `src/registry.ts` | `packages/quests` | Quest lookup by ID (mirrors `npc-registry.ts`) |
+| `src/schema/quests.ts` | `packages/database` | `quest_progress` table schema |
+| `src/queries/quests.ts` | `packages/database` | Quest CRUD operations |
+| `src/game/quest.service.ts` | `apps/game-server` | Quest validation, progress tracking, reward distribution |
+| `src/store/questStore.ts` | `apps/web` | Client-side quest state (active quests, completed quests) |
+| `src/ui/panels/QuestLogPanel.tsx` | `apps/web` | Quest log UI (list of available/active/completed quests) |
+| `src/ui/QuestTracker.tsx` | `apps/web` | HUD quest tracker (shows active quest objectives) |
+| `src/ui/QuestRewardModal.tsx` | `apps/web` | Quest completion reward display |
 
 ### Modified Files
 
 | File | Change |
 |------|--------|
-| `apps/web/src/store/actionBarStore.ts` | Add `cooldowns: Map<string, CooldownState>` and cooldown methods |
-| `apps/web/src/ui/hud/ActionBar.tsx` | Add cooldown check before emitting `ability:use` |
-| `apps/game-server/src/game/player.service.ts` | Add `consumeEnergy()` method |
-| `apps/game-server/src/game/game.module.ts` | Register `BuffService`, `AbilityService`, `CooldownService` |
-| `packages/items/src/types.ts` | Extend `ItemEffect` union with `deal_damage`, `apply_buff`, `energy_cost`, `cooldown` |
-| `packages/shared-types/src/network/events.ts` | Add `ability:use`, `ability:cast`, `buff:apply`, `buff:remove`, `player:energy` events |
-| `packages/game-logic/src/stats/char-stats.ts` | Add buff stat modifier application in `computeCharStats()` |
+| `packages/npcs/src/types.ts` | Add `questIds?: string[]` to `BaseNpcDefinition` (quest givers) |
+| `packages/database/src/schema/index.ts` | Export `quest_progress` schema |
+| `apps/game-server/src/game/game.module.ts` | Register `QuestService`, import `EventEmitterModule` |
+| `apps/game-server/src/game/combat.service.ts` | Emit `entity.killed` event after entity death |
+| `apps/game-server/src/game/inventory.service.ts` | Emit `item.collected` event after item added |
+| `apps/game-server/src/game/game.gateway.ts` | Add `quest:accept`, `quest:abandon`, `quest:complete` event handlers |
+| `apps/web/src/store/gameStore.ts` | Add `quests` slice (or create separate `questStore`) |
+| `apps/web/src/ui/GameUI.tsx` | Add `<QuestTracker />` to HUD, `<QuestLogPanel />` to panels |
+| `packages/shared-types/src/network/events.ts` | Add quest-related events (`quest:started`, `quest:progress`, `quest:completed`, `quest:failed`) |
+
+---
+
+## Implementation Patterns
+
+### 1. Quest Registry (Shared Package)
+
+**Technology:** TypeScript module with static definitions
+
+```typescript
+// packages/quests/src/registry.ts
+import { QuestDefinition } from './types';
+import { FIRST_STEPS } from './definitions/starter-quests';
+// ... import all quest definitions
+
+const QUESTS = new Map<string, QuestDefinition>([
+  [FIRST_STEPS.id, FIRST_STEPS],
+  // ... register all quests
+]);
+
+export function getQuestById(id: string): QuestDefinition | undefined {
+  return QUESTS.get(id);
+}
+
+export function getQuestsByCategory(category: QuestDefinition['category']): QuestDefinition[] {
+  return Array.from(QUESTS.values()).filter(q => q.category === category);
+}
+
+export function getQuestsByGiver(npcId: string): QuestDefinition[] {
+  return Array.from(QUESTS.values()).filter(q => q.questGiverId === npcId);
+}
+```
+
+**Rationale:** Mirrors `packages/npcs/src/npc-registry.ts` pattern. Static registry provides compile-time type safety. Server and client both import same definitions (single source of truth).
+
+### 2. Quest Acceptance Validation (Server)
+
+**Technology:** NestJS service with business logic
+
+```typescript
+// apps/game-server/src/game/quest.service.ts
+export class QuestService {
+  async acceptQuest(characterId: string, questId: string): Promise<QuestProgress | null> {
+    const quest = getQuestById(questId);
+    if (!quest) return null;
+
+    const character = await this.characterService.getCharacter(characterId);
+
+    // Validate prerequisites
+    if (!this.canAcceptQuest(character, quest)) {
+      throw new ForbiddenException('Prerequisites not met');
+    }
+
+    // Check if already active
+    const existing = await this.getActiveQuestProgress(characterId, questId);
+    if (existing) {
+      throw new ConflictException('Quest already active');
+    }
+
+    // Create quest progress
+    const progress = await this.createQuestProgress(characterId, quest);
+
+    return progress;
+  }
+
+  private canAcceptQuest(character: Character, quest: QuestDefinition): boolean {
+    // Level check
+    if (character.level < quest.requiredLevel) return false;
+
+    // Prerequisite check
+    if (quest.prerequisites) {
+      for (const prereqId of quest.prerequisites) {
+        const completed = await this.isQuestCompleted(character.id, prereqId);
+        if (!completed) return false;
+      }
+    }
+
+    return true;
+  }
+}
+```
+
+**Rationale:** Server-authoritative validation (same as `InventoryService.canEquipItem()`). All checks on server prevent client-side exploits.
+
+### 3. Objective Progress Update (Event-Driven)
+
+**Technology:** `@nestjs/event-emitter` with `@OnEvent()` decorators
+
+```typescript
+// apps/game-server/src/game/quest.service.ts
+import { OnEvent } from '@nestjs/event-emitter';
+
+@Injectable()
+export class QuestService {
+  @OnEvent('entity.killed')
+  async onEntityKilled(event: { playerId: string; entityId: string }) {
+    const quests = await this.getActiveQuests(event.playerId);
+
+    for (const quest of quests) {
+      const questDef = getQuestById(quest.questId);
+      if (!questDef) continue;
+
+      let updated = false;
+
+      for (let i = 0; i < quest.objectives.length; i++) {
+        const objective = quest.objectives[i];
+        const objectiveDef = questDef.objectives[i];
+
+        if (objectiveDef.type === 'kill' && objectiveDef.targetEntityId === event.entityId && !objective.completed) {
+          objective.currentCount++;
+          if (objective.currentCount >= objective.requiredCount) {
+            objective.completed = true;
+          }
+          updated = true;
+        }
+      }
+
+      if (updated) {
+        await this.saveQuestProgress(quest);
+        this.emitQuestProgress(event.playerId, quest);
+
+        // Check if all objectives complete
+        if (quest.objectives.every(obj => obj.completed)) {
+          await this.markQuestReadyForCompletion(event.playerId, quest.questId);
+        }
+      }
+    }
+  }
+}
+```
+
+**Event Emission in Combat Service:**
+```typescript
+// apps/game-server/src/game/combat.service.ts
+import { EventEmitter2 } from '@nestjs/event-emitter';
+
+@Injectable()
+export class CombatService {
+  constructor(private eventEmitter: EventEmitter2) {}
+
+  async handleEntityDeath(killerId: string, entity: Entity) {
+    // Existing death logic: remove from zone, broadcast entity:remove, etc.
+
+    // Emit event for quest tracking (decoupled)
+    this.eventEmitter.emit('entity.killed', {
+      playerId: killerId,
+      entityId: entity.entityId,
+    });
+  }
+}
+```
+
+**Rationale:** Decouples quest logic from core services. `CombatService` doesn't import `QuestService`. Adding new objective type (`entity.interacted`, `zone.discovered`) doesn't modify existing services — just add new `@OnEvent()` handler in `QuestService`.
+
+### 4. Reward Distribution (Server)
+
+**Technology:** Existing `InventoryService`, `PlayerService`
+
+```typescript
+// apps/game-server/src/game/quest.service.ts
+export class QuestService {
+  async completeQuest(characterId: string, questId: string): Promise<void> {
+    const quest = getQuestById(questId);
+    if (!quest) return;
+
+    const progress = await this.getQuestProgress(characterId, questId);
+    if (progress.status !== 'active' || !this.allObjectivesComplete(progress)) {
+      throw new BadRequestException('Quest not ready for completion');
+    }
+
+    // Distribute rewards
+    await this.distributeRewards(characterId, quest.rewards);
+
+    // Mark quest completed
+    await this.markQuestCompleted(characterId, questId);
+
+    // Broadcast completion
+    this.emitQuestCompleted(characterId, quest);
+  }
+
+  private async distributeRewards(characterId: string, rewards: QuestRewards): Promise<void> {
+    // XP reward
+    if (rewards.xp > 0) {
+      await this.playerService.addXp(characterId, rewards.xp);
+    }
+
+    // Credits reward
+    if (rewards.credits > 0) {
+      await this.playerService.addCredits(characterId, rewards.credits);
+    }
+
+    // Item rewards
+    if (rewards.items) {
+      for (const item of rewards.items) {
+        await this.inventoryService.addItem(characterId, item.itemId, item.quantity);
+      }
+    }
+  }
+}
+```
+
+**Rationale:** Reuses existing services (`InventoryService.addItem()`, `PlayerService.addXp()`). Quest rewards follow item reward pattern (loot drops use same `addItem()` method).
 
 ---
 
 ## Sources
 
-### Cooldown Visuals (HIGH Confidence)
-- [Phaser 3 radial button cooldown discussion](https://phaser.discourse.group/t/how-to-create-a-radial-button-cooldown-effect/2280) — Community consensus on `Graphics.slice()` for radial cooldowns
-- [Pie Timer Phaser example](https://gist.github.com/chewax/08b155da67e0cc497e15) — Working code for pie-slice cooldown
-- [Phaser Timer Events](https://phaser.io/examples/v3/view/time/timer-event) — Official docs for `Phaser.Time.TimerEvent`
+### Quest System Architecture (MEDIUM Confidence)
+- [Implementing a Scalable Quest System](https://betterprogramming.pub/implementing-a-scalable-quest-system-7f36ea4cfe22) — Quest structs, objective tracking patterns
+- [State Machines: The Key to Cleaner GameDev Code](https://howtomakeanrpg.com/r/a/state-machines.html) — Quest state machine patterns
+- [Quest systems for database?](https://gamedev.net/forums/topic/637223-quest-systems-for-database/5021400/) — Database schema recommendations
+- [State Pattern/FSM Quest-System](https://forum.unity.com/threads/state-pattern-fsm-quest-system.498911/) — Quest Manager architecture
+- [How are quests implemented in MMO video games?](https://www.quora.com/How-are-quests-implemented-in-MMO-video-games) — MMO quest tracking patterns
 
-### State Management (HIGH Confidence)
-- [Zustand time-based state discussion](https://github.com/pmndrs/zustand/discussions/2150) — Performance pattern for timestamp-based cooldowns
-- [Zustand official repository](https://github.com/pmndrs/zustand) — v4.5.0 stable API
-- [React state management 2026](https://www.syncfusion.com/blogs/post/react-state-management-libraries) — Zustand usage trends
+### TypeScript State Management (HIGH Confidence)
+- [How to Build Type-Safe State Machines in TypeScript](https://oneuptime.com/blog/post/2026-01-30-typescript-type-safe-state-machines/view) — Discriminated unions for state machines (2026)
+- [TypeScript: Handbook - Unions and Intersection Types](https://www.typescriptlang.org/docs/handbook/unions-and-intersections.html) — Official TypeScript docs
+- [State · Design Patterns Revisited · Game Programming Patterns](https://gameprogrammingpatterns.com/state.html) — State pattern best practices
 
-### Server Architecture (MEDIUM Confidence)
-- [NestJS WebSocket 2026 guide](https://oneuptime.com/blog/post/2026-02-02-nestjs-websockets/view) — Best practices for Socket.IO in NestJS
-- [NestJS WebSocket gateways](https://docs.nestjs.com/websockets/gateways) — Official docs
-- [NestJS task scheduling](https://docs.nestjs.com/techniques/task-scheduling) — `@Interval()` decorator usage
+### Drizzle ORM & PostgreSQL (HIGH Confidence)
+- [Drizzle ORM PostgreSQL Best Practices Guide (2025)](https://gist.github.com/productdevbook/7c9ce3bbeb96b3fabc3c7c2aa2abc717) — Partial indexes, JSONB patterns, timestamp handling
+- [Drizzle ORM - Schema](https://orm.drizzle.team/docs/sql-schema-declaration) — Official schema docs
+- [Best way to query jsonb field](https://www.answeroverflow.com/m/1188144616541802506) — JSONB query patterns
 
-### Game Design Patterns (MEDIUM Confidence)
-- [Gameplay Ability System documentation](https://github.com/tranek/GASDocumentation) — Unreal Engine GAS architecture reference (cooldown best practices)
-- [Cooldown tracking adjustments](https://www.thegames.dev/?p=131) — Dynamic cooldown implementation patterns
-- [WoW Cooldown Manager](https://blizzardwatch.com/2026/01/16/wow-cooldown-manager-how-to-use/) — Player-facing cooldown UI design
+### NestJS Event Emitter (HIGH Confidence)
+- [@nestjs/event-emitter - npm](https://www.npmjs.com/package/@nestjs/event-emitter) — Version 3.0.1 (latest)
+- [Documentation | NestJS - Events](https://docs.nestjs.com/techniques/events) — Official NestJS event emitter docs
+- [NestJS Event-Driven Scaling Without Kafka Worship](https://medium.com/@ThinkingLoop/nestjs-event-driven-scaling-without-kafka-worship-a6ce25078562) — In-process events pattern (2026)
+- [How to Handle Events in NestJS with the Event Emitter](https://blog.bytescrum.com/how-to-handle-events-in-nestjs-with-the-event-emitter) — Event emitter tutorial
 
-### CSS Radial Wipe (LOW Confidence — Background Research Only)
-- [CSS mask animations](https://expensive.toys/blog/fancy-css-reveal-effects) — Radial wipe with CSS (not used — Phaser preferred)
-- [Smashing Magazine CSS masks](https://www.smashingmagazine.com/2023/09/revealing-images-css-mask-animations/) — Educational reference
+### XState (Background Research — Not Recommended for MVP)
+- [xstate - npm](https://www.npmjs.com/package/xstate) — Version 5.28.0 (latest)
+- [XState](https://stately.ai/docs/xstate) — Official docs
+- [TypeScript](https://stately.ai/docs/typescript) — XState TypeScript integration
 
 ---
 
-*Stack research for: Active Combat Abilities System — Into the Void*
-*Researched: 2026-02-20*
-*Confidence: HIGH — All existing capabilities verified via codebase audit. Zero new npm packages required. All integration points traced to specific source files.*
+*Stack research for: Quest System — Into the Void*
+*Researched: 2026-02-21*
+*Confidence: HIGH — Quest patterns verified via game development forums, NestJS event emitter confirmed at v3.0.1, Drizzle JSONB patterns verified via official best practices guide, all integration points traced to existing codebase patterns.*
