@@ -4,7 +4,7 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, and a complete auth-to-gameplay flow.
 
-## Current State (v1.13 shipped)
+## Current State (v1.14 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
@@ -28,19 +28,19 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~15,000+ LOC TypeScript
 
-## Current Milestone: v1.14 Equipment Stats Overhaul
+## Current Milestone: v1.15 Quest System
 
-**Goal:** Fix the disconnected equipment stats system so items actually provide meaningful stat bonuses, with clear build identity and rarity progression.
+**Goal:** NPCs give quests with objectives, tracking, and rewards — creating purpose-driven gameplay.
 
 **Target features:**
-- New `stats` effect type for clean equipment stat bonuses
-- Effects resolver updated to aggregate stats from equipment
-- All suits updated with stat profiles (tank/scout/combat/utility)
-- All tools updated with appropriate stat bonuses
-- All modules updated with stat bonuses
-- Rarity scaling: higher rarity = stronger stats
-- Stats UI shows equipment bonuses clearly
-- Combat feels different based on equipment choice
+- Quest definition system with types (kill, gather, explore)
+- NPCs offer quests via dialogue with ! and ? markers
+- Multi-step quest chains with objective tracking
+- Full quest log UI (Active/Completed tabs, progress bars)
+- Quest rewards: credits, XP, and items
+- Story quests (one-time) and bounty quests (daily repeatable)
+- Auto-discover quests triggered by area entry
+- Quest state persisted in database
 
 ## Core Value
 
@@ -142,14 +142,16 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 ### Active
 
-- [ ] New `stats` effect type for equipment stat bonuses
-- [ ] Effects resolver aggregates stats from equipped items
-- [ ] Suits with stat profiles by archetype (tank/scout/combat/utility)
-- [ ] Tools with stat bonuses appropriate to tool type
-- [ ] Modules with stat bonuses
-- [ ] Rarity scaling: higher rarity = stronger stat values
-- [ ] Stats UI displays equipment bonuses
-- [ ] Combat reflects equipment choice (tank survives longer, combat hits harder)
+- [ ] Quest definition system with types, objectives, and rewards
+- [ ] NPC quest offering via dialogue system
+- [ ] Quest markers (! for available, ? for turn-in)
+- [ ] Quest log UI with Active/Completed tabs
+- [ ] Objective tracking with counters and progress
+- [ ] Multi-step quest chains
+- [ ] Quest rewards (credits, XP, items)
+- [ ] Story quests (one-time) and bounty quests (daily repeatable)
+- [ ] Auto-discover quests on area entry
+- [ ] Quest state persistence in database
 
 ### Out of Scope
 
@@ -162,7 +164,7 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - Mobile controls — web-first
 - Surface faction HQs (Canopy, Ironhold, Meridian) — orbital first, surface later
 - Shared city at 0,0 — designed in future milestone
-- Quest/mission system — v1.15+ (after equipment stats)
+- Faction reputation system — v1.16+ (after quests)
 - Branching dialogue — simple linear sufficient for now
 
 ## Constraints
@@ -194,4 +196,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-21 after v1.14 milestone start*
+*Last updated: 2026-02-21 after v1.15 milestone start*
