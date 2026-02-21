@@ -26,7 +26,9 @@
     "test": {
       "executor": "@nx/vite:test",
       "options": {
-        "passWithNoTests": true
+        "passWithNoTests": true,
+        "configFile": "packages/items/vitest.config.ts",
+        "reportsDirectory": "../../coverage/packages/items"
       }
     }
   }
