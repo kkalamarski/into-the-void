@@ -21,7 +21,6 @@ import { EquipmentPanel } from './panels/EquipmentPanel';
 import { AbilitiesPanel } from './panels/AbilitiesPanel';
 import { QuestLogPanel } from './panels/QuestLogPanel';
 import { NpcInteractionModal } from './panels/NpcInteractionModal';
-import { TradingPanel } from './panels/TradingPanel';
 import { QuestTracker } from './hud/QuestTracker';
 import { DeathScreen } from './DeathScreen';
 import { AlertNotification } from './AlertNotification';
@@ -31,7 +30,7 @@ import './GameUI.css';
 
 export const GameUI: React.FC = () => {
   const { showChat, showInventory, showEquipment, showAbilities, showDeathScreen, isQuestLogOpen, player } = useGameStore();
-  const { interactingNpc, showTrading } = useNpcStore();
+  const { interactingNpc } = useNpcStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -113,7 +112,6 @@ export const GameUI: React.FC = () => {
         <AlertNotification />
         {showDeathScreen && <DeathScreen />}
         {interactingNpc && <NpcInteractionModal />}
-        {showTrading && <TradingPanel />}
         <div className="minimap-border" />
       </div>
     </DndContext>
