@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, MOVE_DELAY_MS, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure, isHubZone } from '@into-the-void/shared-types';
+import { ZONE_SIZE, MOVE_DELAY_MS, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure, isHubZone, Npc } from '@into-the-void/shared-types';
 import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
 import { ItemRegistry } from '@into-the-void/items';
@@ -232,6 +232,13 @@ export class WorldScene extends Phaser.Scene {
         }
       });
 
+      // K=Abilities (skills) panel
+      this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K).on('down', () => {
+        if (this.input.keyboard?.enabled) {
+          useGameStore.getState().toggleAbilities();
+        }
+      });
+
       // P is alias for E (both toggle equipment+stats panel)
       this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P).on('down', () => {
         if (this.input.keyboard?.enabled) {
@@ -255,6 +262,11 @@ export class WorldScene extends Phaser.Scene {
       if (this.pathfindingController?.isPathActive()) {
         this.pathfindingController.cancelPath();
       }
+    });
+
+    // Listen for npc:interact:response to update quest markers after interaction
+    gameSocket.on('npc:interact:response', (data) => {
+      this.updateNpcQuestMarker(data);
     });
 
     // Set fixed zoom to show ~20x15 tiles viewport (for 256x256 sprites)
@@ -1104,6 +1116,11 @@ export class WorldScene extends Phaser.Scene {
     // Store position for visibility checks during despawn
     container.setData('position', { ...entity.position });
 
+    // Store npcId for NPC entities (for quest marker tracking)
+    if (entity.type === 'npc' && 'npcId' in entity) {
+      container.setData('npcId', (entity as Npc).npcId);
+    }
+
     this.entitySprites.set(entity.id, container);
 
     // Fade-in animation for entity:spawn events only (not initial zone load)
@@ -1301,12 +1318,11 @@ export class WorldScene extends Phaser.Scene {
 
     // Update health bar if health changed for creatures
     if ('health' in changes && this.entityRenderer) {
-      // Find and destroy old health bar (Graphics object at y = -20)
-      const oldHealthBar = container.list.find(
-        (child) => child instanceof Phaser.GameObjects.Graphics && child.y === -20
-      );
+      // Find and destroy old health bar using stored reference (avoids fragile Y-position search)
+      const oldHealthBar = container.getData('healthBar') as Phaser.GameObjects.Container | undefined;
       if (oldHealthBar) {
         oldHealthBar.destroy();
+        container.setData('healthBar', null);
       }
 
       // Create new health bar if damaged (assuming we have access to entity data)
@@ -1316,12 +1332,27 @@ export class WorldScene extends Phaser.Scene {
       const creatureChanges = changes as Partial<Creature>;
       if (creatureChanges.health !== undefined && creatureChanges.maxHealth !== undefined) {
         if (creatureChanges.health < creatureChanges.maxHealth) {
-          const healthBar = this.entityRenderer.createHealthBar(
+          // Get entity scale and sprite height for correct UI positioning
+          const scale = (container.getData('entityScale') as number) ?? 2.5;
+          const spriteHeight = 256 * scale; // BASE_SPRITE_HEIGHT * scale
+          const elevationOffset = (container.getData('elevationOffset') as number) ?? 24;
+          const uiBaseY = -elevationOffset - spriteHeight * 0.5;
+
+          // Get entity data for creature info
+          const entityId = container.getData('entityId') as string;
+          const entity = entityId ? useEntityStore.getState().entities.get(entityId) : null;
+          const creature = entity as Creature | null;
+
+          const healthBar = this.entityRenderer.createHealthBarWithName(
+            creature?.name ?? '???',
             creatureChanges.health,
-            creatureChanges.maxHealth
+            creatureChanges.maxHealth,
+            creature?.behavior,
+            false
           );
-          healthBar.y = -20;
+          healthBar.y = uiBaseY;
           container.add(healthBar);
+          container.setData('healthBar', healthBar);
         }
       }
     }
@@ -1734,5 +1765,52 @@ export class WorldScene extends Phaser.Scene {
     this.chunkTiles.clear();
     this.tileSprites = [];
     this.lastCullBounds = null;
+  }
+
+  /**
+   * Update NPC quest marker after interaction response.
+   * Called when npc:interact:response is received from server.
+   */
+  private updateNpcQuestMarker(data: {
+    npcId: string;
+    availableQuests?: Array<{ questId: string }>;
+    activeQuests?: Array<{ questId: string }>;
+    readyQuests?: Array<{ questId: string }>;
+  }): void {
+    if (!this.entityRenderer) return;
+
+    const npcContainer = this.findNpcContainerById(data.npcId);
+    if (!npcContainer) return;
+
+    // Determine marker type based on quest state
+    // Priority: ready > available > none
+    let markerType: 'available' | 'ready' | 'none' = 'none';
+    if (data.readyQuests && data.readyQuests.length > 0) {
+      markerType = 'ready';
+    } else if (data.availableQuests && data.availableQuests.length > 0) {
+      markerType = 'available';
+    }
+
+    this.entityRenderer.updateQuestMarker(
+      npcContainer.getData('entityId') as string,
+      markerType,
+      npcContainer
+    );
+  }
+
+  /**
+   * Find NPC container by npcId.
+   * Returns the entity container if found, undefined otherwise.
+   */
+  private findNpcContainerById(npcId: string): Phaser.GameObjects.Container | undefined {
+    for (const [_entityId, container] of this.entitySprites) {
+      if (container.getData('entityType') === 'npc') {
+        const storedNpcId = container.getData('npcId');
+        if (storedNpcId === npcId) {
+          return container;
+        }
+      }
+    }
+    return undefined;
   }
 }

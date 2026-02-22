@@ -38,6 +38,7 @@ export class EntityRenderer {
   private tileSize: number;
   private isoTransform: IsometricTransform;
   private elevationOffset = 24; // Pixels entities hover above ground (doubled for 256x256 sprites)
+  private questMarkers: Map<string, Phaser.GameObjects.Container> = new Map();
 
   constructor(scene: Phaser.Scene, tileWidth: number = 256, tileHeight: number = 128) {
     this.scene = scene;
@@ -48,8 +49,17 @@ export class EntityRenderer {
   /**
    * Convert Position (local coords + zoneId) to world coordinates.
    * World coords = zoneCoords * ZONE_SIZE + localCoords
+   * Hub zones are treated as being at origin (0, 0).
    */
   private positionToWorldCoords(position: Position): { worldX: number; worldY: number } {
+    // Hub zones (hub_*) are instanced at origin
+    if (position.zoneId.startsWith('hub_')) {
+      return {
+        worldX: position.x,
+        worldY: position.y,
+      };
+    }
+    // Open-world zones use z_X_Y format
     const parts = position.zoneId.split('_');
     const zoneX = parseInt(parts[1], 10);
     const zoneY = parseInt(parts[2], 10);
@@ -114,6 +124,8 @@ export class EntityRenderer {
       const healthBar = this.createHealthBarWithName(displayName, entity.health, entity.maxHealth, entity.behavior, gated);
       healthBar.y = uiBaseY;
       container.add(healthBar);
+      // Store reference for easy cleanup on health updates
+      container.setData('healthBar', healthBar);
     }
 
     // Minerals get nameplate + yield bar
@@ -528,25 +540,29 @@ export class EntityRenderer {
    * @param isPlayerDamage - If true, uses red color (local player took damage); otherwise white
    */
   static createFloatingDamage(scene: Phaser.Scene, x: number, y: number, damage: number, isPlayerDamage: boolean): void {
-    const color = isPlayerDamage ? '#ff4444' : '#ffffff';
-    const text = scene.add.text(x, y, `-${damage}`, {
-      fontSize: '32px',
+    const color = isPlayerDamage ? '#ff4444' : '#ffff00'; // Yellow for damage dealt, red for damage taken
+    // Start one tile higher (128px = one elevation step in isometric)
+    const startY = y - 128;
+    const text = scene.add.text(x, startY, `-${damage}`, {
+      fontSize: '64px',
       fontStyle: 'bold',
       color: color,
+      stroke: '#000000',
+      strokeThickness: 4,
       shadow: {
-        offsetX: 2,
-        offsetY: 2,
+        offsetX: 3,
+        offsetY: 3,
         color: '#000000',
-        blur: 4,
+        blur: 6,
         fill: true,
       },
     });
     text.setOrigin(0.5, 0.5);
-    text.setDepth(3000);
+    text.setDepth(99999); // Above everything including path graphics
 
     scene.tweens.add({
       targets: text,
-      y: y - 80,
+      y: startY - 100, // Float up 100px from starting position
       alpha: 0,
       duration: 1000,
       ease: 'Cubic.easeOut',
@@ -616,5 +632,121 @@ export class EntityRenderer {
         container.setAlpha(targetAlpha);
       }
     });
+  }
+
+  /**
+   * Creates a quest marker sprite positioned above an NPC.
+   * @param npcEntityId - The NPC entity ID for tracking
+   * @param markerType - 'available' (!) or 'ready' (?)
+   * @param container - The NPC's container to position relative to
+   */
+  createQuestMarker(
+    npcEntityId: string,
+    markerType: 'available' | 'ready',
+    container: Phaser.GameObjects.Container
+  ): Phaser.GameObjects.Container {
+    // Clean up existing marker if any
+    this.removeQuestMarker(npcEntityId);
+
+    const markerContainer = this.scene.add.container(0, 0);
+
+    // Get entity scale for positioning
+    const scale = container.getData('entityScale') ?? 1.0;
+    const spriteHeight = BASE_SPRITE_HEIGHT * scale;
+
+    // Position above nameplate (nameplate is at uiBaseY, marker above that)
+    const markerY = -this.elevationOffset - spriteHeight * 0.5 - 60;
+
+    // Try to use sprite, fall back to procedural graphics
+    const textureKey = markerType === 'available'
+      ? 'ui_quest_marker_available'
+      : 'ui_quest_marker_ready';
+
+    const fallbackKey = markerType === 'available'
+      ? 'ui_quest_marker_available_fallback'
+      : 'ui_quest_marker_ready_fallback';
+
+    if (this.scene.textures.exists(textureKey)) {
+      const sprite = this.scene.add.sprite(0, markerY, textureKey);
+      sprite.setScale(0.8);
+      sprite.setOrigin(0.5, 1.0);
+      markerContainer.add(sprite);
+    } else if (this.scene.textures.exists(fallbackKey)) {
+      // Use fallback procedural texture
+      const sprite = this.scene.add.sprite(0, markerY, fallbackKey);
+      sprite.setScale(0.8);
+      sprite.setOrigin(0.5, 1.0);
+      markerContainer.add(sprite);
+    } else {
+      // Last resort: inline procedural marker
+      const graphics = this.scene.add.graphics();
+      const color = markerType === 'available' ? 0xffcc00 : 0x00ccff;
+      graphics.fillStyle(color, 1);
+      graphics.fillCircle(0, markerY - 20, 20);
+      graphics.lineStyle(3, 0x000000);
+      graphics.strokeCircle(0, markerY - 20, 20);
+      markerContainer.add(graphics);
+
+      const symbol = markerType === 'available' ? '!' : '?';
+      const text = this.scene.add.text(0, markerY - 20, symbol, {
+        fontSize: '28px',
+        fontStyle: 'bold',
+        color: '#000000',
+      });
+      text.setOrigin(0.5, 0.5);
+      markerContainer.add(text);
+    }
+
+    // Add floating animation
+    this.scene.tweens.add({
+      targets: markerContainer,
+      y: -8,
+      duration: 1000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    // Add to NPC container
+    container.add(markerContainer);
+
+    // Track for cleanup
+    this.questMarkers.set(npcEntityId, markerContainer);
+
+    return markerContainer;
+  }
+
+  /**
+   * Remove quest marker from NPC.
+   */
+  removeQuestMarker(npcEntityId: string): void {
+    const marker = this.questMarkers.get(npcEntityId);
+    if (marker) {
+      marker.destroy();
+      this.questMarkers.delete(npcEntityId);
+    }
+  }
+
+  /**
+   * Update quest marker for NPC (change type or remove).
+   */
+  updateQuestMarker(
+    npcEntityId: string,
+    markerType: 'available' | 'ready' | 'none',
+    container: Phaser.GameObjects.Container
+  ): void {
+    if (markerType === 'none') {
+      this.removeQuestMarker(npcEntityId);
+    } else {
+      this.createQuestMarker(npcEntityId, markerType, container);
+    }
+  }
+
+  /**
+   * Clean up all quest markers.
+   */
+  clearAllQuestMarkers(): void {
+    this.questMarkers.forEach((marker) => marker.destroy());
+    this.questMarkers.clear();
   }
 }

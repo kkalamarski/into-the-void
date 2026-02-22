@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNpcStore } from '../../store/npcStore';
 import { useGameStore } from '../../store/gameStore';
 import { useDraggablePanel } from '../../hooks/useDraggablePanel';
+import { TradingPanel } from './TradingPanel';
 import './NpcInteractionModal.css';
 
 // NPC type display labels
@@ -22,8 +23,9 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 
 export const NpcInteractionModal: React.FC = () => {
-  const { interactingNpc, closeInteraction, openTrading } = useNpcStore();
+  const { interactingNpc, closeInteraction, openTrading, showTrading, acceptQuest, completeQuestAtNpc } = useNpcStore();
   const { position, isDragging, handleMouseDown } = useDraggablePanel();
+  const [activeTab, setActiveTab] = useState<'dialogue' | 'trade' | 'quests'>('dialogue');
 
   // Disable Phaser keyboard when modal is open
   useEffect(() => {
@@ -66,6 +68,74 @@ export const NpcInteractionModal: React.FC = () => {
   // Portrait color from NPC definition
   const portraitColor = `#${interactingNpc.color.toString(16).padStart(6, '0')}`;
 
+  // Check if NPC has quests
+  const hasQuests = interactingNpc.availableQuests?.length ||
+                    interactingNpc.activeQuests?.length ||
+                    interactingNpc.readyQuests?.length;
+
+  // Render quests tab content
+  const renderQuestsTab = () => {
+    if (!hasQuests) return <p className="npc-empty-message">No quests available.</p>;
+
+    return (
+      <div className="npc-quests-tab">
+        {/* Ready quests (turn in) - show first, most important */}
+        {interactingNpc.readyQuests?.map(quest => (
+          <div key={quest.questId} className="npc-quest npc-quest--ready">
+            <div className="npc-quest-marker">?</div>
+            <div className="npc-quest-info">
+              <h4 className="npc-quest-name">{quest.displayName}</h4>
+              <button
+                className="npc-action-btn npc-action-btn--primary"
+                onClick={() => completeQuestAtNpc(quest.questId)}
+              >
+                Turn In
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {/* Available quests (can accept) */}
+        {interactingNpc.availableQuests?.map(quest => (
+          <div key={quest.questId} className="npc-quest npc-quest--available">
+            <div className="npc-quest-marker">!</div>
+            <div className="npc-quest-info">
+              <h4 className="npc-quest-name">{quest.displayName}</h4>
+              <p className="npc-quest-desc">{quest.description}</p>
+              <div className="npc-quest-rewards">
+                {quest.rewards.credits && <span className="npc-quest-reward">{quest.rewards.credits} credits</span>}
+                {quest.rewards.xp && <span className="npc-quest-reward">{quest.rewards.xp} XP</span>}
+              </div>
+              <button
+                className="npc-action-btn npc-action-btn--primary"
+                onClick={() => acceptQuest(quest.questId)}
+              >
+                Accept Quest
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {/* Active quests (in progress) */}
+        {interactingNpc.activeQuests?.map(quest => (
+          <div key={quest.questId} className="npc-quest npc-quest--active">
+            <div className="npc-quest-info">
+              <h4 className="npc-quest-name">{quest.displayName}</h4>
+              <p className="npc-quest-desc">{quest.description}</p>
+              <div className="npc-quest-objectives">
+                {quest.objectives.map((obj, i) => (
+                  <div key={i} className={`npc-quest-objective ${obj.complete ? 'npc-quest-objective--complete' : ''}`}>
+                    {obj.description}: {obj.current}/{obj.required}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   // Render action buttons based on NPC type
   const renderActionButtons = () => {
     if (!interactingNpc) return null;
@@ -76,6 +146,7 @@ export const NpcInteractionModal: React.FC = () => {
           <button
             className="npc-action-btn npc-action-btn--primary"
             onClick={() => {
+              setActiveTab('trade');
               openTrading();
             }}
           >
@@ -151,15 +222,47 @@ export const NpcInteractionModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Dialogue section */}
-        <div className="npc-dialogue">
-          <p className="npc-dialogue-text">"{dialogueText}"</p>
-        </div>
+        {/* Tab navigation - only show if trader or has quests */}
+        {(interactingNpc.npcType === 'trader' || hasQuests) && (
+          <div className="npc-tabs">
+            <button
+              className={`npc-tab ${activeTab === 'dialogue' ? 'npc-tab--active' : ''}`}
+              onClick={() => setActiveTab('dialogue')}
+            >
+              Dialogue
+            </button>
+            {interactingNpc.npcType === 'trader' && (
+              <button
+                className={`npc-tab ${activeTab === 'trade' ? 'npc-tab--active' : ''}`}
+                onClick={() => setActiveTab('trade')}
+              >
+                Trade
+              </button>
+            )}
+            {hasQuests && (
+              <button
+                className={`npc-tab ${activeTab === 'quests' ? 'npc-tab--active' : ''}`}
+                onClick={() => setActiveTab('quests')}
+              >
+                Quests {interactingNpc.availableQuests?.length ? `(${interactingNpc.availableQuests.length})` : ''}
+              </button>
+            )}
+          </div>
+        )}
 
-        {/* Action buttons - type-specific */}
-        <div className="npc-actions">
-          {renderActionButtons()}
-        </div>
+        {/* Tab content */}
+        {activeTab === 'dialogue' && (
+          <>
+            <div className="npc-dialogue">
+              <p className="npc-dialogue-text">"{dialogueText}"</p>
+            </div>
+            <div className="npc-actions">
+              {renderActionButtons()}
+            </div>
+          </>
+        )}
+        {activeTab === 'trade' && showTrading && <TradingPanel />}
+        {activeTab === 'quests' && renderQuestsTab()}
       </div>
     </div>
   );
