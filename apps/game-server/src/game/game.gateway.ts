@@ -1167,6 +1167,32 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
   }
 
+  @SubscribeMessage('quest:abandon')
+  async handleQuestAbandon(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { questId: string }
+  ): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const result = await this.questService.abandonQuest(player.id, data.questId);
+
+      if (!result.success) {
+        client.emit('error', {
+          code: 'QUEST_ABANDON_FAILED',
+          message: result.error || 'Failed to abandon quest',
+        });
+      }
+      // Note: quest:abandoned and inventory:update events are emitted by QuestService.abandonQuest
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to process quest abandonment',
+      });
+    }
+  }
+
   /**
    * Compute and emit character stats to the requesting client.
    * Called after auth and after every equipment mutation.
