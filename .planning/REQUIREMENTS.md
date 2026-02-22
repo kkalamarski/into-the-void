@@ -76,32 +76,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NPC-01 | — | Pending |
-| NPC-02 | — | Pending |
-| NPC-03 | — | Pending |
-| NPC-04 | — | Pending |
-| QUEST-01 | — | Pending |
-| QUEST-02 | — | Pending |
-| QUEST-03 | — | Pending |
-| QUEST-04 | — | Pending |
-| QUEST-05 | — | Pending |
-| QUEST-06 | — | Pending |
-| VIS-01 | — | Pending |
-| VIS-02 | — | Pending |
-| VIS-03 | — | Pending |
-| VIS-04 | — | Pending |
-| VIS-05 | — | Pending |
-| VIS-06 | — | Pending |
-| VIS-07 | — | Pending |
-| ERR-01 | — | Pending |
-| ERR-02 | — | Pending |
-| ERR-03 | — | Pending |
+| NPC-01 | Phase 70 | Pending |
+| NPC-02 | Phase 70 | Pending |
+| NPC-03 | Phase 70 | Pending |
+| NPC-04 | Phase 70 | Pending |
+| QUEST-01 | Phase 71 | Pending |
+| QUEST-02 | Phase 71 | Pending |
+| QUEST-03 | Phase 73 | Pending |
+| QUEST-04 | Phase 73 | Pending |
+| QUEST-05 | Phase 74 | Pending |
+| QUEST-06 | Phase 74 | Pending |
+| VIS-01 | Phase 72 | Pending |
+| VIS-02 | Phase 72 | Pending |
+| VIS-03 | Phase 72 | Pending |
+| VIS-04 | Phase 72 | Pending |
+| VIS-05 | Phase 72 | Pending |
+| VIS-06 | Phase 72 | Pending |
+| VIS-07 | Phase 72 | Pending |
+| ERR-01 | Phase 75 | Pending |
+| ERR-02 | Phase 75 | Pending |
+| ERR-03 | Phase 75 | Pending |
 
 **Coverage:**
 - v1.16 requirements: 20 total
-- Mapped to phases: 0
-- Unmapped: 20 (pending roadmap)
+- Mapped to phases: 20
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-22*
-*Last updated: 2026-02-22 after initial definition*
+*Last updated: 2026-02-22 after roadmap creation*

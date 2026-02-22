@@ -17,7 +17,8 @@
 - v1.12 Bug Fixes & Content Polish - Phases 51-55 (shipped 2026-02-20)
 - v1.13 Active Combat Abilities - Phases 56-58 (shipped 2026-02-21)
 - v1.14 Equipment Stats Overhaul - Phases 59-63 (shipped 2026-02-21)
-- **v1.15 Quest System** - Phases 64-69 (shipped 2026-02-22)
+- v1.15 Quest System - Phases 64-69 (shipped 2026-02-22)
+- **v1.16 UI Polish** - Phases 70-75 (in progress)
 
 ## Phases
 
@@ -214,178 +215,144 @@ See: `.planning/milestones/v1.7-ROADMAP.md`
 
 </details>
 
-## Milestone v1.15: Quest System
+<details>
+<summary>v1.15 Quest System (Phases 64-69) - SHIPPED 2026-02-22</summary>
 
-**Goal:** NPCs give quests with objectives, tracking, and rewards — creating purpose-driven gameplay.
+**Milestone Goal:** NPCs give quests with objectives, tracking, and rewards — creating purpose-driven gameplay.
 
-### Phase 64: Quest Foundations
+- [x] Phase 64: Quest Foundations (2/2 plans) - completed 2026-02-22
+- [x] Phase 65: Objective Tracking (2/2 plans) - completed 2026-02-22
+- [x] Phase 66: Quest Completion & Rewards (3/3 plans) - completed 2026-02-22
+- [x] Phase 67: NPC Quest Givers (3/3 plans) - completed 2026-02-22
+- [x] Phase 68: Quest UI (4/4 plans) - completed 2026-02-22
+- [x] Phase 69: Quest Chains & Bounties (2/2 plans) - completed 2026-02-22
 
-**Goal**: Quest definitions exist in code with typed registry and database persistence layer
-**Depends on**: Phase 63 (v1.14 complete)
-**Requirements**: QUEST-01, QUEST-02, QUEST-03
-**Plans:** 2 plans
+See: `.planning/milestones/v1.15-ROADMAP.md`
 
-Plans:
-- [x] 64-01-PLAN.md — Quest type foundation, registry, and definitions
-- [x] 64-02-PLAN.md — Database schema and query functions
+</details>
+
+## Milestone v1.16: UI Polish
+
+**Goal:** Clean, WoW-style NPC interaction with unified window and general HUD improvements.
+
+### Phase 70: Modal Unification
+
+**Goal**: Single unified NPC window with tab navigation replacing the double-modal bug
+**Depends on**: Phase 69 (v1.15 complete)
+**Requirements**: NPC-01, NPC-02, NPC-03, NPC-04
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. Player can look up any quest by ID from QuestRegistry singleton
-  2. Quest definitions include typed objectives (kill, gather, explore) with target counts
-  3. Quest progress rows exist in database with JSONB objectives and UNIQUE constraint on completion
-  4. Quest state machine validates transitions (available -> active -> completed/failed)
+  1. Player interacts with trader NPC and sees single modal window, not two overlapping modals
+  2. Player can switch between Dialogue, Trade, and Quests tabs within single NPC window
+  3. Pressing ESC closes NPC window without cascade bugs or leaving Phaser keyboard disabled
+  4. NPC window defaults to Quests tab when NPC has available or ready quests
+  5. Only one modal state manages NPC interactions (no `showTrading` vs `interactingNpc` conflicts)
 
-**Delivers:**
-- packages/quests with QuestDefinition types and QuestRegistry singleton
-- quest_progress database table with JSONB objectives, UNIQUE constraint
-- 5-10 starter quest definitions (tutorial, faction intro)
-- Quest types in shared-types for client/server contracts
-- Pure validation functions in game-logic package
+Plans:
+- [ ] TBD during phase planning
 
 ---
 
-### Phase 65: Objective Tracking
+### Phase 71: Quest Objective Tracker HUD
 
-**Goal**: Quest objectives update in real-time as players kill creatures, collect items, or enter areas
-**Depends on**: Phase 64
-**Requirements**: QUEST-04, QUEST-10, QUEST-11, QUEST-12
-**Plans:** 2 plans
-
-Plans:
-- [x] 65-01-PLAN.md — Event infrastructure and QuestService with @OnEvent listeners
-- [x] 65-02-PLAN.md — Domain event emission from AbilityService, InventoryService, GameGateway
+**Goal**: On-screen HUD widget showing active quest progress near minimap
+**Depends on**: Phase 70
+**Requirements**: QUEST-01, QUEST-02
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. Player sees "3/5 kills" update immediately when killing quest target creature
-  2. Player sees "2/3 items" update when collecting quest item
-  3. Player sees explore objective complete when entering target biome/location
-  4. Quest progress persists across logout/login
+  1. Player sees active quest objectives displayed in HUD tracker with live progress counters
+  2. Tracker positioned near minimap area without blocking critical HUD elements
+  3. Tracker updates immediately when objective progress changes (kill count, item collection)
+  4. Player can collapse/expand tracker to save screen space
+  5. Tracker shows up to 3 active quests with visual hierarchy for primary quest
 
-**Delivers:**
-- QuestService with objective tracking logic
-- @nestjs/event-emitter integration (entity.killed, item.collected, zone.entered events)
-- Modified AbilityService, InventoryService, GameGateway to emit events
-- quest:progress WebSocket event with full objective state
-- Database queries for quest CRUD operations
+Plans:
+- [ ] TBD during phase planning
 
 ---
 
-### Phase 66: Quest Completion & Rewards
+### Phase 72: Visual Polish
 
-**Goal**: Players turn in completed quests to receive credits, XP, and item rewards atomically
-**Depends on**: Phase 65
-**Requirements**: QUEST-30, QUEST-31, QUEST-32, QUEST-33, QUEST-60, QUEST-61, QUEST-62
-**Plans:** 3 plans
-
-Plans:
-- [x] 66-01-PLAN.md — Quest item drop/trade guards
-- [x] 66-02-PLAN.md — Transactional completion and abandonment logic
-- [x] 66-03-PLAN.md — WebSocket handlers for quest:complete and quest:abandon
+**Goal**: GPU-accelerated hover states, smooth transitions, and glassmorphism effects across all UI panels
+**Depends on**: Phase 70
+**Requirements**: VIS-01, VIS-02, VIS-03, VIS-04, VIS-05, VIS-06, VIS-07
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. Player can turn in quest only when all objectives complete and at quest giver NPC
-  2. Player receives credits, XP, and items in single transaction (no partial rewards)
-  3. Quest items cannot be dropped or traded while quest active
-  4. Quest items removed from inventory automatically on quest completion or abandonment
-  5. Same quest cannot be completed twice (database constraint prevents reward duplication)
+  1. All buttons and tabs show visible hover state (15%+ brightness change) with GPU-accelerated transform
+  2. Modal windows fade in over 150ms with backdrop blur effect
+  3. Interactive elements provide press feedback (scale 0.98 on active state)
+  4. Typography and spacing consistent across all panels (matching design token values)
+  5. CSS design tokens include animation timing, shadow depths, and glassmorphism values
 
-**Delivers:**
-- QuestService.completeQuest() with full validation checklist
-- Transactional completion logic (validate -> remove items -> mark complete -> grant rewards)
-- isQuestItem/questId metadata in inventory items
-- Drop/trade guards for quest items
-- Quest item cleanup on abandonment
+Plans:
+- [ ] TBD during phase planning
 
 ---
 
-### Phase 67: NPC Quest Givers
+### Phase 73: Quest Markers in World
 
-**Goal**: NPCs offer quests via dialogue with visual markers, and players accept/turn-in through NPC interaction
-**Depends on**: Phase 66
-**Requirements**: QUEST-20, QUEST-21, QUEST-22, QUEST-23, QUEST-24, QUEST-05, QUEST-06
-**Plans:** 3 plans
-
-Plans:
-- [x] 67-01-PLAN.md — Server quest-NPC integration with getQuestsForNpc and quest:accept
-- [x] 67-02-PLAN.md — Client NPC modal quests tab with accept/turn-in UI
-- [x] 67-03-PLAN.md — Visual quest markers (! and ?) above NPCs
+**Goal**: Yellow quest markers (! and ?) displayed above NPCs in world
+**Depends on**: Phase 71
+**Requirements**: QUEST-03, QUEST-04
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. NPCs with available quests show "!" marker above their head
-  2. NPCs with quests ready for turn-in show "?" marker
-  3. Player sees available quests in NPC interaction modal filtered by faction
-  4. Player can accept quest through NPC dialogue
-  5. Quests auto-discover when player enters specific zone/biome (without NPC interaction)
+  1. NPCs with available quests display yellow "!" sprite above their head
+  2. NPCs with turn-in ready quests display yellow "?" sprite above their head
+  3. Quest markers render at correct z-index above NPC sprites but below modal windows
+  4. Markers update immediately when quest state changes (quest accepted, objective completed)
+  5. Markers visible at same render distance as NPC sprites
 
-**Delivers:**
-- NPC questGiver field with questIds array
-- Conditional dialogue system based on player quest state
-- Extended npc:interact:response with available/active/ready quests
-- Quest acceptance flow through NPC modal
-- Visual quest marker sprites (! and ?)
-- Auto-discover quest triggers on zone entry
+Plans:
+- [ ] TBD during phase planning
 
 ---
 
-### Phase 68: Quest UI
+### Phase 74: Quest Completion Feedback
 
-**Goal**: Players can view, track, and manage quests through dedicated UI panels
-**Depends on**: Phase 67
-**Requirements**: QUEST-40, QUEST-41, QUEST-42, QUEST-43, QUEST-44, QUEST-45
-**Plans:** 4 plans
-
-Plans:
-- [x] 68-01-PLAN.md — QuestStore foundation with WebSocket event handlers
-- [x] 68-02-PLAN.md — QuestLogPanel and QuestTracker components
-- [x] 68-03-PLAN.md — QuestCompleteModal with auto-dismiss
-- [x] 68-04-PLAN.md — GameUI and HUD wiring with Q hotkey
+**Goal**: Visual and audio feedback when player completes quest
+**Depends on**: Phase 73
+**Requirements**: QUEST-05, QUEST-06
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. Player can open quest log panel with Active/Completed tabs
-  2. Active quest objectives display in HUD tracker with live progress counters
-  3. Quest completion modal shows rewards received with 5s auto-dismiss
-  4. Q key toggles quest log panel
-  5. UI updates immediately on quest:progress events (no manual refresh needed)
+  1. Player sees "Quest Complete" banner displayed with quest name and rewards
+  2. Banner auto-dismisses after 5 seconds or on player click
+  3. Audio cue plays on quest completion (non-intrusive notification sound)
+  4. Banner positioned centrally without blocking critical HUD elements
+  5. Multiple quest completions queue properly without overlapping banners
 
-**Delivers:**
-- QuestStore (Zustand) with activeQuests, completedQuests, trackedQuests
-- QuestLogPanel component with tabs
-- QuestTracker HUD component
-- QuestCompleteModal with auto-dismiss
-- Real-time UI updates on WebSocket events
-- Q hotkey integration in HUD.tsx
+Plans:
+- [ ] TBD during phase planning
 
 ---
 
-### Phase 69: Quest Chains & Bounties
+### Phase 75: Error Handling
 
-**Goal**: Quests support prerequisites for chained storylines and daily repeatable bounties
-**Depends on**: Phase 68
-**Requirements**: QUEST-13, QUEST-50, QUEST-51, QUEST-52
-**Plans:** 2 plans
-
-Plans:
-- [x] 69-01-PLAN.md — Database schema extension and daily reset query logic
-- [x] 69-02-PLAN.md — QuestService integration and bounty quest definitions
+**Goal**: Loading states and error feedback for async operations in trade/quest UI
+**Depends on**: Phase 74
+**Requirements**: ERR-01, ERR-02, ERR-03
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. Player cannot accept quest until prerequisite quests completed
-  2. Story quests (one-time) cannot be repeated after completion
-  3. Bounty quests become available again after daily reset
-  4. Daily reset tracked per character (not global server time)
+  1. Async action buttons show loading spinner during pending state (trade, quest accept, quest turn-in)
+  2. Trade/quest errors display as toast notifications outside modal via alertStore
+  3. Modal cannot be closed while async operation pending (prevents race conditions)
+  4. Error toasts auto-dismiss after 5 seconds with clear error message
+  5. Failed operations revert UI state (button re-enabled, no optimistic update artifacts)
 
-**Delivers:**
-- Quest prerequisite system with validation
-- Quest repeatability types (story, bounty)
-- Daily reset tracking per character in database
-- Bounty availability logic in QuestService
+Plans:
+- [ ] TBD during phase planning
 
 ---
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 64 -> 65 -> 66 -> 67 -> 68 -> 69
+Phases execute in numeric order: 70 -> 71 -> 72 -> 73 -> 74 -> 75
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -458,8 +425,14 @@ Phases execute in numeric order: 64 -> 65 -> 66 -> 67 -> 68 -> 69
 | 67. NPC Quest Givers | v1.15 | 3/3 | Complete | 2026-02-22 |
 | 68. Quest UI | v1.15 | 4/4 | Complete | 2026-02-22 |
 | 69. Quest Chains & Bounties | v1.15 | 2/2 | Complete | 2026-02-22 |
+| 70. Modal Unification | v1.16 | 0/TBD | Not started | - |
+| 71. Quest Objective Tracker HUD | v1.16 | 0/TBD | Not started | - |
+| 72. Visual Polish | v1.16 | 0/TBD | Not started | - |
+| 73. Quest Markers in World | v1.16 | 0/TBD | Not started | - |
+| 74. Quest Completion Feedback | v1.16 | 0/TBD | Not started | - |
+| 75. Error Handling | v1.16 | 0/TBD | Not started | - |
 
-**Total:** 69 phases (69 complete, 0 pending)
+**Total:** 75 phases (69 complete, 6 pending)
 
 ---
-*Last updated: 2026-02-22 after Phase 69 complete — MILESTONE v1.15 COMPLETE*
+*Last updated: 2026-02-22 after v1.16 roadmap creation*
