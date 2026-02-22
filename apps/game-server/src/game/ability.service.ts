@@ -1,12 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { Server } from 'socket.io';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as crypto from 'crypto';
 import { PlayerService } from './player.service';
 import { ZonesService } from '../zones/zones.service';
 import { InventoryService } from './inventory.service';
-import { Creature, isHubZone } from '@into-the-void/shared-types';
-import { AbilityRegistry, canInteract, calculateDamage, computeCharStats } from '@into-the-void/game-logic';
+import { EntityService } from './entity.service';
+import { CombatService } from './combat.service';
+import { Creature, ItemEntity, isHubZone } from '@into-the-void/shared-types';
+import { AbilityRegistry, canInteract, calculateDamage, computeCharStats, rollLootTable, getCreatureLoot } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
+import { EntityRegistry } from '@into-the-void/entities';
+import type { CreatureDefinition } from '@into-the-void/entities';
 import type { AbilityDefinition, Buff } from '@into-the-void/shared-types';
 import type { EquipmentJson } from '@into-the-void/database';
 
@@ -45,9 +50,13 @@ export class AbilityService {
   private server: Server | null = null;
 
   constructor(
+    private readonly eventEmitter: EventEmitter2,
     private readonly playerService: PlayerService,
     private readonly zonesService: ZonesService,
     private readonly inventoryService: InventoryService,
+    private readonly entityService: EntityService,
+    @Inject(forwardRef(() => CombatService))
+    private readonly combatService: CombatService,
   ) {}
 
   setServer(server: Server): void {
@@ -231,7 +240,7 @@ export class AbilityService {
           attackerStats: playerStats,
           defenderStats: creatureStats,
           weaponDamage: effect.baseDamage * effect.scaling,
-          armorReduction: creatureStats.toughness,
+          armorReduction: creatureStats.toughness * 0.1, // Base armor, toughness adds multiplier in formula
         });
 
         damage = damageResult.damage;
@@ -239,21 +248,83 @@ export class AbilityService {
         targetHealth = target.health;
         targetMaxHealth = target.maxHealth;
 
+        const killed = target.health <= 0;
+        let groundItems: ItemEntity[] = [];
+
         // Update entity in zone
         await this.zonesService.updateEntity(player.position.zoneId, targetEntityId!, {
           health: target.health,
-          active: target.health > 0,
+          active: !killed,
         } as Partial<Creature>);
+
+        // Trigger creature retaliation if not killed
+        if (!killed) {
+          // Provoke omnivores so they fight back
+          if (target.behavior === 'omnivore') {
+            await this.combatService.provokeCreature(player.position.zoneId, targetEntityId!);
+          }
+
+          // Set combatTarget so creature knows who attacked it
+          await this.zonesService.updateEntity(player.position.zoneId, targetEntityId!, {
+            combatTarget: player.id,
+          } as Partial<Creature>);
+
+          // Start creature combat for aggressive creatures (predator, maniac, omnivore)
+          if (target.behavior === 'predator' || target.behavior === 'maniac' || target.behavior === 'omnivore') {
+            await this.combatService.startCreatureCombat(targetEntityId!, player.id, player.position.zoneId);
+          }
+        }
+
+        // Emit entity:update so entityStore syncs for UI (TargetFrame, etc.)
+        this.server?.to(player.position.zoneId).emit('entity:update', {
+          entityId: targetEntityId,
+          changes: { health: target.health, maxHealth: target.maxHealth, active: !killed },
+        });
+
+        // Handle creature death: spawn loot and schedule respawn
+        if (killed) {
+          // Stop any creature combat session (prevents stale sessions from blocking re-aggro)
+          this.combatService.stopCreatureCombat(targetEntityId!);
+
+          groundItems = await this.handleCreatureDeath(target, player.position.zoneId);
+
+          // Emit entity:spawn for each loot item so clients render them
+          for (const item of groundItems) {
+            this.server?.to(player.position.zoneId).emit('entity:spawn', item);
+          }
+
+          // Grant XP to player based on creature level
+          const levelDiff = target.level - player.level;
+          const levelBonus = levelDiff > 0 ? 1 + levelDiff * 0.1 : 1;
+          const xpReward = Math.floor(10 * target.level * levelBonus);
+          this.playerService.grantXp(player.id, xpReward);
+
+          // Emit kill event for quest tracking (CRITICAL: use speciesId, not target.id)
+          this.eventEmitter.emit('entity.killed', {
+            characterId: player.id,
+            entityId: target.speciesId,
+            entityType: 'creature',
+            creatureLevel: target.level,
+            zoneId: player.position.zoneId,
+          });
+
+          // Despawn the creature entity
+          this.server?.to(player.position.zoneId).emit('entity:despawn', { entityId: targetEntityId });
+        }
 
         // Broadcast damage to zone
         this.server?.to(player.position.zoneId).emit('combat:damage', {
           attackerId: player.id,
+          attackerName: player.name,
           defenderId: targetEntityId!,
+          defenderName: target.name,
           damage,
           defenderHealth: target.health,
           defenderMaxHealth: target.maxHealth,
           critical: damageResult.critical,
-          killed: target.health <= 0,
+          killed,
+          groundItems: groundItems.length > 0 ? groundItems : undefined,
+          defenderPosition: { x: target.position.x, y: target.position.y },
         });
       }
 
@@ -453,5 +524,37 @@ export class AbilityService {
       }
       this.activeBuffs.delete(playerId);
     }
+  }
+
+  /**
+   * Handle creature death: spawn loot and schedule respawn.
+   * Called when an ability kills a creature.
+   */
+  private async handleCreatureDeath(
+    creature: Creature,
+    zoneId: string,
+  ): Promise<ItemEntity[]> {
+    const def = EntityRegistry.get(creature.speciesId) as CreatureDefinition | undefined;
+    if (!def) return [];
+
+    // Get loot from creature's loot table
+    const lootEntries = getCreatureLoot(def.lootTableId);
+    const loot = rollLootTable(lootEntries);
+
+    // Spawn ground items using EntityService
+    const groundItems = await this.entityService.spawnGroundItemsForCombat(
+      loot,
+      creature.position.x,
+      creature.position.y,
+      creature.position.zoneId,
+    );
+
+    // Schedule respawn with +/-25% variance (RESP-02)
+    const variance = def.respawnSeconds * 0.25;
+    const offset = (Math.random() * 2 - 1) * variance;
+    const respawnSeconds = Math.round(def.respawnSeconds + offset);
+    await this.zonesService.recordEntityKill(creature.id, zoneId, respawnSeconds);
+
+    return groundItems;
   }
 }
