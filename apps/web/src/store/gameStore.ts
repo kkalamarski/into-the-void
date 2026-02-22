@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Player, ConnectionState, ChatMessage, Entity, Creature, ZoneState, Position, PlayerPublic } from '@into-the-void/shared-types';
+import { Player, ConnectionState, ChatMessage, Entity, Creature, ZoneState, Position, PlayerPublic, isHubZone } from '@into-the-void/shared-types';
 import { Game } from '../game/Game';
 import { gameSocket } from '../network/socket';
 import { useEntityStore } from './entityStore';
@@ -56,6 +56,14 @@ interface GameState {
   // Combat log
   showCombatLog: boolean;
   toggleCombatLog: () => void;
+
+  // Abilities panel
+  showAbilities: boolean;
+  toggleAbilities: () => void;
+
+  // Quest log
+  isQuestLogOpen: boolean;
+  toggleQuestLog: () => void;
 
   // Chat
   chatMessages: ChatMessage[];
@@ -115,6 +123,14 @@ export const useGameStore = create<GameState>((set) => ({
   // Combat log
   showCombatLog: true, // Default visible
   toggleCombatLog: () => set((state) => ({ showCombatLog: !state.showCombatLog })),
+
+  // Abilities panel
+  showAbilities: false,
+  toggleAbilities: () => set((state) => ({ showAbilities: !state.showAbilities })),
+
+  // Quest log
+  isQuestLogOpen: false,
+  toggleQuestLog: () => set((state) => ({ isQuestLogOpen: !state.isQuestLogOpen })),
 
   // Chat
   chatMessages: [],
@@ -178,14 +194,17 @@ gameSocket.on('zone:state', (data: ZoneState) => {
   }
 
   // Spawn initial entities and other players in world
-  // IMPORTANT: Only clear entities on initial load. On zone transitions, entities from
-  // adjacent zones (loaded via zone:chunk) must persist for cross-chunk visibility.
-  // spawnEntity already checks for duplicates and filters by visibility distance.
+  // Clear entities on initial load OR when transitioning to/from hub zones.
+  // Hub zones are instanced and separate from the world grid, so their entities
+  // should not persist across transitions. For normal world zone transitions,
+  // entities from adjacent zones must persist for cross-chunk visibility.
   const isInitialLoad = currentZoneId === null;
+  const isHubTransition = isZoneTransition && (isHubZone(zoneId) || (currentZoneId && isHubZone(currentZoneId)));
+  const shouldClearEntities = isInitialLoad || isHubTransition;
 
   // Populate entityStore for click-to-attack lookups
-  // Clear on initial load, then add all zone entities
-  if (isInitialLoad) {
+  // Clear on initial load or hub transitions, then add all zone entities
+  if (shouldClearEntities) {
     useEntityStore.getState().clearEntities();
   }
   if (entities && entities.length > 0) {
@@ -197,8 +216,8 @@ gameSocket.on('zone:state', (data: ZoneState) => {
   if (game) {
     const worldScene = game.getWorldScene();
     if (worldScene) {
-      // Only clear on initial load - zone transitions keep adjacent zone entities
-      if (isInitialLoad) {
+      // Clear entities on initial load or hub transitions
+      if (shouldClearEntities) {
         worldScene.clearEntities();
       }
       worldScene.clearOtherPlayers();
@@ -417,6 +436,7 @@ gameSocket.on('combat:damage', (data: {
   defenderMaxHealth: number;
   critical: boolean;
   killed: boolean;
+  defenderPosition?: { x: number; y: number };
 }) => {
   const game = useGameStore.getState().game;
   const worldScene = game?.getWorldScene();
@@ -427,8 +447,8 @@ gameSocket.on('combat:damage', (data: {
   // Determine if this is damage to the local player
   const isLocalPlayer = currentPlayer?.id === data.defenderId;
 
-  // Show floating damage number
-  worldScene.showDamageNumber(data.defenderId, data.damage, isLocalPlayer);
+  // Show floating damage number (pass position as fallback for despawned entities)
+  worldScene.showDamageNumber(data.defenderId, data.damage, isLocalPlayer, data.defenderPosition);
 
   // Update local player health if they took damage
   if (isLocalPlayer && currentPlayer) {
@@ -466,6 +486,80 @@ gameSocket.on('credits:update', (data: { credits: number }) => {
   if (state.player) {
     useGameStore.setState({
       player: { ...state.player, credits: data.credits },
+    });
+  }
+});
+
+// Listen for XP updates
+gameSocket.on('player:xp', (data: { playerId: string; xp: number; xpToNextLevel: number; level: number; leveledUp: boolean }) => {
+  const state = useGameStore.getState();
+  if (state.player && state.player.id === data.playerId) {
+    useGameStore.setState({
+      player: {
+        ...state.player,
+        xp: data.xp,
+        xpToNextLevel: data.xpToNextLevel,
+        level: data.level,
+      },
+    });
+
+    // Show level up message in chat
+    if (data.leveledUp) {
+      const chatMessage: ChatMessage = {
+        id: Date.now().toString(),
+        senderId: 'system',
+        senderName: 'System',
+        message: `Level up! You are now level ${data.level}.`,
+        channel: 'system',
+        timestamp: Date.now(),
+      };
+      useGameStore.getState().addChatMessage(chatMessage);
+    }
+  }
+});
+
+// Listen for level updates (includes health changes)
+gameSocket.on('player:level', (data: { playerId: string; level: number; health: number; maxHealth: number }) => {
+  const state = useGameStore.getState();
+  if (state.player && state.player.id === data.playerId) {
+    useGameStore.setState({
+      player: {
+        ...state.player,
+        level: data.level,
+        health: data.health,
+        maxHealth: data.maxHealth,
+      },
+    });
+  }
+});
+
+// Listen for health updates (from equipment changes affecting durability)
+gameSocket.on('player:health', (data: { playerId: string; health: number; maxHealth: number }) => {
+  const state = useGameStore.getState();
+  if (state.player && state.player.id === data.playerId) {
+    useGameStore.setState({
+      player: {
+        ...state.player,
+        health: data.health,
+        maxHealth: data.maxHealth,
+      },
+    });
+  }
+});
+
+// Listen for regeneration updates (health/energy regen when not in combat)
+gameSocket.on('player:regen', (data: { playerId: string; health: number; maxHealth: number; energy: number; maxEnergy: number }) => {
+  console.log('[gameStore] player:regen received', data);
+  const state = useGameStore.getState();
+  if (state.player && state.player.id === data.playerId) {
+    useGameStore.setState({
+      player: {
+        ...state.player,
+        health: data.health,
+        maxHealth: data.maxHealth,
+        energy: data.energy,
+        maxEnergy: data.maxEnergy,
+      },
     });
   }
 });
