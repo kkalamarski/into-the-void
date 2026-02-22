@@ -250,8 +250,10 @@ See: `.planning/milestones/v1.15-ROADMAP.md`
   5. Only one modal state manages NPC interactions (no `showTrading` vs `interactingNpc` conflicts)
 
 Plans:
-- [ ] 70-01-PLAN.md — Extract TradeTab, modify npcStore, merge CSS
-- [ ] 70-02-PLAN.md — Update GameUI, delete dead code, verify behavior
+- [x] 70-01-PLAN.md — Extract TradeTab, modify npcStore, merge CSS
+- [x] 70-02-PLAN.md — Update GameUI, delete dead code, verify behavior
+
+✓ **Phase 70 complete** — 2026-02-23
 
 ---
 
@@ -426,14 +428,14 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73 -> 74 -> 75
 | 67. NPC Quest Givers | v1.15 | 3/3 | Complete | 2026-02-22 |
 | 68. Quest UI | v1.15 | 4/4 | Complete | 2026-02-22 |
 | 69. Quest Chains & Bounties | v1.15 | 2/2 | Complete | 2026-02-22 |
-| 70. Modal Unification | v1.16 | 0/2 | Not started | - |
+| 70. Modal Unification | v1.16 | 2/2 | Complete | 2026-02-23 |
 | 71. Quest Objective Tracker HUD | v1.16 | 0/TBD | Not started | - |
 | 72. Visual Polish | v1.16 | 0/TBD | Not started | - |
 | 73. Quest Markers in World | v1.16 | 0/TBD | Not started | - |
 | 74. Quest Completion Feedback | v1.16 | 0/TBD | Not started | - |
 | 75. Error Handling | v1.16 | 0/TBD | Not started | - |
 
-**Total:** 75 phases (69 complete, 6 pending)
+**Total:** 75 phases (70 complete, 5 pending)
 
 ---
-*Last updated: 2026-02-23 after Phase 70 planning*
+*Last updated: 2026-02-23 after Phase 70 complete*
