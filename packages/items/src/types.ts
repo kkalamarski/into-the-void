@@ -42,7 +42,8 @@ export type ItemEffect =
   | { readonly type: 'life_support'; readonly hazardResistance: number }
   | { readonly type: 'sensor'; readonly detectionRange: number }
   | { readonly type: 'power_core'; readonly energyCapacity: number; readonly rechargeRate: number }
-  | { readonly type: 'mobility'; readonly jumpHeight: number };
+  | { readonly type: 'mobility'; readonly jumpHeight: number }
+  | { readonly type: 'stats'; readonly durability?: number; readonly toughness?: number; readonly power?: number; readonly haste?: number; readonly vigor?: number; readonly recovery?: number; readonly perception?: number; readonly resilience?: number };
 
 /**
  * Tool specialization types

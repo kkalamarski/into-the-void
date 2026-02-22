@@ -20,6 +20,7 @@ export const QUEST_HELIX_EXCAVATION: QuestDefinition = {
   faction: 'helix',
   rewards: { credits: 250, xp: 125 },
   minLevel: 1,
+  questGiverId: 'npc_helix_rep',
 };
 
 export const QUEST_HELIX_ORE_RUN: QuestDefinition = {
@@ -37,6 +38,7 @@ export const QUEST_HELIX_ORE_RUN: QuestDefinition = {
   faction: 'helix',
   rewards: { credits: 175, xp: 85 },
   minLevel: 1,
+  questGiverId: 'npc_helix_rep',
 };
 
 export const HELIX_QUESTS: readonly QuestDefinition[] = [

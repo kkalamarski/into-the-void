@@ -45,7 +45,7 @@ export interface BaseNpcDefinition {
 export interface TraderDefinition extends BaseNpcDefinition {
   readonly npcType: 'trader';
   readonly inventory: readonly TradeItem[];
-  readonly specialization?: 'general' | 'weapons' | 'armor' | 'consumables' | 'materials';
+  readonly specialization?: 'general' | 'weapons' | 'armor' | 'consumables' | 'materials' | 'suits' | 'tools' | 'modules';
 }
 
 /** Guard NPC - faction security, no special interactions */

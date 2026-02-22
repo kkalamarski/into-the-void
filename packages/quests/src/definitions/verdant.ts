@@ -25,6 +25,7 @@ export const QUEST_VERDANT_BIODIVERSITY: QuestDefinition = {
   faction: 'verdant',
   rewards: { credits: 200, xp: 100 },
   minLevel: 5,
+  questGiverId: 'npc_verdant_rep',
 };
 
 export const QUEST_VERDANT_SPECIMEN: QuestDefinition = {
@@ -42,6 +43,7 @@ export const QUEST_VERDANT_SPECIMEN: QuestDefinition = {
   faction: 'verdant',
   rewards: { credits: 150, xp: 75 },
   minLevel: 3,
+  questGiverId: 'npc_verdant_rep',
 };
 
 export const BOUNTY_VERDANT_FUNGAL_HARVEST: QuestDefinition = {
@@ -59,6 +61,7 @@ export const BOUNTY_VERDANT_FUNGAL_HARVEST: QuestDefinition = {
   rewards: { credits: 200, xp: 100 },
   faction: 'verdant',
   isRepeatable: true,  // Bounty - repeatable daily
+  questGiverId: 'npc_verdant_rep',
 };
 
 export const QUEST_VERDANT_CHAIN_PART_1: QuestDefinition = {
@@ -74,6 +77,7 @@ export const QUEST_VERDANT_CHAIN_PART_1: QuestDefinition = {
   ],
   rewards: { credits: 100, xp: 50 },
   faction: 'verdant',
+  questGiverId: 'npc_verdant_rep',
 };
 
 export const QUEST_VERDANT_CHAIN_PART_2: QuestDefinition = {
@@ -91,6 +95,7 @@ export const QUEST_VERDANT_CHAIN_PART_2: QuestDefinition = {
   rewards: { credits: 250, xp: 150 },
   faction: 'verdant',
   prerequisiteQuestIds: ['quest_verdant_chain_part_1'],  // CHAIN: requires part 1
+  questGiverId: 'npc_verdant_rep',
 };
 
 export const VERDANT_QUESTS: readonly QuestDefinition[] = [

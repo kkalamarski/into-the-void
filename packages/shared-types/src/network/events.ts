@@ -273,6 +273,12 @@ export interface ServerEvents {
   'quest:abandoned': {
     questId: string;
   };
+  'npc:quest-markers': {
+    markers: Array<{
+      npcId: string;
+      markerType: 'available' | 'ready' | 'none';
+    }>;
+  };
 }
 
 /**

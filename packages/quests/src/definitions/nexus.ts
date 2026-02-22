@@ -19,6 +19,7 @@ export const QUEST_NEXUS_RECON: QuestDefinition = {
   faction: 'nexus',
   rewards: { credits: 300, xp: 150 },
   minLevel: 8,
+  questGiverId: 'npc_nexus_rep',
 };
 
 export const QUEST_NEXUS_SALVAGE: QuestDefinition = {
@@ -36,6 +37,7 @@ export const QUEST_NEXUS_SALVAGE: QuestDefinition = {
   faction: 'nexus',
   rewards: { credits: 200, xp: 100 },
   minLevel: 10,
+  questGiverId: 'npc_nexus_rep',
 };
 
 export const NEXUS_QUESTS: readonly QuestDefinition[] = [

@@ -1,8 +1,8 @@
 import { IsometricTransform } from '../utils/IsometricTransform';
 
 const MAX_ELEVATION = 5;
-const ELEVATION_HEIGHT_STEP = 16;
-const MAX_STRUCTURE_HEIGHT = MAX_ELEVATION * ELEVATION_HEIGHT_STEP; // 80 pixels
+const ELEVATION_HEIGHT_STEP = 128; // 1.0 × diamond height for 256x256 cubes
+const MAX_STRUCTURE_HEIGHT = MAX_ELEVATION * ELEVATION_HEIGHT_STEP; // 160 pixels
 
 /**
  * Calculates which tiles are visible within camera viewport.
@@ -14,7 +14,7 @@ export class ViewportCuller {
   private cullPaddingY: number;
   private isoTransform: IsometricTransform;
 
-  constructor(tileWidth: number = 128, tileHeight: number = 64, padding: number = 4) {
+  constructor(tileWidth: number = 256, tileHeight: number = 128, padding: number = 4) {
     this.tileSize = tileWidth; // Keep for backwards compat
     this.isoTransform = new IsometricTransform(tileWidth, tileHeight);
     this.cullPaddingX = padding;

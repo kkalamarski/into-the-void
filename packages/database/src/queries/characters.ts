@@ -54,14 +54,19 @@ export async function updateCharacterPosition(
 }
 
 /**
- * Update character health
+ * Update character health (and optionally maxHealth)
  */
 export async function updateCharacterHealth(
   db: DbClient,
   characterId: string,
-  health: number
+  health: number,
+  maxHealth?: number
 ): Promise<void> {
-  await db.update(characters).set({ health }).where(eq(characters.id, characterId));
+  const updates: { health: number; maxHealth?: number } = { health };
+  if (maxHealth !== undefined) {
+    updates.maxHealth = maxHealth;
+  }
+  await db.update(characters).set(updates).where(eq(characters.id, characterId));
 }
 
 /**

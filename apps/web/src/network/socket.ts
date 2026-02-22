@@ -104,6 +104,7 @@ class GameSocket {
       'quest:progress',
       'quest:completed',
       'quest:abandoned',
+      'npc:quest-markers',
     ];
 
     for (const event of serverEvents) {

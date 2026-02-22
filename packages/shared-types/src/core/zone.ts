@@ -61,12 +61,30 @@ export interface TileStructure {
   }>;
 }
 
+/** Tile position within a zone (local coordinates without zoneId) */
+export interface TilePosition {
+  x: number;
+  y: number;
+}
+
+/** Portal exit point defining zone transitions */
+export interface ExitPoint {
+  /** Position of the portal in this zone */
+  position: TilePosition;
+  /** Target zone ID to teleport to */
+  targetZone: string;
+}
+
 /**
  * Chunk data (generated terrain for a zone)
  */
 export interface ChunkData {
   /** Zone ID this chunk belongs to */
   zoneId: string;
+  /** Explicit width in tiles (inferred from tiles[0].length if omitted) */
+  width?: number;
+  /** Explicit height in tiles (inferred from tiles.length if omitted) */
+  height?: number;
   /** Tile data (2D array of tile IDs) */
   tiles: number[][]; // Keep as number[][] for now - Phase 13-03 adds migration
   /** Height data (2D array of elevation levels 0-5) - parallel to tiles[][] */
@@ -77,6 +95,10 @@ export interface ChunkData {
   collisions: boolean[][];
   /** Spawn points for entities */
   spawnPoints: SpawnPoint[];
+  /** Default spawn location for players entering this zone */
+  entryPoint?: TilePosition;
+  /** Portal destinations for zone transitions */
+  exitPoints?: ExitPoint[];
 }
 
 /**

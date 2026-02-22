@@ -940,4 +940,36 @@ Her files were classified. Her name was erased from corporate records. But copie
 
 ---
 
+## Part VII: Exo-Suit Systems
+
+### Emergency Lockdown Mode
+
+When an exo-suit's integrity drops to critical levels, the suit's AI activates **Emergency Lockdown Mode** — a protective state that immobilizes all suit functions to preserve pilot life support. The pilot remains conscious but cannot move or act until the suit is restored.
+
+This system was developed after early colonial expeditions suffered catastrophic losses when wounded operatives continued pushing their damaged suits until total system failure. The lockdown protocol sacrifices mobility to preserve the pilot — a calculation the corporations consider acceptable, given the expense of training replacements.
+
+Two recovery options exist for operatives in lockdown:
+
+#### Emergency Rescue Protocol (ERP)
+
+All faction-affiliated personnel can broadcast an S.O.S. signal triggering automated extraction to their faction hub:
+
+- **Verdant Dynamics**: Bio-organic retrieval drones descend from Canopy's canopy layer, cocooning the operative in stabilizing gel before transport. The process is gentle. The cleanup afterward is not.
+
+- **Helix Extraction**: Armored recovery crawlers emerge from the nearest Ironhold access tunnel, securing the operative in a pressurized shell before rapid transit through the subterranean network. Helix prides itself on reaching any operative within their territory in under fifteen minutes. They do not discuss the operatives they cannot reach in time.
+
+- **Nexus Frontiers**: Rapid-response aerial units from Meridian provide extraction anywhere within Nexus-controlled territory. The flight is comfortable. The debrief afterward covers what intelligence was compromised during the operative's incapacitation.
+
+Unaffiliated operatives can access ERP through Nexus emergency contracts — for a fee.
+
+#### Emergency Reboot Kits
+
+Field-deployable system restoration tools that bypass lockdown protocols and restore suit function on-site. Unlike standard repair kits (which restore suit integrity while the suit remains operational), reboot kits contain specialized firmware reset components and emergency power cells designed to override the lockdown state.
+
+Higher-quality kits restore more suit integrity upon reboot. The best kits — particularly those incorporating Prior Inhabitant technology — can restore a suit to full operational capacity, though such items are rare and valuable.
+
+Standard Suit Repair Kits cannot bypass Emergency Lockdown Mode. They are designed for field maintenance of functioning suits, not system recovery from critical failure.
+
+---
+
 *This document is a living reference. Sections will be expanded as development continues.*

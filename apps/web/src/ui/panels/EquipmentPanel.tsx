@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { useDroppable } from '@dnd-kit/core';
+import { useDroppable, useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { useStatsStore } from '../../store/statsStore';
 import { useGameStore } from '../../store/gameStore';
@@ -43,6 +44,53 @@ interface EquipSlotProps {
   size?: 'normal' | 'large';
 }
 
+interface DraggableEquipItemProps {
+  item: InventoryItem;
+  onUnequip: (instanceId: string) => void;
+}
+
+function DraggableEquipItem({ item, onUnequip }: DraggableEquipItemProps) {
+  const itemDef = ItemRegistry.get(item.itemId);
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: item.instanceId,
+    data: { type: 'equipped', instanceId: item.instanceId },
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+    cursor: 'grab',
+  };
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onUnequip(item.instanceId);
+  };
+
+  if (!itemDef) return null;
+
+  return (
+    <ItemTooltip item={itemDef} disabled={isDragging}>
+      <div
+        ref={setNodeRef}
+        className="equip-slot-inner"
+        style={style}
+        {...attributes}
+        {...listeners}
+        onContextMenu={handleContextMenu}
+      >
+        <div
+          className="slot-icon"
+          style={{
+            backgroundColor: `#${itemDef.color.toString(16).padStart(6, '0')}`,
+            borderColor: RARITY_COLORS[itemDef.rarity],
+          }}
+        />
+      </div>
+    </ItemTooltip>
+  );
+}
+
 function EquipSlot({ slotId, label, item, disabled, onUnequip, size = 'normal' }: EquipSlotProps) {
   const { setNodeRef, isOver } = useDroppable({ id: `equip-${slotId}`, disabled });
   const itemDef = item ? ItemRegistry.get(item.itemId) : null;
@@ -60,27 +108,10 @@ function EquipSlot({ slotId, label, item, disabled, onUnequip, size = 'normal' }
     .filter(Boolean)
     .join(' ');
 
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (item && onUnequip) {
-      onUnequip(item.instanceId);
-    }
-  };
-
   return (
-    <div ref={setNodeRef} className={slotClasses} onContextMenu={handleContextMenu}>
-      {item && itemDef ? (
-        <ItemTooltip item={itemDef}>
-          <div className="equip-slot-inner">
-            <div
-              className="slot-icon"
-              style={{
-                backgroundColor: `#${itemDef.color.toString(16).padStart(6, '0')}`,
-                borderColor: RARITY_COLORS[itemDef.rarity],
-              }}
-            />
-          </div>
-        </ItemTooltip>
+    <div ref={setNodeRef} className={slotClasses}>
+      {item && onUnequip ? (
+        <DraggableEquipItem item={item} onUnequip={onUnequip} />
       ) : (
         <span className="equip-slot-label">{label}</span>
       )}

@@ -1,0 +1,62 @@
+.menubar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--menubar-height);
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.menubar-left,
+.menubar-center,
+.menubar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.separator {
+  color: var(--color-border);
+  margin: 0 4px;
+}
+
+.menubar-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.menubar-btn:hover:not(:disabled) {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.menubar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.zone-id-input {
+  width: 200px;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.status-text {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}

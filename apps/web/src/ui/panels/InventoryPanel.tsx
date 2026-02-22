@@ -4,6 +4,7 @@ import {
   rectSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
+import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { useGameStore } from '../../store/gameStore';
@@ -19,7 +20,7 @@ interface SortableSlotProps {
   instanceId: string;
   itemId: string;
   quantity: number;
-  onContextMenu: (e: React.MouseEvent, instanceId: string) => void;
+  onContextMenu: (e: React.MouseEvent, instanceId: string, itemId: string) => void;
   equipment: InventoryEquipment | undefined;
 }
 
@@ -67,7 +68,7 @@ function SortableSlot({ instanceId, itemId, quantity, onContextMenu, equipment }
         style={style}
         {...attributes}
         {...listeners}
-        onContextMenu={(e) => onContextMenu(e, instanceId)}
+        onContextMenu={(e) => onContextMenu(e, instanceId, itemId)}
       >
         <div
           className="slot-icon"
@@ -79,6 +80,22 @@ function SortableSlot({ instanceId, itemId, quantity, onContextMenu, equipment }
   );
 }
 
+function InventoryDropZone({ children, pendingReorder }: { children: React.ReactNode; pendingReorder: boolean }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'inventory-drop-zone',
+    disabled: pendingReorder,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`inventory-drop-zone ${isOver ? 'inventory-drop-zone--over' : ''}`}
+    >
+      {children}
+    </div>
+  );
+}
+
 export const InventoryPanel: React.FC = () => {
   const { inventory, pendingReorder } = useInventoryStore();
   const { toggleInventory } = useGameStore();
@@ -87,7 +104,9 @@ export const InventoryPanel: React.FC = () => {
     x: number;
     y: number;
     instanceId: string;
+    itemId: string;
   } | null>(null);
+  const panelRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = () => setContextMenu(null);
@@ -128,9 +147,13 @@ export const InventoryPanel: React.FC = () => {
 
   const sortableIds = sortedItems.map((i) => i.instanceId);
 
-  const handleContextMenu = (e: React.MouseEvent, instanceId: string) => {
+  const handleContextMenu = (e: React.MouseEvent, instanceId: string, itemId: string) => {
     e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, instanceId });
+    // Calculate position relative to panel
+    const panelRect = panelRef.current?.getBoundingClientRect();
+    const x = panelRect ? e.clientX - panelRect.left : e.clientX;
+    const y = panelRect ? e.clientY - panelRect.top : e.clientY;
+    setContextMenu({ x, y, instanceId, itemId });
   };
 
   const handleDrop = () => {
@@ -141,12 +164,19 @@ export const InventoryPanel: React.FC = () => {
 
   const handleUse = () => {
     if (!contextMenu) return;
-    gameSocket.emit('inventory:use', { instanceId: contextMenu.instanceId });
+    const itemDef = ItemRegistry.get(contextMenu.itemId);
+    // For equippable items, use equipment:change; for consumables, use inventory:use
+    if (itemDef?.equipSlot) {
+      gameSocket.emit('equipment:change', { instanceId: contextMenu.instanceId });
+    } else {
+      gameSocket.emit('inventory:use', { instanceId: contextMenu.instanceId });
+    }
     setContextMenu(null);
   };
 
   return (
     <div
+      ref={panelRef}
       className="inventory-panel ui-panel"
       style={{ transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))` }}
     >
@@ -158,30 +188,36 @@ export const InventoryPanel: React.FC = () => {
         <span>Inventory ({inventory.items.length}/{maxSlots})</span>
         <button className="close-btn" onClick={toggleInventory}>&times;</button>
       </div>
-      <SortableContext items={sortableIds} strategy={rectSortingStrategy}>
-        <div className="inventory-grid" style={{ pointerEvents: pendingReorder ? 'none' : 'auto' }}>
-          {slots.map((item, i) =>
-            item ? (
-              <SortableSlot
-                key={item.instanceId}
-                instanceId={item.instanceId}
-                itemId={item.itemId}
-                quantity={item.quantity}
-                onContextMenu={handleContextMenu}
-                equipment={inventory.equipment}
-              />
-            ) : (
-              <div key={`empty-${i}`} className="inventory-slot inventory-slot--empty" />
-            )
-          )}
-        </div>
-      </SortableContext>
-      {contextMenu && (
-        <div className="context-menu" style={{ left: contextMenu.x, top: contextMenu.y }}>
-          <button onClick={handleUse}>Use</button>
-          <button onClick={handleDrop}>Drop</button>
-        </div>
-      )}
+      <InventoryDropZone pendingReorder={pendingReorder}>
+        <SortableContext items={sortableIds} strategy={rectSortingStrategy}>
+          <div className="inventory-grid" style={{ pointerEvents: pendingReorder ? 'none' : 'auto' }}>
+            {slots.map((item, i) =>
+              item ? (
+                <SortableSlot
+                  key={item.instanceId}
+                  instanceId={item.instanceId}
+                  itemId={item.itemId}
+                  quantity={item.quantity}
+                  onContextMenu={handleContextMenu}
+                  equipment={inventory.equipment}
+                />
+              ) : (
+                <div key={`empty-${i}`} className="inventory-slot inventory-slot--empty" />
+              )
+            )}
+          </div>
+        </SortableContext>
+      </InventoryDropZone>
+      {contextMenu && (() => {
+        const itemDef = ItemRegistry.get(contextMenu.itemId);
+        const isEquippable = !!itemDef?.equipSlot;
+        return (
+          <div className="context-menu" style={{ left: contextMenu.x, top: contextMenu.y }}>
+            <button onClick={handleUse}>{isEquippable ? 'Equip' : 'Use'}</button>
+            <button onClick={handleDrop}>Drop</button>
+          </div>
+        );
+      })()}
     </div>
   );
 };

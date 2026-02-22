@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Game } from '../game/Game';
 import { GameUI } from '../ui/GameUI';
 import { useGameStore } from '../store/gameStore';
+import { useEntityStore } from '../store/entityStore';
 import { ConnectionIndicator } from './ConnectionIndicator';
 import { ReconnectOverlay } from './ReconnectOverlay';
 import { gameSocket } from '../network/socket';
@@ -65,6 +66,8 @@ const GameContainer: React.FC = () => {
         // Client filters by visibility, zone tracking enables memory cleanup on unload
         if (data.entities) {
           data.entities.forEach(entity => {
+            // Add to entityStore for click-to-attack lookups
+            useEntityStore.getState().spawnEntity(entity);
             worldScene.spawnEntity(entity, data.zoneId);
           });
         }

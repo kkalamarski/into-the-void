@@ -269,6 +269,11 @@ export class WorldScene extends Phaser.Scene {
       this.updateNpcQuestMarker(data);
     });
 
+    // Listen for npc:quest-markers to show quest markers on zone entry
+    gameSocket.on('npc:quest-markers', (data) => {
+      this.applyInitialQuestMarkers(data.markers);
+    });
+
     // Set fixed zoom to show ~20x15 tiles viewport (for 256x256 sprites)
     this.cameras.main.setZoom(0.5);
 
@@ -1765,6 +1770,27 @@ export class WorldScene extends Phaser.Scene {
     this.chunkTiles.clear();
     this.tileSprites = [];
     this.lastCullBounds = null;
+  }
+
+  /**
+   * Apply initial quest markers to NPCs when entering a zone.
+   * Called when npc:quest-markers event is received from server.
+   */
+  private applyInitialQuestMarkers(
+    markers: Array<{ npcId: string; markerType: 'available' | 'ready' | 'none' }>
+  ): void {
+    if (!this.entityRenderer) return;
+
+    for (const marker of markers) {
+      const npcContainer = this.findNpcContainerById(marker.npcId);
+      if (npcContainer) {
+        this.entityRenderer.updateQuestMarker(
+          npcContainer.getData('entityId') as string,
+          marker.markerType,
+          npcContainer
+        );
+      }
+    }
   }
 
   /**

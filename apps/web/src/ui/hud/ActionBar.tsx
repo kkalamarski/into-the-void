@@ -9,6 +9,7 @@ import type { AbilityDefinition } from '@into-the-void/shared-types';
 import { DndContext, closestCenter, DragEndEvent, DragStartEvent, DragOverlay } from '@dnd-kit/core';
 import { SortableContext, useSortable, rectSwappingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { AbilityTooltip } from '../../components/AbilityTooltip';
 import './ActionBar.css';
 
 const SLOT_COUNT = 8;
@@ -128,7 +129,7 @@ function SortableAbilitySlot({ index, ability, slotId }: SortableAbilitySlotProp
   const insufficientEnergy = ability && player ? player.energy < ability.energyCost : false;
   const disabled = onCooldown || insufficientEnergy;
 
-  return (
+  const slotContent = (
     <div
       ref={setNodeRef}
       style={style}
@@ -136,11 +137,20 @@ function SortableAbilitySlot({ index, ability, slotId }: SortableAbilitySlotProp
       {...listeners}
       className={`ability-slot ${isEmpty ? 'ability-slot--empty' : ''} ${disabled ? 'ability-slot--disabled' : ''}`}
       onClick={handleClick}
-      title={ability ? `${ability.displayName}\n${ability.description}\nEnergy: ${ability.energyCost}\nCooldown: ${ability.cooldownMs / 1000}s` : undefined}
     >
       <AbilitySlotContent index={index} ability={ability} />
     </div>
   );
+
+  if (ability) {
+    return (
+      <AbilityTooltip ability={ability}>
+        {slotContent}
+      </AbilityTooltip>
+    );
+  }
+
+  return slotContent;
 }
 
 export const ActionBar: React.FC = () => {

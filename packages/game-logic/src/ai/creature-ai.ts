@@ -46,13 +46,22 @@ export function tickCreatureAI(
 }
 
 /**
- * Herbivore behavior: flee from nearby players, otherwise wander
+ * Herbivore behavior: flee from attackers or nearby players, otherwise wander
  */
 function tickHerbivore(
   creature: Creature,
   players: PlayerPublic[],
   collisionMap: boolean[][],
 ): AiTickResult {
+  // If being attacked (has combatTarget set by server), prioritize fleeing from attacker
+  if (creature.combatTarget) {
+    const attacker = players.find(p => p.id === creature.combatTarget);
+    if (attacker) {
+      return flee(creature, attacker, collisionMap);
+    }
+  }
+
+  // Otherwise flee from any nearby players
   const nearbyPlayers = players
     .map((p) => ({
       player: p,

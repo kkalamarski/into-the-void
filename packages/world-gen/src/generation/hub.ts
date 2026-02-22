@@ -1,4 +1,5 @@
 import { ChunkData, BiomeType, FertilityType, ZONE_SIZE } from '@into-the-void/shared-types';
+import { getHubMap } from '../maps/hub-loader';
 
 const PORTAL_TILE_ID = 16; // TileId.PORTAL from terrain.ts
 
@@ -35,6 +36,10 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_verdant_rep', x: 44, y: 20 },      // NE area - faction rep
       { npcId: 'npc_verdant_ambient', x: 20, y: 44 },  // SW area - ambient
       { npcId: 'npc_verdant_service', x: 44, y: 44 },  // SE area - medical
+      // Specialized vendors
+      { npcId: 'npc_suit_vendor', x: 15, y: 32 },      // W area - suit vendor
+      { npcId: 'npc_tool_vendor', x: 49, y: 32 },      // E area - tool vendor
+      { npcId: 'npc_module_vendor', x: 32, y: 49 },    // S area - module vendor
     ],
   },
   hub_helix: {
@@ -49,6 +54,10 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_helix_rep', x: 44, y: 20 },
       { npcId: 'npc_helix_ambient', x: 20, y: 44 },
       { npcId: 'npc_helix_service', x: 44, y: 44 },
+      // Specialized vendors
+      { npcId: 'npc_suit_vendor', x: 15, y: 32 },
+      { npcId: 'npc_tool_vendor', x: 49, y: 32 },
+      { npcId: 'npc_module_vendor', x: 32, y: 49 },
     ],
   },
   hub_nexus: {
@@ -63,6 +72,10 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_nexus_rep', x: 44, y: 20 },
       { npcId: 'npc_nexus_ambient', x: 20, y: 44 },
       { npcId: 'npc_nexus_service', x: 44, y: 44 },
+      // Specialized vendors
+      { npcId: 'npc_suit_vendor', x: 15, y: 32 },
+      { npcId: 'npc_tool_vendor', x: 49, y: 32 },
+      { npcId: 'npc_module_vendor', x: 32, y: 49 },
     ],
   },
   hub_neutral: {
@@ -77,6 +90,10 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_neutral_rep', x: 44, y: 20 },
       { npcId: 'npc_neutral_ambient', x: 20, y: 44 },
       { npcId: 'npc_neutral_service', x: 44, y: 44 },
+      // Specialized vendors
+      { npcId: 'npc_suit_vendor', x: 15, y: 32 },
+      { npcId: 'npc_tool_vendor', x: 49, y: 32 },
+      { npcId: 'npc_module_vendor', x: 32, y: 49 },
     ],
   },
 };
@@ -91,6 +108,8 @@ export function getHubConfig(zoneId: string): HubConfig | undefined {
 
 /**
  * Generate a hub zone chunk.
+ * Loads from pre-defined JSON map if available, otherwise falls back to procedural generation.
+ *
  * Hubs are 64x64 tile areas with:
  * - Walkable floor in the center (roughly 48x48)
  * - Wall/boundary tiles around the perimeter (8 tiles thick)
@@ -98,6 +117,21 @@ export function getHubConfig(zoneId: string): HubConfig | undefined {
  * - No entity spawns (safe zone)
  */
 export function generateHubChunk(hubZoneId: string): ChunkData {
+  // Try to load from JSON map first
+  const mapData = getHubMap(hubZoneId);
+  if (mapData) {
+    // Deep clone to avoid mutation of the cached map
+    return JSON.parse(JSON.stringify(mapData));
+  }
+
+  // Fallback to procedural generation for unknown hubs
+  return generateProceduralHubChunk(hubZoneId);
+}
+
+/**
+ * Generate a hub chunk procedurally (fallback for hubs without JSON maps).
+ */
+function generateProceduralHubChunk(hubZoneId: string): ChunkData {
   const config = HUB_CONFIGS[hubZoneId];
   if (!config) {
     throw new Error(`Unknown hub zone: ${hubZoneId}`);

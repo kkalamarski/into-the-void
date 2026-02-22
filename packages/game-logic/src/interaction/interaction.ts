@@ -56,7 +56,9 @@ export function canInteract(
     entity.position.y
   );
 
-  if (distance > range) {
+  // Add 1.0 buffer to account for diagonal movement where Manhattan distance = 2
+  // but visual distance is ~1.41 tiles. This allows range 1 to hit diagonally adjacent.
+  if (distance > range + 1.0) {
     return { canInteract: false, reason: 'Entity is too far away' };
   }
 
@@ -210,6 +212,7 @@ export function getEntitiesInRange(
       entity.position.y
     );
 
-    return distance <= range;
+    // Add 1.0 buffer to account for diagonal movement
+    return distance <= range + 1.0;
   });
 }

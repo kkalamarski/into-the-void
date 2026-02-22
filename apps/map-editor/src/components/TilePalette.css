@@ -1,0 +1,71 @@
+.tile-palette-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tile-palette-container .panel-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.tile-palette {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  padding: 4px;
+}
+
+.tile-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  background: var(--color-bg-primary);
+  border: 2px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.tile-item:hover {
+  border-color: var(--color-text-secondary);
+  background: var(--color-bg-tertiary);
+}
+
+.tile-item.selected {
+  border-color: var(--color-accent);
+  background: rgba(233, 69, 96, 0.1);
+}
+
+.tile-preview {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 6px;
+  object-fit: contain;
+}
+
+.tile-preview-sprite {
+  image-rendering: pixelated;
+}
+
+.tile-preview-fallback {
+  width: 48px;
+  height: 24px;
+}
+
+.tile-name {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.tile-item.selected .tile-name {
+  color: var(--color-text-primary);
+}

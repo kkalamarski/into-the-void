@@ -7,26 +7,15 @@ import { EntityService } from './entity.service';
 import { AbilityService } from './ability.service';
 import { Creature, ItemEntity, isHubZone } from '@into-the-void/shared-types';
 import {
-  canInteract,
-  canInteractLevel,
   calculateDamage,
   calculateAttackInterval,
   computeCharStats,
   rollLootTable,
   getCreatureLoot,
 } from '@into-the-void/game-logic';
-import { ItemRegistry } from '@into-the-void/items';
 import { EntityRegistry } from '@into-the-void/entities';
 import type { CreatureDefinition } from '@into-the-void/entities';
 import type { EquipmentJson } from '@into-the-void/database';
-
-interface CombatSession {
-  playerId: string;
-  targetId: string;
-  zoneId: string;
-  startedAt: number;
-  lastAttackAt: number;
-}
 
 interface CreatureCombatSession {
   creatureId: string;
@@ -36,15 +25,11 @@ interface CreatureCombatSession {
   lastAttackAt: number;
 }
 
-interface StartCombatResult {
-  success: boolean;
-  error?: string;
-  session?: CombatSession;
-}
-
 interface CombatDamageResult {
   attackerId: string;
+  attackerName: string;
   defenderId: string;
+  defenderName: string;
   damage: number;
   defenderHealth: number;
   defenderMaxHealth: number;
@@ -56,9 +41,6 @@ interface CombatDamageResult {
 
 @Injectable()
 export class CombatService {
-  /** Active combat sessions indexed by playerId */
-  private sessions: Map<string, CombatSession> = new Map();
-
   /** Active creature combat sessions indexed by creatureId */
   private creatureSessions: Map<string, CreatureCombatSession> = new Map();
 
@@ -81,124 +63,9 @@ export class CombatService {
   }
 
   /**
-   * Start combat between a player and a creature.
-   * Validates: player has combat tool equipped, target is creature in range, level gating.
-   */
-  async startCombat(socketId: string, targetEntityId: string): Promise<StartCombatResult> {
-    const player = this.playerService.getPlayerBySocket(socketId);
-    if (!player) return { success: false, error: 'Player not found' };
-
-    // Hub zones are safe - no combat allowed
-    if (isHubZone(player.position.zoneId)) {
-      return { success: false, error: 'Combat is not allowed in hub zones' };
-    }
-
-    // Check if already in combat
-    if (this.sessions.has(player.id)) {
-      return { success: false, error: 'Already in combat' };
-    }
-
-    // Get equipped tool
-    const inventory = this.inventoryService.getInventory(player.id);
-    if (!inventory) return { success: false, error: 'Inventory not loaded' };
-
-    const tool = inventory.equipment.tool;
-    if (!tool) return { success: false, error: 'No tool equipped' };
-
-    const toolDef = ItemRegistry.get(tool.itemId);
-    if (!toolDef) return { success: false, error: 'Unknown tool' };
-
-    // Get target entity
-    const entity = await this.zonesService.getEntity(player.position.zoneId, targetEntityId);
-    if (!entity) return { success: false, error: 'Target not found' };
-
-    // NPCs cannot be attacked
-    if (entity.type === 'npc') {
-      return { success: false, error: 'Cannot attack NPCs' };
-    }
-
-    if (entity.type !== 'creature') return { success: false, error: 'Target is not a creature' };
-
-    const creature = entity as Creature;
-    if (!creature.active || creature.health <= 0) {
-      return { success: false, error: 'Target is already dead' };
-    }
-
-    // Validate range
-    const toolRange = toolDef.range ?? 1;
-    const rangeCheck = canInteract(player, entity, toolRange);
-    if (!rangeCheck.canInteract) {
-      return { success: false, error: rangeCheck.reason };
-    }
-
-    // Level gating (INTR-07)
-    if (!canInteractLevel(player.level, creature.level)) {
-      return { success: false, error: `Creature level ${creature.level} exceeds your level by more than 5` };
-    }
-
-    // Creatures react when attacked
-    const creatureBehavior = creature.behavior;
-    if (creatureBehavior === 'omnivore') {
-      // Provoke omnivores - they'll fight back like predators
-      await this.provokeCreature(player.position.zoneId, targetEntityId);
-    }
-
-    // All creatures get combatTarget set so AI knows who attacked them
-    // - Herbivores use this to flee from the attacker
-    // - Predators/omnivores/maniacs use this to chase and attack
-    await this.zonesService.updateEntity(player.position.zoneId, targetEntityId, {
-      combatTarget: player.id,
-    } as Partial<Creature>);
-
-    // Predators, maniacs, and provoked omnivores immediately start combat session
-    if (creatureBehavior === 'predator' || creatureBehavior === 'maniac' || creatureBehavior === 'omnivore') {
-      await this.startCreatureCombat(targetEntityId, player.id, player.position.zoneId);
-    }
-
-    // Create combat session
-    const session: CombatSession = {
-      playerId: player.id,
-      targetId: targetEntityId,
-      zoneId: player.position.zoneId,
-      startedAt: Date.now(),
-      lastAttackAt: 0,  // Allows immediate first attack
-    };
-    this.sessions.set(player.id, session);
-
-    // Mark player in combat
-    this.playerService.setInCombat(player.id, true);
-
-    return { success: true, session };
-  }
-
-  /**
-   * Stop combat for a player (creature died, player moved out of range, etc.)
-   */
-  stopCombat(playerId: string): void {
-    this.sessions.delete(playerId);
-    this.playerService.setInCombat(playerId, false);
-  }
-
-  /**
-   * Get combat session for a player.
-   */
-  getSession(playerId: string): CombatSession | undefined {
-    return this.sessions.get(playerId);
-  }
-
-  /**
-   * Get all active combat sessions (for tick loop).
-   */
-  getAllSessions(): CombatSession[] {
-    return Array.from(this.sessions.values());
-  }
-
-  /**
    * Handle player disconnect — clean up combat state.
    */
   handleDisconnect(playerId: string): void {
-    this.stopCombat(playerId);
-
     // Stop any creature combat sessions targeting this player
     for (const [creatureId, session] of this.creatureSessions.entries()) {
       if (session.targetPlayerId === playerId) {
@@ -209,9 +76,8 @@ export class CombatService {
 
   /**
    * Handle creature death: spawn loot and schedule respawn.
-   * Mirrors the logic in EntityService.handleAttack() for consistency.
    */
-  private async handleCreatureDeath(
+  async handleCreatureDeath(
     creature: Creature,
     zoneId: string,
   ): Promise<ItemEntity[]> {
@@ -237,143 +103,6 @@ export class CombatService {
     await this.zonesService.recordEntityKill(creature.id, zoneId, respawnSeconds);
 
     return groundItems;
-  }
-
-  /**
-   * Execute one attack from player to target creature.
-   * Returns damage result for broadcasting, or null if not time to attack yet.
-   */
-  async attackTick(session: CombatSession): Promise<CombatDamageResult | null> {
-    const player = this.playerService.getPlayerById(session.playerId);
-    if (!player) {
-      this.stopCombat(session.playerId);
-      return null;
-    }
-
-    // Get player inventory for tool and stats
-    const inventory = this.inventoryService.getInventory(player.id);
-    if (!inventory) {
-      this.stopCombat(session.playerId);
-      return null;
-    }
-
-    // Calculate player stats for interval calculation
-    const activeBuffs = this.abilityService.getActiveBuffs(player.id);
-    const playerStats = computeCharStats(player.level, inventory.equipment as EquipmentJson, 'player', activeBuffs);
-    const attackInterval = calculateAttackInterval(playerStats.haste);
-
-    // Check if enough time has passed since last attack
-    const now = Date.now();
-    if (now - session.lastAttackAt < attackInterval) {
-      // Not time to attack yet
-      return null;
-    }
-
-    // Get target creature
-    const entity = await this.zonesService.getEntity(session.zoneId, session.targetId);
-    if (!entity || entity.type !== 'creature') {
-      this.stopCombat(session.playerId);
-      return null;
-    }
-
-    const creature = entity as Creature;
-    if (!creature.active || creature.health <= 0) {
-      this.stopCombat(session.playerId);
-      return null;
-    }
-
-    // Validate range (player may have moved)
-    const tool = inventory.equipment.tool;
-    const toolDef = tool ? ItemRegistry.get(tool.itemId) : null;
-    const toolRange = toolDef?.range ?? 1;
-
-    const rangeCheck = canInteract(player, entity, toolRange);
-    if (!rangeCheck.canInteract) {
-      // Player moved out of range — stop combat
-      this.stopCombat(session.playerId);
-      return null;
-    }
-
-    // Calculate creature stats from definition
-    const creatureLevel = creature.level;
-    const emptyEquipment: EquipmentJson = { modules: [] };
-    const creatureStats = computeCharStats(creatureLevel, emptyEquipment, 'creature');
-
-    // Tool type damage multiplier: combat tools are most effective
-    // Non-combat tools can be used as improvised weapons with reduced damage
-    const toolDamageMultiplier = this.getToolDamageMultiplier(toolDef?.toolType);
-
-    // Calculate damage: Power vs Toughness
-    const damageResult = calculateDamage({
-      baseDamage: 10 * toolDamageMultiplier,
-      attackerLevel: player.level,
-      defenderLevel: creatureLevel,
-      attackerStats: playerStats,
-      defenderStats: creatureStats,
-      weaponDamage: (toolDef?.ilvl ?? 0) * toolDamageMultiplier,
-      armorReduction: creatureStats.toughness, // Toughness provides base armor for creatures
-    });
-
-    // Apply damage to creature
-    creature.health = Math.max(0, creature.health - damageResult.damage);
-    const killed = creature.health <= 0;
-
-    let groundItems: ItemEntity[] = [];
-
-    if (killed) {
-      // Handle loot drop and respawn scheduling
-      groundItems = await this.handleCreatureDeath(creature, session.zoneId);
-      this.stopCombat(session.playerId);
-
-      // Grant XP to player based on creature level
-      // Base XP = 10 * creature level, with bonus for higher level creatures
-      const levelDiff = creature.level - player.level;
-      const levelBonus = levelDiff > 0 ? 1 + levelDiff * 0.1 : 1;
-      const xpReward = Math.floor(10 * creature.level * levelBonus);
-      this.playerService.grantXp(player.id, xpReward);
-    }
-
-    // Update entity in zone
-    await this.zonesService.updateEntity(session.zoneId, session.targetId, {
-      health: creature.health,
-      active: !killed,
-    } as Partial<Creature>);
-
-    // Update last attack time AFTER successful attack
-    session.lastAttackAt = now;
-
-    return {
-      attackerId: player.id,
-      defenderId: session.targetId,
-      damage: damageResult.damage,
-      defenderHealth: creature.health,
-      defenderMaxHealth: creature.maxHealth,
-      critical: damageResult.critical,
-      killed,
-      groundItems: groundItems.length > 0 ? groundItems : undefined,
-      defenderPosition: { x: creature.position.x, y: creature.position.y },
-    };
-  }
-
-  /**
-   * Process all combat ticks for a zone.
-   * Called by AiService during zone tick.
-   * Returns damage events to broadcast.
-   */
-  async processCombatTick(zoneId: string): Promise<CombatDamageResult[]> {
-    const results: CombatDamageResult[] = [];
-
-    // Get all sessions in this zone
-    const zoneSessions = this.getAllSessions().filter(s => s.zoneId === zoneId);
-
-    for (const session of zoneSessions) {
-      const result = await this.attackTick(session);
-      if (result) {
-        results.push(result);
-      }
-    }
-
-    return results;
   }
 
   /**
@@ -508,9 +237,6 @@ export class CombatService {
       // Mark player as dead
       this.playerService.setDead(session.targetPlayerId, true);
 
-      // Stop any player-initiated combat session (player can no longer attack)
-      this.stopCombat(session.targetPlayerId);
-
       // Stop creature's combat session
       this.stopCreatureCombat(session.creatureId);
 
@@ -540,7 +266,9 @@ export class CombatService {
 
     return {
       attackerId: session.creatureId,
+      attackerName: creature.name,
       defenderId: session.targetPlayerId,
+      defenderName: player.name,
       damage: damageResult.damage,
       defenderHealth: newHealth,
       defenderMaxHealth: player.maxHealth,
@@ -579,23 +307,5 @@ export class CombatService {
    */
   async provokeCreature(zoneId: string, creatureId: string): Promise<void> {
     await this.zonesService.updateEntity(zoneId, creatureId, { provoked: true } as Partial<Creature>);
-  }
-
-  /**
-   * Get damage multiplier based on tool type.
-   * Combat tools deal full damage, other tools work as improvised weapons.
-   */
-  private getToolDamageMultiplier(toolType?: string): number {
-    switch (toolType) {
-      case 'combat':
-        return 1.0; // Full damage - specialized weapon
-      case 'universal':
-        return 0.5; // Half damage - multi-purpose tool
-      case 'mining':
-      case 'research':
-        return 0.3; // 30% damage - not designed for combat
-      default:
-        return 0.25; // Minimal damage for unknown tools
-    }
   }
 }

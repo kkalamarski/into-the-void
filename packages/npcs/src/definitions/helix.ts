@@ -21,12 +21,12 @@ const HELIX_TRADER: TraderDefinition = {
     { text: 'Get back to work.', condition: 'farewell' },
   ],
   inventory: [
-    { itemId: 'pickaxe_iron', buyPrice: 150, sellPrice: 75, stock: 5 },
-    { itemId: 'drill_basic', buyPrice: 300, sellPrice: 150, stock: 3 },
-    { itemId: 'rations_standard', buyPrice: 25, sellPrice: 12, stock: 15 },
-    { itemId: 'world_meteor_fragment', buyPrice: 3000, sellPrice: 1500, stock: 2 },
+    { itemId: 'tool_mining_common', buyPrice: 350, sellPrice: 175, stock: 5 },
+    { itemId: 'tool_mining_rare', buyPrice: 1400, sellPrice: 700, stock: 3 },
+    { itemId: 'suit_repair_kit_common', buyPrice: 90, sellPrice: 45, stock: 10 },
+    { itemId: 'world_volcanic_glass', buyPrice: 120, sellPrice: 60, stock: 15 },
+    { itemId: 'reagent_thermal_compound', buyPrice: 180, sellPrice: 90, stock: 10 },
     { itemId: 'reagent_frost_essence', buyPrice: 220, sellPrice: 110, stock: 8 },
-    { itemId: 'reagent_petrification_enzyme', buyPrice: 1400, sellPrice: 700, stock: 3 },
   ],
   specialization: 'materials',
 };

@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Server } from 'socket.io';
 import { Player, Position, PlayerPublic, FactionId, ZoneState } from '@into-the-void/shared-types';
 import { DatabaseService } from '../database/database.service';
-import { findCharacterById, isCharacterOwnedByAccount, updateLastPlayed, saveLastWorldPosition, getLastWorldPosition, updateCharacterPosition } from '@into-the-void/database';
+import { findCharacterById, isCharacterOwnedByAccount, updateLastPlayed, saveLastWorldPosition, getLastWorldPosition, updateCharacterPosition, updateCharacterHealth, updateCharacterProgression } from '@into-the-void/database';
 import { isHubZone } from '@into-the-void/shared-types';
 import { InventoryService } from './inventory.service';
 import { getFactionRespawnPosition } from '@into-the-void/game-logic';
@@ -124,14 +124,13 @@ export class PlayerService {
       // Flush inventory to DB before removing player
       await this.inventoryService.flushAndUnload(playerId);
 
-      // Save current position to database
+      // Save current position, health, and progression to database
       const player = this.players.get(playerId);
       if (player) {
-        await updateCharacterPosition(
-          this.databaseService.getClient(),
-          playerId,
-          player.position
-        );
+        const db = this.databaseService.getClient();
+        await updateCharacterPosition(db, playerId, player.position);
+        await updateCharacterHealth(db, playerId, player.health, player.maxHealth);
+        await updateCharacterProgression(db, playerId, player.xp, player.level);
         player.online = false;
       }
       this.players.delete(playerId);
@@ -408,6 +407,26 @@ export class PlayerService {
   }
 
   /**
+   * Update player max health (called when equipment changes affect durability).
+   */
+  updateMaxHealth(playerId: string, maxHealth: number): void {
+    const player = this.players.get(playerId);
+    if (player) {
+      player.maxHealth = maxHealth;
+    }
+  }
+
+  /**
+   * Update player energy (called by AiService for regeneration).
+   */
+  updateEnergy(playerId: string, energy: number): void {
+    const player = this.players.get(playerId);
+    if (player) {
+      player.energy = energy;
+    }
+  }
+
+  /**
    * Set or clear player dead state (called by CombatService on player death/respawn).
    */
   setDead(playerId: string, isDead: boolean): void {
@@ -415,6 +434,54 @@ export class PlayerService {
     if (player) {
       player.isDead = isDead;
     }
+  }
+
+  /**
+   * Grant XP to a player and handle level-ups.
+   * Returns the new XP total and whether the player leveled up.
+   */
+  grantXp(playerId: string, amount: number): { xp: number; level: number; leveledUp: boolean } | null {
+    const player = this.players.get(playerId);
+    if (!player || amount <= 0) return null;
+
+    const oldLevel = player.level;
+    player.xp += amount;
+
+    // Check for level up (xpToNextLevel is level * 100)
+    while (player.xp >= player.xpToNextLevel) {
+      player.xp -= player.xpToNextLevel;
+      player.level += 1;
+      player.xpToNextLevel = player.level * 100;
+      // Increase max health on level up
+      player.maxHealth = 100 + (player.level - 1) * 10;
+      // Restore health to full on level up
+      player.health = player.maxHealth;
+    }
+
+    const leveledUp = player.level > oldLevel;
+
+    // Emit XP update to player socket
+    if (this.server) {
+      this.server.to(player.socketId).emit('player:xp', {
+        playerId,
+        xp: player.xp,
+        xpToNextLevel: player.xpToNextLevel,
+        level: player.level,
+        leveledUp,
+      });
+
+      // If leveled up, also emit level update
+      if (leveledUp) {
+        this.server.to(player.socketId).emit('player:level', {
+          playerId,
+          level: player.level,
+          health: player.health,
+          maxHealth: player.maxHealth,
+        });
+      }
+    }
+
+    return { xp: player.xp, level: player.level, leveledUp };
   }
 
   /**

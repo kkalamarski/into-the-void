@@ -1,4 +1,4 @@
-import { ChunkData, BiomeType } from '@into-the-void/shared-types';
+import { ChunkData, BiomeType, isHubZone } from '@into-the-void/shared-types';
 import { Heap } from 'heap-js';
 
 type ChunkState = 'loading' | 'loaded' | 'failed';
@@ -48,8 +48,13 @@ export class ChunkManager {
 
   /**
    * Parse zone ID to coordinates (z_1_2 -> {x: 1, y: 2})
+   * Hub zones return {x: 0, y: 0} since they're isolated instances.
    */
   private parseZoneId(zoneId: string): { x: number; y: number } {
+    // Hub zones are instanced at origin (no coordinate-based neighbors)
+    if (isHubZone(zoneId)) {
+      return { x: 0, y: 0 };
+    }
     const parts = zoneId.split('_');
     return {
       x: parseInt(parts[1], 10),
@@ -66,13 +71,37 @@ export class ChunkManager {
 
   /**
    * Update loaded chunks based on player's current zone.
-   * Loads 3x3 grid (current + adjacent), unloads distant.
+   * Loads 3x3 grid (current + adjacent) for open-world zones.
+   * Hub zones only load themselves (they're isolated instances).
    */
   updateChunks(playerZoneId: string): void {
     this.currentPlayerZone = playerZoneId;
+
+    // Hub zones are isolated - only load the hub itself, no adjacent chunks
+    if (isHubZone(playerZoneId)) {
+      const requiredChunks = new Set<string>([playerZoneId]);
+
+      // Queue hub chunk if not loaded
+      if (!this.chunkStates.has(playerZoneId)) {
+        this.queueChunkRequest(playerZoneId);
+      }
+
+      // Unload any non-hub chunks (player teleported from open world)
+      const chunksToUnload: string[] = [];
+      this.loadedChunks.forEach((_, zoneId) => {
+        if (!requiredChunks.has(zoneId)) {
+          chunksToUnload.push(zoneId);
+        }
+      });
+      chunksToUnload.forEach(zoneId => this.unloadChunk(zoneId));
+
+      this.processNextRequest();
+      return;
+    }
+
     const { x: playerX, y: playerY } = this.parseZoneId(playerZoneId);
 
-    // Calculate required chunks (3x3 grid)
+    // Calculate required chunks (3x3 grid) for open-world zones
     const requiredChunks = new Set<string>();
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
@@ -165,10 +194,14 @@ export class ChunkManager {
       return;
     }
 
-    // Calculate priority (Manhattan distance from player zone)
-    const { x, y } = this.parseZoneId(zoneId);
-    const { x: px, y: py } = this.parseZoneId(this.currentPlayerZone);
-    const priority = Math.abs(x - px) + Math.abs(y - py);
+    // Hub zones always get highest priority (0)
+    let priority = 0;
+    if (!isHubZone(zoneId) && !isHubZone(this.currentPlayerZone)) {
+      // Calculate priority (Manhattan distance from player zone) for open-world zones
+      const { x, y } = this.parseZoneId(zoneId);
+      const { x: px, y: py } = this.parseZoneId(this.currentPlayerZone);
+      priority = Math.abs(x - px) + Math.abs(y - py);
+    }
 
     this.requestQueue.push({ zoneId, priority });
     this.pendingRequests.add(zoneId);
@@ -188,18 +221,36 @@ export class ChunkManager {
     // Clear pending request tracking
     this.pendingRequests.delete(zoneId);
 
-    // Check if chunk is still needed (player may have moved while chunk was loading)
-    const { x: px, y: py } = this.parseZoneId(this.currentPlayerZone);
-    const { x, y } = this.parseZoneId(zoneId);
-    const distance = Math.max(Math.abs(x - px), Math.abs(y - py)); // Chebyshev distance
+    // Hub zones are always needed if the player is in a hub (no adjacent chunk logic)
+    const playerInHub = isHubZone(this.currentPlayerZone);
+    const chunkIsHub = isHubZone(zoneId);
 
-    if (distance > 1) {
-      // Chunk no longer needed (player moved away), discard without rendering
-      this.chunkStates.delete(zoneId);
-      this.notifyLoadingStateChange(); // Notify AFTER state change
-      // Process next queued request
-      this.processNextRequest();
-      return;
+    // Hub chunk received while player in hub - always accept
+    // Non-hub chunk received while player in hub - discard (shouldn't happen)
+    // Hub chunk received while player not in hub - discard (player left hub)
+    if (chunkIsHub || playerInHub) {
+      if (chunkIsHub && playerInHub && zoneId === this.currentPlayerZone) {
+        // Accept: player is in this hub
+      } else if (chunkIsHub !== playerInHub || zoneId !== this.currentPlayerZone) {
+        // Discard: mismatch between hub states
+        this.chunkStates.delete(zoneId);
+        this.notifyLoadingStateChange();
+        this.processNextRequest();
+        return;
+      }
+    } else {
+      // Open-world chunk: check if chunk is still needed (player may have moved)
+      const { x: px, y: py } = this.parseZoneId(this.currentPlayerZone);
+      const { x, y } = this.parseZoneId(zoneId);
+      const distance = Math.max(Math.abs(x - px), Math.abs(y - py)); // Chebyshev distance
+
+      if (distance > 1) {
+        // Chunk no longer needed (player moved away), discard without rendering
+        this.chunkStates.delete(zoneId);
+        this.notifyLoadingStateChange();
+        this.processNextRequest();
+        return;
+      }
     }
 
     // Update state to loaded

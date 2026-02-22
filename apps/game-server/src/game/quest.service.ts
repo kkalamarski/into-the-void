@@ -360,9 +360,15 @@ export class QuestService {
     const allProgress = await getQuestProgressForCharacter(db, characterId);
 
     // Filter registry quests for this NPC and faction
-    const npcQuests = QuestRegistry.getByFaction(playerFaction as any).filter(
+    const allFactionQuests = QuestRegistry.getByFaction(playerFaction as any);
+    const npcQuests = allFactionQuests.filter(
       (q) => q.questGiverId === npcId
     );
+
+    console.log(`[QuestService] getQuestsForNpc: faction=${playerFaction}, npcId=${npcId}, allFactionQuests=${allFactionQuests.length}, npcQuests=${npcQuests.length}`);
+    if (npcQuests.length > 0) {
+      console.log(`[QuestService] NPC quests:`, npcQuests.map(q => ({ id: q.id, questGiverId: q.questGiverId })));
+    }
 
     const available: Array<{
       questId: string;
@@ -790,5 +796,112 @@ export class QuestService {
       console.error('[QuestService] Error abandoning quest:', error);
       return { success: false, error: 'Failed to abandon quest' };
     }
+  }
+
+  /**
+   * Get quest marker types for multiple NPCs.
+   * Used to show ! (available) or ? (ready) markers above NPCs when entering a zone.
+   * Returns a map of npcId -> markerType.
+   */
+  async getQuestMarkersForNpcs(
+    characterId: string,
+    npcIds: string[],
+    playerFaction: string
+  ): Promise<Map<string, 'available' | 'ready' | 'none'>> {
+    const db = this.databaseService.getClient();
+    const markers = new Map<string, 'available' | 'ready' | 'none'>();
+
+    // Initialize all NPCs with 'none'
+    for (const npcId of npcIds) {
+      markers.set(npcId, 'none');
+    }
+
+    console.log(`[QuestService] getQuestMarkersForNpcs: characterId=${characterId}, npcIds=${npcIds.join(',')}, faction=${playerFaction}`);
+
+    if (npcIds.length === 0) {
+      return markers;
+    }
+
+    // Query all quest progress for this character once
+    const allProgress = await getQuestProgressForCharacter(db, characterId);
+
+    // Get all quests for player's faction
+    const factionQuests = QuestRegistry.getByFaction(playerFaction as any);
+
+    // Group quests by questGiverId
+    const questsByNpc = new Map<string, typeof factionQuests>();
+    for (const quest of factionQuests) {
+      if (quest.questGiverId && npcIds.includes(quest.questGiverId)) {
+        if (!questsByNpc.has(quest.questGiverId)) {
+          questsByNpc.set(quest.questGiverId, []);
+        }
+        questsByNpc.get(quest.questGiverId)!.push(quest);
+      }
+    }
+
+    // For each NPC, determine marker type
+    for (const [npcId, npcQuests] of questsByNpc) {
+      let hasReady = false;
+      let hasAvailable = false;
+
+      for (const questDef of npcQuests) {
+        const progress = allProgress.find((p) => p.questId === questDef.id);
+
+        if (progress && progress.state === 'active') {
+          // Check if all objectives complete (ready for turn-in)
+          const allComplete = progress.objectives.every((obj) => obj.complete);
+          if (allComplete) {
+            hasReady = true;
+            break; // Ready takes priority, no need to check more
+          }
+        } else if (!progress || (progress.state === 'failed' && questDef.isRepeatable)) {
+          // Quest is available (not started, or failed repeatable)
+          // Check prerequisites asynchronously
+          let prerequisitesMet = true;
+          if (questDef.prerequisiteQuestIds && questDef.prerequisiteQuestIds.length > 0) {
+            for (const prereqId of questDef.prerequisiteQuestIds) {
+              const hasCompleted = await hasCompletedQuest(db, characterId, prereqId);
+              if (!hasCompleted) {
+                prerequisitesMet = false;
+                break;
+              }
+            }
+          }
+
+          // Check if already completed (non-repeatable)
+          if (prerequisitesMet && !questDef.isRepeatable) {
+            const alreadyCompleted = await hasCompletedQuest(db, characterId, questDef.id);
+            if (alreadyCompleted) {
+              prerequisitesMet = false;
+            }
+          }
+
+          // Check daily reset for repeatable quests
+          if (prerequisitesMet && questDef.isRepeatable) {
+            const canRepeat = await canRepeatBountyQuest(db, characterId, questDef.id);
+            if (!canRepeat) {
+              prerequisitesMet = false;
+            }
+          }
+
+          if (prerequisitesMet) {
+            hasAvailable = true;
+          }
+        }
+      }
+
+      // Priority: ready > available > none
+      if (hasReady) {
+        markers.set(npcId, 'ready');
+      } else if (hasAvailable) {
+        markers.set(npcId, 'available');
+      }
+    }
+
+    // Log final results
+    const nonNoneMarkers = Array.from(markers.entries()).filter(([, type]) => type !== 'none');
+    console.log(`[QuestService] getQuestMarkersForNpcs result: ${nonNoneMarkers.length} NPCs with markers:`, nonNoneMarkers);
+
+    return markers;
   }
 }

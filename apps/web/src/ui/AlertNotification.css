@@ -1,0 +1,64 @@
+.alert-notification-container {
+  position: fixed;
+  top: 25%; /* 1/4 of the screen from the top */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 1200;
+  pointer-events: none;
+}
+
+.alert-notification {
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-family: var(--font-mono, 'Share Tech Mono', monospace);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 200px;
+  max-width: 400px;
+  animation: alert-slide-in 0.3s ease-out, alert-fade-out 0.5s ease-in 2.5s forwards;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  border: 1px solid;
+}
+
+.alert-info {
+  background: rgba(0, 80, 140, 0.95);
+  color: #ffffff;
+  border-color: var(--color-accent, #00a0ff);
+}
+
+.alert-warning {
+  background: rgba(140, 100, 0, 0.95);
+  color: #ffffff;
+  border-color: #ffcc00;
+}
+
+.alert-error {
+  background: rgba(140, 40, 40, 0.95);
+  color: #ffffff;
+  border-color: #ff4444;
+}
+
+@keyframes alert-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes alert-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

@@ -220,10 +220,10 @@
   font-weight: 500;
 }
 
-/* Safe Zone indicator */
+/* Safe Zone indicator - positioned below the connection indicator */
 .safe-zone-indicator {
   position: absolute;
-  top: 16px;
+  top: 56px;
   right: 16px;
   display: flex;
   align-items: center;
@@ -232,6 +232,7 @@
   background: rgba(20, 100, 40, 0.85);
   border: 2px solid #4ade80;
   border-radius: 4px;
+  z-index: 100;
 }
 
 .safe-zone-icon {
@@ -248,10 +249,10 @@
   letter-spacing: 1px;
 }
 
-/* Combat indicator */
+/* Combat indicator - positioned below the connection indicator */
 .combat-indicator {
   position: absolute;
-  top: 16px;
+  top: 56px;
   right: 16px;
   display: flex;
   align-items: center;
@@ -261,6 +262,7 @@
   border: 2px solid var(--color-danger, #ff4444);
   border-radius: 4px;
   animation: combat-pulse 1.5s ease-in-out infinite;
+  z-index: 100;
 }
 
 .combat-indicator-icon {

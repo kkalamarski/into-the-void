@@ -3,6 +3,7 @@ import { immer } from 'zustand/middleware/immer';
 import type { CharStatsPayload, CharacterStats } from '@into-the-void/shared-types';
 import { gameSocket } from '../network/socket';
 import { STAT_DISPLAY_ORDER } from '../ui/constants';
+import { useGameStore } from './gameStore';
 
 interface StatsState {
   stats: CharStatsPayload | null;
@@ -51,4 +52,17 @@ export const useStatsStore = create<StatsState>()(
 // Wire socket event: update stats state on server push
 gameSocket.on('stats:update', (payload: CharStatsPayload) => {
   useStatsStore.getState().setStats(payload);
+
+  // Update player's maxHealth based on durability stat (durability = maxHealth)
+  const player = useGameStore.getState().player;
+  if (player && payload.total.durability !== player.maxHealth) {
+    useGameStore.setState({
+      player: {
+        ...player,
+        maxHealth: payload.total.durability,
+        // Cap current health if it exceeds new max
+        health: Math.min(player.health, payload.total.durability),
+      },
+    });
+  }
 });

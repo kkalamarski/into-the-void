@@ -239,14 +239,14 @@ export class PathfindingController {
 
     // Get elevation offset for destination tile
     const elevation = this.elevationAccessor?.(destination.x, destination.y) ?? 0;
-    const elevationOffset = elevation * 16; // ELEVATION_HEIGHT_STEP
+    const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 × diamond height)
 
     // Apply elevation offset to Y coordinate (higher = visually higher)
     const destY = destScreen.y - elevationOffset;
 
     // Draw isometric diamond outline at destination
-    const hw = 64; // Half tile width (128/2)
-    const hh = 32; // Half tile height (64/2)
+    const hw = 128; // Half tile width (256/2)
+    const hh = 64;  // Half tile height (128/2)
 
     this.pathGraphics.lineStyle(2, 0x00ff00, 0.8);
     this.pathGraphics.beginPath();

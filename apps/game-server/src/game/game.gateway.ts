@@ -162,6 +162,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
         client.emit('auth:success', { player: result.player });
         client.emit('zone:state', zoneState);
+        // Send NPC quest markers (! and ? above NPCs)
+        this.emitNpcQuestMarkers(
+          client,
+          result.player.id,
+          result.player.faction,
+          zoneState.entities as Array<{ type: string; npcId?: string }>
+        );
         // Send initial inventory state (PRIVATE - only to this client)
         client.emit('inventory:update', inventory);
         // Send initial stats (PRIVATE - only to this client)
@@ -257,6 +264,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
           // Send new zone state to player
           const zoneState = await this.gameService.getZoneState(result.newZoneId);
           client.emit('zone:state', zoneState);
+          // Send NPC quest markers for the new zone
+          this.emitNpcQuestMarkers(
+            client,
+            player.id,
+            player.faction,
+            zoneState.entities as Array<{ type: string; npcId?: string }>
+          );
 
           // Emit zone entry event for quest tracking on zone transition
           if (result.playerId) {
@@ -839,6 +853,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         // Send new zone state to player
         const newZoneState = await this.gameService.getZoneState(result.newZoneId);
         client.emit('zone:state', newZoneState);
+        // Send NPC quest markers for the hub zone
+        this.emitNpcQuestMarkers(
+          client,
+          player.id,
+          player.faction,
+          newZoneState.entities as Array<{ type: string; npcId?: string }>
+        );
 
         // Notify new zone of player arrival
         client.to(result.newZoneId).emit('player:joined', {
@@ -900,6 +921,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         // Send new zone state to player
         const newZoneState = await this.gameService.getZoneState(result.newZoneId);
         client.emit('zone:state', newZoneState);
+        // Send NPC quest markers for the hub zone
+        this.emitNpcQuestMarkers(
+          client,
+          player.id,
+          player.faction,
+          newZoneState.entities as Array<{ type: string; npcId?: string }>
+        );
 
         // Notify new zone of player arrival
         client.to(result.newZoneId).emit('player:joined', {
@@ -955,6 +983,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         // Send new zone state to player
         const newZoneState = await this.gameService.getZoneState(result.newZoneId);
         client.emit('zone:state', newZoneState);
+        // Send NPC quest markers for the new zone
+        this.emitNpcQuestMarkers(
+          client,
+          player.id,
+          player.faction,
+          newZoneState.entities as Array<{ type: string; npcId?: string }>
+        );
 
         // Notify new zone of player arrival
         client.to(result.newZoneId).emit('player:joined', {
@@ -1349,6 +1384,45 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       if (!currentRooms.includes(room)) {
         client.join(room);
       }
+    }
+  }
+
+  /**
+   * Emit quest markers for all NPCs in a zone.
+   * Called after zone:state to show ! and ? markers above NPCs.
+   */
+  private async emitNpcQuestMarkers(
+    client: Socket,
+    playerId: string,
+    playerFaction: string,
+    zoneEntities: Array<{ type: string; npcId?: string }>
+  ): Promise<void> {
+    // Extract NPC IDs from zone entities
+    const npcIds = zoneEntities
+      .filter((e) => e.type === 'npc' && e.npcId)
+      .map((e) => e.npcId as string);
+
+    if (npcIds.length === 0) {
+      return;
+    }
+
+    const markers = await this.questService.getQuestMarkersForNpcs(
+      playerId,
+      npcIds,
+      playerFaction
+    );
+
+    // Convert Map to array format for emission
+    const markerArray: Array<{ npcId: string; markerType: 'available' | 'ready' | 'none' }> = [];
+    for (const [npcId, markerType] of markers) {
+      // Only include NPCs with actual markers (skip 'none')
+      if (markerType !== 'none') {
+        markerArray.push({ npcId, markerType });
+      }
+    }
+
+    if (markerArray.length > 0) {
+      client.emit('npc:quest-markers', { markers: markerArray });
     }
   }
 }

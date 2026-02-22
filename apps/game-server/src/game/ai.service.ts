@@ -1,10 +1,12 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Creature, PlayerPublic, isHubZone } from '@into-the-void/shared-types';
-import { tickCreatureAI } from '@into-the-void/game-logic';
+import { tickCreatureAI, computeCharStats } from '@into-the-void/game-logic';
+import type { EquipmentJson } from '@into-the-void/database';
 import { Server } from 'socket.io';
 import { ZonesService } from '../zones/zones.service';
 import { PlayerService } from './player.service';
 import { CombatService } from './combat.service';
+import { InventoryService } from './inventory.service';
 
 /**
  * CRAI-09: Type-enforced whitelist for creature broadcasts.
@@ -18,6 +20,12 @@ interface PublicCreatureUpdate {
 const AI_TICK_INTERVAL_MS = 1000; // Creatures move at half player speed
 const AI_TICK_WARN_MS = 200; // Log warning if tick processing exceeds this threshold
 
+// Regen scaling: 1% base, scales with Vigor up to 5% max
+const REGEN_BASE_PERCENT = 0.01; // 1% base regen per second
+const REGEN_MAX_PERCENT = 0.05; // 5% max regen per second
+const VIGOR_MIN = 50; // Vigor value at which regen starts scaling
+const VIGOR_MAX = 250; // Vigor value at which regen reaches maximum
+
 @Injectable()
 export class AiService implements OnModuleInit {
   private activeZones: Set<string> = new Set();
@@ -28,6 +36,7 @@ export class AiService implements OnModuleInit {
     private readonly zonesService: ZonesService,
     private readonly playerService: PlayerService,
     private readonly combatService: CombatService,
+    private readonly inventoryService: InventoryService,
   ) {}
 
   onModuleInit(): void {
@@ -49,13 +58,16 @@ export class AiService implements OnModuleInit {
   activateZone(zoneId: string): void {
     // Hub zones have no AI - they're safe areas with no creatures
     if (isHubZone(zoneId)) {
+      console.log(`[AiService] Skipping hub zone: ${zoneId}`);
       return;
     }
 
     if (this.activeZones.has(zoneId)) {
       // Zone already active — guard against duplicate timers
+      console.log(`[AiService] Zone already active: ${zoneId}`);
       return;
     }
+    console.log(`[AiService] Activating zone: ${zoneId}`);
     this.activeZones.add(zoneId);
 
     // Immediate aggro check for already-present aggressive creatures
@@ -83,6 +95,7 @@ export class AiService implements OnModuleInit {
 
     // Get all entities in the zone
     const entities = await this.zonesService.getZoneEntities(zoneId);
+    console.log(`[AiService] checkImmediateAggro: ${zoneId} has ${entities.length} entities`);
 
     // Filter to active aggressive creatures (predator/maniac) not already in combat
     const aggressiveCreatures = entities.filter(
@@ -94,6 +107,8 @@ export class AiService implements OnModuleInit {
         !this.combatService.isCreatureInCombat(e.id) &&
         !(e as Creature).combatTarget,
     );
+
+    console.log(`[AiService] Found ${aggressiveCreatures.length} aggressive creatures in ${zoneId}`);
 
     if (aggressiveCreatures.length === 0) return;
 
@@ -341,37 +356,6 @@ export class AiService implements OnModuleInit {
       this.server?.to(zoneId).emit('entity:batch', { updates: movedCreatures });
     }
 
-    // Process combat ticks for players in this zone (player -> creature)
-    const combatResults = await this.combatService.processCombatTick(zoneId);
-
-    // Emit combat damage events to zone
-    for (const result of combatResults) {
-      this.server?.to(zoneId).emit('combat:damage', {
-        attackerId: result.attackerId,
-        defenderId: result.defenderId,
-        damage: result.damage,
-        defenderHealth: result.defenderHealth,
-        defenderMaxHealth: result.defenderMaxHealth,
-        critical: result.critical,
-        killed: result.killed,
-      });
-
-      // If creature was killed, emit entity:update for death state
-      if (result.killed) {
-        this.server?.to(zoneId).emit('entity:update', {
-          entityId: result.defenderId,
-          changes: { health: 0, active: false },
-        });
-
-        // Emit spawned loot items
-        if (result.groundItems) {
-          for (const item of result.groundItems) {
-            this.server?.to(zoneId).emit('entity:spawn', item);
-          }
-        }
-      }
-    }
-
     // Process creature combat ticks (creature -> player)
     const creatureCombatResults = await this.combatService.processCreatureCombatTick(zoneId, creatures);
 
@@ -388,6 +372,7 @@ export class AiService implements OnModuleInit {
           defenderMaxHealth: result.defenderMaxHealth,
           critical: result.critical,
           killed: result.killed,
+          defenderPosition: result.defenderPosition,
         });
       }
 
@@ -400,8 +385,101 @@ export class AiService implements OnModuleInit {
         defenderMaxHealth: result.defenderMaxHealth,
         critical: result.critical,
         killed: result.killed,
+        defenderPosition: result.defenderPosition,
       });
     }
 
+    // Process health and energy regeneration for players not in combat
+    this.processPlayerRegeneration(zoneId);
+  }
+
+  /**
+   * Calculate regen rate based on Vigor stat.
+   * Base: 1%, scales linearly with Vigor up to 5% at Vigor 250.
+   */
+  private calculateRegenPercent(vigor: number): number {
+    if (vigor <= VIGOR_MIN) {
+      return REGEN_BASE_PERCENT;
+    }
+    if (vigor >= VIGOR_MAX) {
+      return REGEN_MAX_PERCENT;
+    }
+    // Linear interpolation between min and max
+    const vigorRange = VIGOR_MAX - VIGOR_MIN;
+    const regenRange = REGEN_MAX_PERCENT - REGEN_BASE_PERCENT;
+    return REGEN_BASE_PERCENT + ((vigor - VIGOR_MIN) / vigorRange) * regenRange;
+  }
+
+  /**
+   * Regenerate health and energy for players in a zone who are not in combat.
+   * Called once per tick (1 second). Regen rate scales with Vigor (1% base, up to 5%).
+   */
+  private processPlayerRegeneration(zoneId: string): void {
+    const players = this.playerService.getPlayersInZone(zoneId);
+
+    for (const playerPublic of players) {
+      // Get full player data (not just public)
+      const player = this.playerService.getPlayerById(playerPublic.id);
+      if (!player) continue;
+
+      // Skip players in combat or dead
+      if (player.inCombat || player.isDead) {
+        continue;
+      }
+
+      // Get player's total stats to determine vigor-based regen rate
+      const inventory = this.inventoryService.getInventory(player.id);
+      let regenPercent = REGEN_BASE_PERCENT;
+
+      if (inventory) {
+        const totalStats = computeCharStats(
+          player.level,
+          inventory.equipment as EquipmentJson,
+          'player',
+        );
+        regenPercent = this.calculateRegenPercent(totalStats.vigor);
+      }
+
+      let healthChanged = false;
+      let energyChanged = false;
+
+      // Regenerate health if below max
+      if (player.health < player.maxHealth) {
+        const healthRegen = Math.ceil(player.maxHealth * regenPercent);
+        const newHealth = Math.min(player.health + healthRegen, player.maxHealth);
+        if (newHealth !== player.health) {
+          this.playerService.updateHealth(player.id, newHealth);
+          healthChanged = true;
+        }
+      }
+
+      // Regenerate energy if below max
+      if (player.energy < player.maxEnergy) {
+        const energyRegen = Math.ceil(player.maxEnergy * regenPercent);
+        const newEnergy = Math.min(player.energy + energyRegen, player.maxEnergy);
+        if (newEnergy !== player.energy) {
+          this.playerService.updateEnergy(player.id, newEnergy);
+          energyChanged = true;
+        }
+      }
+
+      // Emit updates to player if anything changed
+      if (healthChanged || energyChanged) {
+        const socketId = this.playerService.getSocketByPlayerId(player.id);
+        if (socketId && this.server) {
+          // Re-fetch player to get updated values
+          const updatedPlayer = this.playerService.getPlayerById(player.id);
+          if (updatedPlayer) {
+            this.server.to(socketId).emit('player:regen', {
+              playerId: player.id,
+              health: updatedPlayer.health,
+              maxHealth: updatedPlayer.maxHealth,
+              energy: updatedPlayer.energy,
+              maxEnergy: updatedPlayer.maxEnergy,
+            });
+          }
+        }
+      }
+    }
   }
 }

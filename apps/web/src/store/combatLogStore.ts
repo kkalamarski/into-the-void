@@ -53,7 +53,9 @@ export function formatCombatTimestamp(timestamp: number): string {
 // Wire combat:damage socket event to add log entries
 gameSocket.on('combat:damage', (data: {
   attackerId: string;
+  attackerName?: string;
   defenderId: string;
+  defenderName?: string;
   damage: number;
   defenderHealth: number;
   defenderMaxHealth: number;
@@ -67,9 +69,8 @@ gameSocket.on('combat:damage', (data: {
 
   // Determine if this is damage dealt or received
   if (data.attackerId === currentPlayer.id) {
-    // Player dealt damage to creature
-    const target = entities.get(data.defenderId);
-    const targetName = target?.name ?? 'Unknown';
+    // Player dealt damage to creature - prefer name from payload, fallback to entity lookup
+    const targetName = data.defenderName ?? entities.get(data.defenderId)?.name ?? 'Unknown';
 
     useCombatLogStore.getState().addEntry({
       timestamp: Date.now(),
@@ -80,9 +81,8 @@ gameSocket.on('combat:damage', (data: {
       killed: data.killed,
     });
   } else if (data.defenderId === currentPlayer.id) {
-    // Player received damage from creature
-    const attacker = entities.get(data.attackerId);
-    const attackerName = attacker?.name ?? 'Unknown';
+    // Player received damage from creature - prefer name from payload, fallback to entity lookup
+    const attackerName = data.attackerName ?? entities.get(data.attackerId)?.name ?? 'Unknown';
 
     useCombatLogStore.getState().addEntry({
       timestamp: Date.now(),

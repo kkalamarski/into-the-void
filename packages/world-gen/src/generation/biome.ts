@@ -13,10 +13,10 @@ interface BiomeParams {
 }
 
 const DEFAULT_BIOME_PARAMS: BiomeParams = {
-  temperatureScale: 0.001,
-  moistureScale: 0.0015,
-  elevationScale: 0.0006,
-  minBiomeChunks: 20, // Minimum 20 chunks per biome region
+  temperatureScale: 0.002,
+  moistureScale: 0.003,
+  elevationScale: 0.0012,
+  minBiomeChunks: 10, // Minimum 10 chunks per biome region (half previous size)
   chunkSize: ZONE_SIZE,
 };
 

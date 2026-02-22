@@ -21,10 +21,9 @@ const NEXUS_TRADER: TraderDefinition = {
     { text: 'Pleasure doing business.', condition: 'farewell' },
   ],
   inventory: [
-    { itemId: 'medkit_basic', buyPrice: 55, sellPrice: 28, stock: 8 },
-    { itemId: 'stim_energy', buyPrice: 80, sellPrice: 40, stock: 6 },
-    { itemId: 'pickaxe_iron', buyPrice: 160, sellPrice: 80, stock: 3 },
-    { itemId: 'rations_standard', buyPrice: 22, sellPrice: 11, stock: 25 },
+    { itemId: 'health_vial_common', buyPrice: 55, sellPrice: 28, stock: 10 },
+    { itemId: 'energy_cell_common', buyPrice: 55, sellPrice: 28, stock: 10 },
+    { itemId: 'tool_research_common', buyPrice: 350, sellPrice: 175, stock: 3 },
     { itemId: 'antitoxin_common', buyPrice: 75, sellPrice: 38, stock: 12 },
     { itemId: 'world_coastal_shell', buyPrice: 70, sellPrice: 35, stock: 20 },
     { itemId: 'world_spore_sack', buyPrice: 500, sellPrice: 250, stock: 4 },
