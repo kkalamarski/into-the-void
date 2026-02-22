@@ -73,7 +73,8 @@ export type ServerEventType =
   | 'ability:result'
   | 'ability:cooldown'
   | 'buff:apply'
-  | 'buff:expire';
+  | 'buff:expire'
+  | 'quest:progress';
 
 /**
  * Socket.io event map for type safety
@@ -221,6 +222,18 @@ export interface ServerEvents {
   };
   'buff:expire': {
     buffId: string;
+  };
+  'quest:progress': {
+    questId: string;
+    displayName: string;
+    description: string;
+    state: import('../game/quest').QuestState;
+    objectives: import('../game/quest').ObjectiveProgress[];
+    rewards: {
+      credits?: number;
+      xp?: number;
+      items?: { itemId: string; quantity: number }[];
+    };
   };
 }
 
