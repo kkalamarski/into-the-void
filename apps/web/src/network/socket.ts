@@ -101,6 +101,9 @@ class GameSocket {
       'ability:cooldown',
       'buff:apply',
       'buff:expire',
+      'quest:progress',
+      'quest:completed',
+      'quest:abandoned',
     ];
 
     for (const event of serverEvents) {
