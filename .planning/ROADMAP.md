@@ -332,21 +332,28 @@ Plans:
 **Goal**: Players can view, track, and manage quests through dedicated UI panels
 **Depends on**: Phase 67
 **Requirements**: QUEST-40, QUEST-41, QUEST-42, QUEST-43, QUEST-44, QUEST-45
+**Plans:** 4 plans
+
+Plans:
+- [ ] 68-01-PLAN.md — QuestStore foundation with WebSocket event handlers
+- [ ] 68-02-PLAN.md — QuestLogPanel and QuestTracker components
+- [ ] 68-03-PLAN.md — QuestCompleteModal with auto-dismiss
+- [ ] 68-04-PLAN.md — GameUI and HUD wiring with Q hotkey
 
 **Success Criteria** (what must be TRUE):
-  1. Player can open quest log panel with Active/Available/Completed tabs
+  1. Player can open quest log panel with Active/Completed tabs
   2. Active quest objectives display in HUD tracker with live progress counters
-  3. Quest acceptance modal shows full quest description and reward preview
-  4. Quest completion modal shows rewards received
+  3. Quest completion modal shows rewards received with 5s auto-dismiss
+  4. Q key toggles quest log panel
   5. UI updates immediately on quest:progress events (no manual refresh needed)
 
 **Delivers:**
-- QuestStore (Zustand) with activeQuests, completedQuests, questHistory
+- QuestStore (Zustand) with activeQuests, completedQuests, trackedQuests
 - QuestLogPanel component with tabs
 - QuestTracker HUD component
-- Quest acceptance/completion modals
+- QuestCompleteModal with auto-dismiss
 - Real-time UI updates on WebSocket events
-- Integration with existing HUD.tsx and GameUI.tsx
+- Q hotkey integration in HUD.tsx
 
 ---
 
@@ -444,10 +451,10 @@ Phases execute in numeric order: 64 -> 65 -> 66 -> 67 -> 68 -> 69
 | 65. Objective Tracking | v1.15 | 2/2 | Complete | 2026-02-22 |
 | 66. Quest Completion & Rewards | v1.15 | 3/3 | Complete | 2026-02-22 |
 | 67. NPC Quest Givers | v1.15 | 3/3 | Complete | 2026-02-22 |
-| 68. Quest UI | v1.15 | 0/? | Pending | - |
+| 68. Quest UI | v1.15 | 0/4 | Pending | - |
 | 69. Quest Chains & Bounties | v1.15 | 0/? | Pending | - |
 
 **Total:** 69 phases (67 complete, 2 pending)
 
 ---
-*Last updated: 2026-02-22 after Phase 67 complete*
+*Last updated: 2026-02-22 after Phase 68 planning*
