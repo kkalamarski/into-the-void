@@ -62,5 +62,7 @@ export interface QuestDefinition {
   readonly prerequisiteQuestIds?: readonly string[];
   readonly rewards: QuestRewards;
   readonly minLevel?: number;  // default 1
+  /** NPC ID from packages/npcs that gives/accepts this quest (optional for auto-discover quests) */
+  readonly questGiverId?: string;
   readonly isRepeatable?: boolean;  // default false for story quests
 }
