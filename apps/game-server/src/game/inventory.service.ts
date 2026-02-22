@@ -178,6 +178,13 @@ export class InventoryService {
       return { success: false, reason: 'Item not found in inventory' };
     }
 
+    const item = inventory.items[idx];
+
+    // GUARD: Prevent removing quest items
+    if (item.properties?.isQuestItem === true) {
+      return { success: false, reason: 'Quest items cannot be dropped' };
+    }
+
     const [removedItem] = inventory.items.splice(idx, 1);
 
     const db = this.databaseService.getClient();
