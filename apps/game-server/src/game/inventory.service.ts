@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   getInventory,
   createInventory,
@@ -8,13 +9,17 @@ import {
   InventoryItemJson,
   EquipmentJson,
 } from '@into-the-void/database';
+import { ItemRegistry } from '@into-the-void/items';
 import { DatabaseService } from '../database/database.service';
 
 @Injectable()
 export class InventoryService {
   private inventories: Map<string, Inventory> = new Map();
 
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   /**
    * Load inventory from DB for a player, creating a default one if none exists.
@@ -64,8 +69,8 @@ export class InventoryService {
 
   /**
    * Add an item to a player's inventory.
-   * Checks maxSlots before adding. Does NOT flush — batching is the caller's responsibility
-   * for high-frequency events; flush happens on disconnect or on explicit equip operations.
+   * Handles stacking: if the item is stackable and an existing stack has room, adds to it.
+   * Otherwise creates a new stack in an empty slot.
    *
    * Returns {success: true} on success or {success: false, reason} if inventory is full.
    */
@@ -78,15 +83,79 @@ export class InventoryService {
       return { success: false, reason: 'Player inventory not loaded' };
     }
 
+    // Check if item is stackable
+    const itemDef = ItemRegistry.get(item.itemId);
+    const maxStack = itemDef?.maxStack ?? 1;
+    let remainingQty = item.quantity;
+
+    // Try to stack with existing items first
+    if (maxStack > 1) {
+      for (const existingItem of inventory.items) {
+        if (existingItem.itemId === item.itemId && remainingQty > 0) {
+          const canAdd = maxStack - existingItem.quantity;
+          if (canAdd > 0) {
+            const toAdd = Math.min(canAdd, remainingQty);
+            existingItem.quantity += toAdd;
+            remainingQty -= toAdd;
+          }
+        }
+      }
+    }
+
+    // If all items were stacked, we're done
+    if (remainingQty <= 0) {
+      const db = this.databaseService.getClient();
+      await updateInventoryItems(db, playerId, inventory.items);
+
+      // Emit collection event for quest tracking
+      this.eventEmitter.emit('item.collected', {
+        characterId: playerId,
+        itemId: item.itemId,
+        quantity: item.quantity,
+      });
+
+      return { success: true };
+    }
+
+    // Need to create new stack(s) for remaining items
     if (inventory.items.length >= inventory.maxSlots) {
+      // Partial success - some items were stacked but inventory full for rest
+      if (remainingQty < item.quantity) {
+        const db = this.databaseService.getClient();
+        await updateInventoryItems(db, playerId, inventory.items);
+        return { success: false, reason: 'Inventory full (partial stack added)' };
+      }
       return { success: false, reason: 'Inventory full' };
     }
 
-    inventory.items.push(item);
+    // Find first available slot (0 to maxSlots-1)
+    const usedSlots = new Set(inventory.items.map(i => i.slot));
+    let freeSlot = -1;
+    for (let i = 0; i < inventory.maxSlots; i++) {
+      if (!usedSlots.has(i)) {
+        freeSlot = i;
+        break;
+      }
+    }
+
+    // Create new stack with remaining quantity
+    const newItem: InventoryItemJson = {
+      ...item,
+      quantity: remainingQty,
+      slot: freeSlot,
+    };
+    inventory.items.push(newItem);
 
     // Persist items change to DB
     const db = this.databaseService.getClient();
     await updateInventoryItems(db, playerId, inventory.items);
+
+    // Emit collection event for quest tracking
+    this.eventEmitter.emit('item.collected', {
+      characterId: playerId,
+      itemId: item.itemId,
+      quantity: item.quantity,
+    });
 
     return { success: true };
   }
@@ -144,9 +213,9 @@ export class InventoryService {
     // Remove item from items array
     inventory.items.splice(itemIdx, 1);
 
-    // If slot was occupied, return existing item to inventory
+    // If slot was occupied, return existing item to inventory with the freed slot
     if (currentEquipped) {
-      inventory.items.push(currentEquipped);
+      inventory.items.push({ ...currentEquipped, slot: item.slot });
     }
 
     // Place item in slot
@@ -222,9 +291,12 @@ export class InventoryService {
       return { success: false, reason: 'Inventory full' };
     }
 
-    // Move from slot to items
+    // Find first empty slot in inventory
+    const targetSlot = this.findEmptySlot(inventory.items, maxSlots);
+
+    // Move from equipment slot to items with proper slot assignment
     (inventory.equipment as unknown as Record<string, InventoryItemJson | undefined>)[slot] = undefined;
-    inventory.items.push(equipped);
+    inventory.items.push({ ...equipped, slot: targetSlot });
 
     // Single atomic DB write
     const db = this.databaseService.getClient();
@@ -234,6 +306,19 @@ export class InventoryService {
     });
 
     return { success: true };
+  }
+
+  /**
+   * Find the first empty slot index in inventory.
+   */
+  private findEmptySlot(items: InventoryItemJson[], maxSlots: number): number {
+    const usedSlots = new Set(items.map(i => i.slot));
+    for (let slot = 0; slot < maxSlots; slot++) {
+      if (!usedSlots.has(slot)) {
+        return slot;
+      }
+    }
+    return 0; // Fallback, shouldn't happen if inventory full check passes
   }
 
   /**
@@ -322,7 +407,10 @@ export class InventoryService {
     }
 
     const [module] = inventory.equipment.modules.splice(moduleIdx, 1);
-    inventory.items.push(module);
+
+    // Find first empty slot in inventory
+    const targetSlot = this.findEmptySlot(inventory.items, maxSlots);
+    inventory.items.push({ ...module, slot: targetSlot });
 
     // Single atomic DB write
     const db = this.databaseService.getClient();
