@@ -252,8 +252,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 65-01-PLAN.md — Event infrastructure and QuestService with @OnEvent listeners
-- [ ] 65-02-PLAN.md — Domain event emission from AbilityService, InventoryService, GameGateway
+- [x] 65-01-PLAN.md — Event infrastructure and QuestService with @OnEvent listeners
+- [x] 65-02-PLAN.md — Domain event emission from AbilityService, InventoryService, GameGateway
 
 **Success Criteria** (what must be TRUE):
   1. Player sees "3/5 kills" update immediately when killing quest target creature
@@ -429,13 +429,13 @@ Phases execute in numeric order: 64 -> 65 -> 66 -> 67 -> 68 -> 69
 | 62. Calculation Parity | v1.14 | 1/1 | Complete | 2026-02-21 |
 | 63. Content Normalization | v1.14 | 3/3 | Complete | 2026-02-21 |
 | 64. Quest Foundations | v1.15 | 2/2 | Complete | 2026-02-22 |
-| 65. Objective Tracking | v1.15 | 0/2 | Pending | - |
+| 65. Objective Tracking | v1.15 | 2/2 | Complete | 2026-02-22 |
 | 66. Quest Completion & Rewards | v1.15 | 0/? | Pending | - |
 | 67. NPC Quest Givers | v1.15 | 0/? | Pending | - |
 | 68. Quest UI | v1.15 | 0/? | Pending | - |
 | 69. Quest Chains & Bounties | v1.15 | 0/? | Pending | - |
 
-**Total:** 69 phases (64 complete, 5 pending)
+**Total:** 69 phases (65 complete, 4 pending)
 
 ---
-*Last updated: 2026-02-22 after Phase 65 planning*
+*Last updated: 2026-02-22 after Phase 65 complete*
