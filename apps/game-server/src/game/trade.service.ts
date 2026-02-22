@@ -114,7 +114,9 @@ export class TradeService {
 
   /**
    * Sell an item to a trader NPC.
-   * Validates: NPC is trader, item in player inventory, item is sellable.
+   * Validates: NPC is trader, item in player inventory.
+   * Any item can be sold - traders have specific prices for known items,
+   * otherwise uses item's baseValue at 50% (junk price).
    */
   async sell(
     playerId: string,
@@ -141,16 +143,21 @@ export class TradeService {
       return { success: false, error: 'Item not in inventory' };
     }
 
-    // Find sell price from trader's inventory (traders buy at sellPrice)
-    const tradeItem = trader.inventory.find(i => i.itemId === item.itemId);
-
-    // If trader doesn't have this item in inventory, reject
-    // (items not in trader's buy list cannot be sold to them)
-    if (!tradeItem) {
-      return { success: false, error: 'Trader does not buy this item' };
+    // Get item definition for fallback pricing
+    const itemDef = ItemRegistry.get(item.itemId);
+    if (!itemDef || itemDef.id === 'unknown') {
+      return { success: false, error: 'Unknown item' };
     }
 
-    const sellPrice = tradeItem.sellPrice;
+    // GUARD: Prevent selling quest items
+    if (item.properties?.isQuestItem === true) {
+      return { success: false, error: 'Quest items cannot be sold' };
+    }
+
+    // Find sell price from trader's inventory (traders buy at sellPrice)
+    // If not in trader's specific inventory, use item's baseValue at 50%
+    const tradeItem = trader.inventory.find(i => i.itemId === item.itemId);
+    const sellPrice = tradeItem?.sellPrice ?? Math.max(1, Math.floor(itemDef.baseValue * 0.5));
     const totalValue = sellPrice * quantity;
 
     // Remove item from inventory
