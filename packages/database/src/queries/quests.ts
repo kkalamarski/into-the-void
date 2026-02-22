@@ -108,6 +108,31 @@ export async function updateQuestState(
 }
 
 /**
+ * Atomically mark quest as completed.
+ * Uses WHERE state = 'active' to prevent double completion race conditions.
+ * Returns the updated row if successful, undefined if quest was already completed.
+ */
+export async function completeQuestAtomic(
+  db: DbClient,
+  questProgressId: string
+): Promise<QuestProgress | undefined> {
+  const results = await db
+    .update(questProgress)
+    .set({
+      state: 'completed',
+      completedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(questProgress.id, questProgressId),
+        eq(questProgress.state, 'active')
+      )
+    )
+    .returning();
+  return results[0];
+}
+
+/**
  * Check if character has completed a quest
  */
 export async function hasCompletedQuest(
