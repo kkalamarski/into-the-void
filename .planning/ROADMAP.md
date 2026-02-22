@@ -303,6 +303,12 @@ Plans:
 **Goal**: NPCs offer quests via dialogue with visual markers, and players accept/turn-in through NPC interaction
 **Depends on**: Phase 66
 **Requirements**: QUEST-20, QUEST-21, QUEST-22, QUEST-23, QUEST-24, QUEST-05, QUEST-06
+**Plans:** 3 plans
+
+Plans:
+- [ ] 67-01-PLAN.md — Server quest-NPC integration with getQuestsForNpc and quest:accept
+- [ ] 67-02-PLAN.md — Client NPC modal quests tab with accept/turn-in UI
+- [ ] 67-03-PLAN.md — Visual quest markers (! and ?) above NPCs
 
 **Success Criteria** (what must be TRUE):
   1. NPCs with available quests show "!" marker above their head
@@ -437,11 +443,11 @@ Phases execute in numeric order: 64 -> 65 -> 66 -> 67 -> 68 -> 69
 | 64. Quest Foundations | v1.15 | 2/2 | Complete | 2026-02-22 |
 | 65. Objective Tracking | v1.15 | 2/2 | Complete | 2026-02-22 |
 | 66. Quest Completion & Rewards | v1.15 | 3/3 | Complete | 2026-02-22 |
-| 67. NPC Quest Givers | v1.15 | 0/? | Pending | - |
+| 67. NPC Quest Givers | v1.15 | 3 | Planned | - |
 | 68. Quest UI | v1.15 | 0/? | Pending | - |
 | 69. Quest Chains & Bounties | v1.15 | 0/? | Pending | - |
 
 **Total:** 69 phases (66 complete, 3 pending)
 
 ---
-*Last updated: 2026-02-22 after Phase 66 complete*
+*Last updated: 2026-02-22 after Phase 67 planning complete*
