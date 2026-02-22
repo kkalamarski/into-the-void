@@ -1131,6 +1131,42 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
   }
 
+  @SubscribeMessage('quest:complete')
+  async handleQuestComplete(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { questId: string }
+  ): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const result = await this.questService.completeQuest(player.id, data.questId);
+
+      if (result.success) {
+        // Send updated inventory (quest items were removed)
+        const inventory = this.inventoryService.getInventory(player.id);
+        if (inventory) {
+          client.emit('inventory:update', inventory);
+        }
+        // Send updated credits
+        if (result.rewards?.credits) {
+          client.emit('credits:update', { credits: player.credits });
+        }
+        // Note: quest:completed event is emitted by QuestService.completeQuest
+      } else {
+        client.emit('error', {
+          code: 'QUEST_COMPLETE_FAILED',
+          message: result.error || 'Failed to complete quest',
+        });
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to process quest completion',
+      });
+    }
+  }
+
   /**
    * Compute and emit character stats to the requesting client.
    * Called after auth and after every equipment mutation.
