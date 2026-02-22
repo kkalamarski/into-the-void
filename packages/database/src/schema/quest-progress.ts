@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, jsonb, timestamp, unique } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, jsonb, timestamp, unique, integer } from 'drizzle-orm/pg-core';
 import { characters } from './characters';
 
 /**
@@ -35,6 +35,8 @@ export const questProgress = pgTable('quest_progress', {
   objectives: jsonb('objectives').$type<ObjectiveProgressJson[]>().notNull(),
   startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp('completed_at', { withTimezone: true }),
+  lastCompletedAt: timestamp('last_completed_at', { withTimezone: true }),
+  completedCount: integer('completed_count').notNull().default(0),
 }, (table) => ({
   // CRITICAL: Prevents duplicate quest entries per character
   // This ensures a player cannot have two rows for the same quest
