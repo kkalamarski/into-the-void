@@ -240,7 +240,7 @@ See: `.planning/milestones/v1.15-ROADMAP.md`
 **Goal**: Single unified NPC window with tab navigation replacing the double-modal bug
 **Depends on**: Phase 69 (v1.15 complete)
 **Requirements**: NPC-01, NPC-02, NPC-03, NPC-04
-**Plans:** TBD
+**Plans:** 2 plans
 
 **Success Criteria** (what must be TRUE):
   1. Player interacts with trader NPC and sees single modal window, not two overlapping modals
@@ -250,7 +250,8 @@ See: `.planning/milestones/v1.15-ROADMAP.md`
   5. Only one modal state manages NPC interactions (no `showTrading` vs `interactingNpc` conflicts)
 
 Plans:
-- [ ] TBD during phase planning
+- [ ] 70-01-PLAN.md — Extract TradeTab, modify npcStore, merge CSS
+- [ ] 70-02-PLAN.md — Update GameUI, delete dead code, verify behavior
 
 ---
 
@@ -425,7 +426,7 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73 -> 74 -> 75
 | 67. NPC Quest Givers | v1.15 | 3/3 | Complete | 2026-02-22 |
 | 68. Quest UI | v1.15 | 4/4 | Complete | 2026-02-22 |
 | 69. Quest Chains & Bounties | v1.15 | 2/2 | Complete | 2026-02-22 |
-| 70. Modal Unification | v1.16 | 0/TBD | Not started | - |
+| 70. Modal Unification | v1.16 | 0/2 | Not started | - |
 | 71. Quest Objective Tracker HUD | v1.16 | 0/TBD | Not started | - |
 | 72. Visual Polish | v1.16 | 0/TBD | Not started | - |
 | 73. Quest Markers in World | v1.16 | 0/TBD | Not started | - |
@@ -435,4 +436,4 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73 -> 74 -> 75
 **Total:** 75 phases (69 complete, 6 pending)
 
 ---
-*Last updated: 2026-02-22 after v1.16 roadmap creation*
+*Last updated: 2026-02-23 after Phase 70 planning*
