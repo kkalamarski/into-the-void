@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { GameGateway } from './game.gateway';
 import { GameService } from './game.service';
 import { PlayerService } from './player.service';
@@ -11,10 +12,12 @@ import { AiService } from './ai.service';
 import { CombatService } from './combat.service';
 import { TradeService } from './trade.service';
 import { AbilityService } from './ability.service';
+import { QuestService } from './quest.service';
 import { ZonesModule } from '../zones/zones.module';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
     ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -25,7 +28,7 @@ import { ZonesModule } from '../zones/zones.module';
     }),
     ZonesModule,
   ],
-  providers: [GameGateway, GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService],
-  exports: [GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService],
+  providers: [GameGateway, GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService, QuestService],
+  exports: [GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService, QuestService],
 })
 export class GameModule {}

@@ -19,6 +19,7 @@ import { AiService } from './ai.service';
 import { CombatService } from './combat.service';
 import { TradeService } from './trade.service';
 import { AbilityService } from './ability.service';
+import { QuestService } from './quest.service';
 import {
   ClientEvents,
   Direction,
@@ -59,6 +60,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly combatService: CombatService,
     private readonly tradeService: TradeService,
     private readonly abilityService: AbilityService,
+    private readonly questService: QuestService,
   ) {}
 
   afterInit(server: Server) {
@@ -67,10 +69,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.combatService.setServer(server);
     this.playerService.setServer(server);
     this.abilityService.setServer(server);
+    this.questService.setServer(server);
     this.playerService.setZoneStateProvider((zoneId) => this.gameService.getZoneState(zoneId));
     // Wire aggro checker to ZonesService for immediate aggro on creature respawn
     this.zonesService.setAggroChecker(this.aiService);
-    console.log('[GameGateway] WebSocket server initialized, ZonesService, AiService, CombatService, AbilityService, and PlayerService connected');
+    console.log('[GameGateway] WebSocket server initialized, ZonesService, AiService, CombatService, AbilityService, QuestService, and PlayerService connected');
   }
 
   async handleConnection(client: Socket) {
@@ -638,38 +641,6 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       client.emit('error', {
         code: 'SERVER_ERROR',
         message: 'Failed to process tool use',
-      });
-    }
-  }
-
-  @SubscribeMessage('combat:start')
-  async handleCombatStart(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { targetEntityId: string },
-  ): Promise<void> {
-    try {
-      const result = await this.combatService.startCombat(client.id, payload.targetEntityId);
-
-      if (!result.success) {
-        client.emit('error', { code: 'COMBAT_START_FAILED', message: result.error });
-        return;
-      }
-
-      // Emit combat:start to the player with target info
-      const player = this.playerService.getPlayerBySocket(client.id);
-      if (player) {
-        client.emit('combat:start', {
-          active: true,
-          turn: 0,
-          participants: [],
-          currentActorId: player.id,
-          startedAt: result.session!.startedAt,
-        });
-      }
-    } catch (error) {
-      client.emit('error', {
-        code: 'SERVER_ERROR',
-        message: 'Failed to start combat',
       });
     }
   }

@@ -29,7 +29,8 @@
       "@into-the-void/tiles": ["packages/tiles/src/index.ts"],
       "@into-the-void/items": ["packages/items/src/index.ts"],
       "@into-the-void/entities": ["packages/entities/src/index.ts"],
-      "@into-the-void/npcs": ["packages/npcs/src/index.ts"]
+      "@into-the-void/npcs": ["packages/npcs/src/index.ts"],
+      "@into-the-void/quests": ["packages/quests/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
