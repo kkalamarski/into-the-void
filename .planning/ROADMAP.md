@@ -306,9 +306,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 67-01-PLAN.md — Server quest-NPC integration with getQuestsForNpc and quest:accept
-- [ ] 67-02-PLAN.md — Client NPC modal quests tab with accept/turn-in UI
-- [ ] 67-03-PLAN.md — Visual quest markers (! and ?) above NPCs
+- [x] 67-01-PLAN.md — Server quest-NPC integration with getQuestsForNpc and quest:accept
+- [x] 67-02-PLAN.md — Client NPC modal quests tab with accept/turn-in UI
+- [x] 67-03-PLAN.md — Visual quest markers (! and ?) above NPCs
 
 **Success Criteria** (what must be TRUE):
   1. NPCs with available quests show "!" marker above their head
@@ -443,11 +443,11 @@ Phases execute in numeric order: 64 -> 65 -> 66 -> 67 -> 68 -> 69
 | 64. Quest Foundations | v1.15 | 2/2 | Complete | 2026-02-22 |
 | 65. Objective Tracking | v1.15 | 2/2 | Complete | 2026-02-22 |
 | 66. Quest Completion & Rewards | v1.15 | 3/3 | Complete | 2026-02-22 |
-| 67. NPC Quest Givers | v1.15 | 3 | Planned | - |
+| 67. NPC Quest Givers | v1.15 | 3/3 | Complete | 2026-02-22 |
 | 68. Quest UI | v1.15 | 0/? | Pending | - |
 | 69. Quest Chains & Bounties | v1.15 | 0/? | Pending | - |
 
-**Total:** 69 phases (66 complete, 3 pending)
+**Total:** 69 phases (67 complete, 2 pending)
 
 ---
-*Last updated: 2026-02-22 after Phase 67 planning complete*
+*Last updated: 2026-02-22 after Phase 67 complete*

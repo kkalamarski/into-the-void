@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 
 ## Current Position
 
-Phase: 67 - NPC Quest Givers
-Plan: 03 of 03
-Status: Complete
-Last activity: 2026-02-22 — Phase 67 Plan 03 complete (Quest marker visual feedback)
+Phase: 67 - NPC Quest Givers ✓ Complete
+Plan: —
+Status: Ready for Phase 68
+Last activity: 2026-02-22 — Phase 67 verified (5/5 must-haves)
 
 Progress: [████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 67%
 
