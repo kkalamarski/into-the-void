@@ -12,6 +12,9 @@ import {
   updateQuestState,
   updateInventoryItems,
   addCredits,
+  getQuestProgressForCharacter,
+  hasCompletedQuest,
+  createQuestProgress,
   type ObjectiveProgressJson,
 } from '@into-the-void/database';
 import { QuestRegistry, type QuestDefinition } from '@into-the-void/quests';
@@ -187,6 +190,7 @@ export class QuestService {
   /**
    * Handle zone entry events for 'explore' quest objectives.
    * Updates progress for all active quests with matching explore objectives.
+   * Also handles auto-discovery of quests without questGiverId.
    */
   @OnEvent('zone.entered')
   async handleZoneEntered(payload: ZoneEnteredPayload): Promise<void> {
@@ -194,6 +198,7 @@ export class QuestService {
       const db = this.databaseService.getClient();
       const activeQuests = await getActiveQuests(db, payload.characterId);
 
+      // 1. Update active quest explore objectives
       for (const questProgress of activeQuests) {
         const questDef = QuestRegistry.get(questProgress.questId);
         if (!questDef || questDef.id === 'unknown') continue;
@@ -229,6 +234,31 @@ export class QuestService {
             questDef,
             updatedObjectives
           );
+        }
+      }
+
+      // 2. Auto-discover quests without questGiverId that target this biome
+      const player = this.playerService.getPlayerById(payload.characterId);
+      if (!player) return;
+
+      const allProgress = await getQuestProgressForCharacter(db, payload.characterId);
+      const autoDiscoverQuests = QuestRegistry.getByFaction(player.faction as any).filter(
+        (q) =>
+          q.questGiverId === undefined && // Auto-discover quest
+          q.objectives.some(
+            (obj) => obj.objectiveType === 'explore' && obj.biome === payload.biome
+          )
+      );
+
+      for (const questDef of autoDiscoverQuests) {
+        // Check if player already has this quest (any state)
+        const hasQuest = allProgress.some((p) => p.questId === questDef.id);
+        if (hasQuest) continue;
+
+        // Auto-accept the quest
+        const result = await this.acceptQuest(payload.characterId, questDef.id);
+        if (result.success) {
+          console.log(`[QuestService] Auto-discovered quest ${questDef.id} for player ${payload.characterId}`);
         }
       }
     } catch (error) {
@@ -292,6 +322,222 @@ export class QuestService {
       objectives: objectivePayload,
       rewards,
     });
+  }
+
+  /**
+   * Get quests for an NPC interaction.
+   * Returns categorized quest lists: available, active (in progress), and ready (complete, awaiting turn-in).
+   */
+  async getQuestsForNpc(
+    characterId: string,
+    npcId: string,
+    playerFaction: string
+  ): Promise<{
+    available: Array<{
+      questId: string;
+      displayName: string;
+      description: string;
+      objectives: Array<{ description: string; required: number }>;
+      rewards: { credits?: number; xp?: number; items?: Array<{ itemId: string; quantity: number }> };
+      minLevel?: number;
+    }>;
+    active: Array<{
+      questId: string;
+      displayName: string;
+      description: string;
+      objectives: Array<{ description: string; current: number; required: number; complete: boolean }>;
+    }>;
+    ready: Array<{
+      questId: string;
+      displayName: string;
+    }>;
+  }> {
+    const db = this.databaseService.getClient();
+
+    // Query all quest progress for this character
+    const allProgress = await getQuestProgressForCharacter(db, characterId);
+
+    // Filter registry quests for this NPC and faction
+    const npcQuests = QuestRegistry.getByFaction(playerFaction as any).filter(
+      (q) => q.questGiverId === npcId
+    );
+
+    const available: Array<{
+      questId: string;
+      displayName: string;
+      description: string;
+      objectives: Array<{ description: string; required: number }>;
+      rewards: { credits?: number; xp?: number; items?: Array<{ itemId: string; quantity: number }> };
+      minLevel?: number;
+    }> = [];
+    const active: Array<{
+      questId: string;
+      displayName: string;
+      description: string;
+      objectives: Array<{ description: string; current: number; required: number; complete: boolean }>;
+    }> = [];
+    const ready: Array<{
+      questId: string;
+      displayName: string;
+    }> = [];
+
+    for (const questDef of npcQuests) {
+      const progress = allProgress.find((p) => p.questId === questDef.id);
+
+      if (!progress || (progress.state === 'failed' && questDef.isRepeatable)) {
+        // Available: not started (or failed repeatable)
+        // Check prerequisites
+        let prerequisitesMet = true;
+        if (questDef.prerequisiteQuestIds && questDef.prerequisiteQuestIds.length > 0) {
+          for (const prereqId of questDef.prerequisiteQuestIds) {
+            const hasCompleted = await hasCompletedQuest(db, characterId, prereqId);
+            if (!hasCompleted) {
+              prerequisitesMet = false;
+              break;
+            }
+          }
+        }
+
+        if (prerequisitesMet) {
+          available.push({
+            questId: questDef.id,
+            displayName: questDef.displayName,
+            description: questDef.description,
+            objectives: questDef.objectives.map((obj) => ({
+              description: obj.description,
+              required: this.getObjectiveRequired(obj),
+            })),
+            rewards: {
+              credits: questDef.rewards.credits,
+              xp: questDef.rewards.xp,
+              items: questDef.rewards.items
+                ? questDef.rewards.items.map((item) => ({
+                    itemId: item.itemId,
+                    quantity: item.quantity,
+                  }))
+                : undefined,
+            },
+            minLevel: questDef.minLevel,
+          });
+        }
+      } else if (progress.state === 'active') {
+        // Check if all objectives complete
+        const allComplete = progress.objectives.every((obj) => obj.complete);
+
+        if (allComplete) {
+          // Ready for turn-in
+          ready.push({
+            questId: questDef.id,
+            displayName: questDef.displayName,
+          });
+        } else {
+          // Active (in progress)
+          active.push({
+            questId: questDef.id,
+            displayName: questDef.displayName,
+            description: questDef.description,
+            objectives: progress.objectives.map((obj) => ({
+              description: obj.description,
+              current: obj.current,
+              required: obj.required,
+              complete: obj.complete,
+            })),
+          });
+        }
+      }
+    }
+
+    return { available, active, ready };
+  }
+
+  /**
+   * Extract required count from quest objective.
+   */
+  private getObjectiveRequired(obj: any): number {
+    if (obj.objectiveType === 'kill') return obj.targetCount;
+    if (obj.objectiveType === 'gather') return obj.quantity;
+    if (obj.objectiveType === 'explore') return 1;
+    return 1;
+  }
+
+  /**
+   * Accept a quest and create quest_progress entry.
+   * Validates prerequisites, faction, and player level.
+   */
+  async acceptQuest(
+    characterId: string,
+    questId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const db = this.databaseService.getClient();
+
+    // Validate quest exists
+    const questDef = QuestRegistry.get(questId);
+    if (!questDef || questDef.id === 'unknown') {
+      return { success: false, error: 'Quest not found' };
+    }
+
+    // Check if player already has this quest active
+    const existingProgress = await getQuestProgress(db, characterId, questId);
+    if (existingProgress && existingProgress.state === 'active') {
+      return { success: false, error: 'Quest already active' };
+    }
+
+    // Validate prerequisites
+    if (questDef.prerequisiteQuestIds && questDef.prerequisiteQuestIds.length > 0) {
+      for (const prereqId of questDef.prerequisiteQuestIds) {
+        const hasCompleted = await hasCompletedQuest(db, characterId, prereqId);
+        if (!hasCompleted) {
+          return { success: false, error: 'Prerequisites not met' };
+        }
+      }
+    }
+
+    // Validate faction (if quest is faction-specific)
+    if (questDef.faction) {
+      const player = this.playerService.getPlayerById(characterId);
+      if (!player || player.faction !== questDef.faction) {
+        return { success: false, error: 'Faction requirement not met' };
+      }
+    }
+
+    // Initialize objectives
+    const objectives: ObjectiveProgressJson[] = questDef.objectives.map((obj) => ({
+      objectiveType: obj.objectiveType,
+      description: obj.description,
+      current: 0,
+      required: this.getObjectiveRequired(obj),
+      targetId: this.getObjectiveTargetId(obj),
+      complete: false,
+    }));
+
+    try {
+      // Create quest_progress row
+      await createQuestProgress(db, {
+        characterId,
+        questId: questDef.id,
+        state: 'active',
+        objectives,
+        startedAt: new Date(),
+      });
+
+      // Emit quest:progress to player
+      this.emitProgressUpdate(characterId, questDef.id, 'active', questDef, objectives);
+
+      return { success: true };
+    } catch (error) {
+      console.error('[QuestService] Error accepting quest:', error);
+      return { success: false, error: 'Failed to accept quest' };
+    }
+  }
+
+  /**
+   * Extract target ID from quest objective.
+   */
+  private getObjectiveTargetId(obj: any): string {
+    if (obj.objectiveType === 'kill') return obj.targetEntityId;
+    if (obj.objectiveType === 'gather') return obj.itemId;
+    if (obj.objectiveType === 'explore') return obj.biome;
+    return '';
   }
 
   /**
