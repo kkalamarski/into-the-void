@@ -9,6 +9,7 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { GameService } from './game.service';
 import { PlayerService } from './player.service';
 import { InventoryService } from './inventory.service';
@@ -34,6 +35,7 @@ import { computeCharStats } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
 import { NpcRegistry } from '@into-the-void/npcs';
 import { EquipmentJson } from '@into-the-void/database';
+import { BiomeGenerator, getHubConfig } from '@into-the-void/world-gen';
 
 @WebSocketGateway({
   cors: {
@@ -50,6 +52,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   server!: Server;
 
   constructor(
+    private readonly eventEmitter: EventEmitter2,
     private readonly gameService: GameService,
     private readonly playerService: PlayerService,
     private readonly inventoryService: InventoryService,
@@ -164,6 +167,14 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         // Send initial stats (PRIVATE - only to this client)
         this.emitStats(client, result.player.id);
 
+        // Emit zone entry event for quest tracking on login
+        const biome = this.resolveZoneBiome(playerZoneId);
+        this.eventEmitter.emit('zone.entered', {
+          characterId: result.player.id,
+          zoneId: playerZoneId,
+          biome,
+        });
+
         // Notify other players
         client.to(result.player.position.zoneId).emit('player:joined', {
           id: result.player.id,
@@ -246,6 +257,16 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
           // Send new zone state to player
           const zoneState = await this.gameService.getZoneState(result.newZoneId);
           client.emit('zone:state', zoneState);
+
+          // Emit zone entry event for quest tracking on zone transition
+          if (result.playerId) {
+            const biome = this.resolveZoneBiome(result.newZoneId);
+            this.eventEmitter.emit('zone.entered', {
+              characterId: result.playerId,
+              zoneId: result.newZoneId,
+              biome,
+            });
+          }
 
           // Notify new zone
           client.to(result.newZoneId).emit('player:joined', result.playerPublic);
@@ -1157,6 +1178,30 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         maxHealth: newMaxHealth,
       });
     }
+  }
+
+  /**
+   * Resolve biome for a zone ID.
+   * Hub zones use hub config, world zones use BiomeGenerator.
+   */
+  private resolveZoneBiome(zoneId: string): string {
+    if (isHubZone(zoneId)) {
+      const hubConfig = getHubConfig(zoneId);
+      return hubConfig?.biome ?? 'hub';
+    }
+
+    // World zone: parse coordinates and compute biome
+    const parts = zoneId.split('_');
+    const zx = parseInt(parts[1], 10);
+    const zy = parseInt(parts[2], 10);
+
+    // BiomeGenerator needs world coordinates (chunk center)
+    const worldSeed = this.zonesService.getWorldSeed();
+    const biomeGenerator = new BiomeGenerator(worldSeed);
+    // Chunk size is 64, use center point
+    const centerX = zx * 64 + 32;
+    const centerY = zy * 64 + 32;
+    return biomeGenerator.getBiome(centerX, centerY);
   }
 
   /**
