@@ -12,7 +12,7 @@ import { BuffBar } from './BuffBar';
 import './HUD.css';
 
 export const HUD: React.FC = () => {
-  const { player, zoneState, toggleInventory, toggleEquipment, toggleChat, showCombatLog, toggleCombatLog } = useGameStore();
+  const { player, zoneState, toggleInventory, toggleEquipment, toggleAbilities, toggleChat, toggleQuestLog, showCombatLog, toggleCombatLog } = useGameStore();
   const { inventory } = useInventoryStore();
   const { inCombat } = useCombatStore();
 
@@ -45,7 +45,7 @@ export const HUD: React.FC = () => {
     useCombatLogStore.setState({ visible: showCombatLog });
   }, [showCombatLog]);
 
-  // Wire L key to toggle combat log visibility
+  // Wire L key to toggle combat log visibility, Q key for quest log
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger if typing in input or textarea
@@ -56,14 +56,17 @@ export const HUD: React.FC = () => {
         return;
       }
 
-      if (e.key.toLowerCase() === 'l') {
+      const key = e.key.toLowerCase();
+      if (key === 'l') {
         toggleCombatLog();
+      } else if (key === 'q') {
+        toggleQuestLog(); // QUEST-45: Q toggles quest log
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleCombatLog]);
+  }, [toggleCombatLog, toggleQuestLog]);
 
   if (!player) return null;
 
@@ -147,6 +150,14 @@ export const HUD: React.FC = () => {
           <button className="action-btn" onClick={toggleEquipment}>
             <span>E</span>
             <label>Equipment</label>
+          </button>
+          <button className="action-btn" onClick={toggleAbilities}>
+            <span>K</span>
+            <label>Abilities</label>
+          </button>
+          <button className="action-btn" onClick={toggleQuestLog}>
+            <span>Q</span>
+            <label>Quests</label>
           </button>
           <button className="action-btn" onClick={toggleChat}>
             <span>C</span>
