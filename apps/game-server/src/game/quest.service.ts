@@ -3,9 +3,15 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { Server } from 'socket.io';
 import { DatabaseService } from '../database/database.service';
 import { PlayerService } from './player.service';
+import { InventoryService } from './inventory.service';
 import {
   getActiveQuests,
   updateQuestObjectives,
+  getQuestProgress,
+  completeQuestAtomic,
+  updateQuestState,
+  updateInventoryItems,
+  addCredits,
   type ObjectiveProgressJson,
 } from '@into-the-void/database';
 import { QuestRegistry, type QuestDefinition } from '@into-the-void/quests';
@@ -60,6 +66,7 @@ export class QuestService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly playerService: PlayerService,
+    private readonly inventoryService: InventoryService,
   ) {}
 
   /**
@@ -285,5 +292,211 @@ export class QuestService {
       objectives: objectivePayload,
       rewards,
     });
+  }
+
+  /**
+   * Complete a quest and grant rewards atomically.
+   * Validates: quest active, all objectives complete, player at NPC (if questGiverId set).
+   * Transaction: validate -> remove quest items -> mark complete -> grant credits.
+   * XP granted in-memory after transaction commits.
+   */
+  async completeQuest(
+    characterId: string,
+    questId: string,
+    npcEntityId?: string
+  ): Promise<{ success: boolean; error?: string; rewards?: { credits?: number; xp?: number; items?: Array<{ itemId: string; quantity: number }> } }> {
+    const db = this.databaseService.getClient();
+
+    // Get quest definition and progress
+    const questDef = QuestRegistry.get(questId);
+    if (!questDef || questDef.id === 'unknown') {
+      return { success: false, error: 'Quest not found' };
+    }
+
+    const questProgressRow = await getQuestProgress(db, characterId, questId);
+    if (!questProgressRow) {
+      return { success: false, error: 'Quest not started' };
+    }
+    if (questProgressRow.state !== 'active') {
+      return { success: false, error: 'Quest is not active' };
+    }
+
+    // Validate all objectives complete
+    const allComplete = questProgressRow.objectives.every(obj => obj.complete);
+    if (!allComplete) {
+      return { success: false, error: 'Not all objectives are complete' };
+    }
+
+    // TODO: NPC proximity validation - Phase 67 will implement when questGiverId is populated
+    // For now, allow completion without NPC proximity check
+
+    // Transaction: remove quest items -> mark complete -> grant credits
+    try {
+      await db.transaction(async (tx) => {
+        // 1. Remove quest items from inventory
+        const inventory = this.inventoryService.getInventory(characterId);
+        if (inventory) {
+          const filteredItems = inventory.items.filter(
+            item => item.properties?.questId !== questId
+          );
+          if (filteredItems.length !== inventory.items.length) {
+            // Quest items were removed, update in-memory and persist
+            inventory.items = filteredItems;
+            await updateInventoryItems(tx, characterId, filteredItems);
+          }
+        }
+
+        // 2. Atomically mark quest complete (prevents double completion)
+        const completed = await completeQuestAtomic(tx, questProgressRow.id);
+        if (!completed) {
+          throw new Error('Quest already completed');
+        }
+
+        // 3. Grant credits (inside transaction for atomicity)
+        if (questDef.rewards.credits && questDef.rewards.credits > 0) {
+          await addCredits(tx, characterId, questDef.rewards.credits);
+        }
+
+        // 4. Grant item rewards (inside transaction)
+        if (questDef.rewards.items && questDef.rewards.items.length > 0) {
+          for (const reward of questDef.rewards.items) {
+            const newItem = {
+              instanceId: crypto.randomUUID(),
+              itemId: reward.itemId,
+              quantity: reward.quantity,
+              slot: this.findFreeSlot(inventory?.items ?? []),
+              properties: {},
+            };
+            if (inventory) {
+              inventory.items.push(newItem);
+            }
+          }
+          if (inventory) {
+            await updateInventoryItems(tx, characterId, inventory.items);
+          }
+        }
+      });
+
+      // After transaction commits: grant XP (in-memory, persisted on disconnect)
+      if (questDef.rewards.xp && questDef.rewards.xp > 0) {
+        this.playerService.grantXp(characterId, questDef.rewards.xp);
+      }
+
+      // Update player credits cache
+      if (questDef.rewards.credits && questDef.rewards.credits > 0) {
+        const player = this.playerService.getPlayerById(characterId);
+        if (player) {
+          player.credits += questDef.rewards.credits;
+        }
+      }
+
+      // Emit quest completed event to player
+      this.emitQuestCompleted(characterId, questId, questDef);
+
+      return {
+        success: true,
+        rewards: {
+          credits: questDef.rewards.credits,
+          xp: questDef.rewards.xp,
+          items: questDef.rewards.items ? [...questDef.rewards.items] : undefined,
+        },
+      };
+    } catch (error) {
+      console.error('[QuestService] Error completing quest:', error);
+      return { success: false, error: 'Quest completion failed' };
+    }
+  }
+
+  /**
+   * Find first free inventory slot.
+   */
+  private findFreeSlot(items: Array<{ slot: number }>): number {
+    const usedSlots = new Set(items.map(i => i.slot));
+    for (let i = 0; i < 20; i++) {
+      if (!usedSlots.has(i)) return i;
+    }
+    return items.length;
+  }
+
+  /**
+   * Emit quest:completed WebSocket event to player.
+   */
+  private emitQuestCompleted(
+    characterId: string,
+    questId: string,
+    questDef: QuestDefinition
+  ): void {
+    if (!this.server) return;
+
+    const socketId = this.playerService.getSocketByPlayerId(characterId);
+    if (!socketId) return;
+
+    this.server.to(socketId).emit('quest:completed', {
+      questId,
+      displayName: questDef.displayName,
+      rewards: {
+        credits: questDef.rewards.credits,
+        xp: questDef.rewards.xp,
+        items: questDef.rewards.items ? questDef.rewards.items.map(i => ({
+          itemId: i.itemId,
+          quantity: i.quantity,
+        })) : undefined,
+      },
+    });
+  }
+
+  /**
+   * Abandon an active quest and clean up quest items.
+   */
+  async abandonQuest(
+    characterId: string,
+    questId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const db = this.databaseService.getClient();
+
+    const questProgressRow = await getQuestProgress(db, characterId, questId);
+    if (!questProgressRow) {
+      return { success: false, error: 'Quest not found' };
+    }
+    if (questProgressRow.state !== 'active') {
+      return { success: false, error: 'Quest is not active' };
+    }
+
+    try {
+      await db.transaction(async (tx) => {
+        // 1. Remove quest items from inventory
+        const inventory = this.inventoryService.getInventory(characterId);
+        if (inventory) {
+          const filteredItems = inventory.items.filter(
+            item => item.properties?.questId !== questId
+          );
+          if (filteredItems.length !== inventory.items.length) {
+            inventory.items = filteredItems;
+            await updateInventoryItems(tx, characterId, filteredItems);
+          }
+        }
+
+        // 2. Mark quest as failed (abandoned)
+        await updateQuestState(tx, questProgressRow.id, 'failed');
+      });
+
+      // Emit quest abandoned event
+      if (this.server) {
+        const socketId = this.playerService.getSocketByPlayerId(characterId);
+        if (socketId) {
+          this.server.to(socketId).emit('quest:abandoned', { questId });
+          // Also send inventory update
+          const inventory = this.inventoryService.getInventory(characterId);
+          if (inventory) {
+            this.server.to(socketId).emit('inventory:update', inventory);
+          }
+        }
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('[QuestService] Error abandoning quest:', error);
+      return { success: false, error: 'Failed to abandon quest' };
+    }
   }
 }
