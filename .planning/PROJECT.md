@@ -4,7 +4,7 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, and a complete auth-to-gameplay flow.
 
-## Current State (v1.14 shipped)
+## Current State (v1.15 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
@@ -19,6 +19,7 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Trading: Buy/sell with credits, trader inventory, credit balance in HUD
 - Hubs: 4 orbital faction stations, portal travel, H key recall
 - Persistence: Player position saves across sessions, starter kit for new players
+- Quests: Definition system, NPC quest offering, quest log UI, objective tracking, chains, bounties
 
 **Tech stack:**
 - Frontend: React 18, Phaser 3, Zustand, React Router v7
@@ -28,19 +29,16 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~15,000+ LOC TypeScript
 
-## Current Milestone: v1.15 Quest System
+## Current Milestone: v1.16 UI Polish
 
-**Goal:** NPCs give quests with objectives, tracking, and rewards — creating purpose-driven gameplay.
+**Goal:** Clean, WoW-style NPC interaction with unified window and general HUD improvements.
 
 **Target features:**
-- Quest definition system with types (kill, gather, explore)
-- NPCs offer quests via dialogue with ! and ? markers
-- Multi-step quest chains with objective tracking
-- Full quest log UI (Active/Completed tabs, progress bars)
-- Quest rewards: credits, XP, and items
-- Story quests (one-time) and bounty quests (daily repeatable)
-- Auto-discover quests triggered by area entry
-- Quest state persisted in database
+- Fix double-modal bug (two modals appearing for same NPC)
+- Single unified NPC window with tab navigation (Dialogue/Quests/Trade)
+- Quest panel overhaul (visual polish, simplified layout, better feedback)
+- Trade panel overhaul (consistent styling, clearer feedback)
+- General HUD polish (spacing, typography, hover states, consistency)
 
 ## Core Value
 
@@ -139,19 +137,24 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Buff system with instant and duration-based effects — v1.13
 - ✓ 21 abilities across Offensive, Defensive, Utility categories — v1.13
 - ✓ 20 tools and 14 suits with ability grants — v1.13
+- ✓ Quest definition system with types, objectives, and rewards — v1.15
+- ✓ NPC quest offering via dialogue system — v1.15
+- ✓ Quest markers (! for available, ? for turn-in) — v1.15
+- ✓ Quest log UI with Active/Completed tabs — v1.15
+- ✓ Objective tracking with counters and progress — v1.15
+- ✓ Multi-step quest chains — v1.15
+- ✓ Quest rewards (credits, XP, items) — v1.15
+- ✓ Story quests (one-time) and bounty quests (daily repeatable) — v1.15
+- ✓ Auto-discover quests on area entry — v1.15
+- ✓ Quest state persistence in database — v1.15
 
 ### Active
 
-- [ ] Quest definition system with types, objectives, and rewards
-- [ ] NPC quest offering via dialogue system
-- [ ] Quest markers (! for available, ? for turn-in)
-- [ ] Quest log UI with Active/Completed tabs
-- [ ] Objective tracking with counters and progress
-- [ ] Multi-step quest chains
-- [ ] Quest rewards (credits, XP, items)
-- [ ] Story quests (one-time) and bounty quests (daily repeatable)
-- [ ] Auto-discover quests on area entry
-- [ ] Quest state persistence in database
+- [ ] Fix double-modal bug in NPC interaction
+- [ ] Single unified NPC window with tab navigation
+- [ ] Quest panel visual polish and simplified layout
+- [ ] Trade panel visual polish and consistent styling
+- [ ] General HUD polish (spacing, typography, hover states)
 
 ### Out of Scope
 
@@ -164,7 +167,7 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - Mobile controls — web-first
 - Surface faction HQs (Canopy, Ironhold, Meridian) — orbital first, surface later
 - Shared city at 0,0 — designed in future milestone
-- Faction reputation system — v1.16+ (after quests)
+- Faction reputation system — v1.17+ (after UI polish)
 - Branching dialogue — simple linear sufficient for now
 
 ## Constraints
@@ -196,4 +199,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-21 after v1.15 milestone start*
+*Last updated: 2026-02-22 after v1.16 milestone start*
