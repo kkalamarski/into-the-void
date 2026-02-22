@@ -1008,6 +1008,24 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       serviceType?: string;
       title?: string;
       role?: string;
+      availableQuests?: Array<{
+        questId: string;
+        displayName: string;
+        description: string;
+        objectives: Array<{ description: string; required: number }>;
+        rewards: { credits?: number; xp?: number; items?: Array<{ itemId: string; quantity: number }> };
+        minLevel?: number;
+      }>;
+      activeQuests?: Array<{
+        questId: string;
+        displayName: string;
+        description: string;
+        objectives: Array<{ description: string; current: number; required: number; complete: boolean }>;
+      }>;
+      readyQuests?: Array<{
+        questId: string;
+        displayName: string;
+      }>;
     } = {
       npcId: npcDef.id,
       displayName: npcDef.displayName,
@@ -1030,6 +1048,18 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
     if (npcDef.npcType === 'ambient' && 'role' in npcDef) {
       response.role = npcDef.role;
+    }
+
+    // Add quest data for this NPC
+    const questData = await this.questService.getQuestsForNpc(player.id, npcDef.id, player.faction);
+    if (questData.available.length > 0) {
+      response.availableQuests = questData.available;
+    }
+    if (questData.active.length > 0) {
+      response.activeQuests = questData.active;
+    }
+    if (questData.ready.length > 0) {
+      response.readyQuests = questData.ready;
     }
 
     client.emit('npc:interact:response', response);
@@ -1191,6 +1221,25 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         message: 'Failed to process quest abandonment',
       });
     }
+  }
+
+  @SubscribeMessage('quest:accept')
+  async handleQuestAccept(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { questId: string }
+  ): Promise<void> {
+    const player = this.playerService.getPlayerBySocket(client.id);
+    if (!player) return;
+
+    const result = await this.questService.acceptQuest(player.id, data.questId);
+
+    if (!result.success) {
+      client.emit('error', {
+        code: 'QUEST_ACCEPT_FAILED',
+        message: result.error || 'Failed to accept quest',
+      });
+    }
+    // Note: quest:progress is emitted by QuestService.acceptQuest on success
   }
 
   /**

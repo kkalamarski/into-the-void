@@ -39,7 +39,8 @@ export type ClientEventType =
   | 'trade:sell'
   | 'ability:use'
   | 'quest:complete'
-  | 'quest:abandon';
+  | 'quest:abandon'
+  | 'quest:accept';
 
 /**
  * Server-to-client event types
@@ -112,6 +113,7 @@ export interface ClientEvents {
   'ability:use': { abilityId: string; targetEntityId?: string };
   'quest:complete': { questId: string };
   'quest:abandon': { questId: string };
+  'quest:accept': { questId: string };
 }
 
 /**
@@ -203,6 +205,24 @@ export interface ServerEvents {
     serviceType?: 'repair' | 'storage' | 'transport' | 'medical';
     title?: string;
     role?: string;
+    availableQuests?: Array<{
+      questId: string;
+      displayName: string;
+      description: string;
+      objectives: Array<{ description: string; required: number }>;
+      rewards: { credits?: number; xp?: number; items?: Array<{ itemId: string; quantity: number }> };
+      minLevel?: number;
+    }>;
+    activeQuests?: Array<{
+      questId: string;
+      displayName: string;
+      description: string;
+      objectives: Array<{ description: string; current: number; required: number; complete: boolean }>;
+    }>;
+    readyQuests?: Array<{
+      questId: string;
+      displayName: string;
+    }>;
   };
   'ability:result': {
     success: boolean;
