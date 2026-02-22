@@ -92,18 +92,22 @@ export class PreloadScene extends Phaser.Scene {
     for (const key of featureTiles) {
       this.load.image(key, `sprites/${key}.png`);
     }
+
+    // Quest markers (will use procedural fallback if sprites don't exist)
+    this.load.image('ui_quest_marker_available', 'sprites/ui_quest_marker_available.png');
+    this.load.image('ui_quest_marker_ready', 'sprites/ui_quest_marker_ready.png');
   }
 
   private generateTileTextures(): void {
-    const TILE_SIZE = 96;
+    const ENTITY_SIZE = 256; // Entity sprite size (matches 256x256 tiles)
     const graphics = this.make.graphics({ x: 0, y: 0 });
 
     // All tile textures now loaded from PNG - only generate entity textures
 
     // Player sphere - higher resolution with shading for 3D effect
-    const PLAYER_SIZE = 192; // 2x resolution for crisp rendering
+    const PLAYER_SIZE = 256; // Higher resolution for crisp rendering
     const center = PLAYER_SIZE / 2;
-    const radius = 70;
+    const radius = 100;
 
     // Base sphere color
     graphics.fillStyle(0x7b68ee);
@@ -118,44 +122,90 @@ export class PreloadScene extends Phaser.Scene {
     graphics.fillCircle(center - radius * 0.4, center - radius * 0.4, radius * 0.2);
 
     // Dark edge (bottom-right) for depth
-    graphics.lineStyle(3, 0x5040a0, 0.5);
+    graphics.lineStyle(4, 0x5040a0, 0.5);
     graphics.beginPath();
     graphics.arc(center, center, radius - 1, Math.PI * 0.1, Math.PI * 0.9);
     graphics.strokePath();
 
     // Outer ring for definition
-    graphics.lineStyle(2, 0x3a2a7a, 0.8);
+    graphics.lineStyle(3, 0x3a2a7a, 0.8);
     graphics.strokeCircle(center, center, radius);
 
     graphics.generateTexture('player', PLAYER_SIZE, PLAYER_SIZE);
     graphics.clear();
 
-    // Creature (centered at 48,48 for 96px tile)
+    // Creature (centered for 256px sprite)
+    const ec = ENTITY_SIZE / 2; // entity center = 128
     graphics.fillStyle(0xff4444);
-    graphics.fillCircle(48, 48, 30);
-    graphics.generateTexture('creature', TILE_SIZE, TILE_SIZE);
+    graphics.fillCircle(ec, ec, 80);
+    graphics.generateTexture('creature', ENTITY_SIZE, ENTITY_SIZE);
     graphics.clear();
 
-    // Mineral (centered square for 96px tile)
+    // Mineral (centered square for 256px sprite)
     graphics.fillStyle(0x44ffff);
-    graphics.fillRect(24, 24, 48, 48);
-    graphics.generateTexture('mineral', TILE_SIZE, TILE_SIZE);
+    graphics.fillRect(64, 64, 128, 128);
+    graphics.generateTexture('mineral', ENTITY_SIZE, ENTITY_SIZE);
     graphics.clear();
 
-    // Item (smaller circle centered for 96px tile)
+    // Item (smaller circle centered for 256px sprite)
     graphics.fillStyle(0xffff44);
-    graphics.fillCircle(48, 48, 18);
-    graphics.generateTexture('item', TILE_SIZE, TILE_SIZE);
+    graphics.fillCircle(ec, ec, 48);
+    graphics.generateTexture('item', ENTITY_SIZE, ENTITY_SIZE);
     graphics.clear();
 
-    // Plant (triangle centered for 96px tile)
+    // Plant (triangle centered for 256px sprite)
     graphics.fillStyle(0x44cc44); // green
     graphics.fillTriangle(
-      48, 12,  // top
-      24, 84,  // bottom left
-      72, 84   // bottom right
+      ec, 32,     // top
+      64, 224,    // bottom left
+      192, 224    // bottom right
     );
-    graphics.generateTexture('plant', TILE_SIZE, TILE_SIZE);
+    graphics.generateTexture('plant', ENTITY_SIZE, ENTITY_SIZE);
+    graphics.clear();
+
+    // Quest markers (fallback if PNG files don't exist)
+    // These will be used if sprite loading fails
+    const MARKER_SIZE = 64;
+    const mc = MARKER_SIZE / 2; // marker center = 32
+
+    // Available quest marker (yellow ! on transparent background)
+    graphics.fillStyle(0xffcc00, 1);
+    graphics.fillCircle(mc, mc, 28);
+    graphics.lineStyle(3, 0x000000);
+    graphics.strokeCircle(mc, mc, 28);
+    const availableText = this.make.text({
+      x: mc,
+      y: mc,
+      text: '!',
+      style: {
+        fontSize: '48px',
+        fontStyle: 'bold',
+        color: '#000000',
+      },
+    });
+    availableText.setOrigin(0.5, 0.5);
+    graphics.generateTexture('ui_quest_marker_available_fallback', MARKER_SIZE, MARKER_SIZE);
+    availableText.destroy();
+    graphics.clear();
+
+    // Ready quest marker (cyan ? on transparent background)
+    graphics.fillStyle(0x00ccff, 1);
+    graphics.fillCircle(mc, mc, 28);
+    graphics.lineStyle(3, 0x000000);
+    graphics.strokeCircle(mc, mc, 28);
+    const readyText = this.make.text({
+      x: mc,
+      y: mc,
+      text: '?',
+      style: {
+        fontSize: '48px',
+        fontStyle: 'bold',
+        color: '#000000',
+      },
+    });
+    readyText.setOrigin(0.5, 0.5);
+    graphics.generateTexture('ui_quest_marker_ready_fallback', MARKER_SIZE, MARKER_SIZE);
+    readyText.destroy();
     graphics.clear();
 
     graphics.destroy();
