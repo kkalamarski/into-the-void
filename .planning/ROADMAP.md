@@ -362,6 +362,11 @@ Plans:
 **Goal**: Quests support prerequisites for chained storylines and daily repeatable bounties
 **Depends on**: Phase 68
 **Requirements**: QUEST-13, QUEST-50, QUEST-51, QUEST-52
+**Plans:** 2 plans
+
+Plans:
+- [ ] 69-01-PLAN.md — Database schema extension and daily reset query logic
+- [ ] 69-02-PLAN.md — QuestService integration and bounty quest definitions
 
 **Success Criteria** (what must be TRUE):
   1. Player cannot accept quest until prerequisite quests completed
@@ -452,9 +457,9 @@ Phases execute in numeric order: 64 -> 65 -> 66 -> 67 -> 68 -> 69
 | 66. Quest Completion & Rewards | v1.15 | 3/3 | Complete | 2026-02-22 |
 | 67. NPC Quest Givers | v1.15 | 3/3 | Complete | 2026-02-22 |
 | 68. Quest UI | v1.15 | 4/4 | Complete | 2026-02-22 |
-| 69. Quest Chains & Bounties | v1.15 | 0/? | Pending | - |
+| 69. Quest Chains & Bounties | v1.15 | 2/2 | Pending | - |
 
 **Total:** 69 phases (68 complete, 1 pending)
 
 ---
-*Last updated: 2026-02-22 after Phase 68 complete*
+*Last updated: 2026-02-22 after Phase 69 planning complete*
