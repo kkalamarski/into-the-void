@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Server } from 'socket.io';
+import { eq, and, sql } from 'drizzle-orm';
 import { DatabaseService } from '../database/database.service';
 import { PlayerService } from './player.service';
 import { InventoryService } from './inventory.service';
@@ -15,6 +16,8 @@ import {
   getQuestProgressForCharacter,
   hasCompletedQuest,
   createQuestProgress,
+  canRepeatBountyQuest,
+  questProgress,
   type ObjectiveProgressJson,
 } from '@into-the-void/database';
 import { QuestRegistry, type QuestDefinition } from '@into-the-void/quests';
@@ -492,12 +495,41 @@ export class QuestService {
       }
     }
 
+    // Check if story quest already completed (non-repeatable)
+    if (!questDef.isRepeatable) {
+      const alreadyCompleted = await hasCompletedQuest(db, characterId, questId);
+      if (alreadyCompleted) {
+        return { success: false, error: 'Quest already completed' };
+      }
+    }
+
+    // Check daily reset for bounty quests (repeatable)
+    if (questDef.isRepeatable) {
+      const canRepeat = await canRepeatBountyQuest(db, characterId, questId);
+      if (!canRepeat) {
+        return { success: false, error: 'Wait until daily reset to repeat this quest' };
+      }
+    }
+
     // Validate faction (if quest is faction-specific)
     if (questDef.faction) {
       const player = this.playerService.getPlayerById(characterId);
       if (!player || player.faction !== questDef.faction) {
         return { success: false, error: 'Faction requirement not met' };
       }
+    }
+
+    // For repeatable quests: delete old completion record to allow new quest_progress row
+    // UNIQUE constraint (characterId, questId) prevents duplicates, so we must delete first
+    if (questDef.isRepeatable && existingProgress && existingProgress.state === 'completed') {
+      await db
+        .delete(questProgress)
+        .where(
+          and(
+            eq(questProgress.characterId, characterId),
+            eq(questProgress.questId, questId)
+          )
+        );
     }
 
     // Initialize objectives
