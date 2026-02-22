@@ -17,7 +17,7 @@
 - v1.12 Bug Fixes & Content Polish - Phases 51-55 (shipped 2026-02-20)
 - v1.13 Active Combat Abilities - Phases 56-58 (shipped 2026-02-21)
 - v1.14 Equipment Stats Overhaul - Phases 59-63 (shipped 2026-02-21)
-- **v1.15 Quest System** - Phases 64-69 (in progress)
+- **v1.15 Quest System** - Phases 64-69 (shipped 2026-02-22)
 
 ## Phases
 
@@ -365,8 +365,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 69-01-PLAN.md — Database schema extension and daily reset query logic
-- [ ] 69-02-PLAN.md — QuestService integration and bounty quest definitions
+- [x] 69-01-PLAN.md — Database schema extension and daily reset query logic
+- [x] 69-02-PLAN.md — QuestService integration and bounty quest definitions
 
 **Success Criteria** (what must be TRUE):
   1. Player cannot accept quest until prerequisite quests completed
@@ -457,9 +457,9 @@ Phases execute in numeric order: 64 -> 65 -> 66 -> 67 -> 68 -> 69
 | 66. Quest Completion & Rewards | v1.15 | 3/3 | Complete | 2026-02-22 |
 | 67. NPC Quest Givers | v1.15 | 3/3 | Complete | 2026-02-22 |
 | 68. Quest UI | v1.15 | 4/4 | Complete | 2026-02-22 |
-| 69. Quest Chains & Bounties | v1.15 | 2/2 | Pending | - |
+| 69. Quest Chains & Bounties | v1.15 | 2/2 | Complete | 2026-02-22 |
 
-**Total:** 69 phases (68 complete, 1 pending)
+**Total:** 69 phases (69 complete, 0 pending)
 
 ---
-*Last updated: 2026-02-22 after Phase 69 planning complete*
+*Last updated: 2026-02-22 after Phase 69 complete — MILESTONE v1.15 COMPLETE*
