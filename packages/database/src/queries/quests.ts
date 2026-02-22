@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import type { DbClient } from '../client';
 import {
   questProgress,
@@ -151,4 +151,44 @@ export async function hasCompletedQuest(
       )
     );
   return results.length > 0;
+}
+
+/**
+ * Check if a bounty quest can be repeated based on daily UTC reset.
+ * Returns true if:
+ * - Quest has never been completed, OR
+ * - Last completion was on a different UTC day than current day
+ *
+ * Uses PostgreSQL date_trunc to compare UTC days, not 24-hour cooldown.
+ */
+export async function canRepeatBountyQuest(
+  db: DbClient,
+  characterId: string,
+  questId: string
+): Promise<boolean> {
+  const result = await db
+    .select({ lastCompletedAt: questProgress.lastCompletedAt })
+    .from(questProgress)
+    .where(
+      and(
+        eq(questProgress.characterId, characterId),
+        eq(questProgress.questId, questId),
+        eq(questProgress.state, 'completed')
+      )
+    )
+    .limit(1);
+
+  if (result.length === 0 || !result[0].lastCompletedAt) {
+    return true;  // Never completed or no timestamp - can accept
+  }
+
+  // Check if current UTC day is after completion UTC day using date_trunc
+  const resetCheck = await db.execute(sql`
+    SELECT
+      date_trunc('day', now() AT TIME ZONE 'UTC') >
+      date_trunc('day', ${result[0].lastCompletedAt} AT TIME ZONE 'UTC')
+      AS can_reset
+  `);
+
+  return resetCheck.rows[0]?.can_reset === true;
 }
