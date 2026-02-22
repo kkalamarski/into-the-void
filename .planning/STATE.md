@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 ## Current Position
 
 Phase: 67 - NPC Quest Givers
-Plan: 01 of 03
+Plan: 02 of 03
 Status: In Progress
-Last activity: 2026-02-22 — Phase 67 Plan 01 complete (NPC quest integration)
+Last activity: 2026-02-22 — Phase 67 Plan 02 complete (Quest UI in NPC modal)
 
 Progress: [████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 67%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 192
+- Total plans completed: 193
 - Average duration: ~3 min per plan
-- Total execution time: ~9.5 hours across 15 milestones
+- Total execution time: ~9.6 hours across 15 milestones
 
 **By Milestone:**
 
@@ -42,7 +42,7 @@ Progress: [████████████████████░░░
 | v1.12 | 51-55 | 9 | 1 day |
 | v1.13 | 56-58 | 9 | Complete |
 | v1.14 | 59-63 | 8 | Complete |
-| v1.15 | 64-69 | 7/? | In progress |
+| v1.15 | 64-69 | 8/? | In progress |
 
 **Recent Trend:**
 Stable velocity. Phase 67 started (1 of 3 plans done).
@@ -57,6 +57,7 @@ Stable velocity. Phase 67 started (1 of 3 plans done).
 | Phase 66 P02 | 150 | 3 tasks | 3 files |
 | Phase 66 P03 | 164 | 3 tasks | 2 files |
 | Phase 67 P01 | 245 | 2 tasks | 3 files |
+| Phase 67 P02 | 213 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Recent decisions affecting current work:
 - [Phase 67-01]: getQuestsForNpc categorizes quests as available/active/ready by checking prerequisites and objectives
 - [Phase 67-01]: Auto-discover quests trigger on zone.entered when questGiverId undefined and explore objective matches biome
 - [Phase 67-01]: Quest acceptance validates prerequisites using hasCompletedQuest before creating quest_progress row
+- [Phase 67-02]: Tab navigation in NPC modal shows Dialogue/Trade/Quests conditionally based on NPC type and quest availability
+- [Phase 67-02]: Quest UI displays in priority order: ready quests (turn in) → available quests (accept) → active quests (progress)
+- [Phase 67-02]: Quest markers use MMO color convention: yellow "!" for available, blue "?" for ready to turn in
 
 ### Pending Todos
 
@@ -94,13 +98,13 @@ None.
 
 ### Blockers/Concerns
 
-None. Phase 67 Plan 01 complete. Ready for Plan 02 (NPC quest definitions).
+None. Phase 67 Plan 02 complete. Ready for Plan 03 (NPC quest definitions).
 
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 67-01-PLAN.md
+Stopped at: Completed 67-02-PLAN.md
 Resume file: None
 
 ---
-*Last updated: 2026-02-22 after Phase 67 Plan 01 complete*
+*Last updated: 2026-02-22 after Phase 67 Plan 02 complete*
