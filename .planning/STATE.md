@@ -9,17 +9,17 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 
 ## Current Position
 
-Phase: 66 - Quest Completion Rewards ✓ Complete
-Plan: —
-Status: Ready for Phase 67
-Last activity: 2026-02-22 — Phase 66 verified (4/5 must-haves, NPC proximity deferred to P67)
+Phase: 67 - NPC Quest Givers
+Plan: 01 of 03
+Status: In Progress
+Last activity: 2026-02-22 — Phase 67 Plan 01 complete (NPC quest integration)
 
 Progress: [████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 67%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 191
+- Total plans completed: 192
 - Average duration: ~3 min per plan
 - Total execution time: ~9.5 hours across 15 milestones
 
@@ -42,10 +42,10 @@ Progress: [████████████████████░░░
 | v1.12 | 51-55 | 9 | 1 day |
 | v1.13 | 56-58 | 9 | Complete |
 | v1.14 | 59-63 | 8 | Complete |
-| v1.15 | 64-69 | 6/? | In progress |
+| v1.15 | 64-69 | 7/? | In progress |
 
 **Recent Trend:**
-Stable velocity. Phase 66 complete (3 of 3 plans done).
+Stable velocity. Phase 67 started (1 of 3 plans done).
 
 | Plan | Duration (s) | Tasks | Files |
 |------|--------------|-------|-------|
@@ -56,6 +56,7 @@ Stable velocity. Phase 66 complete (3 of 3 plans done).
 | Phase 66 P01 | 62 | 2 tasks | 2 files |
 | Phase 66 P02 | 150 | 3 tasks | 3 files |
 | Phase 66 P03 | 164 | 3 tasks | 2 files |
+| Phase 67 P01 | 245 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,9 @@ Recent decisions affecting current work:
 - [Phase 66-03]: quest:complete and quest:abandon client events carry only questId
 - [Phase 66-03]: QuestService emits quest:completed/abandoned events, gateway emits inventory/credits updates
 - [Phase 66-03]: Gateway only emits errors on failure, success events handled by service layer
+- [Phase 67-01]: getQuestsForNpc categorizes quests as available/active/ready by checking prerequisites and objectives
+- [Phase 67-01]: Auto-discover quests trigger on zone.entered when questGiverId undefined and explore objective matches biome
+- [Phase 67-01]: Quest acceptance validates prerequisites using hasCompletedQuest before creating quest_progress row
 
 ### Pending Todos
 
@@ -90,13 +94,13 @@ None.
 
 ### Blockers/Concerns
 
-None. Phase 66 complete (all 3 plans done). Ready for Phase 67.
+None. Phase 67 Plan 01 complete. Ready for Plan 02 (NPC quest definitions).
 
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 66-03-PLAN.md
+Stopped at: Completed 67-01-PLAN.md
 Resume file: None
 
 ---
-*Last updated: 2026-02-22 after Phase 66 Plan 03 complete*
+*Last updated: 2026-02-22 after Phase 67 Plan 01 complete*
