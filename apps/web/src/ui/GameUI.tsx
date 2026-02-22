@@ -10,6 +10,7 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { useGameStore } from '../store/gameStore';
 import { useInventoryStore } from '../store/inventoryStore';
 import '../store/statsStore'; // Side-effect: registers stats:update socket handler
+import '../store/questStore'; // Side-effect: registers quest socket handlers
 import { useActionBarStore } from '../store/actionBarStore';
 import { useNpcStore } from '../store/npcStore';
 import { gameSocket } from '../network/socket';
@@ -17,15 +18,19 @@ import { HUD } from './hud/HUD';
 import { ChatPanel } from './panels/ChatPanel';
 import { InventoryPanel } from './panels/InventoryPanel';
 import { EquipmentPanel } from './panels/EquipmentPanel';
+import { AbilitiesPanel } from './panels/AbilitiesPanel';
+import { QuestLogPanel } from './panels/QuestLogPanel';
 import { NpcInteractionModal } from './panels/NpcInteractionModal';
 import { TradingPanel } from './panels/TradingPanel';
+import { QuestTracker } from './hud/QuestTracker';
 import { DeathScreen } from './DeathScreen';
 import { AlertNotification } from './AlertNotification';
 import { LevelUpNotification } from '../components/LevelUpNotification';
+import { QuestCompleteModal } from './modals/QuestCompleteModal';
 import './GameUI.css';
 
 export const GameUI: React.FC = () => {
-  const { showChat, showInventory, showEquipment, showDeathScreen, player } = useGameStore();
+  const { showChat, showInventory, showEquipment, showAbilities, showDeathScreen, isQuestLogOpen, player } = useGameStore();
   const { interactingNpc, showTrading } = useNpcStore();
 
   const sensors = useSensors(
@@ -60,6 +65,16 @@ export const GameUI: React.FC = () => {
       return;
     }
 
+    // Dropped on inventory drop zone — unequip if it's an equipped item
+    if (overId === 'inventory-drop-zone') {
+      // Check if the dragged item is from equipment (has 'equipped' data type)
+      const dragData = active.data.current;
+      if (dragData?.type === 'equipped') {
+        gameSocket.emit('inventory:unequip', { instanceId: activeId });
+      }
+      return;
+    }
+
     // Dropped on inventory slot (reorder) — only if both are inventory items
     const inventory = useInventoryStore.getState().inventory;
     if (!inventory) return;
@@ -87,10 +102,14 @@ export const GameUI: React.FC = () => {
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="game-ui">
         <HUD />
+        <QuestTracker />
         {showChat && <ChatPanel />}
         {showInventory && <InventoryPanel />}
         {showEquipment && <EquipmentPanel />}
+        {showAbilities && <AbilitiesPanel />}
+        {isQuestLogOpen && <QuestLogPanel />}
         <LevelUpNotification />
+        <QuestCompleteModal />
         <AlertNotification />
         {showDeathScreen && <DeathScreen />}
         {interactingNpc && <NpcInteractionModal />}
