@@ -1,0 +1,70 @@
+.quest-tracker {
+  position: fixed;
+  top: 60px;
+  right: 16px;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 50;
+  pointer-events: auto;
+}
+
+.tracked-quest {
+  background: var(--color-bg-secondary, #1a1a1a);
+  border: 1px solid var(--color-border, #333);
+  border-radius: 4px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.1s;
+}
+
+.tracked-quest:hover {
+  border-color: var(--color-accent, #7b68ee);
+  transform: translateX(-2px);
+}
+
+.tracked-quest-name {
+  font-weight: 600;
+  color: var(--color-text-primary, #fff);
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.tracked-quest-objectives {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tracked-objective {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--color-text-secondary, #888);
+  line-height: 1.3;
+}
+
+.tracked-objective--complete {
+  color: var(--color-success, #44cc44);
+}
+
+.tracked-objective--complete .objective-text {
+  text-decoration: line-through;
+}
+
+.objective-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 6px;
+}
+
+.objective-progress {
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
