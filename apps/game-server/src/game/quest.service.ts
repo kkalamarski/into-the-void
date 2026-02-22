@@ -9,7 +9,6 @@ import {
   getActiveQuests,
   updateQuestObjectives,
   getQuestProgress,
-  completeQuestAtomic,
   updateQuestState,
   updateInventoryItems,
   addCredits,
@@ -624,9 +623,24 @@ export class QuestService {
           }
         }
 
-        // 2. Atomically mark quest complete (prevents double completion)
-        const completed = await completeQuestAtomic(tx, questProgressRow.id);
-        if (!completed) {
+        // 2. Atomically mark quest complete with completion tracking
+        const completed = await tx
+          .update(questProgress)
+          .set({
+            state: 'completed',
+            completedAt: new Date(),
+            lastCompletedAt: new Date(),  // NEW: for daily reset check
+            completedCount: sql`COALESCE(${questProgress.completedCount}, 0) + 1`,  // NEW: increment counter
+          })
+          .where(
+            and(
+              eq(questProgress.id, questProgressRow.id),
+              eq(questProgress.state, 'active')
+            )
+          )
+          .returning();
+
+        if (completed.length === 0) {
           throw new Error('Quest already completed');
         }
 
