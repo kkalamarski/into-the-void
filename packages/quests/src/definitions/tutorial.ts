@@ -37,7 +37,24 @@ export const QUEST_TUTORIAL_GATHERING: QuestDefinition = {
   minLevel: 1,
 };
 
+export const BOUNTY_VOID_CRAWLER_HUNT: QuestDefinition = {
+  id: 'bounty_void_crawler_hunt',
+  displayName: 'Void Crawler Bounty',
+  description: 'Cull the void crawler population in the outer zones. Repeats daily.',
+  objectives: [
+    {
+      objectiveType: 'kill',
+      description: 'Kill 10 void crawlers',
+      targetEntityId: 'creature_void_crawler',
+      targetCount: 10,
+    },
+  ],
+  rewards: { credits: 150, xp: 75 },
+  isRepeatable: true,  // Bounty - no faction restriction, available to all
+};
+
 export const TUTORIAL_QUESTS: readonly QuestDefinition[] = [
   QUEST_TUTORIAL_FIRST_STEPS,
   QUEST_TUTORIAL_GATHERING,
+  BOUNTY_VOID_CRAWLER_HUNT,
 ];

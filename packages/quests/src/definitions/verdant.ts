@@ -44,7 +44,59 @@ export const QUEST_VERDANT_SPECIMEN: QuestDefinition = {
   minLevel: 3,
 };
 
+export const BOUNTY_VERDANT_FUNGAL_HARVEST: QuestDefinition = {
+  id: 'bounty_verdant_fungal_harvest',
+  displayName: 'Daily Fungal Harvest',
+  description: 'Collect fungal spore clusters for the Verdant research team. Repeats daily at UTC reset.',
+  objectives: [
+    {
+      objectiveType: 'gather',
+      description: 'Collect 10 fungal spore clusters',
+      itemId: 'world_fungal_spore_cluster',
+      quantity: 10,
+    },
+  ],
+  rewards: { credits: 200, xp: 100 },
+  faction: 'verdant',
+  isRepeatable: true,  // Bounty - repeatable daily
+};
+
+export const QUEST_VERDANT_CHAIN_PART_1: QuestDefinition = {
+  id: 'quest_verdant_chain_part_1',
+  displayName: 'Verdant Initiative: First Contact',
+  description: 'Establish initial contact with the Verdant Dynamics research outpost in the fungal forests.',
+  objectives: [
+    {
+      objectiveType: 'explore',
+      description: 'Reach the Verdant outpost in the fungal forest',
+      biome: 'fungal_forest',
+    },
+  ],
+  rewards: { credits: 100, xp: 50 },
+  faction: 'verdant',
+};
+
+export const QUEST_VERDANT_CHAIN_PART_2: QuestDefinition = {
+  id: 'quest_verdant_chain_part_2',
+  displayName: 'Verdant Initiative: Specimen Collection',
+  description: 'Continue research collaboration by gathering biological samples.',
+  objectives: [
+    {
+      objectiveType: 'gather',
+      description: 'Collect 5 void flora samples',
+      itemId: 'world_void_flora_sample',
+      quantity: 5,
+    },
+  ],
+  rewards: { credits: 250, xp: 150 },
+  faction: 'verdant',
+  prerequisiteQuestIds: ['quest_verdant_chain_part_1'],  // CHAIN: requires part 1
+};
+
 export const VERDANT_QUESTS: readonly QuestDefinition[] = [
   QUEST_VERDANT_BIODIVERSITY,
   QUEST_VERDANT_SPECIMEN,
+  BOUNTY_VERDANT_FUNGAL_HARVEST,
+  QUEST_VERDANT_CHAIN_PART_1,
+  QUEST_VERDANT_CHAIN_PART_2,
 ];
