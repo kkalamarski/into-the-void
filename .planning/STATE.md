@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 
 ## Current Position
 
-Phase: 64 - Quest Foundations ✓ Complete
-Plan: —
-Status: Ready for Phase 65
-Last activity: 2026-02-22 — Phase 64 verified (4/4 must-haves)
+Phase: 65 - Objective Tracking
+Plan: 01 ✓ Complete
+Status: Ready for Plan 65-02
+Last activity: 2026-02-22 — Plan 65-01 complete (QuestService with @OnEvent listeners)
 
-Progress: [████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 17%
+Progress: [█████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 18%
 
 ## Performance Metrics
 
@@ -42,15 +42,16 @@ Progress: [████████████████░░░░░░░
 | v1.12 | 51-55 | 9 | 1 day |
 | v1.13 | 56-58 | 9 | Complete |
 | v1.14 | 59-63 | 8 | Complete |
-| v1.15 | 64-69 | 2/? | In progress |
+| v1.15 | 64-69 | 3/? | In progress |
 
 **Recent Trend:**
-Stable velocity. Phase 64 complete (2 of 2 plans).
+Stable velocity. Phase 65 in progress (1 of 2 plans).
 
 | Plan | Duration (s) | Tasks | Files |
 |------|--------------|-------|-------|
 | Phase 64 P01 | 196 | 3 tasks | 12 files |
 | Phase 64 P02 | 251 | 2 tasks | 5 files |
+| Phase 65 P01 | 325 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,10 @@ Recent decisions affecting current work:
 - Phase 64: JSONB for objectives storage allows flexible objective types
 - Phase 64: CASCADE delete on quest_progress FK for automatic cleanup
 - Phase 64: 8 starter quests (2 tutorial + 6 faction)
+- Phase 65-01: Database update BEFORE WebSocket emit to prevent state inconsistency
+- Phase 65-01: try/catch in all @OnEvent handlers to prevent server crash
+- Phase 65-01: Check obj.complete before incrementing to prevent double-counting
+- Phase 65-01: Use speciesId (not instance id) for kill objective matching
 
 ### Pending Todos
 
@@ -71,13 +76,13 @@ None.
 
 ### Blockers/Concerns
 
-None. Phase 64 verified. Ready for Phase 65 planning.
+None. Plan 65-01 complete. Ready for Plan 65-02 (event emission instrumentation).
 
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed Phase 64 (Quest Foundations)
+Stopped at: Completed Plan 65-01 (QuestService with @OnEvent listeners)
 Resume file: None
 
 ---
-*Last updated: 2026-02-22 after Phase 64 complete*
+*Last updated: 2026-02-22 after Plan 65-01 complete*
