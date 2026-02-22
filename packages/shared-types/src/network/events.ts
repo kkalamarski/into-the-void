@@ -37,7 +37,9 @@ export type ClientEventType =
   | 'hub:leave'
   | 'trade:buy'
   | 'trade:sell'
-  | 'ability:use';
+  | 'ability:use'
+  | 'quest:complete'
+  | 'quest:abandon';
 
 /**
  * Server-to-client event types
@@ -74,7 +76,9 @@ export type ServerEventType =
   | 'ability:cooldown'
   | 'buff:apply'
   | 'buff:expire'
-  | 'quest:progress';
+  | 'quest:progress'
+  | 'quest:completed'
+  | 'quest:abandoned';
 
 /**
  * Socket.io event map for type safety
@@ -106,6 +110,8 @@ export interface ClientEvents {
   'trade:buy': { npcId: string; itemId: string; quantity: number };
   'trade:sell': { npcId: string; itemInstanceId: string; quantity: number };
   'ability:use': { abilityId: string; targetEntityId?: string };
+  'quest:complete': { questId: string };
+  'quest:abandon': { questId: string };
 }
 
 /**
@@ -234,6 +240,18 @@ export interface ServerEvents {
       xp?: number;
       items?: { itemId: string; quantity: number }[];
     };
+  };
+  'quest:completed': {
+    questId: string;
+    displayName: string;
+    rewards: {
+      credits?: number;
+      xp?: number;
+      items?: { itemId: string; quantity: number }[];
+    };
+  };
+  'quest:abandoned': {
+    questId: string;
   };
 }
 
