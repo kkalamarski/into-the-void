@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 ## Current Position
 
 Phase: 65 - Objective Tracking
-Plan: 01 ✓ Complete
-Status: Ready for Plan 65-02
-Last activity: 2026-02-22 — Plan 65-01 complete (QuestService with @OnEvent listeners)
+Plan: 02 ✓ Complete
+Status: Ready for Plan 65-03
+Last activity: 2026-02-22 — Plan 65-02 complete (Game event instrumentation)
 
-Progress: [█████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 18%
+Progress: [███████████████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 36%
 
 ## Performance Metrics
 
@@ -45,13 +45,14 @@ Progress: [█████████████████░░░░░░
 | v1.15 | 64-69 | 3/? | In progress |
 
 **Recent Trend:**
-Stable velocity. Phase 65 in progress (1 of 2 plans).
+Stable velocity. Phase 65 in progress (2 of ? plans).
 
 | Plan | Duration (s) | Tasks | Files |
 |------|--------------|-------|-------|
 | Phase 64 P01 | 196 | 3 tasks | 12 files |
 | Phase 64 P02 | 251 | 2 tasks | 5 files |
 | Phase 65 P01 | 325 | 2 tasks | 5 files |
+| Phase 65 P02 | 189 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,9 @@ Recent decisions affecting current work:
 - Phase 65-01: try/catch in all @OnEvent handlers to prevent server crash
 - Phase 65-01: Check obj.complete before incrementing to prevent double-counting
 - Phase 65-01: Use speciesId (not instance id) for kill objective matching
+- Phase 65-02: Emit item.collected for BOTH stacking and new slot scenarios
+- Phase 65-02: Emit zone.entered on BOTH login/auth AND zone transition
+- Phase 65-02: BiomeGenerator per-call for biome resolution (stateless, seed-based)
 
 ### Pending Todos
 
@@ -76,13 +80,13 @@ None.
 
 ### Blockers/Concerns
 
-None. Plan 65-01 complete. Ready for Plan 65-02 (event emission instrumentation).
+None. Plan 65-02 complete. Ready for Plan 65-03 (quest completion and rewards).
 
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed Plan 65-01 (QuestService with @OnEvent listeners)
+Stopped at: Completed Plan 65-02 (Game event instrumentation)
 Resume file: None
 
 ---
-*Last updated: 2026-02-22 after Plan 65-01 complete*
+*Last updated: 2026-02-22 after Plan 65-02 complete*
