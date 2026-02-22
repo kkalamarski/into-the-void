@@ -43,12 +43,11 @@ interface NpcInteraction {
 
 interface NpcState {
   interactingNpc: NpcInteraction | null;
-  showTrading: boolean;
+  activeTab: 'dialogue' | 'trade' | 'quests';
   tradeError: string | null;
   setInteractingNpc: (npc: NpcInteraction | null) => void;
   closeInteraction: () => void;
-  openTrading: () => void;
-  closeTrading: () => void;
+  setActiveTab: (tab: 'dialogue' | 'trade' | 'quests') => void;
   setTradeError: (error: string | null) => void;
   acceptQuest: (questId: string) => void;
   completeQuestAtNpc: (questId: string) => void;
@@ -56,12 +55,11 @@ interface NpcState {
 
 export const useNpcStore = create<NpcState>((set) => ({
   interactingNpc: null,
-  showTrading: false,
+  activeTab: 'dialogue',
   tradeError: null,
   setInteractingNpc: (npc) => set({ interactingNpc: npc }),
-  closeInteraction: () => set({ interactingNpc: null, showTrading: false, tradeError: null }),
-  openTrading: () => set({ showTrading: true, tradeError: null }),
-  closeTrading: () => set({ showTrading: false, tradeError: null }),
+  closeInteraction: () => set({ interactingNpc: null, activeTab: 'dialogue', tradeError: null }),
+  setActiveTab: (tab) => set({ activeTab: tab }),
   setTradeError: (error) => set({ tradeError: error }),
   acceptQuest: (questId: string) => {
     gameSocket.emit('quest:accept', { questId });
