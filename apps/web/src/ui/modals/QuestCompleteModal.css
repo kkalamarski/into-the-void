@@ -1,0 +1,97 @@
+.quest-complete-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;  /* Above panels (100), below death screen (1000) */
+  pointer-events: none;  /* Allow clicks through to game */
+  animation: fadeIn 0.3s ease-out;
+}
+
+.quest-complete-modal {
+  background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+  border: 2px solid var(--color-accent);
+  border-radius: 8px;
+  padding: 24px 32px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(76, 175, 80, 0.4);
+  animation: celebratePop 0.4s ease-out;
+}
+
+.quest-complete-banner {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.quest-complete-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 16px;
+}
+
+.quest-complete-rewards {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  padding: 12px 16px;
+}
+
+.rewards-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.rewards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reward-item {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.reward-credits {
+  color: #ffd700;  /* Gold for credits */
+}
+
+.reward-xp {
+  color: #00ff88;  /* Green for XP */
+}
+
+.reward-item-drop {
+  color: var(--color-text-primary);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes celebratePop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
