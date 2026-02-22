@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNpcStore } from '../../store/npcStore';
 import { useGameStore } from '../../store/gameStore';
 import { useDraggablePanel } from '../../hooks/useDraggablePanel';
-import { TradingPanel } from './TradingPanel';
+import { useInventoryStore } from '../../store/inventoryStore';
+import { gameSocket } from '../../network/socket';
+import { ItemRegistry, type ItemDefinition } from '@into-the-void/items';
+import type { InventoryEquipment } from '@into-the-void/shared-types';
+import { ItemTooltip } from '../../components/ItemTooltip';
+import { RARITY_COLORS } from '../constants';
 import './NpcInteractionModal.css';
 
 // NPC type display labels
@@ -23,9 +28,8 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 
 export const NpcInteractionModal: React.FC = () => {
-  const { interactingNpc, closeInteraction, openTrading, showTrading, acceptQuest, completeQuestAtNpc } = useNpcStore();
+  const { interactingNpc, closeInteraction, activeTab, setActiveTab, tradeError, setTradeError, acceptQuest, completeQuestAtNpc } = useNpcStore();
   const { position, isDragging, handleMouseDown } = useDraggablePanel();
-  const [activeTab, setActiveTab] = useState<'dialogue' | 'trade' | 'quests'>('dialogue');
 
   // Disable Phaser keyboard when modal is open
   useEffect(() => {
@@ -58,6 +62,17 @@ export const NpcInteractionModal: React.FC = () => {
     };
   }, [closeInteraction]);
 
+  // Default to quests tab if NPC has ready or available quests
+  useEffect(() => {
+    if (interactingNpc) {
+      if (interactingNpc.readyQuests?.length || interactingNpc.availableQuests?.length) {
+        setActiveTab('quests');
+      } else {
+        setActiveTab('dialogue');
+      }
+    }
+  }, [interactingNpc, setActiveTab]);
+
   if (!interactingNpc) return null;
 
   // Get greeting dialogue (condition: 'greeting' or first dialogue)
@@ -72,6 +87,164 @@ export const NpcInteractionModal: React.FC = () => {
   const hasQuests = interactingNpc.availableQuests?.length ||
                     interactingNpc.activeQuests?.length ||
                     interactingNpc.readyQuests?.length;
+
+  // Trade helper functions (from TradingPanel)
+  const getEquippedForSlot = (slot: string | undefined, eq: InventoryEquipment | undefined): string | undefined => {
+    if (!slot || !eq) return undefined;
+    switch (slot) {
+      case 'exosuit': return eq.exosuit?.itemId;
+      case 'tool': return eq.tool?.itemId;
+      case 'accessory': return eq.accessory1?.itemId;
+      case 'module': return eq.modules?.[0]?.itemId;
+      default: return undefined;
+    }
+  };
+
+  const getEquippedItemDef = (itemDef: ItemDefinition | undefined, equipment: InventoryEquipment | undefined): ItemDefinition | undefined => {
+    if (!itemDef?.equipSlot) return undefined;
+    const equippedId = getEquippedForSlot(itemDef.equipSlot, equipment);
+    return equippedId ? ItemRegistry.get(equippedId) : undefined;
+  };
+
+  const TradeTab: React.FC = () => {
+    const { inventory } = useInventoryStore();
+    const { player } = useGameStore();
+
+    if (!interactingNpc || interactingNpc.npcType !== 'trader') {
+      return <p className="npc-empty-message">This NPC doesn't have trade options.</p>;
+    }
+
+    const traderInventory = interactingNpc.inventory ?? [];
+    const playerItems = inventory?.items ?? [];
+
+    const handleBuy = (itemId: string, buyPrice: number) => {
+      if (!player || player.credits < buyPrice) {
+        setTradeError('Insufficient credits');
+        return;
+      }
+      setTradeError(null);
+      gameSocket.emit('trade:buy', {
+        npcId: interactingNpc.npcId ?? interactingNpc.displayName,
+        itemId,
+        quantity: 1,
+      });
+    };
+
+    const handleSell = (instanceId: string) => {
+      setTradeError(null);
+      gameSocket.emit('trade:sell', {
+        npcId: interactingNpc.npcId ?? interactingNpc.displayName,
+        itemInstanceId: instanceId,
+        quantity: 1,
+      });
+    };
+
+    const getSellPrice = (itemId: string): number => {
+      const tradeItem = traderInventory.find(i => i.itemId === itemId);
+      if (tradeItem?.sellPrice !== undefined) {
+        return tradeItem.sellPrice;
+      }
+      const itemDef = ItemRegistry.get(itemId);
+      return Math.max(1, Math.floor((itemDef?.baseValue ?? 2) * 0.5));
+    };
+
+    return (
+      <div className="npc-trade-tab">
+        {tradeError && <div className="npc-trade-error">{tradeError}</div>}
+        <div className="npc-trade-credits">
+          Your Credits: <span className="credits-value">{(player?.credits ?? 0).toLocaleString()} cr</span>
+        </div>
+        <div className="npc-trade-columns">
+          <div className="npc-trade-section npc-trade-buy">
+            <h3>Buy</h3>
+            <div className="npc-trade-items">
+              {traderInventory.map((item) => {
+                const itemDef = ItemRegistry.get(item.itemId);
+                const canAfford = (player?.credits ?? 0) >= item.buyPrice;
+                const rarityColor = RARITY_COLORS[itemDef?.rarity ?? 'common'];
+                const equippedItemDef = getEquippedItemDef(itemDef, inventory?.equipment);
+                return (
+                  <div key={item.itemId} className={`npc-trade-item ${!canAfford ? 'cannot-afford' : ''}`}>
+                    <ItemTooltip item={itemDef} equippedItem={equippedItemDef}>
+                      <div
+                        className="npc-trade-item-icon"
+                        style={{
+                          backgroundColor: `#${(itemDef?.color ?? 0x888888).toString(16).padStart(6, '0')}`,
+                          borderColor: rarityColor,
+                        }}
+                      />
+                    </ItemTooltip>
+                    <div className="npc-trade-item-info">
+                      <span className="npc-trade-item-name" style={{ color: rarityColor }}>
+                        {itemDef?.displayName ?? item.itemId}
+                      </span>
+                      <span className="npc-trade-item-stock">
+                        {item.stock === -1 ? 'Unlimited' : `Stock: ${item.stock}`}
+                      </span>
+                    </div>
+                    <div className="npc-trade-item-action">
+                      <span className="npc-trade-item-price">{item.buyPrice} cr</span>
+                      <button
+                        className="npc-trade-btn npc-trade-btn--buy"
+                        onClick={() => handleBuy(item.itemId, item.buyPrice)}
+                        disabled={!canAfford}
+                      >
+                        Buy
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+              {traderInventory.length === 0 && (
+                <div className="npc-trade-empty">No items available</div>
+              )}
+            </div>
+          </div>
+          <div className="npc-trade-section npc-trade-sell">
+            <h3>Sell</h3>
+            <div className="npc-trade-items">
+              {playerItems.map((item) => {
+                const itemDef = ItemRegistry.get(item.itemId);
+                const sellPrice = getSellPrice(item.itemId);
+                const rarityColor = RARITY_COLORS[itemDef?.rarity ?? 'common'];
+                return (
+                  <div key={item.instanceId} className="npc-trade-item">
+                    <ItemTooltip item={itemDef}>
+                      <div
+                        className="npc-trade-item-icon"
+                        style={{
+                          backgroundColor: `#${(itemDef?.color ?? 0x888888).toString(16).padStart(6, '0')}`,
+                          borderColor: rarityColor,
+                        }}
+                      />
+                    </ItemTooltip>
+                    <div className="npc-trade-item-info">
+                      <span className="npc-trade-item-name" style={{ color: rarityColor }}>
+                        {itemDef?.displayName ?? item.itemId}
+                      </span>
+                      <span className="npc-trade-item-qty">x{item.quantity}</span>
+                    </div>
+                    <div className="npc-trade-item-action">
+                      <span className="npc-trade-item-price sell-price">{sellPrice} cr</span>
+                      <button
+                        className="npc-trade-btn npc-trade-btn--sell"
+                        onClick={() => handleSell(item.instanceId)}
+                      >
+                        Sell
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+              {playerItems.length === 0 && (
+                <div className="npc-trade-empty">No items to sell</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Render quests tab content
   const renderQuestsTab = () => {
@@ -145,10 +318,7 @@ export const NpcInteractionModal: React.FC = () => {
         return (
           <button
             className="npc-action-btn npc-action-btn--primary"
-            onClick={() => {
-              setActiveTab('trade');
-              openTrading();
-            }}
+            onClick={() => setActiveTab('trade')}
           >
             Trade
           </button>
@@ -172,17 +342,14 @@ export const NpcInteractionModal: React.FC = () => {
       }
 
       case 'faction_rep':
-        return (
+        return hasQuests ? (
           <button
             className="npc-action-btn npc-action-btn--primary"
-            onClick={() => {
-              // Future: faction quests/reputation
-              console.log('Faction rep clicked - to be implemented');
-            }}
+            onClick={() => setActiveTab('quests')}
           >
             Faction Quests
           </button>
-        );
+        ) : null;
 
       case 'guard':
       case 'ambient':
@@ -261,7 +428,7 @@ export const NpcInteractionModal: React.FC = () => {
             </div>
           </>
         )}
-        {activeTab === 'trade' && showTrading && <TradingPanel />}
+        {activeTab === 'trade' && <TradeTab />}
         {activeTab === 'quests' && renderQuestsTab()}
       </div>
     </div>
