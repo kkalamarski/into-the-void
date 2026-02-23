@@ -18,7 +18,7 @@
 - v1.13 Active Combat Abilities - Phases 56-58 (shipped 2026-02-21)
 - v1.14 Equipment Stats Overhaul - Phases 59-63 (shipped 2026-02-21)
 - v1.15 Quest System - Phases 64-69 (shipped 2026-02-22)
-- **v1.16 UI Polish** - Phases 70-75 (in progress)
+- v1.16 UI Polish - Phases 70-75 (shipped 2026-02-23)
 
 ## Phases
 
@@ -359,8 +359,10 @@ Plans:
   5. Failed operations revert UI state (button re-enabled, no optimistic update artifacts)
 
 Plans:
-- [ ] 75-01-PLAN.md — Pending state infrastructure (npcStore flags, alertStore 5s, spinner CSS)
-- [ ] 75-02-PLAN.md — Button spinners and modal close prevention
+- [x] 75-01-PLAN.md — Pending state infrastructure (npcStore flags, alertStore 5s, spinner CSS)
+- [x] 75-02-PLAN.md — Button spinners and modal close prevention
+
+**Phase 75 complete** — 2026-02-23
 
 ---
 
@@ -445,9 +447,9 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73 -> 74 -> 75
 | 72. Visual Polish | v1.16 | 3/3 | Complete | 2026-02-23 |
 | 73. Quest Markers in World | v1.16 | 1/1 | Complete | 2026-02-23 |
 | 74. Quest Completion Feedback | v1.16 | 2/2 | Complete | 2026-02-23 |
-| 75. Error Handling | v1.16 | 0/2 | Not started | - |
+| 75. Error Handling | v1.16 | 2/2 | Complete | 2026-02-23 |
 
-**Total:** 75 phases (74 complete, 1 pending)
+**Total:** 75 phases (75 complete, 0 pending)
 
 ---
-*Last updated: 2026-02-23 after Phase 75 planning*
+*Last updated: 2026-02-23 — v1.16 milestone complete*
