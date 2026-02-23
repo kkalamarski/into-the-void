@@ -1,6 +1,7 @@
 // Movement
 export * from './movement/validation';
 export * from './movement/pathfinding';
+export * from './movement/speed';
 export { validateMovementWithElevation } from './movement/validation';
 export { findPathWithElevation } from './movement/pathfinding';
 
