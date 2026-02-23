@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 71 - Quest Objective Tracker HUD
+**Current focus:** Phase 72 - Visual Polish
 
 ## Current Position
 
-Phase: 71 of 75 (Quest Objective Tracker HUD)
-Plan: 1 of 1 complete
-Status: Phase complete
-Last activity: 2026-02-23 - Phase 71 completed (Quest Tracker HUD with collapse, 3-quest limit, visual hierarchy)
+Phase: 72 of 75 (Visual Polish)
+Plan: 1 of 2 complete
+Status: In progress
+Last activity: 2026-02-23 - Phase 72 Plan 01 completed (Design token system + GPU-accelerated button polish)
 
 Progress: [█████████████████████████████████████████████████████████████████████████████░░░░░░░░] 94%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 199
+- Total plans completed: 200
 - Average duration: ~3 min per plan
 - Total execution time: ~10.0 hours across 16 milestones
 
@@ -46,7 +46,7 @@ Progress: [███████████████████████
 | v1.16 | 70-75 | TBD | In progress |
 
 **Recent Trend:**
-Stable velocity. Phase 71 complete (1 of 1 plans done).
+Stable velocity. Phase 72 in progress (1 of 2 plans done).
 
 | Plan | Duration (s) | Tasks | Files |
 |------|--------------|-------|-------|
@@ -56,6 +56,7 @@ Stable velocity. Phase 71 complete (1 of 1 plans done).
 | Phase 70 P01 | 159 | 3 tasks | 3 files |
 | Phase 70 P02 | 120 | 3 tasks | 1 files |
 | Phase 71 P01 | 107 | 2 tasks | 2 files |
+| Phase 72 P01 | 74 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Recent decisions affecting current work:
 - [Phase 70]: TradingPanel.tsx and TradingPanel.css fully removed as dead code after trade UI embedding
 - [Phase 70]: GameUI now renders only NpcInteractionModal for trader interactions, not separate TradingPanel
 - [Phase 71]: QuestTracker collapse state persisted via localStorage with key 'quest-tracker-collapsed'
+- [Phase 72]: Design token system uses --duration-* for timing, --ease-* for curves, --transition-* for semantic usage
+- [Phase 72]: GPU-accelerated button polish uses transform/filter instead of top/left/opacity for 60fps animations
 
 ### Pending Todos
 
@@ -91,12 +94,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 71-01-PLAN.md
+Stopped at: Completed 72-01-PLAN.md
 Resume file: None
 
 **Next steps:**
-1. Begin Phase 72 (next phase in v1.16)
+1. Continue Phase 72 (Plan 02: Apply polish to modals and panels)
 2. Research Phaser sprite overlay patterns before Phase 73 (quest markers)
 
 ---
-*Last updated: 2026-02-23 — Phase 71 completed (1 of 1 plans)*
+*Last updated: 2026-02-23 — Phase 72 Plan 01 completed (1 of 2 plans)*
