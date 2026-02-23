@@ -267,8 +267,8 @@ See: `.planning/milestones/v1.16-ROADMAP.md` (collapsed for brevity)
   5. Fog rendering performs at 60fps with 10k+ revealed tiles
 
 Plans:
-- [ ] 76-01-PLAN.md — Fog data layer (bitset persistence, reveal tracking)
-- [ ] 76-02-PLAN.md — Fog rendering integration (RenderTexture overlay, WorldScene hooks)
+- [x] 76-01-PLAN.md — Fog data layer (bitset persistence, reveal tracking)
+- [x] 76-02-PLAN.md — Fog rendering integration (RenderTexture overlay, WorldScene hooks)
 
 ---
 
@@ -449,7 +449,7 @@ Phases execute in numeric order: 76 -> 77 -> 78 -> 79 -> 80 -> 81
 | 73. Quest Markers in World | v1.16 | 1/1 | Complete | 2026-02-23 |
 | 74. Quest Completion Feedback | v1.16 | 2/2 | Complete | 2026-02-23 |
 | 75. Error Handling | v1.16 | 2/2 | Complete | 2026-02-23 |
-| 76. Fog of War Foundation | v1.17 | 0/2 | Planned | — |
+| 76. Fog of War Foundation | v1.17 | 2/2 | Complete | 2026-02-23 |
 | 77. POI Discovery System | v1.17 | 0/? | Pending | — |
 | 78. Gathering Mini-Game | v1.17 | 0/? | Pending | — |
 | 79. Resource Risk/Reward | v1.17 | 0/? | Pending | — |
@@ -459,4 +459,4 @@ Phases execute in numeric order: 76 -> 77 -> 78 -> 79 -> 80 -> 81
 **Total:** 81 phases (75 complete, 6 pending)
 
 ---
-*Last updated: 2026-02-23 — Phase 76 planned*
+*Last updated: 2026-02-23 — Phase 76 complete*

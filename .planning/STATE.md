@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.17 Core Gameplay Loop - Phase 76: Fog of War Foundation
+**Current focus:** v1.17 Core Gameplay Loop - Phase 77: POI Discovery System
 
 ## Current Position
 

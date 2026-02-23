@@ -20,9 +20,9 @@ Requirements for Core Gameplay Loop milestone. Each maps to roadmap phases.
 
 ### Exploration
 
-- [ ] **EXPL-01**: World displays fog of war hiding unexplored tiles
-- [ ] **EXPL-02**: Fog reveals in radius around player as they move
-- [ ] **EXPL-03**: Explored tiles persist per character across sessions
+- [x] **EXPL-01**: World displays fog of war hiding unexplored tiles
+- [x] **EXPL-02**: Fog reveals in radius around player as they move
+- [x] **EXPL-03**: Explored tiles persist per character across sessions
 - [ ] **EXPL-04**: POIs (anomalies, caches, landmarks) exist in world
 - [ ] **EXPL-05**: Player discovers POI when entering its tile with fog revealed
 - [ ] **EXPL-06**: POI discovery grants rewards (XP, items, credits)
@@ -138,9 +138,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GATH-06 | Phase 79 | Pending |
 | GATH-07 | Phase 79 | Pending |
 | GATH-08 | Phase 79 | Pending |
-| EXPL-01 | Phase 76 | Pending |
-| EXPL-02 | Phase 76 | Pending |
-| EXPL-03 | Phase 76 | Pending |
+| EXPL-01 | Phase 76 | Complete |
+| EXPL-02 | Phase 76 | Complete |
+| EXPL-03 | Phase 76 | Complete |
 | EXPL-04 | Phase 77 | Pending |
 | EXPL-05 | Phase 77 | Pending |
 | EXPL-06 | Phase 77 | Pending |
