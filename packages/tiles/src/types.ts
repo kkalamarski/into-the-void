@@ -1,6 +1,12 @@
 import { Entity } from '@into-the-void/shared-types';
 
 /**
+ * Tile traversability state - extends beyond simple blocking
+ * Used for water tiles that are traversable but with special rules
+ */
+export type TileState = 'solid' | 'traversable' | 'shallow_water' | 'deep_water';
+
+/**
  * Tile definition - static properties for a tile type
  * This is the single source of truth for all tile data including rendering
  */
@@ -21,6 +27,10 @@ export interface TileDefinition {
   readonly color: number;
   /** Optional description for tile inspection */
   readonly description?: string;
+  /** Tile state for special traversal rules (water, etc). Defaults to 'traversable' if not blocking, 'solid' if blocking */
+  readonly tileState?: TileState;
+  /** Visibility radius modifier (1.0 = normal, 0.7 = reduced). Affects fog of war reveal. */
+  readonly visibilityModifier?: number;
   /** Optional hooks for tile interactions */
   readonly hooks?: TileHooks;
 }

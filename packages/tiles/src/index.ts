@@ -1,6 +1,7 @@
 // Types
 export type {
   TileDefinition,
+  TileState,
   TileHooks,
   TileHookContext,
   TileHookFn,
