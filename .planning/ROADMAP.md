@@ -309,10 +309,10 @@ Plans:
   5. Gathering proficiency per resource type increases with use and widens success zone
 
 Plans:
-- [ ] 78-01-PLAN.md — Shared types and game-logic validation functions
-- [ ] 78-02-PLAN.md — Database schema for proficiency persistence
-- [ ] 78-03-PLAN.md — Server GatheringService and WebSocket handlers
-- [ ] 78-04-PLAN.md — Client mini-game UI and WorldScene integration
+- [x] 78-01-PLAN.md — Shared types and game-logic validation functions
+- [x] 78-02-PLAN.md — Database schema for proficiency persistence
+- [x] 78-03-PLAN.md — Server GatheringService and WebSocket handlers
+- [x] 78-04-PLAN.md — Client mini-game UI and WorldScene integration
 
 ---
 
@@ -457,12 +457,12 @@ Phases execute in numeric order: 76 -> 77 -> 78 -> 79 -> 80 -> 81
 | 75. Error Handling | v1.16 | 2/2 | Complete | 2026-02-23 |
 | 76. Fog of War Foundation | v1.17 | 2/2 | Complete | 2026-02-23 |
 | 77. POI Discovery System | v1.17 | 4/4 | Complete | 2026-02-23 |
-| 78. Gathering Mini-Game | v1.17 | 0/4 | Planned | — |
+| 78. Gathering Mini-Game | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 79. Resource Risk/Reward | v1.17 | 0/? | Pending | — |
 | 80. Zone Mastery & Lore | v1.17 | 0/? | Pending | — |
 | 81. Combat Balancing & Quest Audit | v1.17 | 0/? | Pending | — |
 
-**Total:** 81 phases (77 complete, 4 pending)
+**Total:** 81 phases (78 complete, 3 pending)
 
 ---
-*Last updated: 2026-02-23 — Phase 78 planned*
+*Last updated: 2026-02-23 — Phase 78 complete*
