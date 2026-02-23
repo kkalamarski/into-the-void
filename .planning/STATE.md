@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 76 (Fog of War Foundation)
-Plan: 1/2 complete
-Status: Executing
-Last activity: 2026-02-23 — Completed 76-01 (Fog Data Layer)
+Plan: 2/2 complete
+Status: Complete
+Last activity: 2026-02-23 — Completed 76-02 (Fog Rendering)
 
-Progress: [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 2.6%
+Progress: [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 2.7%
 
 ## Performance Metrics
 
@@ -44,7 +44,7 @@ Progress: [██░░░░░░░░░░░░░░░░░░░░░
 | v1.14 | 59-63 | 8 | 1 day |
 | v1.15 | 64-69 | 16 | 1 day |
 | v1.16 | 70-75 | 11 | 1 day |
-| v1.17 | 76-81 | 1/? | In Progress |
+| v1.17 | 76-81 | 2/? | In Progress |
 
 **Recent Trend:**
 Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 6 phases.
@@ -65,6 +65,7 @@ Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 
 | Phase 75 P01 | 173 | 2 tasks | 4 files |
 | Phase 75 P02 | 136 | 2 tasks | 2 files |
 | Phase 76 P01 | 606 | 2 tasks | 8 files |
+| Phase 76 P02 | 255 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,11 @@ Recent decisions affecting current work:
 - [Phase 76]: getAllRevealedTiles() caching pattern invalidates on setRevealed() to avoid O(n) reverse hash overhead
 - [Phase 76]: Throttled auto-save (5s max frequency) balances persistence reliability with localStorage write performance
 - [Phase 76]: Iterative BFS with queue for reveal radius avoids stack overflow with large radii (tested up to radius=50)
+- [Phase 76]: RenderTexture sized to viewport (not world) for memory efficiency (8MB vs 500MB)
+- [Phase 76]: Batch Graphics drawing with single erase() call maintains 60fps with 100+ tile reveals
+- [Phase 76]: 60% opacity fog overlay preserves terrain visibility while hiding unexplored areas
+- [Phase 76]: Fog depth 1000 (above terrain ~100-200, below UI ~2000) for correct visual layering
+- [Phase 76]: Fog reveal skipped during reconciliation to avoid double-reveal on server confirmation
 
 ### Pending Todos
 
@@ -117,7 +123,8 @@ None.
 ### Blockers/Concerns
 
 **v1.17 Milestone Active:**
-- Phase 76: Fog of War Foundation (EXPL-01, EXPL-02, EXPL-03) — 1/2 plans complete (76-01 done, 76-02 next)
+- Phase 76: Fog of War Foundation (EXPL-01, EXPL-02, EXPL-03) — Complete (2/2 plans)
+- Next: Phase 77 (POI System)
 - Remaining phases: 77-81 (POI, Gathering, Risk/Reward, Mastery, Combat Balancing)
 
 **Known Issues:**
@@ -126,12 +133,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed Phase 76 Plan 01 (Fog Data Layer)
+Stopped at: Completed Phase 76 Plan 02 (Fog Rendering) - Phase 76 Complete
 Resume file: None
 
 **Next steps:**
-1. Execute Phase 76 Plan 02 (Fog Rendering)
-2. Continue to Phase 77 (POI System)
+1. Start Phase 77 (POI System)
+2. Continue v1.17 milestone
 
 ---
-*Last updated: 2026-02-23 - Completed Phase 76 Plan 01*
+*Last updated: 2026-02-23 - Completed Phase 76 (Fog of War Foundation)*
