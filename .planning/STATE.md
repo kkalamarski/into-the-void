@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 78 (Gathering Mini-Game)
-Plan: 2/4 complete
+Plan: 3/4 complete
 Status: In Progress
-Last activity: 2026-02-23 — Completed 78-02 (Database Schema for Gathering Proficiency)
+Last activity: 2026-02-23 — Completed 78-03 (Server-Side Gathering Service)
 
-Progress: [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 2.8%
+Progress: [███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 3.3%
 
 ## Performance Metrics
 
@@ -73,6 +73,7 @@ Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 
 | Phase 77 P04 | 194 | 3 tasks | 3 files |
 | Phase 78 P02 | 130 | 2 tasks | 2 files |
 | Phase 78 P01 | 152 | 2 tasks | 6 files |
+| Phase 78 P03 | 534 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -134,6 +135,10 @@ Recent decisions affecting current work:
 - [Phase 78]: Dual click handling (container + scene listener) ensures reliable capture across browsers
 - [Phase 78]: Entity routing by type: minerals/plants → gathering, artifacts → instant, creatures → combat
 - [Phase 78]: isGathering flag blocks both WASD movement and pathfinding clicks during mini-game
+- [Phase 78]: Entity locking prevents race conditions (Map<entityId, playerId>) during concurrent gathering attempts
+- [Phase 78]: Artifact instant collection skips mini-game, awards archaeology XP via EntityService delegation
+- [Phase 78]: Challenge auto-expiration (GATHER_DURATION_MS + 1000ms) cleans up abandoned sessions and releases locks
+- [Phase 78]: Proficiency cache (Map<characterId, ProficiencyJson>) reduces database load with load/unload lifecycle
 
 ### Pending Todos
 
@@ -152,12 +157,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 78-04-PLAN.md (Client-Side Gathering Mini-Game UI)
+Stopped at: Completed 78-03-PLAN.md (Server-Side Gathering Service)
 Resume file: None
 
 **Next steps:**
-1. Continue Phase 78 (Gathering Mini-Game) - Plan 78-03 remaining (Server-Side Integration)
-2. Continue v1.17 milestone
+1. Phase 78 complete - all 4 plans executed (types, database, server, client)
+2. Continue v1.17 milestone with remaining phases (79-81)
 
 ---
-*Last updated: 2026-02-23 - Completed 78-04-PLAN.md (Client-Side Gathering Mini-Game UI)*
+*Last updated: 2026-02-23 - Completed 78-03-PLAN.md (Server-Side Gathering Service)*
