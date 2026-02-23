@@ -331,10 +331,10 @@ Plans:
   5. Risk/reward balance: dangerous zones have 3x rare node density vs safe zones
 
 Plans:
-- [ ] 79-01-PLAN.md — Types and rare node definitions (shared-types, entities)
-- [ ] 79-02-PLAN.md — Proximity-based spawn system (world-gen)
-- [ ] 79-03-PLAN.md — Discovery tracking and WebSocket events (database, game-server)
-- [ ] 79-04-PLAN.md — Visual effects and map markers (web client)
+- [x] 79-01-PLAN.md — Types and rare node definitions (shared-types, entities)
+- [x] 79-02-PLAN.md — Proximity-based spawn system (world-gen)
+- [x] 79-03-PLAN.md — Discovery tracking and WebSocket events (database, game-server)
+- [x] 79-04-PLAN.md — Visual effects and map markers (web client)
 
 ---
 
@@ -461,11 +461,11 @@ Phases execute in numeric order: 76 -> 77 -> 78 -> 79 -> 80 -> 81
 | 76. Fog of War Foundation | v1.17 | 2/2 | Complete | 2026-02-23 |
 | 77. POI Discovery System | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 78. Gathering Mini-Game | v1.17 | 4/4 | Complete | 2026-02-23 |
-| 79. Resource Risk/Reward | v1.17 | 0/4 | Pending | — |
+| 79. Resource Risk/Reward | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 80. Zone Mastery & Lore | v1.17 | 0/? | Pending | — |
 | 81. Combat Balancing & Quest Audit | v1.17 | 0/? | Pending | — |
 
-**Total:** 81 phases (78 complete, 3 pending)
+**Total:** 81 phases (79 complete, 2 pending)
 
 ---
-*Last updated: 2026-02-23 — Phase 79 planned*
+*Last updated: 2026-02-23 — Phase 79 complete*

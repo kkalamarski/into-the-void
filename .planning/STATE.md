@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 79 (Resource Risk/Reward)
-Plan: 4/? in progress
-Status: In Progress
-Last activity: 2026-02-23 — Completed 79-04 (Client Rare Node Visual Effects)
+Plan: 4/4 complete
+Status: Complete
+Last activity: 2026-02-23 — Completed Phase 79 (Resource Risk/Reward)
 
 Progress: [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 4.6%
 
@@ -174,8 +174,8 @@ None.
 - Phase 76: Fog of War Foundation (EXPL-01, EXPL-02, EXPL-03) — Complete (2/2 plans)
 - Phase 77: POI Discovery System — Complete (4/4 plans)
 - Phase 78: Gathering Mini-Game — Complete (4/4 plans)
-- Phase 79: Resource Risk/Reward — In Progress (4/? plans)
-- Remaining phases: 80-81 (Mastery, Combat Balancing)
+- Phase 79: Resource Risk/Reward — Complete (4/4 plans)
+- Remaining phases: 80-81 (Zone Mastery, Combat Balancing)
 
 **Known Issues:**
 - Web app vitest tests hang when run via nx (vitest 4.0.18 vs nx expecting v1-3). TypeScript compilation verified instead.
@@ -187,8 +187,8 @@ Stopped at: Completed 79-04 Client Rare Node Visual Effects
 Resume file: None
 
 **Next steps:**
-1. Continue Phase 79 (Resource Risk/Reward) - requires planning for remaining risk/reward features
+1. Begin Phase 80 (Zone Mastery & Lore) - requires planning
 2. Continue v1.17 milestone with remaining phases (80-81)
 
 ---
-*Last updated: 2026-02-23 - Completed Phase 79 Plan 04 (Client Rare Node Visual Effects)*
+*Last updated: 2026-02-23 - Completed Phase 79 Resource Risk/Reward*
