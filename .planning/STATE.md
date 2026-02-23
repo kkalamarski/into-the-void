@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 82 of 87 (Aquatic Biome Foundation)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-23 - Completed 82-02-PLAN.md (Aquatic Biome Generation)
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-02-23 - Completed 82-03-PLAN.md (Aquatic Movement and Visibility)
 
 Progress: [####################] 100% v1.17 | [##............] 14% v1.18
 
@@ -42,6 +42,7 @@ Progress: [####################] 100% v1.17 | [##............] 14% v1.18
 | 87. Gaps & Discovery | 2 | ENT-07-09, CREA-09-10, PROG-04-06 |
 | Phase 82 P01 | 176s | 3 tasks | 5 files |
 | Phase 82 P02 | 363s | 3 tasks | 10 files |
+| Phase 82 P03 | 380s | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,9 @@ Recent decisions affecting current work:
 - [Phase 82-02]: Asymmetric shore transition thresholds (2 for land->shore, 3 for water->shore)
 - [Phase 82-02]: Kelp corridors use noise contours (fbm 0.08, < 0.15 threshold) for organic paths
 - [Phase 82-02]: Post-processing order: terrain -> shore -> kelp -> structures -> spawns
+- [Phase 82-03]: Movement speed modifiers stack multiplicatively (tile * biome)
+- [Phase 82-03]: Dynamic movement rate limiting based on destination tile
+- [Phase 82-03]: Fog reveal radius minimum of 3 tiles for playability
 
 ### Pending Todos
 
@@ -78,11 +82,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 82-02-PLAN.md
+Stopped at: Completed 82-03-PLAN.md (Phase 82 complete)
 Resume file: None
 
 **Next steps:**
-1. Execute 82-03-PLAN.md (Aquatic Zone Generation - final plan in phase)
+1. Phase 82 (Aquatic Biome Foundation) complete - all 3 plans executed
+2. Ready for Phase 83 (Aquatic Entities) or continue v1.18 milestone
 
 ---
 *Last updated: 2026-02-23 - v1.18 roadmap created with 6 phases (82-87)*
