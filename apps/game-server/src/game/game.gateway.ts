@@ -23,6 +23,8 @@ import { AbilityService } from './ability.service';
 import { QuestService } from './quest.service';
 import { DiscoveryService } from './discovery.service';
 import { GatheringService } from './gathering.service';
+import { LoreService } from './lore.service';
+import { ZoneMasteryService } from './zone-mastery.service';
 import {
   ClientEvents,
   Direction,
@@ -72,6 +74,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly questService: QuestService,
     private readonly discoveryService: DiscoveryService,
     private readonly gatheringService: GatheringService,
+    private readonly loreService: LoreService,
+    private readonly zoneMasteryService: ZoneMasteryService,
   ) {}
 
   afterInit(server: Server) {
@@ -81,10 +85,12 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.playerService.setServer(server);
     this.abilityService.setServer(server);
     this.questService.setServer(server);
+    this.loreService.setServer(server);
+    this.zoneMasteryService.setServer(server);
     this.playerService.setZoneStateProvider((zoneId) => this.gameService.getZoneState(zoneId));
     // Wire aggro checker to ZonesService for immediate aggro on creature respawn
     this.zonesService.setAggroChecker(this.aiService);
-    console.log('[GameGateway] WebSocket server initialized, ZonesService, AiService, CombatService, AbilityService, QuestService, and PlayerService connected');
+    console.log('[GameGateway] WebSocket server initialized, ZonesService, AiService, CombatService, AbilityService, QuestService, LoreService, ZoneMasteryService, and PlayerService connected');
   }
 
   async handleConnection(client: Socket) {
@@ -1392,6 +1398,33 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ): Promise<void> {
     const result = await this.gatheringService.completeGathering(client.id, data);
     client.emit('gathering:result', result);
+  }
+
+  @SubscribeMessage('lore:collect')
+  async handleLoreCollect(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { loreId: string; worldX: number; worldY: number }
+  ): Promise<void> {
+    const player = this.playerService.getPlayerBySocket(client.id);
+    if (!player) return;
+
+    await this.loreService.attemptCollect(player.id, data.loreId, client.id);
+  }
+
+  @SubscribeMessage('mastery:query')
+  async handleMasteryQuery(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { biome: string }
+  ): Promise<void> {
+    const player = this.playerService.getPlayerBySocket(client.id);
+    if (!player) return;
+
+    const masteryMap = await this.zoneMasteryService.getMasteryForCharacter(player.id);
+    const progress = masteryMap.get(data.biome);
+
+    if (progress) {
+      client.emit('mastery:progress', { biome: data.biome, progress });
+    }
   }
 
   /**
