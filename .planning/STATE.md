@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 79 (Resource Risk/Reward)
-Plan: 2/? in progress
+Plan: 3/? in progress
 Status: In Progress
-Last activity: 2026-02-23 — Completed 79-02 (Proximity-Based Rare Node Spawning)
+Last activity: 2026-02-23 — Completed 79-03 (Rare Resource Discovery Persistence)
 
-Progress: [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 4.5%
+Progress: [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 4.6%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 215
+- Total plans completed: 218
 - Average duration: ~3 min per plan
-- Total execution time: ~10.6 hours across 17 milestones
+- Total execution time: ~10.9 hours across 17 milestones
 
 **By Milestone:**
 
@@ -44,7 +44,7 @@ Progress: [████░░░░░░░░░░░░░░░░░░░
 | v1.14 | 59-63 | 8 | 1 day |
 | v1.15 | 64-69 | 16 | 1 day |
 | v1.16 | 70-75 | 11 | 1 day |
-| v1.17 | 76-81 | 11/? | In Progress |
+| v1.17 | 76-81 | 14/? | In Progress |
 
 **Recent Trend:**
 Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 6 phases.
@@ -77,6 +77,7 @@ Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 
 | Phase 78 P04 | 400 | 3 tasks | 5 files |
 | Phase 79 P01 | 195 | 2 tasks | 5 files |
 | Phase 79 P02 | 142 | 2 tasks | 3 files |
+| Phase 79 P03 | 303 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -151,6 +152,10 @@ Recent decisions affecting current work:
 - [Phase 79]: Chunk caps of 3 rare + 1 epic minerals prevent resource flooding in high-danger zones
 - [Phase 79]: 50% weight cap prevents guaranteed rare spawns even with maximum proximity bonuses
 - [Phase 79]: Rare spawns generated after creature spawns for correct proximity dependency and determinism
+- [Phase 79]: 3-tile discovery range balances exploration reward with proximity requirement
+- [Phase 79]: Unique index on (characterId, entityId) prevents duplicate discoveries via database constraint
+- [Phase 79]: Discovery check on every movement uses fire-and-forget async pattern without blocking
+- [Phase 79]: Discovered rare nodes sent on character join for map marker persistence across sessions
 
 ### Pending Todos
 
@@ -162,7 +167,7 @@ None.
 - Phase 76: Fog of War Foundation (EXPL-01, EXPL-02, EXPL-03) — Complete (2/2 plans)
 - Phase 77: POI Discovery System — Complete (4/4 plans)
 - Phase 78: Gathering Mini-Game — Complete (4/4 plans)
-- Phase 79: Resource Risk/Reward — In Progress (2/? plans)
+- Phase 79: Resource Risk/Reward — In Progress (3/? plans)
 - Remaining phases: 80-81 (Mastery, Combat Balancing)
 
 **Known Issues:**
@@ -171,7 +176,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 79-02 Proximity-Based Rare Node Spawning
+Stopped at: Completed 79-03 Rare Resource Discovery Persistence
 Resume file: None
 
 **Next steps:**
@@ -179,4 +184,4 @@ Resume file: None
 2. Continue v1.17 milestone with remaining phases (80-81)
 
 ---
-*Last updated: 2026-02-23 - Completed Phase 79 Plan 02 (Proximity-Based Rare Node Spawning)*
+*Last updated: 2026-02-23 - Completed Phase 79 Plan 03 (Rare Resource Discovery Persistence)*
