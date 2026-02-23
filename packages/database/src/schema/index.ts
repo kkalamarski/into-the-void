@@ -30,3 +30,6 @@ export * from './loot-tables';
 
 // Quest progress (QUEST-03)
 export * from './quest-progress';
+
+// Gathering proficiency (GATH-04)
+export * from './gathering-proficiency';
