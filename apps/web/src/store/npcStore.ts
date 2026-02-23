@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { gameSocket } from '../network/socket';
+import { useAlertStore } from './alertStore';
 
 interface QuestPreview {
   questId: string;
@@ -45,10 +46,14 @@ interface NpcState {
   interactingNpc: NpcInteraction | null;
   activeTab: 'dialogue' | 'trade' | 'quests';
   tradeError: string | null;
+  tradePending: boolean;
+  questPending: boolean;
   setInteractingNpc: (npc: NpcInteraction | null) => void;
   closeInteraction: () => void;
   setActiveTab: (tab: 'dialogue' | 'trade' | 'quests') => void;
   setTradeError: (error: string | null) => void;
+  setTradePending: (pending: boolean) => void;
+  setQuestPending: (pending: boolean) => void;
   acceptQuest: (questId: string) => void;
   completeQuestAtNpc: (questId: string) => void;
 }
@@ -57,14 +62,26 @@ export const useNpcStore = create<NpcState>((set) => ({
   interactingNpc: null,
   activeTab: 'dialogue',
   tradeError: null,
+  tradePending: false,
+  questPending: false,
   setInteractingNpc: (npc) => set({ interactingNpc: npc }),
-  closeInteraction: () => set({ interactingNpc: null, activeTab: 'dialogue', tradeError: null }),
+  closeInteraction: () => set({
+    interactingNpc: null,
+    activeTab: 'dialogue',
+    tradeError: null,
+    tradePending: false,
+    questPending: false,
+  }),
   setActiveTab: (tab) => set({ activeTab: tab }),
   setTradeError: (error) => set({ tradeError: error }),
+  setTradePending: (pending) => set({ tradePending: pending }),
+  setQuestPending: (pending) => set({ questPending: pending }),
   acceptQuest: (questId: string) => {
+    set({ questPending: true });
     gameSocket.emit('quest:accept', { questId });
   },
   completeQuestAtNpc: (questId: string) => {
+    set({ questPending: true });
     gameSocket.emit('quest:complete', { questId });
   },
 }));
@@ -74,11 +91,27 @@ gameSocket.on('npc:interact:response', (data) => {
   useNpcStore.getState().setInteractingNpc(data as NpcInteraction);
 });
 
-// Listen for trade:result - show errors from failed trade attempts
+// Listen for trade:result - route errors to alertStore and reset pending state
 gameSocket.on('trade:result', (data: { success: boolean; error?: string }) => {
   if (!data.success && data.error) {
-    useNpcStore.getState().setTradeError(data.error);
-  } else {
-    useNpcStore.getState().setTradeError(null);
+    useAlertStore.getState().addAlert(data.error, 'error');
   }
+  useNpcStore.getState().setTradeError(null);
+  useNpcStore.getState().setTradePending(false);
+});
+
+// Listen for quest:accepted - reset pending state on success
+gameSocket.on('quest:accepted', () => {
+  useNpcStore.getState().setQuestPending(false);
+});
+
+// Listen for quest:completed - reset pending state on success
+gameSocket.on('quest:completed', () => {
+  useNpcStore.getState().setQuestPending(false);
+});
+
+// Listen for quest:error - handle quest failures
+gameSocket.on('quest:error', (data: { message: string }) => {
+  useAlertStore.getState().addAlert(data.message, 'error');
+  useNpcStore.getState().setQuestPending(false);
 });
