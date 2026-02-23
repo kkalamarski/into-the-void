@@ -159,6 +159,78 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_alien_flora_petrified', minAmount: 1, maxAmount: 2, chance: 0.4 },
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.15 },
   ]],
+
+  // Tier I — Tidal Pools (Herbivore, levels 1-6)
+  ['loot_creature_tide_crab', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.8 },
+    { itemId: 'world_crater_dust', minAmount: 1, maxAmount: 2, chance: 0.4 },
+  ]],
+
+  // Tier I — Tidal Pools (Herbivore, levels 1-5)
+  ['loot_creature_coastal_urchin', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.75 },
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier I — Tidal Pools (Omnivore, levels 2-7)
+  ['loot_creature_reef_scavenger', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 3, chance: 0.85 },
+    { itemId: 'world_crater_dust', minAmount: 1, maxAmount: 2, chance: 0.3 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.05 },
+  ]],
+
+  // Tier II — Kelp Forests (Herbivore, levels 6-14)
+  ['loot_creature_kelp_grazer', [
+    { itemId: 'world_organic_material_common', minAmount: 2, maxAmount: 3, chance: 0.85 },
+    { itemId: 'world_mycelial_fiber', minAmount: 1, maxAmount: 2, chance: 0.35 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier II — Kelp Forests (Predator, levels 8-16)
+  ['loot_creature_tangle_stalker', [
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.75 },
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 2, chance: 0.4 },
+    { itemId: 'reagent_biogenic_catalyst', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ]],
+
+  // Tier II — Kelp Forests (Omnivore, levels 7-15)
+  ['loot_creature_current_rider', [
+    { itemId: 'world_organic_material_common', minAmount: 2, maxAmount: 3, chance: 0.8 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.12 },
+    { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ]],
+
+  // Tier III — Deep Trenches (Herbivore, levels 12-20)
+  ['loot_creature_pressure_feeder', [
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.8 },
+    { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 1, chance: 0.3 },
+    { itemId: 'world_void_crystal', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ]],
+
+  // Tier III — Deep Trenches (Predator, levels 14-24)
+  ['loot_creature_trench_hunter', [
+    { itemId: 'world_organic_material_rare', minAmount: 2, maxAmount: 3, chance: 0.85 },
+    { itemId: 'world_void_crystal', minAmount: 1, maxAmount: 2, chance: 0.4 },
+    { itemId: 'reagent_void_essence', minAmount: 1, maxAmount: 1, chance: 0.25 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.08 },
+  ]],
+
+  // Tier III — Deep Trenches (Omnivore, levels 13-22)
+  ['loot_creature_abyssal_scavenger', [
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.75 },
+    { itemId: 'world_geothermal_compound', minAmount: 1, maxAmount: 1, chance: 0.3 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.06 },
+  ]],
+
+  // Tier IV — Deep Trenches (Maniac, levels 20-32)
+  ['loot_creature_abyssal_leviathan', [
+    { itemId: 'world_organic_material_epic', minAmount: 2, maxAmount: 3, chance: 0.9 },
+    { itemId: 'world_void_crystal', minAmount: 2, maxAmount: 4, chance: 0.5 },
+    { itemId: 'reagent_void_essence', minAmount: 2, maxAmount: 3, chance: 0.4 },
+    { itemId: 'world_ancient_fragment', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 2, chance: 0.3 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
 ]);
 
 /**
