@@ -22,6 +22,8 @@ import { useCombatStore } from '../../store/combatStore';
 import { useQuestStore } from '../../store/questStore';
 import { gameSocket } from '../../network/socket';
 import { TargetHighlight } from '../rendering/TargetHighlight';
+import { FogManager } from '../fog/FogManager';
+import { FogRenderer } from '../fog/FogRenderer';
 
 export const ISO_TILE_WIDTH = 256;
 export const ISO_TILE_HEIGHT = 128;
@@ -102,6 +104,10 @@ export class WorldScene extends Phaser.Scene {
   private targetHighlight: TargetHighlight | null = null;
   // Portal tile detection: track last position where portal:use was emitted to prevent duplicates
   private lastPortalEmitKey: string | null = null;
+  // Fog of war system
+  private fogManager: FogManager | null = null;
+  private fogRenderer: FogRenderer | null = null;
+  private fogInitialized: boolean = false;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -113,6 +119,10 @@ export class WorldScene extends Phaser.Scene {
 
     // Initialize IsometricTransform
     this.isoTransform = new IsometricTransform(ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
+
+    // Initialize fog rendering (will redraw from state once character loads)
+    this.fogRenderer = new FogRenderer(this, this.isoTransform);
+    this.fogRenderer.create();
 
     // Initialize DepthSorter
     this.depthSorter = new DepthSorter();
@@ -580,8 +590,27 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  private initializeFog(characterId: string): void {
+    if (this.fogInitialized) return;
+
+    this.fogManager = new FogManager(characterId);
+    this.fogManager.initialize();
+    this.fogInitialized = true;
+
+    // Redraw fog from saved state
+    if (this.fogRenderer && this.fogManager) {
+      this.fogRenderer.redrawFromState(this.fogManager);
+    }
+  }
+
   private createLocalPlayer(position: Position): void {
     if (!this.isoTransform) return;
+
+    // Initialize fog system once we have player data
+    const player = useGameStore.getState().player;
+    if (player?.id) {
+      this.initializeFog(player.id);
+    }
 
     // Get elevation for the correct zone
     const elevation = this.getTileElevation(position.x, position.y, position.zoneId);
@@ -628,6 +657,11 @@ export class WorldScene extends Phaser.Scene {
     if (time - this.lastCullTime >= this.cullInterval) {
       this.lastCullTime = time;
       this.updateVisibleTiles();
+    }
+
+    // Update fog position with camera
+    if (this.fogRenderer) {
+      this.fogRenderer.updatePosition(this.cameras.main);
     }
 
     // Throttled depth sorting - include entities AND remote players
@@ -1557,6 +1591,14 @@ export class WorldScene extends Phaser.Scene {
     if (!reconciling) {
       this.checkPortalTile(position);
     }
+
+    // Reveal fog at new position (skip during reconciliation to avoid double-reveal)
+    if (!reconciling && this.fogManager && this.fogRenderer) {
+      const newlyRevealed = this.fogManager.revealAtPosition(worldX, worldY);
+      if (newlyRevealed.size > 0) {
+        this.fogRenderer.revealTiles(newlyRevealed);
+      }
+    }
   }
 
   updateLocalPlayer(position: Position): void {
@@ -1805,6 +1847,17 @@ export class WorldScene extends Phaser.Scene {
     this.chunkTiles.clear();
     this.tileSprites = [];
     this.lastCullBounds = null;
+
+    // Cleanup fog system
+    if (this.fogManager) {
+      this.fogManager.flush(); // Final save on shutdown
+      this.fogManager = null;
+    }
+    if (this.fogRenderer) {
+      this.fogRenderer.destroy();
+      this.fogRenderer = null;
+    }
+    this.fogInitialized = false;
   }
 
   /**
