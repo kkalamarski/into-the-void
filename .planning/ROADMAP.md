@@ -366,7 +366,7 @@ Plans:
 **Goal**: Combat follows gradual fight pattern and all quest items obtainable from world
 **Depends on**: Phase 80
 **Requirements**: COMB-01, COMB-02, COMB-03, COMB-04, COMB-05, QUEST-07, QUEST-08
-**Plans:** TBD
+**Plans:** 3 plans
 
 **Success Criteria** (what must be TRUE):
   1. Typical creature dies in 4-8 hits from same-level player (no one-shots)
@@ -376,7 +376,9 @@ Plans:
   5. All quest-required items have obtainable source (entity drops or POI rewards verified)
 
 Plans:
-- [ ] TBD
+- [ ] 81-01-PLAN.md — Level-gap damage multiplier (game-logic)
+- [ ] 81-02-PLAN.md — Quest item audit and missing source fix (items, entities)
+- [ ] 81-03-PLAN.md — Creature stat rebalancing and TTK tests (entities, game-logic)
 
 ---
 
@@ -467,9 +469,9 @@ Phases execute in numeric order: 76 -> 77 -> 78 -> 79 -> 80 -> 81
 | 78. Gathering Mini-Game | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 79. Resource Risk/Reward | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 80. Zone Mastery & Lore | v1.17 | 5/5 | Complete | 2026-02-23 |
-| 81. Combat Balancing & Quest Audit | v1.17 | 0/? | Pending | — |
+| 81. Combat Balancing & Quest Audit | v1.17 | 0/3 | Pending | — |
 
 **Total:** 81 phases (80 complete, 1 pending)
 
 ---
-*Last updated: 2026-02-23 — Phase 80 complete*
+*Last updated: 2026-02-23 — Phase 81 planning complete*
