@@ -1,4 +1,5 @@
 import type { TimingChallenge, TimingResult, GatheringAccuracy, ResourceCategory } from '../game/proficiency';
+import type { ZoneMasteryProgress, MasteryTier, MasteryReward } from '../game/zone-mastery';
 
 /**
  * Game event base interface
@@ -128,6 +129,8 @@ export interface ClientEvents {
   'poi:discover': { poiId: string; worldX: number; worldY: number };
   'gathering:start': { targetEntityId: string };
   'gathering:complete': TimingResult;
+  'lore:collect': { loreId: string; worldX: number; worldY: number };
+  'mastery:query': { biome: string };
 }
 
 /**
@@ -335,6 +338,10 @@ export interface ServerEvents {
     category: ResourceCategory;
     error?: string;
   };
+  'lore:collected': { loreId: string; title: string; category: string; xpReward: number };
+  'lore:already_collected': { loreId: string };
+  'mastery:progress': { biome: string; progress: ZoneMasteryProgress };
+  'mastery:completed': { biome: string; tier: MasteryTier; rewards: MasteryReward[] };
 }
 
 /**

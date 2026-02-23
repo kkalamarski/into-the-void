@@ -20,6 +20,8 @@ export * from './game/buff';
 export * from './game/quest';
 export * from './game/poi';
 export * from './game/proficiency';
+export * from './game/lore';
+export * from './game/zone-mastery';
 
 // Network types
 export * from './network/events';

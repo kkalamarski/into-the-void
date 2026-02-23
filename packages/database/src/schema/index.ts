@@ -34,3 +34,8 @@ export * from './quest-progress';
 
 // Gathering proficiency (GATH-04)
 export * from './gathering-proficiency';
+
+// Zone mastery and lore collection (ZONE-01)
+export * from './collected-lore';
+export * from './zone-mastery';
+export * from './character-rewards';
