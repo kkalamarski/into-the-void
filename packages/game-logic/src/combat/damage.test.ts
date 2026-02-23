@@ -1,4 +1,4 @@
-import { calculateAttackInterval, calculateDamage } from './damage';
+import { calculateAttackInterval, calculateDamage, applyLevelGapMultiplier } from './damage';
 
 describe('calculateAttackInterval', () => {
   it('returns 1000ms at base haste (50)', () => {
@@ -78,5 +78,63 @@ describe('calculateDamage', () => {
     // Low toughness (20): effectiveArmor = 20 * (1 + 20*0.02) = 28 — moderate reduction.
     // High toughness (100): effectiveArmor = 100 * (1 + 100*0.02) = 300 — floors at 1.
     expect(avgHigh).toBeLessThan(avgLow * 0.8);
+  });
+});
+
+describe('applyLevelGapMultiplier', () => {
+  it('returns unchanged damage within 5-level threshold', () => {
+    expect(applyLevelGapMultiplier(100, 0)).toBe(100);   // Same level
+    expect(applyLevelGapMultiplier(100, 5)).toBe(100);   // Exactly at threshold
+    expect(applyLevelGapMultiplier(100, -5)).toBe(100);  // Exactly at threshold (other direction)
+    expect(applyLevelGapMultiplier(100, 3)).toBe(100);   // Within threshold
+  });
+
+  it('applies 15% bonus per level beyond threshold when attacker higher', () => {
+    // 6 level gap: 1 excess level -> 1.15x
+    expect(applyLevelGapMultiplier(100, 6)).toBeCloseTo(115, 0);
+    // 10 level gap: 5 excess levels -> 1.75x
+    expect(applyLevelGapMultiplier(100, 10)).toBeCloseTo(175, 0);
+    // 15 level gap: 10 excess levels -> 2.5x
+    expect(applyLevelGapMultiplier(100, 15)).toBeCloseTo(250, 0);
+  });
+
+  it('applies 15% penalty per level beyond threshold when attacker lower', () => {
+    // 6 level gap (attacker lower): 1 excess level -> /1.15 = ~87
+    expect(applyLevelGapMultiplier(100, -6)).toBeCloseTo(87, 0);
+    // 10 level gap (attacker lower): 5 excess levels -> /1.75 = ~57
+    expect(applyLevelGapMultiplier(100, -10)).toBeCloseTo(57, 0);
+  });
+
+  it('prevents one-shot at 10 level gap against typical creature', () => {
+    // Level 20 player vs level 10 creature
+    // Even with 1.75x multiplier, 50 base damage becomes 87.5, not enough to one-shot 150 HP creature
+    const boostedDamage = applyLevelGapMultiplier(50, 10);
+    expect(boostedDamage).toBeLessThan(150); // Typical creature HP
+  });
+});
+
+describe('calculateDamage with level gap multiplier', () => {
+  it('applies level gap multiplier for extreme level differences', () => {
+    // Run multiple times to average out randomness
+    const results: number[] = [];
+    for (let i = 0; i < 50; i++) {
+      results.push(calculateDamage({
+        baseDamage: 15,
+        attackerLevel: 20,
+        defenderLevel: 10, // 10 level gap
+        attackerStats: { power: 50 },
+        defenderStats: { toughness: 20 },
+        armorReduction: 0, // No armor for cleaner test
+        critChance: 0, // No crits for cleaner test
+      }).damage);
+    }
+    const avgDamage = results.reduce((a, b) => a + b, 0) / results.length;
+
+    // At 10 level gap: base levelMod is 1.5 (capped), then gap multiplier is 1.75
+    // Effective multiplier = 1.5 * 1.75 = 2.625
+    // Base damage with power: 15 + (50 * 0.5) = 40
+    // Expected ~= 40 * 2.625 = 105 (plus +-10% variance)
+    expect(avgDamage).toBeGreaterThan(80);
+    expect(avgDamage).toBeLessThan(130);
   });
 });
