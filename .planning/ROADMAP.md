@@ -343,7 +343,7 @@ Plans:
 **Goal**: Zone exploration tracked with mastery progression and lore collection
 **Depends on**: Phase 77 (POI system), Phase 78 (gathering system)
 **Requirements**: EXPL-07, EXPL-08, EXPL-09, EXPL-10, EXPL-11, EXPL-12
-**Plans:** 4 plans
+**Plans:** 5 plans
 
 **Success Criteria** (what must be TRUE):
   1. Lore fragments exist as collectible data logs that reveal world/faction history
@@ -353,10 +353,11 @@ Plans:
   5. Zone mastery completion unlocks zone-specific rewards (titles, cosmetics, or bonuses)
 
 Plans:
-- [ ] 80-01-PLAN.md — Types and lore package (shared-types, @into-the-void/lore)
-- [ ] 80-02-PLAN.md — Database schema for lore and mastery (database package)
-- [ ] 80-03-PLAN.md — Server services for lore and mastery (game-server)
-- [ ] 80-04-PLAN.md — Client UI (LoreCodex, ZoneMasteryHUD)
+- [x] 80-01-PLAN.md — Types and lore package (shared-types, @into-the-void/lore)
+- [x] 80-02-PLAN.md — Database schema for lore and mastery (database package)
+- [x] 80-03-PLAN.md — Server services for lore and mastery (game-server)
+- [x] 80-04-PLAN.md — Client UI (LoreCodex, ZoneMasteryHUD)
+- [ ] 80-05-PLAN.md — Gap closure: POI discovery event emission (game-server)
 
 ---
 
@@ -465,10 +466,10 @@ Phases execute in numeric order: 76 -> 77 -> 78 -> 79 -> 80 -> 81
 | 77. POI Discovery System | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 78. Gathering Mini-Game | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 79. Resource Risk/Reward | v1.17 | 4/4 | Complete | 2026-02-23 |
-| 80. Zone Mastery & Lore | v1.17 | 0/4 | Pending | — |
+| 80. Zone Mastery & Lore | v1.17 | 4/5 | In Progress | — |
 | 81. Combat Balancing & Quest Audit | v1.17 | 0/? | Pending | — |
 
 **Total:** 81 phases (79 complete, 2 pending)
 
 ---
-*Last updated: 2026-02-23 — Phase 80 planned*
+*Last updated: 2026-02-23 — Phase 80 gap closure planned*
