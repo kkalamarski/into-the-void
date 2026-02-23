@@ -22,7 +22,7 @@ interface ReadyQuestInfo {
   displayName: string;
 }
 
-interface NpcInteraction {
+export interface NpcInteraction {
   npcId: string;
   displayName: string;
   npcType: 'trader' | 'guard' | 'faction_rep' | 'ambient' | 'service';
