@@ -21,6 +21,7 @@ import { CombatService } from './combat.service';
 import { TradeService } from './trade.service';
 import { AbilityService } from './ability.service';
 import { QuestService } from './quest.service';
+import { DiscoveryService } from './discovery.service';
 import {
   ClientEvents,
   Direction,
@@ -36,6 +37,8 @@ import { ItemRegistry } from '@into-the-void/items';
 import { NpcRegistry } from '@into-the-void/npcs';
 import { EquipmentJson } from '@into-the-void/database';
 import { BiomeGenerator, getHubConfig } from '@into-the-void/world-gen';
+import { createZoneId } from '@into-the-void/game-logic';
+import { PoiType } from '@into-the-void/shared-types';
 
 @WebSocketGateway({
   cors: {
@@ -64,6 +67,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly tradeService: TradeService,
     private readonly abilityService: AbilityService,
     private readonly questService: QuestService,
+    private readonly discoveryService: DiscoveryService,
   ) {}
 
   afterInit(server: Server) {
@@ -1275,6 +1279,69 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       });
     }
     // Note: quest:progress is emitted by QuestService.acceptQuest on success
+  }
+
+  @SubscribeMessage('poi:discover')
+  async handlePoiDiscover(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { poiId: string; worldX: number; worldY: number }
+  ): Promise<void> {
+    const player = this.playerService.getPlayerBySocket(client.id);
+    if (!player) return;
+
+    // Parse POI info from deterministic ID format: poi_${chunkX}_${chunkY}_${index}
+    const [, chunkXStr, chunkYStr] = data.poiId.split('_');
+    const chunkX = parseInt(chunkXStr, 10);
+    const chunkY = parseInt(chunkYStr, 10);
+
+    // Get chunk to validate POI exists and get type/biome
+    const zoneId = createZoneId(chunkX, chunkY);
+    const zoneState = await this.gameService.getZoneState(zoneId);
+
+    if (!zoneState?.chunk?.pois) {
+      console.warn(`No POIs in zone ${zoneId} for discovery attempt`);
+      return;
+    }
+
+    const poi = zoneState.chunk.pois.find((p) => p.poiId === data.poiId);
+    if (!poi) {
+      console.warn(`POI ${data.poiId} not found in zone ${zoneId}`);
+      return;
+    }
+
+    // Attempt discovery
+    const result = await this.discoveryService.attemptDiscovery(
+      player.id,
+      data.poiId,
+      poi.type as PoiType,
+      poi.biome
+    );
+
+    if (result.alreadyDiscovered) {
+      client.emit('poi:already_discovered', { poiId: data.poiId });
+      return;
+    }
+
+    if (result.success && result.reward) {
+      // Emit discovery success with reward
+      client.emit('poi:discovered', {
+        poiId: data.poiId,
+        poiType: poi.type,
+        reward: result.reward,
+      });
+
+      // Also emit XP and credits updates
+      client.emit('player:xp', {
+        playerId: player.id,
+        xp: player.xp + result.reward.xp,
+        xpToNextLevel: 100, // TODO: Calculate properly based on level
+        level: player.level,
+        leveledUp: false,
+      });
+      client.emit('credits:update', {
+        credits: player.credits + result.reward.credits,
+      });
+    }
   }
 
   /**
