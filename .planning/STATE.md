@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 77 (POI Discovery System)
-Plan: 1/4 complete
+Plan: 2/4 complete
 Status: In Progress
-Last activity: 2026-02-23 — Completed 77-02 (POI Discovery Schema)
+Last activity: 2026-02-23 — Completed 77-01 (POI Type Definitions and Generation)
 
 Progress: [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 2.7%
 
@@ -67,6 +67,7 @@ Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 
 | Phase 76 P01 | 606 | 2 tasks | 8 files |
 | Phase 76 P02 | 255 | 2 tasks | 2 files |
 | Phase 77 P02 | 93 | 2 tasks | 3 files |
+| Phase 77 P01 | 148 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -119,6 +120,9 @@ Recent decisions affecting current work:
 - [Phase 77]: discovered_pois table uses composite primary key (characterId, poiId) to prevent re-discovery exploits
 - [Phase 77]: poiId format poi_${chunkX}_${chunkY}_${index} supports procedural generation with 100 char varchar limit
 - [Phase 77]: Cascade delete from characters to discovered_pois ensures automatic cleanup of orphaned discovery records
+- [Phase 77]: POI density threshold 0.3 (30% of chunks) for sparse exploration-focused discovery
+- [Phase 77]: Biome-specific POI type weights (ancient_ruins prefers anomalies, toxic_wastes prefers caches)
+- [Phase 77]: Noise frequency 0.03 creates POI clusters rather than uniform distribution
 
 ### Pending Todos
 
@@ -128,7 +132,7 @@ None.
 
 **v1.17 Milestone Active:**
 - Phase 76: Fog of War Foundation (EXPL-01, EXPL-02, EXPL-03) — Complete (2/2 plans)
-- Phase 77: POI Discovery System — In Progress (1/4 plans complete)
+- Phase 77: POI Discovery System — In Progress (2/4 plans complete)
 - Remaining phases: 78-81 (Gathering, Risk/Reward, Mastery, Combat Balancing)
 
 **Known Issues:**
@@ -137,12 +141,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed Phase 77 Plan 02 (POI Discovery Schema)
+Stopped at: Completed 77-01-PLAN.md (POI Type Definitions and Generation)
 Resume file: None
 
 **Next steps:**
-1. Continue Phase 77 (POI System) - 3 plans remaining
+1. Continue Phase 77 (POI System) - 2 plans remaining
 2. Continue v1.17 milestone
 
 ---
-*Last updated: 2026-02-23 - Completed Phase 77 Plan 02 (POI Discovery Schema)*
+*Last updated: 2026-02-23 - Completed 77-01-PLAN.md (POI Type Definitions and Generation)*
