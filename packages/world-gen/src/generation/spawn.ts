@@ -145,33 +145,43 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   tidal_pools: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_COASTAL_SCUTTLER, weight: 10, minLevel: 1, maxLevel: 5 },
+      { id: ENTITY_IDS.CREATURE_TIDE_CRAB, weight: 10, minLevel: 1, maxLevel: 6 },
+      { id: ENTITY_IDS.CREATURE_COASTAL_URCHIN, weight: 8, minLevel: 1, maxLevel: 5 },
+      { id: ENTITY_IDS.CREATURE_REEF_SCAVENGER, weight: 6, minLevel: 2, maxLevel: 7 },
     ],
     minerals: [
-      { id: ENTITY_IDS.MINERAL_VOID_CRYSTAL, weight: 10, rarity: 1 },
+      { id: ENTITY_IDS.MINERAL_CORAL_DEPOSIT, weight: 10, rarity: 1 },
+      { id: ENTITY_IDS.MINERAL_SEA_CRYSTAL, weight: 8, rarity: 1 },
+      { id: ENTITY_IDS.MINERAL_TIDAL_STONE, weight: 12, rarity: 1 },
     ],
-    creatureDensity: 3,
-    mineralDensity: 4,
+    creatureDensity: 6,  // 1.5x terrestrial Tier I baseline (void_plains: 4 -> 6)
+    mineralDensity: 5,   // Abundant shallow resources
   },
   kelp_forests: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_VOID_CRAWLER, weight: 8, minLevel: 4, maxLevel: 12 },
+      { id: ENTITY_IDS.CREATURE_KELP_GRAZER, weight: 8, minLevel: 6, maxLevel: 14 },
+      { id: ENTITY_IDS.CREATURE_TANGLE_STALKER, weight: 5, minLevel: 8, maxLevel: 16 },
+      { id: ENTITY_IDS.CREATURE_CURRENT_RIDER, weight: 7, minLevel: 7, maxLevel: 15 },
     ],
     minerals: [
-      { id: ENTITY_IDS.MINERAL_VOID_CRYSTAL, weight: 10, rarity: 1 },
+      { id: ENTITY_IDS.MINERAL_SEA_CRYSTAL, weight: 8, rarity: 1 },
+      { id: ENTITY_IDS.MINERAL_PEARL_NODE, weight: 4, rarity: 2 },
     ],
-    creatureDensity: 4,
-    mineralDensity: 5,
+    creatureDensity: 6,  // Dense kelp = more creature cover
+    mineralDensity: 4,
   },
   deep_trenches: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_VOID_HORROR, weight: 5, minLevel: 10, maxLevel: 25 },
+      { id: ENTITY_IDS.CREATURE_PRESSURE_FEEDER, weight: 6, minLevel: 12, maxLevel: 20 },
+      { id: ENTITY_IDS.CREATURE_TRENCH_HUNTER, weight: 4, minLevel: 14, maxLevel: 24 },
+      { id: ENTITY_IDS.CREATURE_ABYSSAL_SCAVENGER, weight: 5, minLevel: 13, maxLevel: 22 },
+      { id: ENTITY_IDS.CREATURE_ABYSSAL_LEVIATHAN, weight: 1, minLevel: 20, maxLevel: 32 },
     ],
     minerals: [
-      { id: ENTITY_IDS.MINERAL_ANOMALY_CRYSTAL, weight: 6, rarity: 3 },
+      { id: ENTITY_IDS.MINERAL_ABYSSAL_ORE, weight: 8, rarity: 3 },
     ],
-    creatureDensity: 2,
-    mineralDensity: 3,
+    creatureDensity: 3,  // Sparse but dangerous
+    mineralDensity: 5,   // Rich deep mineral deposits
   },
 };
 
