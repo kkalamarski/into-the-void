@@ -10,6 +10,15 @@ import { VOLCANIC_FLOOR, LAVA } from './volcanic-tiles';
 import { FUNGAL_FLOOR, FUNGAL_GROWTH } from './fungal-tiles';
 import { CRATER_FLOOR, CRATER_DEBRIS } from './crater-tiles';
 import { PORTAL } from './portal-tile';
+import {
+  TIDAL_FLOOR,
+  TIDAL_SHALLOW,
+  KELP_FLOOR,
+  KELP_WALL,
+  TRENCH_FLOOR,
+  TRENCH_DEEP,
+  SHORE_TRANSITION,
+} from './aquatic-tiles';
 
 /**
  * All tile definitions - register these with TileRegistry
@@ -41,6 +50,14 @@ export const ALL_TILES: readonly TileDefinition[] = [
   CRATER_DEBRIS,
   // Portal Structure
   PORTAL,
+  // Aquatic Biomes
+  TIDAL_FLOOR,
+  TIDAL_SHALLOW,
+  KELP_FLOOR,
+  KELP_WALL,
+  TRENCH_FLOOR,
+  TRENCH_DEEP,
+  SHORE_TRANSITION,
 ];
 
 /**
@@ -64,6 +81,13 @@ export const TILE_IDS = {
   CRATER_FLOOR: 'crater_floor',
   CRATER_DEBRIS: 'crater_debris',
   PORTAL: 'portal',
+  TIDAL_FLOOR: 'tidal_floor',
+  TIDAL_SHALLOW: 'tidal_shallow',
+  KELP_FLOOR: 'kelp_floor',
+  KELP_WALL: 'kelp_wall',
+  TRENCH_FLOOR: 'trench_floor',
+  TRENCH_DEEP: 'trench_deep',
+  SHORE_TRANSITION: 'shore_transition',
 } as const;
 
 // Re-export individual tiles for direct imports
@@ -85,4 +109,11 @@ export {
   CRATER_FLOOR,
   CRATER_DEBRIS,
   PORTAL,
+  TIDAL_FLOOR,
+  TIDAL_SHALLOW,
+  KELP_FLOOR,
+  KELP_WALL,
+  TRENCH_FLOOR,
+  TRENCH_DEEP,
+  SHORE_TRANSITION,
 };
