@@ -11,7 +11,10 @@ export type BiomeType =
   | 'fungal_forest'
   | 'starfall_crater'
   | 'miasma_marshes'     // Tier II - toxic swamp biome
-  | 'petrified_expanse'; // Tier II - stone forest biome
+  | 'petrified_expanse'  // Tier II - stone forest biome
+  | 'tidal_pools'        // Tier I - shallow coastal biome
+  | 'kelp_forests'       // Tier II - dense underwater vegetation
+  | 'deep_trenches';     // Tier III - high-pressure deep ocean
 
 /**
  * Biome data
@@ -50,7 +53,7 @@ export interface BiomeResources {
  */
 export interface BiomeHazard {
   /** Hazard type */
-  type: 'radiation' | 'toxic' | 'cold' | 'heat' | 'void_storm';
+  type: 'radiation' | 'toxic' | 'cold' | 'heat' | 'void_storm' | 'pressure';
   /** Damage per tick */
   damage: number;
   /** Hazard frequency (0-1) */
@@ -87,6 +90,9 @@ export const BIOME_DISPLAY_NAMES: Record<BiomeType, string> = {
   starfall_crater: 'Starfall Crater',
   miasma_marshes: 'Miasma Marshes',
   petrified_expanse: 'Petrified Expanse',
+  tidal_pools: 'Tidal Pools',
+  kelp_forests: 'Kelp Forests',
+  deep_trenches: 'Deep Trenches',
 };
 
 /**
@@ -103,4 +109,7 @@ export const BIOME_COLORS: Record<BiomeType, string> = {
   starfall_crater: '#191970',
   miasma_marshes: '#6b8e23',      // Olive drab (toxic swamp)
   petrified_expanse: '#a9a9a9',   // Dark gray (stone forest)
+  tidal_pools: '#5f9ea0',         // Cadet blue (shallow coastal)
+  kelp_forests: '#228b22',        // Forest green (dense vegetation)
+  deep_trenches: '#191970',       // Midnight blue (deep ocean)
 };
