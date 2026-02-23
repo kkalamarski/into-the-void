@@ -1305,7 +1305,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       resilience: total.resilience - base.resilience,
     };
 
-    const payload: CharStatsPayload = { total, base, equipment };
+    const payload: CharStatsPayload = { level: player.level, total, base, equipment };
     client.emit('stats:update', payload);
 
     // Update player's maxHealth based on durability stat

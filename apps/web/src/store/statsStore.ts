@@ -20,8 +20,8 @@ export const useStatsStore = create<StatsState>()(
 
     setStats: (payload: CharStatsPayload) =>
       set((state) => {
-        // Detect level-up by comparing incoming base stats to previous base stats
-        if (state.stats !== null) {
+        // Detect level-up by checking if level actually increased
+        if (state.stats !== null && payload.level > state.stats.level) {
           const deltas: Partial<CharacterStats> = {};
           for (const { key } of STAT_DISPLAY_ORDER) {
             const prev = state.stats.base[key];

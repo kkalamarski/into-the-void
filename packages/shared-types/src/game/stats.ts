@@ -5,6 +5,8 @@ import { CharacterStats } from '../core/player';
  * Server computes and emits; client only renders.
  */
 export interface CharStatsPayload {
+  /** Character level used for base stat calculation */
+  level: number;
   /** Total effective stats (base + equipment) */
   total: CharacterStats;
   /** Base stats without any equipment contribution */
