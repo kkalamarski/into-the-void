@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
@@ -28,5 +29,13 @@ export default defineConfig({
 
   define: {
     'process.env': {},
+  },
+
+  test: {
+    globals: true,
+    environment: 'node',
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    reporters: ['default'],
+    setupFiles: ['./src/test-setup.ts'],
   },
 });
