@@ -21,10 +21,12 @@ import {
   validateUnequip,
   effectiveStats,
   type ComputedStats,
+  getMovementSpeedModifier,
+  calculateMovementDelay,
 } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
 import type { Inventory, InventoryItemJson, EquipmentJson } from '@into-the-void/database';
-import { getBiome, BiomeGenerator, getHubConfig } from '@into-the-void/world-gen';
+import { getBiome, BiomeGenerator, getHubConfig, tileIdToString } from '@into-the-void/world-gen';
 import { isHubZone } from '@into-the-void/shared-types';
 
 interface MoveResult {
@@ -131,6 +133,47 @@ export class GameService {
       biome,
       fertilityType,
     };
+  }
+
+  /**
+   * Calculate movement delay for a specific position based on tile and biome
+   * @param position - Target position
+   * @returns Movement delay in milliseconds
+   */
+  async getMovementDelay(position: Position): Promise<number> {
+    const BASE_MOVEMENT_TICK = 500; // Base 500ms movement rate
+
+    try {
+      // Get chunk to access tile data
+      const chunk = await this.zonesService.getChunk(position.zoneId);
+
+      // Get tile ID at position
+      const tileIdEnum = chunk.tiles[position.y]?.[position.x];
+      if (tileIdEnum === undefined) {
+        return BASE_MOVEMENT_TICK; // Default if position invalid
+      }
+
+      // Convert numeric tile ID to string tile ID
+      const tileId = tileIdToString(tileIdEnum);
+
+      // Get biome for the zone
+      let biome: string | undefined;
+      if (!isHubZone(position.zoneId)) {
+        const parts = position.zoneId.split('_');
+        const x = parseInt(parts[1], 10);
+        const y = parseInt(parts[2], 10);
+        biome = getBiome(this.zonesService.getWorldSeed(), x, y);
+      }
+
+      // Calculate speed modifier and delay
+      const speedModifier = getMovementSpeedModifier(tileId, biome);
+      const delay = calculateMovementDelay(BASE_MOVEMENT_TICK, speedModifier);
+
+      return delay;
+    } catch (error) {
+      // Fallback to base rate on error
+      return BASE_MOVEMENT_TICK;
+    }
   }
 
   async movePlayer(socketId: string, direction: Direction): Promise<MoveResult> {
