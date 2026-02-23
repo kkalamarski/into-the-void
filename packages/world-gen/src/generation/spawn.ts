@@ -1,4 +1,4 @@
-import { BiomeType, FertilityType, SpawnPoint, ZONE_SIZE } from '@into-the-void/shared-types';
+import { BiomeType, FertilityType, SpawnPoint, ZONE_SIZE, NodeRarity } from '@into-the-void/shared-types';
 import { ENTITY_IDS } from '@into-the-void/entities';
 import { SeededRandom } from '../random/seeded-random';
 import { BiomeGenerator } from './biome';
@@ -30,8 +30,12 @@ const SPAWN_CAPS = {
 interface BiomeSpawnConfig {
   creatures: Array<{ id: string; weight: number; minLevel: number; maxLevel: number }>;
   minerals: Array<{ id: string; weight: number; rarity: number }>;
+  plants: Array<{ id: string; weight: number; rarity?: NodeRarity }>;
+  artifacts: Array<{ id: string; weight: number; rarity: 'rare' | 'epic' | 'exotic' | 'legendary' }>;
   creatureDensity: number; // Average creatures per chunk
   mineralDensity: number; // Average minerals per chunk
+  plantDensity: number; // Average plants per chunk
+  artifactDensity: number; // Artifact spawn attempts per chunk (gated by probability)
 }
 
 const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
@@ -43,8 +47,15 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     minerals: [
       { id: ENTITY_IDS.MINERAL_VOID_CRYSTAL, weight: 10, rarity: 1 },
     ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_DROUGHT_CACTUS, weight: 10 },
+      { id: ENTITY_IDS.PLANT_VOID_FERN, weight: 10 },
+    ],
+    artifacts: [], // No artifacts in void_plains
     creatureDensity: 4,
     mineralDensity: 3,
+    plantDensity: 3,
+    artifactDensity: 1,
   },
   crystal_caves: {
     creatures: [
@@ -54,8 +65,17 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     minerals: [
       { id: ENTITY_IDS.MINERAL_PRISMATIC_CRYSTAL, weight: 8, rarity: 2 },
     ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_LATTICE_MOSS, weight: 10 },
+      { id: ENTITY_IDS.PLANT_LATTICE_MOSS_RARE, weight: 2, rarity: 'rare' },
+    ],
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_CRYSTALLINE_RESONATOR, weight: 6, rarity: 'epic' },
+    ],
     creatureDensity: 3,
     mineralDensity: 8,
+    plantDensity: 3,
+    artifactDensity: 1,
   },
   toxic_wastes: {
     creatures: [
@@ -64,8 +84,14 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     minerals: [
       { id: ENTITY_IDS.MINERAL_CORROSIVE_DEPOSIT, weight: 10, rarity: 1 },
     ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_ACID_FERN, weight: 10 },
+    ],
+    artifacts: [], // No artifacts in toxic_wastes
     creatureDensity: 5,
     mineralDensity: 4,
+    plantDensity: 3,
+    artifactDensity: 1,
   },
   ancient_ruins: {
     creatures: [
@@ -75,8 +101,18 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     minerals: [
       { id: ENTITY_IDS.MINERAL_ANOMALY_CRYSTAL, weight: 5, rarity: 3 },
     ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_PHASE_BLOOM, weight: 10 },
+      { id: ENTITY_IDS.PLANT_PHASE_BLOOM_RARE, weight: 2, rarity: 'rare' },
+    ],
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_ANCIENT_DATA_CORE, weight: 3, rarity: 'exotic' },
+      { id: ENTITY_IDS.ARTIFACT_VOID_TOUCHED_RELIC, weight: 1, rarity: 'legendary' },
+    ],
     creatureDensity: 2,
     mineralDensity: 2,
+    plantDensity: 3,
+    artifactDensity: 1,
   },
   frozen_expanse: {
     creatures: [
@@ -86,8 +122,16 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     minerals: [
       { id: ENTITY_IDS.MINERAL_PERMAFROST_SHARD, weight: 6, rarity: 2 },
     ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_ICE_ALGAE, weight: 10 },
+    ],
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_PRESERVED_SPECIMEN, weight: 10, rarity: 'rare' },
+    ],
     creatureDensity: 3,
     mineralDensity: 4,
+    plantDensity: 3,
+    artifactDensity: 1,
   },
   volcanic_ridge: {
     creatures: [
@@ -97,8 +141,16 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     minerals: [
       { id: ENTITY_IDS.MINERAL_VOLCANIC_ORE, weight: 8, rarity: 2 },
     ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_THERMAL_VENT_MOSS, weight: 10 },
+    ],
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_THERMAL_CORE, weight: 6, rarity: 'epic' },
+    ],
     creatureDensity: 4,
     mineralDensity: 5,
+    plantDensity: 3,
+    artifactDensity: 1,
   },
   fungal_forest: {
     creatures: [
@@ -108,8 +160,16 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     minerals: [
       { id: ENTITY_IDS.MINERAL_MYCELIAL_CLUSTER, weight: 10, rarity: 1 },
     ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_LUMINOUS_VINE, weight: 10 },
+      { id: ENTITY_IDS.PLANT_VOID_FERN, weight: 10 },
+      { id: ENTITY_IDS.PLANT_LUMINOUS_VINE_RARE, weight: 2, rarity: 'rare' },
+    ],
+    artifacts: [], // No artifacts in fungal_forest
     creatureDensity: 6,
     mineralDensity: 7,
+    plantDensity: 4, // Lush biome
+    artifactDensity: 1,
   },
   starfall_crater: {
     creatures: [
@@ -118,8 +178,16 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     minerals: [
       { id: ENTITY_IDS.MINERAL_COSMIC_FRAGMENT, weight: 4, rarity: 4 },
     ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_STAR_LICHEN, weight: 10 },
+    ],
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_VOID_TOUCHED_RELIC, weight: 1, rarity: 'legendary' },
+    ],
     creatureDensity: 2,
     mineralDensity: 3,
+    plantDensity: 3,
+    artifactDensity: 1,
   },
   miasma_marshes: {
     creatures: [
@@ -129,8 +197,14 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     minerals: [
       { id: ENTITY_IDS.MINERAL_CHEMICAL_SUMP, weight: 8, rarity: 2 },
     ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_GAS_POD, weight: 10 },
+    ],
+    artifacts: [], // No artifacts in miasma_marshes
     creatureDensity: 5,
     mineralDensity: 4,
+    plantDensity: 3,
+    artifactDensity: 1,
   },
   petrified_expanse: {
     creatures: [
@@ -140,8 +214,16 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     minerals: [
       { id: ENTITY_IDS.MINERAL_MINERALIZED_LOG, weight: 6, rarity: 2 },
     ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_MOBILE_VINE, weight: 10 },
+    ],
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_PRESERVED_SPECIMEN, weight: 10, rarity: 'rare' },
+    ],
     creatureDensity: 3,
     mineralDensity: 6,
+    plantDensity: 3,
+    artifactDensity: 1,
   },
   tidal_pools: {
     creatures: [
@@ -154,8 +236,15 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
       { id: ENTITY_IDS.MINERAL_SEA_CRYSTAL, weight: 8, rarity: 1 },
       { id: ENTITY_IDS.MINERAL_TIDAL_STONE, weight: 12, rarity: 1 },
     ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_TIDAL_KELP, weight: 10 },
+      { id: ENTITY_IDS.PLANT_BIOLUMINESCENT_ALGAE, weight: 10 },
+    ],
+    artifacts: [], // No artifacts in tidal_pools
     creatureDensity: 6,  // 1.5x terrestrial Tier I baseline (void_plains: 4 -> 6)
     mineralDensity: 5,   // Abundant shallow resources
+    plantDensity: 5,     // Aquatic biome
+    artifactDensity: 1,
   },
   kelp_forests: {
     creatures: [
@@ -167,8 +256,17 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
       { id: ENTITY_IDS.MINERAL_SEA_CRYSTAL, weight: 8, rarity: 1 },
       { id: ENTITY_IDS.MINERAL_PEARL_NODE, weight: 4, rarity: 2 },
     ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_BIOLUMINESCENT_ALGAE, weight: 10 },
+      { id: ENTITY_IDS.PLANT_PRESSURE_FERN, weight: 10 },
+    ],
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_SUNKEN_TECH, weight: 6, rarity: 'epic' },
+    ],
     creatureDensity: 6,  // Dense kelp = more creature cover
     mineralDensity: 4,
+    plantDensity: 5,     // Aquatic biome
+    artifactDensity: 1,
   },
   deep_trenches: {
     creatures: [
@@ -180,8 +278,20 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     minerals: [
       { id: ENTITY_IDS.MINERAL_ABYSSAL_ORE, weight: 8, rarity: 3 },
     ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_PRESSURE_FERN, weight: 10 },
+      { id: ENTITY_IDS.PLANT_VOID_KELP, weight: 10 },
+      { id: ENTITY_IDS.PLANT_THERMAL_VENT_COLONY, weight: 10 },
+    ],
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_SUNKEN_TECH, weight: 6, rarity: 'epic' },
+      { id: ENTITY_IDS.ARTIFACT_ANCIENT_SHELL, weight: 10, rarity: 'rare' },
+      { id: ENTITY_IDS.ARTIFACT_DROWNED_RELIC, weight: 1, rarity: 'legendary' },
+    ],
     creatureDensity: 3,  // Sparse but dangerous
     mineralDensity: 5,   // Rich deep mineral deposits
+    plantDensity: 5,     // Aquatic biome
+    artifactDensity: 1,
   },
 };
 
@@ -311,6 +421,58 @@ export function generateSpawnPoints(
         });
         epicNodesSpawned++;
       }
+    }
+  }
+
+  // Generate plant spawns
+  const rawPlantCount = Math.round(config.plantDensity * multiplier * (0.5 + random.next()));
+  const plantCount = Math.min(rawPlantCount, SPAWN_CAPS.plants);
+  for (let i = 0; i < plantCount; i++) {
+    const position = findValidSpawnPosition(random, collisionMap);
+    if (!position) continue;
+
+    // Per-tile biome sampling for spawn table
+    const worldX = chunkX * ZONE_SIZE + position.x;
+    const worldY = chunkY * ZONE_SIZE + position.y;
+    const tileBiome = biomeGenerator.getBiome(worldX, worldY);
+    const tileConfig = BIOME_SPAWN_CONFIGS[tileBiome];
+
+    const plant = weightedPick(random, tileConfig.plants);
+    if (plant) {
+      spawnPoints.push({
+        x: position.x,
+        y: position.y,
+        entityType: 'plant',
+        spawnId: plant.id,
+        respawnTime: 300 + random.nextInt(0, 300), // 5-10 minutes
+      });
+    }
+  }
+
+  // Generate artifact spawns (extremely rare)
+  const artifactAttempts = Math.round(config.artifactDensity);
+  for (let i = 0; i < artifactAttempts; i++) {
+    // Only 5% base chance per attempt (extremely rare)
+    if (random.next() >= 0.05) continue;
+
+    const position = findValidSpawnPosition(random, collisionMap);
+    if (!position) continue;
+
+    // Per-tile biome sampling for spawn table
+    const worldX = chunkX * ZONE_SIZE + position.x;
+    const worldY = chunkY * ZONE_SIZE + position.y;
+    const tileBiome = biomeGenerator.getBiome(worldX, worldY);
+    const tileConfig = BIOME_SPAWN_CONFIGS[tileBiome];
+
+    const artifact = weightedPick(random, tileConfig.artifacts);
+    if (artifact) {
+      spawnPoints.push({
+        x: position.x,
+        y: position.y,
+        entityType: 'artifact',
+        spawnId: artifact.id,
+        respawnTime: -1, // Artifacts don't respawn
+      });
     }
   }
 

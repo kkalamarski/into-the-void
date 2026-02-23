@@ -64,6 +64,7 @@ export const ENTITY_IDS = {
 
   // ---- PLANTS ----
   PLANT_LUMINOUS_VINE: 'plant_luminous_vine',
+  PLANT_VOID_FERN: 'plant_void_fern',
   PLANT_DROUGHT_CACTUS: 'plant_drought_cactus',
   PLANT_GAS_POD: 'plant_gas_pod',
   PLANT_MOBILE_VINE: 'plant_mobile_vine',

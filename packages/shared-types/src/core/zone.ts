@@ -113,10 +113,10 @@ export interface SpawnPoint {
   /** Y position within zone */
   y: number;
   /** Type of entity to spawn */
-  entityType: 'creature' | 'mineral';
+  entityType: 'creature' | 'mineral' | 'plant' | 'artifact';
   /** Specific entity ID to spawn */
   spawnId: string;
-  /** Respawn time in seconds */
+  /** Respawn time in seconds (-1 or omitted = no respawn) */
   respawnTime: number;
 }
 
