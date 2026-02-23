@@ -19,7 +19,7 @@
 - v1.14 Equipment Stats Overhaul - Phases 59-63 (shipped 2026-02-21)
 - v1.15 Quest System - Phases 64-69 (shipped 2026-02-22)
 - v1.16 UI Polish - Phases 70-75 (shipped 2026-02-23)
-- v1.17 Core Gameplay Loop - Phases 76-81 (active)
+- v1.17 Core Gameplay Loop - Phases 76-81 (shipped 2026-02-23)
 
 ## Phases
 
@@ -376,9 +376,9 @@ Plans:
   5. All quest-required items have obtainable source (entity drops or POI rewards verified)
 
 Plans:
-- [ ] 81-01-PLAN.md — Level-gap damage multiplier (game-logic)
-- [ ] 81-02-PLAN.md — Quest item audit and missing source fix (items, entities)
-- [ ] 81-03-PLAN.md — Creature stat rebalancing and TTK tests (entities, game-logic)
+- [x] 81-01-PLAN.md — Level-gap damage multiplier (game-logic)
+- [x] 81-02-PLAN.md — Quest item audit and missing source fix (items, entities)
+- [x] 81-03-PLAN.md — Creature stat rebalancing and TTK tests (entities, game-logic)
 
 ---
 
@@ -469,9 +469,9 @@ Phases execute in numeric order: 76 -> 77 -> 78 -> 79 -> 80 -> 81
 | 78. Gathering Mini-Game | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 79. Resource Risk/Reward | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 80. Zone Mastery & Lore | v1.17 | 5/5 | Complete | 2026-02-23 |
-| 81. Combat Balancing & Quest Audit | v1.17 | 0/3 | Pending | — |
+| 81. Combat Balancing & Quest Audit | v1.17 | 3/3 | Complete | 2026-02-23 |
 
-**Total:** 81 phases (80 complete, 1 pending)
+**Total:** 81 phases (81 complete, 0 pending)
 
 ---
-*Last updated: 2026-02-23 — Phase 81 planning complete*
+*Last updated: 2026-02-23 — Phase 81 complete, v1.17 milestone complete*

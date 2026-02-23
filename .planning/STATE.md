@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.17 Core Gameplay Loop - Phase 80: Zone Mastery & Lore
+**Current focus:** v1.17 Core Gameplay Loop - COMPLETE
 
 ## Current Position
 
-Phase: 81 (Combat Balancing & Quest Audit) - IN PROGRESS
-Plan: 3/? complete (01, 02, 03)
-Status: Active
-Last activity: 2026-02-23 — Completed 81-03 Creature Health Rebalancing
+Phase: 81 (Combat Balancing & Quest Audit) - COMPLETE
+Plan: 3/3 complete
+Status: Complete
+Last activity: 2026-02-23 — Completed Phase 81, v1.17 milestone shipped
 
 Progress: [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 5.0%
 
