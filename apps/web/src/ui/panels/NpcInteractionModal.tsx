@@ -202,7 +202,9 @@ const TradeTab: React.FC<TradeTabProps> = ({ npc, tradeError, setTradeError }) =
 
 export const NpcInteractionModal: React.FC = () => {
   const { interactingNpc, closeInteraction, activeTab, setActiveTab, tradeError, setTradeError, acceptQuest, completeQuestAtNpc } = useNpcStore();
+  const tradePending = useNpcStore(state => state.tradePending);
   const questPending = useNpcStore(state => state.questPending);
+  const isPending = tradePending || questPending;
   const { position, isDragging, handleMouseDown } = useDraggablePanel();
 
   // Clear any stuck movement keys when modal opens
@@ -215,10 +217,10 @@ export const NpcInteractionModal: React.FC = () => {
     }
   }, []);
 
-  // Handle Escape key to close modal
+  // Handle Escape key to close modal (blocked during pending operations)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !isPending) {
         closeInteraction();
       }
     };
@@ -227,7 +229,7 @@ export const NpcInteractionModal: React.FC = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [closeInteraction]);
+  }, [closeInteraction, isPending]);
 
   // Default to quests tab if NPC has ready or available quests
   useEffect(() => {
@@ -372,9 +374,9 @@ export const NpcInteractionModal: React.FC = () => {
     }
   };
 
-  // Handler for clicking overlay background (not modal content)
+  // Handler for clicking overlay background (not modal content, blocked during pending)
   const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && !isPending) {
       closeInteraction();
     }
   };
@@ -391,7 +393,14 @@ export const NpcInteractionModal: React.FC = () => {
           style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
         >
           <span>{interactingNpc.displayName}</span>
-          <button className="close-btn" onClick={closeInteraction}>&times;</button>
+          <button
+            className="close-btn"
+            onClick={closeInteraction}
+            disabled={isPending}
+            style={{ opacity: isPending ? 0.5 : 1, cursor: isPending ? 'not-allowed' : 'pointer' }}
+          >
+            &times;
+          </button>
         </div>
 
       <div className="npc-modal-content">

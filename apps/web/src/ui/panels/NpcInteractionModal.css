@@ -189,6 +189,19 @@
   background: var(--color-bg-secondary);
 }
 
+.npc-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  filter: none;
+}
+
+.npc-action-btn:disabled:hover,
+.npc-action-btn:disabled:active {
+  transform: none;
+  filter: none;
+}
+
 /* Tab navigation */
 .npc-tabs {
   display: flex;
