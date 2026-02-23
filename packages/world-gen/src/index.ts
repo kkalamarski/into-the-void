@@ -6,6 +6,7 @@ export * from './random/seeded-random';
 export * from './generation/chunk';
 export * from './generation/biome';
 export * from './generation/spawn';
+export * from './generation/rarity';
 export * from './generation/terrain';
 export * from './generation/structures';
 export { generatePOIs, selectPoiTypeForBiome } from './generation/pois';
