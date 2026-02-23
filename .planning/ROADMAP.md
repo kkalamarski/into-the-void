@@ -316,7 +316,9 @@ Plans:
   5. Markers visible at same render distance as NPC sprites
 
 Plans:
-- [ ] 73-01-PLAN.md — Wire quest event handlers for real-time marker updates
+- [x] 73-01-PLAN.md — Wire quest event handlers for real-time marker updates
+
+**Phase 73 complete** — 2026-02-23
 
 ---
 
@@ -437,11 +439,11 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73 -> 74 -> 75
 | 70. Modal Unification | v1.16 | 2/2 | Complete | 2026-02-23 |
 | 71. Quest Objective Tracker HUD | v1.16 | 1/1 | Complete | 2026-02-23 |
 | 72. Visual Polish | v1.16 | 3/3 | Complete | 2026-02-23 |
-| 73. Quest Markers in World | v1.16 | 0/1 | Not started | - |
+| 73. Quest Markers in World | v1.16 | 1/1 | Complete | 2026-02-23 |
 | 74. Quest Completion Feedback | v1.16 | 0/TBD | Not started | - |
 | 75. Error Handling | v1.16 | 0/TBD | Not started | - |
 
-**Total:** 75 phases (72 complete, 3 pending)
+**Total:** 75 phases (73 complete, 2 pending)
 
 ---
-*Last updated: 2026-02-23 after Phase 73 planning*
+*Last updated: 2026-02-23 after Phase 73 execution*
