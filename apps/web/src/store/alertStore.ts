@@ -16,7 +16,7 @@ interface AlertState {
   clearAlerts: () => void;
 }
 
-const ALERT_DURATION = 3000; // 3 seconds
+const ALERT_DURATION = 5000; // 5 seconds per ERR-02
 
 export const useAlertStore = create<AlertState>((set, get) => ({
   alerts: [],
