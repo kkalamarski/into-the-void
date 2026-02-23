@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 
 ## Current Position
 
-Phase: 76 (Fog of War Foundation)
-Plan: 2/2 complete
-Status: Complete
-Last activity: 2026-02-23 — Completed 76-02 (Fog Rendering)
+Phase: 77 (POI Discovery System)
+Plan: 1/4 complete
+Status: In Progress
+Last activity: 2026-02-23 — Completed 77-02 (POI Discovery Schema)
 
 Progress: [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 2.7%
 
@@ -44,7 +44,7 @@ Progress: [██░░░░░░░░░░░░░░░░░░░░░
 | v1.14 | 59-63 | 8 | 1 day |
 | v1.15 | 64-69 | 16 | 1 day |
 | v1.16 | 70-75 | 11 | 1 day |
-| v1.17 | 76-81 | 2/? | In Progress |
+| v1.17 | 76-81 | 3/? | In Progress |
 
 **Recent Trend:**
 Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 6 phases.
@@ -66,6 +66,7 @@ Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 
 | Phase 75 P02 | 136 | 2 tasks | 2 files |
 | Phase 76 P01 | 606 | 2 tasks | 8 files |
 | Phase 76 P02 | 255 | 2 tasks | 2 files |
+| Phase 77 P02 | 93 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,9 @@ Recent decisions affecting current work:
 - [Phase 76]: 60% opacity fog overlay preserves terrain visibility while hiding unexplored areas
 - [Phase 76]: Fog depth 1000 (above terrain ~100-200, below UI ~2000) for correct visual layering
 - [Phase 76]: Fog reveal skipped during reconciliation to avoid double-reveal on server confirmation
+- [Phase 77]: discovered_pois table uses composite primary key (characterId, poiId) to prevent re-discovery exploits
+- [Phase 77]: poiId format poi_${chunkX}_${chunkY}_${index} supports procedural generation with 100 char varchar limit
+- [Phase 77]: Cascade delete from characters to discovered_pois ensures automatic cleanup of orphaned discovery records
 
 ### Pending Todos
 
@@ -124,8 +128,8 @@ None.
 
 **v1.17 Milestone Active:**
 - Phase 76: Fog of War Foundation (EXPL-01, EXPL-02, EXPL-03) — Complete (2/2 plans)
-- Next: Phase 77 (POI System)
-- Remaining phases: 77-81 (POI, Gathering, Risk/Reward, Mastery, Combat Balancing)
+- Phase 77: POI Discovery System — In Progress (1/4 plans complete)
+- Remaining phases: 78-81 (Gathering, Risk/Reward, Mastery, Combat Balancing)
 
 **Known Issues:**
 - Web app vitest tests hang when run via nx (vitest 4.0.18 vs nx expecting v1-3). TypeScript compilation verified instead.
@@ -133,12 +137,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed Phase 76 Plan 02 (Fog Rendering) - Phase 76 Complete
+Stopped at: Completed Phase 77 Plan 02 (POI Discovery Schema)
 Resume file: None
 
 **Next steps:**
-1. Start Phase 77 (POI System)
+1. Continue Phase 77 (POI System) - 3 plans remaining
 2. Continue v1.17 milestone
 
 ---
-*Last updated: 2026-02-23 - Completed Phase 76 (Fog of War Foundation)*
+*Last updated: 2026-02-23 - Completed Phase 77 Plan 02 (POI Discovery Schema)*
