@@ -262,7 +262,7 @@ Plans:
 **Goal**: On-screen HUD widget showing active quest progress near minimap
 **Depends on**: Phase 70
 **Requirements**: QUEST-01, QUEST-02
-**Plans:** TBD
+**Plans:** 1 plan
 
 **Success Criteria** (what must be TRUE):
   1. Player sees active quest objectives displayed in HUD tracker with live progress counters
@@ -272,7 +272,7 @@ Plans:
   5. Tracker shows up to 3 active quests with visual hierarchy for primary quest
 
 Plans:
-- [ ] TBD during phase planning
+- [ ] 71-01-PLAN.md — Enhance QuestTracker with collapse, 3-quest limit, and primary styling
 
 ---
 
@@ -429,7 +429,7 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73 -> 74 -> 75
 | 68. Quest UI | v1.15 | 4/4 | Complete | 2026-02-22 |
 | 69. Quest Chains & Bounties | v1.15 | 2/2 | Complete | 2026-02-22 |
 | 70. Modal Unification | v1.16 | 2/2 | Complete | 2026-02-23 |
-| 71. Quest Objective Tracker HUD | v1.16 | 0/TBD | Not started | - |
+| 71. Quest Objective Tracker HUD | v1.16 | 0/1 | Not started | - |
 | 72. Visual Polish | v1.16 | 0/TBD | Not started | - |
 | 73. Quest Markers in World | v1.16 | 0/TBD | Not started | - |
 | 74. Quest Completion Feedback | v1.16 | 0/TBD | Not started | - |
@@ -438,4 +438,4 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73 -> 74 -> 75
 **Total:** 75 phases (70 complete, 5 pending)
 
 ---
-*Last updated: 2026-02-23 after Phase 70 complete*
+*Last updated: 2026-02-23 after Phase 71 planning*
