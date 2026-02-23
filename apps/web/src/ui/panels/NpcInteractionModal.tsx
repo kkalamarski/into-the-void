@@ -362,19 +362,27 @@ export const NpcInteractionModal: React.FC = () => {
     }
   };
 
+  // Handler for clicking overlay background (not modal content)
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      closeInteraction();
+    }
+  };
+
   return (
-    <div
-      className="npc-modal ui-panel"
-      style={{ transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px)` }}
-    >
+    <div className="npc-modal-overlay npc-modal-overlay--visible" onClick={handleOverlayClick}>
       <div
-        className="npc-modal-header"
-        onMouseDown={handleMouseDown}
-        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        className="npc-modal ui-panel"
+        style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
       >
-        <span>{interactingNpc.displayName}</span>
-        <button className="close-btn" onClick={closeInteraction}>&times;</button>
-      </div>
+        <div
+          className="npc-modal-header"
+          onMouseDown={handleMouseDown}
+          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        >
+          <span>{interactingNpc.displayName}</span>
+          <button className="close-btn" onClick={closeInteraction}>&times;</button>
+        </div>
 
       <div className="npc-modal-content">
         {/* Portrait section */}
@@ -431,6 +439,7 @@ export const NpcInteractionModal: React.FC = () => {
         )}
         {activeTab === 'trade' && <TradeTab npc={interactingNpc} tradeError={tradeError} setTradeError={setTradeError} />}
         {activeTab === 'quests' && renderQuestsTab()}
+      </div>
       </div>
     </div>
   );
