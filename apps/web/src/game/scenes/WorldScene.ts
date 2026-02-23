@@ -24,6 +24,7 @@ import { gameSocket } from '../../network/socket';
 import { TargetHighlight } from '../rendering/TargetHighlight';
 import { FogManager } from '../fog/FogManager';
 import { FogRenderer } from '../fog/FogRenderer';
+import { PoiRenderer } from '../pois/PoiRenderer';
 
 export const ISO_TILE_WIDTH = 256;
 export const ISO_TILE_HEIGHT = 128;
@@ -104,10 +105,15 @@ export class WorldScene extends Phaser.Scene {
   private targetHighlight: TargetHighlight | null = null;
   // Portal tile detection: track last position where portal:use was emitted to prevent duplicates
   private lastPortalEmitKey: string | null = null;
+  // Local player facing direction for sprite selection
+  private localPlayerFacing: Direction = 's';
   // Fog of war system
   private fogManager: FogManager | null = null;
   private fogRenderer: FogRenderer | null = null;
   private fogInitialized: boolean = false;
+  // POI discovery system
+  private poiRenderer: PoiRenderer | null = null;
+  private discoveredPoiIds: Set<string> = new Set();
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -123,6 +129,9 @@ export class WorldScene extends Phaser.Scene {
     // Initialize fog rendering (will redraw from state once character loads)
     this.fogRenderer = new FogRenderer(this, this.isoTransform);
     this.fogRenderer.create();
+
+    // Initialize POI renderer
+    this.poiRenderer = new PoiRenderer(this, this.isoTransform);
 
     // Initialize DepthSorter
     this.depthSorter = new DepthSorter();
@@ -290,6 +299,22 @@ export class WorldScene extends Phaser.Scene {
     gameSocket.on('quest:progress', this.handleQuestProgress);
     gameSocket.on('quest:completed', this.handleQuestCompleted);
     gameSocket.on('quest:abandoned', this.handleQuestAbandoned);
+
+    // POI discovery system listeners
+    gameSocket.on('poi:discovered_ids', (data: { poiIds: string[] }) => {
+      this.discoveredPoiIds = new Set(data.poiIds);
+    });
+
+    gameSocket.on('poi:discovered', (data: { poiId: string; poiType: string; reward: any }) => {
+      this.discoveredPoiIds.add(data.poiId);
+      this.poiRenderer?.markDiscovered(data.poiId);
+      // Reward is handled by existing XP/credits listeners
+    });
+
+    gameSocket.on('poi:already_discovered', (data: { poiId: string }) => {
+      this.discoveredPoiIds.add(data.poiId);
+      this.poiRenderer?.markDiscovered(data.poiId);
+    });
 
     // Set fixed zoom to show ~20x15 tiles viewport (for 256x256 sprites)
     this.cameras.main.setZoom(0.5);
@@ -603,6 +628,17 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Update local player's facing direction and sprite texture.
+   */
+  private updateLocalPlayerDirection(direction: Direction): void {
+    if (this.localPlayerFacing === direction) return;
+    this.localPlayerFacing = direction;
+
+    const sprite = this.localPlayer?.getData('characterSprite') as Phaser.GameObjects.Sprite | undefined;
+    sprite?.setTexture(`character-${direction}`);
+  }
+
   private createLocalPlayer(position: Position): void {
     if (!this.isoTransform) return;
 
@@ -629,11 +665,12 @@ export class WorldScene extends Phaser.Scene {
     const shadow = this.add.ellipse(0, 0, 80, 40, 0x000000, 0.3);
     container.add(shadow);
 
-    // Player sprite elevated (texture is 2x resolution, scale down for crispness)
-    const sprite = this.add.sprite(0, -24, 'player');
+    // Player sprite with directional character texture (default facing south)
+    const sprite = this.add.sprite(0, -24, `character-${this.localPlayerFacing}`);
     sprite.setOrigin(0.5, 1.0);
     sprite.setScale(1.0);
     container.add(sprite);
+    container.setData('characterSprite', sprite); // Store reference for direction updates
 
     // Store reference (as container now, not sprite)
     this.localPlayer = container as unknown as Phaser.GameObjects.Sprite; // Type hack for compatibility
@@ -742,6 +779,9 @@ export class WorldScene extends Phaser.Scene {
       if (this.pathfindingController?.isPathActive()) {
         this.pathfindingController.cancelPath();
       }
+
+      // Update facing direction immediately for responsive sprite change
+      this.updateLocalPlayerDirection(direction);
 
       this.lastMoveTime = time;
       // Reset chord for next input sequence
@@ -1097,6 +1137,11 @@ export class WorldScene extends Phaser.Scene {
     // Structures are now rendered via tiles[][] with distinct colors
     // No separate cube rendering needed
 
+    // Create POI sprites for this chunk
+    if (chunkData.pois && chunkData.pois.length > 0 && this.poiRenderer) {
+      this.poiRenderer.createPoisForChunk(chunkData.pois, chunkX, chunkY, this.discoveredPoiIds);
+    }
+
     this.chunkTiles.set(zoneId, chunkTileArray);
 
     if (zoneId === this.currentZoneId) {
@@ -1446,8 +1491,8 @@ export class WorldScene extends Phaser.Scene {
     const shadow = this.add.ellipse(0, 0, 80, 40, 0x000000, 0.3);
     container.add(shadow);
 
-    // Player sprite (texture is 2x resolution, scale down for crispness)
-    const sprite = this.add.sprite(0, -24, 'player');
+    // Player sprite with south-facing character texture (remote players always face south for now)
+    const sprite = this.add.sprite(0, -24, 'character-s');
     sprite.setOrigin(0.5, 1.0);
     sprite.setScale(1.0);
     sprite.setTint(this.getFactionColor(player.faction));
@@ -1597,6 +1642,15 @@ export class WorldScene extends Phaser.Scene {
       const newlyRevealed = this.fogManager.revealAtPosition(worldX, worldY);
       if (newlyRevealed.size > 0) {
         this.fogRenderer.revealTiles(newlyRevealed);
+      }
+    }
+
+    // Check for POI discovery (only on prediction, not reconciliation)
+    if (!reconciling && this.poiRenderer && this.fogManager?.isRevealed(worldX, worldY)) {
+      const poiId = this.poiRenderer.checkPlayerOnPoi(worldX, worldY);
+      if (poiId && !this.discoveredPoiIds.has(poiId)) {
+        // Request discovery from server
+        gameSocket.emit('poi:discover', { poiId, worldX, worldY });
       }
     }
   }
@@ -1858,6 +1912,13 @@ export class WorldScene extends Phaser.Scene {
       this.fogRenderer = null;
     }
     this.fogInitialized = false;
+
+    // Cleanup POI system
+    if (this.poiRenderer) {
+      this.poiRenderer.destroy();
+      this.poiRenderer = null;
+    }
+    this.discoveredPoiIds.clear();
   }
 
   /**
