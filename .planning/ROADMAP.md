@@ -337,8 +337,10 @@ Plans:
   5. Multiple quest completions queue properly without overlapping banners
 
 Plans:
-- [ ] 74-01-PLAN.md — Queue-based reward store, click-to-dismiss banner
-- [ ] 74-02-PLAN.md — Audio utility and quest completion sound
+- [x] 74-01-PLAN.md — Queue-based reward store, click-to-dismiss banner
+- [x] 74-02-PLAN.md — Audio utility and quest completion sound
+
+**Phase 74 complete** — 2026-02-23
 
 ---
 
@@ -441,10 +443,10 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73 -> 74 -> 75
 | 71. Quest Objective Tracker HUD | v1.16 | 1/1 | Complete | 2026-02-23 |
 | 72. Visual Polish | v1.16 | 3/3 | Complete | 2026-02-23 |
 | 73. Quest Markers in World | v1.16 | 1/1 | Complete | 2026-02-23 |
-| 74. Quest Completion Feedback | v1.16 | 0/2 | Not started | - |
+| 74. Quest Completion Feedback | v1.16 | 2/2 | Complete | 2026-02-23 |
 | 75. Error Handling | v1.16 | 0/TBD | Not started | - |
 
-**Total:** 75 phases (73 complete, 2 pending)
+**Total:** 75 phases (74 complete, 1 pending)
 
 ---
-*Last updated: 2026-02-23 after Phase 74 planning*
+*Last updated: 2026-02-23 after Phase 74 execution*
