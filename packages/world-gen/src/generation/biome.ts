@@ -121,6 +121,20 @@ export class BiomeGenerator {
     const moisture = this.getMoisture(center.x, center.y);
     const elevation = this.getElevation(center.x, center.y);
 
+    // Aquatic biomes - very low elevation with high moisture
+    if (elevation < 0.15) {
+      if (moisture > 0.8) {
+        return 'deep_trenches';  // Tier III - lowest elevation, highest moisture
+      }
+      if (moisture > 0.5) {
+        return 'kelp_forests';   // Tier II - low elevation, moderate-high moisture
+      }
+      if (moisture > 0.3) {
+        return 'tidal_pools';    // Tier I - low elevation, moderate moisture
+      }
+      // Low elevation but low moisture = starfall_crater (existing)
+    }
+
     // High elevation = special biomes
     if (elevation > 0.8) {
       if (temp < 0.3) return 'frozen_expanse';
@@ -210,6 +224,9 @@ export function getBiomeDangerLevel(biome: BiomeType): number {
     starfall_crater: 8,
     miasma_marshes: 4,      // Tier II hazardous
     petrified_expanse: 4,   // Tier II hazardous
+    tidal_pools: 2,         // Tier I - safe
+    kelp_forests: 4,        // Tier II - moderate
+    deep_trenches: 7,       // Tier III - dangerous
   };
   return dangerLevels[biome];
 }
@@ -229,6 +246,9 @@ export function getBiomeColor(biome: BiomeType): number {
     starfall_crater: 0x191970,
     miasma_marshes: 0x6b8e23,
     petrified_expanse: 0xa9a9a9,
+    tidal_pools: 0x5f9ea0,        // Cadet blue
+    kelp_forests: 0x228b22,       // Forest green
+    deep_trenches: 0x191970,      // Midnight blue
   };
   return colors[biome];
 }

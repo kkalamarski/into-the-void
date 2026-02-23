@@ -25,6 +25,9 @@ const BIOME_FEATURE_TILE_IDS: Record<BiomeType, TileId> = {
   starfall_crater: TileId.CRATER_DEBRIS,
   miasma_marshes: TileId.TOXIC_POOL,
   petrified_expanse: TileId.VOID_WALL,
+  tidal_pools: TileId.TIDAL_SHALLOW,
+  kelp_forests: TileId.KELP_WALL,
+  deep_trenches: TileId.TRENCH_DEEP,
 };
 
 /**
@@ -175,6 +178,9 @@ function getFeatureTileIdForBiome(biome: BiomeType): string {
     starfall_crater: TILE_IDS.CRATER_DEBRIS,
     miasma_marshes: TILE_IDS.TOXIC_POOL,
     petrified_expanse: TILE_IDS.VOID_WALL,
+    tidal_pools: TILE_IDS.TIDAL_SHALLOW,
+    kelp_forests: TILE_IDS.KELP_WALL,
+    deep_trenches: TILE_IDS.TRENCH_DEEP,
   };
   return featureTiles[biome];
 }

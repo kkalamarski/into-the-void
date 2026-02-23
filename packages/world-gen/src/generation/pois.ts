@@ -20,6 +20,9 @@ const BIOME_POI_WEIGHTS: Record<BiomeType, Record<PoiType, number>> = {
   frozen_expanse: { anomaly: 7, cache: 4, landmark: 5 },
   volcanic_ridge: { anomaly: 6, cache: 5, landmark: 5 },
   petrified_expanse: { anomaly: 3, cache: 5, landmark: 8 },
+  tidal_pools: { anomaly: 4, cache: 6, landmark: 5 },
+  kelp_forests: { anomaly: 5, cache: 7, landmark: 4 },
+  deep_trenches: { anomaly: 8, cache: 4, landmark: 6 },
 };
 
 /**

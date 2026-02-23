@@ -143,6 +143,36 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     creatureDensity: 3,
     mineralDensity: 6,
   },
+  tidal_pools: {
+    creatures: [
+      { id: ENTITY_IDS.CREATURE_COASTAL_SCUTTLER, weight: 10, minLevel: 1, maxLevel: 5 },
+    ],
+    minerals: [
+      { id: ENTITY_IDS.MINERAL_VOID_CRYSTAL, weight: 10, rarity: 1 },
+    ],
+    creatureDensity: 3,
+    mineralDensity: 4,
+  },
+  kelp_forests: {
+    creatures: [
+      { id: ENTITY_IDS.CREATURE_VOID_CRAWLER, weight: 8, minLevel: 4, maxLevel: 12 },
+    ],
+    minerals: [
+      { id: ENTITY_IDS.MINERAL_VOID_CRYSTAL, weight: 10, rarity: 1 },
+    ],
+    creatureDensity: 4,
+    mineralDensity: 5,
+  },
+  deep_trenches: {
+    creatures: [
+      { id: ENTITY_IDS.CREATURE_VOID_HORROR, weight: 5, minLevel: 10, maxLevel: 25 },
+    ],
+    minerals: [
+      { id: ENTITY_IDS.MINERAL_ANOMALY_CRYSTAL, weight: 6, rarity: 3 },
+    ],
+    creatureDensity: 2,
+    mineralDensity: 3,
+  },
 };
 
 /**

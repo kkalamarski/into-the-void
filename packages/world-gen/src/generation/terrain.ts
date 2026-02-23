@@ -26,6 +26,13 @@ export enum TileId {
   CRATER_FLOOR = 14,
   CRATER_DEBRIS = 15,
   PORTAL = 16,
+  TIDAL_FLOOR = 17,
+  TIDAL_SHALLOW = 18,
+  KELP_FLOOR = 19,
+  KELP_WALL = 20,
+  TRENCH_FLOOR = 21,
+  TRENCH_DEEP = 22,
+  SHORE_TRANSITION = 23,
 }
 
 /**
@@ -51,6 +58,13 @@ export function tileIdToString(id: TileId): string {
     [TileId.CRATER_FLOOR]: TILE_IDS.CRATER_FLOOR,
     [TileId.CRATER_DEBRIS]: TILE_IDS.CRATER_DEBRIS,
     [TileId.PORTAL]: TILE_IDS.PORTAL,
+    [TileId.TIDAL_FLOOR]: TILE_IDS.TIDAL_FLOOR,
+    [TileId.TIDAL_SHALLOW]: TILE_IDS.TIDAL_SHALLOW,
+    [TileId.KELP_FLOOR]: TILE_IDS.KELP_FLOOR,
+    [TileId.KELP_WALL]: TILE_IDS.KELP_WALL,
+    [TileId.TRENCH_FLOOR]: TILE_IDS.TRENCH_FLOOR,
+    [TileId.TRENCH_DEEP]: TILE_IDS.TRENCH_DEEP,
+    [TileId.SHORE_TRANSITION]: TILE_IDS.SHORE_TRANSITION,
   };
   return mapping[id] ?? TILE_IDS.VOID_FLOOR;
 }
@@ -81,6 +95,9 @@ const BIOME_TILES: Record<BiomeType, { floor: TileId; wall: TileId; feature: Til
   },
   miasma_marshes: { floor: TileId.FUNGAL_FLOOR, wall: TileId.TOXIC_POOL, feature: TileId.TOXIC_POOL },
   petrified_expanse: { floor: TileId.VOID_FLOOR, wall: TileId.VOID_WALL, feature: TileId.VOID_WALL },
+  tidal_pools: { floor: TileId.TIDAL_FLOOR, wall: TileId.TIDAL_SHALLOW, feature: TileId.TIDAL_SHALLOW },
+  kelp_forests: { floor: TileId.KELP_FLOOR, wall: TileId.KELP_WALL, feature: TileId.KELP_WALL },
+  deep_trenches: { floor: TileId.TRENCH_FLOOR, wall: TileId.TRENCH_DEEP, feature: TileId.TRENCH_DEEP },
 };
 
 /**
@@ -97,6 +114,9 @@ const BIOME_TILE_IDS: Record<BiomeType, { floor: string; wall: string; feature: 
   starfall_crater: { floor: TILE_IDS.CRATER_FLOOR, wall: TILE_IDS.CRATER_DEBRIS, feature: TILE_IDS.CRATER_DEBRIS },
   miasma_marshes: { floor: TILE_IDS.FUNGAL_FLOOR, wall: TILE_IDS.TOXIC_POOL, feature: TILE_IDS.TOXIC_POOL },
   petrified_expanse: { floor: TILE_IDS.VOID_FLOOR, wall: TILE_IDS.VOID_WALL, feature: TILE_IDS.VOID_WALL },
+  tidal_pools: { floor: TILE_IDS.TIDAL_FLOOR, wall: TILE_IDS.TIDAL_SHALLOW, feature: TILE_IDS.TIDAL_SHALLOW },
+  kelp_forests: { floor: TILE_IDS.KELP_FLOOR, wall: TILE_IDS.KELP_WALL, feature: TILE_IDS.KELP_WALL },
+  deep_trenches: { floor: TILE_IDS.TRENCH_FLOOR, wall: TILE_IDS.TRENCH_DEEP, feature: TILE_IDS.TRENCH_DEEP },
 };
 
 /**
@@ -114,6 +134,9 @@ const BIOME_ELEVATION_RANGES: Record<BiomeType, { min: number; max: number }> = 
   void_plains: { min: 0, max: 3 }, // Standard terrain variation
   miasma_marshes: { min: 0, max: 2 },      // Low-lying marsh
   petrified_expanse: { min: 1, max: 4 },   // Moderate elevation stone forest
+  tidal_pools: { min: 0, max: 1 },         // Very flat coastal
+  kelp_forests: { min: 0, max: 1 },        // Flat underwater
+  deep_trenches: { min: 0, max: 0 },       // Completely flat abyss
 };
 
 /**
@@ -219,6 +242,9 @@ function getWallThreshold(biome: BiomeType): number {
     starfall_crater: 0.5,
     miasma_marshes: 0.45,      // Moderate wall density
     petrified_expanse: 0.5,    // Standard wall density
+    tidal_pools: 0.7,          // Few obstacles
+    kelp_forests: 0.3,         // Dense kelp walls (will be carved by corridors)
+    deep_trenches: 0.8,        // Open trenches
   };
   return thresholds[biome];
 }
@@ -238,6 +264,9 @@ function isFeatureBlocking(biome: BiomeType): boolean {
     starfall_crater: true,
     miasma_marshes: false,     // Toxic pools damage but don't block
     petrified_expanse: true,   // Stone formations block
+    tidal_pools: false,        // Shallow water doesn't block
+    kelp_forests: false,       // Kelp floor doesn't block
+    deep_trenches: false,      // Deep water doesn't block
   };
   return blocking[biome];
 }
