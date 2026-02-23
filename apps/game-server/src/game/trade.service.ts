@@ -154,16 +154,31 @@ export class TradeService {
       return { success: false, error: 'Quest items cannot be sold' };
     }
 
+    // Validate quantity
+    const sellQuantity = Math.min(quantity, item.quantity);
+    if (sellQuantity <= 0) {
+      return { success: false, error: 'Invalid quantity' };
+    }
+
     // Find sell price from trader's inventory (traders buy at sellPrice)
     // If not in trader's specific inventory, use item's baseValue at 50%
     const tradeItem = trader.inventory.find(i => i.itemId === item.itemId);
     const sellPrice = tradeItem?.sellPrice ?? Math.max(1, Math.floor(itemDef.baseValue * 0.5));
-    const totalValue = sellPrice * quantity;
+    const totalValue = sellPrice * sellQuantity;
 
-    // Remove item from inventory
-    const removeResult = await this.inventoryService.removeItem(playerId, itemInstanceId);
-    if (!removeResult.success) {
-      return { success: false, error: removeResult.reason ?? 'Failed to remove item' };
+    // Remove item or reduce quantity
+    if (sellQuantity >= item.quantity) {
+      // Remove entire stack
+      const removeResult = await this.inventoryService.removeItem(playerId, itemInstanceId);
+      if (!removeResult.success) {
+        return { success: false, error: removeResult.reason ?? 'Failed to remove item' };
+      }
+    } else {
+      // Reduce quantity (partial sell)
+      const reduceResult = await this.inventoryService.reduceItemQuantity(playerId, itemInstanceId, sellQuantity);
+      if (!reduceResult.success) {
+        return { success: false, error: reduceResult.reason ?? 'Failed to reduce item quantity' };
+      }
     }
 
     // Add credits

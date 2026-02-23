@@ -194,6 +194,37 @@ export class InventoryService {
   }
 
   /**
+   * Reduce the quantity of a stackable item.
+   * Used for partial sells/trades.
+   */
+  async reduceItemQuantity(
+    playerId: string,
+    instanceId: string,
+    amount: number
+  ): Promise<{ success: boolean; reason?: string }> {
+    const inventory = this.inventories.get(playerId);
+    if (!inventory) {
+      return { success: false, reason: 'Player inventory not loaded' };
+    }
+
+    const item = inventory.items.find((i) => i.instanceId === instanceId);
+    if (!item) {
+      return { success: false, reason: 'Item not found in inventory' };
+    }
+
+    if (amount >= item.quantity) {
+      return { success: false, reason: 'Use removeItem for full stack removal' };
+    }
+
+    item.quantity -= amount;
+
+    const db = this.databaseService.getClient();
+    await updateInventoryItems(db, playerId, inventory.items);
+
+    return { success: true };
+  }
+
+  /**
    * Equip an item from inventory to a named slot (exosuit, tool, accessory1, accessory2).
    * Atomically swaps item between items array and equipment slot using updateInventoryFull.
    *

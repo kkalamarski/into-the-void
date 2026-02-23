@@ -76,12 +76,12 @@ const TradeTab: React.FC<TradeTabProps> = ({ npc, tradeError, setTradeError }) =
     });
   };
 
-  const handleSell = (instanceId: string) => {
+  const handleSell = (instanceId: string, quantity: number) => {
     setTradeError(null);
     gameSocket.emit('trade:sell', {
       npcId: npc.npcId ?? npc.displayName,
       itemInstanceId: instanceId,
-      quantity: 1,
+      quantity,
     });
   };
 
@@ -151,7 +151,8 @@ const TradeTab: React.FC<TradeTabProps> = ({ npc, tradeError, setTradeError }) =
           <div className="npc-trade-items">
             {playerItems.map((item) => {
               const itemDef = ItemRegistry.get(item.itemId);
-              const sellPrice = getSellPrice(item.itemId);
+              const unitPrice = getSellPrice(item.itemId);
+              const totalPrice = unitPrice * item.quantity;
               const rarityColor = RARITY_COLORS[itemDef?.rarity ?? 'common'];
               return (
                 <div key={item.instanceId} className="npc-trade-item">
@@ -171,10 +172,10 @@ const TradeTab: React.FC<TradeTabProps> = ({ npc, tradeError, setTradeError }) =
                     <span className="npc-trade-item-qty">x{item.quantity}</span>
                   </div>
                   <div className="npc-trade-item-action">
-                    <span className="npc-trade-item-price sell-price">{sellPrice} cr</span>
+                    <span className="npc-trade-item-price sell-price">{totalPrice} cr</span>
                     <button
                       className="npc-trade-btn npc-trade-btn--sell"
-                      onClick={() => handleSell(item.instanceId)}
+                      onClick={() => handleSell(item.instanceId, item.quantity)}
                     >
                       Sell
                     </button>
