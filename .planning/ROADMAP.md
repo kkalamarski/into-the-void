@@ -295,7 +295,7 @@ Plans:
 **Goal**: Aquatic biomes are populated with unique resources and creatures appropriate to each tier
 **Depends on**: Phase 82
 **Requirements**: ENT-01, ENT-02, ENT-03, CREA-01, CREA-02, CREA-03, CREA-04
-**Plans:** 2 plans
+**Plans:** 3 plans
 
 **Success Criteria** (what must be TRUE):
   1. Player can gather 5 distinct aquatic minerals (coral, sea crystals, abyssal ore, tidal stones, pearl nodes)
@@ -305,8 +305,9 @@ Plans:
   5. Creature spawn density and behavior matches biome tier (passive in Tier I, dangerous in Tier III)
 
 Plans:
-- [ ] 83-01-PLAN.md — Aquatic entity definitions (10 creatures, 5 plants, 5 minerals, 3 artifacts)
-- [ ] 83-02-PLAN.md — Spawn tables and loot configuration
+- [x] 83-01-PLAN.md — Aquatic entity definitions (10 creatures, 5 plants, 5 minerals, 3 artifacts)
+- [x] 83-02-PLAN.md — Spawn tables and loot configuration
+- [ ] 83-03-PLAN.md — Gap closure: plant and artifact spawn system (systemic fix for ALL biomes)
 
 ---
 
@@ -479,7 +480,7 @@ Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87
 | 80. Zone Mastery & Lore | v1.17 | 5/5 | Complete | 2026-02-23 |
 | 81. Combat Balancing & Quest Audit | v1.17 | 3/3 | Complete | 2026-02-23 |
 | 82. Aquatic Biome Foundation | v1.18 | 3/3 | Complete | 2026-02-23 |
-| 83. Aquatic Entity Population | v1.18 | 0/2 | Planned | - |
+| 83. Aquatic Entity Population | v1.18 | 2/3 | In Progress | - |
 | 84. Exotic Biome Foundation | v1.18 | 0/2 | Not started | - |
 | 85. Exotic Entity Population | v1.18 | 0/2 | Not started | - |
 | 86. Item Integration & Balance | v1.18 | 0/3 | Not started | - |
@@ -488,4 +489,4 @@ Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87
 **Total:** 87 phases (82 complete, 5 pending)
 
 ---
-*Last updated: 2026-02-23 - Phase 83 planned*
+*Last updated: 2026-02-23 - Phase 83 gap closure plan created*
