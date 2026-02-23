@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { eq, and } from 'drizzle-orm';
 import { DatabaseService } from '../database/database.service';
 import { discoveredPois, discoveredResources, characters } from '@into-the-void/database';
@@ -30,7 +31,10 @@ export interface ResourceDiscoveryData {
 export class DiscoveryService {
   private readonly logger = new Logger(DiscoveryService.name);
 
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   /**
    * Attempt to discover a POI. Returns reward if successful.
@@ -66,6 +70,13 @@ export class DiscoveryService {
         characterId,
         poiId,
         poiType,
+      });
+
+      // Emit event for zone mastery tracking
+      this.eventEmitter.emit('poi.discovered', {
+        characterId,
+        poiId,
+        biome,
       });
 
       // 3. Calculate reward with biome tier multiplier
