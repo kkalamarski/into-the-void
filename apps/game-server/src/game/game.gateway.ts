@@ -32,6 +32,8 @@ import {
   CharacterStats,
   isHubZone,
   Npc,
+  Mineral,
+  Plant,
 } from '@into-the-void/shared-types';
 import { computeCharStats } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
@@ -170,6 +172,10 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         // Load gathering proficiency for this session
         await this.gatheringService.loadProficiency(result.player.id);
 
+        // Send discovered rare nodes on join
+        const discoveredResources = await this.discoveryService.getDiscoveredResources(result.player.id);
+        client.emit('rare-nodes:discovered', { discoveries: discoveredResources });
+
         client.emit('auth:success', { player: result.player });
         client.emit('zone:state', zoneState);
         // Send NPC quest markers (! and ? above NPCs)
@@ -248,7 +254,16 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
       const result = await this.gameService.movePlayer(client.id, data.direction);
 
-      if (result.success) {
+      if (result.success && result.position) {
+        // Check for rare node discoveries after movement
+        await this.checkRareNodeDiscovery(
+          player.id,
+          result.position.x,
+          result.position.y,
+          result.position.zoneId,
+          client
+        );
+
         // Notify players in old and new zone
         if (result.oldZoneId && result.newZoneId) {
           // Zone transition - update 3x3 room subscriptions
@@ -1485,6 +1500,64 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     for (const room of requiredRooms) {
       if (!currentRooms.includes(room)) {
         client.join(room);
+      }
+    }
+  }
+
+  /**
+   * Check for rare node discoveries when player moves.
+   * Called from movement handler after position update.
+   */
+  private async checkRareNodeDiscovery(
+    characterId: string,
+    playerX: number,
+    playerY: number,
+    zoneId: string,
+    socket: Socket
+  ): Promise<void> {
+    const RARE_DISCOVERY_RANGE = 3; // Tiles - player must be within 3 tiles to discover
+
+    const entities = await this.zonesService.getZoneEntities(zoneId);
+
+    for (const entity of entities) {
+      // Only check minerals and plants
+      if (entity.type !== 'mineral' && entity.type !== 'plant') continue;
+
+      // Check if entity has rarity (rare or epic)
+      const rarity = (entity as Mineral | Plant).rarity;
+      if (!rarity || rarity === 'common') continue;
+
+      // Calculate distance
+      const distance = Math.hypot(
+        playerX - entity.position.x,
+        playerY - entity.position.y
+      );
+
+      if (distance <= RARE_DISCOVERY_RANGE) {
+        // Attempt discovery
+        const resourceId = entity.type === 'mineral'
+          ? (entity as Mineral).resourceId
+          : (entity as Plant).speciesId;
+
+        const discoveryData = {
+          entityId: entity.id,
+          rarity: rarity as 'rare' | 'epic',
+          resourceType: entity.type as 'mineral' | 'plant',
+          zoneId,
+          worldX: entity.position.x, // These are already world coords
+          worldY: entity.position.y,
+          resourceId,
+        };
+
+        const isNew = await this.discoveryService.discoverResource(
+          characterId,
+          discoveryData
+        );
+
+        if (isNew) {
+          // Emit new discovery event to player
+          socket.emit('rare-node:new-discovery', discoveryData);
+        }
       }
     }
   }
