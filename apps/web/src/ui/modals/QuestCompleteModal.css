@@ -4,15 +4,17 @@
   left: 0;
   right: 0;
   bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 200;  /* Above panels (100), below death screen (1000) */
   pointer-events: none;  /* Allow clicks through to game */
   animation: fadeIn 0.3s ease-out;
 }
 
 .quest-complete-modal {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;  /* Enable clicks */
+  cursor: pointer;  /* Indicate clickable */
   background: linear-gradient(135deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
   border: 2px solid var(--color-accent);
   border-radius: 8px;
