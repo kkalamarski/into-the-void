@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 81 (Combat Balancing & Quest Audit) - IN PROGRESS
-Plan: 2/? complete (01, 02)
+Plan: 3/? complete (01, 02, 03)
 Status: Active
-Last activity: 2026-02-23 — Completed 81-01 Level Gap Damage Multiplier
+Last activity: 2026-02-23 — Completed 81-03 Creature Health Rebalancing
 
 Progress: [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 5.0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 221
+- Total plans completed: 222
 - Average duration: ~3 min per plan
-- Total execution time: ~11.1 hours across 17 milestones
+- Total execution time: ~11.2 hours across 17 milestones
 
 **By Milestone:**
 
@@ -87,6 +87,7 @@ Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 
 | Phase 80 P05 | 45 | 1 tasks | 1 files |
 | Phase 81 P02 | 167 | 3 tasks | 2 files |
 | Phase 81 P01 | 189 | 2 tasks | 2 files |
+| Phase 81 P03 | 484 | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -192,6 +193,10 @@ Recent decisions affecting current work:
 - [Phase 81]: 15% multiplier per level beyond 5-level threshold prevents one-shots while maintaining meaningful level advantage
 - [Phase 81-02]: world_void_flora_sample as common rarity with 100% drop chance from PLANT_VOID_FERN ensures Verdant chain quest completability
 - [Phase 81-02]: Dual biome spawning (fungal_forest + void_plains) balances quest location with new player accessibility
+- [Phase 81-03]: Backward TTK design calculates creature health from target 6-hit kills using damage formula
+- [Phase 81-03]: Tier-based health scaling (70-100 T1, 110-160 T2, 140-220 T3, 280-320 T4) maintains difficulty curve
+- [Phase 81-03]: TTK simulation tests run 100 iterations to smooth ±10% variance and 5% crit randomness
+- [Phase 81-03]: Ability DPS tests use 10s rotation windows with 50 iterations for realistic gameplay representation
 
 ### Pending Todos
 
@@ -213,12 +218,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 81-01 Level Gap Damage Multiplier
+Stopped at: Completed 81-03 Creature Health Rebalancing
 Resume file: None
 
 **Next steps:**
-1. Continue Phase 81 (Combat Balancing & Quest Audit) - Plans 01 and 02 complete
+1. Continue Phase 81 (Combat Balancing & Quest Audit) - Plans 01, 02, and 03 complete
 2. Complete remaining plans in Phase 81 to finish v1.17 milestone
 
 ---
-*Last updated: 2026-02-23 - Completed Phase 81 Plan 01 Level Gap Damage Multiplier*
+*Last updated: 2026-02-23 - Completed Phase 81 Plan 03 Creature Health Rebalancing*
