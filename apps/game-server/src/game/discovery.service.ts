@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
 import { DatabaseService } from '../database/database.service';
-import { discoveredPois, characters } from '@into-the-void/database/schema';
+import { discoveredPois, characters } from '@into-the-void/database';
 import {
   DiscoveryReward,
   PoiType,
