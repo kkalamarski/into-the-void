@@ -1,258 +1,316 @@
-# Feature Research: Entity System (v1.8)
+# Feature Landscape: Aquatic and Exotic Biomes Content Expansion
 
-**Domain:** Entity system — creatures, plants, minerals, artifacts in a multiplayer 2D sci-fi survival MMO
-**Researched:** 2026-02-18
-**Confidence:** HIGH (codebase direct inspection + lore alignment); MEDIUM (survival game patterns via web research)
+**Domain:** Content expansion for 2D sci-fi survival MMO
+**Researched:** 2026-02-23
+**Confidence:** MEDIUM
 
----
+## Context
 
-## Context: What Already Exists
+Into the Void is adding aquatic biomes (underwater/ocean zones) and exotic/alien biomes (void rifts, dimensional anomalies) to an existing system with 10 biomes, procedural generation, gathering mini-game, 4 entity types, fog of war, and creature AI. The lore establishes Terminus as a patchwork planet with Anomaly Zones (Tier IV extreme) where "reality is optional."
 
-The entity system builds on a partial foundation. Understand what is already in place before adding the new layer.
-
-| Component | Current State | Relevance to Entity System |
-|-----------|---------------|---------------------------|
-| `Entity`, `Creature`, `Mineral` interfaces | In `shared-types/core/entity.ts` | Foundation types exist. `Creature` has health, level, behavior. `Mineral` has yield/tier. Both need new fields (loot tables, fertility, respawn). |
-| `CreatureBehavior` type | `'passive' \| 'neutral' \| 'aggressive' \| 'defensive'` | Does NOT match lore's 4-class model (Herbivore/Omnivore/Predator/Maniac). Must be updated. |
-| `EntityRegistry` | Stub in `shared-types/game/entity-registry.ts` with 4 creatures, 4 minerals | Placeholder data. Needs full expansion to ~35 definitions matching lore biomes. |
-| `BiomeSpawnConfig` in `world-gen/generation/spawn.ts` | Per-biome creature/mineral lists with weights and densities | This is the spawning engine. Works. Does not handle Plants or Artifacts yet. Only 8 old biome types; lore now has 10. |
-| `ZonesService` | Loads zones, spawns entities from `SpawnPoint`, `despawnEntity()`, `spawnEntity()` | Respawn mechanism: `SpawnPoint.respawnTime` exists but respawn tick loop does NOT exist. Must be built. |
-| `GameService.handleInteraction()` | Dispatches on entity type: `mineral` deactivates immediately (no yield logic), `creature` sets `inCombat` only | Interaction logic is stub-level. Harvest, combat, loot all need real implementation. |
-| `Perception` stat | In `CharacterStats` (durability, toughness, power, haste, vigor, recovery, perception, resilience) | Perception gates entity visibility — the `???` display requires reading this stat. Foundation exists in stats system. |
-| `getBiome()` / biome types | 8 biome types in `world-gen`, 10 biomes in lore (missing: Miasma Marshes → `miasma_marshes`, Petrified Expanse → `petrified_expanse`) | Biome mismatch must be resolved. Entity definitions must reference correct biome IDs. |
-| Entity rendering (health bars) | Basic entity rendering exists in Phaser client | Health bars rendered. No perception gating, no `???` display, no loot animation. |
-
-**Key insight:** The spawn, zone, and interaction infrastructure exists in skeletal form. v1.8 fills in the content (35 definitions), the AI tick (wander loop), the loot system (weighted drops), and the perception gate (???). No architectural rebuild needed — targeted extension of existing systems.
+This research focuses on player expectations and feature patterns from the survival game genre, adapted for 2D top-down perspective and sci-fi corporate survival setting.
 
 ---
 
-## Lore Alignment: 4 Behavior Classes
+## Table Stakes
 
-Lore defines exactly four behavioral classes. The existing `CreatureBehavior` type (`passive`, `neutral`, `aggressive`, `defensive`) does not match these. All implementation must use lore-accurate behavior names.
+Features players expect in aquatic and exotic biomes. Missing these = content feels incomplete or inconsistent with existing systems.
 
-| Lore Class | Threat Level | Attack Condition | Current Type (wrong) | Correct Type |
-|-----------|-------------|------------------|---------------------|-------------|
-| Herbivore | Low | Cornered only / young threatened | `'passive'` | `'herbivore'` |
-| Omnivore | Moderate | Significantly larger AND hungry | `'neutral'` | `'omnivore'` |
-| Predator | High | Hungry + viable prey identified | `'aggressive'` | `'predator'` |
-| Maniac | Extreme | Any perceived entity, always | `'defensive'` | `'maniac'` |
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|--------------|------------|--------------|-------|
+| **Biome-specific visibility rules** | Underwater = reduced vision range; Anomaly = distorted vision | Medium | Fog of war system, rendering layer | Existing fog of war must support per-biome visibility modifiers |
+| **Unique resource nodes per biome** | Each biome needs distinct gatherable entities (minerals, plants, artifacts) | Low | Entity registry, gathering system | ~30 new entities across all new biomes with unique IDs, textures, loot tables |
+| **Biome-appropriate creature behaviors** | Aquatic creatures use different movement; Anomaly creatures have unpredictable patterns | Medium | Creature AI, movement validation | May need new AI behaviors beyond herbivore/omnivore/predator/maniac |
+| **Environmental hazards per biome** | Aquatic = drowning/pressure; Anomaly = reality distortion effects | Medium | Status effect system, tick damage | Lore defines hazards: aquatic predators, spatial tears, temporal stutters |
+| **Biome tier consistency** | New biomes fit existing Tier I-IV system (Frontier → Extreme) | Low | Danger level system, spawn rates | Aquatic likely Tier I-II; Exotic/Anomaly must be Tier IV |
+| **Loot quality scaling** | Higher-tier biomes = better resources (1.5x to 6.0x profit multiplier) | Low | Item rarity, drop tables | Follows existing biome tier multipliers from lore |
+| **Biome-specific visual identity** | Distinct color palette, tile sets, ambient effects | Medium | Sprite assets, tile rendering | 2D isometric tiles (256x256); aquatic = blues/greens, anomaly = "impossible colors" |
+| **Integration with gathering mini-game** | All harvestable entities use existing timing challenge system | Low | Gathering service, timing validation | Artifacts should remain instant-collect (per Phase 33 research) |
+| **Creature spawn distribution** | ~20 new creatures distributed across new biomes by habitat | Low | Spawn generation, biome data | Each creature config includes `biomes: string[]` array |
+| **Item integration** | ~40 new items from new resources fit existing equipment/consumable/material systems | Medium | Item registry, inventory system, crafting | Tools, suits, consumables made from aquatic/anomaly materials |
 
----
-
-## Feature Landscape
-
-### Table Stakes (Users Expect These)
-
-Survival MMO players universally expect these behaviors. Missing any of them makes the world feel empty, static, or broken.
-
-| Feature | Why Expected | Complexity | Dependencies on Existing |
-|---------|--------------|------------|--------------------------|
-| **4 entity types: Creature, Plant, Mineral, Artifact** | Survival games (Minecraft, ARK, No Man's Sky, Tibia) always provide distinct entity categories that feel different to interact with. Creatures move and fight back. Plants are harvested passively. Minerals deplete on interaction. Artifacts are collectible rarities. Players parse these categories by instinct. | LOW | `EntityType` in `entity.ts` already has `creature`, `mineral`; add `plant`, `artifact`. |
-| **~35 entity definitions covering all 10 biomes** | Each biome must feel unique. Encountering the same creatures in every zone makes the world feel copy-pasted. Lore specifies unique flora/fauna per biome. 10 creatures, 10 plants, 10 minerals, 5 artifacts = 35 definitions is minimum viable content for distinct biome identity. | MEDIUM | `EntityRegistry` already exists as the data store. `BiomeSpawnConfig` already exists per biome. Definitions are data, not code — moderate content work. |
-| **Biome-specific spawning** | Players expect creatures to match their environment: bioluminescent fauna in Luminous Canopy, silicon-armored creatures in Volcanic Reaches, blind vibration-sensing creatures in Fungal Depths. Biome identity depends on this. | LOW | `BiomeSpawnConfig` in `world-gen/generation/spawn.ts` already implements this. Needs 2 new biome entries (Miasma Marshes, Petrified Expanse) and updated creature IDs. |
-| **Weighted random loot drops** | Players expect killing creatures or harvesting resources to yield items. Without drops, there is no resource loop, no progression, no reason to interact with entities. Loot tables are fundamental to every survival game from Minecraft to DayZ. The standard approach is weighted random selection from a per-entity drop table. | MEDIUM | Item system with 100 items and `ItemRegistry` already built. `ZonesService.spawnEntity()` can spawn ground item entities. Ground items with `despawnAt` already modeled in `ItemEntity`. Weighted pick function already in `world-gen/generation/spawn.ts`. |
-| **Entity health and depletion** | Creatures must be damageable and killable. Minerals must deplete over harvests (not disappear in one hit). Players expect feedback: damage numbers, health bar changes, resource node "cracking" or visually depleting. | LOW (server) / MEDIUM (client visual) | `Creature.health/maxHealth` already in type. `Mineral.yield/maxYield` already in type. `GameService.handleInteraction()` needs real damage/depletion logic. `ZonesService.updateEntity()` exists. |
-| **Entity respawn system** | When entities die or are depleted, they must come back. Static non-respawning entities would be exhausted by the player population within hours. Respawn timers (1-5 min for common creatures, 2-5 min for minerals, longer for artifacts) are the genre standard. | MEDIUM | `SpawnPoint.respawnTime` exists. BUT the respawn tick loop does NOT exist — `ZonesService` has no timer-based entity reactivation. This is the primary new server component needed. |
-| **Creature idle wander movement** | Creatures standing perfectly still look wrong and feel dead. Players expect passive creatures to graze, patrol a small area, or move randomly. This is table stakes for any creature system — even Minecraft skeletons wander at night. Wander patterns make the world feel alive. | MEDIUM | No movement system for entities exists currently. Server-side position updates for entities must be added. Should be periodic (every 3-5s) and short-range (2-4 tiles from spawn point) to avoid performance problems. |
-| **Perception/level gating with ??? display** | In survival MMOs (WoW's skull icon, EverQuest's con system, Pantheon's Perception system), players receive visual cues about whether an entity is within their ability to engage safely. "???" for entities that exceed the player's Perception/level is an expected pattern that communicates danger, rewards exploration, and drives character progression. | MEDIUM | `CharacterStats.perception` exists in the stats system. Entity display logic lives in Phaser client. Requires: server sends entity level/tier in zone state, client compares against player Perception stat, renders `???` for out-of-range entities. |
-| **Interaction feedback (harvest yield, loot drop)** | When a player harvests a mineral, they expect to see items added to inventory. When a creature dies, they expect to see loot appear on the ground or go directly to inventory. No visual/audio feedback = players doubt the interaction worked. | LOW | `InventoryService.addItem()` exists. Ground item spawning via `ZonesService.spawnEntity()` exists. Socket events exist. Need: loot resolution on entity death + item spawn + inventory update broadcast. |
+**Critical:** All new content must respect lore constraints. Terminus biomes appear in "seemingly random distribution" with "minimal transitional zones." Aquatic biomes are **NOT** oceans covering continents — they are patches (like Coastal Shallows Tier I). Anomaly Zones already exist in lore as Tier IV biomes where "physics is unreliable."
 
 ---
 
-### Differentiators (Competitive Advantage)
+## Differentiators
 
-Features that fit Into the Void's specific lore and sci-fi identity. These go beyond standard survival game patterns and make the entity system feel unique to Terminus.
+Features that set aquatic and exotic biomes apart from baseline content. Not expected, but add depth and replayability.
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| **4-class lore-accurate creature behavior AI** | The Herbivore/Omnivore/Predator/Maniac system from the world bible is more nuanced than the standard "passive/aggressive" binary of most survival games. Herbivores flee when cornered (defensive only). Omnivores calculate size differential before attacking. Predators are satiated vs hungry (conditional threat). Maniacs attack everything without survival instinct. This creates emergent player experiences: a satiated predator can be approached, a cornered herbivore is more dangerous than players expect. | MEDIUM | State machine per creature type: Herbivore (idle, flee, fight-if-cornered). Omnivore (idle, wander, size-check, hunt). Predator (idle, stalk, hunger-timer, hunt). Maniac (always aggro, no flee state). Implemented as a server-side tick — NOT pathfinding, just directional updates and aggro flag. |
-| **Fertility zone modifier (Barren/Normal/Lush)** | Biome-level fertility zones modulate spawn density: Lush zones have 1.5x entity density, Barren zones have 0.5x. This creates within-biome variation — two chunks of Luminous Canopy feel different, with some feeling dense and teeming vs sparse and foreboding. Players discover these zones through exploration rather than a map UI. Aligned with lore's aggressive adaptation and symbiotic complexity of Terminus biology. | LOW | `BiomeSpawnConfig.creatureDensity/mineralDensity` already drives spawn count. Add a `fertilityMultiplier` per chunk derived from the existing noise layer (reuse elevation or moisture). No new infrastructure — one line in spawn density calculation. |
-| **Perception-gated discovery with scan unlock** | Rather than just showing `???` forever, players with Perception investment can "scan" an unknown entity to permanently unlock its codex entry — species name, behavior class, loot preview. This creates an explorer progression path: research-tool players level Perception to catalogue Terminus fauna, matching Verdant Dynamics' xenobiology research theme and the lore's emphasis on corporate knowledge extraction. | HIGH | Requires: codex data store (per-character or account-level discovered entities), scan action on examine interaction, unlock event. High complexity for v1.8 — flag as future feature. The `???` display is table stakes; the scan/unlock is the differentiator. |
-| **Artifact entities as one-time world discoveries** | Artifacts do not respawn. Finding one is a permanent event per zone instance. This creates scarcity and genuine discovery moments — the feeling of "I found something no one in this zone has seen." Aligns with lore's Ancient ruins theme (artifacts are remnants of the Ancients, their absence after collection means you found the last piece). | LOW | `SpawnPoint.respawnTime = -1` (or `Infinity`) for artifact spawn points. `ZonesService.despawnEntity()` marks inactive; respawn tick skips `respawnTime === -1`. Simple flag, large experiential payoff. |
-| **Biome-tier creature level brackets matching survival tiers** | Lore defines 4 survival tiers (I-IV). Creature level ranges must be bracketed to match: Tier I biomes (Luminous Canopy, Coastal Shallows, Scarred Badlands) spawn creatures level 1-10. Tier II (Miasma Marshes, Petrified Expanse) spawn 10-20. Tier III (Volcanic Reaches, Crystalline Wastes, Fungal Depths, Frozen Reaches) spawn 20-35. Tier IV (Anomaly Zones) spawn 35+. This makes biome danger legible — stepping into a higher tier feels immediately different. | LOW | Level ranges already in `BiomeSpawnConfig` per creature entry. Restructuring them to match lore tiers is a data change, not a code change. |
-| **Plant-specific interaction: passive harvest vs proximity trigger** | Plants in lore are described as reactive — the Luminous Canopy brightens when approached. Some have proximity triggers (gas-releasing pods in Miasma Marshes). Implementing two plant interaction modes — passive harvest (approach and gather) vs proximity trigger (approaching causes a spore cloud status effect) — creates environmental depth. Players must learn which plants are safe to approach. | HIGH | Proximity trigger requires server-side zone-tick proximity check for players near plant entities. Status effect system needed. High complexity — the passive harvest plant is v1.8 table stakes; proximity trigger is a differentiator for future milestone. |
+| Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---------|-------------------|------------|--------------|-------|
+| **Depth-based mechanics in aquatic biomes** | Multiple vertical layers with different creatures/resources per depth | High | Zone generation, spawn logic | 2D top-down view doesn't naturally show depth; needs abstraction (shallow/mid/deep sub-zones?) |
+| **Tidal cycle mechanics** | Resource nodes appear/disappear based on time of day (dual moons) | High | World time system, entity lifecycle | Lore mentions "complex tidal patterns" from dual moons Vigil and Whisper |
+| **Anomaly zone instability** | Geography shifts, entities phase in/out, time dilation effects | Very High | Zone data mutation, client sync | Lore: "Geography shifts. Time stutters." Technical challenge for multiplayer sync |
+| **Anomaly-forged materials** | Unique item tier only available from Tier IV zones | Medium | Item system, crafting recipes | Lore: "Anomaly-forged materials (unique and valuable)" — endgame gear |
+| **Aquatic-specific movement speed modifiers** | Different tile types affect movement differently (kelp forest vs open water) | Low | Movement validation, tile data | Already have `TileType.speedModifier` |
+| **Reality distortion visual effects** | Shader effects for Anomaly zones (color shifts, geometry warps, impossible perspectives) | High | Client rendering, Phaser shaders | Lore: "impossible geometries and colors that shouldn't exist" |
+| **Amphibious creatures** | Creatures that transition between aquatic and land biomes | Medium | Creature AI, biome boundaries | Coastal Shallows lore mentions "creatures that cross water-land boundary" |
+| **Temporal resource mechanics** | Plants/minerals in Anomaly zones that exist in temporal loops or phase states | Very High | Entity state management, respawn timers | Lore: "Temporal Stutters: Localized time distortions" |
+| **Pressure damage in deep water** | Depth-based hazard requiring specific suit upgrades | Medium | Status effects, equipment stats | Logical extension of aquatic realism; requires suit progression system |
+| **Ancient artifact concentration** | Anomaly zones have higher artifact spawn rates (lore-accurate) | Low | Spawn generation | Lore: "Ancient artifacts often overlap with Anomaly zones" |
+| **Biome-specific discovery achievements** | Zone mastery tracking for new biomes (already have system) | Low | Zone mastery system | Extends existing POI discovery and fog of war systems |
+| **Anomaly exposure corruption** | Prolonged time in Anomaly zones applies temporary debuffs or mutations | Medium | Status effects, zone time tracking | Lore: "exposure to Anomaly effects damages aggression regulation" |
+
+**Strategic Note:** Depth and tidal mechanics are HIGH complexity for 2D perspective. Consider simpler abstractions: "Deep Water" zone type vs "Shallow Water" zone type rather than continuous depth. Tidal cycles could be binary (exposed/submerged) triggered by time of day.
+
+**Anomaly Instability:** This is the signature differentiator but also highest technical risk. Start with static Anomaly zones (fixed layout, unique visuals) before attempting dynamic geography shifts. Multiplayer synchronization of shifting terrain is a Phase-level milestone, not a content addition.
 
 ---
 
-### Anti-Features (Commonly Requested, Often Problematic)
+## Anti-Features
 
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| **Full pathfinding for creature AI** | Players expect creatures to navigate around obstacles, not walk into walls. Pathfinding makes AI feel smart. | A* or Dijkstra on a per-entity basis in a multiplayer server tick is catastrophically expensive at scale. 50 creatures across 10 zones running A* at 60fps = immediate performance ceiling. This is the most documented pitfall in server-side MMO entity AI (Minecraft server entity lag). | Simple directional wander: creatures move in a random cardinal direction, try an alternative direction if blocked. For aggro: move toward player on each server tick (4-8 ticks/sec) — simple delta toward target. Players accept imprecise creature movement. The Tibia model (creatures track toward player without full pathfinding) is the proven pattern for this scale. |
-| **Real-time creature combat with turn-by-turn actions** | Players expect action-RPG-style combat where creature decision-making happens every frame, abilities fire on cooldowns, etc. | Full real-time combat simulation per creature on the server is an engine architecture decision that requires a dedicated combat tick with state machines per entity, cooldown tracking, ability queues. This is a separate milestone, not entity system scope. | Creature combat in v1.8 is: creature deals damage on each server tick when in aggro range. Damage is fixed per creature type with minor randomness. Full turn-based or ability-based combat is a future milestone. Entity system provides the AI behavior states (flee/hunt/ignore) — damage resolution is kept simple. |
-| **Infinite entity density (spawn everywhere)** | Dense creature populations feel alive. Players in survival games like to feel surrounded by wildlife. | High entity counts per zone are the primary cause of server tick performance degradation. Each entity requires position updates, behavior ticks, proximity checks. At >30 entities per zone, server tick time starts suffering. The fix (entity AI optimizer, reducing visible mob range) negates the purpose. | Density caps per zone: 15 creatures max, 10 minerals max, 5 plants max, 2 artifacts max per chunk. The fertility zone modifier allows chunks to feel denser or sparser within these caps. Quality of encounter over quantity of entities. |
-| **Creature memory / grudge system** | Players ask for creatures that "remember" being attacked, track players across zones, persist aggro. | Cross-zone entity state persistence requires entity state to survive zone cache eviction (currently zones are LRU cached with 5-minute TTL). Persisting creature aggro in the database is premature complexity. Cross-zone tracking defeats the zone boundary as a safe retreat mechanic. | Aggro radius is per-zone and session only. Creatures de-aggro when player leaves zone or creature returns to spawn leash radius. This is the standard model (WoW, Tibia leash radius). |
-| **Random rare creature spawns (boss equivalent) in every zone** | Players want rare named creatures for high-value loot — makes exploration exciting. | Without a full notification or map system, random rare spawns are invisible to players most of the time and are killed instantly by the first player to encounter them, creating spawn camping. | Defer rare/boss spawns to a dedicated "boss system" milestone. In v1.8, rarity is handled through Artifact entities (one-time discoveries) and loot table rarity weights. Named bosses require their own design and player communication system. |
-| **Creature taming/domestication** | Common survival game request (ARK: Survival Evolved, Palworld). Players want pets. | Taming requires a creature state machine addition (tamed/wild), persistent creature ownership data, movement mode changes (follow player), client rendering changes. This is a full parallel system to build, not an entity system feature. | Out of scope for v1.8. Note in backlog: Verdant Dynamics faction quest line could introduce creature taming as a faction-specific progression feature. The lore supports it ("bioengineering native species for industrial purposes"). |
+Features to explicitly NOT build for this content expansion.
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| **Underwater oxygen/breathing mechanic** | 2D top-down doesn't convey breath urgency well; breaks exploration flow | Environmental tick damage in "Deep" aquatic sub-zones (like existing hazards: radiation, toxic, cold) |
+| **Swimming skill progression** | Adds complexity without clear gameplay value in 2D perspective | Use suit equipment (aquatic suit variants) to enable deeper zones |
+| **Submarines/vehicles** | Scope creep; requires new systems (vehicle control, inventory, docking) | Players are in exo-suits (already established). Aquatic suit = underwater capability |
+| **Anomaly zone "solving" puzzles** | Lore states Anomalies are dangerous, not puzzle dungeons | Anomalies are extreme-tier resource zones with high risk/reward, not quest content |
+| **Water physics simulation** | 2D isometric doesn't benefit from fluid dynamics | Use tile-based water zones with visual effects (animated tiles, particle overlays) |
+| **Continuous depth with gradual transitions** | Too complex for 2D; hard to communicate to player | Discrete zones: Shallow (Tier I), Mid-depth (Tier II), Deep (Tier III), Abyss (Tier IV) |
+| **Anomaly zone "corruption" spreading** | Dynamic biome mutation breaks procedural generation determinism | Anomaly zones are fixed spawn locations during world gen (like other biomes) |
+| **Unique controls for aquatic movement** | Breaks input consistency; confusing in MMO with frequent biome transitions | Same WASD movement; just different speed modifiers per tile type |
+| **Procedural Anomaly generation** | "Random" anomalies feel arbitrary; lore states they overlap with Ancient ruins (intentional placement) | Anomaly zones spawn near Ancient ruin structures during world generation |
+| **Multi-level water zones (layers at different elevations)** | 2D perspective makes elevation ambiguous | Single-layer water zones; depth is abstracted through zone type, not Z-axis |
+
+**Design Philosophy:** This is content expansion, not systems overhaul. Reuse existing systems (gathering, combat, fog of war, zone mastery) with new data (entities, items, biomes). Avoid adding new input methods, HUD elements, or core gameplay loops.
+
+**Lore Constraint:** Anomaly Zones are **already in the game** as Tier IV biomes. This milestone adds *more* Anomaly Zone variants (void rifts, dimensional rifts) and populates them with entities/items, not creates the concept from scratch.
 
 ---
 
 ## Feature Dependencies
 
+### On Existing Systems
+
 ```
-[Entity Definitions (~35)] — data in EntityRegistry + BiomeSpawnConfig
-    └──feeds──> [Biome-specific spawning] (already working)
-    └──feeds──> [Loot tables per entity] (new: drop table field in EntityRegistry)
-    └──feeds──> [Level brackets per biome tier] (data only)
+Aquatic Biomes depend on:
+├── Biome generation (existing)
+├── Entity spawn system (existing)
+├── Gathering mini-game (existing)
+├── Fog of war (needs per-biome visibility modifiers)
+├── Tile rendering (needs aquatic tile sets)
+└── Creature AI (needs aquatic movement patterns)
 
-[BiomeType expansion] — add miasma_marshes, petrified_expanse to BiomeType enum
-    └──required by──> [Entity definitions] (definitions reference biome IDs)
-    └──required by──> [BiomeSpawnConfig] (new entries needed)
+Exotic/Anomaly Biomes depend on:
+├── Anomaly Zone biome type (exists in lore, verify implementation)
+├── Entity spawn system (existing)
+├── Gathering mini-game (existing)
+├── Status effects system (for reality distortion hazards)
+├── Rare item generation (Anomaly-forged materials)
+└── Shader effects (for visual distortion — optional but impactful)
 
-[Respawn tick loop] — new: interval timer in ZonesService
-    └──requires──> [SpawnPoint.respawnTime] (already exists, populated)
-    └──enables──> [Creature respawn after death]
-    └──enables──> [Mineral respawn after depletion]
-    └──excludes──> [Artifact respawn] (respawnTime = -1, intentionally skipped)
+New Entities (~30) depend on:
+├── Entity registry (existing)
+├── Entity definitions (existing)
+├── Harvest yield system (existing)
+└── Sprite assets (new)
 
-[Creature behavior AI tick] — new: server-side entity update loop
-    └──requires──> [4-class behavior types] (update CreatureBehavior type)
-    └──requires──> [Entity position update in ZonesService] (extend updateEntity())
-    └──feeds──> [Client entity position sync] (new socket event: entity:moved)
-
-[Loot resolution] — on creature death / mineral depletion
-    └──requires──> [Loot tables in EntityRegistry] (new field per entity definition)
-    └──requires──> [Weighted pick function] (already in world-gen/random, reuse)
-    └──requires──> [ItemRegistry] (already built with 100 items)
-    └──feeds──> [Ground item spawn via ZonesService.spawnEntity()]
-    └──feeds──> [Inventory update via InventoryService.addItem()]
-
-[Perception gating / ??? display]
-    └──requires──> [CharacterStats.perception] (already in stats system)
-    └──requires──> [Entity level field in zone state payload] (must be sent to client)
-    └──requires──> [Client Phaser rendering: ??? override] (conditional name render)
-
-[Fertility zones]
-    └──requires──> [Noise layer access in spawn.ts] (already has SeededRandom, can derive)
-    └──enhances──> [Biome-specific spawning] (density multiplier on creature/mineral count)
-
-[Artifact one-time discovery]
-    └──requires──> [Respawn tick loop] (to skip respawnTime === -1 entities)
-    └──enhances──> [Perception gating] (artifact reveals name only with sufficient Perception)
+New Items (~40) depend on:
+├── Item registry (existing)
+├── Crafting recipes (if applicable)
+├── Loot tables (for creature drops)
+└── Equipment stats system (for suits/tools)
 ```
 
-### Dependency Notes
+### System Gaps to Address
 
-- **BiomeType expansion is the critical path:** Every entity definition references a biome ID. The two missing biomes (`miasma_marshes`, `petrified_expanse`) must be added to the `BiomeType` enum and `BIOME_SPAWN_CONFIGS` before any definitions using them can be written.
-- **Respawn tick loop must be built before creature/mineral content matters:** Without respawn, every entity that gets harvested or killed creates a permanently dead spawn point. The loop is not complex (setInterval on `ZonesService`, checks `entity.active === false && Date.now() > respawnAt`), but it is a prerequisite for testing entity flow.
-- **Loot tables are independent of behavior AI:** Loot resolution on death can be implemented before the wander AI tick. These are separate subsystems with the same trigger (entity death/depletion).
-- **Perception gating depends on stats system (already built in previous phase):** The `CharacterStats.perception` field exists. The gating only requires the client to receive entity level in the zone state and compare it to the player's Perception value. Server-side the stat is already computable.
-- **Creature behavior AI is purely server-side:** The client does not simulate creature movement — it renders entity positions received from the server. The AI tick runs on the game-server and broadcasts position changes via socket.
+1. **Biome-specific fog of war**: Current system may not support per-biome visibility ranges
+2. **Environmental hazard variety**: Need status effects for drowning, pressure, reality distortion (or reuse existing: toxic, radiation, void_storm)
+3. **Aquatic creature movement**: AI may need adjustment for "flowing" movement vs land-based pathing
+4. **Anomaly visual effects**: Client rendering for "impossible colors" and spatial distortion
+5. **Depth abstraction**: If implementing shallow/mid/deep zones, need zone sub-typing or metadata
 
----
-
-## MVP Definition
-
-### Launch With — v1.8 Entity System
-
-Minimum to make the world feel populated with entities that behave, respawn, and drop loot.
-
-- [ ] **`BiomeType` updated** — Add `miasma_marshes` and `petrified_expanse` to enum. Add `BiomeSpawnConfig` entries for both. Update biome generation thresholds.
-- [ ] **`CreatureBehavior` updated** — Replace `'passive' | 'neutral' | 'aggressive' | 'defensive'` with `'herbivore' | 'omnivore' | 'predator' | 'maniac'` matching lore classification.
-- [ ] **~35 entity definitions** — 10 creatures, 10 plants, 10 minerals, 5 artifacts. Each with: id, name, biomes[], levelRange, behavior (creatures), loot table (weighted drops), baseHealth/yield, respawnTime. All sourced from/aligned with lore biome descriptions.
-- [ ] **Plant and Artifact entity types** — Add `PlantConfig` and `ArtifactConfig` interfaces to `EntityRegistry`. Add `'plant'` and `'artifact'` to `EntityType` in `entity.ts`. Add `Plant` and `Artifact` entity interfaces.
-- [ ] **Loot table field on entity definitions** — `lootTable: Array<{ itemId: string; weight: number; quantityMin: number; quantityMax: number }>` per creature and mineral definition. Artifacts use guaranteed fixed drops.
-- [ ] **Loot resolution on entity death/depletion** — `GameService.handleInteraction()` resolves loot table on creature death: pick items via weighted random, spawn as ground item entities via `ZonesService.spawnEntity()`. Mineral harvest reduces `mineral.yield`; at 0, mark inactive + schedule respawn.
-- [ ] **Respawn tick loop** — `ZonesService` runs `setInterval` (every 5s) checking all inactive entities. If `entity.respawnAt < Date.now()` and `entity.respawnTime !== -1`, reactivate entity (restore health/yield, set `active = true`, broadcast to zone). Artifacts (`respawnTime === -1`) are permanently skipped.
-- [ ] **Entity behavior tick (wander + aggro)** — Server-side tick (every 3-4s) per creature. Herbivore: random direction move (2 tile max from spawn), flee if player within 2 tiles. Omnivore: idle, move toward player if player is lower level AND omnivore is "hungry" (time-based flag). Predator: move toward nearest player if within aggro range (5 tiles). Maniac: always move toward nearest player. Position broadcast via `entity:moved` event.
-- [ ] **Fertility zone modifier** — Per-chunk `fertilityMultiplier` derived from noise (reuse moisture layer: `< 0.3 → 0.5x, 0.3-0.7 → 1x, > 0.7 → 1.5x`). Applied to `creatureDensity` and `mineralDensity` in `generateSpawnPoints()`.
-- [ ] **Perception gating client-side** — Zone state includes entity `level` (already on `Creature.level`). Client compares entity level to player `perception` stat. If `entity.level > player.perception * 3`, render entity name as `???` and hide level display. Below threshold: display normal name and level.
-- [ ] **Artifact one-time spawning** — Artifact spawn points have `respawnTime: -1` in `SpawnPoint`. Respawn tick loop skips these. Once artifact is picked up, its spawn is permanently inactive (per zone instance lifetime).
-
-### Add After Validation (v1.x — content and polish pass)
-
-- [ ] **Creature aggro sound/visual cue** — Client-side: render aggro indicator (exclamation mark sprite or red outline) when a creature enters attack state toward the player. No server change needed — derive from entity state in zone update.
-- [ ] **Harvest progress animation** — Client-side: mineral/plant shows depletion visual (cracking, color shift) proportional to `yield / maxYield`. Pure client, no server change.
-- [ ] **Codex entry on first discovery** — Track discovered entity IDs per character. On first sighting of an entity above Perception threshold, unlock its codex entry (name, behavior class, loot hint). Requires a small DB column (discovered_entities JSON array on character row).
-- [ ] **Scan action for ??? entities** — Players with research tools can scan `???` entities to reveal them. Interact + research tool = scan attempt. Successful scan (based on Perception vs entity level) unlocks codex entry.
-- [ ] **Creature level scaling to zone** — Spawned creature level is randomized within `levelRange`. Add zone-level modifier: deeper zones (higher coordinate distance from 0,0) shift the level range upward by 1-3 levels. Makes exploration into unknown territory meaningfully harder.
-
-### Future Consideration (v2+)
-
-- [ ] **Full creature pathfinding (A\*)** — Only viable with server-side spatial indexing and entity count limits enforced. Requires dedicated performance testing. Not v1.8.
-- [ ] **Creature taming (Verdant faction feature)** — Lore supports it. Full separate milestone. Requires creature ownership, follow behavior, persistent tamed-creature data.
-- [ ] **Proximity trigger plants (spore cloud, acid)** — Miasma Marshes plants should have proximity triggers. Requires status effect system. Defer to hazard/status-effect milestone.
-- [ ] **Dynamic creature ecosystems (predator eats herbivore)** — Prey-predator population dynamics within zones. Conceptually rich, architecturally complex. Future milestone.
-- [ ] **Named boss entities** — Rare spawn, high-value loot, zone notification. Requires boss-specific AI, spawn announcement, loot table design. Separate milestone.
+**Recommendation:** Audit existing hazard and visibility systems before designing new entity populations. If current systems can't support underwater breathing or reality distortion, either extend them or reframe features to fit existing capabilities (e.g., "aquatic zones have toxic water" reuses toxic hazard).
 
 ---
 
-## Feature Prioritization Matrix
+## MVP Recommendation
 
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| BiomeType expansion (2 missing biomes) | HIGH (blocks all entity definitions) | LOW | P1 |
-| CreatureBehavior lore-accurate types | HIGH (lore compliance, AI states) | LOW | P1 |
-| ~35 entity definitions (content) | HIGH (world feels alive) | MEDIUM | P1 |
-| Plant and Artifact entity types | HIGH (entity diversity) | LOW | P1 |
-| Loot tables + resolution on death | HIGH (core resource loop) | MEDIUM | P1 |
-| Respawn tick loop | HIGH (world repopulates) | LOW | P1 |
-| Creature wander/behavior AI tick | MEDIUM (world feels alive) | MEDIUM | P1 |
-| Fertility zone modifier | MEDIUM (within-biome variety) | LOW | P1 |
-| Perception gating / ??? display | MEDIUM (progression + danger signal) | LOW | P1 |
-| Artifact one-time spawning | MEDIUM (discovery moments) | LOW | P1 |
-| Creature aggro visual cue | MEDIUM (player safety signal) | LOW | P2 |
-| Harvest depletion animation | LOW (polish) | LOW | P2 |
-| Codex discovery tracking | LOW (exploration reward) | MEDIUM | P2 |
-| Scan action for ??? entities | LOW (advanced Perception use) | HIGH | P3 |
-| Creature level zone scaling | LOW (depth reward) | LOW | P2 |
+Prioritize these features for initial aquatic/exotic biome implementation:
 
-**Priority key:**
-- P1: Must have for v1.8 entity system milestone
-- P2: Should have, add in first post-launch patch
-- P3: Nice to have, future milestone
+### Phase 1: Core Biome Infrastructure (Week 1-2)
+1. **Aquatic biome type definitions** (Shallow Waters Tier I, Deep Waters Tier II-III)
+2. **Exotic biome variant definitions** (Void Rift, Dimensional Anomaly — both Tier IV)
+3. **Biome-specific tile sets** (aquatic and anomaly visual identities)
+4. **Fog of war modifiers** (reduced visibility in water/anomalies)
 
----
+### Phase 2: Entity Population (Week 3-4)
+5. **15 aquatic entities** (5 creatures, 5 plants, 5 minerals/artifacts)
+6. **15 exotic entities** (5 creatures, 5 anomaly plants, 5 anomaly artifacts)
+7. **Basic loot tables** for all new entities
+8. **Spawn distribution** per biome
 
-## Competitor Feature Analysis
+### Phase 3: Items and Progression (Week 5-6)
+9. **20 aquatic items** (aquatic suit variants, underwater tools, marine materials)
+10. **20 anomaly items** (anomaly-forged gear, dimensional materials, corrupted artifacts)
+11. **Integration with existing crafting** (if applicable)
+12. **Equipment progression** (Tier I-IV gear from new materials)
 
-| Feature | Tibia | Minecraft | ARK: Survival Evolved | Our Approach |
-|---------|-------|-----------|----------------------|--------------|
-| Creature behavior model | 4 states: chase, wander, runaway, dead. Flee HP threshold per creature. | 3 types: passive, neutral, hostile. Simple proximity aggro. | Complex: tame/wild, many attack modes, flee. | 4 lore classes: herbivore/omnivore/predator/maniac. Behavior varies by class not proximity alone. |
-| Spawn system | Fixed spawn points with respawn timer. Players camp spawns. | Chunk-based dynamic spawning (mobs spawn in dark areas). | Spawn regions, respawn on death. Dino level tied to region. | Spawn points in chunk with respawn timer. Fertility modifier adds density variation. |
-| Loot model | Per-creature loot table with weighted items. Ground loot despawns. | Per-creature loot table, direct-to-inventory option. | Harvesting body with tools for resources. Separate inventory loot. | Weighted drop table per entity. Ground item spawn with despawn timer. Optional direct-to-inventory on pickup. |
-| Entity gating (danger signaling) | Skull icon for much-stronger creatures. Color-coded level indicator. | No level display — visual cues only (size, appearance). | Creature level visible always. Region tier communicated via biome. | Perception stat gates name/level visibility. `???` for entities above threshold. Clear progression signal. |
-| Plant interaction | Static resource nodes. No plant behavior. | 2-block range, right-click to harvest. Grow over time. | Passive resource nodes. Some trigger nearby creatures. | Passive harvest (approach + interact). Proximity triggers deferred to v2. |
-| Respawn | Fixed timers, well-known (spawn camping meta). | Instant in dark areas. No memory of killed mobs. | Respawn after time, same region. Difficulty scales. | Zone-based timer (1-5 min). Randomized within range. Artifacts: no respawn. |
-| AI movement (server-side) | Tile-based pathfinding toward player. Leash radius. | Client-side mob AI with server validation. | Server-side with pathfinding. Performance capped by dino count. | Simplified directional AI tick (no A*). Leash radius from spawn. Acceptable for 2D tile world. |
+### Defer to Later Phases
+- **Tidal mechanics** (high complexity, low MVP value)
+- **Depth-based layering** (requires significant generation changes)
+- **Dynamic Anomaly instability** (multiplayer sync nightmare)
+- **Temporal resource mechanics** (extreme complexity)
+- **Shader effects for Anomalies** (nice-to-have visuals)
+
+**Rationale:** Get playable aquatic and exotic zones with full entity/item populations first. Polish and advanced mechanics come after players can explore, gather, and progress in new biomes. Lore already supports "Anomaly Zones" as extreme-tier content, so implementation is adding variety within that framework, not inventing new systems.
 
 ---
 
-## Existing Code Integration Map
+## Complexity Assessment
 
-Every new entity system feature maps to an existing integration point. No new architecture.
+| Component | Complexity | Estimated Effort | Risk Level |
+|-----------|------------|------------------|------------|
+| Aquatic biome definitions | Low | 2-3 days | Low |
+| Exotic biome definitions | Low | 2-3 days | Low |
+| Aquatic tile sets (sprites) | Medium | 1 week (art) | Low |
+| Anomaly tile sets (sprites) | High | 1-2 weeks (art) | Medium |
+| 30 new entity definitions | Low | 3-4 days | Low |
+| 30 new entity sprites | Medium | 1-2 weeks (art) | Low |
+| 40 new item definitions | Low | 4-5 days | Low |
+| 40 new item sprites/icons | Medium | 1-2 weeks (art) | Low |
+| Biome-specific fog of war | Medium | 3-5 days | Medium |
+| Aquatic creature AI movement | Medium | 4-6 days | Medium |
+| Environmental hazard integration | Low | 2-3 days | Low |
+| Loot table balancing | Low | 2-3 days | Low |
+| Spawn distribution tuning | Low | 2-3 days | Low |
+| Anomaly visual effects (shaders) | High | 1-2 weeks | High |
+| Depth-based mechanics | Very High | 2-3 weeks | High |
+| Tidal cycle system | Very High | 2-3 weeks | High |
+| Dynamic Anomaly instability | Extreme | 4+ weeks | Extreme |
 
-| Feature | Integration Point | Change Type |
-|---------|------------------|-------------|
-| Plant/Artifact entity types | `entity.ts`: extend `EntityType`, add `Plant`, `Artifact` interfaces | Type extension |
-| Lore-accurate behavior types | `entity.ts`: `CreatureBehavior` type update | Breaking type change — audit all uses |
-| Entity definitions (35) | `entity-registry.ts`: expand creature/mineral, add plant/artifact records | Data addition |
-| Biome expansion (2 biomes) | `shared-types/game/biome.ts`: `BiomeType` enum; `world-gen/generation/biome.ts` and `spawn.ts`: new entries | Config + data |
-| Loot table field | `entity-registry.ts`: add `lootTable` field to `CreatureConfig`, `MineralConfig`, `ArtifactConfig` | Type extension |
-| Loot resolution | `game.service.ts`: `handleInteraction()` creature/mineral branch | Logic addition |
-| Respawn loop | `zones.service.ts`: `setInterval` in `onModuleInit()` | New method |
-| Behavior AI tick | `zones.service.ts`: separate `setInterval` for entity position updates | New method + new socket event |
-| Fertility modifier | `world-gen/generation/spawn.ts`: `generateSpawnPoints()` density multiplier | Algorithm change (1 line) |
-| Perception gating | Client Phaser scene: entity name render conditional | Client rendering logic |
-| Artifact no-respawn | `zones.service.ts` respawn loop: `if (spawnPoint.respawnTime === -1) continue` | Guard clause |
+**Total MVP Effort (without deferred features):** ~6-8 weeks (1 developer + 1 artist working in parallel)
+
+**With deferred features:** 12-16+ weeks (not recommended for content milestone)
+
+---
+
+## Player Expectations by Biome Type
+
+### Aquatic Biomes (Shallow to Deep Waters)
+
+**From genre research:**
+- Reduced visibility compared to land biomes ([Subnautica patterns](https://www.pcgamer.com/games/survival-crafting/it-was-a-good-year-for-survival-crafting-sickos-and-ill-be-playing-some-of-these-well-into-2026/))
+- Distinct flora/fauna adapted to aquatic life ([UNDER the WATER](https://store.steampowered.com/app/1745380/UNDER_the_WATER__an_ocean_survival_game/))
+- Valuable marine resources (filtration organisms, shell materials, rare compounds)
+- Pressure/depth as progression gate ([Anchor mechanics](https://gamerant.com/anchor-underwater-open-world-survival-game-reveal/))
+- Predators that hunt differently than land creatures
+
+**Applied to Into the Void:**
+- **Shallow Waters (Tier I):** Starter aquatic zones with Coastal Shallows aesthetic (already in lore). Safe exploration, abundant common resources, herbivore creatures.
+- **Mid-Depth Waters (Tier II):** Miasma Marshes underwater equivalent. Toxic zones, reduced visibility, omnivore/predator creatures, valuable pharmaceutical compounds.
+- **Deep Waters (Tier III):** High-pressure zones requiring advanced aquatic suits. Rare minerals, predator/maniac creatures, Ancient artifacts in underwater ruins.
+- **Abyssal Depths (Tier IV):** Deepest zones overlapping with Anomaly effects. Extreme danger, unique materials, corrupted creatures.
+
+**Lore Integration:** Terminus has "extensive coastal zones with tidal flats" (Coastal Shallows biome). Expanding this to include deeper aquatic regions fits existing world structure. Dual moons (Vigil and Whisper) create "complex tidal patterns" — tidal mechanics are lore-accurate but mechanically optional.
+
+### Exotic/Alien Biomes (Anomaly Variants)
+
+**From genre research:**
+- Reality distortion as core hazard ([S.T.A.L.K.E.R. Anomalies](https://kotaku.com/most-survival-games-have-problems-that-s-t-a-l-k-e-r-s-1683484728))
+- Unpredictable danger requiring experience to navigate ([Anomaly Zone](https://store.steampowered.com/app/1157250/Anomaly_Zone/))
+- Highest-value resources justify extreme risk ([No Man's Sky exotic planets](https://www.thegamer.com/no-mans-sky-best-exotic-planets/))
+- Visual and auditory cues of "wrongness" ([Zone Anomaly](https://store.steampowered.com/app/979830/Zone_Anomaly/))
+- Environmental hazards that defy normal physics
+
+**Applied to Into the Void:**
+- **Void Rifts:** Spatial tears where distances change, geometry fails. Creatures phase in/out. Rare "void-touched" materials. Visual: dark purples, blacks, star-field textures.
+- **Dimensional Anomalies:** Echo Fields where past events replay. Temporal distortion hazards. Ancient artifacts in pristine condition. Visual: overlapping translucent layers, afterimages.
+- **Null Pockets:** Technology failure zones where HUD elements flicker, abilities disabled. Extreme danger but unique "null-forged" materials. Visual: grayscale desaturation, static effects.
+
+**Lore Integration:** Anomaly Zones already established as Tier IV biomes. This milestone adds **variety** to Anomaly Zones (different sub-types with distinct mechanics) rather than creating anomalies from scratch. Lore describes "Temporal Stutters, Spatial Tears, Echo Fields, Null Pockets" — these become specific Anomaly Zone variants.
+
+**Critical Design Constraint:** Players **expect** Anomaly Zones to feel fundamentally different from normal biomes. If Anomaly zones play identically to Volcanic Reaches but with different sprites, they fail player expectations. Must implement **at least one** reality distortion mechanic (e.g., periodic vision distortion, random teleportation within zone, or time-dilated resource respawns).
+
+---
+
+## Implementation Notes
+
+### Biome-Specific Visibility (High Priority)
+
+Current fog of war system may be global. Need per-biome visibility modifiers:
+
+```typescript
+interface BiomeData {
+  // ... existing fields
+  visibilityRange: number; // tiles visible from player position
+  visibilityDecayRate: number; // how quickly fog darkens with distance
+}
+
+// Example values
+const SHALLOW_WATER_VISIBILITY = 12; // slightly reduced from land (15)
+const DEEP_WATER_VISIBILITY = 8; // murky depths
+const ANOMALY_VISIBILITY = 10; // distorted but not dark
+```
+
+### Aquatic Creature Movement (Medium Priority)
+
+Options:
+1. **Reuse existing pathfinding** with different speed modifiers (simple, works for 2D)
+2. **Add "flowing" movement patterns** — creatures drift in currents (medium complexity)
+3. **Implement schooling behavior** for fish-like creatures (high complexity, high visual impact)
+
+**Recommendation:** Start with option 1. Aquatic creatures move like land creatures but with `speedModifier: 1.2` (faster in water). Add schooling in later polish phase if time permits.
+
+### Anomaly Visual Effects (Medium Priority, High Impact)
+
+Three tiers of visual fidelity:
+1. **Minimum Viable:** Recolor existing tiles with "anomalous" palette (purples, shifting hues). Use existing particle effects.
+2. **Enhanced:** Add shader effects (chromatic aberration, color shifts, geometry distortions). Requires Phaser shader implementation.
+3. **Full Experience:** Dynamic geometry warping, impossible perspectives, time-based visual mutations. Requires custom rendering layer.
+
+**Recommendation:** Launch with tier 1 (palette swap + particles). Add tier 2 shaders in post-launch polish if performance allows. Tier 3 is overkill for 2D top-down.
+
+### Entity Distribution Strategy
+
+30 entities across new biomes:
+- **10 creatures** (5 aquatic, 5 anomaly-corrupted)
+- **10 plants** (5 aquatic flora, 5 anomaly-mutated plants)
+- **10 minerals/artifacts** (3 aquatic minerals, 2 marine artifacts, 3 anomaly minerals, 2 anomaly artifacts)
+
+Each creature needs:
+- Species ID, name, base health, level range, behavior type
+- Biome array (which new biomes it spawns in)
+- Loot table (drops)
+- Sprite asset
+
+Each plant/mineral needs:
+- Resource ID, name, yield, required tier
+- Biome array
+- Harvest yield table (items produced)
+- Sprite asset
+
+**Art Asset Estimate:** 30 entity sprites + 40 item icons + 2-3 tile sets = ~75 visual assets. Significant art production requirement.
 
 ---
 
 ## Sources
 
-- Direct codebase inspection: `packages/shared-types/src/core/entity.ts`, `packages/shared-types/src/game/entity-registry.ts`, `packages/world-gen/src/generation/spawn.ts`, `packages/world-gen/src/generation/biome.ts`, `apps/game-server/src/zones/zones.service.ts`, `apps/game-server/src/game/game.service.ts`
-- Into the Void lore: `lore/world-bible.md` — Creature Behavioral Classifications (Herbivore/Omnivore/Predator/Maniac), biome descriptions with per-biome fauna/flora/hazards, survival tier table
-- Survival game entity AI (state machine patterns): https://developers-heaven.net/blog/game-ai-behavior-trees-state-machines-and-pathfinding/
-- Tibia creature behavior (chase/wander/runaway/dead + flee threshold + leash): https://tibiantis-notes.github.io/Creature
-- Loot table design (weighted random, tier batching, anti-patterns): https://www.gamedeveloper.com/design/loot-drop-best-practices
-- Respawn timer design (variable randomization, spawn camping mitigation): https://forums.mmorpg.com/discussion/391074/preffered-spawn-system
-- Server-side entity AI performance pitfalls (mob count vs tick time): https://help.sparkedhost.com/en/article/how-to-fix-minecraft-server-tick-lag-from-entities-1m5a7g2/
-- Pantheon Perception system (Perception as exploration gating): https://www.mmorpg.com/developer-journals/feature-spotlight-perception-system-2000105610
-- Fertility/lush-barren density patterns: https://survivingtheaftermath.fandom.com/wiki/Biomes
-- Wandering AI tutorial (random path + directional fallback): https://arongranberg.com/astar/documentation/stable/wander.html
+### Aquatic Survival Mechanics
+- [Subnautica 2 underwater base-building and co-op](https://www.pcgamer.com/games/survival-crafting/it-was-a-good-year-for-survival-crafting-sickos-and-ill-be-playing-some-of-these-well-into-2026/)
+- [UNDER the WATER ocean survival features](https://store.steampowered.com/app/1745380/UNDER_the_WATER__an_ocean_survival_game/)
+- [Anchor 150-player underwater survival mechanics](https://gamerant.com/anchor-underwater-open-world-survival-game-reveal/)
+- [World in the Abyss underwater resource gathering](https://streamforgestudio.wordpress.com/2026/01/13/new-survival-games-2026-15-upcoming-open-world-multiplayer-survival-experiences-you-must-play/)
+- [Best open-world underwater exploration games](https://gamerant.com/best-open-world-games-for-underwater-exploration/)
+- [2D underwater game mechanics discussion](https://raygaming.wordpress.com/2013/08/15/underwater-in-2d-spaces/)
+- [Top-down underwater games on itch.io](https://itch.io/games/tag-top-down/tag-underwater)
 
----
+### Exotic/Anomaly Biome Mechanics
+- [No Man's Sky exotic planet biomes with anomalies](https://www.thegamer.com/no-mans-sky-best-exotic-planets/)
+- [S.T.A.L.K.E.R. Anomaly survival mechanics](https://kotaku.com/most-survival-games-have-problems-that-s-t-a-l-k-e-r-s-1683484728)
+- [Anomaly Zone MMORPG with reality distortion](https://store.steampowered.com/app/1157250/Anomaly_Zone/)
+- [Zone Anomaly radiation and anomaly mechanics](https://store.steampowered.com/app/979830/Zone_Anomaly/)
+- [Best open-world games with alien ecosystems](https://gamerant.com/best-open-world-games-alien-ecosystems/)
+- [ANOMALY TAPES unique entity mechanics](https://store.steampowered.com/app/3145780/ANOMALY_TAPES_Beyond_Reality/)
 
-*Feature research for: Entity System — Into the Void survival MMO v1.8*
-*Researched: 2026-02-18*
-*Confidence: HIGH for codebase integration map (directly verified); HIGH for lore alignment (world-bible sourced); MEDIUM for competitor behavior patterns (web research, cross-referenced with Tibia dev documentation); MEDIUM for performance thresholds (entity count caps derived from Minecraft community research, not specific to this stack)*
+### Biome Differentiation Patterns
+- [LORT biomes with environment-specific mechanics](https://www.lortgame.org/content/biomes)
+- [9 survival games with unique biomes](https://gamerant.com/survival-games-most-unique-biomes/)
+- [PEAK biome survival guide for all zones](https://www.ofzenandcomputing.com/peak-biome-survival-guide/)
+- [Hytale zones guide with biome features](https://www.hytale-game.wiki/gameplay/zones)
+- [Outward biome-dependent hazard mechanics](https://gamerant.com/survival-games-most-unique-biomes/)
+
+**Confidence Assessment:** MEDIUM because web search provides genre patterns but Into the Void has unique constraints (2D top-down, sci-fi corporate setting, existing lore). Aquatic mechanics are well-documented in genre. Anomaly mechanics are less standardized. Recommendations are based on adapting 3D survival patterns to 2D perspective and existing game systems.
