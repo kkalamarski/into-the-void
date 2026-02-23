@@ -14,7 +14,10 @@ export type BiomeType =
   | 'petrified_expanse'  // Tier II - stone forest biome
   | 'tidal_pools'        // Tier I - shallow coastal biome
   | 'kelp_forests'       // Tier II - dense underwater vegetation
-  | 'deep_trenches';     // Tier III - high-pressure deep ocean
+  | 'deep_trenches'      // Tier III - high-pressure deep ocean
+  | 'void_rift'          // Tier IV - reality distortion biome
+  | 'crystalline_wastes' // Tier III - high-elevation crystal formations
+  | 'bioluminescent_depths'; // Tier II - glowing flora caverns
 
 /**
  * Biome data
@@ -93,6 +96,9 @@ export const BIOME_DISPLAY_NAMES: Record<BiomeType, string> = {
   tidal_pools: 'Tidal Pools',
   kelp_forests: 'Kelp Forests',
   deep_trenches: 'Deep Trenches',
+  void_rift: 'Void Rift',
+  crystalline_wastes: 'Crystalline Wastes',
+  bioluminescent_depths: 'Bioluminescent Depths',
 };
 
 /**
@@ -112,4 +118,7 @@ export const BIOME_COLORS: Record<BiomeType, string> = {
   tidal_pools: '#5f9ea0',         // Cadet blue (shallow coastal)
   kelp_forests: '#228b22',        // Forest green (dense vegetation)
   deep_trenches: '#191970',       // Midnight blue (deep ocean)
+  void_rift: '#4a0080',           // Deep purple (void/anomaly theme)
+  crystalline_wastes: '#b0e0e6',  // Pale cyan (crystal reflections)
+  bioluminescent_depths: '#00ff88', // Bright cyan-green (bioluminescence)
 };
