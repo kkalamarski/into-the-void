@@ -130,6 +130,10 @@ Recent decisions affecting current work:
 - [Phase 77]: Noise frequency 0.03 creates POI clusters rather than uniform distribution
 - [Phase 77]: Discovery recorded before reward to prevent rollback exploits
 - [Phase 77]: POI validation via chunk lookup ensures POI exists at claimed coordinates
+- [Phase 78]: Mini-game depth 2000 places UI above world objects and fog but below HUD
+- [Phase 78]: Dual click handling (container + scene listener) ensures reliable capture across browsers
+- [Phase 78]: Entity routing by type: minerals/plants → gathering, artifacts → instant, creatures → combat
+- [Phase 78]: isGathering flag blocks both WASD movement and pathfinding clicks during mini-game
 
 ### Pending Todos
 
@@ -148,12 +152,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 78-02-PLAN.md (Database Schema for Gathering Proficiency)
+Stopped at: Completed 78-04-PLAN.md (Client-Side Gathering Mini-Game UI)
 Resume file: None
 
 **Next steps:**
-1. Continue Phase 78 (Gathering Mini-Game) - Plans 78-03 and 78-04 remaining
+1. Continue Phase 78 (Gathering Mini-Game) - Plan 78-03 remaining (Server-Side Integration)
 2. Continue v1.17 milestone
 
 ---
-*Last updated: 2026-02-23 - Completed 78-02-PLAN.md (Database Schema for Gathering Proficiency)*
+*Last updated: 2026-02-23 - Completed 78-04-PLAN.md (Client-Side Gathering Mini-Game UI)*
