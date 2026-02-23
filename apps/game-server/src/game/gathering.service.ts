@@ -29,8 +29,8 @@ import {
 import { EntityRegistry } from '@into-the-void/entities';
 import { ItemRegistry } from '@into-the-void/items';
 import { gatheringProficiency, DEFAULT_PROFICIENCY, ProficiencyJson } from '@into-the-void/database';
-import { eq, sql } from 'drizzle-orm';
-import type { MineralDefinition, PlantDefinition, ArtifactDefinition } from '@into-the-void/entities';
+import { eq } from 'drizzle-orm';
+import type { MineralDefinition, PlantDefinition, ArtifactDefinition, HarvestYield } from '@into-the-void/entities';
 
 interface ActiveChallenge {
   challenge: TimingChallenge;
@@ -103,7 +103,7 @@ export class GatheringService {
     this.proficiencyCache.delete(characterId);
     // Clean up any active challenges for this player
     for (const [playerId, challenge] of this.activeChallenges.entries()) {
-      const player = this.playerService.getPlayer(playerId);
+      const player = this.playerService.getPlayerById(playerId);
       if (player?.id === characterId) {
         this.entityLocks.delete(challenge.entityId);
         this.activeChallenges.delete(playerId);
@@ -252,20 +252,21 @@ export class GatheringService {
 
     // Get entity definition for loot
     const entity = active.entity;
-    let lootEntries: { itemId: string; weight: number; minQty: number; maxQty: number }[] = [];
+    let lootEntries: readonly HarvestYield[] = [];
     let resourceTier = 1;
 
     if (entity.type === 'mineral') {
       const def = EntityRegistry.get((entity as Mineral).resourceId) as MineralDefinition | undefined;
       if (def?.miningYield) {
         lootEntries = def.miningYield;
-        resourceTier = def.tier || 1;
+        resourceTier = def.requiredTier || 1;
       }
     } else if (entity.type === 'plant') {
       const def = EntityRegistry.get((entity as Plant).speciesId) as PlantDefinition | undefined;
       if (def?.harvestYield) {
         lootEntries = def.harvestYield;
-        resourceTier = def.tier || 1;
+        // Plants don't have explicit tier, use 1 as default
+        resourceTier = 1;
       }
     }
 
@@ -281,10 +282,7 @@ export class GatheringService {
     }));
 
     // Spawn ground items via EntityService (updates entity state)
-    await this.entityService.handleToolUse(
-      this.playerService.getSocketIdByPlayer(player.id)!,
-      active.entityId
-    );
+    await this.entityService.handleToolUse(socketId, active.entityId);
 
     // Award proficiency XP
     const xp = calculateXPReward(validation.accuracy, resourceTier);
