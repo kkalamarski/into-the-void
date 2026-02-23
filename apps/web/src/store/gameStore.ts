@@ -5,6 +5,16 @@ import { gameSocket } from '../network/socket';
 import { useEntityStore } from './entityStore';
 import { useAlertStore } from './alertStore';
 
+export interface DiscoveredResource {
+  entityId: string;
+  rarity: 'rare' | 'epic';
+  resourceType: 'mineral' | 'plant';
+  zoneId: string;
+  worldX: number;
+  worldY: number;
+  resourceId: string;
+}
+
 interface GameState {
   // Connection
   connectionState: ConnectionState;
@@ -70,6 +80,11 @@ interface GameState {
   chatMessages: ChatMessage[];
   addChatMessage: (message: ChatMessage) => void;
   clearChat: () => void;
+
+  // Discovered resources (rare nodes)
+  discoveredResources: DiscoveredResource[];
+  setDiscoveredResources: (resources: DiscoveredResource[]) => void;
+  addDiscoveredResource: (resource: DiscoveredResource) => void;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -140,6 +155,15 @@ export const useGameStore = create<GameState>((set) => ({
       chatMessages: [...state.chatMessages.slice(-99), message],
     })),
   clearChat: () => set({ chatMessages: [] }),
+
+  // Discovered resources
+  discoveredResources: [],
+  setDiscoveredResources: (resources: DiscoveredResource[]) =>
+    set({ discoveredResources: resources }),
+  addDiscoveredResource: (resource: DiscoveredResource) =>
+    set((state) => ({
+      discoveredResources: [...state.discoveredResources, resource],
+    })),
 }));
 
 // Listen for initial game state from server

@@ -26,6 +26,8 @@ import { FogManager } from '../fog/FogManager';
 import { FogRenderer } from '../fog/FogRenderer';
 import { PoiRenderer } from '../pois/PoiRenderer';
 import { GatheringMiniGame } from '../ui/GatheringMiniGame';
+import { createRareNodeMarker } from '../rendering/RareNodeFX';
+import type { DiscoveredResource } from '../../store/gameStore';
 
 export const ISO_TILE_WIDTH = 256;
 export const ISO_TILE_HEIGHT = 128;
@@ -118,6 +120,8 @@ export class WorldScene extends Phaser.Scene {
   // Gathering mini-game
   private activeMiniGame: GatheringMiniGame | null = null;
   private isGathering: boolean = false;
+  // Rare node markers
+  private rareNodeMarkers: Map<string, Phaser.GameObjects.Container> = new Map();
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -318,6 +322,17 @@ export class WorldScene extends Phaser.Scene {
     gameSocket.on('poi:already_discovered', (data: { poiId: string }) => {
       this.discoveredPoiIds.add(data.poiId);
       this.poiRenderer?.markDiscovered(data.poiId);
+    });
+
+    // Rare node discovery system listeners
+    gameSocket.on('rare-nodes:discovered', (data: any) => {
+      useGameStore.getState().setDiscoveredResources(data.discoveries);
+      this.refreshRareNodeMarkers();
+    });
+
+    gameSocket.on('rare-node:new-discovery', (data: any) => {
+      useGameStore.getState().addDiscoveredResource(data);
+      this.addRareNodeMarker(data);
     });
 
     // Set fixed zoom to show ~20x15 tiles viewport (for 256x256 sprites)
@@ -976,6 +991,9 @@ export class WorldScene extends Phaser.Scene {
         } else {
           useAlertStore.getState().addAlert(`Zone ${newZoneId}`, 'info');
         }
+
+        // Refresh rare node markers for new zone
+        this.refreshRareNodeMarkers();
       }
     }
 
@@ -1937,6 +1955,10 @@ export class WorldScene extends Phaser.Scene {
     gameSocket.off('quest:completed', this.handleQuestCompleted);
     gameSocket.off('quest:abandoned', this.handleQuestAbandoned);
 
+    // Clean up rare node markers
+    this.rareNodeMarkers.forEach((marker) => marker.destroy());
+    this.rareNodeMarkers.clear();
+
     if (this.targetHighlight) {
       this.targetHighlight.destroy();
       this.targetHighlight = null;
@@ -2146,5 +2168,63 @@ export class WorldScene extends Phaser.Scene {
     }
 
     return 'none'; // No quests
+  }
+
+  /**
+   * Refresh all rare node markers from store state.
+   * Called on initial load and zone changes.
+   */
+  private refreshRareNodeMarkers(): void {
+    // Clear existing markers
+    this.rareNodeMarkers.forEach((marker) => marker.destroy());
+    this.rareNodeMarkers.clear();
+
+    // Get current zone's discovered resources
+    const discoveries = useGameStore.getState().discoveredResources;
+    const currentZone = useGameStore.getState().zoneState;
+
+    if (!currentZone) return;
+
+    for (const resource of discoveries) {
+      // Only show markers for current zone
+      if (resource.zoneId !== currentZone.zoneId) continue;
+
+      this.addRareNodeMarker(resource);
+    }
+  }
+
+  /**
+   * Add a single rare node marker to the scene.
+   */
+  private addRareNodeMarker(resource: DiscoveredResource): void {
+    if (this.rareNodeMarkers.has(resource.entityId)) return;
+    if (!this.isoTransform) return;
+
+    // Convert world coords to screen position
+    const screenPos = this.isoTransform.gridToScreen(
+      resource.worldX,
+      resource.worldY
+    );
+
+    // Position marker above entity (offset upward)
+    const marker = createRareNodeMarker(
+      this,
+      screenPos.x,
+      screenPos.y - 300, // Above entity nameplate
+      resource.rarity
+    );
+
+    this.rareNodeMarkers.set(resource.entityId, marker);
+  }
+
+  /**
+   * Remove marker when resource is harvested.
+   */
+  private removeRareNodeMarker(entityId: string): void {
+    const marker = this.rareNodeMarkers.get(entityId);
+    if (marker) {
+      marker.destroy();
+      this.rareNodeMarkers.delete(entityId);
+    }
   }
 }
