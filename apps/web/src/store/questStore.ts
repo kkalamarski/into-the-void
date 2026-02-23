@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { gameSocket } from '../network/socket';
 import { QuestProgressPayload } from '@into-the-void/shared-types';
+import { playQuestCompleteSound } from '../utils/audio';
 
 /**
  * Completed quest metadata for history tracking
@@ -169,6 +170,9 @@ gameSocket.on(
     store.removeActiveQuest(data.questId);
     store.addCompletedQuest(data.questId, data.displayName);
     store.addCompletedReward(data);
+
+    // Play audio cue after state update
+    playQuestCompleteSound();
   }
 );
 
