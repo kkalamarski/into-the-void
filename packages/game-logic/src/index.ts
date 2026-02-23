@@ -39,3 +39,7 @@ export { AbilityRegistry } from './ability/ability-registry';
 
 // Quest
 export * from './quest';
+
+// Gathering
+export * from './gathering/timing-validation';
+export * from './gathering/proficiency';
