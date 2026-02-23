@@ -283,7 +283,7 @@ Plans:
 **Goal**: GPU-accelerated hover states, smooth transitions, and glassmorphism effects across all UI panels
 **Depends on**: Phase 70
 **Requirements**: VIS-01, VIS-02, VIS-03, VIS-04, VIS-05, VIS-06, VIS-07
-**Plans:** 2 plans
+**Plans:** 3 plans
 
 **Success Criteria** (what must be TRUE):
   1. All buttons and tabs show visible hover state (15%+ brightness change) with GPU-accelerated transform
@@ -293,17 +293,20 @@ Plans:
   5. CSS design tokens include animation timing, shadow depths, and glassmorphism values
 
 Plans:
-- [ ] 72-01-PLAN.md — Expand design tokens, GPU-accelerated button styles
-- [ ] 72-02-PLAN.md — Modal glassmorphism, panel hover/active/focus consistency
+- [x] 72-01-PLAN.md — Expand design tokens, GPU-accelerated button styles
+- [x] 72-02-PLAN.md — Modal glassmorphism, panel hover/active/focus consistency
+- [x] 72-03-PLAN.md — Wire glassmorphism modal overlay
+
+**Phase 72 complete** — 2026-02-23
 
 ---
 
 ### Phase 73: Quest Markers in World
 
-**Goal**: Yellow quest markers (! and ?) displayed above NPCs in world
+**Goal**: Real-time quest marker updates when quest state changes
 **Depends on**: Phase 71
 **Requirements**: QUEST-03, QUEST-04
-**Plans:** TBD
+**Plans:** 1 plan
 
 **Success Criteria** (what must be TRUE):
   1. NPCs with available quests display yellow "!" sprite above their head
@@ -313,7 +316,7 @@ Plans:
   5. Markers visible at same render distance as NPC sprites
 
 Plans:
-- [ ] TBD during phase planning
+- [ ] 73-01-PLAN.md — Wire quest event handlers for real-time marker updates
 
 ---
 
@@ -433,12 +436,12 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73 -> 74 -> 75
 | 69. Quest Chains & Bounties | v1.15 | 2/2 | Complete | 2026-02-22 |
 | 70. Modal Unification | v1.16 | 2/2 | Complete | 2026-02-23 |
 | 71. Quest Objective Tracker HUD | v1.16 | 1/1 | Complete | 2026-02-23 |
-| 72. Visual Polish | v1.16 | 0/2 | Not started | - |
-| 73. Quest Markers in World | v1.16 | 0/TBD | Not started | - |
+| 72. Visual Polish | v1.16 | 3/3 | Complete | 2026-02-23 |
+| 73. Quest Markers in World | v1.16 | 0/1 | Not started | - |
 | 74. Quest Completion Feedback | v1.16 | 0/TBD | Not started | - |
 | 75. Error Handling | v1.16 | 0/TBD | Not started | - |
 
-**Total:** 75 phases (71 complete, 4 pending)
+**Total:** 75 phases (72 complete, 3 pending)
 
 ---
-*Last updated: 2026-02-23 after Phase 72 planning*
+*Last updated: 2026-02-23 after Phase 73 planning*
