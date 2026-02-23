@@ -4,7 +4,7 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, and a complete auth-to-gameplay flow.
 
-## Current State (v1.16 shipped)
+## Current State (v1.17 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
@@ -13,7 +13,7 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Inventory: 100+ items, exo-suit equipment, module slots, action bar, storage
 - Stats: 8 primary stats with equipment bonuses, level scaling
 - Entities: 42 definitions, fertility-based spawning, creature AI, tool interaction, loot, respawn
-- Combat: Ability-based system with energy costs and cooldowns, creature aggro AI, player death/respawn
+- Combat: Ability-based system with energy costs and cooldowns, creature aggro AI, player death/respawn, balanced TTK
 - Abilities: 21 abilities across offensive/defensive/utility, item-granted, buff system with durations
 - NPCs: Definition system, 5 types (Trader/Guard/Rep/Ambient/Service), interaction modal, dialogue
 - Trading: Buy/sell with credits, trader inventory, credit balance in HUD
@@ -21,6 +21,8 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Persistence: Player position saves across sessions, starter kit for new players
 - Quests: Definition system, NPC quest offering, quest log UI, objective tracking, chains, bounties
 - UI Polish: Unified NPC modal, quest tracker HUD, glassmorphism, quest markers, completion feedback
+- Gathering: Timing mini-game, proficiency progression, rare/epic node variants, risk/reward placement
+- Exploration: Fog of war, POI discovery, lore fragments, zone mastery system
 
 **Tech stack:**
 - Frontend: React 18, Phaser 3, Zustand, React Router v7
@@ -30,15 +32,17 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~15,000+ LOC TypeScript
 
-## Current Milestone: v1.17 Core Gameplay Loop
+## Current Milestone: v1.18 Content Expansion
 
-**Goal:** Complete the gameplay loop with engaging gathering, exploration discovery, and balanced combat.
+**Goal:** Massively expand world content with new biomes, gatherable resources, creatures, and items.
 
 **Target features:**
-- Gathering system with skill expression, risk/reward, and progression
-- Exploration system with fog of war, POIs, lore fragments, and zone mastery
-- Combat balancing for gradual fights (no random one-shots)
-- Quest item audit ensuring all items are obtainable from world
+- 5-6 new biomes (aquatic and exotic/alien themes) with full entity populations
+- ~30 new gatherable entities (minerals, plants, artifacts) with rare/epic variants
+- ~20 new creatures across new and existing biomes
+- ~40 new items (materials, consumables, equipment) from new resources
+- Fill all existing biome resource gaps
+- Improved tier progression from starter to endgame zones
 
 ## Core Value
 
@@ -153,18 +157,27 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Real-time quest markers on NPCs (! for available, ? for turn-in) — v1.16
 - ✓ Quest completion banners with audio feedback — v1.16
 - ✓ Loading spinners and error handling for async operations — v1.16
+- ✓ Gathering system with timing mini-game and skill expression — v1.17
+- ✓ Resource node risk/reward (better nodes in dangerous areas) — v1.17
+- ✓ Gathering progression (proficiency improves with use) — v1.17
+- ✓ Fog of war map reveal (persistent per-character) — v1.17
+- ✓ Points of interest discovery (anomalies, caches, landmarks) — v1.17
+- ✓ Lore fragments (data logs revealing world history) — v1.17
+- ✓ Zone mastery system (completion objectives per zone) — v1.17
+- ✓ Combat balancing (gradual fights, no one-shots) — v1.17
+- ✓ Quest item audit (ensure all items obtainable) — v1.17
 
 ### Active
 
-- [ ] Gathering system with timing mini-game and skill expression
-- [ ] Resource node risk/reward (better nodes in dangerous areas)
-- [ ] Gathering progression (proficiency improves with use)
-- [ ] Fog of war map reveal (persistent per-character)
-- [ ] Points of interest discovery (anomalies, caches, landmarks)
-- [ ] Lore fragments (data logs revealing world history)
-- [ ] Zone mastery system (completion objectives per zone)
-- [ ] Combat balancing (gradual fights, no one-shots)
-- [ ] Quest item audit (ensure all items obtainable)
+- [ ] New aquatic biomes (2-3 zones with underwater/ocean themes)
+- [ ] New exotic/alien biomes (2-3 zones with void/dimensional themes)
+- [ ] New minerals (~15 types with rare/epic variants)
+- [ ] New plants (~15 types with rare variants)
+- [ ] New artifacts (~10 types across all biomes)
+- [ ] New creatures (~20 for new and existing biomes)
+- [ ] New items (~40 materials, consumables, equipment)
+- [ ] Fill existing biome resource gaps
+- [ ] Tier progression balance (starter → endgame)
 
 ### Out of Scope
 
@@ -209,4 +222,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-23 after v1.17 milestone start*
+*Last updated: 2026-02-23 after v1.18 milestone start*

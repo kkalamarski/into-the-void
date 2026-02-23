@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.17 Core Gameplay Loop - COMPLETE
+**Current focus:** v1.18 Content Expansion
 
 ## Current Position
 
-Phase: 81 (Combat Balancing & Quest Audit) - COMPLETE
-Plan: 3/3 complete
-Status: Complete
-Last activity: 2026-02-23 — Completed Phase 81, v1.17 milestone shipped
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-23 — Milestone v1.18 started
 
 Progress: [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 5.0%
 
