@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 79 (Resource Risk/Reward)
-Plan: 1/? in progress
+Plan: 2/? in progress
 Status: In Progress
-Last activity: 2026-02-23 — Completed 79-01 (Resource Node Rarity System)
+Last activity: 2026-02-23 — Completed 79-02 (Proximity-Based Rare Node Spawning)
 
-Progress: [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 4.4%
+Progress: [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 4.5%
 
 ## Performance Metrics
 
@@ -76,6 +76,7 @@ Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 
 | Phase 78 P03 | 534 | 2 tasks | 4 files |
 | Phase 78 P04 | 400 | 3 tasks | 5 files |
 | Phase 79 P01 | 195 | 2 tasks | 5 files |
+| Phase 79 P02 | 142 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -146,6 +147,10 @@ Recent decisions affecting current work:
 - [Phase 79]: Epic variants use 2x yield multiplier for endgame zones (ancient ruins, starfall crater)
 - [Phase 79]: Rare nodes require +1 tool tier to prevent early-game farming exploits
 - [Phase 79]: Variant naming pattern {BASE}_RARE / {BASE}_EPIC for clear code identification
+- [Phase 79]: Proximity-based rare spawning uses 3x multiplier within 10 tiles of predators/maniacs with linear falloff
+- [Phase 79]: Chunk caps of 3 rare + 1 epic minerals prevent resource flooding in high-danger zones
+- [Phase 79]: 50% weight cap prevents guaranteed rare spawns even with maximum proximity bonuses
+- [Phase 79]: Rare spawns generated after creature spawns for correct proximity dependency and determinism
 
 ### Pending Todos
 
@@ -157,7 +162,7 @@ None.
 - Phase 76: Fog of War Foundation (EXPL-01, EXPL-02, EXPL-03) — Complete (2/2 plans)
 - Phase 77: POI Discovery System — Complete (4/4 plans)
 - Phase 78: Gathering Mini-Game — Complete (4/4 plans)
-- Phase 79: Resource Risk/Reward — In Progress (1/? plans)
+- Phase 79: Resource Risk/Reward — In Progress (2/? plans)
 - Remaining phases: 80-81 (Mastery, Combat Balancing)
 
 **Known Issues:**
@@ -166,12 +171,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 79-01 Resource Node Rarity System
+Stopped at: Completed 79-02 Proximity-Based Rare Node Spawning
 Resume file: None
 
 **Next steps:**
-1. Continue Phase 79 (Resource Risk/Reward) - requires planning for spawn system integration
+1. Continue Phase 79 (Resource Risk/Reward) - requires planning for remaining risk/reward features
 2. Continue v1.17 milestone with remaining phases (80-81)
 
 ---
-*Last updated: 2026-02-23 - Completed Phase 79 Plan 01 (Resource Node Rarity System)*
+*Last updated: 2026-02-23 - Completed Phase 79 Plan 02 (Proximity-Based Rare Node Spawning)*
