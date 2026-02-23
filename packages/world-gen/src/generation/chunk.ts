@@ -3,6 +3,7 @@ import { BiomeGenerator } from './biome';
 import { generateTerrain } from './terrain';
 import { generateSpawnPoints } from './spawn';
 import { generateStructures } from './structures';
+import { generatePOIs } from './pois';
 import { createZoneId } from '@into-the-void/game-logic';
 
 /**
@@ -56,6 +57,15 @@ export class WorldGenerator {
       collisions
     );
 
+    // Generate POIs (uses updated collision map)
+    const pois = generatePOIs(
+      this.worldSeed,
+      chunkX,
+      chunkY,
+      biome,
+      collisions
+    );
+
     return {
       zoneId,
       tiles,
@@ -63,6 +73,7 @@ export class WorldGenerator {
       structures, // Now populated instead of empty []
       collisions,
       spawnPoints,
+      pois,
     };
   }
 

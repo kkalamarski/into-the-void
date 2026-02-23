@@ -1,6 +1,7 @@
 import { Entity } from './entity';
 import { PlayerPublic } from './player';
 import { BiomeType } from '../game/biome';
+import { PoiSpawn } from '../game/poi';
 
 /**
  * Fertility zone type — determines spawn density modulation
@@ -95,6 +96,8 @@ export interface ChunkData {
   collisions: boolean[][];
   /** Spawn points for entities */
   spawnPoints: SpawnPoint[];
+  /** Points of interest in this zone */
+  pois?: PoiSpawn[];
   /** Default spawn location for players entering this zone */
   entryPoint?: TilePosition;
   /** Portal destinations for zone transitions */

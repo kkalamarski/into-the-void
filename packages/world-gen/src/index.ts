@@ -8,4 +8,5 @@ export * from './generation/biome';
 export * from './generation/spawn';
 export * from './generation/terrain';
 export * from './generation/structures';
+export { generatePOIs, selectPoiTypeForBiome } from './generation/pois';
 export { generateHubChunk, isKnownHub, getHubConfig, type HubConfig, type NpcSpawn } from './generation/hub';
