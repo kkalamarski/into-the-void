@@ -274,7 +274,7 @@ See: `.planning/milestones/v1.16-ROADMAP.md`
 **Goal**: Players can explore three distinct aquatic biomes with appropriate movement and visibility constraints
 **Depends on**: Phase 81 (v1.17 complete)
 **Requirements**: BIOME-01, BIOME-02, BIOME-03, BIOME-07, BIOME-08, BIOME-09
-**Plans:** TBD
+**Plans:** 3 plans
 
 **Success Criteria** (what must be TRUE):
   1. Player can enter Tidal Pools (Tier I) and move at reduced speed through shallow water tiles
@@ -284,9 +284,9 @@ See: `.planning/milestones/v1.16-ROADMAP.md`
   5. Fog of war reveals reduced radius in aquatic zones based on biome visibility modifiers
 
 Plans:
-- [ ] 82-01: TBD
-- [ ] 82-02: TBD
-- [ ] 82-03: TBD
+- [ ] 82-01-PLAN.md — Type foundation and aquatic tile definitions
+- [ ] 82-02-PLAN.md — Biome generation with shore transitions and kelp corridors
+- [ ] 82-03-PLAN.md — Movement speed and fog of war visibility modifiers
 
 ---
 
@@ -478,7 +478,7 @@ Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87
 | 79. Resource Risk/Reward | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 80. Zone Mastery & Lore | v1.17 | 5/5 | Complete | 2026-02-23 |
 | 81. Combat Balancing & Quest Audit | v1.17 | 3/3 | Complete | 2026-02-23 |
-| 82. Aquatic Biome Foundation | v1.18 | 0/3 | Not started | - |
+| 82. Aquatic Biome Foundation | v1.18 | 0/3 | Planned | - |
 | 83. Aquatic Entity Population | v1.18 | 0/2 | Not started | - |
 | 84. Exotic Biome Foundation | v1.18 | 0/2 | Not started | - |
 | 85. Exotic Entity Population | v1.18 | 0/2 | Not started | - |
@@ -488,4 +488,4 @@ Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87
 **Total:** 87 phases (81 complete, 6 pending)
 
 ---
-*Last updated: 2026-02-23 - v1.18 Content Expansion roadmap created*
+*Last updated: 2026-02-23 - Phase 82 plans created*
