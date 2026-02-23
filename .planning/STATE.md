@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.17 Core Gameplay Loop - Phase 79: Resource Risk/Reward
+**Current focus:** v1.17 Core Gameplay Loop - Phase 80: Zone Mastery & Lore
 
 ## Current Position
 
-Phase: 79 (Resource Risk/Reward)
-Plan: 4/4 complete
-Status: Complete
-Last activity: 2026-02-23 — Completed Phase 79 (Resource Risk/Reward)
+Phase: 80 (Zone Mastery & Lore)
+Plan: 1/? complete
+Status: In Progress
+Last activity: 2026-02-23 — Completed 80-02 Database Schema & Queries
 
-Progress: [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 4.6%
+Progress: [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 4.7%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 218
+- Total plans completed: 219
 - Average duration: ~3 min per plan
-- Total execution time: ~10.9 hours across 17 milestones
+- Total execution time: ~11.0 hours across 17 milestones
 
 **By Milestone:**
 
@@ -44,7 +44,7 @@ Progress: [████░░░░░░░░░░░░░░░░░░░
 | v1.14 | 59-63 | 8 | 1 day |
 | v1.15 | 64-69 | 16 | 1 day |
 | v1.16 | 70-75 | 11 | 1 day |
-| v1.17 | 76-81 | 14/? | In Progress |
+| v1.17 | 76-81 | 15/? | In Progress |
 
 **Recent Trend:**
 Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 6 phases.
@@ -79,6 +79,8 @@ Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 
 | Phase 79 P02 | 142 | 2 tasks | 3 files |
 | Phase 79 P03 | 303 | 3 tasks | 5 files |
 | Phase 79 P04 | 383 | 3 tasks | 4 files |
+| Phase 80 P02 | 281 | 2 tasks | 9 files |
+| Phase 80 P01 | 318 | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -163,6 +165,12 @@ Recent decisions affecting current work:
 - [Phase 79]: Markers positioned 300px above nameplate at depth 1500 (above fog, below HUD) for optimal visibility
 - [Phase 79]: Zone-scoped marker refresh on zone transition prevents rendering thousands of markers across world
 - [Phase 79]: Type casting (any) for socket events avoids Socket.io function-type inference confusion
+- [Phase 80]: Composite PK (characterId, loreId) prevents duplicate lore collection via database constraint
+- [Phase 80]: JSONB objectives in zone_mastery for flexible mastery tracking without schema migrations
+- [Phase 80]: Unique constraint (characterId, biome, tier) prevents duplicate mastery entries per tier
+- [Phase 80]: Unique constraint (characterId, rewardId) prevents duplicate reward unlocks
+- [Phase 80]: grantCharacterReward returns null on duplicate (23505 error) for graceful handling
+- [Phase 80]: All lore/mastery/reward tables cascade delete from characters for automatic orphan cleanup
 
 ### Pending Todos
 
@@ -175,7 +183,8 @@ None.
 - Phase 77: POI Discovery System — Complete (4/4 plans)
 - Phase 78: Gathering Mini-Game — Complete (4/4 plans)
 - Phase 79: Resource Risk/Reward — Complete (4/4 plans)
-- Remaining phases: 80-81 (Zone Mastery, Combat Balancing)
+- Phase 80: Zone Mastery & Lore — In Progress (1/? plans complete)
+- Remaining phases: 81 (Combat Balancing)
 
 **Known Issues:**
 - Web app vitest tests hang when run via nx (vitest 4.0.18 vs nx expecting v1-3). TypeScript compilation verified instead.
@@ -183,12 +192,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 79-04 Client Rare Node Visual Effects
+Stopped at: Completed 80-02 Database Schema & Queries
 Resume file: None
 
 **Next steps:**
-1. Begin Phase 80 (Zone Mastery & Lore) - requires planning
-2. Continue v1.17 milestone with remaining phases (80-81)
+1. Continue Phase 80 with remaining plans (services, client UI)
+2. Complete v1.17 milestone with Phase 81 (Combat Balancing)
 
 ---
-*Last updated: 2026-02-23 - Completed Phase 79 Resource Risk/Reward*
+*Last updated: 2026-02-23 - Completed Phase 80 Plan 02 Database Schema & Queries*
