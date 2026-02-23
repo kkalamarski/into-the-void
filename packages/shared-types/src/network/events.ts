@@ -1,3 +1,5 @@
+import type { TimingChallenge, TimingResult, GatheringAccuracy, ResourceCategory } from '../game/proficiency';
+
 /**
  * Game event base interface
  */
@@ -41,7 +43,9 @@ export type ClientEventType =
   | 'quest:complete'
   | 'quest:abandon'
   | 'quest:accept'
-  | 'poi:discover';
+  | 'poi:discover'
+  | 'gathering:start'
+  | 'gathering:complete';
 
 /**
  * Server-to-client event types
@@ -84,7 +88,9 @@ export type ServerEventType =
   | 'quest:accepted'
   | 'quest:error'
   | 'poi:discovered'
-  | 'poi:already_discovered';
+  | 'poi:already_discovered'
+  | 'gathering:challenge'
+  | 'gathering:result';
 
 /**
  * Socket.io event map for type safety
@@ -120,6 +126,8 @@ export interface ClientEvents {
   'quest:abandon': { questId: string };
   'quest:accept': { questId: string };
   'poi:discover': { poiId: string; worldX: number; worldY: number };
+  'gathering:start': { targetEntityId: string };
+  'gathering:complete': TimingResult;
 }
 
 /**
@@ -293,6 +301,17 @@ export interface ServerEvents {
   };
   'poi:discovered': { poiId: string; poiType: string; reward: import('../game/poi').DiscoveryReward };
   'poi:already_discovered': { poiId: string };
+  'gathering:challenge': TimingChallenge;
+  'gathering:result': {
+    success: boolean;
+    accuracy: GatheringAccuracy;
+    yieldMultiplier: number;
+    items: { itemId: string; quantity: number }[];
+    proficiencyXP: number;
+    proficiencyLevel: number;
+    category: ResourceCategory;
+    error?: string;
+  };
 }
 
 /**

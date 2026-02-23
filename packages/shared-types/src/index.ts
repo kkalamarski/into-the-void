@@ -19,6 +19,7 @@ export * from './game/ability';
 export * from './game/buff';
 export * from './game/quest';
 export * from './game/poi';
+export * from './game/proficiency';
 
 // Network types
 export * from './network/events';
