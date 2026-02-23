@@ -1,706 +1,520 @@
-# Architecture Patterns: Active Combat Abilities System
+# Architecture Integration Research
 
-**Domain:** 2D multiplayer sci-fi survival MMO
-**Researched:** 2026-02-20
+**Domain:** Gathering, Exploration, and Combat Balancing Systems
+**Researched:** 2026-02-23
+**Confidence:** HIGH
 
-## Current State Summary
+## Integration Overview
 
-Into the Void has established architecture patterns that the ability system must integrate with:
-
-### Backend (NestJS + Socket.IO)
-- **Service-based architecture**: `combat.service.ts`, `inventory.service.ts`, `player.service.ts`
-- **Event-driven communication**: `ClientEvents` and `ServerEvents` interfaces in `shared-types`
-- **Session management**: In-memory maps (e.g., `CombatService.sessions`)
-- **Tick-based processing**: `AiService` drives zone ticks which call `CombatService.processCombatTick()`
-- **Validation pattern**: Server validates all actions, broadcasts results
-
-### Frontend (React + Phaser 3)
-- **Dual rendering**: React for UI panels, Phaser for game canvas
-- **State management**: Zustand stores (`gameStore`, `combatStore`, `statsStore`, `inventoryStore`)
-- **Socket listeners**: Stores register socket event handlers at module level
-- **Action bar**: Existing 8-slot hotbar with localStorage persistence (`actionBarStore`)
-- **Item effects**: Strategy pattern in `packages/items` with `ItemEffectDef` definitions
-
-### Item System
-- **Definition-driven**: `ItemDefinition` in `packages/items` with readonly properties
-- **Effect system**: `effects: ItemEffectDef[]` with trigger types (`on_use`, `on_equip`, `passive`)
-- **Repository pattern**: `ItemRegistry.get(itemId)` for centralized access
-- **Current effect types**: `heal`, `energy_restore`, `stat_buff`, `suit_repair`, etc.
-
-### Combat System
-- **Auto-attack loop**: Timer-based damage ticks in `CombatService.attackTick()`
-- **Interval calculation**: `calculateAttackInterval(haste)` from game-logic
-- **Damage events**: `combat:damage` socket event broadcasts to zone
-- **Session tracking**: `Map<playerId, CombatSession>` with `lastAttackAt` timestamps
-
-## Recommended Architecture
-
-### Component Boundaries
-
-| Component | Responsibility | Location | New/Modified |
-|-----------|---------------|----------|--------------|
-| **AbilityService** | Validate ability use, track cooldowns, apply effects | `apps/game-server/src/game/` | NEW |
-| **AbilityDefinitions** | Define abilities with costs, cooldowns, effects | `packages/abilities/src/definitions/` | NEW |
-| **AbilityRegistry** | Singleton registry for ability lookups | `packages/abilities/src/registry.ts` | NEW |
-| **ItemDefinition.grantedAbilities** | Link items to abilities they grant | `packages/items/src/types.ts` | MODIFIED |
-| **useAbilityStore** | Client-side cooldown UI state | `apps/web/src/store/abilityStore.ts` | NEW |
-| **AbilityBar** | Visual cooldown display UI | `apps/web/src/ui/hud/AbilityBar.tsx` | NEW |
-| **PlayerService.energy** | Track energy resource for costs | `apps/game-server/src/game/player.service.ts` | MODIFIED |
-| **ClientEvents/ServerEvents** | Add ability-related events | `packages/shared-types/src/network/events.ts` | MODIFIED |
-
-### Data Flow: Ability Use
+New features integrate into existing three-tier architecture (client, game-server, shared logic). Each system follows established patterns: Zustand stores for client state, NestJS services for server logic, Socket.IO events for communication, and shared-types for contracts.
 
 ```
-1. Client (React)
-   → User presses ability keybind (Q/E/R/F)
-   → useAbilityStore checks local cooldown (optimistic UI)
-   → gameSocket.emit('ability:use', { abilityId, targetId? })
-
-2. Server (NestJS)
-   → GameGateway.handleAbilityUse() receives event
-   → AbilityService.useAbility(playerId, abilityId, targetId?)
-
-3. Validation (AbilityService)
-   → Check ability granted by equipped item
-   → Check energy cost (PlayerService.getEnergy())
-   → Check cooldown (Map<playerId, Map<abilityId, endTime>>)
-   → Check range/conditions (similar to combat.service.ts:85-130)
-   → Return { success: boolean, error?: string }
-
-4. Effect Application
-   → AbilityService.applyEffects(abilityDef.effects, context)
-   → Effects reuse ItemEffect types from existing system
-   → Damage: call CombatService.applyDamage()
-   → Buffs: tracked in new BuffService (time-limited stat modifiers)
-   → Healing: PlayerService.updateHealth()
-
-5. Broadcast Results
-   → server.to(zoneId).emit('ability:cast', { casterId, abilityId, targetId })
-   → server.to(playerId).emit('ability:cooldown', { abilityId, cooldownMs })
-   → If damage: emit 'combat:damage' (existing event)
-   → If buff: emit 'buff:applied', { targetId, buffId, duration }
-
-6. Client Update
-   → useAbilityStore.setCooldown(abilityId, cooldownMs)
-   → AbilityBar renders cooldown progress (Phaser TimerEvent)
-   → WorldScene shows visual effects at target position
+┌─────────────────────────────────────────────────────────────────┐
+│                    WEB CLIENT (apps/web)                         │
+├─────────────────────────────────────────────────────────────────┤
+│  STORES (Zustand)                                                │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐             │
+│  │explorationSto│ │gatheringStore│ │combatStore   │             │
+│  │re (NEW)      │ │(NEW)         │ │(MODIFY)      │             │
+│  └──────┬───────┘ └──────┬───────┘ └──────┬───────┘             │
+│         │                │                │                      │
+│  PHASER SCENES                                                   │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ WorldScene (MODIFY)                                       │   │
+│  │  ├─ FogOfWarManager (NEW)                                │   │
+│  │  ├─ GatheringMiniGameOverlay (NEW)                       │   │
+│  │  └─ POIRenderer (NEW)                                    │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│         │                │                │                      │
+├─────────┴────────────────┴────────────────┴──────────────────────┤
+│                     WEBSOCKET (Socket.IO)                        │
+├─────────────────────────────────────────────────────────────────┤
+│                 GAME SERVER (apps/game-server)                   │
+├─────────────────────────────────────────────────────────────────┤
+│  SERVICES (NestJS)                                               │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐             │
+│  │ExplorationSvc│ │GatheringSvc  │ │CombatService │             │
+│  │(NEW)         │ │(NEW)         │ │(MODIFY)      │             │
+│  └──────┬───────┘ └──────┬───────┘ └──────┬───────┘             │
+│         │                │                │                      │
+├─────────┴────────────────┴────────────────┴──────────────────────┤
+│               DATABASE (packages/database)                       │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐             │
+│  │exploration   │ │gathering_    │ │combat_       │             │
+│  │(NEW)         │ │stats (NEW)   │ │balancing     │             │
+│  └──────────────┘ └──────────────┘ └──────────────┘             │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Integration Points
+## Component Integration Map
 
-#### 1. Item System Integration
-**Location:** `packages/items/src/types.ts`
+### NEW Components
 
-Add to `ItemDefinition`:
-```typescript
-/** Abilities granted when this item is equipped (tools/modules) */
-readonly grantedAbilities?: readonly string[]; // Array of ability IDs
+| Component | Location | Purpose | Integrates With |
+|-----------|----------|---------|-----------------|
+| **explorationStore** | `apps/web/src/store/` | Fog of war state, POI discovery, zone mastery | gameStore, localStorage |
+| **gatheringStore** | `apps/web/src/store/` | Mini-game state, resource yields | inventoryStore, entityStore |
+| **FogOfWarManager** | `apps/web/src/game/systems/` | Render fog overlay, persist revealed tiles | WorldScene, explorationStore |
+| **GatheringMiniGameOverlay** | `apps/web/src/game/ui/` | Timing-based skill check UI | WorldScene, gatheringStore |
+| **POIRenderer** | `apps/web/src/game/rendering/` | Render undiscovered POI icons | WorldScene, EntityRenderer |
+| **ExplorationService** | `apps/game-server/src/game/` | Track POI discovery, zone mastery | ZonesService, QuestService |
+| **GatheringService** | `apps/game-server/src/game/` | Validate mini-game, calculate yields | EntityService, InventoryService |
+
+### MODIFIED Components
+
+| Component | Location | Modifications | Reason |
+|-----------|----------|---------------|--------|
+| **CombatService** | `apps/game-server/src/game/` | Add difficulty scaling based on level gap | Combat balancing requirements |
+| **EntityService** | `apps/game-server/src/game/` | Trigger mini-game flow for gathering | Gathering system integration |
+| **gameStore** | `apps/web/src/store/` | Add mini-game UI toggle state | UI orchestration |
+| **WorldScene** | `apps/web/src/game/scenes/` | Integrate FogOfWar, GatheringOverlay, POIRenderer | Rendering coordination |
+| **shared-types** | `packages/shared-types/src/` | Add exploration, gathering, POI types | Type contracts |
+
+## Data Flow Patterns
+
+### Gathering Mini-Game Flow
+
+```
+Player clicks resource entity
+    ↓
+[WorldScene] → entity:interact → [EntityService]
+    ↓                                   ↓
+[detects gathering resource]    [checks tool + range]
+    ↓                                   ↓
+[shows mini-game overlay] ← gathering:start ← [GatheringService]
+    ↓
+[player completes timing] → gathering:complete → [GatheringService]
+    ↓                                               ↓
+[validates timing window]                   [rolls loot table]
+    ↓                                               ↓
+[awards bonus/penalty] ← gathering:result ← [updates inventory]
+    ↓
+[hides overlay, updates entityStore]
 ```
 
-**Rationale:** Items grant abilities, not all abilities available at all times. Combat tool grants combat abilities, research tool grants research abilities.
+**Key Integration Points:**
+1. **EntityService.handleToolUse()** - Insert mini-game check before loot roll
+2. **GatheringService** - NEW service validates client timing, calculates yield multiplier
+3. **gatheringStore** - Tracks mini-game state (active, startTime, difficulty)
+4. **Socket Events:** `gathering:start`, `gathering:complete`, `gathering:result`
 
-#### 2. Energy System Integration
-**Location:** `apps/game-server/src/game/player.service.ts`
+### Fog of War Flow
 
-Add methods:
-```typescript
-getEnergy(playerId: string): number;
-consumeEnergy(playerId: string, amount: number): boolean;
-// Energy regeneration already handled by existing regen tick
+```
+Player moves to new tile
+    ↓
+[MovementController] → player:moved → [PlayerService]
+    ↓                                      ↓
+[updates local position]           [broadcasts to zone]
+    ↓
+[FogOfWarManager.revealTile(x, y)]
+    ↓
+[updates explorationStore.revealedTiles]
+    ↓
+[persists to localStorage per characterId]
+    ↓
+[checks for POI discovery] → exploration:poi_discovered → [ExplorationService]
+    ↓                                                           ↓
+[adds to explorationStore.discoveredPOIs]              [awards lore entry]
 ```
 
-**Rationale:** Energy already exists in player state (`player:regen` event line 535 in gameStore.ts). Abilities consume energy, preventing spam.
+**Key Integration Points:**
+1. **MovementController** - Hook into position updates to call FogOfWarManager
+2. **FogOfWarManager** - NEW system maintains revealed tile bitmap, renders overlay
+3. **explorationStore** - Persists fog state per character using localStorage
+4. **localStorage key:** `fog-of-war:${characterId}` (bitset array for efficiency)
+5. **POI Discovery:** Check revealed tiles against zone's POI positions
 
-#### 3. Cooldown Tracking
-**Location:** `apps/game-server/src/game/ability.service.ts`
+### Zone Mastery Flow
 
-```typescript
-private cooldowns: Map<string, Map<string, number>> = new Map();
-// playerId -> abilityId -> endTimestamp
-
-isOnCooldown(playerId: string, abilityId: string): boolean;
-startCooldown(playerId: string, abilityId: string, durationMs: number): void;
+```
+Player discovers POI / kills creature / gathers resource
+    ↓
+[ExplorationService.incrementActivity(characterId, zoneId, activityType)]
+    ↓
+[updates exploration table: poi_count, kills, resources]
+    ↓
+[calculates mastery percentage]
+    ↓
+[if threshold reached] → exploration:mastery_tier → [client]
+    ↓
+[explorationStore.updateZoneMastery(zoneId, tier)]
+    ↓
+[shows tier-up notification in UI]
 ```
 
-**Rationale:** Similar to `CombatService.sessions` pattern. In-memory tracking, cleared on disconnect.
+**Key Integration Points:**
+1. **QuestService.handleEntityKilled** - Call ExplorationService.incrementActivity
+2. **GatheringService** - Call ExplorationService.incrementActivity on gather
+3. **ExplorationService** - NEW service tracks per-zone activity counters
+4. **Database:** `exploration` table with characterId, zoneId, activity counts
+5. **Socket Event:** `exploration:mastery_tier` with tier level (1-5)
 
-#### 4. Buff System (New Component)
-**Location:** `apps/game-server/src/game/buff.service.ts`
+### Combat Balancing Flow
 
-```typescript
-interface ActiveBuff {
-  buffId: string;
-  targetId: string;
-  stat: string;
-  amount: number;
-  endsAt: number;
-}
-
-private activeBuffs: Map<string, ActiveBuff[]> = new Map(); // playerId -> buffs
-applyBuff(targetId, buffDef): void;
-removeExpiredBuffs(): void; // Called by tick loop
-getActiveBuffs(playerId): ActiveBuff[];
+```
+Player attacks creature with level gap > 5
+    ↓
+[CombatService.handlePlayerAttack()]
+    ↓
+[calculates level gap = creature.level - player.level]
+    ↓
+[if gap > 5] → difficultyMultiplier = 1.0 + (gap * 0.15)
+    ↓
+[applies to creature damage: baseDamage * multiplier]
+    ↓
+[existing damage flow continues with scaled values]
 ```
 
-**Rationale:** Timed stat modifiers from abilities. Integrates with existing `computeCharStats()` in game-logic.
+**Key Integration Points:**
+1. **CombatService.handlePlayerAttack()** - Add level-gap scaling before damage calculation
+2. **calculateDamage()** in game-logic - Pass difficulty multiplier parameter
+3. **No new stores/services** - Pure modification of existing combat logic
+4. **Creature AI:** Add retreat behavior when health < 20% (AiService modification)
 
-#### 5. Socket Event Extensions
-**Location:** `packages/shared-types/src/network/events.ts`
+## Architectural Patterns
 
-Add to `ClientEvents`:
-```typescript
-'ability:use': { abilityId: string; targetId?: string };
-```
+### Pattern 1: Client-Side Mini-Game with Server Validation
 
-Add to `ServerEvents`:
-```typescript
-'ability:cast': { casterId: string; abilityId: string; targetId?: string; timestamp: number };
-'ability:cooldown': { abilityId: string; cooldownMs: number; endsAt: number };
-'ability:granted': { abilityIds: string[] }; // When equipment changes
-'buff:applied': { targetId: string; buffId: string; stat: string; amount: number; duration: number };
-'buff:expired': { targetId: string; buffId: string };
-```
+**What:** Client renders interactive timing challenge, server validates result independently.
 
-**Rationale:** Follows existing event pattern (see `combat:start`, `combat:damage`).
-
-#### 6. Client Cooldown UI
-**Location:** `apps/web/src/store/abilityStore.ts`
-
-```typescript
-interface AbilityState {
-  grantedAbilities: string[]; // From equipped items
-  cooldowns: Map<string, number>; // abilityId -> endsAt timestamp
-  setCooldown: (abilityId: string, cooldownMs: number) => void;
-  tickCooldowns: () => void; // Called by Phaser update loop
-}
-```
-
-**Location:** `apps/web/src/ui/hud/AbilityBar.tsx`
-
-React component rendering 4 ability slots (Q/E/R/F) with:
-- Ability icon from definition
-- Cooldown overlay (radial or linear)
-- Energy cost indicator
-- Keybind label
-
-**Rationale:** Mirrors ActionBar.tsx pattern (line 54-93). Uses Phaser TimerEvent for smooth cooldown animations.
-
-### New Components Required
-
-#### 1. `packages/abilities/` (New Package)
-
-**Structure:**
-```
-packages/abilities/
-├── src/
-│   ├── types.ts              // AbilityDefinition interface
-│   ├── registry.ts           // AbilityRegistry singleton
-│   ├── definitions/
-│   │   ├── combat.ts         // Combat tool abilities
-│   │   ├── mining.ts         // Mining tool abilities
-│   │   ├── research.ts       // Research tool abilities
-│   │   └── index.ts
-│   └── index.ts
-├── package.json
-└── tsconfig.json
-```
-
-**AbilityDefinition interface:**
-```typescript
-export interface AbilityDefinition {
-  readonly id: string;                    // e.g., 'plasma_burst'
-  readonly displayName: string;           // 'Plasma Burst'
-  readonly description: string;
-  readonly icon: string;                  // Texture key
-  readonly energyCost: number;            // Energy consumed on use
-  readonly cooldownMs: number;            // Cooldown duration
-  readonly castTime?: number;             // Cast time (0 = instant)
-  readonly range?: number;                // Max range in tiles (null = self)
-  readonly targetType: 'self' | 'enemy' | 'ground' | 'ally';
-  readonly effects: readonly AbilityEffect[];
-}
-
-export type AbilityEffect =
-  | { type: 'damage'; amount: number; damageType: 'physical' | 'energy' }
-  | { type: 'heal'; amount: number }
-  | { type: 'buff'; stat: string; amount: number; duration: number }
-  | { type: 'debuff'; stat: string; amount: number; duration: number }
-  | { type: 'energy_restore'; amount: number };
-```
-
-**Rationale:** Mirrors `packages/items` structure. Strategy pattern for maintainability.
-
-#### 2. `apps/game-server/src/game/ability.service.ts` (New Service)
-
-**Responsibilities:**
-- Validate ability use (grants, energy, cooldown, range)
-- Start cooldowns
-- Apply ability effects (delegates to existing services)
-- Broadcast ability events
-
-**Integration:**
-```typescript
-@Injectable()
-export class AbilityService {
-  constructor(
-    private readonly playerService: PlayerService,
-    private readonly inventoryService: InventoryService,
-    private readonly combatService: CombatService,
-    private readonly buffService: BuffService,
-  ) {}
-
-  async useAbility(
-    playerId: string,
-    abilityId: string,
-    targetId?: string
-  ): Promise<{ success: boolean; error?: string }>;
-}
-```
-
-**Rationale:** Follows existing service pattern (CombatService, InventoryService).
-
-#### 3. `apps/game-server/src/game/buff.service.ts` (New Service)
-
-**Responsibilities:**
-- Track active buffs per player
-- Apply buffs (stat modifiers)
-- Remove expired buffs (tick-based)
-- Integrate with `computeCharStats()` for stat calculation
-
-**Tick Integration:**
-```typescript
-// In AiService.tickZone() after combat tick:
-await this.buffService.processBuffTick(zoneId);
-```
-
-**Rationale:** Time-limited stat modifiers are core to ability effects.
-
-#### 4. `apps/web/src/store/abilityStore.ts` (New Store)
-
-**Responsibilities:**
-- Track granted abilities from equipment
-- Track cooldown states for UI
-- Listen to `ability:granted`, `ability:cooldown` socket events
-
-**Socket listener setup:**
-```typescript
-gameSocket.on('ability:granted', (data: { abilityIds: string[] }) => {
-  useAbilityStore.getState().setGrantedAbilities(data.abilityIds);
-});
-
-gameSocket.on('ability:cooldown', (data: { abilityId: string; cooldownMs: number }) => {
-  useAbilityStore.getState().setCooldown(data.abilityId, cooldownMs);
-});
-```
-
-**Rationale:** Mirrors combatStore.ts pattern (line 11-14).
-
-#### 5. `apps/web/src/ui/hud/AbilityBar.tsx` (New Component)
-
-**Responsibilities:**
-- Render 4 ability slots (Q/E/R/F keybinds)
-- Show cooldown progress (circular or radial)
-- Display energy cost and keybind
-- Handle keyboard input for ability activation
-
-**Visual Design:**
-```
-[Q]  [E]  [R]  [F]
- ↓    ↓    ↓    ↓
-[🔥] [⛏️] [🔬] [⚡]
- 45   0   120   30  ← Energy cost
- 2.5s      READY    ← Cooldown state
-```
-
-**Rationale:** Positioned next to ActionBar in HUD.tsx. Uses Phaser.Time.TimerEvent for smooth cooldown rendering.
-
-#### 6. `apps/web/src/game/rendering/AbilityEffectRenderer.ts` (New Renderer)
-
-**Responsibilities:**
-- Render visual effects for ability casts
-- Particle effects at target location
-- Beam/projectile animations
-- Integrate with EntityRenderer for positioning
-
-**Example:**
-```typescript
-export class AbilityEffectRenderer {
-  showCastEffect(abilityId: string, casterPos: Position, targetPos?: Position): void;
-  // Creates particles, sprites, tweens based on ability type
-}
-```
-
-**Rationale:** Visual feedback for ability usage. Similar to damage number rendering in WorldScene.
-
-### Modified Components
-
-#### 1. `packages/items/src/types.ts`
-**Change:** Add `grantedAbilities?: readonly string[]` to `ItemDefinition`
-
-**Impact:** Tools and modules can grant abilities when equipped.
-
-#### 2. `packages/items/src/definitions/tools.ts`
-**Change:** Add `grantedAbilities` arrays to tool definitions
-
-**Example:**
-```typescript
-export const TOOL_COMBAT_COMMON: ItemDefinition = {
-  // ... existing properties
-  grantedAbilities: ['basic_strike', 'energy_shield'],
-};
-```
-
-**Impact:** Links items to abilities they provide.
-
-#### 3. `apps/game-server/src/game/game.gateway.ts`
-**Change:** Add `@SubscribeMessage('ability:use')` handler
-
-**Location:** After existing handlers (~line 400)
-
-**Impact:** Routes ability use requests to AbilityService.
-
-#### 4. `apps/game-server/src/game/player.service.ts`
-**Change:** Add energy management methods
-
-**New methods:**
-```typescript
-getEnergy(playerId: string): number;
-consumeEnergy(playerId: string, amount: number): boolean;
-```
-
-**Impact:** Enables energy cost validation for abilities.
-
-#### 5. `packages/shared-types/src/network/events.ts`
-**Change:** Add ability events to ClientEvents and ServerEvents interfaces
-
-**Impact:** Type-safe socket communication for abilities.
-
-#### 6. `apps/web/src/ui/GameUI.tsx`
-**Change:** Import and render `<AbilityBar />` in HUD
-
-**Location:** After ActionBar in HUD component (~line 99)
-
-**Impact:** Ability UI visible in game.
-
-#### 7. `packages/game-logic/src/stats/char-stats.ts`
-**Change:** Integrate buff modifiers into `computeCharStats()`
-
-**New parameter:**
-```typescript
-export function computeCharStats(
-  level: number,
-  equipment: EquipmentJson,
-  entityType: 'player' | 'creature',
-  activeBuffs?: Array<{ stat: string; amount: number }> // NEW
-): CharacterStats;
-```
-
-**Impact:** Buffs modify effective stats for combat calculations.
-
-## Build Order (Considering Dependencies)
-
-### Phase 1: Foundation (No UI)
-**Dependencies:** None - establishes data structures
-
-1. Create `packages/abilities/` package
-   - Define `AbilityDefinition` interface
-   - Implement `AbilityRegistry` singleton
-   - Create 3-5 example abilities (one per tool type)
-
-2. Extend `ItemDefinition` with `grantedAbilities`
-   - Modify `packages/items/src/types.ts`
-   - Update 3 tool definitions with ability grants
-
-3. Add ability events to `shared-types`
-   - Extend `ClientEvents` and `ServerEvents`
-
-**Validation:** Abilities can be imported, registry lookups work
-
-### Phase 2: Server Infrastructure
-**Dependencies:** Phase 1 complete
-
-4. Implement `BuffService`
-   - Track active buffs
-   - Expire buffs on tick
-   - Integrate with `computeCharStats()`
-
-5. Implement `AbilityService`
-   - Validation logic (grants, energy, cooldown, range)
-   - Cooldown tracking (in-memory map)
-   - Effect application (delegates to existing services)
-
-6. Extend `PlayerService` with energy methods
-   - `getEnergy()`, `consumeEnergy()`
-
-7. Add `ability:use` handler to `GameGateway`
-   - Wire to `AbilityService.useAbility()`
-
-8. Wire buff tick into `AiService.tickZone()`
-
-**Validation:** Server logs ability use, applies effects, starts cooldowns
-
-### Phase 3: Client State
-**Dependencies:** Phase 2 complete (server emits events)
-
-9. Implement `useAbilityStore`
-   - Track granted abilities
-   - Track cooldowns
-   - Socket event listeners
-
-10. Wire `ability:granted` emission on equipment change
-    - Modify inventory service to emit when tool equipped
-
-**Validation:** Client state updates when abilities granted/used
-
-### Phase 4: UI and Input
-**Dependencies:** Phase 3 complete (state available)
-
-11. Implement `AbilityBar` component
-    - Render 4 slots with cooldown overlays
-    - Keyboard input (Q/E/R/F)
-    - Energy cost display
-
-12. Add `AbilityBar` to `GameUI.tsx`
-
-13. Implement `AbilityEffectRenderer`
-    - Visual effects for ability casts
-    - Integrate with `WorldScene`
-
-**Validation:** Full ability flow works end-to-end with UI feedback
-
-### Phase 5: Content and Polish
-**Dependencies:** Phase 4 complete (system functional)
-
-14. Create 20+ ability definitions across tool types
-    - 5 combat abilities (damage, stuns)
-    - 5 mining abilities (AoE mining, ore detection)
-    - 5 research abilities (scanning, analysis boosts)
-    - 5 utility abilities (speed boosts, shields)
-
-15. Balance energy costs and cooldowns
-
-16. Polish visual effects
-
-**Validation:** Full ability catalog playable
-
-## Architecture Patterns to Follow
-
-### 1. Strategy Pattern (Existing)
-**Where:** `packages/abilities/src/definitions/`
-
-**How:** Each ability is a data object, effects processed by switch statement
-
-**Example from items:**
-```typescript
-// packages/game-logic/src/inventory/effects.ts:24-108
-export function resolveEffect(effect: ItemEffect): EffectResult {
-  switch (effect.type) {
-    case 'heal': return { type: 'heal', applied: { health: effect.amount } };
-    // ... other cases
-  }
-}
-```
-
-**Apply to abilities:** Reuse `ItemEffect` types for ability effects.
-
-### 2. Repository Pattern (Existing)
-**Where:** `packages/abilities/src/registry.ts`
-
-**How:** Singleton registry with `get(abilityId)` method
-
-**Example from items:**
-```typescript
-// packages/items/src/registry.ts
-export class ItemRegistry {
-  private static items = new Map<string, ItemDefinition>();
-  static get(itemId: string): ItemDefinition | undefined;
-}
-```
-
-**Apply to abilities:** `AbilityRegistry.get(abilityId)` for lookups.
-
-### 3. Service Delegation (Existing)
-**Where:** `AbilityService.applyEffects()`
-
-**How:** Ability service delegates to existing services rather than duplicating logic
-
-**Example from combat:**
-```typescript
-// CombatService.attackTick() delegates to:
-const damageResult = calculateDamage(...); // game-logic
-this.playerService.grantXp(player.id, xpReward); // player service
-```
-
-**Apply to abilities:** Damage effects call `CombatService`, heals call `PlayerService`.
-
-### 4. Event Broadcasting (Existing)
-**Where:** All ability results
-
-**How:** Emit to zone room for visual feedback, emit to player for state updates
-
-**Example from combat:**
-```typescript
-// combat.service.ts:408-413
-this.server.to(playerSocket).emit('combat:start', {
-  attackerId: creatureId,
-  defenderId: targetPlayerId,
-  timestamp: session.startedAt,
-});
-```
-
-**Apply to abilities:** `ability:cast` to zone, `ability:cooldown` to caster.
-
-### 5. Zustand Store + Socket Wiring (Existing)
-**Where:** `useAbilityStore`
-
-**How:** Store registers socket listeners at module level, components subscribe to state
-
-**Example from combat:**
-```typescript
-// combatStore.ts:17-46
-gameSocket.on('combat:start', (data) => {
-  if (defenderId === currentPlayer.id) {
-    useCombatStore.getState().setInCombat(true, attackerId);
-  }
-});
-```
-
-**Apply to abilities:** `gameSocket.on('ability:cooldown')` updates store.
-
-### 6. Optimistic UI (Recommended)
-**Where:** Client ability activation
-
-**How:** Show cooldown immediately on client, revert if server rejects
-
-**Why:** Responsive UI for fast-paced combat
+**Why:** Low latency for responsive gameplay while preventing timing manipulation.
 
 **Implementation:**
 ```typescript
-// Client-side
-const useAbility = (abilityId: string) => {
-  // Start optimistic cooldown
-  const cooldownMs = AbilityRegistry.get(abilityId)?.cooldownMs;
-  if (cooldownMs) {
-    useAbilityStore.getState().setCooldown(abilityId, cooldownMs);
+// Client (gatheringStore)
+startMiniGame(difficulty: number) {
+  this.state = 'active';
+  this.startTime = performance.now();
+  this.targetWindow = [1000, 1500]; // ms range
+}
+
+submitTiming(clickTime: number) {
+  const elapsed = clickTime - this.startTime;
+  gameSocket.emit('gathering:complete', { elapsed });
+}
+
+// Server (GatheringService)
+validateTiming(elapsed: number, difficulty: number): number {
+  const [minMs, maxMs] = getTargetWindow(difficulty);
+  if (elapsed >= minMs && elapsed <= maxMs) {
+    const precision = 1 - Math.abs(elapsed - (minMs + maxMs) / 2) / (maxMs - minMs);
+    return 1.0 + precision * 0.5; // 1.0x to 1.5x yield
+  }
+  return 0.5; // penalty for failure
+}
+```
+
+**Trade-offs:**
+- Pro: Responsive feedback, prevents cheating
+- Con: Network latency affects difficulty calibration (mitigate: use server timestamp validation)
+
+### Pattern 2: Persistent Client-Side Map with Server Authority
+
+**What:** Client maintains fog of war state locally, server owns POI definitions and discovery validation.
+
+**Why:** Reduces network traffic (no per-tile reveals), enables instant rendering, server validates discoveries.
+
+**Implementation:**
+```typescript
+// Client (FogOfWarManager)
+class FogOfWarManager {
+  private revealedTiles: Set<string>; // "x,y" keys
+
+  constructor(characterId: string) {
+    this.revealedTiles = this.loadFromStorage(characterId);
   }
 
-  // Emit to server
-  gameSocket.emit('ability:use', { abilityId });
+  revealTile(x: number, y: number, zoneId: string) {
+    const key = `${zoneId}:${x},${y}`;
+    if (!this.revealedTiles.has(key)) {
+      this.revealedTiles.add(key);
+      this.saveToStorage();
+      this.checkPOIDiscovery(x, y, zoneId); // emit to server
+    }
+  }
 
-  // Server will emit 'ability:cooldown' to confirm or 'error' to revert
-};
+  private loadFromStorage(characterId: string): Set<string> {
+    const data = localStorage.getItem(`fog-of-war:${characterId}`);
+    return data ? new Set(JSON.parse(data)) : new Set();
+  }
+}
+
+// Server (ExplorationService)
+async validatePOIDiscovery(characterId: string, x: number, y: number, zoneId: string) {
+  const poi = await this.getPOIAtPosition(x, y, zoneId);
+  if (poi && !await this.hasDiscovered(characterId, poi.id)) {
+    await this.recordDiscovery(characterId, poi.id);
+    return poi; // emit back to client with lore data
+  }
+  return null;
+}
 ```
+
+**Trade-offs:**
+- Pro: Instant fog reveal, persists across sessions, low bandwidth
+- Con: Client storage per character (~1MB for 100k revealed tiles), potential desync (mitigate: version flag in localStorage)
+
+### Pattern 3: Event-Driven Zone Mastery Tracking
+
+**What:** Domain events (entity.killed, item.collected, poi.discovered) trigger mastery updates via existing event system.
+
+**Why:** Reuses QuestService event pattern, decouples mastery from individual actions.
+
+**Implementation:**
+```typescript
+// Server (ExplorationService)
+@OnEvent('entity.killed')
+async handleEntityKilled(payload: EntityKilledPayload) {
+  await this.incrementMasteryCounter(
+    payload.characterId,
+    payload.zoneId,
+    'kills'
+  );
+  this.checkMasteryTier(payload.characterId, payload.zoneId);
+}
+
+@OnEvent('item.collected')
+async handleItemCollected(payload: ItemCollectedPayload) {
+  await this.incrementMasteryCounter(
+    payload.characterId,
+    payload.zoneId,
+    'resources'
+  );
+  this.checkMasteryTier(payload.characterId, payload.zoneId);
+}
+
+private async checkMasteryTier(characterId: string, zoneId: string) {
+  const progress = await this.getMasteryProgress(characterId, zoneId);
+  const tier = this.calculateTier(progress); // 0-5 based on thresholds
+  if (tier > progress.currentTier) {
+    await this.updateTier(characterId, zoneId, tier);
+    this.emitTierUp(characterId, zoneId, tier);
+  }
+}
+```
+
+**Trade-offs:**
+- Pro: Consistent with existing QuestService pattern, easy to add new mastery triggers
+- Con: Additional database writes per action (mitigate: batch updates with 5s debounce)
+
+## Database Schema Extensions
+
+### New Tables
+
+```typescript
+// packages/database/src/schema/exploration.ts
+export const exploration = pgTable('exploration', {
+  id: serial('id').primaryKey(),
+  characterId: integer('character_id').notNull().references(() => characters.id),
+  zoneId: varchar('zone_id', { length: 50 }).notNull(),
+  revealedTiles: integer('revealed_tiles').default(0), // count for statistics
+  discoveredPOIs: jsonb('discovered_pois').$type<string[]>().default([]),
+  masteryTier: integer('mastery_tier').default(0), // 0-5
+  kills: integer('kills').default(0),
+  resourcesGathered: integer('resources_gathered').default(0),
+  lastActivityAt: timestamp('last_activity_at').defaultNow(),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Composite index for efficient lookups
+export const explorationIndex = uniqueIndex('exploration_character_zone_idx')
+  .on(exploration.characterId, exploration.zoneId);
+```
+
+```typescript
+// packages/database/src/schema/gathering-stats.ts
+export const gatheringStats = pgTable('gathering_stats', {
+  id: serial('id').primaryKey(),
+  characterId: integer('character_id').notNull().references(() => characters.id),
+  resourceType: varchar('resource_type', { length: 50 }).notNull(), // mineral/plant
+  totalGathers: integer('total_gathers').default(0),
+  perfectGathers: integer('perfect_gathers').default(0), // mini-game success
+  averageYield: real('average_yield').default(1.0), // multiplier average
+  lastGatherAt: timestamp('last_gather_at'),
+});
+```
+
+### Modified Tables
+
+```typescript
+// packages/database/src/schema/characters.ts (ADD)
+// Add to existing characters table
+combatDifficultyPreference: varchar('combat_difficulty_preference', { length: 20 })
+  .default('normal'); // 'easy', 'normal', 'hard'
+```
+
+## New Socket Events
+
+### Client → Server
+
+| Event | Payload | Purpose |
+|-------|---------|---------|
+| `gathering:complete` | `{ elapsed: number }` | Submit mini-game timing result |
+| `exploration:reveal_tiles` | `{ tiles: Array<{x,y}> }` | Batch reveal multiple tiles (zone transition) |
+| `exploration:poi_discovered` | `{ x: number, y: number, zoneId: string }` | Validate POI discovery |
+
+### Server → Client
+
+| Event | Payload | Purpose |
+|-------|---------|---------|
+| `gathering:start` | `{ difficulty: number, targetWindow: [number, number] }` | Initiate mini-game with parameters |
+| `gathering:result` | `{ success: boolean, multiplier: number, items: ItemDrop[] }` | Award resources with yield multiplier |
+| `exploration:poi_data` | `{ poi: POI, loreEntry: string }` | Send POI details and lore on discovery |
+| `exploration:mastery_tier` | `{ zoneId: string, tier: number, rewards: Reward[] }` | Notify tier-up with rewards |
+| `combat:difficulty_scaled` | `{ multiplier: number }` | Debug event showing applied difficulty |
+
+## Scaling Considerations
+
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| 0-1k users | Current architecture sufficient. Fog of war in localStorage, mastery counters in PostgreSQL. |
+| 1k-10k users | Add Redis cache for zone mastery counters (reduce DB writes). Batch fog reveals on zone transition. |
+| 10k+ users | Consider separate exploration microservice, use Redis for real-time counters, PostgreSQL for persistence. |
+
+### Bottleneck Analysis
+
+1. **First bottleneck (5k users):** Fog of war localStorage size (100k tiles = 1MB per character)
+   - **Mitigation:** Use bitset encoding (8 tiles per byte) → 12.5KB per character
+   - **Implementation:** `FogOfWarManager` uses Uint8Array, bit manipulation for get/set
+
+2. **Second bottleneck (10k users):** Zone mastery database writes (every kill/gather)
+   - **Mitigation:** In-memory counter batching with 5-second flush interval
+   - **Implementation:** `ExplorationService` maintains Map<characterId_zoneId, counters>, periodic batch update
+
+## Build Order Recommendations
+
+### Phase 1: Fog of War Foundation
+**Why first:** Zero dependencies, enables other exploration features, pure client-side.
+
+1. Create `explorationStore` with revealed tiles Set
+2. Implement `FogOfWarManager` with localStorage persistence
+3. Hook into `MovementController` position updates
+4. Add fog overlay rendering to `WorldScene`
+
+**Success Criteria:** Player sees fog, moves reveal tiles, fog persists across sessions.
+
+### Phase 2: POI Discovery System
+**Why second:** Depends on fog of war, enables lore collection.
+
+1. Add `exploration` database table and schema
+2. Implement `ExplorationService` with POI validation
+3. Add POI definitions to `world-gen` package
+4. Implement `POIRenderer` in WorldScene
+5. Wire `exploration:poi_discovered` event flow
+
+**Success Criteria:** Player reveals POI, receives lore entry, POI marked as discovered.
+
+### Phase 3: Gathering Mini-Game
+**Why third:** Independent system, can test without exploration features.
+
+1. Create `gatheringStore` with mini-game state
+2. Implement `GatheringMiniGameOverlay` UI component
+3. Implement `GatheringService` with timing validation
+4. Modify `EntityService.handleToolUse()` to trigger mini-game
+5. Wire `gathering:start`, `gathering:complete`, `gathering:result` events
+
+**Success Criteria:** Click resource → mini-game appears → correct timing → bonus loot.
+
+### Phase 4: Zone Mastery Tracking
+**Why fourth:** Depends on exploration events, requires POI system.
+
+1. Add mastery counters to `exploration` table
+2. Implement event handlers in `ExplorationService`
+3. Add mastery tier calculation logic
+4. Implement tier-up rewards in `InventoryService`
+5. Wire `exploration:mastery_tier` event
+
+**Success Criteria:** Activities increment counters, tier-up notification appears, rewards granted.
+
+### Phase 5: Combat Balancing
+**Why last:** Independent of other features, modifies critical system.
+
+1. Add difficulty multiplier to `CombatService.handlePlayerAttack()`
+2. Modify `calculateDamage()` in game-logic package
+3. Add retreat behavior to `AiService` FSM
+4. Add difficulty preference to character table
+5. Test balancing with various level gaps
+
+**Success Criteria:** High-level creatures deal scaled damage, low-health creatures retreat.
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Client-Side Ability Logic
-**What goes wrong:** Client calculates damage, applies effects locally
+### Anti-Pattern 1: Server-Side Fog Tracking
 
-**Why bad:** Cheating, desync issues, duplicate logic
+**What people do:** Store revealed tiles in database, sync on every movement.
 
-**Prevention:** Server is source of truth. Client only renders results.
+**Why it's wrong:** Generates massive database writes (every step), increases latency, doesn't scale.
 
-### Anti-Pattern 2: Polling for Cooldown State
-**What goes wrong:** Client repeatedly checks `Date.now()` against cooldown end time
+**Do this instead:** Client localStorage with server-side POI discovery validation only. Server never sees per-tile reveals.
 
-**Why bad:** Performance overhead, imprecise timing, battery drain
+### Anti-Pattern 2: Synchronous Mini-Game Validation
 
-**Prevention:** Use Phaser TimerEvent for cooldown updates
+**What people do:** Block server response waiting for player to complete mini-game.
 
-### Anti-Pattern 3: Global Ability Registry Mutation
-**What goes wrong:** Modifying ability definitions at runtime (e.g., storing cooldown state in definition)
+**Why it's wrong:** Ties up server thread, vulnerable to timeout, breaks with packet loss.
 
-**Why bad:** Shared state corruption, race conditions, breaks readonly contract
+**Do this instead:** Async flow: server sends `gathering:start`, client plays mini-game, client sends `gathering:complete`, server validates and responds. Each step is non-blocking.
 
-**Prevention:** Definitions are immutable. State lives in service/store.
+### Anti-Pattern 3: Real-Time Mastery Counter Updates
 
-### Anti-Pattern 4: Synchronous Ability Resolution
-**What goes wrong:** Blocking the event loop waiting for ability effects to complete
+**What people do:** Update database on every single kill/gather action.
 
-**Why bad:** Server lag, timeouts, poor UX
+**Why it's wrong:** Generates excessive database writes, causes contention on hot rows, expensive at scale.
 
-**Prevention:** Async/await for all service calls, effects applied asynchronously
+**Do this instead:** In-memory counter accumulation with periodic (5s) batch flush. Only write to DB when tier changes or on disconnect.
 
-### Anti-Pattern 5: Tightly Coupled UI
-**What goes wrong:** AbilityBar directly calls AbilityService methods
+### Anti-Pattern 4: Global Difficulty Setting
 
-**Why bad:** Violates separation of concerns, hard to test, breaks on service changes
+**What people do:** Apply same difficulty multiplier to all creatures in a zone.
 
-**Prevention:** UI talks to store, store talks to socket, socket talks to service
+**Why it's wrong:** Removes per-encounter challenge tuning, forces homogeneous content.
 
-## Scalability Considerations
+**Do this instead:** Calculate difficulty per creature based on player vs creature level gap. Allows zone diversity while maintaining accessibility.
 
-| Concern | At 10 abilities | At 50 abilities | At 200+ abilities |
-|---------|----------------|-----------------|-------------------|
-| **Registry Lookup** | Map O(1) fine | Map O(1) fine | Map O(1) fine |
-| **Cooldown Tracking** | In-memory map per player | In-memory map per player | Consider Redis for persistence |
-| **Buff Calculation** | Array iteration acceptable | Array iteration acceptable | Index buffs by stat for O(1) lookup |
-| **Event Broadcasting** | Zone broadcast fine | Zone broadcast fine | Consider interest management (only nearby players) |
-| **Client Memory** | All definitions loaded | All definitions loaded | Lazy load ability assets |
+## Integration Testing Strategy
 
-**Recommendation for 20+ abilities:** Current architecture scales fine. Use in-memory maps, zone-based broadcasting.
+### Test Order
 
-**Future optimization (100+ abilities):**
-- Redis for cooldown/buff persistence (survives server restart)
-- Interest management for broadcasts (only players in render distance)
-- Asset lazy loading on client (only load icons when ability granted)
+1. **Fog of War (isolated):** Test localStorage persistence, tile reveal logic, rendering
+2. **POI Discovery:** Test fog + POI integration, server validation, lore delivery
+3. **Gathering Mini-Game:** Test timing validation, yield calculation, inventory updates
+4. **Zone Mastery:** Test event aggregation, tier calculation, reward delivery
+5. **Combat Balancing:** Test damage scaling, retreat behavior, difficulty preferences
+6. **Full Integration:** Test all systems interacting (gather → mastery → tier-up reward)
 
-## Rate Limiting Integration
+### Critical Integration Points
 
-NestJS has a throttler module for rate limiting WebSocket events. For abilities, integrate server-side rate limiting to prevent spam.
+| Integration | Test Scenario | Expected Behavior |
+|-------------|---------------|-------------------|
+| Fog + POI | Reveal tiles around POI | POI appears when center tile revealed |
+| Mini-Game + Inventory | Perfect timing | 1.5x yield multiplier applied to loot |
+| Mastery + Quests | Kill creature | Both quest progress AND mastery increment |
+| Combat + AI | Attack high-level creature | Scaled damage, retreat at 20% health |
+| Fog + Zone Transition | Move to new zone | Load fog for new zone from localStorage |
 
-**Implementation:**
-```typescript
-// ability.service.ts
-private lastAbilityUse: Map<string, number> = new Map(); // playerId -> timestamp
+## Sources
 
-async useAbility(playerId: string, abilityId: string): Promise<Result> {
-  const now = Date.now();
-  const lastUse = this.lastAbilityUse.get(playerId) ?? 0;
-  const MIN_INTERVAL = 100; // 100ms global cooldown
+Phaser 3 fog of war patterns:
+- [Fog of War with Hexagons implementation advice](https://phaser.discourse.group/t/fog-of-war-with-hexagons-implementation-advice/4895)
+- [Simple Fog of War Effect for a Phaser 3 Roguelike](https://blog.ourcade.co/posts/2020/phaser3-fog-of-war-field-of-view-roguelike/)
+- [@pixelburp/phaser3-fog-of-war npm package](https://www.npmjs.com/package/@pixelburp/phaser3-fog-of-war)
 
-  if (now - lastUse < MIN_INTERVAL) {
-    return { success: false, error: 'Ability on global cooldown' };
-  }
+Phaser 3 timing implementation:
+- [How to Create an Accurate Timer for Phaser Games](https://www.joshmorony.com/how-to-create-an-accurate-timer-for-phaser-games/)
 
-  this.lastAbilityUse.set(playerId, now);
-  // ... rest of validation
-}
-```
+MMO gathering mechanics:
+- [Mini games for gathering resources — MMORPG.com Forums](https://forums.mmorpg.com/discussion/229842/mini-games-for-gathering-resources)
+- [Common anti-patterns in MMORPG design](https://www.gamedeveloper.com/design/common-anti-patterns-in-mmorpg-design)
 
-**Rationale:** Prevents client from spamming ability requests before server cooldown applied. Global cooldown (100ms) is standard in MMOs.
+Exploration systems:
+- [Best MMOs for Exploration — MMOPulse](https://mmopulse.com/recommended/recommended-exploration)
+- [Community Debate - POI Interest — Pantheon Forums](https://seforums.pantheonmmo.com/content/forums/topic/12992/community-debate-do-points-of-interest-poi-interest-you/view/post_id/251844)
 
-## References
+Persistent map patterns:
+- [BetterMap - Persistent Mapping & Waypoints](https://hytalemod.me/posts/bettermap-hytale)
+- [GitHub - fog-of-war: Map Exploration Simulator](https://github.com/wblachut/fog-of-war)
 
-**Architecture Patterns:**
-- [Generic Combat System (GCS)](https://www.aeblender.com/2026/01/ue-5-6-generic-combat-system-advanced-gas-v1-4-crack-download/) - Component-based combat architecture decoupled through interfaces
-- [Multiplayer Action Combat System](https://www.fab.com/listings/345ecdbc-c543-4f7d-93e2-110f8a877460) - Handles combos, cooldowns, stuns, crowd control
-
-**Cooldown Systems:**
-- [Roblox Client-Server Cooldown](https://devforum.roblox.com/t/how-can-i-make-a-robust-client-server-cooldown-system/544500) - Debounces on client with server validation
-- [GitHub keep-cooldown](https://github.com/swkeep/keep-cooldown) - Server-side cooldown resource
-
-**Phaser Timer Implementation:**
-- [Phaser 3 Time API](https://docs.phaser.io/phaser/concepts/time) - Timer events for delayed function calls
-- [Phaser Timer Notes](https://rexrainbow.github.io/phaser3-rex-notes/docs/site/timer/) - Timer patterns and best practices
-
-**NestJS Rate Limiting:**
-- [NestJS Throttler](https://github.com/nestjs/throttler) - Rate limiting for WebSockets
-- [NestJS WebSocket Rate Limiting](https://www.delightfulengineering.com/blog/nest-websockets/rate-limiting-acknowledgements) - Implementation patterns
-
-**Combat Design:**
-- [Combat Design Mechanics](https://gamedesignskills.com/game-design/combat-design/) - Active elements (abilities, attacks) and resource management
-
-## Summary
-
-Active combat abilities integrate cleanly with Into the Void's existing architecture by:
-
-1. **Leveraging existing patterns**: Item effects, socket events, service delegation, Zustand stores
-2. **Minimal modification**: Only 7 existing files need changes, rest are new components
-3. **Clear dependencies**: Phase-based build order prevents integration issues
-4. **Server authority**: Client UI only, server validates and broadcasts results
-5. **Scalability**: In-memory maps and zone broadcasts scale to 50+ abilities without architectural changes
-
-**Key architectural decision:** Abilities are granted by items (tools/modules), not inherent to player. This maintains item-driven progression and reuses equipment change events.
-
-**Critical path:** BuffService integration with `computeCharStats()` is most complex new component, requiring careful testing to ensure stat calculations remain accurate.
+---
+*Architecture integration research for: Gathering, Exploration, and Combat Balancing*
+*Researched: 2026-02-23*
