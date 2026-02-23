@@ -235,55 +235,55 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BIOME-01 | TBD | Pending |
-| BIOME-02 | TBD | Pending |
-| BIOME-03 | TBD | Pending |
-| BIOME-04 | TBD | Pending |
-| BIOME-05 | TBD | Pending |
-| BIOME-06 | TBD | Pending |
-| BIOME-07 | TBD | Pending |
-| BIOME-08 | TBD | Pending |
-| BIOME-09 | TBD | Pending |
-| ENT-01 | TBD | Pending |
-| ENT-02 | TBD | Pending |
-| ENT-03 | TBD | Pending |
-| ENT-04 | TBD | Pending |
-| ENT-05 | TBD | Pending |
-| ENT-06 | TBD | Pending |
-| ENT-07 | TBD | Pending |
-| ENT-08 | TBD | Pending |
-| ENT-09 | TBD | Pending |
-| CREA-01 | TBD | Pending |
-| CREA-02 | TBD | Pending |
-| CREA-03 | TBD | Pending |
-| CREA-04 | TBD | Pending |
-| CREA-05 | TBD | Pending |
-| CREA-06 | TBD | Pending |
-| CREA-07 | TBD | Pending |
-| CREA-08 | TBD | Pending |
-| CREA-09 | TBD | Pending |
-| CREA-10 | TBD | Pending |
-| ITEM-01 | TBD | Pending |
-| ITEM-02 | TBD | Pending |
-| ITEM-03 | TBD | Pending |
-| ITEM-04 | TBD | Pending |
-| ITEM-05 | TBD | Pending |
-| ITEM-06 | TBD | Pending |
-| ITEM-07 | TBD | Pending |
-| ITEM-08 | TBD | Pending |
-| ITEM-09 | TBD | Pending |
-| ITEM-10 | TBD | Pending |
-| PROG-01 | TBD | Pending |
-| PROG-02 | TBD | Pending |
-| PROG-03 | TBD | Pending |
-| PROG-04 | TBD | Pending |
-| PROG-05 | TBD | Pending |
-| PROG-06 | TBD | Pending |
+| BIOME-01 | Phase 82 | Pending |
+| BIOME-02 | Phase 82 | Pending |
+| BIOME-03 | Phase 82 | Pending |
+| BIOME-04 | Phase 84 | Pending |
+| BIOME-05 | Phase 84 | Pending |
+| BIOME-06 | Phase 84 | Pending |
+| BIOME-07 | Phase 82 | Pending |
+| BIOME-08 | Phase 82 | Pending |
+| BIOME-09 | Phase 82 | Pending |
+| ENT-01 | Phase 83 | Pending |
+| ENT-02 | Phase 83 | Pending |
+| ENT-03 | Phase 83 | Pending |
+| ENT-04 | Phase 85 | Pending |
+| ENT-05 | Phase 85 | Pending |
+| ENT-06 | Phase 85 | Pending |
+| ENT-07 | Phase 87 | Pending |
+| ENT-08 | Phase 87 | Pending |
+| ENT-09 | Phase 87 | Pending |
+| CREA-01 | Phase 83 | Pending |
+| CREA-02 | Phase 83 | Pending |
+| CREA-03 | Phase 83 | Pending |
+| CREA-04 | Phase 83 | Pending |
+| CREA-05 | Phase 85 | Pending |
+| CREA-06 | Phase 85 | Pending |
+| CREA-07 | Phase 85 | Pending |
+| CREA-08 | Phase 85 | Pending |
+| CREA-09 | Phase 87 | Pending |
+| CREA-10 | Phase 87 | Pending |
+| ITEM-01 | Phase 86 | Pending |
+| ITEM-02 | Phase 86 | Pending |
+| ITEM-03 | Phase 86 | Pending |
+| ITEM-04 | Phase 86 | Pending |
+| ITEM-05 | Phase 86 | Pending |
+| ITEM-06 | Phase 86 | Pending |
+| ITEM-07 | Phase 86 | Pending |
+| ITEM-08 | Phase 86 | Pending |
+| ITEM-09 | Phase 86 | Pending |
+| ITEM-10 | Phase 86 | Pending |
+| PROG-01 | Phase 86 | Pending |
+| PROG-02 | Phase 86 | Pending |
+| PROG-03 | Phase 86 | Pending |
+| PROG-04 | Phase 87 | Pending |
+| PROG-05 | Phase 87 | Pending |
+| PROG-06 | Phase 87 | Pending |
 
 **Coverage:**
 - v1.18 requirements: 44 total
-- Mapped to phases: 0 (awaiting roadmap)
-- Unmapped: 44
+- Mapped to phases: 44
+- Unmapped: 0
 
 ### v1.17 Requirements (Complete)
 
@@ -319,4 +319,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-23*
-*Last updated: 2026-02-23 after v1.18 requirements definition*
+*Last updated: 2026-02-23 after v1.18 roadmap creation - 44/44 requirements mapped*

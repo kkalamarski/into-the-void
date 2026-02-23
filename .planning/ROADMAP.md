@@ -20,6 +20,7 @@
 - v1.15 Quest System - Phases 64-69 (shipped 2026-02-22)
 - v1.16 UI Polish - Phases 70-75 (shipped 2026-02-23)
 - v1.17 Core Gameplay Loop - Phases 76-81 (shipped 2026-02-23)
+- **v1.18 Content Expansion** - Phases 82-87 (in progress)
 
 ## Phases
 
@@ -244,148 +245,155 @@ See: `.planning/milestones/v1.15-ROADMAP.md`
 - [x] Phase 74: Quest Completion Feedback (2/2 plans) - completed 2026-02-23
 - [x] Phase 75: Error Handling (2/2 plans) - completed 2026-02-23
 
-See: `.planning/milestones/v1.16-ROADMAP.md` (collapsed for brevity)
+See: `.planning/milestones/v1.16-ROADMAP.md`
 
 </details>
 
-## Milestone v1.17: Core Gameplay Loop
+<details>
+<summary>v1.17 Core Gameplay Loop (Phases 76-81) - SHIPPED 2026-02-23</summary>
 
-**Goal:** Complete the gameplay loop with engaging gathering, exploration discovery, and balanced combat.
+**Milestone Goal:** Complete the gameplay loop with engaging gathering, exploration discovery, and balanced combat.
 
-### Phase 76: Fog of War Foundation
+- [x] Phase 76: Fog of War Foundation (2/2 plans) - completed 2026-02-23
+- [x] Phase 77: POI Discovery System (4/4 plans) - completed 2026-02-23
+- [x] Phase 78: Gathering Mini-Game (4/4 plans) - completed 2026-02-23
+- [x] Phase 79: Resource Risk/Reward (4/4 plans) - completed 2026-02-23
+- [x] Phase 80: Zone Mastery & Lore (5/5 plans) - completed 2026-02-23
+- [x] Phase 81: Combat Balancing & Quest Audit (3/3 plans) - completed 2026-02-23
 
-**Goal**: Players see exploration progress with fog overlay that reveals tiles as they move
-**Depends on**: Phase 75 (v1.16 complete)
-**Requirements**: EXPL-01, EXPL-02, EXPL-03
-**Plans:** 2 plans
-
-**Success Criteria** (what must be TRUE):
-  1. Player sees fog overlay hiding unexplored tiles in dark/dimmed state
-  2. Fog reveals in radius around player as they move to new tiles
-  3. Explored tiles persist across sessions keyed by characterId in localStorage
-  4. Fog state uses bitset encoding (8 tiles per byte) to prevent localStorage bloat
-  5. Fog rendering performs at 60fps with 10k+ revealed tiles
-
-Plans:
-- [x] 76-01-PLAN.md — Fog data layer (bitset persistence, reveal tracking)
-- [x] 76-02-PLAN.md — Fog rendering integration (RenderTexture overlay, WorldScene hooks)
+</details>
 
 ---
 
-### Phase 77: POI Discovery System
+## Milestone v1.18: Content Expansion
 
-**Goal**: Players discover points of interest that grant lore and rewards
-**Depends on**: Phase 76
-**Requirements**: EXPL-04, EXPL-05, EXPL-06
-**Plans:** 4 plans
+**Goal:** Massively expand world content with 6 new biomes (3 aquatic, 3 exotic), ~30 new gatherable entities, ~20 new creatures, and ~40 new items. Build order follows research: aquatic foundation first (mechanically simpler), then exotic biomes, with item integration and balance after all content exists.
+
+### Phase 82: Aquatic Biome Foundation
+
+**Goal**: Players can explore three distinct aquatic biomes with appropriate movement and visibility constraints
+**Depends on**: Phase 81 (v1.17 complete)
+**Requirements**: BIOME-01, BIOME-02, BIOME-03, BIOME-07, BIOME-08, BIOME-09
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. POIs (anomalies, caches, landmarks) spawn in world with visual distinction when fog revealed
-  2. Player discovers POI by entering its tile after fog revealed
-  3. POI discovery grants immediate rewards (XP, items, or credits)
-  4. Discovered POIs persist in database to prevent re-discovery exploits
-  5. POI icons render at correct z-index above terrain, below modals
+  1. Player can enter Tidal Pools (Tier I) and move at reduced speed through shallow water tiles
+  2. Player can navigate Kelp Forests (Tier II) through defined corridors between dense flora
+  3. Player can access Deep Trenches (Tier III) with pressure hazard awareness
+  4. Water/land boundaries render with smooth shore transition tiles (no 1-tile artifacts)
+  5. Fog of war reveals reduced radius in aquatic zones based on biome visibility modifiers
 
 Plans:
-- [x] 77-01-PLAN.md — POI types and procedural generation (shared-types, world-gen)
-- [x] 77-02-PLAN.md — Discovery tracking database schema (database package)
-- [x] 77-03-PLAN.md — Discovery service and WebSocket events (game-server)
-- [x] 77-04-PLAN.md — POI rendering and client integration (web app)
+- [ ] 82-01: TBD
+- [ ] 82-02: TBD
+- [ ] 82-03: TBD
 
 ---
 
-### Phase 78: Gathering Mini-Game
+### Phase 83: Aquatic Entity Population
 
-**Goal**: Resource gathering requires timing skill check with variable yield
-**Depends on**: Phase 76 (independent of POI system)
-**Requirements**: GATH-01, GATH-02, GATH-03, GATH-04, GATH-05
-**Plans:** 4 plans
+**Goal**: Aquatic biomes are populated with unique resources and creatures appropriate to each tier
+**Depends on**: Phase 82
+**Requirements**: ENT-01, ENT-02, ENT-03, CREA-01, CREA-02, CREA-03, CREA-04
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. Player clicks gatherable entity with tool equipped to start mini-game
-  2. Mini-game displays timing bar with moving indicator and success zone
-  3. Player timing accuracy determines yield: 0.5x (poor), 1.0x (good), 1.5x (perfect)
-  4. Server validates timing to prevent auto-click cheats using server-side elapsed time
-  5. Gathering proficiency per resource type increases with use and widens success zone
+  1. Player can gather 5 distinct aquatic minerals (coral, sea crystals, abyssal ore, tidal stones, pearl nodes)
+  2. Player can gather 5 distinct aquatic plants (kelp, bioluminescent algae, pressure ferns, void kelp, thermal vents)
+  3. Player can discover 3 aquatic artifacts (sunken tech, ancient shells, drowned relics)
+  4. Player encounters herbivore, omnivore, predator, and maniac aquatic creatures across tiers
+  5. Creature spawn density and behavior matches biome tier (passive in Tier I, dangerous in Tier III)
 
 Plans:
-- [x] 78-01-PLAN.md — Shared types and game-logic validation functions
-- [x] 78-02-PLAN.md — Database schema for proficiency persistence
-- [x] 78-03-PLAN.md — Server GatheringService and WebSocket handlers
-- [x] 78-04-PLAN.md — Client mini-game UI and WorldScene integration
+- [ ] 83-01: TBD
+- [ ] 83-02: TBD
 
 ---
 
-### Phase 79: Resource Risk/Reward
+### Phase 84: Exotic Biome Foundation
 
-**Goal**: Better resources spawn in dangerous areas with visual distinction
-**Depends on**: Phase 78
-**Requirements**: GATH-06, GATH-07, GATH-08
-**Plans:** 4 plans
+**Goal**: Players can explore three exotic/anomaly biomes with unique visual identity and environmental effects
+**Depends on**: Phase 83
+**Requirements**: BIOME-04, BIOME-05, BIOME-06
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. Higher tier resource nodes spawn near aggressive creatures (proximity-based spawn rules)
-  2. Rare nodes display visual distinction (shimmer effect, color variation, icon marker)
-  3. Player can track discovered rare node locations via map markers
-  4. Rare nodes yield higher tier resources than common nodes of same type
-  5. Risk/reward balance: dangerous zones have 3x rare node density vs safe zones
+  1. Player can enter Void Rift (Tier IV) with distinct visual palette and reality distortion awareness
+  2. Player can explore Crystalline Wastes (Tier III) with crystal formations visible on terrain
+  3. Player can navigate Bioluminescent Depths (Tier II) with glowing flora and reduced base visibility
+  4. Each exotic biome has distinct tile types and color schemes distinguishable from aquatic biomes
 
 Plans:
-- [x] 79-01-PLAN.md — Types and rare node definitions (shared-types, entities)
-- [x] 79-02-PLAN.md — Proximity-based spawn system (world-gen)
-- [x] 79-03-PLAN.md — Discovery tracking and WebSocket events (database, game-server)
-- [x] 79-04-PLAN.md — Visual effects and map markers (web client)
+- [ ] 84-01: TBD
+- [ ] 84-02: TBD
 
 ---
 
-### Phase 80: Zone Mastery & Lore
+### Phase 85: Exotic Entity Population
 
-**Goal**: Zone exploration tracked with mastery progression and lore collection
-**Depends on**: Phase 77 (POI system), Phase 78 (gathering system)
-**Requirements**: EXPL-07, EXPL-08, EXPL-09, EXPL-10, EXPL-11, EXPL-12
-**Plans:** 5 plans
+**Goal**: Exotic biomes are populated with unique resources and creatures appropriate to dimensional/anomaly themes
+**Depends on**: Phase 84
+**Requirements**: ENT-04, ENT-05, ENT-06, CREA-05, CREA-06, CREA-07, CREA-08
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. Lore fragments exist as collectible data logs that reveal world/faction history
-  2. Collected lore tracked in codex UI accessible via hotkey with read/unread states
-  3. Zone mastery objectives track POI discoveries, resource gathers, creature kills
-  4. Zone mastery progress displays in HUD with tier indicators and percentage
-  5. Zone mastery completion unlocks zone-specific rewards (titles, cosmetics, or bonuses)
+  1. Player can gather 5 distinct exotic minerals (void crystals, anomaly shards, dimensional ore, null stones, phase minerals)
+  2. Player can gather 5 distinct exotic plants (reality moss, echo blooms, temporal fungi, void vines, null grass)
+  3. Player can discover 4 exotic artifacts (anomaly cores, dimensional fragments, echo records, void relics)
+  4. Player encounters exotic creatures with appropriate dimensional behaviors (phase grazers, void stalkers)
+  5. Tier IV maniac creature (dimensional aberration) presents significant challenge requiring Tier III gear
 
 Plans:
-- [x] 80-01-PLAN.md — Types and lore package (shared-types, @into-the-void/lore)
-- [x] 80-02-PLAN.md — Database schema for lore and mastery (database package)
-- [x] 80-03-PLAN.md — Server services for lore and mastery (game-server)
-- [x] 80-04-PLAN.md — Client UI (LoreCodex, ZoneMasteryHUD)
-- [x] 80-05-PLAN.md — Gap closure: POI discovery event emission (game-server)
+- [ ] 85-01: TBD
+- [ ] 85-02: TBD
 
 ---
 
-### Phase 81: Combat Balancing & Quest Audit
+### Phase 86: Item Integration & Balance
 
-**Goal**: Combat follows gradual fight pattern and all quest items obtainable from world
-**Depends on**: Phase 80
-**Requirements**: COMB-01, COMB-02, COMB-03, COMB-04, COMB-05, QUEST-07, QUEST-08
-**Plans:** 3 plans
+**Goal**: New content yields useful equipment and materials with balanced progression across all tiers
+**Depends on**: Phase 85
+**Requirements**: ITEM-01, ITEM-02, ITEM-03, ITEM-04, ITEM-05, ITEM-06, ITEM-07, ITEM-08, ITEM-09, ITEM-10, PROG-01, PROG-02, PROG-03
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. Typical creature dies in 4-8 hits from same-level player (no one-shots)
-  2. Level gap beyond 5 applies 15% damage multiplier per level difference
-  3. Creature stats rebalanced to match new damage formula with predictable scaling
-  4. Abilities remain impactful compared to auto-attack (20%+ DPS increase)
-  5. All quest-required items have obtainable source (entity drops or POI rewards verified)
+  1. Player can craft/obtain 3 aquatic suits (diving, pressure, abyssal) and 3 aquatic tools (harpoon, diving pick, net)
+  2. Player can craft/obtain 3 exotic suits (void-touched, anomaly, null) and 3 exotic tools (phase extractor, void pick, reality anchor)
+  3. Player can use 10 new consumables (5 aquatic, 5 exotic) with meaningful effects
+  4. Tier I-II aquatic items are accessible without high-tier prerequisites (comparable to Frontier zones)
+  5. High-tier exotic items require existing Tier I-II materials (horizontal progression, no power creep)
 
 Plans:
-- [x] 81-01-PLAN.md — Level-gap damage multiplier (game-logic)
-- [x] 81-02-PLAN.md — Quest item audit and missing source fix (items, entities)
-- [x] 81-03-PLAN.md — Creature stat rebalancing and TTK tests (entities, game-logic)
+- [ ] 86-01: TBD
+- [ ] 86-02: TBD
+- [ ] 86-03: TBD
+
+---
+
+### Phase 87: Content Gaps & Discovery
+
+**Goal**: Existing biomes have complete resource coverage and all new content integrates with discovery systems
+**Depends on**: Phase 86
+**Requirements**: ENT-07, ENT-08, ENT-09, CREA-09, CREA-10, PROG-04, PROG-05, PROG-06
+**Plans:** TBD
+
+**Success Criteria** (what must be TRUE):
+  1. Player can gather rare/epic variants in fungal_forest (rare fungi, epic spores)
+  2. Player can gather rare/epic variants in miasma_marshes (toxic crystals, marsh gas nodes)
+  3. Player can find artifacts in toxic_wastes, volcanic_reaches, and glacial_expanse
+  4. Player encounters additional creatures in starfall_crater (2) and ancient_ruins (2)
+  5. All new biomes have zone mastery objectives, lore fragments (6-10 total), and POI types
+
+Plans:
+- [ ] 87-01: TBD
+- [ ] 87-02: TBD
 
 ---
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 76 -> 77 -> 78 -> 79 -> 80 -> 81
+Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -470,8 +478,14 @@ Phases execute in numeric order: 76 -> 77 -> 78 -> 79 -> 80 -> 81
 | 79. Resource Risk/Reward | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 80. Zone Mastery & Lore | v1.17 | 5/5 | Complete | 2026-02-23 |
 | 81. Combat Balancing & Quest Audit | v1.17 | 3/3 | Complete | 2026-02-23 |
+| 82. Aquatic Biome Foundation | v1.18 | 0/3 | Not started | - |
+| 83. Aquatic Entity Population | v1.18 | 0/2 | Not started | - |
+| 84. Exotic Biome Foundation | v1.18 | 0/2 | Not started | - |
+| 85. Exotic Entity Population | v1.18 | 0/2 | Not started | - |
+| 86. Item Integration & Balance | v1.18 | 0/3 | Not started | - |
+| 87. Content Gaps & Discovery | v1.18 | 0/2 | Not started | - |
 
-**Total:** 81 phases (81 complete, 0 pending)
+**Total:** 87 phases (81 complete, 6 pending)
 
 ---
-*Last updated: 2026-02-23 — Phase 81 complete, v1.17 milestone complete*
+*Last updated: 2026-02-23 - v1.18 Content Expansion roadmap created*
