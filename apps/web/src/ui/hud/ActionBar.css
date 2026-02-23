@@ -16,11 +16,29 @@
   border-radius: 4px;
   cursor: grab;
   overflow: hidden;
-  transition: transform 150ms ease, opacity 150ms ease;
+
+  /* GPU-accelerated transitions */
+  transition:
+    transform var(--transition-hover),
+    opacity var(--transition-hover),
+    border-color var(--transition-hover),
+    filter var(--transition-hover);
 }
 
-.ability-slot:hover:not(.ability-slot--disabled):not(.ability-slot--empty) {
+.ability-slot:hover:not(.ability-slot--disabled):not(.ability-slot--empty):not(.ability-slot--dragging) {
   border-color: var(--color-accent);
+  filter: brightness(1.15);
+  transform: translateY(-2px);
+}
+
+.ability-slot:active:not(.ability-slot--disabled):not(.ability-slot--empty) {
+  transform: translateY(0) scale(0.98);
+  transition: transform var(--transition-active);
+}
+
+.ability-slot:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .ability-slot--empty {

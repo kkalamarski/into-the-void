@@ -52,10 +52,29 @@
   justify-content: center;
   position: relative;
   cursor: pointer;
-  transition: border-color 0.2s;
+
+  /* GPU-accelerated transitions */
+  transition:
+    border-color var(--transition-hover),
+    filter var(--transition-hover),
+    box-shadow var(--transition-hover),
+    transform var(--transition-hover);
 }
 
-.inventory-slot:hover {
+.inventory-slot:hover:not(.inventory-slot--empty):not(.inventory-slot--locked) {
+  border-color: var(--color-accent);
+  filter: brightness(1.15);
+  box-shadow: 0 0 12px rgba(123, 104, 238, 0.4);
+}
+
+.inventory-slot:active:not(.inventory-slot--empty):not(.inventory-slot--locked) {
+  transform: scale(0.98);
+  transition: transform var(--transition-active);
+}
+
+.inventory-slot:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
   border-color: var(--color-accent);
 }
 
@@ -127,10 +146,20 @@
   color: var(--color-text-primary);
   font-size: 13px;
   cursor: pointer;
+
+  transition:
+    background-color var(--transition-hover),
+    filter var(--transition-hover);
 }
 
 .context-menu button:hover {
   background-color: var(--color-bg-tertiary);
+  filter: brightness(1.1);
+}
+
+.context-menu button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
 }
 
 .inventory-drop-zone {

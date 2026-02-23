@@ -15,14 +15,25 @@
   align-items: center;
   padding: 6px 10px;
   background: var(--color-bg-tertiary, #1e1e2e);
-  border: 1px solid var(--color-border, #333);
+  border: 1px solid var(--color-bg-tertiary, #333);
   border-radius: 4px;
   cursor: pointer;
   margin-bottom: 4px;
+
+  /* GPU-accelerated transitions */
+  transition:
+    border-color var(--transition-hover),
+    filter var(--transition-hover);
 }
 
 .quest-tracker-header:hover {
   border-color: var(--color-accent, #7b68ee);
+  filter: brightness(1.1);
+}
+
+.quest-tracker-header:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .quest-tracker-title {
@@ -45,16 +56,32 @@
 
 .tracked-quest {
   background: var(--color-bg-secondary, #1a1a1a);
-  border: 1px solid var(--color-border, #333);
+  border: 1px solid var(--color-bg-tertiary, #333);
   border-radius: 4px;
   padding: 8px 10px;
   cursor: pointer;
-  transition: border-color 0.2s, transform 0.1s;
+
+  /* GPU-accelerated transitions */
+  transition:
+    border-color var(--transition-hover),
+    transform var(--transition-hover),
+    filter var(--transition-hover);
 }
 
 .tracked-quest:hover {
   border-color: var(--color-accent, #7b68ee);
   transform: translateX(-2px);
+  filter: brightness(1.1);
+}
+
+.tracked-quest:active {
+  transform: translateX(0) scale(0.98);
+  transition: transform var(--transition-active);
+}
+
+.tracked-quest:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .tracked-quest-name {
