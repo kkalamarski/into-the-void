@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-22)
+See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 75 - Error Handling
+**Current focus:** v1.17 Core Gameplay Loop - Defining requirements
 
 ## Current Position
 
-Phase: 75 of 75 (Error Handling)
-Plan: 2 of 2
-Status: Complete
-Last activity: 2026-02-23 - Phase 75 Plan 02 complete
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-23 — Milestone v1.17 started
 
-Progress: [████████████████████████████████████████████████████████████████████████████████████████] 100%
+Progress: [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -46,7 +46,7 @@ Progress: [███████████████████████
 | v1.16 | 70-75 | 8 | Complete |
 
 **Recent Trend:**
-Stable velocity. Phase 75 complete (2 of 2 plans done). v1.16 milestone complete.
+Stable velocity. v1.16 shipped (6 phases, 11 plans). Starting v1.17.
 
 | Plan | Duration (s) | Tasks | Files |
 |------|--------------|-------|-------|
@@ -104,9 +104,11 @@ None.
 
 ### Blockers/Concerns
 
-**v1.16 Milestone Complete:**
-- All 6 phases (70-75) executed successfully
-- 8 plans total across UI Polish milestone
+**v1.17 Milestone Starting:**
+- Gathering system (skill expression, risk/reward, progression)
+- Exploration system (fog of war, POIs, lore, zone mastery)
+- Combat balancing (gradual fights, no one-shots)
+- Quest item audit
 
 **Known Issues:**
 - Escape key cascade in nested modals - to be addressed in future phase
@@ -114,12 +116,13 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 75-02-PLAN.md
+Stopped at: Started v1.17 milestone
 Resume file: None
 
 **Next steps:**
-1. Verify Phase 75: `/gsd:verify-phase 75`
-2. v1.16 milestone complete - begin next milestone planning
+1. Research domain (optional)
+2. Define requirements with REQ-IDs
+3. Create roadmap
 
 ---
-*Last updated: 2026-02-23 - Phase 75 Plan 02 complete (pending state UI wiring)*
+*Last updated: 2026-02-23 - v1.17 milestone started*

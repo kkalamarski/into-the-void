@@ -4,7 +4,7 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, and a complete auth-to-gameplay flow.
 
-## Current State (v1.15 shipped)
+## Current State (v1.16 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
@@ -20,6 +20,7 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Hubs: 4 orbital faction stations, portal travel, H key recall
 - Persistence: Player position saves across sessions, starter kit for new players
 - Quests: Definition system, NPC quest offering, quest log UI, objective tracking, chains, bounties
+- UI Polish: Unified NPC modal, quest tracker HUD, glassmorphism, quest markers, completion feedback
 
 **Tech stack:**
 - Frontend: React 18, Phaser 3, Zustand, React Router v7
@@ -29,16 +30,15 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~15,000+ LOC TypeScript
 
-## Current Milestone: v1.16 UI Polish
+## Current Milestone: v1.17 Core Gameplay Loop
 
-**Goal:** Clean, WoW-style NPC interaction with unified window and general HUD improvements.
+**Goal:** Complete the gameplay loop with engaging gathering, exploration discovery, and balanced combat.
 
 **Target features:**
-- Fix double-modal bug (two modals appearing for same NPC)
-- Single unified NPC window with tab navigation (Dialogue/Quests/Trade)
-- Quest panel overhaul (visual polish, simplified layout, better feedback)
-- Trade panel overhaul (consistent styling, clearer feedback)
-- General HUD polish (spacing, typography, hover states, consistency)
+- Gathering system with skill expression, risk/reward, and progression
+- Exploration system with fog of war, POIs, lore fragments, and zone mastery
+- Combat balancing for gradual fights (no random one-shots)
+- Quest item audit ensuring all items are obtainable from world
 
 ## Core Value
 
@@ -147,14 +147,24 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Story quests (one-time) and bounty quests (daily repeatable) — v1.15
 - ✓ Auto-discover quests on area entry — v1.15
 - ✓ Quest state persistence in database — v1.15
+- ✓ Unified NPC modal with tab navigation (Dialogue/Quests/Trade) — v1.16
+- ✓ Quest objective tracker HUD with collapse/expand — v1.16
+- ✓ GPU-accelerated visual polish with glassmorphism effects — v1.16
+- ✓ Real-time quest markers on NPCs (! for available, ? for turn-in) — v1.16
+- ✓ Quest completion banners with audio feedback — v1.16
+- ✓ Loading spinners and error handling for async operations — v1.16
 
 ### Active
 
-- [ ] Fix double-modal bug in NPC interaction
-- [ ] Single unified NPC window with tab navigation
-- [ ] Quest panel visual polish and simplified layout
-- [ ] Trade panel visual polish and consistent styling
-- [ ] General HUD polish (spacing, typography, hover states)
+- [ ] Gathering system with timing mini-game and skill expression
+- [ ] Resource node risk/reward (better nodes in dangerous areas)
+- [ ] Gathering progression (proficiency improves with use)
+- [ ] Fog of war map reveal (persistent per-character)
+- [ ] Points of interest discovery (anomalies, caches, landmarks)
+- [ ] Lore fragments (data logs revealing world history)
+- [ ] Zone mastery system (completion objectives per zone)
+- [ ] Combat balancing (gradual fights, no one-shots)
+- [ ] Quest item audit (ensure all items obtainable)
 
 ### Out of Scope
 
@@ -199,4 +209,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-22 after v1.16 milestone start*
+*Last updated: 2026-02-23 after v1.17 milestone start*
