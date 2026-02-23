@@ -14,6 +14,7 @@ export * from './species';
 export * from './world';
 export * from './structures';
 export * from './discoveries';
+export * from './discovered-pois';
 
 // Player storage
 export * from './storage';
