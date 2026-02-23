@@ -22,6 +22,7 @@ import { TradeService } from './trade.service';
 import { AbilityService } from './ability.service';
 import { QuestService } from './quest.service';
 import { DiscoveryService } from './discovery.service';
+import { GatheringService } from './gathering.service';
 import {
   ClientEvents,
   Direction,
@@ -68,6 +69,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly abilityService: AbilityService,
     private readonly questService: QuestService,
     private readonly discoveryService: DiscoveryService,
+    private readonly gatheringService: GatheringService,
   ) {}
 
   afterInit(server: Server) {
@@ -112,6 +114,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     if (player) {
       this.combatService.handleDisconnect(player.id);
       this.abilityService.handleDisconnect(player.id);
+      this.gatheringService.unloadProficiency(player.id);
     }
 
     await this.playerService.handleDisconnect(client.id);
@@ -163,6 +166,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
         // Load inventory for this session
         const inventory = await this.inventoryService.loadForPlayer(result.player.id);
+
+        // Load gathering proficiency for this session
+        await this.gatheringService.loadProficiency(result.player.id);
 
         client.emit('auth:success', { player: result.player });
         client.emit('zone:state', zoneState);
@@ -1342,6 +1348,35 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         credits: player.credits + result.reward.credits,
       });
     }
+  }
+
+  @SubscribeMessage('gathering:start')
+  async handleGatheringStart(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { targetEntityId: string }
+  ): Promise<void> {
+    const result = await this.gatheringService.startGathering(client.id, data.targetEntityId);
+
+    if ('error' in result) {
+      // Special case: artifact was collected instantly
+      if (result.error === 'ARTIFACT_COLLECTED') {
+        // EntityService already handled the entity update and ground item spawn
+        return;
+      }
+      client.emit('error', { code: 'GATHERING_ERROR', message: result.error });
+      return;
+    }
+
+    client.emit('gathering:challenge', result.challenge);
+  }
+
+  @SubscribeMessage('gathering:complete')
+  async handleGatheringComplete(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: import('@into-the-void/shared-types').TimingResult
+  ): Promise<void> {
+    const result = await this.gatheringService.completeGathering(client.id, data);
+    client.emit('gathering:result', result);
   }
 
   /**
