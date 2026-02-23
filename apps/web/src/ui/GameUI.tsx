@@ -11,6 +11,8 @@ import { useGameStore } from '../store/gameStore';
 import { useInventoryStore } from '../store/inventoryStore';
 import '../store/statsStore'; // Side-effect: registers stats:update socket handler
 import '../store/questStore'; // Side-effect: registers quest socket handlers
+import '../store/loreStore'; // Side-effect: registers lore socket handlers
+import '../store/zoneMasteryStore'; // Side-effect: registers mastery socket handlers
 import { useActionBarStore } from '../store/actionBarStore';
 import { useNpcStore } from '../store/npcStore';
 import { gameSocket } from '../network/socket';
@@ -26,6 +28,8 @@ import { DeathScreen } from './DeathScreen';
 import { AlertNotification } from './AlertNotification';
 import { LevelUpNotification } from '../components/LevelUpNotification';
 import { QuestCompleteModal } from './modals/QuestCompleteModal';
+import { LoreCodex } from '../components/LoreCodex';
+import { ZoneMasteryHUD } from '../components/ZoneMasteryHUD';
 import './GameUI.css';
 
 export const GameUI: React.FC = () => {
@@ -102,11 +106,13 @@ export const GameUI: React.FC = () => {
       <div className="game-ui">
         <HUD />
         <QuestTracker />
+        <ZoneMasteryHUD />
         {showChat && <ChatPanel />}
         {showInventory && <InventoryPanel />}
         {showEquipment && <EquipmentPanel />}
         {showAbilities && <AbilitiesPanel />}
         {isQuestLogOpen && <QuestLogPanel />}
+        <LoreCodex />
         <LevelUpNotification />
         <QuestCompleteModal />
         <AlertNotification />
