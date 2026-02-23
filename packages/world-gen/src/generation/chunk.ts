@@ -4,6 +4,8 @@ import { generateTerrain } from './terrain';
 import { generateSpawnPoints } from './spawn';
 import { generateStructures } from './structures';
 import { generatePOIs } from './pois';
+import { generateShoreTransitions } from './shore';
+import { generateKelpCorridors } from './kelp-corridors';
 import { createZoneId } from '@into-the-void/game-logic';
 
 /**
@@ -34,6 +36,12 @@ export class WorldGenerator {
       chunkY,
       this.biomeGenerator
     );
+
+    // Post-process: Generate shore transitions at water/land boundaries
+    generateShoreTransitions(tiles, collisions);
+
+    // Post-process: Carve navigable corridors in kelp forests
+    generateKelpCorridors(this.worldSeed, chunkX, chunkY, tiles, collisions);
 
     // Generate structure features (modifies tiles and collisions in place)
     // Uses dominant biome for consistency
