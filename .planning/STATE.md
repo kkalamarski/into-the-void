@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 83 of 87 (Aquatic Entity Population)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-23 - Phase 83 Plan 01 complete (aquatic entity definitions)
+Plan: 2 of 2 in current phase
+Status: Complete
+Last activity: 2026-02-23 - Phase 83 Plan 02 complete (aquatic spawn & loot configuration)
 
-Progress: [####################] 100% v1.17 | [###...........] 29% v1.18
+Progress: [####################] 100% v1.17 | [####..........] 36% v1.18
 
 ## Performance Metrics
 
@@ -28,7 +28,7 @@ Progress: [####################] 100% v1.17 | [###...........] 29% v1.18
 | Milestone | Phases | Plans | Timeline |
 |-----------|--------|-------|----------|
 | v1.0-v1.17 | 1-81 | 222 | 10 days |
-| v1.18 | 82-87 | 4/14 | In Progress |
+| v1.18 | 82-87 | 5/14 | In Progress |
 
 **v1.18 Phase Estimates:**
 
@@ -44,6 +44,7 @@ Progress: [####################] 100% v1.17 | [###...........] 29% v1.18
 | Phase 82 P02 | 363s | 3 tasks | 10 files |
 | Phase 82 P03 | 380s | 3 tasks | 8 files |
 | Phase 83 P01 | 211 | 4 tasks | 5 files |
+| Phase 83 P02 | 327 | 4 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,9 @@ Recent decisions affecting current work:
 - [Phase 83-01]: Use existing items for aquatic harvest yields (aquatic-specific items in Phase 86)
 - [Phase 83-01]: Apply Phase 81 health balance targets to aquatic creatures
 - [Phase 83-01]: Abyssal Leviathan as maniac-tier endgame threat in deep trenches
+- [Phase 83-02]: 1.5x aquatic density multiplier for ocean population (void_plains baseline 4 -> 6)
+- [Phase 83-02]: Maniac spawn weight of 1 for Abyssal Leviathan (matches Void Horror rarity)
+- [Phase 83-02]: Use existing items for aquatic loot tables (aquatic-specific items in Phase 86)
 
 ### Pending Todos
 
@@ -86,12 +90,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Phase 83 Plan 01 complete
+Stopped at: Phase 83 complete (aquatic entity population)
 Resume file: None
 
 **Next steps:**
-1. Execute Phase 83 Plan 02 (aquatic spawn configuration)
-2. Continue Phase 83 Aquatic Entity Population
+1. Begin Phase 84 (Exotic Biome Foundation)
+2. Implement exotic biome generators (temporal_rift, void_anomaly, psionic_field)
 
 ---
-*Last updated: 2026-02-23 - Phase 83 Plan 01 complete (aquatic entity definitions)*
+*Last updated: 2026-02-23 - Phase 83 complete (aquatic entity population with spawn & loot configuration)*
