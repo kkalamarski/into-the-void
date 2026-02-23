@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DatabaseService } from '../database/database.service';
 import { PlayerService } from './player.service';
 import { ZonesService } from '../zones/zones.service';
@@ -66,6 +67,7 @@ export class GatheringService {
     private readonly zonesService: ZonesService,
     private readonly inventoryService: InventoryService,
     private readonly entityService: EntityService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -287,6 +289,14 @@ export class GatheringService {
     // Award proficiency XP
     const xp = calculateXPReward(validation.accuracy, resourceTier);
     const newLevel = await this.awardProficiencyXP(player.id, active.category, xp);
+
+    // Emit resource.gathered event for zone mastery tracking
+    this.eventEmitter.emit('resource.gathered', {
+      characterId: player.id,
+      category: active.category,
+      biome: player.position.zoneId,
+      entityType: entity.type === 'mineral' ? (entity as Mineral).resourceId : (entity as Plant).speciesId,
+    });
 
     return {
       success: true,

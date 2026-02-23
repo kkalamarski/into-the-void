@@ -10,3 +10,5 @@ export * from './queries/characters';
 export * from './queries/inventory';
 export * from './queries/storage';
 export * from './queries/quests';
+export * from './queries/lore';
+export * from './queries/zone-mastery';

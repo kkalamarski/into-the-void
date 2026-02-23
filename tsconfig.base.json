@@ -30,7 +30,8 @@
       "@into-the-void/items": ["packages/items/src/index.ts"],
       "@into-the-void/entities": ["packages/entities/src/index.ts"],
       "@into-the-void/npcs": ["packages/npcs/src/index.ts"],
-      "@into-the-void/quests": ["packages/quests/src/index.ts"]
+      "@into-the-void/quests": ["packages/quests/src/index.ts"],
+      "@into-the-void/lore": ["packages/lore/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

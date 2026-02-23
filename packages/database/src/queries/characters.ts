@@ -196,3 +196,21 @@ export async function addCredits(
 
   return { success: true, newBalance: result[0].credits };
 }
+
+/**
+ * Add XP to a character atomically.
+ */
+export async function addXp(
+  db: DbClient,
+  characterId: string,
+  amount: number
+): Promise<void> {
+  if (amount <= 0) {
+    return;
+  }
+
+  await db
+    .update(characters)
+    .set({ xp: sql`${characters.xp} + ${amount}` })
+    .where(eq(characters.id, characterId));
+}
