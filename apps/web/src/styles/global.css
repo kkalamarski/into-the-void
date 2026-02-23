@@ -1,4 +1,5 @@
 :root {
+  /* Colors */
   --color-bg-primary: #0a0a0f;
   --color-bg-secondary: #14141f;
   --color-bg-tertiary: #1e1e2e;
@@ -9,6 +10,43 @@
   --color-danger: #ff4444;
   --color-success: #44ff44;
   --color-warning: #ffaa44;
+
+  /* Animation timing */
+  --duration-instant: 0ms;
+  --duration-fast: 100ms;
+  --duration-normal: 150ms;
+  --duration-moderate: 200ms;
+  --duration-slow: 300ms;
+
+  /* Easing curves */
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-in: cubic-bezier(0.32, 0, 0.67, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Semantic transitions */
+  --transition-hover: var(--duration-normal) var(--ease-out);
+  --transition-active: var(--duration-fast) var(--ease-in);
+  --transition-modal: var(--duration-normal) var(--ease-out);
+
+  /* Shadow elevation scale */
+  --shadow-0: none;
+  --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-3: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-4: 0 12px 32px rgba(0, 0, 0, 0.6);
+
+  /* Semantic shadows */
+  --shadow-panel: var(--shadow-2);
+  --shadow-modal: var(--shadow-4);
+  --shadow-hover: var(--shadow-3);
+
+  /* Glassmorphism */
+  --glass-blur: blur(10px);
+  --glass-tint: rgba(20, 20, 31, 0.7);
+
+  /* Modal backdrop */
+  --modal-backdrop-blur: var(--glass-blur);
+  --modal-backdrop-tint: var(--glass-tint);
 }
 
 * {
@@ -148,4 +186,15 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #2a2a3a;
+}
+
+/* Motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0ms;
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    --duration-moderate: 0ms;
+    --duration-slow: 0ms;
+  }
 }
