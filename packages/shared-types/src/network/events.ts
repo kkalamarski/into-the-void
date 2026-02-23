@@ -302,6 +302,28 @@ export interface ServerEvents {
   'poi:discovered': { poiId: string; poiType: string; reward: import('../game/poi').DiscoveryReward };
   'poi:already_discovered': { poiId: string };
   'poi:discovered_ids': { poiIds: string[] };
+  /** Sent on character join with list of discovered rare nodes */
+  'rare-nodes:discovered': (data: {
+    discoveries: Array<{
+      entityId: string;
+      rarity: 'rare' | 'epic';
+      resourceType: 'mineral' | 'plant';
+      zoneId: string;
+      worldX: number;
+      worldY: number;
+      resourceId: string;
+    }>;
+  }) => void;
+  /** Sent when player discovers a new rare node */
+  'rare-node:new-discovery': (data: {
+    entityId: string;
+    rarity: 'rare' | 'epic';
+    resourceType: 'mineral' | 'plant';
+    zoneId: string;
+    worldX: number;
+    worldY: number;
+    resourceId: string;
+  }) => void;
   'gathering:challenge': TimingChallenge;
   'gathering:result': {
     success: boolean;

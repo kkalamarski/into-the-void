@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
 import { DatabaseService } from '../database/database.service';
-import { discoveredPois, characters } from '@into-the-void/database';
+import { discoveredPois, discoveredResources, characters } from '@into-the-void/database';
 import {
   DiscoveryReward,
   PoiType,
@@ -14,6 +14,16 @@ export interface DiscoveryResult {
   alreadyDiscovered?: boolean;
   reward?: DiscoveryReward;
   error?: string;
+}
+
+export interface ResourceDiscoveryData {
+  entityId: string;
+  rarity: 'rare' | 'epic';
+  resourceType: 'mineral' | 'plant';
+  zoneId: string;
+  worldX: number;
+  worldY: number;
+  resourceId: string;
 }
 
 @Injectable()
@@ -153,5 +163,103 @@ export class DiscoveryService {
       .limit(1);
 
     return existing.length > 0;
+  }
+
+  /**
+   * Attempt to discover a rare resource node.
+   * Records discovery if not already known.
+   * Returns true if new discovery, false if already discovered.
+   */
+  async discoverResource(
+    characterId: string,
+    data: ResourceDiscoveryData
+  ): Promise<boolean> {
+    try {
+      const db = this.databaseService.getClient();
+
+      // Check if already discovered
+      const existing = await db
+        .select()
+        .from(discoveredResources)
+        .where(
+          and(
+            eq(discoveredResources.characterId, characterId),
+            eq(discoveredResources.entityId, data.entityId)
+          )
+        )
+        .limit(1);
+
+      if (existing.length > 0) {
+        return false; // Already discovered
+      }
+
+      // Record new discovery
+      await db.insert(discoveredResources).values({
+        characterId,
+        entityId: data.entityId,
+        rarity: data.rarity,
+        resourceType: data.resourceType,
+        zoneId: data.zoneId,
+        worldX: data.worldX,
+        worldY: data.worldY,
+        resourceId: data.resourceId,
+      });
+
+      this.logger.log(
+        `Character ${characterId} discovered ${data.rarity} ${data.resourceType} ${data.entityId}`
+      );
+
+      return true;
+    } catch (error) {
+      // Unique constraint violation = already discovered (race condition)
+      if (error && typeof error === 'object' && 'code' in error && error.code === '23505') {
+        return false;
+      }
+      this.logger.error(`Resource discovery failed: ${error}`);
+      return false;
+    }
+  }
+
+  /**
+   * Get all discovered rare resources for a character.
+   * Called on character join to populate client map markers.
+   */
+  async getDiscoveredResources(characterId: string): Promise<ResourceDiscoveryData[]> {
+    const db = this.databaseService.getClient();
+
+    const discoveries = await db
+      .select({
+        entityId: discoveredResources.entityId,
+        rarity: discoveredResources.rarity,
+        resourceType: discoveredResources.resourceType,
+        zoneId: discoveredResources.zoneId,
+        worldX: discoveredResources.worldX,
+        worldY: discoveredResources.worldY,
+        resourceId: discoveredResources.resourceId,
+      })
+      .from(discoveredResources)
+      .where(eq(discoveredResources.characterId, characterId));
+
+    return discoveries as ResourceDiscoveryData[];
+  }
+
+  /**
+   * Remove discovery when resource is harvested (optional - for cleanup).
+   * Call this when a rare node is fully depleted.
+   */
+  async removeResourceDiscovery(
+    characterId: string,
+    entityId: string
+  ): Promise<void> {
+    const db = this.databaseService.getClient();
+
+    await db
+      .delete(discoveredResources)
+      .where(
+        and(
+          eq(discoveredResources.characterId, characterId),
+          eq(discoveredResources.entityId, entityId)
+        )
+      );
   }
 }
