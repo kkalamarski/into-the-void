@@ -9,17 +9,17 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 
 ## Current Position
 
-Phase: 80 (Zone Mastery & Lore)
-Plan: 3/4 complete
-Status: In Progress
-Last activity: 2026-02-23 — Completed 80-03 Server-Side Lore & Zone Mastery Services
+Phase: 80 (Zone Mastery & Lore) - COMPLETE
+Plan: 4/4 complete
+Status: Complete
+Last activity: 2026-02-23 — Completed 80-04 Client Lore Codex & Zone Mastery HUD
 
-Progress: [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 4.7%
+Progress: [█████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 5.0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 219
+- Total plans completed: 220
 - Average duration: ~3 min per plan
 - Total execution time: ~11.0 hours across 17 milestones
 
@@ -44,7 +44,7 @@ Progress: [████░░░░░░░░░░░░░░░░░░░
 | v1.14 | 59-63 | 8 | 1 day |
 | v1.15 | 64-69 | 16 | 1 day |
 | v1.16 | 70-75 | 11 | 1 day |
-| v1.17 | 76-81 | 15/? | In Progress |
+| v1.17 | 76-81 | 16/? | In Progress |
 
 **Recent Trend:**
 Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 6 phases.
@@ -83,6 +83,7 @@ Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 
 | Phase 80 P02 | 281 | 2 tasks | 9 files |
 | Phase 80 P01 | 318 | 2 tasks | 12 files |
 | Phase 80 P03 | 443 | 2 tasks | 8 files |
+| Phase 80 P04 | 240 | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -177,6 +178,12 @@ Recent decisions affecting current work:
 - [Phase 80-01]: Registry indexing: Three Map-based indexes (by ID, category, biome) for O(1) lookups
 - [Phase 80-01]: Mastery tier structure: Bronze/Silver/Gold with escalating requirements (3/10/5, 7/30/15, 15/75/40)
 - [Phase 80-01]: Fragment content source: Extract from world-bible.md for canonical lore consistency
+- [Phase 80-04]: LoreCodex uses split-view layout with 280px fragment list and flexible reader pane
+- [Phase 80-04]: ZoneMasteryHUD positioned bottom-left to avoid overlap with QuestTracker (top-right)
+- [Phase 80-04]: Store imports as side-effects in GameUI.tsx for automatic socket listener registration
+- [Phase 80-04]: Completion banners auto-dismiss after 5s with store-managed timers
+- [Phase 80-04]: L hotkey for lore codex with input field check to prevent conflicts
+- [Phase 80-04]: Tier colors: bronze=#cd7f32, silver=#c0c0c0, gold=#ffd700
 
 ### Pending Todos
 
@@ -189,7 +196,7 @@ None.
 - Phase 77: POI Discovery System — Complete (4/4 plans)
 - Phase 78: Gathering Mini-Game — Complete (4/4 plans)
 - Phase 79: Resource Risk/Reward — Complete (4/4 plans)
-- Phase 80: Zone Mastery & Lore — In Progress (1/? plans complete)
+- Phase 80: Zone Mastery & Lore — Complete (4/4 plans)
 - Remaining phases: 81 (Combat Balancing)
 
 **Known Issues:**
@@ -198,12 +205,11 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 80-03 Server-Side Lore & Zone Mastery Services
+Stopped at: Completed 80-04 Client Lore Codex & Zone Mastery HUD
 Resume file: None
 
 **Next steps:**
-1. Continue Phase 80 with Plan 04 (client UI for lore codex and mastery overlay)
-2. Complete v1.17 milestone with Phase 81 (Combat Balancing)
+1. Complete v1.17 milestone with Phase 81 (Combat Balancing)
 
 ---
-*Last updated: 2026-02-23 - Completed Phase 80 Plan 03 Server-Side Lore & Zone Mastery Services*
+*Last updated: 2026-02-23 - Completed Phase 80 Plan 04 Client Lore Codex & Zone Mastery HUD*
