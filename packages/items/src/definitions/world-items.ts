@@ -57,6 +57,22 @@ export const WORLD_MYCELIAL_FIBER: ItemDefinition = {
   color: 0xcc66cc,
 };
 
+export const WORLD_VOID_FLORA_SAMPLE: ItemDefinition = {
+  id: 'world_void_flora_sample',
+  displayName: 'Void Flora Sample',
+  description:
+    'A preserved specimen from Terminus void-adapted plant life. Contains unique biological compounds that survive in low-nutrient, high-radiation environments. Essential for Verdant biodiversity research.',
+  category: 'world-item',
+  rarity: 'common',
+  maxStack: 20,
+  weight: 0.2,
+  baseValue: 70,
+  requiredLevel: 1,
+  ilvl: computeIlvl(1, 'common'),
+  textureKey: 'item_world_void_flora_sample',
+  color: 0x55aa55,
+};
+
 // ============================================================
 // MIASMA MARSHES MATERIALS (1)
 // ============================================================
@@ -389,6 +405,7 @@ export const ALL_WORLD_ITEMS: readonly ItemDefinition[] = [
   WORLD_VOID_CRYSTAL,
   WORLD_FUNGAL_SPORE_CLUSTER,
   WORLD_MYCELIAL_FIBER,
+  WORLD_VOID_FLORA_SAMPLE,
   WORLD_TOXIC_RESIDUE,
   WORLD_FROZEN_SHARD,
   WORLD_VOLCANIC_GLASS,
