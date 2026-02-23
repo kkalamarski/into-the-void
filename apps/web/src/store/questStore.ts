@@ -34,8 +34,8 @@ interface QuestState {
   /** Quest IDs being tracked in HUD (persisted to localStorage) */
   trackedQuests: Set<string>;
 
-  /** Completion reward for modal display (cleared after auto-dismiss) */
-  completedQuestReward: QuestReward | null;
+  /** Completion rewards queue for modal display (max 3, auto-dismiss after 5s each) */
+  completedRewards: QuestReward[];
 
   /** Add new active quest */
   addActiveQuest: (quest: QuestProgressPayload) => void;
@@ -52,11 +52,11 @@ interface QuestState {
   /** Toggle quest tracking in HUD (saves to localStorage) */
   toggleTracked: (questId: string) => void;
 
-  /** Set completion reward for modal */
-  setCompletedReward: (reward: QuestReward) => void;
+  /** Add completion reward to queue (max 3, auto-dismiss after 5s) */
+  addCompletedReward: (reward: QuestReward) => void;
 
-  /** Clear completion reward after modal dismiss */
-  clearCompletedReward: () => void;
+  /** Remove specific completion reward from queue */
+  removeCompletedReward: (questId: string) => void;
 }
 
 // Load tracked quest IDs from localStorage
@@ -85,7 +85,7 @@ export const useQuestStore = create<QuestState>((set, get) => ({
   activeQuests: [],
   completedQuests: [],
   trackedQuests: loadTrackedQuests(),
-  completedQuestReward: null,
+  completedRewards: [],
 
   addActiveQuest: (quest) =>
     set((state) => ({
@@ -124,9 +124,23 @@ export const useQuestStore = create<QuestState>((set, get) => ({
       return { trackedQuests: newTracked };
     }),
 
-  setCompletedReward: (reward) => set({ completedQuestReward: reward }),
+  addCompletedReward: (reward) => {
+    set((state) => ({
+      // Keep max 3 active banners (slice last 2, add new = 3)
+      completedRewards: [...state.completedRewards.slice(-2), reward],
+    }));
 
-  clearCompletedReward: () => set({ completedQuestReward: null }),
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+      get().removeCompletedReward(reward.questId);
+    }, 5000);
+  },
+
+  removeCompletedReward: (questId) => {
+    set((state) => ({
+      completedRewards: state.completedRewards.filter((r) => r.questId !== questId),
+    }));
+  },
 }));
 
 // Wire socket events at module level
@@ -154,7 +168,7 @@ gameSocket.on(
     const store = useQuestStore.getState();
     store.removeActiveQuest(data.questId);
     store.addCompletedQuest(data.questId, data.displayName);
-    store.setCompletedReward(data);
+    store.addCompletedReward(data);
   }
 );
 
