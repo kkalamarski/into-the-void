@@ -4,7 +4,7 @@
  * Convention: lootTableId uses format 'loot_<entity_id>' for Phase 35 compatibility.
  */
 
-import type { BiomeType, CreatureBehavior } from '@into-the-void/shared-types';
+import type { BiomeType, CreatureBehavior, NodeRarity } from '@into-the-void/shared-types';
 
 /** Entity class discriminator */
 export type EntityClass = 'creature' | 'plant' | 'mineral' | 'artifact';
@@ -44,6 +44,8 @@ export interface PlantDefinition extends BaseEntityDefinition {
   readonly entityClass: 'plant';
   readonly harvestYield: readonly HarvestYield[];
   readonly respawnSeconds: number;
+  /** Rarity tier - if undefined, defaults to 'common' in spawn logic */
+  readonly rarity?: NodeRarity;
 }
 
 /** Mineral entity definition */
@@ -52,6 +54,8 @@ export interface MineralDefinition extends BaseEntityDefinition {
   readonly miningYield: readonly HarvestYield[];
   readonly requiredTier: 1 | 2 | 3 | 4;
   readonly respawnSeconds: number;
+  /** Rarity tier - if undefined, defaults to 'common' in spawn logic */
+  readonly rarity?: NodeRarity;
 }
 
 /**

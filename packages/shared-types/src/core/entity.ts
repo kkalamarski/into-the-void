@@ -1,6 +1,15 @@
 import { Position } from './position';
 
 /**
+ * Rarity tier for resource nodes (minerals and plants).
+ * Affects spawn rates and yield multipliers.
+ * - common: standard resources (default if undefined)
+ * - rare: higher yield, slower respawn, often found in dangerous areas
+ * - epic: exceptional yield, very slow respawn, high-tier zones only
+ */
+export type NodeRarity = 'common' | 'rare' | 'epic';
+
+/**
  * Types of entities in the game world
  */
 export type EntityType =
@@ -70,6 +79,8 @@ export interface Mineral extends Entity {
   maxYield: number;
   /** Required tool tier to harvest */
   requiredTier: number;
+  /** Rarity tier (defaults to 'common' if undefined) */
+  rarity?: NodeRarity;
 }
 
 /**
@@ -83,6 +94,8 @@ export interface Plant extends Entity {
   yield: number;
   /** Maximum yield */
   maxYield: number;
+  /** Rarity tier (defaults to 'common' if undefined) */
+  rarity?: NodeRarity;
 }
 
 /**
