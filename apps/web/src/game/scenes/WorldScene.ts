@@ -1764,6 +1764,11 @@ export class WorldScene extends Phaser.Scene {
   }
 
   shutdown(): void {
+    // Unregister quest event listeners to prevent memory leaks
+    gameSocket.off('quest:progress', this.handleQuestProgress);
+    gameSocket.off('quest:completed', this.handleQuestCompleted);
+    gameSocket.off('quest:abandoned', this.handleQuestAbandoned);
+
     if (this.targetHighlight) {
       this.targetHighlight.destroy();
       this.targetHighlight = null;
