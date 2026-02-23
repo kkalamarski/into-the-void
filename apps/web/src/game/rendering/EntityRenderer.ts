@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import { Entity, Creature, Mineral, Plant, Npc, CreatureBehavior, Position, ZONE_SIZE } from '@into-the-void/shared-types';
+import type { NodeRarity } from '@into-the-void/shared-types';
 import { IsometricTransform } from '../utils/IsometricTransform';
 import { useStatsStore } from '../../store/statsStore';
+import { applyRareNodeFX } from './RareNodeFX';
 
 const ELEVATION_HEIGHT_STEP = 128; // Pixels per elevation level (1.0 × diamond height for 256x256 cubes)
 const OCCLUSION_DEPTH_THRESHOLD = 10.0;  // Structures this far "in front" occlude entities
@@ -101,6 +103,17 @@ export class EntityRenderer {
     sprite.setOrigin(0.5, 1.0); // Bottom-center origin for ground alignment
     sprite.setScale(scale);
 
+    // Apply glow effect for rare/epic minerals and plants
+    if (this.isMineral(entity) || this.isPlant(entity)) {
+      const rarity = (entity as { rarity?: NodeRarity }).rarity;
+      applyRareNodeFX(sprite, rarity);
+
+      // Store rarity on container for marker creation
+      if (rarity && rarity !== 'common') {
+        container.setData('rarity', rarity);
+      }
+    }
+
     // Make creature sprites interactive for click-to-attack
     if (entity.type === 'creature') {
       sprite.setInteractive({ useHandCursor: true });
@@ -130,7 +143,9 @@ export class EntityRenderer {
 
     // Minerals get nameplate + yield bar
     if (this.isMineral(entity)) {
-      const nameplate = this.createNameplate(displayName);
+      const rarity = (entity as { rarity?: NodeRarity }).rarity;
+      const rarityPrefix = rarity === 'epic' ? '[Epic] ' : rarity === 'rare' ? '[Rare] ' : '';
+      const nameplate = this.createNameplate(rarityPrefix + displayName);
       nameplate.y = uiBaseY - 20;
       container.add(nameplate);
 
@@ -143,7 +158,9 @@ export class EntityRenderer {
 
     // Plants get nameplate + yield bar
     if (this.isPlant(entity)) {
-      const nameplate = this.createNameplate(displayName);
+      const rarity = (entity as { rarity?: NodeRarity }).rarity;
+      const rarityPrefix = rarity === 'epic' ? '[Epic] ' : rarity === 'rare' ? '[Rare] ' : '';
+      const nameplate = this.createNameplate(rarityPrefix + displayName);
       nameplate.y = uiBaseY - 20;
       container.add(nameplate);
 
