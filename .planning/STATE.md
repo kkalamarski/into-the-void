@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 ## Current Position
 
 Phase: 72 of 75 (Visual Polish)
-Plan: 1 of 2 complete
-Status: In progress
-Last activity: 2026-02-23 - Phase 72 Plan 01 completed (Design token system + GPU-accelerated button polish)
+Plan: 2 of 2 complete
+Status: Phase complete
+Last activity: 2026-02-23 - Phase 72 Plan 02 completed (Glassmorphism modals + UI panel polish)
 
 Progress: [█████████████████████████████████████████████████████████████████████████████░░░░░░░░] 94%
 
@@ -46,7 +46,7 @@ Progress: [███████████████████████
 | v1.16 | 70-75 | TBD | In progress |
 
 **Recent Trend:**
-Stable velocity. Phase 72 in progress (1 of 2 plans done).
+Stable velocity. Phase 72 complete (2 of 2 plans done).
 
 | Plan | Duration (s) | Tasks | Files |
 |------|--------------|-------|-------|
@@ -57,6 +57,7 @@ Stable velocity. Phase 72 in progress (1 of 2 plans done).
 | Phase 70 P02 | 120 | 3 tasks | 1 files |
 | Phase 71 P01 | 107 | 2 tasks | 2 files |
 | Phase 72 P01 | 74 | 2 tasks | 1 files |
+| Phase 72 P02 | 153 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,8 @@ Recent decisions affecting current work:
 - [Phase 71]: QuestTracker collapse state persisted via localStorage with key 'quest-tracker-collapsed'
 - [Phase 72]: Design token system uses --duration-* for timing, --ease-* for curves, --transition-* for semantic usage
 - [Phase 72]: GPU-accelerated button polish uses transform/filter instead of top/left/opacity for 60fps animations
+- [Phase 72]: NPC modal overlay uses glassmorphism with backdrop-filter and fallback for unsupported browsers
+- [Phase 72]: Modal transitions combine opacity fade with scale (0.95 → 1) for modern feel
 
 ### Pending Todos
 
@@ -94,12 +97,13 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 72-01-PLAN.md
+Stopped at: Completed 72-02-PLAN.md
 Resume file: None
 
 **Next steps:**
-1. Continue Phase 72 (Plan 02: Apply polish to modals and panels)
+1. Phase 72 complete - proceed to Phase 73 (or verify visual polish in game)
 2. Research Phaser sprite overlay patterns before Phase 73 (quest markers)
+3. Note: NpcInteractionModal.tsx needs overlay wrapper update for glassmorphism fade
 
 ---
-*Last updated: 2026-02-23 — Phase 72 Plan 01 completed (1 of 2 plans)*
+*Last updated: 2026-02-23 — Phase 72 complete (2 of 2 plans)*
