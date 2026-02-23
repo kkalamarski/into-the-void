@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 76 (Fog of War Foundation)
-Plan: Not started
-Status: Ready for planning
-Last activity: 2026-02-23 — Roadmap created for v1.17
+Plan: 1/2 complete
+Status: Executing
+Last activity: 2026-02-23 — Completed 76-01 (Fog Data Layer)
 
-Progress: [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 2.5%
+Progress: [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 2.6%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 207
+- Total plans completed: 208
 - Average duration: ~3 min per plan
-- Total execution time: ~10.3 hours across 16 milestones
+- Total execution time: ~10.4 hours across 17 milestones
 
 **By Milestone:**
 
@@ -44,7 +44,7 @@ Progress: [██░░░░░░░░░░░░░░░░░░░░░
 | v1.14 | 59-63 | 8 | 1 day |
 | v1.15 | 64-69 | 16 | 1 day |
 | v1.16 | 70-75 | 11 | 1 day |
-| v1.17 | 76-81 | 0/? | In Progress |
+| v1.17 | 76-81 | 1/? | In Progress |
 
 **Recent Trend:**
 Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 6 phases.
@@ -64,6 +64,7 @@ Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 
 | Phase 74 P02 | 161 | 2 tasks | 3 files |
 | Phase 75 P01 | 173 | 2 tasks | 4 files |
 | Phase 75 P02 | 136 | 2 tasks | 2 files |
+| Phase 76 P01 | 606 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -103,6 +104,11 @@ Recent decisions affecting current work:
 - [v1.17 Roadmap]: Zone mastery uses event-driven tracking (@nestjs/event-emitter) with in-memory batching
 - [v1.17 Roadmap]: Combat balancing applies 15% damage multiplier per level beyond 5-level gap
 - [v1.17 Roadmap]: Phase ordering: Fog → POI → Gathering → Risk/Reward → Mastery → Combat (dependency-driven)
+- [Phase 76]: Coordinate hashing formula (worldX + OFFSET) * RANGE + (worldY + OFFSET) maps -100k to +100k coords to positive indices
+- [Phase 76]: Brian Kernighan's algorithm (byte &= byte - 1) for efficient bit counting in getRevealedCount()
+- [Phase 76]: getAllRevealedTiles() caching pattern invalidates on setRevealed() to avoid O(n) reverse hash overhead
+- [Phase 76]: Throttled auto-save (5s max frequency) balances persistence reliability with localStorage write performance
+- [Phase 76]: Iterative BFS with queue for reveal radius avoids stack overflow with large radii (tested up to radius=50)
 
 ### Pending Todos
 
@@ -111,22 +117,21 @@ None.
 ### Blockers/Concerns
 
 **v1.17 Milestone Active:**
-- Phase 76: Fog of War Foundation (EXPL-01, EXPL-02, EXPL-03) — ready for planning
+- Phase 76: Fog of War Foundation (EXPL-01, EXPL-02, EXPL-03) — 1/2 plans complete (76-01 done, 76-02 next)
 - Remaining phases: 77-81 (POI, Gathering, Risk/Reward, Mastery, Combat Balancing)
 
 **Known Issues:**
-- None blocking current phase
+- Web app vitest tests hang when run via nx (vitest 4.0.18 vs nx expecting v1-3). TypeScript compilation verified instead.
 
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: v1.17 roadmap created
+Stopped at: Completed Phase 76 Plan 01 (Fog Data Layer)
 Resume file: None
 
 **Next steps:**
-1. Execute `/gsd:plan-phase 76` to create execution plans
-2. Execute plans for Phase 76
-3. Continue to Phase 77
+1. Execute Phase 76 Plan 02 (Fog Rendering)
+2. Continue to Phase 77 (POI System)
 
 ---
-*Last updated: 2026-02-23 - v1.17 roadmap created*
+*Last updated: 2026-02-23 - Completed Phase 76 Plan 01*
