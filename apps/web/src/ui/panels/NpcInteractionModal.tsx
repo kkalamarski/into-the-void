@@ -197,21 +197,14 @@ export const NpcInteractionModal: React.FC = () => {
   const { interactingNpc, closeInteraction, activeTab, setActiveTab, tradeError, setTradeError, acceptQuest, completeQuestAtNpc } = useNpcStore();
   const { position, isDragging, handleMouseDown } = useDraggablePanel();
 
-  // Disable Phaser keyboard when modal is open
+  // Clear any stuck movement keys when modal opens
   useEffect(() => {
     const game = useGameStore.getState().game;
     const worldScene = game?.getWorldScene();
     if (worldScene) {
-      worldScene.setKeyboardEnabled(false);
+      // Reset movement state to prevent stuck keys
+      worldScene.resetMovementInput?.();
     }
-
-    return () => {
-      const game = useGameStore.getState().game;
-      const worldScene = game?.getWorldScene();
-      if (worldScene) {
-        worldScene.setKeyboardEnabled(true);
-      }
-    };
   }, []);
 
   // Handle Escape key to close modal

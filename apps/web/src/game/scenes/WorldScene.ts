@@ -1695,6 +1695,29 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /**
+   * Reset movement input state to prevent stuck keys.
+   * Called when modal opens to clear any keys that were held during the click.
+   */
+  resetMovementInput(): void {
+    // Reset WASD keys
+    if (this.wasd) {
+      this.wasd.W.reset();
+      this.wasd.A.reset();
+      this.wasd.S.reset();
+      this.wasd.D.reset();
+    }
+    // Reset cursor keys
+    if (this.cursors) {
+      this.cursors.up.reset();
+      this.cursors.down.reset();
+      this.cursors.left.reset();
+      this.cursors.right.reset();
+    }
+    // Clear any pending movement inputs
+    this.movementController?.clearPendingInputs();
+  }
+
+  /**
    * Check if a world coordinate tile is blocked.
    * Looks up the correct chunk from ChunkManager.
    * Returns true if blocked or if chunk not loaded (conservative).
