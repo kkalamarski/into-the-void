@@ -1,8 +1,9 @@
 import { create } from 'zustand';
-import { Player, ConnectionState, ChatMessage, Entity, Creature, ZoneState, Position, PlayerPublic, isHubZone } from '@into-the-void/shared-types';
+import { Player, ConnectionState, ChatMessage, Entity, Creature, ZoneState, Position, PlayerPublic, isHubZone, TimingChallenge } from '@into-the-void/shared-types';
 import { Game } from '../game/Game';
 import { gameSocket } from '../network/socket';
 import { useEntityStore } from './entityStore';
+import { useAlertStore } from './alertStore';
 
 interface GameState {
   // Connection
@@ -562,4 +563,41 @@ gameSocket.on('player:regen', (data: { playerId: string; health: number; maxHeal
       },
     });
   }
+});
+
+// Handle gathering challenge (mini-game start)
+gameSocket.on('gathering:challenge', (challenge: TimingChallenge) => {
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+  if (worldScene) {
+    worldScene.handleGatheringChallenge(challenge);
+  }
+});
+
+// Handle gathering result (mini-game complete)
+gameSocket.on('gathering:result', (result: {
+  success: boolean;
+  accuracy: string;
+  yieldMultiplier: number;
+  items: { itemId: string; quantity: number }[];
+  proficiencyXP: number;
+  proficiencyLevel: number;
+  category: string;
+  error?: string;
+}) => {
+  if (!result.success && result.error) {
+    useAlertStore.getState().addAlert(result.error, 'error');
+    return;
+  }
+
+  // Show accuracy feedback
+  const accuracyMessages = {
+    perfect: 'Perfect! +50% yield bonus!',
+    good: 'Good timing!',
+    poor: 'Poor timing. -50% yield.',
+  };
+  const message = accuracyMessages[result.accuracy as keyof typeof accuracyMessages] || 'Gathered!';
+  const alertType = result.accuracy === 'perfect' ? 'info' : result.accuracy === 'good' ? 'info' : 'warning';
+
+  useAlertStore.getState().addAlert(`${message} +${result.proficiencyXP} XP`, alertType);
 });

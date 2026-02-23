@@ -7,7 +7,7 @@ const POI_DEPTH_BASE = 800;
 
 interface PoiSpriteData {
   sprite: Phaser.GameObjects.Sprite;
-  tween: Phaser.Tweens.Tween;
+  tween: Phaser.Tweens.Tween | null;
   worldX: number;
   worldY: number;
   discovered: boolean;
@@ -81,7 +81,7 @@ export class PoiRenderer {
     }
 
     // Pulsing glow effect (only for undiscovered)
-    let tween: Phaser.Tweens.Tween;
+    let tween: Phaser.Tweens.Tween | null;
     if (!discovered) {
       tween = this.scene.tweens.add({
         targets: sprite,
@@ -93,8 +93,8 @@ export class PoiRenderer {
         ease: 'Sine.easeInOut',
       });
     } else {
-      // Static tween placeholder for discovered POIs
-      tween = this.scene.tweens.create({ targets: sprite });
+      // No tween for discovered POIs
+      tween = null;
     }
 
     this.poiSprites.set(poiId, {

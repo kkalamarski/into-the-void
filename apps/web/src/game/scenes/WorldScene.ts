@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, MOVE_DELAY_MS, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure, isHubZone, Npc } from '@into-the-void/shared-types';
+import { ZONE_SIZE, MOVE_DELAY_MS, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure, isHubZone, Npc, TimingChallenge, TimingResult } from '@into-the-void/shared-types';
 import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
 import { ItemRegistry } from '@into-the-void/items';
@@ -25,6 +25,7 @@ import { TargetHighlight } from '../rendering/TargetHighlight';
 import { FogManager } from '../fog/FogManager';
 import { FogRenderer } from '../fog/FogRenderer';
 import { PoiRenderer } from '../pois/PoiRenderer';
+import { GatheringMiniGame } from '../ui/GatheringMiniGame';
 
 export const ISO_TILE_WIDTH = 256;
 export const ISO_TILE_HEIGHT = 128;
@@ -114,6 +115,9 @@ export class WorldScene extends Phaser.Scene {
   // POI discovery system
   private poiRenderer: PoiRenderer | null = null;
   private discoveredPoiIds: Set<string> = new Set();
+  // Gathering mini-game
+  private activeMiniGame: GatheringMiniGame | null = null;
+  private isGathering: boolean = false;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -343,6 +347,9 @@ export class WorldScene extends Phaser.Scene {
       // Only handle left click for movement
       if (pointer.rightButtonDown()) return;
 
+      // Block pathfinding during gathering mini-game
+      if (this.isGathering) return;
+
       // Clear target highlight when clicking ground (empty tile)
       this.targetHighlight?.hide();
       useCombatStore.getState().setInCombat(useCombatStore.getState().inCombat, null);
@@ -420,13 +427,29 @@ export class WorldScene extends Phaser.Scene {
         return;
       }
 
-      if (entityType !== 'creature') return;
+      // Gathering: minerals and plants use timing mini-game
+      if (entityType === 'mineral' || entityType === 'plant') {
+        this.lastClickedEntity = entityId;
+        gameSocket.emit('gathering:start', { targetEntityId: entityId });
+        return;
+      }
 
-      // Track that we clicked an entity to suppress pathfinding
-      this.lastClickedEntity = entityId;
+      // Artifacts: instant collection (no mini-game)
+      if (entityType === 'artifact') {
+        this.lastClickedEntity = entityId;
+        gameSocket.emit('entity:tool_use', { targetEntityId: entityId });
+        return;
+      }
 
-      // Attempt to start combat with this creature
-      this.handleEntityClick(entityId);
+      // Creatures: combat flow
+      if (entityType === 'creature') {
+        // Track that we clicked an entity to suppress pathfinding
+        this.lastClickedEntity = entityId;
+
+        // Attempt to start combat with this creature
+        this.handleEntityClick(entityId);
+        return;
+      }
     });
   }
 
@@ -546,6 +569,50 @@ export class WorldScene extends Phaser.Scene {
 
     // Select target for ability use (does NOT auto-attack)
     useCombatStore.getState().selectTarget(entityId);
+  }
+
+  /**
+   * Handle gathering:challenge event from server.
+   * Spawns mini-game UI and disables world input.
+   */
+  public handleGatheringChallenge(challenge: TimingChallenge): void {
+    if (this.activeMiniGame) {
+      this.activeMiniGame.destroy();
+    }
+
+    this.isGathering = true;
+
+    // Disable player movement during mini-game
+    // (input still works for the mini-game itself)
+
+    // Spawn mini-game centered on screen
+    const centerX = this.cameras.main.centerX;
+    const centerY = this.cameras.main.centerY - 50;
+
+    this.activeMiniGame = new GatheringMiniGame(
+      this,
+      centerX,
+      centerY,
+      challenge,
+      (offset) => this.completeGathering(challenge.challengeId, offset)
+    );
+  }
+
+  /**
+   * Complete gathering and report timing to server.
+   */
+  private completeGathering(challengeId: string, clientOffset: number): void {
+    this.isGathering = false;
+    this.activeMiniGame = null;
+
+    // Send result to server
+    const result: TimingResult = {
+      challengeId,
+      clientOffset,
+      clickTime: Date.now(),
+    };
+
+    gameSocket.emit('gathering:complete', result);
   }
 
   /**
@@ -732,6 +799,11 @@ export class WorldScene extends Phaser.Scene {
     // Can't move while dead
     const player = useGameStore.getState().player;
     if (player?.isDead) return;
+
+    // Block movement during gathering mini-game
+    if (this.isGathering) {
+      return;
+    }
 
     // Check if any movement key is pressed
     const anyWasdDown = this.wasd && (

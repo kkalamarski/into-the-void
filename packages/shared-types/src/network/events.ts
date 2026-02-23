@@ -301,6 +301,7 @@ export interface ServerEvents {
   };
   'poi:discovered': { poiId: string; poiType: string; reward: import('../game/poi').DiscoveryReward };
   'poi:already_discovered': { poiId: string };
+  'poi:discovered_ids': { poiIds: string[] };
   'gathering:challenge': TimingChallenge;
   'gathering:result': {
     success: boolean;
