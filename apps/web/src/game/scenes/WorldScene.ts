@@ -3,6 +3,7 @@ import { ZONE_SIZE, MOVE_DELAY_MS, HYSTERESIS_TILES, Position, Entity, PlayerPub
 import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
 import { ItemRegistry } from '@into-the-void/items';
+import { QuestRegistry } from '@into-the-void/quests';
 import { TileRenderer } from '../rendering/TileRenderer';
 import { EntityRenderer } from '../rendering/EntityRenderer';
 import { ChunkManager } from '../rendering/ChunkManager';
@@ -18,6 +19,7 @@ import { useEntityStore } from '../../store/entityStore';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { useAlertStore } from '../../store/alertStore';
 import { useCombatStore } from '../../store/combatStore';
+import { useQuestStore } from '../../store/questStore';
 import { gameSocket } from '../../network/socket';
 import { TargetHighlight } from '../rendering/TargetHighlight';
 
@@ -273,6 +275,11 @@ export class WorldScene extends Phaser.Scene {
     gameSocket.on('npc:quest-markers', (data) => {
       this.applyInitialQuestMarkers(data.markers);
     });
+
+    // Hook quest state changes for real-time marker updates
+    gameSocket.on('quest:progress', this.handleQuestProgress);
+    gameSocket.on('quest:completed', this.handleQuestCompleted);
+    gameSocket.on('quest:abandoned', this.handleQuestAbandoned);
 
     // Set fixed zoom to show ~20x15 tiles viewport (for 256x256 sprites)
     this.cameras.main.setZoom(0.5);
@@ -1861,5 +1868,92 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     return undefined;
+  }
+
+  // Quest event handlers for real-time marker updates
+  private handleQuestProgress = (data: { questId: string }): void => {
+    this.updateMarkerForQuestId(data.questId);
+  };
+
+  private handleQuestCompleted = (data: { questId: string }): void => {
+    this.updateMarkerForQuestId(data.questId);
+  };
+
+  private handleQuestAbandoned = (data: { questId: string }): void => {
+    this.updateMarkerForQuestId(data.questId);
+  };
+
+  /**
+   * Update quest marker for NPC associated with questId.
+   * Called when quest state changes (accept, progress, complete, abandon).
+   */
+  private updateMarkerForQuestId(questId: string): void {
+    const questDef = QuestRegistry.get(questId);
+    if (!questDef.questGiverId) return; // Auto-discover quest or unknown, no NPC marker
+
+    const npcContainer = this.findNpcContainerById(questDef.questGiverId);
+    if (!npcContainer) return; // NPC not in current zone
+
+    const markerType = this.computeMarkerTypeForNpc(questDef.questGiverId);
+
+    this.entityRenderer?.updateQuestMarker(
+      npcContainer.getData('entityId') as string,
+      markerType,
+      npcContainer
+    );
+  }
+
+  /**
+   * Compute marker type for NPC from current quest state.
+   * Priority: ready (?) > available (!) > none
+   */
+  private computeMarkerTypeForNpc(npcId: string): 'available' | 'ready' | 'none' {
+    const questStore = useQuestStore.getState();
+    const player = useGameStore.getState().player;
+    if (!player) return 'none';
+
+    // 1. Check for ready quests (highest priority) - active quests with all objectives complete
+    for (const activeQuest of questStore.activeQuests) {
+      const questDef = QuestRegistry.get(activeQuest.questId);
+      if (questDef.questGiverId === npcId) {
+        const allComplete = activeQuest.objectives.every(obj => obj.complete);
+        if (allComplete) {
+          return 'ready'; // Can turn in
+        }
+      }
+    }
+
+    // 2. Check for available quests - not active, not completed (unless repeatable), meets prerequisites
+    // Neutral faction has no quests (only verdant, helix, nexus)
+    if (player.faction === 'neutral') return 'none';
+
+    const allQuests = QuestRegistry.getByFaction(player.faction);
+    const hasAvailable = allQuests.some(q => {
+      if (q.questGiverId !== npcId) return false;
+
+      // Not already active
+      const isActive = questStore.activeQuests.some(aq => aq.questId === q.id);
+      if (isActive) return false;
+
+      // Not completed (unless repeatable)
+      const completed = questStore.completedQuests.some(cq => cq.questId === q.id);
+      if (completed && !q.isRepeatable) return false;
+
+      // Check prerequisites
+      if (q.prerequisiteQuestIds && q.prerequisiteQuestIds.length > 0) {
+        const metPrereqs = q.prerequisiteQuestIds.every(prereqId =>
+          questStore.completedQuests.some(cq => cq.questId === prereqId)
+        );
+        if (!metPrereqs) return false;
+      }
+
+      return true;
+    });
+
+    if (hasAvailable) {
+      return 'available'; // Can accept
+    }
+
+    return 'none'; // No quests
   }
 }
