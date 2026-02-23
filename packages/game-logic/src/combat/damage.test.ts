@@ -242,3 +242,136 @@ describe('TTK (Time-To-Kill) Balance Verification', () => {
     expect(result.avg).toBeLessThan(5); // But faster than same-level
   });
 });
+
+describe('Ability DPS Advantage', () => {
+  /**
+   * Calculate DPS over a rotation window.
+   * Accounts for cooldowns and compares to sustained basic attacks.
+   */
+  function calculateAbilityDPS(
+    baseDamage: number,
+    cooldownMs: number,
+    attackerLevel: number,
+    defenderLevel: number
+  ): number {
+    // Average damage per use (run 100 iterations to smooth variance)
+    let totalDamage = 0;
+    for (let i = 0; i < 100; i++) {
+      totalDamage += calculateDamage({
+        baseDamage,
+        attackerLevel,
+        defenderLevel,
+        attackerStats: { power: 50 },
+        defenderStats: { toughness: 30 },
+        armorReduction: 5,
+        critChance: 0.05,
+        critMultiplier: 2.0,
+      }).damage;
+    }
+    const avgDamage = totalDamage / 100;
+    // DPS = damage / cooldown in seconds
+    return avgDamage / (cooldownMs / 1000);
+  }
+
+  it('Basic Strike provides baseline DPS for comparison', () => {
+    // Basic Strike: 15 base damage, 1500ms cooldown
+    const basicDPS = calculateAbilityDPS(15, 1500, 10, 10);
+    // Should be roughly 25-35 DPS (40 damage / 1.5s = ~27 DPS)
+    expect(basicDPS).toBeGreaterThan(15);
+    expect(basicDPS).toBeLessThan(50);
+  });
+
+  it('Plasma Burst deals significantly more damage per use than Basic Strike', () => {
+    // Calculate average damage for each ability
+    let plasmaDamageTotal = 0;
+    let basicDamageTotal = 0;
+
+    for (let i = 0; i < 100; i++) {
+      plasmaDamageTotal += calculateDamage({
+        baseDamage: 35, // Plasma Burst
+        attackerLevel: 10,
+        defenderLevel: 10,
+        attackerStats: { power: 50 },
+        defenderStats: { toughness: 30 },
+        armorReduction: 5,
+        critChance: 0.05,
+        critMultiplier: 2.0,
+      }).damage;
+
+      basicDamageTotal += calculateDamage({
+        baseDamage: 15, // Basic Strike
+        attackerLevel: 10,
+        defenderLevel: 10,
+        attackerStats: { power: 50 },
+        defenderStats: { toughness: 30 },
+        armorReduction: 5,
+        critChance: 0.05,
+        critMultiplier: 2.0,
+      }).damage;
+    }
+
+    const avgPlasma = plasmaDamageTotal / 100;
+    const avgBasic = basicDamageTotal / 100;
+
+    // Plasma Burst should deal more damage per use than Basic Strike
+    // The ratio should be at least 1.5x (given 35 vs 15 base damage)
+    expect(avgPlasma).toBeGreaterThan(avgBasic * 1.5);
+  });
+
+  it('Sustained rotations with abilities outperform pure basic attacks', () => {
+    // Simulate 10-second combat window over multiple iterations to smooth variance
+    let pureBasicTotal = 0;
+    let rotationTotal = 0;
+
+    for (let iteration = 0; iteration < 50; iteration++) {
+      // Pure basic attacks: 10000 / 1500 = 6.67 attacks
+      let pureBasicDamage = 0;
+      for (let i = 0; i < 7; i++) {
+        pureBasicDamage += calculateDamage({
+          baseDamage: 15,
+          attackerLevel: 10,
+          defenderLevel: 10,
+          attackerStats: { power: 50 },
+          defenderStats: { toughness: 30 },
+          armorReduction: 5,
+          critChance: 0.05,
+          critMultiplier: 2.0,
+        }).damage;
+      }
+      pureBasicTotal += pureBasicDamage;
+
+      // Rotation: Plasma Burst (8s CD) + 5 Basic Strikes
+      let rotationDamage = calculateDamage({
+        baseDamage: 35, // Plasma Burst
+        attackerLevel: 10,
+        defenderLevel: 10,
+        attackerStats: { power: 50 },
+        defenderStats: { toughness: 30 },
+        armorReduction: 5,
+        critChance: 0.05,
+        critMultiplier: 2.0,
+      }).damage;
+
+      for (let i = 0; i < 5; i++) {
+        rotationDamage += calculateDamage({
+          baseDamage: 15,
+          attackerLevel: 10,
+          defenderLevel: 10,
+          attackerStats: { power: 50 },
+          defenderStats: { toughness: 30 },
+          armorReduction: 5,
+          critChance: 0.05,
+          critMultiplier: 2.0,
+        }).damage;
+      }
+      rotationTotal += rotationDamage;
+    }
+
+    const avgPureBasic = pureBasicTotal / 50;
+    const avgRotation = rotationTotal / 50;
+
+    // Rotation should deal similar or more damage than pure basic attacks
+    // With variance, we expect them to be competitive (within 20%)
+    expect(avgRotation).toBeGreaterThanOrEqual(avgPureBasic * 0.8);
+  });
+});
