@@ -40,7 +40,8 @@ export type ClientEventType =
   | 'ability:use'
   | 'quest:complete'
   | 'quest:abandon'
-  | 'quest:accept';
+  | 'quest:accept'
+  | 'poi:discover';
 
 /**
  * Server-to-client event types
@@ -81,7 +82,9 @@ export type ServerEventType =
   | 'quest:completed'
   | 'quest:abandoned'
   | 'quest:accepted'
-  | 'quest:error';
+  | 'quest:error'
+  | 'poi:discovered'
+  | 'poi:already_discovered';
 
 /**
  * Socket.io event map for type safety
@@ -116,6 +119,7 @@ export interface ClientEvents {
   'quest:complete': { questId: string };
   'quest:abandon': { questId: string };
   'quest:accept': { questId: string };
+  'poi:discover': { poiId: string; worldX: number; worldY: number };
 }
 
 /**
@@ -287,6 +291,8 @@ export interface ServerEvents {
       markerType: 'available' | 'ready' | 'none';
     }>;
   };
+  'poi:discovered': { poiId: string; poiType: string; reward: import('../game/poi').DiscoveryReward };
+  'poi:already_discovered': { poiId: string };
 }
 
 /**
