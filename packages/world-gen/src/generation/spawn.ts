@@ -2,6 +2,12 @@ import { BiomeType, FertilityType, SpawnPoint, ZONE_SIZE } from '@into-the-void/
 import { ENTITY_IDS } from '@into-the-void/entities';
 import { SeededRandom } from '../random/seeded-random';
 import { BiomeGenerator } from './biome';
+import {
+  calculateRarityWeight,
+  getRareBiomeMinerals,
+  getEpicBiomeMinerals,
+  RARE_SPAWN_CONFIG
+} from './rarity';
 
 const FERTILITY_MULTIPLIERS: Record<FertilityType, number> = {
   Barren: 0.5,
@@ -14,6 +20,8 @@ const SPAWN_CAPS = {
   minerals: 10,
   plants: 5,
   artifacts: 2,
+  rareMinerals: 3,
+  epicMinerals: 1,
 } as const;
 
 /**
@@ -205,6 +213,64 @@ export function generateSpawnPoints(
         spawnId: mineral.id,
         respawnTime: 120 + random.nextInt(0, 180), // 2-5 minutes
       });
+    }
+  }
+
+  // Generate rare mineral spawns (proximity-based)
+  let rareNodesSpawned = 0;
+  const creatureSpawns = spawnPoints.filter(sp => sp.entityType === 'creature');
+
+  for (let attempt = 0; attempt < 30 && rareNodesSpawned < SPAWN_CAPS.rareMinerals; attempt++) {
+    const position = findValidSpawnPosition(random, collisionMap);
+    if (!position) continue;
+
+    const rarityWeight = calculateRarityWeight(position, creatureSpawns, 'rare');
+
+    if (random.next() < rarityWeight) {
+      const worldX = chunkX * ZONE_SIZE + position.x;
+      const worldY = chunkY * ZONE_SIZE + position.y;
+      const tileBiome = biomeGenerator.getBiome(worldX, worldY);
+
+      const rareMinerals = getRareBiomeMinerals(tileBiome);
+      if (rareMinerals.length > 0) {
+        const mineralId = rareMinerals[random.nextInt(0, rareMinerals.length)];
+        spawnPoints.push({
+          x: position.x,
+          y: position.y,
+          entityType: 'mineral',
+          spawnId: mineralId,
+          respawnTime: 300 + random.nextInt(0, 300), // 5-10 minutes
+        });
+        rareNodesSpawned++;
+      }
+    }
+  }
+
+  // Generate epic mineral spawns (very rare, high danger zones only)
+  let epicNodesSpawned = 0;
+  for (let attempt = 0; attempt < 15 && epicNodesSpawned < SPAWN_CAPS.epicMinerals; attempt++) {
+    const position = findValidSpawnPosition(random, collisionMap);
+    if (!position) continue;
+
+    const epicWeight = calculateRarityWeight(position, creatureSpawns, 'epic');
+
+    if (random.next() < epicWeight) {
+      const worldX = chunkX * ZONE_SIZE + position.x;
+      const worldY = chunkY * ZONE_SIZE + position.y;
+      const tileBiome = biomeGenerator.getBiome(worldX, worldY);
+
+      const epicMinerals = getEpicBiomeMinerals(tileBiome);
+      if (epicMinerals.length > 0) {
+        const mineralId = epicMinerals[random.nextInt(0, epicMinerals.length)];
+        spawnPoints.push({
+          x: position.x,
+          y: position.y,
+          entityType: 'mineral',
+          spawnId: mineralId,
+          respawnTime: 600 + random.nextInt(0, 300), // 10-15 minutes
+        });
+        epicNodesSpawned++;
+      }
     }
   }
 
