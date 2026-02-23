@@ -6,12 +6,24 @@
  */
 
 import { FogPersistence } from './FogPersistence';
+import { TileRegistry } from '@into-the-void/tiles';
 
 interface QueueItem {
   x: number;
   y: number;
   dist: number;
 }
+
+/**
+ * Per-biome visibility modifiers for fog of war reveal radius
+ * Values < 1.0 reduce visibility in that biome
+ */
+const BIOME_VISIBILITY_MODIFIERS: Record<string, number> = {
+  tidal_pools: 0.85, // Slight visibility reduction (water refraction)
+  kelp_forests: 0.7, // Significant reduction (dense vegetation)
+  deep_trenches: 0.6, // Major reduction (darkness of the depths)
+  // All other biomes default to 1.0
+};
 
 export class FogManager {
   private persistence: FogPersistence;
@@ -35,11 +47,39 @@ export class FogManager {
   }
 
   /**
+   * Get the effective reveal radius for a position based on biome
+   * @param biome - The biome type at the player's position
+   * @param tileId - Optional tile ID for additional visibility modifier
+   * @returns Effective reveal radius (integer)
+   */
+  getEffectiveRevealRadius(biome?: string, tileId?: string): number {
+    let modifier = 1.0;
+
+    // Apply biome modifier
+    if (biome && BIOME_VISIBILITY_MODIFIERS[biome]) {
+      modifier *= BIOME_VISIBILITY_MODIFIERS[biome];
+    }
+
+    // Apply tile-specific modifier if available
+    if (tileId) {
+      const tileDef = TileRegistry.get(tileId);
+      if (tileDef.visibilityModifier !== undefined) {
+        modifier *= tileDef.visibilityModifier;
+      }
+    }
+
+    // Return adjusted radius (minimum 3 tiles for playability)
+    return Math.max(3, Math.floor(this.revealRadius * modifier));
+  }
+
+  /**
    * Reveal tiles in a radius around the given position
    * Uses iterative BFS to avoid stack overflow with large radii
    * Returns Set of newly revealed tile keys (delta only, not already revealed)
    */
-  revealAtPosition(worldX: number, worldY: number): Set<string> {
+  revealAtPosition(worldX: number, worldY: number, biome?: string, tileId?: string): Set<string> {
+    const effectiveRadius = this.getEffectiveRevealRadius(biome, tileId);
+
     const queue: QueueItem[] = [{ x: worldX, y: worldY, dist: 0 }];
     const visited = new Set<string>();
     const newlyRevealed = new Set<string>();
@@ -50,7 +90,7 @@ export class FogManager {
       const key = `${x},${y}`;
 
       // Skip if already visited or beyond radius
-      if (visited.has(key) || dist > this.revealRadius) {
+      if (visited.has(key) || dist > effectiveRadius) {
         continue;
       }
 

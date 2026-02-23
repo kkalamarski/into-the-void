@@ -60,6 +60,13 @@ export const TILE_TEXTURE_MAP: Record<TileId, string> = {
   [TileId.CRATER_FLOOR]: 'tile_crater_floor',
   [TileId.CRATER_DEBRIS]: 'tile_crater_debris',
   [TileId.PORTAL]: 'tile_portal',
+  [TileId.TIDAL_FLOOR]: 'tile_tidal_floor',
+  [TileId.TIDAL_SHALLOW]: 'tile_tidal_shallow',
+  [TileId.KELP_FLOOR]: 'tile_kelp_floor',
+  [TileId.KELP_WALL]: 'tile_kelp_wall',
+  [TileId.TRENCH_FLOOR]: 'tile_trench_floor',
+  [TileId.TRENCH_DEEP]: 'tile_trench_deep',
+  [TileId.SHORE_TRANSITION]: 'tile_shore',
 };
 
 /**

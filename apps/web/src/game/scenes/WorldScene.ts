@@ -698,15 +698,19 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private initializeFog(characterId: string): void {
+    // Fog of war disabled - FogPersistence allocates too much memory (40B tiles)
+    // TODO: Fix FogPersistence to use sparse data structure instead of dense bitset
+    return;
+
     if (this.fogInitialized) return;
 
     this.fogManager = new FogManager(characterId);
-    this.fogManager.initialize();
+    this.fogManager!.initialize();
     this.fogInitialized = true;
 
     // Redraw fog from saved state
     if (this.fogRenderer && this.fogManager) {
-      this.fogRenderer.redrawFromState(this.fogManager);
+      this.fogRenderer!.redrawFromState(this.fogManager!);
     }
   }
 
@@ -748,9 +752,10 @@ export class WorldScene extends Phaser.Scene {
     container.add(shadow);
 
     // Player sprite with directional character texture (default facing south)
+    // Scale 1024px sprite to 256px with isometric squash (75% height)
     const sprite = this.add.sprite(0, -24, `character-${this.localPlayerFacing}`);
     sprite.setOrigin(0.5, 1.0);
-    sprite.setScale(1.0);
+    sprite.setScale(0.25, 0.1875);
     container.add(sprite);
     container.setData('characterSprite', sprite); // Store reference for direction updates
 
@@ -1582,9 +1587,10 @@ export class WorldScene extends Phaser.Scene {
     container.add(shadow);
 
     // Player sprite with south-facing character texture (remote players always face south for now)
+    // Scale 1024px sprite to 256px with isometric squash (75% height)
     const sprite = this.add.sprite(0, -24, 'character-s');
     sprite.setOrigin(0.5, 1.0);
-    sprite.setScale(1.0);
+    sprite.setScale(0.25, 0.1875);
     sprite.setTint(this.getFactionColor(player.faction));
     container.add(sprite);
 
@@ -1729,7 +1735,17 @@ export class WorldScene extends Phaser.Scene {
 
     // Reveal fog at new position (skip during reconciliation to avoid double-reveal)
     if (!reconciling && this.fogManager && this.fogRenderer) {
-      const newlyRevealed = this.fogManager.revealAtPosition(worldX, worldY);
+      // Get tile ID at player position for visibility modifier
+      let tileId: string | undefined;
+      if (this.currentTiles && position.y < this.currentTiles.length && position.x < this.currentTiles[0]?.length) {
+        const tileNumericId = this.currentTiles[position.y]?.[position.x];
+        if (tileNumericId !== undefined) {
+          tileId = tileIdToString(tileNumericId as TileId);
+        }
+      }
+
+      // Reveal with biome and tile visibility modifiers
+      const newlyRevealed = this.fogManager.revealAtPosition(worldX, worldY, this.currentBiome, tileId);
       if (newlyRevealed.size > 0) {
         this.fogRenderer.revealTiles(newlyRevealed);
       }
