@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 83 - Aquatic Entity Population
+**Current focus:** Phase 84 - Exotic Biome Foundation
 
 ## Current Position
 
-Phase: 83 of 87 (Aquatic Entity Population)
-Plan: 3 of 3 in current phase
-Status: Complete
-Last activity: 2026-02-23 - Phase 83 Plan 03 complete (plant & artifact spawn system)
+Phase: 84 of 87 (Exotic Biome Foundation)
+Plan: 0 of 2 in current phase
+Status: Ready to plan
+Last activity: 2026-02-23 - Phase 83 complete (verified, all gaps closed)
 
 Progress: [####################] 100% v1.17 | [#####.........] 43% v1.18
 
@@ -94,13 +94,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Phase 83 Plan 03 complete (plant & artifact spawn system)
+Stopped at: Phase 83 complete (verified)
 Resume file: None
 
 **Next steps:**
-1. Begin Phase 84 (Exotic Biome Foundation)
-2. Implement exotic biome generators (temporal_rift, void_anomaly, psionic_field)
-3. Test plant/artifact spawning in game server integration
+1. Run `/gsd:plan-phase 84` to plan Exotic Biome Foundation
+2. Execute Phase 84 to add exotic biome tile types and generation
 
 ---
 *Last updated: 2026-02-23 - Phase 83 complete with gap closure (aquatic entities + systemic spawn fix)*
