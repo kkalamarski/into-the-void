@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 80 (Zone Mastery & Lore)
-Plan: 1/? complete
+Plan: 1/4 complete
 Status: In Progress
-Last activity: 2026-02-23 — Completed 80-02 Database Schema & Queries
+Last activity: 2026-02-23 — Completed 80-01 Lore & Zone Mastery Foundation
 
 Progress: [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 4.7%
 
@@ -171,6 +171,10 @@ Recent decisions affecting current work:
 - [Phase 80]: Unique constraint (characterId, rewardId) prevents duplicate reward unlocks
 - [Phase 80]: grantCharacterReward returns null on duplicate (23505 error) for graceful handling
 - [Phase 80]: All lore/mastery/reward tables cascade delete from characters for automatic orphan cleanup
+- [Phase 80-01]: Lore fragment structure: Self-contained objects with id/title/content/category/biome/xpReward for simple storage
+- [Phase 80-01]: Registry indexing: Three Map-based indexes (by ID, category, biome) for O(1) lookups
+- [Phase 80-01]: Mastery tier structure: Bronze/Silver/Gold with escalating requirements (3/10/5, 7/30/15, 15/75/40)
+- [Phase 80-01]: Fragment content source: Extract from world-bible.md for canonical lore consistency
 
 ### Pending Todos
 
