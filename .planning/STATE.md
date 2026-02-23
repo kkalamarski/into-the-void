@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.17 Core Gameplay Loop - Phase 78: Gathering Mini-Game
+**Current focus:** v1.17 Core Gameplay Loop - Phase 79: Resource Risk/Reward
 
 ## Current Position
 
-Phase: 78 (Gathering Mini-Game)
-Plan: 4/4 complete
-Status: Complete
-Last activity: 2026-02-23 — Completed 78-04 (Client Mini-Game UI and WorldScene Integration)
+Phase: 79 (Resource Risk/Reward)
+Plan: 1/? in progress
+Status: In Progress
+Last activity: 2026-02-23 — Completed 79-01 (Resource Node Rarity System)
 
-Progress: [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 4.3%
+Progress: [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 4.4%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 214
+- Total plans completed: 215
 - Average duration: ~3 min per plan
-- Total execution time: ~10.5 hours across 17 milestones
+- Total execution time: ~10.6 hours across 17 milestones
 
 **By Milestone:**
 
@@ -44,7 +44,7 @@ Progress: [████░░░░░░░░░░░░░░░░░░░
 | v1.14 | 59-63 | 8 | 1 day |
 | v1.15 | 64-69 | 16 | 1 day |
 | v1.16 | 70-75 | 11 | 1 day |
-| v1.17 | 76-81 | 10/? | In Progress |
+| v1.17 | 76-81 | 11/? | In Progress |
 
 **Recent Trend:**
 Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 6 phases.
@@ -75,6 +75,7 @@ Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 
 | Phase 78 P01 | 152 | 2 tasks | 6 files |
 | Phase 78 P03 | 534 | 2 tasks | 4 files |
 | Phase 78 P04 | 400 | 3 tasks | 5 files |
+| Phase 79 P01 | 195 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -140,6 +141,11 @@ Recent decisions affecting current work:
 - [Phase 78]: Artifact instant collection skips mini-game, awards archaeology XP via EntityService delegation
 - [Phase 78]: Challenge auto-expiration (GATHER_DURATION_MS + 1000ms) cleans up abandoned sessions and releases locks
 - [Phase 78]: Proficiency cache (Map<characterId, ProficiencyJson>) reduces database load with load/unload lifecycle
+- [Phase 79]: NodeRarity type with three tiers (common/rare/epic) for resource node differentiation
+- [Phase 79]: Rare variants use 1.5x yield multiplier and 2x respawn time vs common nodes
+- [Phase 79]: Epic variants use 2x yield multiplier for endgame zones (ancient ruins, starfall crater)
+- [Phase 79]: Rare nodes require +1 tool tier to prevent early-game farming exploits
+- [Phase 79]: Variant naming pattern {BASE}_RARE / {BASE}_EPIC for clear code identification
 
 ### Pending Todos
 
@@ -151,7 +157,8 @@ None.
 - Phase 76: Fog of War Foundation (EXPL-01, EXPL-02, EXPL-03) — Complete (2/2 plans)
 - Phase 77: POI Discovery System — Complete (4/4 plans)
 - Phase 78: Gathering Mini-Game — Complete (4/4 plans)
-- Remaining phases: 79-81 (Risk/Reward, Mastery, Combat Balancing)
+- Phase 79: Resource Risk/Reward — In Progress (1/? plans)
+- Remaining phases: 80-81 (Mastery, Combat Balancing)
 
 **Known Issues:**
 - Web app vitest tests hang when run via nx (vitest 4.0.18 vs nx expecting v1-3). TypeScript compilation verified instead.
@@ -159,12 +166,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed Phase 78 Gathering Mini-Game (all 4 plans verified)
+Stopped at: Completed 79-01 Resource Node Rarity System
 Resume file: None
 
 **Next steps:**
-1. Begin Phase 79 (Resource Risk/Reward) - requires planning
-2. Continue v1.17 milestone with remaining phases (79-81)
+1. Continue Phase 79 (Resource Risk/Reward) - requires planning for spawn system integration
+2. Continue v1.17 milestone with remaining phases (80-81)
 
 ---
-*Last updated: 2026-02-23 - Completed Phase 78 Gathering Mini-Game*
+*Last updated: 2026-02-23 - Completed Phase 79 Plan 01 (Resource Node Rarity System)*
