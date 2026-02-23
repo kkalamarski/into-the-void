@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 ## Current Position
 
 Phase: 72 of 75 (Visual Polish)
-Plan: 2 of 2 complete
+Plan: 3 of 3 complete
 Status: Phase complete
-Last activity: 2026-02-23 - Phase 72 Plan 02 completed (Glassmorphism modals + UI panel polish)
+Last activity: 2026-02-23 - Phase 72 Plan 03 completed (Wire glassmorphism modal overlay)
 
 Progress: [█████████████████████████████████████████████████████████████████████████████░░░░░░░░] 94%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 200
+- Total plans completed: 201
 - Average duration: ~3 min per plan
 - Total execution time: ~10.0 hours across 16 milestones
 
@@ -46,11 +46,10 @@ Progress: [███████████████████████
 | v1.16 | 70-75 | TBD | In progress |
 
 **Recent Trend:**
-Stable velocity. Phase 72 complete (2 of 2 plans done).
+Stable velocity. Phase 72 complete (3 of 3 plans done).
 
 | Plan | Duration (s) | Tasks | Files |
 |------|--------------|-------|-------|
-| Phase 68 P04 | 93 | 2 tasks | 2 files |
 | Phase 69 P01 | 345 | 3 tasks | 3 files |
 | Phase 69 P02 | 283 | 3 tasks | 3 files |
 | Phase 70 P01 | 159 | 3 tasks | 3 files |
@@ -58,6 +57,7 @@ Stable velocity. Phase 72 complete (2 of 2 plans done).
 | Phase 71 P01 | 107 | 2 tasks | 2 files |
 | Phase 72 P01 | 74 | 2 tasks | 1 files |
 | Phase 72 P02 | 153 | 2 tasks | 5 files |
+| Phase 72 P03 | 77 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -79,6 +79,8 @@ Recent decisions affecting current work:
 - [Phase 72]: GPU-accelerated button polish uses transform/filter instead of top/left/opacity for 60fps animations
 - [Phase 72]: NPC modal overlay uses glassmorphism with backdrop-filter and fallback for unsupported browsers
 - [Phase 72]: Modal transitions combine opacity fade with scale (0.95 → 1) for modern feel
+- [Phase 72]: Overlay wrapper pattern for modal centering via flexbox (removes fixed positioning from modal content)
+- [Phase 72]: Background-click-to-close uses e.target === e.currentTarget pattern (prevents closing on modal content clicks)
 
 ### Pending Todos
 
@@ -97,13 +99,13 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 72-02-PLAN.md
+Stopped at: Completed 72-03-PLAN.md
 Resume file: None
 
 **Next steps:**
-1. Phase 72 complete - proceed to Phase 73 (or verify visual polish in game)
+1. Phase 72 complete - proceed to Phase 73 (verify visual polish in game recommended)
 2. Research Phaser sprite overlay patterns before Phase 73 (quest markers)
-3. Note: NpcInteractionModal.tsx needs overlay wrapper update for glassmorphism fade
+3. Verify glassmorphism effect visually (backdrop blur, 150ms fade, background-click-to-close)
 
 ---
-*Last updated: 2026-02-23 — Phase 72 complete (2 of 2 plans)*
+*Last updated: 2026-02-23 — Phase 72 complete (3 of 3 plans)*
