@@ -272,7 +272,9 @@ Plans:
   5. Tracker shows up to 3 active quests with visual hierarchy for primary quest
 
 Plans:
-- [ ] 71-01-PLAN.md — Enhance QuestTracker with collapse, 3-quest limit, and primary styling
+- [x] 71-01-PLAN.md — Enhance QuestTracker with collapse, 3-quest limit, and primary styling
+
+✓ **Phase 71 complete** — 2026-02-23
 
 ---
 
@@ -429,13 +431,13 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73 -> 74 -> 75
 | 68. Quest UI | v1.15 | 4/4 | Complete | 2026-02-22 |
 | 69. Quest Chains & Bounties | v1.15 | 2/2 | Complete | 2026-02-22 |
 | 70. Modal Unification | v1.16 | 2/2 | Complete | 2026-02-23 |
-| 71. Quest Objective Tracker HUD | v1.16 | 0/1 | Not started | - |
+| 71. Quest Objective Tracker HUD | v1.16 | 1/1 | Complete | 2026-02-23 |
 | 72. Visual Polish | v1.16 | 0/TBD | Not started | - |
 | 73. Quest Markers in World | v1.16 | 0/TBD | Not started | - |
 | 74. Quest Completion Feedback | v1.16 | 0/TBD | Not started | - |
 | 75. Error Handling | v1.16 | 0/TBD | Not started | - |
 
-**Total:** 75 phases (70 complete, 5 pending)
+**Total:** 75 phases (71 complete, 4 pending)
 
 ---
-*Last updated: 2026-02-23 after Phase 71 planning*
+*Last updated: 2026-02-23 after Phase 71 complete*

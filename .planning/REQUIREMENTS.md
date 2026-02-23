@@ -80,8 +80,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NPC-02 | Phase 70 | Complete |
 | NPC-03 | Phase 70 | Complete |
 | NPC-04 | Phase 70 | Complete |
-| QUEST-01 | Phase 71 | Pending |
-| QUEST-02 | Phase 71 | Pending |
+| QUEST-01 | Phase 71 | Complete |
+| QUEST-02 | Phase 71 | Complete |
 | QUEST-03 | Phase 73 | Pending |
 | QUEST-04 | Phase 73 | Pending |
 | QUEST-05 | Phase 74 | Pending |
