@@ -531,3 +531,17 @@ export function getBiomeCreatures(biome: BiomeType): string[] {
 export function getBiomeMinerals(biome: BiomeType): string[] {
   return BIOME_SPAWN_CONFIGS[biome].minerals.map((m) => m.id);
 }
+
+/**
+ * Get plants that can spawn in a biome
+ */
+export function getBiomePlants(biome: BiomeType): string[] {
+  return BIOME_SPAWN_CONFIGS[biome].plants.map((p) => p.id);
+}
+
+/**
+ * Get artifacts that can spawn in a biome
+ */
+export function getBiomeArtifacts(biome: BiomeType): string[] {
+  return BIOME_SPAWN_CONFIGS[biome].artifacts.map((a) => a.id);
+}
