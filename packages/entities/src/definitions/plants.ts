@@ -16,6 +16,22 @@ export const PLANT_LUMINOUS_VINE: PlantDefinition = {
   respawnSeconds: 300,
 };
 
+export const PLANT_VOID_FERN: PlantDefinition = {
+  id: 'plant_void_fern',
+  displayName: 'Void Fern',
+  description: 'Hardy fern adapted to low-light conditions beneath the fungal canopy. Produces spores with unusual radiation-resistant properties.',
+  entityClass: 'plant',
+  biomes: ['fungal_forest', 'void_plains'],
+  textureKey: 'plant_void_fern',
+  color: 0x446644,
+  lootTableId: 'loot_plant_void_fern',
+  harvestYield: [
+    { itemId: 'world_void_flora_sample', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 1, chance: 0.3 },
+  ],
+  respawnSeconds: 240,
+};
+
 export const PLANT_DROUGHT_CACTUS: PlantDefinition = {
   id: 'plant_drought_cactus',
   displayName: 'Drought Cactus',
@@ -212,6 +228,7 @@ export const PLANT_PHASE_BLOOM_RARE: PlantDefinition = {
 
 export const ALL_PLANTS: readonly PlantDefinition[] = [
   PLANT_LUMINOUS_VINE,
+  PLANT_VOID_FERN,
   PLANT_DROUGHT_CACTUS,
   PLANT_GAS_POD,
   PLANT_MOBILE_VINE,
