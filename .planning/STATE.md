@@ -10,32 +10,32 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 83 of 87 (Aquatic Entity Population)
-Plan: 2 of 2 in current phase
+Plan: 3 of 3 in current phase
 Status: Complete
-Last activity: 2026-02-23 - Phase 83 Plan 02 complete (aquatic spawn & loot configuration)
+Last activity: 2026-02-23 - Phase 83 Plan 03 complete (plant & artifact spawn system)
 
-Progress: [####################] 100% v1.17 | [####..........] 36% v1.18
+Progress: [####################] 100% v1.17 | [#####.........] 43% v1.18
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 222 (v1.0-v1.17)
+- Total plans completed: 228 (v1.0-v1.17: 222, v1.18: 6)
 - Average duration: ~3 min per plan
-- Total execution time: ~11.2 hours across 17 milestones
+- Total execution time: ~11.6 hours across 17 milestones
 
 **By Milestone:**
 
 | Milestone | Phases | Plans | Timeline |
 |-----------|--------|-------|----------|
 | v1.0-v1.17 | 1-81 | 222 | 10 days |
-| v1.18 | 82-87 | 5/14 | In Progress |
+| v1.18 | 82-87 | 6/14 | In Progress |
 
 **v1.18 Phase Estimates:**
 
 | Phase | Est. Plans | Requirements |
 |-------|------------|--------------|
 | 82. Aquatic Foundation | 3 | BIOME-01-03, BIOME-07-09 |
-| 83. Aquatic Entities | 2 | ENT-01-03, CREA-01-04 |
+| 83. Aquatic Entities | 3 | ENT-01-03, CREA-01-04, gap-closure |
 | 84. Exotic Foundation | 2 | BIOME-04-06 |
 | 85. Exotic Entities | 2 | ENT-04-06, CREA-05-08 |
 | 86. Items & Balance | 3 | ITEM-01-10, PROG-01-03 |
@@ -45,6 +45,7 @@ Progress: [####################] 100% v1.17 | [####..........] 36% v1.18
 | Phase 82 P03 | 380s | 3 tasks | 8 files |
 | Phase 83 P01 | 211 | 4 tasks | 5 files |
 | Phase 83 P02 | 327 | 4 tasks | 2 files |
+| Phase 83 P03 | 239 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,9 @@ Recent decisions affecting current work:
 - [Phase 83-02]: 1.5x aquatic density multiplier for ocean population (void_plains baseline 4 -> 6)
 - [Phase 83-02]: Maniac spawn weight of 1 for Abyssal Leviathan (matches Void Horror rarity)
 - [Phase 83-02]: Use existing items for aquatic loot tables (aquatic-specific items in Phase 86)
+- [Phase 83-03]: Artifact spawn rate 5% per attempt (extremely rare one-time discoveries)
+- [Phase 83-03]: Plant respawn timing 5-10 minutes matches mineral pattern
+- [Phase 83-03]: Artifact respawnTime -1 for no respawn (ZonesService handles removal)
 
 ### Pending Todos
 
@@ -90,12 +94,13 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Phase 83 complete (aquatic entity population)
+Stopped at: Phase 83 Plan 03 complete (plant & artifact spawn system)
 Resume file: None
 
 **Next steps:**
 1. Begin Phase 84 (Exotic Biome Foundation)
 2. Implement exotic biome generators (temporal_rift, void_anomaly, psionic_field)
+3. Test plant/artifact spawning in game server integration
 
 ---
-*Last updated: 2026-02-23 - Phase 83 complete (aquatic entity population with spawn & loot configuration)*
+*Last updated: 2026-02-23 - Phase 83 complete with gap closure (aquatic entities + systemic spawn fix)*
