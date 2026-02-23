@@ -316,7 +316,7 @@ Plans:
 **Goal**: Players can explore three exotic/anomaly biomes with unique visual identity and environmental effects
 **Depends on**: Phase 83
 **Requirements**: BIOME-04, BIOME-05, BIOME-06
-**Plans:** TBD
+**Plans:** 2 plans
 
 **Success Criteria** (what must be TRUE):
   1. Player can enter Void Rift (Tier IV) with distinct visual palette and reality distortion awareness
@@ -325,8 +325,8 @@ Plans:
   4. Each exotic biome has distinct tile types and color schemes distinguishable from aquatic biomes
 
 Plans:
-- [ ] 84-01: TBD
-- [ ] 84-02: TBD
+- [ ] 84-01-PLAN.md — Type foundation and exotic tile definitions
+- [ ] 84-02-PLAN.md — Biome generation and configuration
 
 ---
 
@@ -481,12 +481,12 @@ Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87
 | 81. Combat Balancing & Quest Audit | v1.17 | 3/3 | Complete | 2026-02-23 |
 | 82. Aquatic Biome Foundation | v1.18 | 3/3 | Complete | 2026-02-23 |
 | 83. Aquatic Entity Population | v1.18 | 3/3 | Complete | 2026-02-23 |
-| 84. Exotic Biome Foundation | v1.18 | 0/2 | Not started | - |
+| 84. Exotic Biome Foundation | v1.18 | 0/2 | Planned | - |
 | 85. Exotic Entity Population | v1.18 | 0/2 | Not started | - |
 | 86. Item Integration & Balance | v1.18 | 0/3 | Not started | - |
 | 87. Content Gaps & Discovery | v1.18 | 0/2 | Not started | - |
 
-**Total:** 87 phases (82 complete, 5 pending)
+**Total:** 87 phases (83 complete, 4 pending)
 
 ---
-*Last updated: 2026-02-23 - Phase 83 gap closure plan created*
+*Last updated: 2026-02-24 - Phase 84 plans created*
