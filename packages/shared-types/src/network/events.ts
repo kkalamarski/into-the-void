@@ -79,7 +79,9 @@ export type ServerEventType =
   | 'buff:expire'
   | 'quest:progress'
   | 'quest:completed'
-  | 'quest:abandoned';
+  | 'quest:abandoned'
+  | 'quest:accepted'
+  | 'quest:error';
 
 /**
  * Socket.io event map for type safety
@@ -272,6 +274,12 @@ export interface ServerEvents {
   };
   'quest:abandoned': {
     questId: string;
+  };
+  'quest:accepted': {
+    questId: string;
+  };
+  'quest:error': {
+    message: string;
   };
   'npc:quest-markers': {
     markers: Array<{
