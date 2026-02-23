@@ -287,10 +287,10 @@ Plans:
   5. POI icons render at correct z-index above terrain, below modals
 
 Plans:
-- [ ] 77-01-PLAN.md — POI types and procedural generation (shared-types, world-gen)
-- [ ] 77-02-PLAN.md — Discovery tracking database schema (database package)
-- [ ] 77-03-PLAN.md — Discovery service and WebSocket events (game-server)
-- [ ] 77-04-PLAN.md — POI rendering and client integration (web app)
+- [x] 77-01-PLAN.md — POI types and procedural generation (shared-types, world-gen)
+- [x] 77-02-PLAN.md — Discovery tracking database schema (database package)
+- [x] 77-03-PLAN.md — Discovery service and WebSocket events (game-server)
+- [x] 77-04-PLAN.md — POI rendering and client integration (web app)
 
 ---
 
@@ -453,13 +453,13 @@ Phases execute in numeric order: 76 -> 77 -> 78 -> 79 -> 80 -> 81
 | 74. Quest Completion Feedback | v1.16 | 2/2 | Complete | 2026-02-23 |
 | 75. Error Handling | v1.16 | 2/2 | Complete | 2026-02-23 |
 | 76. Fog of War Foundation | v1.17 | 2/2 | Complete | 2026-02-23 |
-| 77. POI Discovery System | v1.17 | 0/4 | Pending | — |
+| 77. POI Discovery System | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 78. Gathering Mini-Game | v1.17 | 0/? | Pending | — |
 | 79. Resource Risk/Reward | v1.17 | 0/? | Pending | — |
 | 80. Zone Mastery & Lore | v1.17 | 0/? | Pending | — |
 | 81. Combat Balancing & Quest Audit | v1.17 | 0/? | Pending | — |
 
-**Total:** 81 phases (76 complete, 5 pending)
+**Total:** 81 phases (77 complete, 4 pending)
 
 ---
-*Last updated: 2026-02-23 — Phase 77 plans created*
+*Last updated: 2026-02-23 — Phase 77 complete*
