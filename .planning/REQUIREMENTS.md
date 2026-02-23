@@ -130,39 +130,39 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GATH-01 | TBD | Pending |
-| GATH-02 | TBD | Pending |
-| GATH-03 | TBD | Pending |
-| GATH-04 | TBD | Pending |
-| GATH-05 | TBD | Pending |
-| GATH-06 | TBD | Pending |
-| GATH-07 | TBD | Pending |
-| GATH-08 | TBD | Pending |
-| EXPL-01 | TBD | Pending |
-| EXPL-02 | TBD | Pending |
-| EXPL-03 | TBD | Pending |
-| EXPL-04 | TBD | Pending |
-| EXPL-05 | TBD | Pending |
-| EXPL-06 | TBD | Pending |
-| EXPL-07 | TBD | Pending |
-| EXPL-08 | TBD | Pending |
-| EXPL-09 | TBD | Pending |
-| EXPL-10 | TBD | Pending |
-| EXPL-11 | TBD | Pending |
-| EXPL-12 | TBD | Pending |
-| COMB-01 | TBD | Pending |
-| COMB-02 | TBD | Pending |
-| COMB-03 | TBD | Pending |
-| COMB-04 | TBD | Pending |
-| COMB-05 | TBD | Pending |
-| QUEST-07 | TBD | Pending |
-| QUEST-08 | TBD | Pending |
+| GATH-01 | Phase 78 | Pending |
+| GATH-02 | Phase 78 | Pending |
+| GATH-03 | Phase 78 | Pending |
+| GATH-04 | Phase 78 | Pending |
+| GATH-05 | Phase 78 | Pending |
+| GATH-06 | Phase 79 | Pending |
+| GATH-07 | Phase 79 | Pending |
+| GATH-08 | Phase 79 | Pending |
+| EXPL-01 | Phase 76 | Pending |
+| EXPL-02 | Phase 76 | Pending |
+| EXPL-03 | Phase 76 | Pending |
+| EXPL-04 | Phase 77 | Pending |
+| EXPL-05 | Phase 77 | Pending |
+| EXPL-06 | Phase 77 | Pending |
+| EXPL-07 | Phase 80 | Pending |
+| EXPL-08 | Phase 80 | Pending |
+| EXPL-09 | Phase 80 | Pending |
+| EXPL-10 | Phase 80 | Pending |
+| EXPL-11 | Phase 80 | Pending |
+| EXPL-12 | Phase 80 | Pending |
+| COMB-01 | Phase 81 | Pending |
+| COMB-02 | Phase 81 | Pending |
+| COMB-03 | Phase 81 | Pending |
+| COMB-04 | Phase 81 | Pending |
+| COMB-05 | Phase 81 | Pending |
+| QUEST-07 | Phase 81 | Pending |
+| QUEST-08 | Phase 81 | Pending |
 
 **Coverage:**
 - v1.17 requirements: 27 total
-- Mapped to phases: 0
-- Unmapped: 27 (awaiting roadmap)
+- Mapped to phases: 27 (100% coverage)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-23*
-*Last updated: 2026-02-23 after v1.17 definition*
+*Last updated: 2026-02-23 after v1.17 roadmap creation*

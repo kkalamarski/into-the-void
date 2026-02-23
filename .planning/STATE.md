@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.17 Core Gameplay Loop - Defining requirements
+**Current focus:** v1.17 Core Gameplay Loop - Phase 76: Fog of War Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-23 — Milestone v1.17 started
+Phase: 76 (Fog of War Foundation)
+Plan: Not started
+Status: Ready for planning
+Last activity: 2026-02-23 — Roadmap created for v1.17
 
-Progress: [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 2.5%
 
 ## Performance Metrics
 
@@ -40,13 +40,14 @@ Progress: [░░░░░░░░░░░░░░░░░░░░░░░
 | v1.10 | 43-45 | 5 | 1 day |
 | v1.11 | 46-50 | 18 | 2 days |
 | v1.12 | 51-55 | 9 | 1 day |
-| v1.13 | 56-58 | 9 | Complete |
-| v1.14 | 59-63 | 8 | Complete |
-| v1.15 | 64-69 | 16 | Complete |
-| v1.16 | 70-75 | 8 | Complete |
+| v1.13 | 56-58 | 9 | 1 day |
+| v1.14 | 59-63 | 8 | 1 day |
+| v1.15 | 64-69 | 16 | 1 day |
+| v1.16 | 70-75 | 11 | 1 day |
+| v1.17 | 76-81 | 0/? | In Progress |
 
 **Recent Trend:**
-Stable velocity. v1.16 shipped (6 phases, 11 plans). Starting v1.17.
+Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 6 phases.
 
 | Plan | Duration (s) | Tasks | Files |
 |------|--------------|-------|-------|
@@ -97,6 +98,11 @@ Recent decisions affecting current work:
 - [Phase 75]: Alert duration increased to 5s (was 3s) per ERR-02 spec
 - [Phase 75]: isPending computed from tradePending || questPending for unified modal close prevention
 - [Phase 75]: Spinner toggle pattern: {pending ? <span className="spinner-small" /> : 'Label'}
+- [v1.17 Roadmap]: Fog of war uses bitset encoding (8 tiles/byte) to prevent localStorage bloat (1MB → 12.5KB)
+- [v1.17 Roadmap]: Gathering mini-game server validates timing via server-side elapsed time to prevent cheats
+- [v1.17 Roadmap]: Zone mastery uses event-driven tracking (@nestjs/event-emitter) with in-memory batching
+- [v1.17 Roadmap]: Combat balancing applies 15% damage multiplier per level beyond 5-level gap
+- [v1.17 Roadmap]: Phase ordering: Fog → POI → Gathering → Risk/Reward → Mastery → Combat (dependency-driven)
 
 ### Pending Todos
 
@@ -104,25 +110,23 @@ None.
 
 ### Blockers/Concerns
 
-**v1.17 Milestone Starting:**
-- Gathering system (skill expression, risk/reward, progression)
-- Exploration system (fog of war, POIs, lore, zone mastery)
-- Combat balancing (gradual fights, no one-shots)
-- Quest item audit
+**v1.17 Milestone Active:**
+- Phase 76: Fog of War Foundation (EXPL-01, EXPL-02, EXPL-03) — ready for planning
+- Remaining phases: 77-81 (POI, Gathering, Risk/Reward, Mastery, Combat Balancing)
 
 **Known Issues:**
-- Escape key cascade in nested modals - to be addressed in future phase
+- None blocking current phase
 
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Started v1.17 milestone
+Stopped at: v1.17 roadmap created
 Resume file: None
 
 **Next steps:**
-1. Research domain (optional)
-2. Define requirements with REQ-IDs
-3. Create roadmap
+1. Execute `/gsd:plan-phase 76` to create execution plans
+2. Execute plans for Phase 76
+3. Continue to Phase 77
 
 ---
-*Last updated: 2026-02-23 - v1.17 milestone started*
+*Last updated: 2026-02-23 - v1.17 roadmap created*

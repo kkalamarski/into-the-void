@@ -19,6 +19,7 @@
 - v1.14 Equipment Stats Overhaul - Phases 59-63 (shipped 2026-02-21)
 - v1.15 Quest System - Phases 64-69 (shipped 2026-02-22)
 - v1.16 UI Polish - Phases 70-75 (shipped 2026-02-23)
+- v1.17 Core Gameplay Loop - Phases 76-81 (active)
 
 ## Phases
 
@@ -231,145 +232,144 @@ See: `.planning/milestones/v1.15-ROADMAP.md`
 
 </details>
 
-## Milestone v1.16: UI Polish
+<details>
+<summary>v1.16 UI Polish (Phases 70-75) - SHIPPED 2026-02-23</summary>
 
-**Goal:** Clean, WoW-style NPC interaction with unified window and general HUD improvements.
+**Milestone Goal:** Clean, WoW-style NPC interaction with unified window and general HUD improvements.
 
-### Phase 70: Modal Unification
+- [x] Phase 70: Modal Unification (2/2 plans) - completed 2026-02-23
+- [x] Phase 71: Quest Objective Tracker HUD (1/1 plans) - completed 2026-02-23
+- [x] Phase 72: Visual Polish (3/3 plans) - completed 2026-02-23
+- [x] Phase 73: Quest Markers in World (1/1 plans) - completed 2026-02-23
+- [x] Phase 74: Quest Completion Feedback (2/2 plans) - completed 2026-02-23
+- [x] Phase 75: Error Handling (2/2 plans) - completed 2026-02-23
 
-**Goal**: Single unified NPC window with tab navigation replacing the double-modal bug
-**Depends on**: Phase 69 (v1.15 complete)
-**Requirements**: NPC-01, NPC-02, NPC-03, NPC-04
-**Plans:** 2 plans
+See: `.planning/milestones/v1.16-ROADMAP.md` (collapsed for brevity)
+
+</details>
+
+## Milestone v1.17: Core Gameplay Loop
+
+**Goal:** Complete the gameplay loop with engaging gathering, exploration discovery, and balanced combat.
+
+### Phase 76: Fog of War Foundation
+
+**Goal**: Players see exploration progress with fog overlay that reveals tiles as they move
+**Depends on**: Phase 75 (v1.16 complete)
+**Requirements**: EXPL-01, EXPL-02, EXPL-03
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. Player interacts with trader NPC and sees single modal window, not two overlapping modals
-  2. Player can switch between Dialogue, Trade, and Quests tabs within single NPC window
-  3. Pressing ESC closes NPC window without cascade bugs or leaving Phaser keyboard disabled
-  4. NPC window defaults to Quests tab when NPC has available or ready quests
-  5. Only one modal state manages NPC interactions (no `showTrading` vs `interactingNpc` conflicts)
+  1. Player sees fog overlay hiding unexplored tiles in dark/dimmed state
+  2. Fog reveals in radius around player as they move to new tiles
+  3. Explored tiles persist across sessions keyed by characterId in localStorage
+  4. Fog state uses bitset encoding (8 tiles per byte) to prevent localStorage bloat
+  5. Fog rendering performs at 60fps with 10k+ revealed tiles
 
 Plans:
-- [x] 70-01-PLAN.md — Extract TradeTab, modify npcStore, merge CSS
-- [x] 70-02-PLAN.md — Update GameUI, delete dead code, verify behavior
-
-**Phase 70 complete** — 2026-02-23
+- [ ] TBD
 
 ---
 
-### Phase 71: Quest Objective Tracker HUD
+### Phase 77: POI Discovery System
 
-**Goal**: On-screen HUD widget showing active quest progress near minimap
-**Depends on**: Phase 70
-**Requirements**: QUEST-01, QUEST-02
-**Plans:** 1 plan
+**Goal**: Players discover points of interest that grant lore and rewards
+**Depends on**: Phase 76
+**Requirements**: EXPL-04, EXPL-05, EXPL-06
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. Player sees active quest objectives displayed in HUD tracker with live progress counters
-  2. Tracker positioned near minimap area without blocking critical HUD elements
-  3. Tracker updates immediately when objective progress changes (kill count, item collection)
-  4. Player can collapse/expand tracker to save screen space
-  5. Tracker shows up to 3 active quests with visual hierarchy for primary quest
+  1. POIs (anomalies, caches, landmarks) spawn in world with visual distinction when fog revealed
+  2. Player discovers POI by entering its tile after fog revealed
+  3. POI discovery grants immediate rewards (XP, items, or credits)
+  4. Discovered POIs persist in database to prevent re-discovery exploits
+  5. POI icons render at correct z-index above terrain, below modals
 
 Plans:
-- [x] 71-01-PLAN.md — Enhance QuestTracker with collapse, 3-quest limit, and primary styling
-
-**Phase 71 complete** — 2026-02-23
+- [ ] TBD
 
 ---
 
-### Phase 72: Visual Polish
+### Phase 78: Gathering Mini-Game
 
-**Goal**: GPU-accelerated hover states, smooth transitions, and glassmorphism effects across all UI panels
-**Depends on**: Phase 70
-**Requirements**: VIS-01, VIS-02, VIS-03, VIS-04, VIS-05, VIS-06, VIS-07
-**Plans:** 3 plans
+**Goal**: Resource gathering requires timing skill check with variable yield
+**Depends on**: Phase 76 (independent of POI system)
+**Requirements**: GATH-01, GATH-02, GATH-03, GATH-04, GATH-05
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. All buttons and tabs show visible hover state (15%+ brightness change) with GPU-accelerated transform
-  2. Modal windows fade in over 150ms with backdrop blur effect
-  3. Interactive elements provide press feedback (scale 0.98 on active state)
-  4. Typography and spacing consistent across all panels (matching design token values)
-  5. CSS design tokens include animation timing, shadow depths, and glassmorphism values
+  1. Player clicks gatherable entity with tool equipped to start mini-game
+  2. Mini-game displays timing bar with moving indicator and success zone
+  3. Player timing accuracy determines yield: 0.5x (poor), 1.0x (good), 1.5x (perfect)
+  4. Server validates timing to prevent auto-click cheats using server-side elapsed time
+  5. Gathering proficiency per resource type increases with use and widens success zone
 
 Plans:
-- [x] 72-01-PLAN.md — Expand design tokens, GPU-accelerated button styles
-- [x] 72-02-PLAN.md — Modal glassmorphism, panel hover/active/focus consistency
-- [x] 72-03-PLAN.md — Wire glassmorphism modal overlay
-
-**Phase 72 complete** — 2026-02-23
+- [ ] TBD
 
 ---
 
-### Phase 73: Quest Markers in World
+### Phase 79: Resource Risk/Reward
 
-**Goal**: Real-time quest marker updates when quest state changes
-**Depends on**: Phase 71
-**Requirements**: QUEST-03, QUEST-04
-**Plans:** 1 plan
+**Goal**: Better resources spawn in dangerous areas with visual distinction
+**Depends on**: Phase 78
+**Requirements**: GATH-06, GATH-07, GATH-08
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. NPCs with available quests display yellow "!" sprite above their head
-  2. NPCs with turn-in ready quests display yellow "?" sprite above their head
-  3. Quest markers render at correct z-index above NPC sprites but below modal windows
-  4. Markers update immediately when quest state changes (quest accepted, objective completed)
-  5. Markers visible at same render distance as NPC sprites
+  1. Higher tier resource nodes spawn near aggressive creatures (proximity-based spawn rules)
+  2. Rare nodes display visual distinction (shimmer effect, color variation, icon marker)
+  3. Player can track discovered rare node locations via map markers
+  4. Rare nodes yield higher tier resources than common nodes of same type
+  5. Risk/reward balance: dangerous zones have 3x rare node density vs safe zones
 
 Plans:
-- [x] 73-01-PLAN.md — Wire quest event handlers for real-time marker updates
-
-**Phase 73 complete** — 2026-02-23
+- [ ] TBD
 
 ---
 
-### Phase 74: Quest Completion Feedback
+### Phase 80: Zone Mastery & Lore
 
-**Goal**: Visual and audio feedback when player completes quest
-**Depends on**: Phase 73
-**Requirements**: QUEST-05, QUEST-06
-**Plans:** 2 plans
+**Goal**: Zone exploration tracked with mastery progression and lore collection
+**Depends on**: Phase 77 (POI system), Phase 78 (gathering system)
+**Requirements**: EXPL-07, EXPL-08, EXPL-09, EXPL-10, EXPL-11, EXPL-12
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. Player sees "Quest Complete" banner displayed with quest name and rewards
-  2. Banner auto-dismisses after 5 seconds or on player click
-  3. Audio cue plays on quest completion (non-intrusive notification sound)
-  4. Banner positioned centrally without blocking critical HUD elements
-  5. Multiple quest completions queue properly without overlapping banners
+  1. Lore fragments exist as collectible data logs that reveal world/faction history
+  2. Collected lore tracked in codex UI accessible via hotkey with read/unread states
+  3. Zone mastery objectives track POI discoveries, resource gathers, creature kills
+  4. Zone mastery progress displays in HUD with tier indicators and percentage
+  5. Zone mastery completion unlocks zone-specific rewards (titles, cosmetics, or bonuses)
 
 Plans:
-- [x] 74-01-PLAN.md — Queue-based reward store, click-to-dismiss banner
-- [x] 74-02-PLAN.md — Audio utility and quest completion sound
-
-**Phase 74 complete** — 2026-02-23
+- [ ] TBD
 
 ---
 
-### Phase 75: Error Handling
+### Phase 81: Combat Balancing & Quest Audit
 
-**Goal**: Loading states and error feedback for async operations in trade/quest UI
-**Depends on**: Phase 74
-**Requirements**: ERR-01, ERR-02, ERR-03
-**Plans:** 2 plans
+**Goal**: Combat follows gradual fight pattern and all quest items obtainable from world
+**Depends on**: Phase 80
+**Requirements**: COMB-01, COMB-02, COMB-03, COMB-04, COMB-05, QUEST-07, QUEST-08
+**Plans:** TBD
 
 **Success Criteria** (what must be TRUE):
-  1. Async action buttons show loading spinner during pending state (trade, quest accept, quest turn-in)
-  2. Trade/quest errors display as toast notifications outside modal via alertStore
-  3. Modal cannot be closed while async operation pending (prevents race conditions)
-  4. Error toasts auto-dismiss after 5 seconds with clear error message
-  5. Failed operations revert UI state (button re-enabled, no optimistic update artifacts)
+  1. Typical creature dies in 4-8 hits from same-level player (no one-shots)
+  2. Level gap beyond 5 applies 15% damage multiplier per level difference
+  3. Creature stats rebalanced to match new damage formula with predictable scaling
+  4. Abilities remain impactful compared to auto-attack (20%+ DPS increase)
+  5. All quest-required items have obtainable source (entity drops or POI rewards verified)
 
 Plans:
-- [x] 75-01-PLAN.md — Pending state infrastructure (npcStore flags, alertStore 5s, spinner CSS)
-- [x] 75-02-PLAN.md — Button spinners and modal close prevention
-
-**Phase 75 complete** — 2026-02-23
+- [ ] TBD
 
 ---
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 70 -> 71 -> 72 -> 73 -> 74 -> 75
+Phases execute in numeric order: 76 -> 77 -> 78 -> 79 -> 80 -> 81
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -448,8 +448,14 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73 -> 74 -> 75
 | 73. Quest Markers in World | v1.16 | 1/1 | Complete | 2026-02-23 |
 | 74. Quest Completion Feedback | v1.16 | 2/2 | Complete | 2026-02-23 |
 | 75. Error Handling | v1.16 | 2/2 | Complete | 2026-02-23 |
+| 76. Fog of War Foundation | v1.17 | 0/? | Pending | — |
+| 77. POI Discovery System | v1.17 | 0/? | Pending | — |
+| 78. Gathering Mini-Game | v1.17 | 0/? | Pending | — |
+| 79. Resource Risk/Reward | v1.17 | 0/? | Pending | — |
+| 80. Zone Mastery & Lore | v1.17 | 0/? | Pending | — |
+| 81. Combat Balancing & Quest Audit | v1.17 | 0/? | Pending | — |
 
-**Total:** 75 phases (75 complete, 0 pending)
+**Total:** 81 phases (75 complete, 6 pending)
 
 ---
-*Last updated: 2026-02-23 — v1.16 milestone complete*
+*Last updated: 2026-02-23 — v1.17 milestone started*
