@@ -357,7 +357,7 @@ Plans:
 - [x] 80-02-PLAN.md — Database schema for lore and mastery (database package)
 - [x] 80-03-PLAN.md — Server services for lore and mastery (game-server)
 - [x] 80-04-PLAN.md — Client UI (LoreCodex, ZoneMasteryHUD)
-- [ ] 80-05-PLAN.md — Gap closure: POI discovery event emission (game-server)
+- [x] 80-05-PLAN.md — Gap closure: POI discovery event emission (game-server)
 
 ---
 
@@ -466,10 +466,10 @@ Phases execute in numeric order: 76 -> 77 -> 78 -> 79 -> 80 -> 81
 | 77. POI Discovery System | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 78. Gathering Mini-Game | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 79. Resource Risk/Reward | v1.17 | 4/4 | Complete | 2026-02-23 |
-| 80. Zone Mastery & Lore | v1.17 | 4/5 | In Progress | — |
+| 80. Zone Mastery & Lore | v1.17 | 5/5 | Complete | 2026-02-23 |
 | 81. Combat Balancing & Quest Audit | v1.17 | 0/? | Pending | — |
 
-**Total:** 81 phases (79 complete, 2 pending)
+**Total:** 81 phases (80 complete, 1 pending)
 
 ---
-*Last updated: 2026-02-23 — Phase 80 gap closure planned*
+*Last updated: 2026-02-23 — Phase 80 complete*
