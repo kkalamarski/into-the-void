@@ -269,24 +269,24 @@ See: `.planning/milestones/v1.16-ROADMAP.md`
 
 **Goal:** Massively expand world content with 6 new biomes (3 aquatic, 3 exotic), ~30 new gatherable entities, ~20 new creatures, and ~40 new items. Build order follows research: aquatic foundation first (mechanically simpler), then exotic biomes, with item integration and balance after all content exists.
 
-### Phase 82: Aquatic Biome Foundation
+### Phase 82: Aquatic Biome Foundation — COMPLETE (2026-02-23)
 
 **Goal**: Players can explore three distinct aquatic biomes with appropriate movement and visibility constraints
 **Depends on**: Phase 81 (v1.17 complete)
 **Requirements**: BIOME-01, BIOME-02, BIOME-03, BIOME-07, BIOME-08, BIOME-09
-**Plans:** 3 plans
+**Plans:** 3/3 complete
 
 **Success Criteria** (what must be TRUE):
-  1. Player can enter Tidal Pools (Tier I) and move at reduced speed through shallow water tiles
-  2. Player can navigate Kelp Forests (Tier II) through defined corridors between dense flora
-  3. Player can access Deep Trenches (Tier III) with pressure hazard awareness
-  4. Water/land boundaries render with smooth shore transition tiles (no 1-tile artifacts)
-  5. Fog of war reveals reduced radius in aquatic zones based on biome visibility modifiers
+  1. ✓ Player can enter Tidal Pools (Tier I) and move at reduced speed through shallow water tiles
+  2. ✓ Player can navigate Kelp Forests (Tier II) through defined corridors between dense flora
+  3. ✓ Player can access Deep Trenches (Tier III) with pressure hazard awareness
+  4. ✓ Water/land boundaries render with smooth shore transition tiles (no 1-tile artifacts)
+  5. ✓ Fog of war reveals reduced radius in aquatic zones based on biome visibility modifiers
 
 Plans:
-- [ ] 82-01-PLAN.md — Type foundation and aquatic tile definitions
-- [ ] 82-02-PLAN.md — Biome generation with shore transitions and kelp corridors
-- [ ] 82-03-PLAN.md — Movement speed and fog of war visibility modifiers
+- [x] 82-01-PLAN.md — Type foundation and aquatic tile definitions
+- [x] 82-02-PLAN.md — Biome generation with shore transitions and kelp corridors
+- [x] 82-03-PLAN.md — Movement speed and fog of war visibility modifiers
 
 ---
 
@@ -478,14 +478,14 @@ Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87
 | 79. Resource Risk/Reward | v1.17 | 4/4 | Complete | 2026-02-23 |
 | 80. Zone Mastery & Lore | v1.17 | 5/5 | Complete | 2026-02-23 |
 | 81. Combat Balancing & Quest Audit | v1.17 | 3/3 | Complete | 2026-02-23 |
-| 82. Aquatic Biome Foundation | v1.18 | 0/3 | Planned | - |
+| 82. Aquatic Biome Foundation | v1.18 | 3/3 | Complete | 2026-02-23 |
 | 83. Aquatic Entity Population | v1.18 | 0/2 | Not started | - |
 | 84. Exotic Biome Foundation | v1.18 | 0/2 | Not started | - |
 | 85. Exotic Entity Population | v1.18 | 0/2 | Not started | - |
 | 86. Item Integration & Balance | v1.18 | 0/3 | Not started | - |
 | 87. Content Gaps & Discovery | v1.18 | 0/2 | Not started | - |
 
-**Total:** 87 phases (81 complete, 6 pending)
+**Total:** 87 phases (82 complete, 5 pending)
 
 ---
-*Last updated: 2026-02-23 - Phase 82 plans created*
+*Last updated: 2026-02-23 - Phase 82 complete*
