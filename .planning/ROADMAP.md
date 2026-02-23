@@ -349,7 +349,7 @@ Plans:
 **Goal**: Loading states and error feedback for async operations in trade/quest UI
 **Depends on**: Phase 74
 **Requirements**: ERR-01, ERR-02, ERR-03
-**Plans:** TBD
+**Plans:** 2 plans
 
 **Success Criteria** (what must be TRUE):
   1. Async action buttons show loading spinner during pending state (trade, quest accept, quest turn-in)
@@ -359,7 +359,8 @@ Plans:
   5. Failed operations revert UI state (button re-enabled, no optimistic update artifacts)
 
 Plans:
-- [ ] TBD during phase planning
+- [ ] 75-01-PLAN.md — Pending state infrastructure (npcStore flags, alertStore 5s, spinner CSS)
+- [ ] 75-02-PLAN.md — Button spinners and modal close prevention
 
 ---
 
@@ -444,9 +445,9 @@ Phases execute in numeric order: 70 -> 71 -> 72 -> 73 -> 74 -> 75
 | 72. Visual Polish | v1.16 | 3/3 | Complete | 2026-02-23 |
 | 73. Quest Markers in World | v1.16 | 1/1 | Complete | 2026-02-23 |
 | 74. Quest Completion Feedback | v1.16 | 2/2 | Complete | 2026-02-23 |
-| 75. Error Handling | v1.16 | 0/TBD | Not started | - |
+| 75. Error Handling | v1.16 | 0/2 | Not started | - |
 
 **Total:** 75 phases (74 complete, 1 pending)
 
 ---
-*Last updated: 2026-02-23 after Phase 74 execution*
+*Last updated: 2026-02-23 after Phase 75 planning*
