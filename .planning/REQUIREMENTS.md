@@ -1,47 +1,100 @@
 # Requirements: Into the Void
 
-**Defined:** 2026-02-22
+**Defined:** 2026-02-23
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.16 Requirements
+## v1.17 Requirements
 
-Requirements for UI Polish milestone. Each maps to roadmap phases.
+Requirements for Core Gameplay Loop milestone. Each maps to roadmap phases.
+
+### Gathering
+
+- [ ] **GATH-01**: Player can gather resources from entities using equipped tool
+- [ ] **GATH-02**: Gathering displays timing mini-game with success zone
+- [ ] **GATH-03**: Mini-game timing accuracy affects yield (0.5x poor, 1.0x good, 1.5x perfect)
+- [ ] **GATH-04**: Player has gathering proficiency per resource type that improves with use
+- [ ] **GATH-05**: Higher proficiency increases success zone size and base yield
+- [ ] **GATH-06**: Better resource nodes spawn in dangerous areas (near aggressive creatures)
+- [ ] **GATH-07**: Rare nodes spawn with visual distinction and higher tier resources
+- [ ] **GATH-08**: Player can track discovered rare node locations
+
+### Exploration
+
+- [ ] **EXPL-01**: World displays fog of war hiding unexplored tiles
+- [ ] **EXPL-02**: Fog reveals in radius around player as they move
+- [ ] **EXPL-03**: Explored tiles persist per character across sessions
+- [ ] **EXPL-04**: POIs (anomalies, caches, landmarks) exist in world
+- [ ] **EXPL-05**: Player discovers POI when entering its tile with fog revealed
+- [ ] **EXPL-06**: POI discovery grants rewards (XP, items, credits)
+- [ ] **EXPL-07**: Lore fragments exist as collectible data logs
+- [ ] **EXPL-08**: Lore fragments reveal world/faction history when collected
+- [ ] **EXPL-09**: Lore collection tracked in codex UI
+- [ ] **EXPL-10**: Zones have mastery objectives (discover POIs, gather resources, defeat creatures)
+- [ ] **EXPL-11**: Zone mastery progress displays in HUD
+- [ ] **EXPL-12**: Zone mastery completion unlocks zone-specific rewards
+
+### Combat Balancing
+
+- [ ] **COMB-01**: Combat follows gradual fight pattern (4-8 hits to kill typical creature)
+- [ ] **COMB-02**: Damage scales predictably based on level gap
+- [ ] **COMB-03**: Level-gap multiplier prevents one-shots except extreme differences (10+ levels)
+- [ ] **COMB-04**: Creature stats rebalanced to match new damage formula
+- [ ] **COMB-05**: Abilities remain impactful (not just auto-attack spam)
+
+### Quest Items
+
+- [ ] **QUEST-07**: All quest-required items have obtainable source in world
+- [ ] **QUEST-08**: Missing item sources added via new entity drops or POI rewards
+
+## v1.16 Requirements (Complete)
+
+All requirements shipped 2026-02-23.
 
 ### NPC Interaction
 
-- [ ] **NPC-01**: Fix double-modal bug where two windows appear for same NPC
-- [ ] **NPC-02**: Single unified NPC window with tab navigation (Dialogue/Trade/Quests)
-- [ ] **NPC-03**: ESC key properly closes unified window without cascade bugs
-- [ ] **NPC-04**: Tab state defaults intelligently (quests tab if NPC has ready quests)
+- [x] **NPC-01**: Fix double-modal bug where two windows appear for same NPC
+- [x] **NPC-02**: Single unified NPC window with tab navigation (Dialogue/Trade/Quests)
+- [x] **NPC-03**: ESC key properly closes unified window without cascade bugs
+- [x] **NPC-04**: Tab state defaults intelligently (quests tab if NPC has ready quests)
 
 ### Quest UI
 
-- [ ] **QUEST-01**: Quest objective tracker HUD widget showing active quest progress
-- [ ] **QUEST-02**: Quest tracker positioned near minimap with collapsible objectives
-- [ ] **QUEST-03**: Quest markers (yellow !) displayed above NPCs with available quests
-- [ ] **QUEST-04**: Quest markers (yellow ?) displayed above NPCs with turn-in ready quests
-- [ ] **QUEST-05**: "Quest Complete" banner with visual feedback on completion
-- [ ] **QUEST-06**: Quest completion audio cue
+- [x] **QUEST-01**: Quest objective tracker HUD widget showing active quest progress
+- [x] **QUEST-02**: Quest tracker positioned near minimap with collapsible objectives
+- [x] **QUEST-03**: Quest markers (yellow !) displayed above NPCs with available quests
+- [x] **QUEST-04**: Quest markers (yellow ?) displayed above NPCs with turn-in ready quests
+- [x] **QUEST-05**: "Quest Complete" banner with visual feedback on completion
+- [x] **QUEST-06**: Quest completion audio cue
 
 ### Visual Polish
 
-- [ ] **VIS-01**: Design token expansion (animation timing, shadows, glassmorphism)
-- [ ] **VIS-02**: GPU-accelerated hover states on all buttons and tabs
-- [ ] **VIS-03**: Smooth transitions on modal open/close (150ms fade)
-- [ ] **VIS-04**: Glassmorphism effect on NPC modal (backdrop-filter blur)
-- [ ] **VIS-05**: Consistent spacing and typography across all panels
-- [ ] **VIS-06**: Active/focus states on interactive elements
-- [ ] **VIS-07**: Micro-interactions on button press (scale feedback)
+- [x] **VIS-01**: Design token expansion (animation timing, shadows, glassmorphism)
+- [x] **VIS-02**: GPU-accelerated hover states on all buttons and tabs
+- [x] **VIS-03**: Smooth transitions on modal open/close (150ms fade)
+- [x] **VIS-04**: Glassmorphism effect on NPC modal (backdrop-filter blur)
+- [x] **VIS-05**: Consistent spacing and typography across all panels
+- [x] **VIS-06**: Active/focus states on interactive elements
+- [x] **VIS-07**: Micro-interactions on button press (scale feedback)
 
 ### Error Handling
 
-- [ ] **ERR-01**: Loading spinner on async action buttons during pending state
-- [ ] **ERR-02**: Toast notifications for trade/quest errors outside modal
-- [ ] **ERR-03**: Prevent modal close while async operation pending
+- [x] **ERR-01**: Loading spinner on async action buttons during pending state
+- [x] **ERR-02**: Toast notifications for trade/quest errors outside modal
+- [x] **ERR-03**: Prevent modal close while async operation pending
 
 ## Future Requirements
 
-Deferred to future release. Tracked but not in current roadmap.
+Deferred to future releases. Tracked but not in current roadmap.
+
+### Gathering Expansion
+
+- **GATH-09**: Crafting system using gathered resources
+- **GATH-10**: Gathering tool quality affects success rate
+
+### Exploration Expansion
+
+- **EXPL-13**: Achievement system for exploration milestones
+- **EXPL-14**: Shared world map with party members
 
 ### Advanced Quest Features
 
@@ -64,11 +117,12 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
+| Real-time mini-game PvP | Complexity, focus on PvE gathering first |
+| Full crafting system | Defer to v1.18, needs separate design |
+| Procedural quest generation | Current hand-crafted quests sufficient |
+| Dynamic weather affecting gathering | Polish feature, not core |
 | Auto-accept/auto-complete quests | Removes player agency, breaks immersion |
 | Quest mini-map markers with GPS | Removes exploration, use zone hints instead |
-| Multiple simultaneous NPC windows | Window management nightmare |
-| Auto-sell junk items | Players accidentally lose quest items |
-| Immersive dialogue presentation | Requires content restructuring, v2+ |
 
 ## Traceability
 
@@ -76,32 +130,39 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NPC-01 | Phase 70 | Complete |
-| NPC-02 | Phase 70 | Complete |
-| NPC-03 | Phase 70 | Complete |
-| NPC-04 | Phase 70 | Complete |
-| QUEST-01 | Phase 71 | Complete |
-| QUEST-02 | Phase 71 | Complete |
-| QUEST-03 | Phase 73 | Pending |
-| QUEST-04 | Phase 73 | Pending |
-| QUEST-05 | Phase 74 | Pending |
-| QUEST-06 | Phase 74 | Pending |
-| VIS-01 | Phase 72 | Pending |
-| VIS-02 | Phase 72 | Pending |
-| VIS-03 | Phase 72 | Pending |
-| VIS-04 | Phase 72 | Pending |
-| VIS-05 | Phase 72 | Pending |
-| VIS-06 | Phase 72 | Pending |
-| VIS-07 | Phase 72 | Pending |
-| ERR-01 | Phase 75 | Pending |
-| ERR-02 | Phase 75 | Pending |
-| ERR-03 | Phase 75 | Pending |
+| GATH-01 | TBD | Pending |
+| GATH-02 | TBD | Pending |
+| GATH-03 | TBD | Pending |
+| GATH-04 | TBD | Pending |
+| GATH-05 | TBD | Pending |
+| GATH-06 | TBD | Pending |
+| GATH-07 | TBD | Pending |
+| GATH-08 | TBD | Pending |
+| EXPL-01 | TBD | Pending |
+| EXPL-02 | TBD | Pending |
+| EXPL-03 | TBD | Pending |
+| EXPL-04 | TBD | Pending |
+| EXPL-05 | TBD | Pending |
+| EXPL-06 | TBD | Pending |
+| EXPL-07 | TBD | Pending |
+| EXPL-08 | TBD | Pending |
+| EXPL-09 | TBD | Pending |
+| EXPL-10 | TBD | Pending |
+| EXPL-11 | TBD | Pending |
+| EXPL-12 | TBD | Pending |
+| COMB-01 | TBD | Pending |
+| COMB-02 | TBD | Pending |
+| COMB-03 | TBD | Pending |
+| COMB-04 | TBD | Pending |
+| COMB-05 | TBD | Pending |
+| QUEST-07 | TBD | Pending |
+| QUEST-08 | TBD | Pending |
 
 **Coverage:**
-- v1.16 requirements: 20 total
-- Mapped to phases: 20
-- Unmapped: 0
+- v1.17 requirements: 27 total
+- Mapped to phases: 0
+- Unmapped: 27 (awaiting roadmap)
 
 ---
-*Requirements defined: 2026-02-22*
-*Last updated: 2026-02-22 after roadmap creation*
+*Requirements defined: 2026-02-23*
+*Last updated: 2026-02-23 after v1.17 definition*
