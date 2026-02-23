@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 77 (POI Discovery System)
-Plan: 2/4 complete
+Plan: 3/4 complete
 Status: In Progress
-Last activity: 2026-02-23 — Completed 77-01 (POI Type Definitions and Generation)
+Last activity: 2026-02-23 — Completed 77-03 (Server Discovery Service and WebSocket Integration)
 
 Progress: [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 2.7%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 208
+- Total plans completed: 209
 - Average duration: ~3 min per plan
-- Total execution time: ~10.4 hours across 17 milestones
+- Total execution time: ~10.5 hours across 17 milestones
 
 **By Milestone:**
 
@@ -44,7 +44,7 @@ Progress: [██░░░░░░░░░░░░░░░░░░░░░
 | v1.14 | 59-63 | 8 | 1 day |
 | v1.15 | 64-69 | 16 | 1 day |
 | v1.16 | 70-75 | 11 | 1 day |
-| v1.17 | 76-81 | 3/? | In Progress |
+| v1.17 | 76-81 | 4/? | In Progress |
 
 **Recent Trend:**
 Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 6 phases.
@@ -68,6 +68,7 @@ Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 
 | Phase 76 P02 | 255 | 2 tasks | 2 files |
 | Phase 77 P02 | 93 | 2 tasks | 3 files |
 | Phase 77 P01 | 148 | 2 tasks | 6 files |
+| Phase 77 P03 | 211 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -123,6 +124,8 @@ Recent decisions affecting current work:
 - [Phase 77]: POI density threshold 0.3 (30% of chunks) for sparse exploration-focused discovery
 - [Phase 77]: Biome-specific POI type weights (ancient_ruins prefers anomalies, toxic_wastes prefers caches)
 - [Phase 77]: Noise frequency 0.03 creates POI clusters rather than uniform distribution
+- [Phase 77]: Discovery recorded before reward to prevent rollback exploits
+- [Phase 77]: POI validation via chunk lookup ensures POI exists at claimed coordinates
 
 ### Pending Todos
 
@@ -132,7 +135,7 @@ None.
 
 **v1.17 Milestone Active:**
 - Phase 76: Fog of War Foundation (EXPL-01, EXPL-02, EXPL-03) — Complete (2/2 plans)
-- Phase 77: POI Discovery System — In Progress (2/4 plans complete)
+- Phase 77: POI Discovery System — In Progress (3/4 plans complete)
 - Remaining phases: 78-81 (Gathering, Risk/Reward, Mastery, Combat Balancing)
 
 **Known Issues:**
@@ -141,12 +144,12 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 77-01-PLAN.md (POI Type Definitions and Generation)
+Stopped at: Completed 77-03-PLAN.md (Server Discovery Service and WebSocket Integration)
 Resume file: None
 
 **Next steps:**
-1. Continue Phase 77 (POI System) - 2 plans remaining
+1. Continue Phase 77 (POI System) - 1 plan remaining
 2. Continue v1.17 milestone
 
 ---
-*Last updated: 2026-02-23 - Completed 77-01-PLAN.md (POI Type Definitions and Generation)*
+*Last updated: 2026-02-23 - Completed 77-03-PLAN.md (Server Discovery Service and WebSocket Integration)*
