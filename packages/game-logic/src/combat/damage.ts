@@ -17,6 +17,18 @@ const BASE_ATTACK_INTERVAL_MS = 1000;
 const BASE_HASTE = 50;
 
 /**
+ * Level gap threshold for damage multiplier.
+ * Gaps within this range apply no additional scaling.
+ */
+export const LEVEL_GAP_THRESHOLD = 5;
+
+/**
+ * Damage multiplier per level beyond the threshold.
+ * 0.15 = 15% increase per level.
+ */
+export const LEVEL_GAP_MULTIPLIER_PER_LEVEL = 0.15;
+
+/**
  * Calculate attack interval based on Haste stat.
  * Higher Haste = lower interval = faster attacks.
  *
@@ -39,6 +51,51 @@ export function calculateAttackInterval(haste: number): number {
 
   // Clamp between 200ms (very fast) and 3000ms (very slow)
   return Math.round(Math.max(200, Math.min(3000, interval)));
+}
+
+/**
+ * Apply level gap multiplier to damage.
+ *
+ * For level gaps beyond LEVEL_GAP_THRESHOLD (5 levels), applies an additional
+ * 15% multiplier per excess level to amplify level advantage/disadvantage.
+ *
+ * @param baseDamage - Damage value before level gap multiplier
+ * @param levelDiff - Attacker level minus defender level
+ * @returns Modified damage with level gap multiplier applied
+ *
+ * @example
+ * // Same level: no multiplier
+ * applyLevelGapMultiplier(100, 0) // 100
+ *
+ * // 6 level gap (1 excess): 15% bonus
+ * applyLevelGapMultiplier(100, 6) // 115
+ *
+ * // 10 level gap (5 excess): 75% bonus
+ * applyLevelGapMultiplier(100, 10) // 175
+ *
+ * // 6 level gap negative (attacker lower): 15% penalty
+ * applyLevelGapMultiplier(100, -6) // ~87
+ */
+export function applyLevelGapMultiplier(baseDamage: number, levelDiff: number): number {
+  const absLevelDiff = Math.abs(levelDiff);
+
+  // No multiplier if within threshold
+  if (absLevelDiff <= LEVEL_GAP_THRESHOLD) {
+    return baseDamage;
+  }
+
+  // Calculate excess levels beyond threshold
+  const excessLevels = absLevelDiff - LEVEL_GAP_THRESHOLD;
+  const multiplier = 1 + (excessLevels * LEVEL_GAP_MULTIPLIER_PER_LEVEL);
+
+  // Apply or divide based on direction
+  if (levelDiff > 0) {
+    // Attacker is higher level: bonus damage
+    return baseDamage * multiplier;
+  } else {
+    // Attacker is lower level: penalty damage
+    return baseDamage / multiplier;
+  }
 }
 
 /**
@@ -79,10 +136,13 @@ export function calculateDamage(params: DamageParams): {
   let damage = baseDamage + weaponDamage;
   damage += (attackerStats.power ?? 10) * 0.5;
 
-  // Level difference modifier (-10% to +10% per level)
+  // Level difference modifier: +-5% per level, capped at +-50%
   const levelDiff = attackerLevel - defenderLevel;
   const levelMod = 1 + Math.max(-0.5, Math.min(0.5, levelDiff * 0.05));
   damage *= levelMod;
+
+  // Apply additional multiplier for extreme level gaps (beyond 5 levels)
+  damage = applyLevelGapMultiplier(damage, levelDiff);
 
   // Critical hit check
   const critRoll = Math.random();
