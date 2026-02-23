@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 79 (Resource Risk/Reward)
-Plan: 3/? in progress
+Plan: 4/? in progress
 Status: In Progress
-Last activity: 2026-02-23 — Completed 79-03 (Rare Resource Discovery Persistence)
+Last activity: 2026-02-23 — Completed 79-04 (Client Rare Node Visual Effects)
 
 Progress: [████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 4.6%
 
@@ -78,6 +78,7 @@ Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 
 | Phase 79 P01 | 195 | 2 tasks | 5 files |
 | Phase 79 P02 | 142 | 2 tasks | 3 files |
 | Phase 79 P03 | 303 | 3 tasks | 5 files |
+| Phase 79 P04 | 383 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -156,6 +157,12 @@ Recent decisions affecting current work:
 - [Phase 79]: Unique index on (characterId, entityId) prevents duplicate discoveries via database constraint
 - [Phase 79]: Discovery check on every movement uses fire-and-forget async pattern without blocking
 - [Phase 79]: Discovered rare nodes sent on character join for map marker persistence across sessions
+- [Phase 79]: Phaser PostFX glow with fallback tint for non-WebGL ensures rare node visibility across all hardware
+- [Phase 79]: Gold (0xffd700) for rare, purple (0x9400d3) for epic follows industry-standard rarity color coding
+- [Phase 79]: Diamond-shaped map markers with pulsing animation (800ms cycle) provides distinct visual feedback
+- [Phase 79]: Markers positioned 300px above nameplate at depth 1500 (above fog, below HUD) for optimal visibility
+- [Phase 79]: Zone-scoped marker refresh on zone transition prevents rendering thousands of markers across world
+- [Phase 79]: Type casting (any) for socket events avoids Socket.io function-type inference confusion
 
 ### Pending Todos
 
@@ -167,7 +174,7 @@ None.
 - Phase 76: Fog of War Foundation (EXPL-01, EXPL-02, EXPL-03) — Complete (2/2 plans)
 - Phase 77: POI Discovery System — Complete (4/4 plans)
 - Phase 78: Gathering Mini-Game — Complete (4/4 plans)
-- Phase 79: Resource Risk/Reward — In Progress (3/? plans)
+- Phase 79: Resource Risk/Reward — In Progress (4/? plans)
 - Remaining phases: 80-81 (Mastery, Combat Balancing)
 
 **Known Issues:**
@@ -176,7 +183,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-23
-Stopped at: Completed 79-03 Rare Resource Discovery Persistence
+Stopped at: Completed 79-04 Client Rare Node Visual Effects
 Resume file: None
 
 **Next steps:**
@@ -184,4 +191,4 @@ Resume file: None
 2. Continue v1.17 milestone with remaining phases (80-81)
 
 ---
-*Last updated: 2026-02-23 - Completed Phase 79 Plan 03 (Rare Resource Discovery Persistence)*
+*Last updated: 2026-02-23 - Completed Phase 79 Plan 04 (Client Rare Node Visual Effects)*
