@@ -72,6 +72,7 @@ Stable velocity. v1.16 shipped (6 phases, 11 plans). v1.17 roadmap created with 
 | Phase 77 P04 | 194 | 3 tasks | 3 files |
 | Phase 77 P04 | 194 | 3 tasks | 3 files |
 | Phase 78 P02 | 130 | 2 tasks | 2 files |
+| Phase 78 P01 | 152 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
