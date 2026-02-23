@@ -55,6 +55,8 @@ interface TradeTabProps {
 const TradeTab: React.FC<TradeTabProps> = ({ npc, tradeError, setTradeError }) => {
   const { inventory } = useInventoryStore();
   const { player } = useGameStore();
+  const tradePending = useNpcStore(state => state.tradePending);
+  const setTradePending = useNpcStore(state => state.setTradePending);
 
   if (npc.npcType !== 'trader') {
     return <p className="npc-empty-message">This NPC doesn't have trade options.</p>;
@@ -64,11 +66,13 @@ const TradeTab: React.FC<TradeTabProps> = ({ npc, tradeError, setTradeError }) =
   const playerItems = inventory?.items ?? [];
 
   const handleBuy = (itemId: string, buyPrice: number) => {
+    if (tradePending) return; // Prevent double-click
     if (!player || player.credits < buyPrice) {
       setTradeError('Insufficient credits');
       return;
     }
     setTradeError(null);
+    setTradePending(true);
     gameSocket.emit('trade:buy', {
       npcId: npc.npcId ?? npc.displayName,
       itemId,
@@ -77,7 +81,9 @@ const TradeTab: React.FC<TradeTabProps> = ({ npc, tradeError, setTradeError }) =
   };
 
   const handleSell = (instanceId: string, quantity: number) => {
+    if (tradePending) return; // Prevent double-click
     setTradeError(null);
+    setTradePending(true);
     gameSocket.emit('trade:sell', {
       npcId: npc.npcId ?? npc.displayName,
       itemInstanceId: instanceId,
@@ -133,9 +139,9 @@ const TradeTab: React.FC<TradeTabProps> = ({ npc, tradeError, setTradeError }) =
                     <button
                       className="npc-trade-btn npc-trade-btn--buy"
                       onClick={() => handleBuy(item.itemId, item.buyPrice)}
-                      disabled={!canAfford}
+                      disabled={!canAfford || tradePending}
                     >
-                      Buy
+                      {tradePending ? <span className="spinner-small" /> : 'Buy'}
                     </button>
                   </div>
                 </div>
@@ -176,8 +182,9 @@ const TradeTab: React.FC<TradeTabProps> = ({ npc, tradeError, setTradeError }) =
                     <button
                       className="npc-trade-btn npc-trade-btn--sell"
                       onClick={() => handleSell(item.instanceId, item.quantity)}
+                      disabled={tradePending}
                     >
-                      Sell
+                      {tradePending ? <span className="spinner-small" /> : 'Sell'}
                     </button>
                   </div>
                 </div>
@@ -195,6 +202,7 @@ const TradeTab: React.FC<TradeTabProps> = ({ npc, tradeError, setTradeError }) =
 
 export const NpcInteractionModal: React.FC = () => {
   const { interactingNpc, closeInteraction, activeTab, setActiveTab, tradeError, setTradeError, acceptQuest, completeQuestAtNpc } = useNpcStore();
+  const questPending = useNpcStore(state => state.questPending);
   const { position, isDragging, handleMouseDown } = useDraggablePanel();
 
   // Clear any stuck movement keys when modal opens
@@ -262,8 +270,9 @@ export const NpcInteractionModal: React.FC = () => {
               <button
                 className="npc-action-btn npc-action-btn--primary"
                 onClick={() => completeQuestAtNpc(quest.questId)}
+                disabled={questPending}
               >
-                Turn In
+                {questPending ? <span className="spinner-small" /> : 'Turn In'}
               </button>
             </div>
           </div>
@@ -283,8 +292,9 @@ export const NpcInteractionModal: React.FC = () => {
               <button
                 className="npc-action-btn npc-action-btn--primary"
                 onClick={() => acceptQuest(quest.questId)}
+                disabled={questPending}
               >
-                Accept Quest
+                {questPending ? <span className="spinner-small" /> : 'Accept Quest'}
               </button>
             </div>
           </div>
