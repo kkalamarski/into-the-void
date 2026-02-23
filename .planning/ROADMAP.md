@@ -299,7 +299,7 @@ Plans:
 **Goal**: Resource gathering requires timing skill check with variable yield
 **Depends on**: Phase 76 (independent of POI system)
 **Requirements**: GATH-01, GATH-02, GATH-03, GATH-04, GATH-05
-**Plans:** TBD
+**Plans:** 4 plans
 
 **Success Criteria** (what must be TRUE):
   1. Player clicks gatherable entity with tool equipped to start mini-game
@@ -309,7 +309,10 @@ Plans:
   5. Gathering proficiency per resource type increases with use and widens success zone
 
 Plans:
-- [ ] TBD
+- [ ] 78-01-PLAN.md — Shared types and game-logic validation functions
+- [ ] 78-02-PLAN.md — Database schema for proficiency persistence
+- [ ] 78-03-PLAN.md — Server GatheringService and WebSocket handlers
+- [ ] 78-04-PLAN.md — Client mini-game UI and WorldScene integration
 
 ---
 
@@ -454,7 +457,7 @@ Phases execute in numeric order: 76 -> 77 -> 78 -> 79 -> 80 -> 81
 | 75. Error Handling | v1.16 | 2/2 | Complete | 2026-02-23 |
 | 76. Fog of War Foundation | v1.17 | 2/2 | Complete | 2026-02-23 |
 | 77. POI Discovery System | v1.17 | 4/4 | Complete | 2026-02-23 |
-| 78. Gathering Mini-Game | v1.17 | 0/? | Pending | — |
+| 78. Gathering Mini-Game | v1.17 | 0/4 | Planned | — |
 | 79. Resource Risk/Reward | v1.17 | 0/? | Pending | — |
 | 80. Zone Mastery & Lore | v1.17 | 0/? | Pending | — |
 | 81. Combat Balancing & Quest Audit | v1.17 | 0/? | Pending | — |
@@ -462,4 +465,4 @@ Phases execute in numeric order: 76 -> 77 -> 78 -> 79 -> 80 -> 81
 **Total:** 81 phases (77 complete, 4 pending)
 
 ---
-*Last updated: 2026-02-23 — Phase 77 complete*
+*Last updated: 2026-02-23 — Phase 78 planned*
