@@ -156,6 +156,60 @@ export const PLANT_STAR_LICHEN: PlantDefinition = {
   respawnSeconds: 600,
 };
 
+// ===== RARE VARIANTS =====
+// Higher yield (1.5x), slower respawn (2x), increased bonus drop rates
+
+export const PLANT_LUMINOUS_VINE_RARE: PlantDefinition = {
+  id: 'plant_luminous_vine_rare',
+  displayName: 'Luminous Vine (Rare)',
+  description: 'Intensely glowing vine network. Bioluminescence visible from great distance.',
+  entityClass: 'plant',
+  biomes: ['fungal_forest'],
+  textureKey: 'plant_luminous_vine_rare',
+  color: 0x66ffaa, // Brighter green
+  lootTableId: 'loot_plant_luminous_vine_rare',
+  harvestYield: [
+    { itemId: 'world_alien_flora_luminous', minAmount: 2, maxAmount: 4, chance: 1.0 }, // 1.5x (was 1-3)
+    { itemId: 'reagent_biogenic_catalyst', minAmount: 1, maxAmount: 2, chance: 0.35 }, // Bonus increased
+  ],
+  respawnSeconds: 600, // 2x (was 300)
+  rarity: 'rare',
+};
+
+export const PLANT_LATTICE_MOSS_RARE: PlantDefinition = {
+  id: 'plant_lattice_moss_rare',
+  displayName: 'Lattice Moss (Rare)',
+  description: 'Dense silicon-based moss with intricate crystalline patterns throughout.',
+  entityClass: 'plant',
+  biomes: ['crystal_caves'],
+  textureKey: 'plant_lattice_moss_rare',
+  color: 0xffb0ff, // Brighter pink
+  lootTableId: 'loot_plant_lattice_moss_rare',
+  harvestYield: [
+    { itemId: 'world_crystal_fragment', minAmount: 2, maxAmount: 3, chance: 1.0 }, // 1.5x (was 1-2)
+    { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 2, chance: 0.5 }, // Bonus increased
+  ],
+  respawnSeconds: 960, // 2x (was 480)
+  rarity: 'rare',
+};
+
+export const PLANT_PHASE_BLOOM_RARE: PlantDefinition = {
+  id: 'plant_phase_bloom_rare',
+  displayName: 'Phase Bloom (Rare)',
+  description: 'Anomaly flower in perfect quantum superposition. Reality shimmers around it.',
+  entityClass: 'plant',
+  biomes: ['ancient_ruins'],
+  textureKey: 'plant_phase_bloom_rare',
+  color: 0xaa00ff, // Brighter purple
+  lootTableId: 'loot_plant_phase_bloom_rare',
+  harvestYield: [
+    { itemId: 'reagent_quantum_residue', minAmount: 2, maxAmount: 2, chance: 1.0 }, // Increased (was 1 with 0.8 chance)
+    { itemId: 'reagent_void_essence', minAmount: 1, maxAmount: 1, chance: 0.25 }, // Bonus increased
+  ],
+  respawnSeconds: 1800, // 2x (was 900)
+  rarity: 'rare',
+};
+
 export const ALL_PLANTS: readonly PlantDefinition[] = [
   PLANT_LUMINOUS_VINE,
   PLANT_DROUGHT_CACTUS,
@@ -167,4 +221,8 @@ export const ALL_PLANTS: readonly PlantDefinition[] = [
   PLANT_ACID_FERN,
   PLANT_PHASE_BLOOM,
   PLANT_STAR_LICHEN,
+  // Rare variants
+  PLANT_LUMINOUS_VINE_RARE,
+  PLANT_LATTICE_MOSS_RARE,
+  PLANT_PHASE_BLOOM_RARE,
 ];

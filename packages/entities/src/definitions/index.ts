@@ -53,6 +53,10 @@ export const ENTITY_IDS = {
   PLANT_ACID_FERN: 'plant_acid_fern',
   PLANT_PHASE_BLOOM: 'plant_phase_bloom',
   PLANT_STAR_LICHEN: 'plant_star_lichen',
+  // Rare plant variants
+  PLANT_LUMINOUS_VINE_RARE: 'plant_luminous_vine_rare',
+  PLANT_LATTICE_MOSS_RARE: 'plant_lattice_moss_rare',
+  PLANT_PHASE_BLOOM_RARE: 'plant_phase_bloom_rare',
 
   // ---- MINERALS ----
   MINERAL_VOID_CRYSTAL: 'mineral_void_crystal',
@@ -65,6 +69,13 @@ export const ENTITY_IDS = {
   MINERAL_MYCELIAL_CLUSTER: 'mineral_mycelial_cluster',
   MINERAL_ANOMALY_CRYSTAL: 'mineral_anomaly_crystal',
   MINERAL_COSMIC_FRAGMENT: 'mineral_cosmic_fragment',
+  // Rare mineral variants
+  MINERAL_VOID_CRYSTAL_RARE: 'mineral_void_crystal_rare',
+  MINERAL_PRISMATIC_CRYSTAL_RARE: 'mineral_prismatic_crystal_rare',
+  MINERAL_VOLCANIC_ORE_RARE: 'mineral_volcanic_ore_rare',
+  MINERAL_COSMIC_FRAGMENT_RARE: 'mineral_cosmic_fragment_rare',
+  // Epic mineral variants
+  MINERAL_ANOMALY_CRYSTAL_EPIC: 'mineral_anomaly_crystal_epic',
 
   // ---- ARTIFACTS ----
   ARTIFACT_ANCIENT_DATA_CORE: 'artifact_ancient_data_core',

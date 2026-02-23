@@ -167,6 +167,105 @@ export const MINERAL_COSMIC_FRAGMENT: MineralDefinition = {
   respawnSeconds: 720,
 };
 
+// ===== RARE VARIANTS =====
+// Higher yield (1.5x), slower respawn (2x), higher tool requirements
+
+export const MINERAL_VOID_CRYSTAL_RARE: MineralDefinition = {
+  id: 'mineral_void_crystal_rare',
+  displayName: 'Void Crystal (Rare)',
+  description: 'Exceptionally pure void crystal formation. Dark energy pulses within.',
+  entityClass: 'mineral',
+  biomes: ['void_plains'],
+  textureKey: 'mineral_void_crystal_rare',
+  color: 0x6a4a8a, // Deeper purple
+  lootTableId: 'loot_mineral_void_crystal_rare',
+  miningYield: [
+    { itemId: 'world_void_crystal', minAmount: 2, maxAmount: 4, chance: 1.0 }, // 1.5x (was 1-3)
+    { itemId: 'reagent_void_essence', minAmount: 1, maxAmount: 1, chance: 0.4 }, // Bonus
+  ],
+  requiredTier: 2, // +1 tier (was 1)
+  respawnSeconds: 600, // 2x (was 300)
+  rarity: 'rare',
+};
+
+export const MINERAL_PRISMATIC_CRYSTAL_RARE: MineralDefinition = {
+  id: 'mineral_prismatic_crystal_rare',
+  displayName: 'Prismatic Crystal (Rare)',
+  description: 'Flawless silicon crystal with intense light refraction. Museum-quality specimen.',
+  entityClass: 'mineral',
+  biomes: ['crystal_caves'],
+  textureKey: 'mineral_prismatic_crystal_rare',
+  color: 0x9b78ff, // Brighter purple
+  lootTableId: 'loot_mineral_prismatic_crystal_rare',
+  miningYield: [
+    { itemId: 'world_crystal_fragment', minAmount: 3, maxAmount: 6, chance: 1.0 }, // 1.5x (was 2-4)
+    { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 3, chance: 0.5 }, // Bonus increased
+  ],
+  requiredTier: 4, // +1 tier (was 3)
+  respawnSeconds: 1200, // 2x (was 600)
+  rarity: 'rare',
+};
+
+export const MINERAL_VOLCANIC_ORE_RARE: MineralDefinition = {
+  id: 'mineral_volcanic_ore_rare',
+  displayName: 'Volcanic Ore (Rare)',
+  description: 'Superheated metal deposit glowing with residual magma heat.',
+  entityClass: 'mineral',
+  biomes: ['volcanic_ridge'],
+  textureKey: 'mineral_volcanic_ore_rare',
+  color: 0xff6a00, // Brighter orange
+  lootTableId: 'loot_mineral_volcanic_ore_rare',
+  miningYield: [
+    { itemId: 'world_volcanic_glass', minAmount: 3, maxAmount: 6, chance: 1.0 }, // 1.5x (was 2-4)
+    { itemId: 'world_geothermal_compound', minAmount: 2, maxAmount: 3, chance: 0.6 }, // Bonus increased
+    { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 1, chance: 0.3 }, // Extra bonus
+  ],
+  requiredTier: 4, // +1 tier (was 3)
+  respawnSeconds: 1080, // 2x (was 540)
+  rarity: 'rare',
+};
+
+export const MINERAL_COSMIC_FRAGMENT_RARE: MineralDefinition = {
+  id: 'mineral_cosmic_fragment_rare',
+  displayName: 'Cosmic Fragment (Rare)',
+  description: 'Pristine starsteel ore with cosmic patterns visible in the metal grain.',
+  entityClass: 'mineral',
+  biomes: ['starfall_crater'],
+  textureKey: 'mineral_cosmic_fragment_rare',
+  color: 0x2a1a70, // Deeper midnight blue
+  lootTableId: 'loot_mineral_cosmic_fragment_rare',
+  miningYield: [
+    { itemId: 'world_crater_dust', minAmount: 3, maxAmount: 5, chance: 1.0 }, // 1.5x (was 2-3)
+    { itemId: 'reagent_void_essence', minAmount: 1, maxAmount: 2, chance: 0.35 }, // Bonus increased
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.2 }, // Extra bonus
+  ],
+  requiredTier: 4, // Same (already max)
+  respawnSeconds: 1440, // 2x (was 720)
+  rarity: 'rare',
+};
+
+// ===== EPIC VARIANTS =====
+// Exceptional yield (2x), very slow respawn, high-tier zones only
+
+export const MINERAL_ANOMALY_CRYSTAL_EPIC: MineralDefinition = {
+  id: 'mineral_anomaly_crystal_epic',
+  displayName: 'Anomaly Crystal (Epic)',
+  description: 'Reality-warped crystal formation pulsing with quantum instability. Extreme danger.',
+  entityClass: 'mineral',
+  biomes: ['ancient_ruins'],
+  textureKey: 'mineral_anomaly_crystal_epic',
+  color: 0xaa2be2, // Brighter violet
+  lootTableId: 'loot_mineral_anomaly_crystal_epic',
+  miningYield: [
+    { itemId: 'reagent_quantum_residue', minAmount: 2, maxAmount: 4, chance: 1.0 }, // 2x (was 1-2)
+    { itemId: 'reagent_void_essence', minAmount: 1, maxAmount: 2, chance: 0.5 }, // Bonus increased
+    { itemId: 'reagent_crystalline_dust', minAmount: 2, maxAmount: 3, chance: 0.3 }, // Extra bonus
+  ],
+  requiredTier: 4, // Same (already max)
+  respawnSeconds: 1800, // 2x (was 900)
+  rarity: 'epic',
+};
+
 export const ALL_MINERALS: readonly MineralDefinition[] = [
   MINERAL_VOID_CRYSTAL,
   MINERAL_PRISMATIC_CRYSTAL,
@@ -178,4 +277,11 @@ export const ALL_MINERALS: readonly MineralDefinition[] = [
   MINERAL_MYCELIAL_CLUSTER,
   MINERAL_ANOMALY_CRYSTAL,
   MINERAL_COSMIC_FRAGMENT,
+  // Rare variants
+  MINERAL_VOID_CRYSTAL_RARE,
+  MINERAL_PRISMATIC_CRYSTAL_RARE,
+  MINERAL_VOLCANIC_ORE_RARE,
+  MINERAL_COSMIC_FRAGMENT_RARE,
+  // Epic variants
+  MINERAL_ANOMALY_CRYSTAL_EPIC,
 ];
