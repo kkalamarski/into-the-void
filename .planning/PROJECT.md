@@ -4,7 +4,7 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, and a complete auth-to-gameplay flow.
 
-## Current State (v1.17 shipped)
+## Current State (v1.18 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
@@ -12,7 +12,7 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Movement: 8-directional WASD, click-to-move pathfinding, client prediction
 - Inventory: 100+ items, exo-suit equipment, module slots, action bar, storage
 - Stats: 8 primary stats with equipment bonuses, level scaling
-- Entities: 42 definitions, fertility-based spawning, creature AI, tool interaction, loot, respawn
+- Entities: 60+ definitions, fertility-based spawning, creature AI, tool interaction, loot, respawn
 - Combat: Ability-based system with energy costs and cooldowns, creature aggro AI, player death/respawn, balanced TTK
 - Abilities: 21 abilities across offensive/defensive/utility, item-granted, buff system with durations
 - NPCs: Definition system, 5 types (Trader/Guard/Rep/Ambient/Service), interaction modal, dialogue
@@ -23,6 +23,7 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - UI Polish: Unified NPC modal, quest tracker HUD, glassmorphism, quest markers, completion feedback
 - Gathering: Timing mini-game, proficiency progression, rare/epic node variants, risk/reward placement
 - Exploration: Fog of war, POI discovery, lore fragments, zone mastery system
+- Content: 6 new biomes (aquatic + exotic), 30+ new gatherables, 20+ new creatures, 40+ new items
 
 **Tech stack:**
 - Frontend: React 18, Phaser 3, Zustand, React Router v7
@@ -32,17 +33,17 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~15,000+ LOC TypeScript
 
-## Current Milestone: v1.18 Content Expansion
+## Current Milestone: v1.19 Deployment & CI/CD
 
-**Goal:** Massively expand world content with new biomes, gatherable resources, creatures, and items.
+**Goal:** Deploy the game to production with automated CI/CD pipeline.
 
 **Target features:**
-- 5-6 new biomes (aquatic and exotic/alien themes) with full entity populations
-- ~30 new gatherable entities (minerals, plants, artifacts) with rare/epic variants
-- ~20 new creatures across new and existing biomes
-- ~40 new items (materials, consumables, equipment) from new resources
-- Fill all existing biome resource gaps
-- Improved tier progression from starter to endgame zones
+- Production Docker images for all services (web, API, game-server)
+- Docker Swarm stack for single-node deployment
+- Traefik reverse proxy with automatic Let's Encrypt SSL
+- GitHub Actions workflow for tag-based deployments
+- Self-hosted PostgreSQL and Redis in Swarm
+- Domain: play.intothevoid.online
 
 ## Core Value
 
@@ -166,18 +167,23 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Zone mastery system (completion objectives per zone) — v1.17
 - ✓ Combat balancing (gradual fights, no one-shots) — v1.17
 - ✓ Quest item audit (ensure all items obtainable) — v1.17
+- ✓ New aquatic biomes (coral_reef, kelp_forest, abyssal_trench) — v1.18
+- ✓ New exotic biomes (crystalline_wastes, bioluminescent_depths, void_rift) — v1.18
+- ✓ 30+ new gatherable entities with rare/epic variants — v1.18
+- ✓ 20+ new creatures across all biomes — v1.18
+- ✓ 40+ new items (materials, consumables, equipment) — v1.18
+- ✓ All biome resource gaps filled — v1.18
+- ✓ Tier progression balanced (starter → endgame) — v1.18
 
 ### Active
 
-- [ ] New aquatic biomes (2-3 zones with underwater/ocean themes)
-- [ ] New exotic/alien biomes (2-3 zones with void/dimensional themes)
-- [ ] New minerals (~15 types with rare/epic variants)
-- [ ] New plants (~15 types with rare variants)
-- [ ] New artifacts (~10 types across all biomes)
-- [ ] New creatures (~20 for new and existing biomes)
-- [ ] New items (~40 materials, consumables, equipment)
-- [ ] Fill existing biome resource gaps
-- [ ] Tier progression balance (starter → endgame)
+- [ ] Production Dockerfiles for web, API, game-server
+- [ ] Docker Swarm stack configuration
+- [ ] Traefik reverse proxy with Let's Encrypt SSL
+- [ ] GitHub Actions CI/CD workflow (tag-triggered)
+- [ ] Self-hosted PostgreSQL and Redis services
+- [ ] VM setup documentation
+- [ ] Environment and secrets configuration
 
 ### Out of Scope
 
@@ -222,4 +228,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-23 after v1.18 milestone start*
+*Last updated: 2026-02-24 after v1.19 milestone start*
