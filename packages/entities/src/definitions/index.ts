@@ -15,7 +15,7 @@ import { ALL_EXOTIC_ARTIFACTS } from './exotic-artifacts';
 
 /**
  * All entity definitions - register these with EntityRegistry.
- * Total: ~82 entities (37 creatures + 24 plants + 20 minerals + 11 artifacts)
+ * Total: ~92 entities (41 creatures + 26 plants + 22 minerals + 13 artifacts)
  */
 export const ALL_ENTITIES: readonly EntityDefinition[] = [
   ...ALL_CREATURES,
@@ -57,6 +57,11 @@ export const ENTITY_IDS = {
   CREATURE_CRYSTAL_CRAWLER: 'creature_crystal_crawler',
   CREATURE_RUIN_SEEKER: 'creature_ruin_seeker',
   CREATURE_PETRIFIED_LURKER: 'creature_petrified_lurker',
+  // Phase 88 starfall_crater and ancient_ruins creatures
+  CREATURE_STARFALL_GRAZER: 'creature_starfall_grazer',
+  CREATURE_CRATER_STALKER: 'creature_crater_stalker',
+  CREATURE_GUARDIAN_CONSTRUCT: 'creature_guardian_construct',
+  CREATURE_RELIC_BEAST: 'creature_relic_beast',
 
   // ---- AQUATIC CREATURES ----
   CREATURE_TIDE_CRAB: 'creature_tide_crab',
@@ -87,6 +92,9 @@ export const ENTITY_IDS = {
   PLANT_LUMINOUS_VINE_RARE: 'plant_luminous_vine_rare',
   PLANT_LATTICE_MOSS_RARE: 'plant_lattice_moss_rare',
   PLANT_PHASE_BLOOM_RARE: 'plant_phase_bloom_rare',
+  // Phase 88 fungal_forest rare/epic
+  PLANT_RARE_FUNGI: 'plant_rare_fungi',
+  PLANT_EPIC_SPORES: 'plant_epic_spores',
 
   // ---- AQUATIC PLANTS ----
   PLANT_TIDAL_KELP: 'plant_tidal_kelp',
@@ -113,6 +121,9 @@ export const ENTITY_IDS = {
   MINERAL_COSMIC_FRAGMENT_RARE: 'mineral_cosmic_fragment_rare',
   // Epic mineral variants
   MINERAL_ANOMALY_CRYSTAL_EPIC: 'mineral_anomaly_crystal_epic',
+  // Phase 88 miasma_marshes rare/epic
+  MINERAL_TOXIC_CRYSTAL: 'mineral_toxic_crystal',
+  MINERAL_MARSH_GAS_NODE: 'mineral_marsh_gas_node',
 
   // ---- AQUATIC MINERALS ----
   MINERAL_CORAL_DEPOSIT: 'mineral_coral_deposit',
@@ -127,6 +138,9 @@ export const ENTITY_IDS = {
   ARTIFACT_CRYSTALLINE_RESONATOR: 'artifact_crystalline_resonator',
   ARTIFACT_PRESERVED_SPECIMEN: 'artifact_preserved_specimen',
   ARTIFACT_THERMAL_CORE: 'artifact_thermal_core',
+  // Phase 88 biome gap artifacts
+  ARTIFACT_CONTAMINATED_RELIC: 'artifact_contaminated_relic',
+  ARTIFACT_FROZEN_ARCHIVE: 'artifact_frozen_archive',
 
   // ---- AQUATIC ARTIFACTS ----
   ARTIFACT_SUNKEN_TECH: 'artifact_sunken_tech',
