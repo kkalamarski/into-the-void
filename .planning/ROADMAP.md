@@ -376,19 +376,20 @@ Plans:
 **Goal**: New content yields useful equipment and materials with balanced progression across all tiers
 **Depends on**: Phase 86
 **Requirements**: ITEM-01, ITEM-02, ITEM-03, ITEM-04, ITEM-05, ITEM-06, ITEM-07, ITEM-08, ITEM-09, ITEM-10, PROG-01, PROG-02, PROG-03
-**Plans:** 3 plans
+**Plans:** 4 plans
 
 **Success Criteria** (what must be TRUE):
-  1. Player can craft/obtain 3 aquatic suits (diving, pressure, abyssal) and 3 aquatic tools (harpoon, diving pick, net)
-  2. Player can craft/obtain 3 exotic suits (void-touched, anomaly, null) and 3 exotic tools (phase extractor, void pick, reality anchor)
-  3. Player can use 10 new consumables (5 aquatic, 5 exotic) with meaningful effects
+  1. ✓ Player can craft/obtain 3 aquatic suits (diving, pressure, abyssal) and 3 aquatic tools (harpoon, diving pick, net)
+  2. ✓ Player can craft/obtain 3 exotic suits (void-touched, anomaly, null) and 3 exotic tools (phase extractor, void pick, reality anchor)
+  3. ✓ Player can use 10 new consumables (5 aquatic, 5 exotic) with meaningful effects
   4. Tier I-II aquatic items are accessible without high-tier prerequisites (comparable to Frontier zones)
   5. High-tier exotic items require existing Tier I-II materials (horizontal progression, no power creep)
 
 Plans:
-- [ ] 87-01-PLAN.md — Aquatic equipment (3 suits + 3 tools)
-- [ ] 87-02-PLAN.md — Exotic equipment (3 suits + 3 tools)
-- [ ] 87-03-PLAN.md — Consumables & integration (5 aquatic + 5 exotic + index.ts)
+- [x] 87-01-PLAN.md — Aquatic equipment (3 suits + 3 tools)
+- [x] 87-02-PLAN.md — Exotic equipment (3 suits + 3 tools)
+- [x] 87-03-PLAN.md — Consumables & integration (5 aquatic + 5 exotic + index.ts)
+- [ ] 87-04-PLAN.md — Gap closure: Loot table and vendor integration
 
 ---
 
@@ -505,10 +506,10 @@ Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87 -> 88
 | 84. Exotic Biome Foundation | v1.18 | 2/2 | Complete | 2026-02-24 |
 | 85. Gathering as Ability System | v1.18 | 4/4 | Complete | 2026-02-24 |
 | 86. Exotic Entity Population | v1.18 | 2/2 | Complete | 2026-02-24 |
-| 87. Item Integration & Balance | v1.18 | 0/3 | Not started | - |
+| 87. Item Integration & Balance | v1.18 | 3/4 | In Progress | - |
 | 88. Content Gaps & Discovery | v1.18 | 0/2 | Not started | - |
 
-**Total:** 88 phases (86 complete, 2 pending)
+**Total:** 88 phases (86 complete, 2 in progress)
 
 ---
-*Last updated: 2026-02-24 - Phase 87 planned (Item Integration & Balance)*
+*Last updated: 2026-02-24 - Phase 87 gap closure plan created (87-04: Loot table and vendor integration)*
