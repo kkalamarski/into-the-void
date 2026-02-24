@@ -231,6 +231,80 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 2, chance: 0.3 },
     { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.1 },
   ]],
+
+  // Tier II — Bioluminescent Depths (Herbivore, levels 6-14)
+  ['loot_creature_echo_drifter', [
+    { itemId: 'world_organic_material_common', minAmount: 2, maxAmount: 3, chance: 0.85 },
+    { itemId: 'reagent_biogenic_catalyst', minAmount: 1, maxAmount: 2, chance: 0.35 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier II — Bioluminescent Depths (Herbivore, levels 7-15)
+  ['loot_creature_phase_grazer', [
+    { itemId: 'world_organic_material_common', minAmount: 2, maxAmount: 3, chance: 0.85 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.25 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.12 },
+  ]],
+
+  // Tier II — Bioluminescent Depths (Omnivore, levels 8-16)
+  ['loot_creature_reality_scavenger', [
+    { itemId: 'world_organic_material_common', minAmount: 2, maxAmount: 3, chance: 0.8 },
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ]],
+
+  // Tier III — Crystalline Wastes (Herbivore, levels 12-20)
+  ['loot_creature_null_feeder', [
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.8 },
+    { itemId: 'reagent_crystalline_dust', minAmount: 2, maxAmount: 3, chance: 0.4 },
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ]],
+
+  // Tier III — Crystalline Wastes (Omnivore, levels 13-22)
+  ['loot_creature_dimensional_hunter', [
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.75 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.25 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.06 },
+  ]],
+
+  // Tier III — Crystalline Wastes (Predator, levels 14-24)
+  ['loot_creature_rift_hunter', [
+    { itemId: 'world_organic_material_rare', minAmount: 2, maxAmount: 3, chance: 0.85 },
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 2, chance: 0.35 },
+    { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 2, chance: 0.3 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.08 },
+  ]],
+
+  // Tier IV — Void Rift (Predator, levels 18-28)
+  ['loot_creature_void_grazer', [
+    { itemId: 'world_organic_material_rare', minAmount: 2, maxAmount: 3, chance: 0.85 },
+    { itemId: 'reagent_void_essence', minAmount: 1, maxAmount: 2, chance: 0.35 },
+    { itemId: 'world_void_crystal', minAmount: 1, maxAmount: 1, chance: 0.12 },
+  ]],
+
+  // Tier IV — Void Rift (Omnivore, levels 20-30)
+  ['loot_creature_anomaly_scavenger', [
+    { itemId: 'world_organic_material_rare', minAmount: 2, maxAmount: 3, chance: 0.8 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 2, chance: 0.3 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier IV — Void Rift (Predator, levels 22-32)
+  ['loot_creature_void_stalker', [
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 2, chance: 0.8 },
+    { itemId: 'world_void_crystal', minAmount: 1, maxAmount: 2, chance: 0.4 },
+    { itemId: 'reagent_void_essence', minAmount: 2, maxAmount: 3, chance: 0.35 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 2, chance: 0.25 },
+  ]],
+
+  // Tier IV — Void Rift (Maniac, levels 24-35)
+  ['loot_creature_dimensional_aberration', [
+    { itemId: 'world_organic_material_epic', minAmount: 3, maxAmount: 4, chance: 0.9 },
+    { itemId: 'world_void_crystal', minAmount: 2, maxAmount: 3, chance: 0.5 },
+    { itemId: 'reagent_void_essence', minAmount: 2, maxAmount: 4, chance: 0.5 },
+    { itemId: 'reagent_quantum_residue', minAmount: 2, maxAmount: 3, chance: 0.4 },
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 2, chance: 0.3 },
+  ]],
 ]);
 
 /**
