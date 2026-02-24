@@ -20,7 +20,7 @@
 - v1.15 Quest System - Phases 64-69 (shipped 2026-02-22)
 - v1.16 UI Polish - Phases 70-75 (shipped 2026-02-23)
 - v1.17 Core Gameplay Loop - Phases 76-81 (shipped 2026-02-23)
-- **v1.18 Content Expansion** - Phases 82-88 (in progress)
+- v1.18 Content Expansion - Phases 82-88 (shipped 2026-02-24)
 
 ## Phases
 
@@ -393,24 +393,24 @@ Plans:
 
 ---
 
-### Phase 88: Content Gaps & Discovery
+### Phase 88: Content Gaps & Discovery — COMPLETE (2026-02-24)
 
 **Goal**: Existing biomes have complete resource coverage and all new content integrates with discovery systems
 **Depends on**: Phase 87
 **Requirements**: ENT-07, ENT-08, ENT-09, CREA-09, CREA-10, PROG-04, PROG-05, PROG-06
-**Plans:** 3 plans
+**Plans:** 3/3 complete
 
 **Success Criteria** (what must be TRUE):
-  1. Player can gather rare/epic variants in fungal_forest (rare fungi, epic spores)
-  2. Player can gather rare/epic variants in miasma_marshes (toxic crystals, marsh gas nodes)
-  3. Player can find artifacts in toxic_wastes, volcanic_ridge, and frozen_expanse
-  4. Player encounters additional creatures in starfall_crater (2) and ancient_ruins (2)
-  5. All new biomes have zone mastery objectives, lore fragments (6 total), and POI types
+  1. ✓ Player can gather rare/epic variants in fungal_forest (rare fungi, epic spores)
+  2. ✓ Player can gather rare/epic variants in miasma_marshes (toxic crystals, marsh gas nodes)
+  3. ✓ Player can find artifacts in toxic_wastes, volcanic_ridge, and frozen_expanse
+  4. ✓ Player encounters additional creatures in starfall_crater (2) and ancient_ruins (2)
+  5. ✓ All new biomes have zone mastery objectives, lore fragments (6 total), and POI types
 
 Plans:
 - [x] 88-01-PLAN.md — Entity definitions (rare/epic plants, rare/epic minerals, artifacts, creatures)
 - [x] 88-02-PLAN.md — Discovery integration (lore fragments, creature loot tables)
-- [ ] 88-03-PLAN.md — Gap closure: Spawn table integration for all 10 entities
+- [x] 88-03-PLAN.md — Gap closure: Spawn table integration for all 10 entities
 
 ---
 
@@ -508,9 +508,9 @@ Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87 -> 88
 | 85. Gathering as Ability System | v1.18 | 4/4 | Complete | 2026-02-24 |
 | 86. Exotic Entity Population | v1.18 | 2/2 | Complete | 2026-02-24 |
 | 87. Item Integration & Balance | v1.18 | 4/4 | Complete | 2026-02-24 |
-| 88. Content Gaps & Discovery | v1.18 | 2/3 | In Progress | - |
+| 88. Content Gaps & Discovery | v1.18 | 3/3 | Complete | 2026-02-24 |
 
-**Total:** 88 phases (87 complete, 1 not started)
+**Total:** 88 phases (88 complete)
 
 ---
-*Last updated: 2026-02-24 - Phase 87 complete (loot table and vendor integration)*
+*Last updated: 2026-02-24 - Phase 88 complete (spawn table integration - v1.18 milestone complete)*
