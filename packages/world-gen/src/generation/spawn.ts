@@ -165,6 +165,8 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
       { id: ENTITY_IDS.PLANT_LUMINOUS_VINE, weight: 10 },
       { id: ENTITY_IDS.PLANT_VOID_FERN, weight: 10 },
       { id: ENTITY_IDS.PLANT_LUMINOUS_VINE_RARE, weight: 2, rarity: 'rare' },
+      { id: ENTITY_IDS.PLANT_RARE_FUNGI, weight: 2, rarity: 'rare' },
+      { id: ENTITY_IDS.PLANT_EPIC_SPORES, weight: 1, rarity: 'epic' },
     ],
     artifacts: [], // No artifacts in fungal_forest
     creatureDensity: 6,
