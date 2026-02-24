@@ -6,23 +6,23 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-**Current focus:** Phase 89 - Docker Images
+**Current focus:** Phase 90 - Swarm Stack
 
 ## Current Position
 
-Phase: 89 of 93 (Docker Images) — Complete
-Plan: 3 of 3 in current phase
-Status: Phase complete, pending verification
-Last activity: 2026-02-24 — Phase 89 execution complete
+Phase: 90 of 93 (Swarm Stack) — In Progress
+Plan: 1 of 1 in current phase (90-01 complete)
+Status: Phase complete, ready for Phase 91
+Last activity: 2026-02-24 — Phase 90 execution complete
 
-Progress: [█████████████████████████████████████████████████████████████████████████████████████████████░░░] 89/93 phases = 96%
+Progress: [█████████████████████████████████████████████████████████████████████████████████████████████░░░] 90/93 phases = 97%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 242 (v1.0-v1.19 in progress)
+- Total plans completed: 243 (v1.0-v1.19 in progress)
 - Average duration: ~3 min per plan
-- Total execution time: ~12.2 hours across 18 milestones
+- Total execution time: ~12.3 hours across 18 milestones
 
 **Recent Milestones:**
 - v1.18 Content Expansion: 7 phases (82-88) completed 2026-02-24
@@ -31,8 +31,8 @@ Progress: [███████████████████████
 
 **v1.19 Status:**
 - Phases: 5 total (89-93)
-- Plans: 3 completed of ~10 estimated across all phases
-- Status: Phase 89 complete (web image deferred to CI/CD)
+- Plans: 4 completed of ~10 estimated across all phases
+- Status: Phase 90 complete (Docker Swarm stack configured)
 
 *Updated after each plan completion*
 
@@ -53,6 +53,8 @@ Recent decisions affecting current work:
 - Docker (89-02): VITE_* env vars baked at build time via ARG directives
 - Docker (89-02): 1-year cache for /assets/ due to Vite content-hashing
 - Docker (89-03): Web image build deferred to CI/CD (ARM64 container emulation issue with Vite)
+- [Phase 090-01]: Database services placed on manager node for volume access and data persistence
+- [Phase 090-01]: Overlay networks with internal network isolation for secure database access
 
 ### Pending Todos
 
@@ -76,8 +78,8 @@ None yet (v1.19 just started).
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Phase 89 complete — Docker images for all services
-Resume file: None - continue with /gsd:plan-phase 90
+Stopped at: Phase 90 complete — Docker Swarm stack configured
+Resume file: None - continue with /gsd:plan-phase 91
 
 ---
-*Last updated: 2026-02-24 — Phase 89 complete*
+*Last updated: 2026-02-24 — Phase 90 complete*
