@@ -135,6 +135,27 @@ export class BiomeGenerator {
       // Low elevation but low moisture = starfall_crater (existing)
     }
 
+    // EXOTIC BIOMES - rare, specific conditions
+
+    // Void Rift: Very low temperature + very low moisture + mid elevation
+    // Represents "cold void" areas where reality is thin
+    // Rarest biome - both temp AND moisture must be very low
+    if (temp < 0.15 && moisture < 0.2 && elevation > 0.4 && elevation < 0.6) {
+      return 'void_rift';
+    }
+
+    // Crystalline Wastes: Very high elevation + low moisture + extreme temperatures
+    // Higher and harsher than existing crystal_caves
+    if (elevation > 0.75 && moisture < 0.35 && (temp < 0.25 || temp > 0.75)) {
+      return 'crystalline_wastes';
+    }
+
+    // Bioluminescent Depths: Low-to-mid elevation + very high moisture + moderate temp
+    // Underground/cave-like biome with glowing flora (NOT underwater - above aquatic elevation)
+    if (elevation > 0.2 && elevation < 0.4 && moisture > 0.8 && temp > 0.4 && temp < 0.7) {
+      return 'bioluminescent_depths';
+    }
+
     // High elevation = special biomes
     if (elevation > 0.8) {
       if (temp < 0.3) return 'frozen_expanse';
@@ -227,6 +248,9 @@ export function getBiomeDangerLevel(biome: BiomeType): number {
     tidal_pools: 2,         // Tier I - safe
     kelp_forests: 4,        // Tier II - moderate
     deep_trenches: 7,       // Tier III - dangerous
+    void_rift: 9,              // Tier IV - extreme
+    crystalline_wastes: 7,     // Tier III - hostile
+    bioluminescent_depths: 4,  // Tier II - hazardous
   };
   return dangerLevels[biome];
 }
@@ -249,6 +273,9 @@ export function getBiomeColor(biome: BiomeType): number {
     tidal_pools: 0x5f9ea0,        // Cadet blue
     kelp_forests: 0x228b22,       // Forest green
     deep_trenches: 0x191970,      // Midnight blue
+    void_rift: 0x4a0080,           // Deep purple
+    crystalline_wastes: 0xb0e0e6,  // Pale cyan
+    bioluminescent_depths: 0x00ff88, // Bright cyan-green
   };
   return colors[biome];
 }
