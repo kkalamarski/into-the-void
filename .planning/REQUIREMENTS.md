@@ -24,11 +24,11 @@ Requirements for Deployment & CI/CD milestone. Each maps to roadmap phases.
 
 ### Reverse Proxy
 
-- [ ] **PROXY-01**: Traefik configured as ingress with Docker provider
-- [ ] **PROXY-02**: Let's Encrypt ACME for automatic SSL certificates
-- [ ] **PROXY-03**: Route play.intothevoid.online to web service
-- [ ] **PROXY-04**: Route api.intothevoid.online to API service (or /api path)
-- [ ] **PROXY-05**: WebSocket routing for game server with sticky sessions
+- [x] **PROXY-01**: Traefik configured as ingress with Docker provider
+- [x] **PROXY-02**: Let's Encrypt ACME for automatic SSL certificates
+- [x] **PROXY-03**: Route play.intothevoid.online to web service
+- [x] **PROXY-04**: Route api.intothevoid.online to API service (or /api path)
+- [x] **PROXY-05**: WebSocket routing for game server with sticky sessions
 
 ### CI/CD
 
