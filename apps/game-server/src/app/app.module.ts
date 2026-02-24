@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '../database/database.module';
 import { GameModule } from '../game/game.module';
 import { ZonesModule } from '../zones/zones.module';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -14,5 +15,6 @@ import { ZonesModule } from '../zones/zones.module';
     GameModule,
     ZonesModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}
