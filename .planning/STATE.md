@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 
 ## Current Position
 
-Phase: 85 of 88 (Gathering as Ability System) - COMPLETE
+Phase: 85 of 88 (Gathering as Ability System) - VERIFIED
 Plan: 4 of 4 in current phase (includes gap-closure)
-Status: Planning required
-Last activity: 2026-02-24 - Completed Phase 85 Plan 04 (Tool YieldBonus Parameter Fix)
+Status: Phase complete, verification passed
+Last activity: 2026-02-24 - Gap closure executed (85-04), all success criteria verified
 
-Progress: [####################] 100% v1.17 | [########......] 57% v1.18
+Progress: [####################] 100% v1.17 | [##########....] 71% v1.18
 
 ## Performance Metrics
 
@@ -28,7 +28,7 @@ Progress: [####################] 100% v1.17 | [########......] 57% v1.18
 | Milestone | Phases | Plans | Timeline |
 |-----------|--------|-------|----------|
 | v1.0-v1.17 | 1-81 | 222 | 10 days |
-| v1.18 | 82-87 | 8/14 | In Progress |
+| v1.18 | 82-88 | 12/18 | In Progress |
 
 **v1.18 Phase Estimates:**
 

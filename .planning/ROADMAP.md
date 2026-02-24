@@ -330,25 +330,25 @@ Plans:
 
 ---
 
-### Phase 85: Gathering as Ability System
+### Phase 85: Gathering as Ability System — COMPLETE (2026-02-24)
 
 **Goal**: Replace broken mini-game gathering with ability-based system where tools grant gathering abilities with cooldowns and tool stats affect yield/speed
 **Depends on**: Phase 84
 **Requirements**: Bugfix (gathering broken), Bugfix (entity collisions not set on client)
-**Plans:** 4 plans (3 complete, 1 gap closure)
+**Plans:** 4/4 complete
 
 **Success Criteria** (what must be TRUE):
-  1. Player can use Harvest ability (granted by botany tools) on plants with cooldown
-  2. Player can use Mine ability (granted by extraction tools) on minerals with cooldown
-  3. Tool stats (yield bonus, gather speed) affect gathering outcomes
-  4. Entity collisions are properly set on client (minerals/plants block movement)
-  5. Gathering produces items in inventory and updates entity state/respawn
+  1. ✓ Player can use Harvest ability (granted by botany tools) on plants with cooldown
+  2. ✓ Player can use Mine ability (granted by extraction tools) on minerals with cooldown
+  3. ✓ Tool stats (yield bonus, gather speed) affect gathering outcomes
+  4. ✓ Entity collisions are properly set on client (minerals/plants block movement)
+  5. ✓ Gathering produces items in inventory and updates entity state/respawn
 
 Plans:
 - [x] 85-01-PLAN.md — Gather ability types and definitions
 - [x] 85-02-PLAN.md — AbilityService gather effect handling
 - [x] 85-03-PLAN.md — Entity collision fix on client
-- [ ] 85-04-PLAN.md — Gap closure: Fix yieldBonus parameter passing
+- [x] 85-04-PLAN.md — Gap closure: Fix yieldBonus parameter passing
 ---
 
 ### Phase 86: Exotic Entity Population
@@ -503,12 +503,12 @@ Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87 -> 88
 | 82. Aquatic Biome Foundation | v1.18 | 3/3 | Complete | 2026-02-23 |
 | 83. Aquatic Entity Population | v1.18 | 3/3 | Complete | 2026-02-23 |
 | 84. Exotic Biome Foundation | v1.18 | 2/2 | Complete | 2026-02-24 |
-| 85. Gathering as Ability System | v1.18 | 0/3 | Not started | - |
+| 85. Gathering as Ability System | v1.18 | 4/4 | Complete | 2026-02-24 |
 | 86. Exotic Entity Population | v1.18 | 0/2 | Not started | - |
 | 87. Item Integration & Balance | v1.18 | 0/3 | Not started | - |
 | 88. Content Gaps & Discovery | v1.18 | 0/2 | Not started | - |
 
-**Total:** 88 phases (84 complete, 4 pending)
+**Total:** 88 phases (85 complete, 3 pending)
 
 ---
-*Last updated: 2026-02-24 - Phase 85 (Gathering as Ability) added, phases shifted*
+*Last updated: 2026-02-24 - Phase 85 complete (Gathering as Ability System)*
