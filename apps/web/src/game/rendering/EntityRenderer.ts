@@ -49,6 +49,13 @@ const PLANT_SCALE_OVERRIDE: Record<string, number> = {
   plant_void_tree: 8.0,  // Large tree - towering over players
 };
 
+// Scale multipliers for rare/epic resource nodes
+const RARITY_SCALE_MULTIPLIER: Record<string, number> = {
+  common: 1.0,
+  rare: 1.4,    // 40% larger
+  epic: 1.7,    // 70% larger
+};
+
 
 // Base sprite height for UI positioning (256px texture)
 const BASE_SPRITE_HEIGHT = 256;
@@ -124,6 +131,11 @@ export class EntityRenderer {
     }
     if (this.isPlant(entity) && entity.speciesId && PLANT_SCALE_OVERRIDE[entity.speciesId]) {
       scale = PLANT_SCALE_OVERRIDE[entity.speciesId];
+    }
+    // Apply rarity scale multiplier for minerals and plants
+    if (this.isMineral(entity) || this.isPlant(entity)) {
+      const rarity = (entity as { rarity?: NodeRarity }).rarity ?? 'common';
+      scale *= RARITY_SCALE_MULTIPLIER[rarity] ?? 1.0;
     }
     const spriteHeight = BASE_SPRITE_HEIGHT * scale;
 

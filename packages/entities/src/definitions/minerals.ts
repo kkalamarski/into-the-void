@@ -176,7 +176,7 @@ export const MINERAL_VOID_CRYSTAL_RARE: MineralDefinition = {
   description: 'Exceptionally pure void crystal formation. Dark energy pulses within.',
   entityClass: 'mineral',
   biomes: ['void_plains'],
-  textureKey: 'mineral_void_crystal_rare',
+  textureKey: 'mineral_void_crystal', // Same sprite as base, rendered larger via rarity scaling
   color: 0x6a4a8a, // Deeper purple
   lootTableId: 'loot_mineral_void_crystal_rare',
   miningYield: [
@@ -194,7 +194,7 @@ export const MINERAL_PRISMATIC_CRYSTAL_RARE: MineralDefinition = {
   description: 'Flawless silicon crystal with intense light refraction. Museum-quality specimen.',
   entityClass: 'mineral',
   biomes: ['crystal_caves'],
-  textureKey: 'mineral_prismatic_crystal_rare',
+  textureKey: 'mineral_prismatic_crystal', // Same sprite as base, rendered larger via rarity scaling
   color: 0x9b78ff, // Brighter purple
   lootTableId: 'loot_mineral_prismatic_crystal_rare',
   miningYield: [
@@ -212,7 +212,7 @@ export const MINERAL_VOLCANIC_ORE_RARE: MineralDefinition = {
   description: 'Superheated metal deposit glowing with residual magma heat.',
   entityClass: 'mineral',
   biomes: ['volcanic_ridge'],
-  textureKey: 'mineral_volcanic_ore_rare',
+  textureKey: 'mineral_volcanic_ore', // Same sprite as base, rendered larger via rarity scaling
   color: 0xff6a00, // Brighter orange
   lootTableId: 'loot_mineral_volcanic_ore_rare',
   miningYield: [
@@ -231,7 +231,7 @@ export const MINERAL_COSMIC_FRAGMENT_RARE: MineralDefinition = {
   description: 'Pristine starsteel ore with cosmic patterns visible in the metal grain.',
   entityClass: 'mineral',
   biomes: ['starfall_crater'],
-  textureKey: 'mineral_cosmic_fragment_rare',
+  textureKey: 'mineral_cosmic_fragment', // Same sprite as base, rendered larger via rarity scaling
   color: 0x2a1a70, // Deeper midnight blue
   lootTableId: 'loot_mineral_cosmic_fragment_rare',
   miningYield: [
@@ -253,7 +253,7 @@ export const MINERAL_ANOMALY_CRYSTAL_EPIC: MineralDefinition = {
   description: 'Reality-warped crystal formation pulsing with quantum instability. Extreme danger.',
   entityClass: 'mineral',
   biomes: ['ancient_ruins'],
-  textureKey: 'mineral_anomaly_crystal_epic',
+  textureKey: 'mineral_anomaly_crystal', // Same sprite as base, rendered larger via rarity scaling
   color: 0xaa2be2, // Brighter violet
   lootTableId: 'loot_mineral_anomaly_crystal_epic',
   miningYield: [

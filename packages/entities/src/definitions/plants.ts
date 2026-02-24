@@ -197,7 +197,7 @@ export const PLANT_LUMINOUS_VINE_RARE: PlantDefinition = {
   description: 'Intensely glowing vine network. Bioluminescence visible from great distance.',
   entityClass: 'plant',
   biomes: ['fungal_forest'],
-  textureKey: 'plant_luminous_vine_rare',
+  textureKey: 'plant_luminous_vine', // Same sprite as base, rendered larger via rarity scaling
   color: 0x66ffaa, // Brighter green
   lootTableId: 'loot_plant_luminous_vine_rare',
   harvestYield: [
@@ -214,7 +214,7 @@ export const PLANT_LATTICE_MOSS_RARE: PlantDefinition = {
   description: 'Dense silicon-based moss with intricate crystalline patterns throughout.',
   entityClass: 'plant',
   biomes: ['crystal_caves'],
-  textureKey: 'plant_lattice_moss_rare',
+  textureKey: 'plant_lattice_moss', // Same sprite as base, rendered larger via rarity scaling
   color: 0xffb0ff, // Brighter pink
   lootTableId: 'loot_plant_lattice_moss_rare',
   harvestYield: [
@@ -231,7 +231,7 @@ export const PLANT_PHASE_BLOOM_RARE: PlantDefinition = {
   description: 'Anomaly flower in perfect quantum superposition. Reality shimmers around it.',
   entityClass: 'plant',
   biomes: ['ancient_ruins'],
-  textureKey: 'plant_phase_bloom_rare',
+  textureKey: 'plant_phase_bloom', // Same sprite as base, rendered larger via rarity scaling
   color: 0xaa00ff, // Brighter purple
   lootTableId: 'loot_plant_phase_bloom_rare',
   harvestYield: [
