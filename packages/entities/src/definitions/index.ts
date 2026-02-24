@@ -8,10 +8,14 @@ import { ALL_AQUATIC_CREATURES } from './aquatic-creatures';
 import { ALL_AQUATIC_PLANTS } from './aquatic-plants';
 import { ALL_AQUATIC_MINERALS } from './aquatic-minerals';
 import { ALL_AQUATIC_ARTIFACTS } from './aquatic-artifacts';
+import { ALL_EXOTIC_CREATURES } from './exotic-creatures';
+import { ALL_EXOTIC_PLANTS } from './exotic-plants';
+import { ALL_EXOTIC_MINERALS } from './exotic-minerals';
+import { ALL_EXOTIC_ARTIFACTS } from './exotic-artifacts';
 
 /**
  * All entity definitions - register these with EntityRegistry.
- * Total: ~58 entities (27 creatures + 19 plants + 15 minerals + 8 artifacts)
+ * Total: ~82 entities (37 creatures + 24 plants + 20 minerals + 11 artifacts)
  */
 export const ALL_ENTITIES: readonly EntityDefinition[] = [
   ...ALL_CREATURES,
@@ -22,6 +26,10 @@ export const ALL_ENTITIES: readonly EntityDefinition[] = [
   ...ALL_AQUATIC_PLANTS,
   ...ALL_AQUATIC_MINERALS,
   ...ALL_AQUATIC_ARTIFACTS,
+  ...ALL_EXOTIC_CREATURES,
+  ...ALL_EXOTIC_PLANTS,
+  ...ALL_EXOTIC_MINERALS,
+  ...ALL_EXOTIC_ARTIFACTS,
 ];
 
 /**
@@ -124,6 +132,38 @@ export const ENTITY_IDS = {
   ARTIFACT_SUNKEN_TECH: 'artifact_sunken_tech',
   ARTIFACT_ANCIENT_SHELL: 'artifact_ancient_shell',
   ARTIFACT_DROWNED_RELIC: 'artifact_drowned_relic',
+
+  // ---- EXOTIC CREATURES ----
+  CREATURE_ECHO_DRIFTER: 'creature_echo_drifter',
+  CREATURE_PHASE_GRAZER: 'creature_phase_grazer',
+  CREATURE_REALITY_SCAVENGER: 'creature_reality_scavenger',
+  CREATURE_NULL_FEEDER: 'creature_null_feeder',
+  CREATURE_DIMENSIONAL_HUNTER: 'creature_dimensional_hunter',
+  CREATURE_RIFT_HUNTER: 'creature_rift_hunter',
+  CREATURE_VOID_GRAZER: 'creature_void_grazer',
+  CREATURE_ANOMALY_SCAVENGER: 'creature_anomaly_scavenger',
+  CREATURE_VOID_STALKER: 'creature_void_stalker',
+  CREATURE_DIMENSIONAL_ABERRATION: 'creature_dimensional_aberration',
+
+  // ---- EXOTIC PLANTS ----
+  PLANT_REALITY_MOSS: 'plant_reality_moss',
+  PLANT_ECHO_BLOOM: 'plant_echo_bloom',
+  PLANT_TEMPORAL_FUNGUS: 'plant_temporal_fungus',
+  PLANT_VOID_VINE: 'plant_void_vine',
+  PLANT_NULL_GRASS: 'plant_null_grass',
+
+  // ---- EXOTIC MINERALS ----
+  MINERAL_VOID_CRYSTAL_NODE: 'mineral_void_crystal_node',
+  MINERAL_ANOMALY_SHARD: 'mineral_anomaly_shard',
+  MINERAL_DIMENSIONAL_ORE: 'mineral_dimensional_ore',
+  MINERAL_NULL_STONE: 'mineral_null_stone',
+  MINERAL_PHASE_MINERAL: 'mineral_phase_mineral',
+
+  // ---- EXOTIC ARTIFACTS ----
+  ARTIFACT_ANOMALY_CORE: 'artifact_anomaly_core',
+  ARTIFACT_DIMENSIONAL_FRAGMENT: 'artifact_dimensional_fragment',
+  ARTIFACT_ECHO_RECORD: 'artifact_echo_record',
+  ARTIFACT_VOID_RELIC: 'artifact_void_relic',
 } as const;
 
 // Re-export individual entity arrays for direct imports
@@ -135,3 +175,7 @@ export * from './aquatic-creatures';
 export * from './aquatic-plants';
 export * from './aquatic-minerals';
 export * from './aquatic-artifacts';
+export * from './exotic-creatures';
+export * from './exotic-plants';
+export * from './exotic-minerals';
+export * from './exotic-artifacts';
