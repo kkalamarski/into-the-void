@@ -2,11 +2,13 @@ import type { LoreFragment, LoreCategory } from '@into-the-void/shared-types';
 import { WORLD_HISTORY_FRAGMENTS } from './fragments/world-history';
 import { FACTION_LORE_FRAGMENTS } from './fragments/faction-lore';
 import { ANCIENT_TECH_FRAGMENTS } from './fragments/ancient-tech';
+import { BIOME_ECOLOGY_FRAGMENTS } from './fragments/biome-ecology';
 
 const ALL_FRAGMENTS: LoreFragment[] = [
   ...WORLD_HISTORY_FRAGMENTS,
   ...FACTION_LORE_FRAGMENTS,
   ...ANCIENT_TECH_FRAGMENTS,
+  ...BIOME_ECOLOGY_FRAGMENTS,
 ];
 
 const fragmentsById = new Map<string, LoreFragment>();
