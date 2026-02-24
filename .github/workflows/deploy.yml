@@ -62,3 +62,20 @@ jobs:
           build-args: |
             ${{ matrix.service == 'web' && format('VITE_API_URL=https://api.{0}', secrets.DOMAIN || 'intothevoid.online') || '' }}
             ${{ matrix.service == 'web' && format('VITE_GAME_SERVER_URL=wss://game.{0}', secrets.DOMAIN || 'intothevoid.online') || '' }}
+
+  deploy:
+    name: Deploy to Swarm
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy placeholder
+        run: |
+          echo "Deployment job configured"
+          echo "Will be implemented in Plan 92-02"
+          echo "Tag: ${{ github.ref_name }}"
