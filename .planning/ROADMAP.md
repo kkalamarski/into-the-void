@@ -356,7 +356,7 @@ Plans:
 **Goal**: Exotic biomes are populated with unique resources and creatures appropriate to dimensional/anomaly themes
 **Depends on**: Phase 85
 **Requirements**: ENT-04, ENT-05, ENT-06, CREA-05, CREA-06, CREA-07, CREA-08
-**Plans:** TBD
+**Plans:** 2 plans
 
 **Success Criteria** (what must be TRUE):
   1. Player can gather 5 distinct exotic minerals (void crystals, anomaly shards, dimensional ore, null stones, phase minerals)
@@ -366,8 +366,8 @@ Plans:
   5. Tier IV maniac creature (dimensional aberration) presents significant challenge requiring Tier III gear
 
 Plans:
-- [ ] 86-01: TBD
-- [ ] 86-02: TBD
+- [ ] 086-01-PLAN.md - Entity definitions (10 creatures, 5 plants, 5 minerals, 4 artifacts)
+- [ ] 086-02-PLAN.md - Spawn tables and loot configuration
 
 ---
 
@@ -504,7 +504,7 @@ Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87 -> 88
 | 83. Aquatic Entity Population | v1.18 | 3/3 | Complete | 2026-02-23 |
 | 84. Exotic Biome Foundation | v1.18 | 2/2 | Complete | 2026-02-24 |
 | 85. Gathering as Ability System | v1.18 | 4/4 | Complete | 2026-02-24 |
-| 86. Exotic Entity Population | v1.18 | 0/2 | Not started | - |
+| 86. Exotic Entity Population | v1.18 | 0/2 | Planned | - |
 | 87. Item Integration & Balance | v1.18 | 0/3 | Not started | - |
 | 88. Content Gaps & Discovery | v1.18 | 0/2 | Not started | - |
 
