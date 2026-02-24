@@ -24,8 +24,10 @@ RUN pnpm install --frozen-lockfile
 ARG VITE_API_URL=""
 ARG VITE_GAME_SERVER_URL=""
 
-# Build the web app
-RUN pnpm nx run web:build
+# Build the web app (increase Node memory limit for large bundle)
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NX_SKIP_NX_CACHE=true
+RUN pnpm nx run web:build || (echo "Build failed with exit code $?"; exit 1)
 
 # Stage 2: Runner - Serve with nginx
 FROM nginx:alpine
