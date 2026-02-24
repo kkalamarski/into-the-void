@@ -98,11 +98,10 @@ Plans:
   4. API requests route correctly (either api.intothevoid.online or /api path)
   5. WebSocket connections maintain sticky sessions without drops
 
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 91-01: TBD
-- [ ] 91-02: TBD
+- [ ] 91-01-PLAN.md — Traefik stack with Let's Encrypt ACME and HTTPS routing
 
 ---
 
@@ -247,7 +246,7 @@ Phases execute in numeric order: 89 → 90 → 91 → 92 → 93
 | 88. Content Gaps & Discovery | v1.18 | 3/3 | Complete | 2026-02-24 |
 | 89. Docker Images | v1.19 | 3/3 | Complete | 2026-02-24 |
 | 90. Swarm Stack | v1.19 | 1/1 | Complete | 2026-02-24 |
-| 91. Traefik & SSL | v1.19 | 0/2 | Not started | - |
+| 91. Traefik & SSL | v1.19 | 0/1 | Not started | - |
 | 92. CI/CD Pipeline | v1.19 | 0/2 | Not started | - |
 | 93. Documentation | v1.19 | 0/1 | Not started | - |
 
