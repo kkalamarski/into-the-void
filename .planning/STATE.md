@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 
 ## Current Position
 
-Phase: 85 of 88 (Gathering as Ability System) - NOT STARTED
-Plan: 0 of 3 in current phase
+Phase: 85 of 88 (Gathering as Ability System) - COMPLETE
+Plan: 3 of 3 in current phase
 Status: Planning required
-Last activity: 2026-02-24 - Phase 84 complete, Phase 85 created
+Last activity: 2026-02-24 - Completed Phase 85 (Gathering as Ability System)
 
 Progress: [####################] 100% v1.17 | [########......] 57% v1.18
 
@@ -49,6 +49,7 @@ Progress: [####################] 100% v1.17 | [########......] 57% v1.18
 | Phase 83 P03 | 239 | 3 tasks | 3 files |
 | Phase 84 P01 | 143s | 3 tasks | 3 files |
 | Phase 84 P02 | 247s | 3 tasks | 7 files |
+| Phase 85 P03 | 234s | 5 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Recent decisions affecting current work:
 - [Phase 84-02]: Void rift requires BOTH temp < 0.15 AND moisture < 0.2 (rarest biome)
 - [Phase 84-02]: Crystalline wastes triggers at elevation > 0.75 (high altitude)
 - [Phase 84-02]: Bioluminescent depths positioned at elevation 0.2-0.4 (above aquatic)
+- [Phase 85-03]: Only static gatherable entities (minerals, plants) block movement
+- [Phase 85-03]: Items, NPCs, and creatures do not block pathfinding
+- [Phase 85-03]: Minerals/plants use target selection instead of auto-start gathering
 
 ### Pending Todos
 
@@ -103,13 +107,13 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Created Phase 85 (Gathering as Ability System)
+Stopped at: Completed Phase 85 (Gathering as Ability System)
 Resume file: None
 
 **Next steps:**
-1. Plan Phase 85 (Gathering as Ability System)
-2. Research gathering ability types and tool stats
-3. Create plans for gather effect handling and entity collision fix
+1. Begin Phase 86 (Exotic Entities)
+2. Implement exotic biome entities (void creatures, crystal formations)
+3. Balance exotic entity loot and progression
 
 ---
-*Last updated: 2026-02-24 - Phase 85 created (gathering as ability system)*
+*Last updated: 2026-02-24 - Phase 85 complete (gathering as ability system)*
