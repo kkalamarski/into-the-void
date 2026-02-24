@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 87 of 88 (Item Integration & Balance)
-Plan: 2 of 3 in current phase
-Status: In progress - Exotic equipment definitions complete
-Last activity: 2026-02-24 - Completed 87-02 (Exotic Equipment Definitions)
+Plan: 1 of 3 in current phase
+Status: Phase 87 in progress - Aquatic equipment definitions complete
+Last activity: 2026-02-24 - Completed 87-01 (Aquatic Equipment Definitions)
 
-Progress: [####################] 100% v1.17 | [############...] 81% v1.18
+Progress: [####################] 100% v1.17 | [############...] 79% v1.18
 
 ## Performance Metrics
 
@@ -54,10 +54,8 @@ Progress: [####################] 100% v1.17 | [############...] 81% v1.18
 | Phase 85 P01 | 430 | 3 tasks | 4 files |
 | Phase 85 P04 | 206s | 3 tasks | 2 files |
 | Phase 86 P01 | 252s | 3 tasks | 5 files |
-| Phase 86 P01 | 252 | 3 tasks | 5 files |
 | Phase 86 P02 | 311 | 4 tasks | 2 files |
-| Phase 87 P02 | 111s | 2 tasks | 2 files |
-| Phase 87 P02 | 111 | 2 tasks | 2 files |
+| Phase 87 P01 | 128s | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -103,18 +101,11 @@ Recent decisions affecting current work:
 - [Phase 85-03]: Minerals/plants use target selection instead of auto-start gathering
 - [Phase 85-04]: Optional yieldMultiplier parameter for backward compatibility in EntityService.handleToolUse
 - [Phase 85-04]: Tool yield multiplier affects both loot drop chance (capped 1.0) and quantity (min 1)
-- [Phase 85]: Optional yieldMultiplier parameter for backward compatibility in EntityService.handleToolUse
-- [Phase 85]: Tool yield multiplier affects both loot drop chance (capped 1.0) and quantity (min 1)
-- [Phase 86-01]: Changed MINERAL_VOID_CRYSTAL_NODE rarity from 'exotic' to 'epic' (NodeRarity constraint)
 - [Phase 86-01]: Changed MINERAL_VOID_CRYSTAL_NODE rarity from 'exotic' to 'epic' (NodeRarity constraint)
 - [Phase 86-02]: Bioluminescent depths flora-focused with plantDensity 8 (highest in exotic biomes)
 - [Phase 86-02]: Crystalline wastes mineral-focused with mineralDensity 10 (highest in game)
 - [Phase 86-02]: Void rift danger-focused with low creatureDensity 2 but includes maniac
 - [Phase 86-02]: Dimensional Aberration weight 1 matches Abyssal Leviathan and Void Horror rarity
-- [Phase 87]: Scout/recon/balanced archetypes for exotic suits create horizontal progression
-- [Phase 87]: Anomaly toolType added for reality distortion resistance (Reality Anchor)
-- [Phase 87]: Scout/recon/balanced archetypes for exotic suits create horizontal progression
-- [Phase 87]: Anomaly toolType added for reality distortion resistance (Reality Anchor)
 
 ### Pending Todos
 
@@ -133,13 +124,13 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 87-02-PLAN.md (Exotic Equipment Definitions)
+Stopped at: Completed 87-01-PLAN.md (Aquatic Equipment Definitions)
 Resume file: None
 
 **Next steps:**
-1. Continue Phase 87 (Plan 03 - Items & Balance)
+1. Continue Phase 87 (Items & Balance)
 2. Balance crafting recipes for exotic materials
 3. Complete v1.18 milestone with Phase 88 (Gaps & Discovery)
 
 ---
-*Last updated: 2026-02-24 - Phase 87 Plan 02 complete (exotic equipment definitions with horizontal progression)*
+*Last updated: 2026-02-24 - Phase 87-01 complete (aquatic equipment definitions)*
