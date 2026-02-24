@@ -55,14 +55,174 @@ export class PreloadScene extends Phaser.Scene {
     // Load directional character sprites
     this.loadCharacterSprites();
 
+    // Load creature sprites (Void Crawler, etc.)
+    this.loadCreatureSprites();
+
+    // Load NPC directional sprites
+    this.loadNpcSprites();
+
+    // Load feature sprites (plants, minerals, artifacts)
+    this.loadFeatureSprites();
+
     // Generate procedural textures for walls, formations, and entities
     this.generateTileTextures();
   }
 
+  private loadCreatureSprites(): void {
+    // Direction mapping: grid directions to sprite files (same 45° rotation as character)
+    const directionMap: Record<string, string> = {
+      'n': 'north-east',
+      'ne': 'east',
+      'e': 'south-east',
+      'se': 'south',
+      's': 'south-west',
+      'sw': 'west',
+      'w': 'north-west',
+      'nw': 'north',
+    };
+
+    const directions = Object.keys(directionMap);
+
+    // Creature sprite definitions: speciesId -> folder name
+    const creatureSprites: Record<string, string> = {
+      'creature_void_crawler': 'violet-wolf',
+      'creature_coastal_scuttler': 'neon-creature',
+      'creature_crystal_hunter': 'crystal-hunter',
+      'creature_frost_stalker': 'frost-stalker',
+    };
+
+    for (const [speciesId, folder] of Object.entries(creatureSprites)) {
+      for (const dir of directions) {
+        const filename = directionMap[dir];
+
+        // Load idle frames from rotations/ directory
+        this.load.image(
+          `${speciesId}-idle-${dir}`,
+          `sprites/creatures/${folder}/rotations/${filename}.png`
+        );
+
+        // Load walk animation frames (8 per direction)
+        for (let frame = 0; frame < 8; frame++) {
+          const frameStr = frame.toString().padStart(3, '0');
+          this.load.image(
+            `${speciesId}-walk-${dir}-${frame}`,
+            `sprites/creatures/${folder}/animations/walk-8-frames/${filename}/frame_${frameStr}.png`
+          );
+        }
+      }
+    }
+  }
+
+  private loadNpcSprites(): void {
+    // Direction mapping: grid directions to sprite files (same 45° rotation as character)
+    const directionMap: Record<string, string> = {
+      'n': 'north-east',
+      'ne': 'east',
+      'e': 'south-east',
+      'se': 'south',
+      's': 'south-west',
+      'sw': 'west',
+      'w': 'north-west',
+      'nw': 'north',
+    };
+
+    // NPC sprite folders
+    const npcSprites = ['npc-1', 'trader-npc', 'guard-npc'];
+
+    for (const npcFolder of npcSprites) {
+      for (const [dir, filename] of Object.entries(directionMap)) {
+        this.load.image(
+          `npc-${npcFolder}-${dir}`,
+          `sprites/npc/${npcFolder}/rotations/${filename}.png`
+        );
+      }
+    }
+  }
+
+  private loadFeatureSprites(): void {
+    // Feature sprite definitions: entityId -> folder name and variant count
+    // Variants are used to add visual variety to features of the same type
+    const featureSprites: Array<{ entityId: string; folder: string; variants: number }> = [
+      // Plants - void plains
+      { entityId: 'plant_void_tree', folder: 'void-tree', variants: 8 },
+      { entityId: 'plant_void_fern', folder: 'void-fern', variants: 2 },
+      { entityId: 'plant_drought_cactus', folder: 'drought-cactus', variants: 1 },
+      // Minerals - void plains
+      { entityId: 'mineral_void_crystal', folder: 'void-crystal', variants: 1 },
+    ];
+
+    for (const { entityId, folder, variants } of featureSprites) {
+      for (let v = 1; v <= variants; v++) {
+        this.load.image(
+          `${entityId}-v${v}`,
+          `sprites/features/${folder}/variant_${v}.png`
+        );
+      }
+    }
+  }
+
   private loadCharacterSprites(): void {
-    const directions = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
+    // Direction mapping: grid directions to sprite files
+    // Grid directions are rotated 45° from screen directions in isometric view:
+    // - Grid 'n' (going -Y) appears as screen top-right → sprite faces 'north-east'
+    // - Grid 'ne' (going +X,-Y) appears as screen right → sprite faces 'east'
+    // - Grid 'e' (going +X) appears as screen bottom-right → sprite faces 'south-east'
+    // - Grid 'se' (going +X,+Y) appears as screen down → sprite faces 'south'
+    // - Grid 's' (going +Y) appears as screen bottom-left → sprite faces 'south-west'
+    // - Grid 'sw' (going -X,+Y) appears as screen left → sprite faces 'west'
+    // - Grid 'w' (going -X) appears as screen top-left → sprite faces 'north-west'
+    // - Grid 'nw' (going -X,-Y) appears as screen up → sprite faces 'north'
+    const directionMap: Record<string, string> = {
+      'n': 'north-east',
+      'ne': 'east',
+      'e': 'south-east',
+      'se': 'south',
+      's': 'south-west',
+      'sw': 'west',
+      'w': 'north-west',
+      'nw': 'north',
+    };
+
+    const directions = Object.keys(directionMap);
+
     for (const dir of directions) {
-      this.load.image(`character-${dir}`, `sprites/character/character-${dir}.png`);
+      const filename = directionMap[dir];
+
+      // Load idle frames from rotations/ directory
+      this.load.image(
+        `character-idle-${dir}`,
+        `sprites/character-sprite/rotations/${filename}.png`
+      );
+
+      // Load running animation frames (6 per direction)
+      for (let frame = 0; frame < 6; frame++) {
+        const frameStr = frame.toString().padStart(3, '0');
+        this.load.image(
+          `character-run-${dir}-${frame}`,
+          `sprites/character-sprite/animations/running-6-frames/${filename}/frame_${frameStr}.png`
+        );
+      }
+    }
+  }
+
+  private createCharacterAnimations(): void {
+    const directions = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
+
+    for (const dir of directions) {
+      // Create running animation with 6 frames
+      this.anims.create({
+        key: `character-run-${dir}`,
+        frames: [
+          { key: `character-run-${dir}-0` },
+          { key: `character-run-${dir}-1` },
+          { key: `character-run-${dir}-2` },
+          { key: `character-run-${dir}-3` },
+          { key: `character-run-${dir}-4` },
+          { key: `character-run-${dir}-5` },
+        ],
+        frameRate: 12.5, // 6 frames over ~480ms (matches move delay)
+        repeat: -1, // Loop continuously
+      });
     }
   }
 
@@ -273,6 +433,35 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Create animations after all sprites are loaded
+    this.createCharacterAnimations();
+    this.createCreatureAnimations();
     this.scene.start('WorldScene');
+  }
+
+  private createCreatureAnimations(): void {
+    const directions = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
+    const animatedCreatures = ['creature_void_crawler', 'creature_coastal_scuttler', 'creature_crystal_hunter', 'creature_frost_stalker'];
+
+    // Walk animations (8 frames per direction) for each animated creature
+    for (const speciesId of animatedCreatures) {
+      for (const dir of directions) {
+        this.anims.create({
+          key: `${speciesId}-walk-${dir}`,
+          frames: [
+            { key: `${speciesId}-walk-${dir}-0` },
+            { key: `${speciesId}-walk-${dir}-1` },
+            { key: `${speciesId}-walk-${dir}-2` },
+            { key: `${speciesId}-walk-${dir}-3` },
+            { key: `${speciesId}-walk-${dir}-4` },
+            { key: `${speciesId}-walk-${dir}-5` },
+            { key: `${speciesId}-walk-${dir}-6` },
+            { key: `${speciesId}-walk-${dir}-7` },
+          ],
+          frameRate: 16, // 8 frames over 500ms (creature movement duration)
+          repeat: -1,
+        });
+      }
+    }
   }
 }

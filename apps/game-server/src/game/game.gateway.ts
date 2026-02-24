@@ -1384,19 +1384,39 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { targetEntityId: string }
   ): Promise<void> {
-    const result = await this.gatheringService.startGathering(client.id, data.targetEntityId);
-
-    if ('error' in result) {
-      // Special case: artifact was collected instantly
-      if (result.error === 'ARTIFACT_COLLECTED') {
-        // EntityService already handled the entity update and ground item spawn
-        return;
-      }
-      client.emit('error', { code: 'GATHERING_ERROR', message: result.error });
+    // Simplified gathering: just use tool on entity directly (no mini-game)
+    // This reuses the entity:tool_use logic which handles all broadcasting
+    const toolResult = await this.entityService.handleToolUse(client.id, data.targetEntityId);
+    if (!toolResult.success) {
+      client.emit('error', { code: 'GATHERING_ERROR', message: toolResult.error });
       return;
     }
 
-    client.emit('gathering:challenge', result.challenge);
+    // Emit entity update to zone
+    if (toolResult.entityChanges && toolResult.zoneId) {
+      this.server.to(toolResult.zoneId).emit('entity:update', {
+        entityId: data.targetEntityId,
+        changes: toolResult.entityChanges,
+      });
+    }
+
+    // Emit ground item spawns to zone
+    if (toolResult.groundItems && toolResult.zoneId) {
+      for (const item of toolResult.groundItems) {
+        this.server.to(toolResult.zoneId).emit('entity:spawn', item);
+      }
+    }
+
+    // Send gathering result
+    client.emit('gathering:result', {
+      success: true,
+      accuracy: 'good',
+      yieldMultiplier: 1.0,
+      items: [],
+      proficiencyXP: 10,
+      proficiencyLevel: 1,
+      category: 'mining',
+    });
   }
 
   @SubscribeMessage('gathering:complete')
@@ -1404,6 +1424,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: Socket,
     @MessageBody() data: import('@into-the-void/shared-types').TimingResult
   ): Promise<void> {
+    // Keep for backwards compatibility but gathering now auto-completes
     const result = await this.gatheringService.completeGathering(client.id, data);
     client.emit('gathering:result', result);
   }

@@ -47,6 +47,22 @@ export const PLANT_DROUGHT_CACTUS: PlantDefinition = {
   respawnSeconds: 240,
 };
 
+export const PLANT_VOID_TREE: PlantDefinition = {
+  id: 'plant_void_tree',
+  displayName: 'Void Tree',
+  description: 'Towering crimson tree adapted to the void plains. Its deep roots tap into underground water reserves, and its bark contains valuable organic compounds.',
+  entityClass: 'plant',
+  biomes: ['void_plains'],
+  textureKey: 'plant_void_tree',
+  color: 0x8b0000,
+  lootTableId: 'loot_plant_void_tree',
+  harvestYield: [
+    { itemId: 'world_organic_material_common', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'world_void_flora_sample', minAmount: 1, maxAmount: 2, chance: 0.5 },
+  ],
+  respawnSeconds: 360,
+};
+
 export const PLANT_GAS_POD: PlantDefinition = {
   id: 'plant_gas_pod',
   displayName: 'Gas Pod',
@@ -230,6 +246,7 @@ export const ALL_PLANTS: readonly PlantDefinition[] = [
   PLANT_LUMINOUS_VINE,
   PLANT_VOID_FERN,
   PLANT_DROUGHT_CACTUS,
+  PLANT_VOID_TREE,
   PLANT_GAS_POD,
   PLANT_MOBILE_VINE,
   PLANT_THERMAL_VENT_MOSS,

@@ -20,6 +20,36 @@ const ENTITY_SCALE: Record<string, number> = {
   npc: 2.2,        // NPCs slightly smaller than creatures
 };
 
+// Scale overrides for animated creatures with smaller sprite sheets (~56px)
+const ANIMATED_CREATURE_SCALE: Record<string, number> = {
+  creature_void_crawler: 3.5,      // ~200px visual size
+  creature_coastal_scuttler: 3.0,  // Smaller creature
+  creature_crystal_hunter: 4.0,    // Larger predator
+  creature_frost_stalker: 3.5,     // Similar size to void crawler
+};
+
+// Shadow size overrides for animated creatures { width, height }
+const ANIMATED_CREATURE_SHADOW: Record<string, { width: number; height: number }> = {
+  creature_void_crawler: { width: 80, height: 40 },
+  creature_coastal_scuttler: { width: 70, height: 35 },
+  creature_crystal_hunter: { width: 90, height: 45 },
+  creature_frost_stalker: { width: 80, height: 40 },
+};
+
+// Y offset overrides for animated creatures (0 = feet at shadow level)
+const ANIMATED_CREATURE_Y_OFFSET: Record<string, number> = {
+  creature_void_crawler: 0,
+  creature_coastal_scuttler: 0,
+  creature_crystal_hunter: 0,
+  creature_frost_stalker: 0,
+};
+
+// Scale overrides for specific plants (speciesId -> scale multiplier)
+const PLANT_SCALE_OVERRIDE: Record<string, number> = {
+  plant_void_tree: 8.0,  // Large tree - towering over players
+};
+
+
 // Base sprite height for UI positioning (256px texture)
 const BASE_SPRITE_HEIGHT = 256;
 
@@ -87,19 +117,51 @@ export class EntityRenderer {
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
-    // Get scale for this entity type
-    const scale = ENTITY_SCALE[entity.type] ?? 1.0;
+    // Get scale for this entity type (with overrides for specific species)
+    let scale = ENTITY_SCALE[entity.type] ?? 1.0;
+    if (this.isCreature(entity) && entity.speciesId && ANIMATED_CREATURE_SCALE[entity.speciesId]) {
+      scale = ANIMATED_CREATURE_SCALE[entity.speciesId];
+    }
+    if (this.isPlant(entity) && entity.speciesId && PLANT_SCALE_OVERRIDE[entity.speciesId]) {
+      scale = PLANT_SCALE_OVERRIDE[entity.speciesId];
+    }
     const spriteHeight = BASE_SPRITE_HEIGHT * scale;
 
-    // Blob shadow at ground level (container origin) - sized based on entity type
-    const shadowWidth = 60 * scale;
-    const shadowHeight = 30 * scale;
-    const shadow = this.scene.add.ellipse(0, 0, shadowWidth, shadowHeight, 0x000000, 0.3);
-    shadow.setOrigin(0.5, 0.5);
-    container.add(shadow);
+    // Blob shadow at ground level - skip for plants and minerals (performance optimization)
+    if (!this.isPlant(entity) && !this.isMineral(entity)) {
+      let shadowWidth = 60 * scale;
+      let shadowHeight = 30 * scale;
+      // Creatures get larger shadow to touch feet
+      if (this.isCreature(entity)) {
+        shadowWidth = 80 * (scale / 2.5); // Scale relative to default creature scale
+        shadowHeight = 40 * (scale / 2.5);
+        // Override shadow for specific animated creatures
+        if (entity.speciesId && ANIMATED_CREATURE_SHADOW[entity.speciesId]) {
+          const shadowOverride = ANIMATED_CREATURE_SHADOW[entity.speciesId];
+          shadowWidth = shadowOverride.width;
+          shadowHeight = shadowOverride.height;
+        }
+      }
+      const shadow = this.scene.add.ellipse(0, 0, shadowWidth, shadowHeight, 0x000000, 0.3);
+      shadow.setOrigin(0.5, 0.5);
+      container.add(shadow);
+    }
 
-    // Entity sprite elevated above ground (scaled based on entity type)
-    const sprite = this.scene.add.sprite(0, -this.elevationOffset, this.getEntityTexture(entity));
+    // Entity sprite - creatures and plants at ground level, others elevated
+    let spriteYOffset = -this.elevationOffset;
+    if (this.isCreature(entity)) {
+      // Creatures positioned with feet at shadow level
+      spriteYOffset = 0;
+      // Override Y offset for specific animated creatures if needed
+      if (entity.speciesId && entity.speciesId in ANIMATED_CREATURE_Y_OFFSET) {
+        spriteYOffset = ANIMATED_CREATURE_Y_OFFSET[entity.speciesId];
+      }
+    }
+    if (this.isPlant(entity) || this.isMineral(entity)) {
+      // Plants and minerals positioned with base at ground level
+      spriteYOffset = 0;
+    }
+    const sprite = this.scene.add.sprite(0, spriteYOffset, this.getEntityTexture(entity));
     sprite.setOrigin(0.5, 1.0); // Bottom-center origin for ground alignment
     sprite.setScale(scale);
 
@@ -114,19 +176,39 @@ export class EntityRenderer {
       }
     }
 
-    // Make creature sprites interactive for click-to-attack
-    if (entity.type === 'creature') {
-      sprite.setInteractive({ useHandCursor: true });
-    } else {
-      sprite.setInteractive();
+    // Make sprites interactive - use hand cursor for clickable entities
+    const isClickable = entity.type === 'creature' || entity.type === 'plant' || entity.type === 'mineral';
+    sprite.setInteractive({ useHandCursor: isClickable });
+
+    // Plants and minerals: show UI on hover for performance (UI hidden by default)
+    if (this.isPlant(entity) || this.isMineral(entity)) {
+      sprite.on('pointerover', () => {
+        const nameplate = container.getData('nameplate') as Phaser.GameObjects.Text | undefined;
+        const yieldBar = container.getData('yieldBar') as Phaser.GameObjects.Graphics | undefined;
+        if (nameplate) nameplate.setVisible(true);
+        if (yieldBar) yieldBar.setVisible(true);
+      });
+      sprite.on('pointerout', () => {
+        const nameplate = container.getData('nameplate') as Phaser.GameObjects.Text | undefined;
+        const yieldBar = container.getData('yieldBar') as Phaser.GameObjects.Graphics | undefined;
+        if (nameplate) nameplate.setVisible(false);
+        if (yieldBar) yieldBar.setVisible(false);
+      });
     }
 
     container.add(sprite);
     container.setData('entityScale', scale); // Store for UI positioning
+    container.setData('entitySprite', sprite); // Store sprite reference for animation
 
     // Store entity identity on container for click handling in WorldScene
     container.setData('entityId', entity.id);
     container.setData('entityType', entity.type);
+
+    // Store speciesId for animated creatures
+    if (this.isCreature(entity) && entity.speciesId && EntityRenderer.ANIMATED_CREATURES.has(entity.speciesId)) {
+      container.setData('speciesId', entity.speciesId);
+      container.setData('facing', 's'); // Default facing direction
+    }
 
     // UI positioning based on sprite height
     const uiBaseY = -this.elevationOffset - spriteHeight * 0.5;
@@ -141,31 +223,37 @@ export class EntityRenderer {
       container.setData('healthBar', healthBar);
     }
 
-    // Minerals get nameplate + yield bar
+    // Minerals get nameplate + yield bar (hidden by default for performance, shown on hover)
     if (this.isMineral(entity)) {
       const rarity = (entity as { rarity?: NodeRarity }).rarity;
       const rarityPrefix = rarity === 'epic' ? '[Epic] ' : rarity === 'rare' ? '[Rare] ' : '';
       const nameplate = this.createNameplate(rarityPrefix + displayName);
       nameplate.y = uiBaseY - 20;
+      nameplate.setVisible(false);
       container.add(nameplate);
+      container.setData('nameplate', nameplate);
 
       const yieldBar = this.createHealthBar(entity.yield, entity.maxYield);
       yieldBar.y = uiBaseY;
+      yieldBar.setVisible(false);
       container.add(yieldBar);
       container.setData('maxYield', entity.maxYield);
       container.setData('yieldBar', yieldBar);
     }
 
-    // Plants get nameplate + yield bar
+    // Plants get nameplate + yield bar (hidden by default for performance, shown on hover)
     if (this.isPlant(entity)) {
       const rarity = (entity as { rarity?: NodeRarity }).rarity;
       const rarityPrefix = rarity === 'epic' ? '[Epic] ' : rarity === 'rare' ? '[Rare] ' : '';
       const nameplate = this.createNameplate(rarityPrefix + displayName);
       nameplate.y = uiBaseY - 20;
+      nameplate.setVisible(false);
       container.add(nameplate);
+      container.setData('nameplate', nameplate);
 
       const yieldBar = this.createHealthBar(entity.yield, entity.maxYield);
       yieldBar.y = uiBaseY;
+      yieldBar.setVisible(false);
       container.add(yieldBar);
       container.setData('maxYield', entity.maxYield);
       container.setData('yieldBar', yieldBar);
@@ -380,6 +468,44 @@ export class EntityRenderer {
     return text;
   }
 
+  // Creatures with sprite sheets (idle + walk animations)
+  private static readonly ANIMATED_CREATURES = new Set([
+    'creature_void_crawler',
+    'creature_coastal_scuttler',
+    'creature_crystal_hunter',
+    'creature_frost_stalker',
+  ]);
+
+  // Features with sprite variants: entityId -> number of variants
+  // Used for plants, minerals, and artifacts
+  private static readonly FEATURE_SPRITE_VARIANTS: Record<string, number> = {
+    // Plants
+    plant_void_tree: 8,
+    plant_void_fern: 2,
+    plant_drought_cactus: 1,
+    // Minerals
+    mineral_void_crystal: 1,
+  };
+
+  /**
+   * Simple hash function for entity ID to get deterministic variant selection.
+   */
+  private static hashEntityId(id: string): number {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = ((hash << 5) - hash) + id.charCodeAt(i);
+      hash |= 0; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
+  }
+
+  /**
+   * Check if a creature has animated sprites available.
+   */
+  hasAnimatedSprites(speciesId: string): boolean {
+    return EntityRenderer.ANIMATED_CREATURES.has(speciesId);
+  }
+
   /**
    * Maps entity to texture key.
    * Uses species-specific or resource-specific texture for enriched entities,
@@ -388,13 +514,31 @@ export class EntityRenderer {
   private getEntityTexture(entity: Entity): string {
     // Use species-specific texture if available (enriched entities)
     if (this.isCreature(entity) && entity.speciesId) {
+      // Check if this creature has animated sprites
+      if (EntityRenderer.ANIMATED_CREATURES.has(entity.speciesId)) {
+        // Return idle sprite facing south (default direction)
+        return `${entity.speciesId}-idle-s`;
+      }
       // Try species-specific texture, fall back to generic 'creature'
       return entity.speciesId;
     }
     if (this.isMineral(entity) && entity.resourceId) {
+      // Check if this mineral has sprite variants
+      const variantCount = EntityRenderer.FEATURE_SPRITE_VARIANTS[entity.resourceId];
+      if (variantCount) {
+        const variant = (EntityRenderer.hashEntityId(entity.id) % variantCount) + 1;
+        return `${entity.resourceId}-v${variant}`;
+      }
       return entity.resourceId;
     }
     if (this.isPlant(entity) && entity.speciesId) {
+      // Check if this plant species has sprite variants
+      const variantCount = EntityRenderer.FEATURE_SPRITE_VARIANTS[entity.speciesId];
+      if (variantCount) {
+        // Deterministic variant selection based on entity ID
+        const variant = (EntityRenderer.hashEntityId(entity.id) % variantCount) + 1;
+        return `${entity.speciesId}-v${variant}`;
+      }
       return entity.speciesId;
     }
 
@@ -765,5 +909,25 @@ export class EntityRenderer {
   clearAllQuestMarkers(): void {
     this.questMarkers.forEach((marker) => marker.destroy());
     this.questMarkers.clear();
+  }
+
+  /**
+   * Show plant UI (nameplate + yield bar) - call when player hovers/targets a plant.
+   */
+  showPlantUI(container: Phaser.GameObjects.Container): void {
+    const nameplate = container.getData('nameplate') as Phaser.GameObjects.Text | undefined;
+    const yieldBar = container.getData('yieldBar') as Phaser.GameObjects.Graphics | undefined;
+    if (nameplate) nameplate.setVisible(true);
+    if (yieldBar) yieldBar.setVisible(true);
+  }
+
+  /**
+   * Hide plant UI (nameplate + yield bar) - call when player stops hovering/targeting.
+   */
+  hidePlantUI(container: Phaser.GameObjects.Container): void {
+    const nameplate = container.getData('nameplate') as Phaser.GameObjects.Text | undefined;
+    const yieldBar = container.getData('yieldBar') as Phaser.GameObjects.Graphics | undefined;
+    if (nameplate) nameplate.setVisible(false);
+    if (yieldBar) yieldBar.setVisible(false);
   }
 }

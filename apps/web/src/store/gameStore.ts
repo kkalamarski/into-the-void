@@ -494,6 +494,7 @@ gameSocket.on('combat:damage', (data: {
 
 // Handle server errors (e.g., level-gated interaction rejection)
 gameSocket.on('error', ({ code, message }: { code: string; message: string }) => {
+  console.log('[DEBUG] Server error:', { code, message });
   const chatMessage: ChatMessage = {
     id: Date.now().toString(),
     senderId: 'system',
@@ -591,6 +592,7 @@ gameSocket.on('player:regen', (data: { playerId: string; health: number; maxHeal
 
 // Handle gathering challenge (mini-game start)
 gameSocket.on('gathering:challenge', (challenge: TimingChallenge) => {
+  console.log('[DEBUG] Received gathering:challenge', challenge);
   const game = useGameStore.getState().game;
   const worldScene = game?.getWorldScene();
   if (worldScene) {

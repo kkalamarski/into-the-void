@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, MOVE_DELAY_MS, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure, isHubZone, Npc, TimingChallenge, TimingResult } from '@into-the-void/shared-types';
+import { ZONE_SIZE, MOVE_DELAY_MS, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure, isHubZone, Npc, TimingChallenge } from '@into-the-void/shared-types';
 import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
 import { ItemRegistry } from '@into-the-void/items';
@@ -25,7 +25,7 @@ import { TargetHighlight } from '../rendering/TargetHighlight';
 import { FogManager } from '../fog/FogManager';
 import { FogRenderer } from '../fog/FogRenderer';
 import { PoiRenderer } from '../pois/PoiRenderer';
-import { GatheringMiniGame } from '../ui/GatheringMiniGame';
+// GatheringMiniGame removed - gathering now auto-completes on server
 import { createRareNodeMarker } from '../rendering/RareNodeFX';
 import type { DiscoveredResource } from '../../store/gameStore';
 
@@ -110,6 +110,10 @@ export class WorldScene extends Phaser.Scene {
   private lastPortalEmitKey: string | null = null;
   // Local player facing direction for sprite selection
   private localPlayerFacing: Direction = 's';
+  // Movement animation state tracking
+  private lastMovementTime = 0;
+  private movementTweenEndTime = 0; // When current movement tween will complete
+  private static readonly IDLE_THRESHOLD_MS = 50; // Time after tween completes before stopping animation
   // Fog of war system
   private fogManager: FogManager | null = null;
   private fogRenderer: FogRenderer | null = null;
@@ -117,9 +121,7 @@ export class WorldScene extends Phaser.Scene {
   // POI discovery system
   private poiRenderer: PoiRenderer | null = null;
   private discoveredPoiIds: Set<string> = new Set();
-  // Gathering mini-game
-  private activeMiniGame: GatheringMiniGame | null = null;
-  private isGathering: boolean = false;
+  // Gathering - now auto-completes on server, no mini-game needed
   // Rare node markers
   private rareNodeMarkers: Map<string, Phaser.GameObjects.Container> = new Map();
 
@@ -362,8 +364,6 @@ export class WorldScene extends Phaser.Scene {
       // Only handle left click for movement
       if (pointer.rightButtonDown()) return;
 
-      // Block pathfinding during gathering mini-game
-      if (this.isGathering) return;
 
       // Clear target highlight when clicking ground (empty tile)
       this.targetHighlight?.hide();
@@ -416,15 +416,19 @@ export class WorldScene extends Phaser.Scene {
 
     // Entity click handler for click-to-attack (CATK-01, CATK-02, CATK-04)
     this.input.on('gameobjectdown', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject) => {
+      console.log('[DEBUG] gameobjectdown fired', { gameObject: gameObject.constructor.name });
+
       // Only process left-click
       if (!pointer.leftButtonDown()) return;
 
       // Check if clicked object's parent container has entity data
       const container = gameObject.parentContainer;
+      console.log('[DEBUG] container:', container ? 'found' : 'null');
       if (!container) return;
 
       const entityId = container.getData('entityId') as string | undefined;
       const entityType = container.getData('entityType') as string | undefined;
+      console.log('[DEBUG] entity data:', { entityId, entityType });
 
       if (!entityId) return;
 
@@ -444,6 +448,7 @@ export class WorldScene extends Phaser.Scene {
 
       // Gathering: minerals and plants use timing mini-game
       if (entityType === 'mineral' || entityType === 'plant') {
+        console.log('[DEBUG] Emitting gathering:start for', entityType, entityId);
         this.lastClickedEntity = entityId;
         gameSocket.emit('gathering:start', { targetEntityId: entityId });
         return;
@@ -588,46 +593,19 @@ export class WorldScene extends Phaser.Scene {
 
   /**
    * Handle gathering:challenge event from server.
-   * Spawns mini-game UI and disables world input.
+   * No longer used - gathering auto-completes on server.
+   * Kept for backwards compatibility.
    */
-  public handleGatheringChallenge(challenge: TimingChallenge): void {
-    if (this.activeMiniGame) {
-      this.activeMiniGame.destroy();
-    }
-
-    this.isGathering = true;
-
-    // Disable player movement during mini-game
-    // (input still works for the mini-game itself)
-
-    // Spawn mini-game centered on screen
-    const centerX = this.cameras.main.centerX;
-    const centerY = this.cameras.main.centerY - 50;
-
-    this.activeMiniGame = new GatheringMiniGame(
-      this,
-      centerX,
-      centerY,
-      challenge,
-      (offset) => this.completeGathering(challenge.challengeId, offset)
-    );
+  public handleGatheringChallenge(_challenge: TimingChallenge): void {
+    // Gathering now auto-completes on server, no mini-game needed
   }
 
   /**
    * Complete gathering and report timing to server.
+   * No longer used - gathering auto-completes on server.
    */
-  private completeGathering(challengeId: string, clientOffset: number): void {
-    this.isGathering = false;
-    this.activeMiniGame = null;
-
-    // Send result to server
-    const result: TimingResult = {
-      challengeId,
-      clientOffset,
-      clickTime: Date.now(),
-    };
-
-    gameSocket.emit('gathering:complete', result);
+  private completeGathering(_challengeId: string, _clientOffset: number): void {
+    // No longer used - gathering auto-completes on server
   }
 
   /**
@@ -716,13 +694,53 @@ export class WorldScene extends Phaser.Scene {
 
   /**
    * Update local player's facing direction and sprite texture.
+   * If moving, switches to the new direction's running animation.
+   * If idle, switches to the new direction's idle texture.
    */
   private updateLocalPlayerDirection(direction: Direction): void {
     if (this.localPlayerFacing === direction) return;
     this.localPlayerFacing = direction;
 
     const sprite = this.localPlayer?.getData('characterSprite') as Phaser.GameObjects.Sprite | undefined;
-    sprite?.setTexture(`character-${direction}`);
+    if (!sprite) return;
+
+    const isMoving = this.localPlayer?.getData('isMoving') as boolean;
+    if (isMoving) {
+      // Switch to new direction's running animation
+      sprite.play(`character-run-${direction}`);
+    } else {
+      // Switch to new direction's idle texture
+      sprite.setTexture(`character-idle-${direction}`);
+    }
+  }
+
+  /**
+   * Start running animation for the local player.
+   * Only starts if not already playing the same animation.
+   */
+  private startPlayerAnimation(direction: Direction): void {
+    const sprite = this.localPlayer?.getData('characterSprite') as Phaser.GameObjects.Sprite | undefined;
+    if (!sprite) return;
+
+    const animKey = `character-run-${direction}`;
+    // Only play if not already playing this animation (prevents jitter from restarting)
+    // Check both: animation must be playing AND must be the same key
+    if (!sprite.anims.isPlaying || sprite.anims.currentAnim?.key !== animKey) {
+      sprite.play(animKey);
+    }
+    this.localPlayer?.setData('isMoving', true);
+  }
+
+  /**
+   * Stop running animation and return to idle.
+   */
+  private stopPlayerAnimation(): void {
+    const sprite = this.localPlayer?.getData('characterSprite') as Phaser.GameObjects.Sprite | undefined;
+    if (!sprite) return;
+
+    sprite.stop();
+    sprite.setTexture(`character-idle-${this.localPlayerFacing}`);
+    this.localPlayer?.setData('isMoving', false);
   }
 
   private createLocalPlayer(position: Position): void {
@@ -747,17 +765,18 @@ export class WorldScene extends Phaser.Scene {
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
-    // Blob shadow (doubled for 256x256 tiles)
-    const shadow = this.add.ellipse(0, 0, 80, 40, 0x000000, 0.3);
+    // Blob shadow stretched to reach character's feet
+    const shadow = this.add.ellipse(0, -10, 120, 60, 0x000000, 0.3);
     container.add(shadow);
 
     // Player sprite with directional character texture (default facing south)
-    // Scale 1024px sprite to 256px with isometric squash (75% height)
-    const sprite = this.add.sprite(0, -24, `character-${this.localPlayerFacing}`);
+    // 56px astronaut sprites scaled to ~336px visual (6x width, 4.5x height for isometric squash)
+    const sprite = this.add.sprite(0, 0, `character-idle-${this.localPlayerFacing}`);
     sprite.setOrigin(0.5, 1.0);
-    sprite.setScale(0.25, 0.1875);
+    sprite.setScale(6, 4.5);
     container.add(sprite);
     container.setData('characterSprite', sprite); // Store reference for direction updates
+    container.setData('isMoving', false); // Track animation state
 
     // Store reference (as container now, not sprite)
     this.localPlayer = container as unknown as Phaser.GameObjects.Sprite; // Type hack for compatibility
@@ -776,6 +795,17 @@ export class WorldScene extends Phaser.Scene {
 
   update(time: number): void {
     this.handleInput(time);
+
+    // Check for idle state to stop running animation
+    // Don't stop if pathfinding is active (it handles its own animation lifecycle)
+    // Don't stop until movement tween has completed (prevents "sliding" without animation)
+    const isMoving = this.localPlayer?.getData('isMoving') as boolean;
+    const isPathfinding = this.pathfindingController?.isPathActive() ?? false;
+    const tweenComplete = time > this.movementTweenEndTime;
+    const keysReleased = time - this.lastMovementTime > WorldScene.IDLE_THRESHOLD_MS;
+    if (isMoving && !isPathfinding && tweenComplete && keysReleased) {
+      this.stopPlayerAnimation();
+    }
 
     // Throttled viewport culling
     if (time - this.lastCullTime >= this.cullInterval) {
@@ -814,16 +844,11 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private handleInput(time: number): void {
-    if (!this.localPlayer || !this.movementController || time - this.lastMoveTime < this.moveDelay) return;
+    if (!this.localPlayer || !this.movementController) return;
 
     // Can't move while dead
     const player = useGameStore.getState().player;
     if (player?.isDead) return;
-
-    // Block movement during gathering mini-game
-    if (this.isGathering) {
-      return;
-    }
 
     // Check if any movement key is pressed
     const anyWasdDown = this.wasd && (
@@ -837,6 +862,20 @@ export class WorldScene extends Phaser.Scene {
     // Reset chord when no keys are pressed
     if (!anyWasdDown && !anyCursorDown) {
       this.chordStartTime = 0;
+      return;
+    }
+
+    // Track movement time whenever keys are held (for animation idle detection)
+    this.lastMovementTime = time;
+
+    // Start/maintain running animation while keys are held
+    const isMoving = this.localPlayer.getData('isMoving') as boolean;
+    if (!isMoving) {
+      this.startPlayerAnimation(this.localPlayerFacing);
+    }
+
+    // Check if we can actually move (respecting move delay)
+    if (time - this.lastMoveTime < this.moveDelay) {
       return;
     }
 
@@ -1471,6 +1510,28 @@ export class WorldScene extends Phaser.Scene {
       const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 × diamond height)
       const targetY = screenPos.y - elevationOffset;
 
+      // Calculate movement direction for animated creatures
+      const oldX = container.getData('gridX') as number;
+      const oldY = container.getData('gridY') as number;
+      const dx = worldX - oldX;
+      const dy = worldY - oldY;
+      const newFacing = this.calculateFacingDirection(dx, dy);
+
+      // Handle animated creature sprites
+      const speciesId = container.getData('speciesId') as string | undefined;
+      const entitySprite = container.getData('entitySprite') as Phaser.GameObjects.Sprite | undefined;
+
+      if (speciesId && entitySprite && newFacing) {
+        const currentFacing = container.getData('facing') as Direction || 's';
+        container.setData('facing', newFacing);
+
+        // Play walk animation
+        const animKey = `${speciesId}-walk-${newFacing}`;
+        if (!entitySprite.anims.isPlaying || entitySprite.anims.currentAnim?.key !== animKey) {
+          entitySprite.play(animKey);
+        }
+      }
+
       // Kill any existing movement tween on this container
       this.tweens.killTweensOf(container);
 
@@ -1498,6 +1559,13 @@ export class WorldScene extends Phaser.Scene {
           container.setData('elevation', elevation);
           const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevation, 0, true);
           container.setDepth(depth);
+
+          // Stop walk animation and return to idle for animated creatures
+          if (speciesId && entitySprite) {
+            const facing = container.getData('facing') as Direction || 's';
+            entitySprite.stop();
+            entitySprite.setTexture(`${speciesId}-idle-${facing}`);
+          }
         },
       });
     }
@@ -1582,17 +1650,20 @@ export class WorldScene extends Phaser.Scene {
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
-    // Shadow (doubled for 256x256 tiles)
-    const shadow = this.add.ellipse(0, 0, 80, 40, 0x000000, 0.3);
+    // Blob shadow stretched to reach character's feet
+    const shadow = this.add.ellipse(0, -10, 120, 60, 0x000000, 0.3);
     container.add(shadow);
 
     // Player sprite with south-facing character texture (remote players always face south for now)
-    // Scale 1024px sprite to 256px with isometric squash (75% height)
-    const sprite = this.add.sprite(0, -24, 'character-s');
+    // 56px astronaut sprites scaled to ~336px visual (6x width, 4.5x height for isometric squash)
+    const sprite = this.add.sprite(0, 0, 'character-idle-s');
     sprite.setOrigin(0.5, 1.0);
-    sprite.setScale(0.25, 0.1875);
+    sprite.setScale(6, 4.5);
     sprite.setTint(this.getFactionColor(player.faction));
     container.add(sprite);
+    container.setData('characterSprite', sprite);
+    container.setData('isMoving', false);
+    container.setData('facing', 's');
 
     const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 0, true);
     container.setDepth(depth);
@@ -1609,8 +1680,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   movePlayer(playerId: string, position: Position): void {
-    const sprite = this.playerSprites.get(playerId);
-    if (!sprite || !this.isoTransform) return;
+    const container = this.playerSprites.get(playerId);
+    if (!container || !this.isoTransform) return;
 
     // Get elevation for the correct zone
     const elevation = this.getTileElevation(position.x, position.y, position.zoneId);
@@ -1619,30 +1690,89 @@ export class WorldScene extends Phaser.Scene {
     const { worldX, worldY } = this.positionToWorldCoords(position);
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
 
+    // Calculate movement direction from position delta
+    const oldX = container.getData('gridX') as number;
+    const oldY = container.getData('gridY') as number;
+    const dx = worldX - oldX;
+    const dy = worldY - oldY;
+    const newFacing = this.calculateFacingDirection(dx, dy);
+
+    // Get character sprite for animation control
+    const characterSprite = container.getData('characterSprite') as Phaser.GameObjects.Sprite | undefined;
+    const currentFacing = container.getData('facing') as Direction || 's';
+
+    // Update facing and start animation
+    if (characterSprite && newFacing) {
+      container.setData('facing', newFacing);
+      const isMoving = container.getData('isMoving') as boolean;
+
+      if (!isMoving || newFacing !== currentFacing) {
+        characterSprite.play(`character-run-${newFacing}`);
+        container.setData('isMoving', true);
+      }
+    }
+
     // Mark player dirty for depth sorting
     if (this.depthSorter) {
       this.depthSorter.markDirty(playerId);
     }
 
-    this.tweens.killTweensOf(sprite);
+    this.tweens.killTweensOf(container);
     this.tweens.add({
-      targets: sprite,
+      targets: container,
       x: screenPos.x,
       y: screenPos.y - elevationOffset,
       duration: 100,
       ease: 'Linear',
       onComplete: () => {
-        sprite.setData('gridX', worldX);
-        sprite.setData('gridY', worldY);
-        sprite.setData('elevation', elevation);
+        container.setData('gridX', worldX);
+        container.setData('gridY', worldY);
+        container.setData('elevation', elevation);
         const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevation, 0, true);
-        sprite.setDepth(depth);
+        container.setDepth(depth);
+
+        // Stop animation and return to idle
+        if (characterSprite) {
+          characterSprite.stop();
+          const facing = container.getData('facing') as Direction || 's';
+          characterSprite.setTexture(`character-idle-${facing}`);
+          container.setData('isMoving', false);
+        }
       }
     });
   }
 
+  /**
+   * Calculate facing direction from movement delta.
+   */
+  private calculateFacingDirection(dx: number, dy: number): Direction | null {
+    if (dx === 0 && dy === 0) return null;
+
+    // 8-directional mapping based on dx/dy
+    if (dx > 0 && dy === 0) return 'e';
+    if (dx < 0 && dy === 0) return 'w';
+    if (dx === 0 && dy > 0) return 's';
+    if (dx === 0 && dy < 0) return 'n';
+    if (dx > 0 && dy > 0) return 'se';
+    if (dx > 0 && dy < 0) return 'ne';
+    if (dx < 0 && dy > 0) return 'sw';
+    if (dx < 0 && dy < 0) return 'nw';
+
+    return null;
+  }
+
   updateLocalPlayerSprite(position: Position, reconciling = false): void {
     if (!this.localPlayer || !this.isoTransform) return;
+
+    // For pathfinding (click-to-move), start animation if not already moving
+    // Keyboard movement handles animation in handleInput() instead
+    if (!reconciling && this.pathfindingController?.isPathActive()) {
+      this.lastMovementTime = this.time.now;
+      const isMoving = this.localPlayer.getData('isMoving') as boolean;
+      if (!isMoving) {
+        this.startPlayerAnimation(this.localPlayerFacing);
+      }
+    }
 
     // Get elevation for the correct zone (handles race condition when zone:state arrives after position update)
     const elevation = this.getTileElevation(position.x, position.y, position.zoneId);
@@ -1686,6 +1816,11 @@ export class WorldScene extends Phaser.Scene {
     }
     // Update moveDelay for rate limiting (keyboard) and pathfinding timer
     this.moveDelay = effectiveMoveDelay;
+
+    // Track when this movement tween will complete (for animation idle detection)
+    if (!reconciling) {
+      this.movementTweenEndTime = this.time.now + tweenDuration;
+    }
     this.pathfindingController?.setMoveDelay(effectiveMoveDelay);
 
     if (reconciling) {
