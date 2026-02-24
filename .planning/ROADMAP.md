@@ -76,11 +76,10 @@ Plans:
   4. Each service has defined resource limits preventing runaway consumption
   5. Stack deploys successfully with docker stack deploy command
 
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 90-01: TBD
-- [ ] 90-02: TBD
+- [ ] 90-01-PLAN.md — Docker Swarm stack with all services, volumes, and resource limits
 
 ---
 
@@ -247,7 +246,7 @@ Phases execute in numeric order: 89 → 90 → 91 → 92 → 93
 | 87. Item Integration & Balance | v1.18 | 4/4 | Complete | 2026-02-24 |
 | 88. Content Gaps & Discovery | v1.18 | 3/3 | Complete | 2026-02-24 |
 | 89. Docker Images | v1.19 | 3/3 | Complete | 2026-02-24 |
-| 90. Swarm Stack | v1.19 | 0/2 | Not started | - |
+| 90. Swarm Stack | v1.19 | 0/1 | Not started | - |
 | 91. Traefik & SSL | v1.19 | 0/2 | Not started | - |
 | 92. CI/CD Pipeline | v1.19 | 0/2 | Not started | - |
 | 93. Documentation | v1.19 | 0/1 | Not started | - |
