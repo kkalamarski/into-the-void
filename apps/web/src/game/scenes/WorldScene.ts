@@ -458,7 +458,7 @@ export class WorldScene extends Phaser.Scene {
         }
 
         // Set as combat target so abilities can target it
-        useCombatStore.getState().setTarget(entityId);
+        useCombatStore.getState().selectTarget(entityId);
         return;
       }
 

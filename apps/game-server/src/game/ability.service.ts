@@ -218,10 +218,14 @@ export class AbilityService {
     const inventory = this.inventoryService.getInventory(player.id);
     if (inventory?.equipment.tool) {
       const toolDef = ItemRegistry.get(inventory.equipment.tool.itemId);
-      if (toolDef?.stats) {
+      // Extract stats from effects array (stats are stored as an effect with type='stats')
+      const statsEffect = toolDef?.effects?.find(
+        (e) => e.effect.type === 'stats'
+      );
+      if (statsEffect && statsEffect.effect.type === 'stats') {
         toolStats = {
-          yieldBonus: toolDef.stats.yieldBonus ?? 0,
-          gatherSpeed: toolDef.stats.gatherSpeed ?? 0,
+          yieldBonus: statsEffect.effect.yieldBonus ?? 0,
+          gatherSpeed: statsEffect.effect.gatherSpeed ?? 0,
         };
       }
     }
