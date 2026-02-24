@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 87 - Item Integration & Balance
+**Current focus:** Phase 88 - Content Gaps & Discovery
 
 ## Current Position
 
-Phase: 87 of 88 (Item Integration & Balance)
-Plan: 4 of 4 in current phase
-Status: Phase 87 complete - Items defined, integrated, and obtainable
-Last activity: 2026-02-24 - Completed 87-04 (Loot Tables & Vendor Integration)
+Phase: 88 of 88 (Content Gaps & Discovery)
+Plan: 1 of 2 in current phase
+Status: Phase 88 in progress - Entity definitions complete, loot tables pending
+Last activity: 2026-02-24 - Completed 88-01 (Entity Gap Closure)
 
-Progress: [####################] 100% v1.17 | [############...] 79% v1.18
+Progress: [####################] 100% v1.17 | [#############..] 83% v1.18
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 236 (v1.0-v1.17: 222, v1.18: 14)
+- Total plans completed: 237 (v1.0-v1.17: 222, v1.18: 15)
 - Average duration: ~3 min per plan
-- Total execution time: ~11.9 hours across 17 milestones
+- Total execution time: ~12.0 hours across 17 milestones
 
 **By Milestone:**
 
@@ -59,6 +59,7 @@ Progress: [####################] 100% v1.17 | [############...] 79% v1.18
 | Phase 87 P02 | 111s | 2 tasks | 2 files |
 | Phase 87 P03 | 157s | 3 tasks | 3 files |
 | Phase 87 P04 | 326s | 2 tasks | 5 files |
+| Phase 088 P01 | 266 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,10 @@ Recent decisions affecting current work:
 - [Phase 87-04]: Exotic suits/tools (Level 25+) NOT in vendors - loot-only for progression gating
 - [Phase 87-04]: Consumable drop rates scaled by biome tier (0.05-0.25 for rares/epics)
 - [Phase 87-04]: Maniac creatures have highest consumable drop rates (0.15-0.25 for all rarities)
+- [Phase 88-01]: Reuse existing textures for rare/epic variants (plant_luminous_vine, mineral_chemical_sump)
+- [Phase 88-01]: Epic spores include ancient_fragment drop (0.15 chance) for progression value
+- [Phase 88-01]: Marsh gas node yields reagent_volatile_extract (epic-tier reagent)
+- [Phase 88-01]: Guardian construct and crater stalker as predators, relic beast as omnivore
 
 ### Pending Todos
 
@@ -131,13 +136,13 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 87-04-PLAN.md (Loot Tables & Vendor Integration)
+Stopped at: Completed 88-01-PLAN.md (Entity Gap Closure)
 Resume file: None
 
 **Next steps:**
-1. Complete v1.18 milestone with Phase 88 (Gaps & Discovery)
-2. Address gap-closure requirements (ENT-07-09, CREA-09-10, PROG-04-06)
+1. Complete Phase 88-02 (Loot Tables for new entities)
+2. Verify all v1.18 gap-closure requirements satisfied (ENT-07-09, CREA-09-10, PROG-04-06)
 3. Begin v1.19 milestone planning
 
 ---
-*Last updated: 2026-02-24 - Phase 87 complete (items defined, integrated, and obtainable)*
+*Last updated: 2026-02-24 - Phase 88-01 complete (entity definitions added for biome gaps)*
