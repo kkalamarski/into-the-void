@@ -446,11 +446,19 @@ export class WorldScene extends Phaser.Scene {
         return;
       }
 
-      // Gathering: minerals and plants use timing mini-game
+      // Gathering: minerals and plants are selected as targets for gathering abilities
       if (entityType === 'mineral' || entityType === 'plant') {
-        console.log('[DEBUG] Emitting gathering:start for', entityType, entityId);
+        // Select as target for gathering abilities
         this.lastClickedEntity = entityId;
-        gameSocket.emit('gathering:start', { targetEntityId: entityId });
+
+        // Show target highlight (use 'herbivore' style for plants, 'mineral' for minerals)
+        const targetContainer = this.entitySprites.get(entityId);
+        if (targetContainer) {
+          this.targetHighlight?.show(entityId, targetContainer, 'herbivore');
+        }
+
+        // Set as combat target so abilities can target it
+        useCombatStore.getState().setTarget(entityId);
         return;
       }
 
