@@ -20,7 +20,7 @@
 - v1.15 Quest System - Phases 64-69 (shipped 2026-02-22)
 - v1.16 UI Polish - Phases 70-75 (shipped 2026-02-23)
 - v1.17 Core Gameplay Loop - Phases 76-81 (shipped 2026-02-23)
-- **v1.18 Content Expansion** - Phases 82-87 (in progress)
+- **v1.18 Content Expansion** - Phases 82-88 (in progress)
 
 ## Phases
 
@@ -311,29 +311,50 @@ Plans:
 
 ---
 
-### Phase 84: Exotic Biome Foundation
+### Phase 84: Exotic Biome Foundation — COMPLETE (2026-02-24)
 
 **Goal**: Players can explore three exotic/anomaly biomes with unique visual identity and environmental effects
 **Depends on**: Phase 83
 **Requirements**: BIOME-04, BIOME-05, BIOME-06
-**Plans:** 2 plans
+**Plans:** 2/2 complete
 
 **Success Criteria** (what must be TRUE):
-  1. Player can enter Void Rift (Tier IV) with distinct visual palette and reality distortion awareness
-  2. Player can explore Crystalline Wastes (Tier III) with crystal formations visible on terrain
-  3. Player can navigate Bioluminescent Depths (Tier II) with glowing flora and reduced base visibility
-  4. Each exotic biome has distinct tile types and color schemes distinguishable from aquatic biomes
+  1. ✓ Player can enter Void Rift (Tier IV) with distinct visual palette and reality distortion awareness
+  2. ✓ Player can explore Crystalline Wastes (Tier III) with crystal formations visible on terrain
+  3. ✓ Player can navigate Bioluminescent Depths (Tier II) with glowing flora and reduced base visibility
+  4. ✓ Each exotic biome has distinct tile types and color schemes distinguishable from aquatic biomes
 
 Plans:
-- [ ] 84-01-PLAN.md — Type foundation and exotic tile definitions
-- [ ] 84-02-PLAN.md — Biome generation and configuration
+- [x] 84-01-PLAN.md — Type foundation and exotic tile definitions
+- [x] 84-02-PLAN.md — Biome generation and configuration
 
 ---
 
-### Phase 85: Exotic Entity Population
+### Phase 85: Gathering as Ability System
+
+**Goal**: Replace broken mini-game gathering with ability-based system where tools grant gathering abilities with cooldowns and tool stats affect yield/speed
+**Depends on**: Phase 84
+**Requirements**: Bugfix (gathering broken), Bugfix (entity collisions not set on client)
+**Plans:** 3 plans
+
+**Success Criteria** (what must be TRUE):
+  1. Player can use Harvest ability (granted by botany tools) on plants with cooldown
+  2. Player can use Mine ability (granted by extraction tools) on minerals with cooldown
+  3. Tool stats (yield bonus, gather speed) affect gathering outcomes
+  4. Entity collisions are properly set on client (minerals/plants block movement)
+  5. Gathering produces items in inventory and updates entity state/respawn
+
+Plans:
+- [ ] 85-01-PLAN.md — Gather ability types and definitions
+- [ ] 85-02-PLAN.md — AbilityService gather effect handling
+- [ ] 85-03-PLAN.md — Entity collision fix on client
+
+---
+
+### Phase 86: Exotic Entity Population
 
 **Goal**: Exotic biomes are populated with unique resources and creatures appropriate to dimensional/anomaly themes
-**Depends on**: Phase 84
+**Depends on**: Phase 85
 **Requirements**: ENT-04, ENT-05, ENT-06, CREA-05, CREA-06, CREA-07, CREA-08
 **Plans:** TBD
 
@@ -345,15 +366,15 @@ Plans:
   5. Tier IV maniac creature (dimensional aberration) presents significant challenge requiring Tier III gear
 
 Plans:
-- [ ] 85-01: TBD
-- [ ] 85-02: TBD
+- [ ] 86-01: TBD
+- [ ] 86-02: TBD
 
 ---
 
-### Phase 86: Item Integration & Balance
+### Phase 87: Item Integration & Balance
 
 **Goal**: New content yields useful equipment and materials with balanced progression across all tiers
-**Depends on**: Phase 85
+**Depends on**: Phase 86
 **Requirements**: ITEM-01, ITEM-02, ITEM-03, ITEM-04, ITEM-05, ITEM-06, ITEM-07, ITEM-08, ITEM-09, ITEM-10, PROG-01, PROG-02, PROG-03
 **Plans:** TBD
 
@@ -365,16 +386,16 @@ Plans:
   5. High-tier exotic items require existing Tier I-II materials (horizontal progression, no power creep)
 
 Plans:
-- [ ] 86-01: TBD
-- [ ] 86-02: TBD
-- [ ] 86-03: TBD
+- [ ] 87-01: TBD
+- [ ] 87-02: TBD
+- [ ] 87-03: TBD
 
 ---
 
-### Phase 87: Content Gaps & Discovery
+### Phase 88: Content Gaps & Discovery
 
 **Goal**: Existing biomes have complete resource coverage and all new content integrates with discovery systems
-**Depends on**: Phase 86
+**Depends on**: Phase 87
 **Requirements**: ENT-07, ENT-08, ENT-09, CREA-09, CREA-10, PROG-04, PROG-05, PROG-06
 **Plans:** TBD
 
@@ -386,15 +407,15 @@ Plans:
   5. All new biomes have zone mastery objectives, lore fragments (6-10 total), and POI types
 
 Plans:
-- [ ] 87-01: TBD
-- [ ] 87-02: TBD
+- [ ] 88-01: TBD
+- [ ] 88-02: TBD
 
 ---
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87
+Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87 -> 88
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -481,12 +502,13 @@ Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87
 | 81. Combat Balancing & Quest Audit | v1.17 | 3/3 | Complete | 2026-02-23 |
 | 82. Aquatic Biome Foundation | v1.18 | 3/3 | Complete | 2026-02-23 |
 | 83. Aquatic Entity Population | v1.18 | 3/3 | Complete | 2026-02-23 |
-| 84. Exotic Biome Foundation | v1.18 | 0/2 | Planned | - |
-| 85. Exotic Entity Population | v1.18 | 0/2 | Not started | - |
-| 86. Item Integration & Balance | v1.18 | 0/3 | Not started | - |
-| 87. Content Gaps & Discovery | v1.18 | 0/2 | Not started | - |
+| 84. Exotic Biome Foundation | v1.18 | 2/2 | Complete | 2026-02-24 |
+| 85. Gathering as Ability System | v1.18 | 0/3 | Not started | - |
+| 86. Exotic Entity Population | v1.18 | 0/2 | Not started | - |
+| 87. Item Integration & Balance | v1.18 | 0/3 | Not started | - |
+| 88. Content Gaps & Discovery | v1.18 | 0/2 | Not started | - |
 
-**Total:** 87 phases (83 complete, 4 pending)
+**Total:** 88 phases (84 complete, 4 pending)
 
 ---
-*Last updated: 2026-02-24 - Phase 84 plans created*
+*Last updated: 2026-02-24 - Phase 85 (Gathering as Ability) added, phases shifted*

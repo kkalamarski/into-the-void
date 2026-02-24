@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 84 - Exotic Biome Foundation
+**Current focus:** Phase 85 - Gathering as Ability System
 
 ## Current Position
 
-Phase: 84 of 87 (Exotic Biome Foundation) - COMPLETE
-Plan: 2 of 2 in current phase
-Status: Phase Complete
-Last activity: 2026-02-24 - Plan 084-02 complete (exotic biome generation)
+Phase: 85 of 88 (Gathering as Ability System) - NOT STARTED
+Plan: 0 of 3 in current phase
+Status: Planning required
+Last activity: 2026-02-24 - Phase 84 complete, Phase 85 created
 
-Progress: [####################] 100% v1.17 | [#######.......] 57% v1.18
+Progress: [####################] 100% v1.17 | [########......] 57% v1.18
 
 ## Performance Metrics
 
@@ -37,9 +37,10 @@ Progress: [####################] 100% v1.17 | [#######.......] 57% v1.18
 | 82. Aquatic Foundation | 3 | BIOME-01-03, BIOME-07-09 |
 | 83. Aquatic Entities | 3 | ENT-01-03, CREA-01-04, gap-closure |
 | 84. Exotic Foundation | 2 | BIOME-04-06 |
-| 85. Exotic Entities | 2 | ENT-04-06, CREA-05-08 |
-| 86. Items & Balance | 3 | ITEM-01-10, PROG-01-03 |
-| 87. Gaps & Discovery | 2 | ENT-07-09, CREA-09-10, PROG-04-06 |
+| 85. Gathering as Ability | 3 | Bugfix gathering, entity collisions |
+| 86. Exotic Entities | 2 | ENT-04-06, CREA-05-08 |
+| 87. Items & Balance | 3 | ITEM-01-10, PROG-01-03 |
+| 88. Gaps & Discovery | 2 | ENT-07-09, CREA-09-10, PROG-04-06 |
 | Phase 82 P01 | 176s | 3 tasks | 5 files |
 | Phase 82 P02 | 363s | 3 tasks | 10 files |
 | Phase 82 P03 | 380s | 3 tasks | 8 files |
@@ -102,12 +103,13 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 084-02-PLAN.md (Phase 84 complete)
+Stopped at: Created Phase 85 (Gathering as Ability System)
 Resume file: None
 
 **Next steps:**
-1. Continue to Phase 85 (Exotic Entities)
-2. Create exotic creature and entity definitions
+1. Plan Phase 85 (Gathering as Ability System)
+2. Research gathering ability types and tool stats
+3. Create plans for gather effect handling and entity collision fix
 
 ---
-*Last updated: 2026-02-24 - Phase 84 complete (exotic biome foundation)*
+*Last updated: 2026-02-24 - Phase 85 created (gathering as ability system)*
