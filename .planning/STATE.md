@@ -49,6 +49,7 @@ Progress: [####################] 100% v1.17 | [########......] 57% v1.18
 | Phase 83 P03 | 239 | 3 tasks | 3 files |
 | Phase 84 P01 | 143s | 3 tasks | 3 files |
 | Phase 84 P02 | 247s | 3 tasks | 7 files |
+| Phase 85 P02 | 268s | 5 tasks | 2 files |
 | Phase 85 P03 | 234s | 5 tasks | 3 files |
 
 ## Accumulated Context
@@ -86,6 +87,10 @@ Recent decisions affecting current work:
 - [Phase 84-02]: Void rift requires BOTH temp < 0.15 AND moisture < 0.2 (rarest biome)
 - [Phase 84-02]: Crystalline wastes triggers at elevation > 0.75 (high altitude)
 - [Phase 84-02]: Bioluminescent depths positioned at elevation 0.2-0.4 (above aquatic)
+- [Phase 85-02]: Tool stats extracted once per ability use for gather abilities
+- [Phase 85-02]: GatherSpeed reduces cooldown multiplicatively (1 - speed)
+- [Phase 85-02]: EntityService.handleToolUse handles inventory updates and entity changes
+- [Phase 85-02]: Gathering:start handler redirects to ability:use for backward compatibility
 - [Phase 85-03]: Only static gatherable entities (minerals, plants) block movement
 - [Phase 85-03]: Items, NPCs, and creatures do not block pathfinding
 - [Phase 85-03]: Minerals/plants use target selection instead of auto-start gathering
