@@ -199,6 +199,8 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_CHEMICAL_SUMP, weight: 8, rarity: 2 },
+      { id: ENTITY_IDS.MINERAL_TOXIC_CRYSTAL, weight: 5, rarity: 2 },
+      { id: ENTITY_IDS.MINERAL_MARSH_GAS_NODE, weight: 3, rarity: 3 },
     ],
     plants: [
       { id: ENTITY_IDS.PLANT_GAS_POD, weight: 10 },
