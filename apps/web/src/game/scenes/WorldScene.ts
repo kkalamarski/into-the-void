@@ -2086,9 +2086,13 @@ export class WorldScene extends Phaser.Scene {
     const terrainBlocked = chunk.data.collisions[localY]?.[localX] ?? true;
     if (terrainBlocked) return true;
 
-    // 2. Entity blocking (EBLK-02)
+    // 2. Entity blocking - only static gatherable entities block
     const entityAtTile = useEntityStore.getState().getEntityAtPosition(localX, localY, zoneId);
-    if (entityAtTile) return true;
+    if (entityAtTile) {
+      // Only minerals and plants block movement
+      const blocksMovement = entityAtTile.type === 'mineral' || entityAtTile.type === 'plant';
+      if (blocksMovement) return true;
+    }
 
     return false;
   }
