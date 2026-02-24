@@ -14,6 +14,10 @@ import { computeIlvl, STAT_RARITY_MULTIPLIERS, TIER_MULTIPLIERS } from '../utils
  * Stat Formula: base(15) * rarity_mult * tier_mult
  * Rarity: common=1.0, rare=1.4, epic=2.0, exotic=2.8, legendary=4.0
  * Tier: 1=1.0, 2=2.0, 3=3.5, 4=5.5, 5=8.0
+ *
+ * Gathering Stats (Phase 85):
+ * - mining/bio tools: yieldBonus and gatherSpeed based on tier
+ * - Tier 1: 0.0, Tier 2: 0.1, Tier 3: 0.2, Tier 4: 0.3, Tier 5: 0.5/0.4
  */
 
 /**
@@ -25,16 +29,44 @@ function getToolStats(toolType: ToolType, rarity: ItemRarity, tier: 1 | 2 | 3 | 
   const tierMult = TIER_MULTIPLIERS[tier];
   const value = Math.round(base * rarityMult * tierMult);
 
+  // Gathering stat bonuses (Phase 85)
+  const gatheringStats: { yieldBonus?: number; gatherSpeed?: number } = {};
+  if (toolType === 'mining' || toolType === 'bio') {
+    switch (tier) {
+      case 1:
+        gatheringStats.yieldBonus = 0.0;
+        gatheringStats.gatherSpeed = 0.0;
+        break;
+      case 2:
+        gatheringStats.yieldBonus = 0.1;
+        gatheringStats.gatherSpeed = 0.1;
+        break;
+      case 3:
+        gatheringStats.yieldBonus = 0.2;
+        gatheringStats.gatherSpeed = 0.2;
+        break;
+      case 4:
+        gatheringStats.yieldBonus = 0.3;
+        gatheringStats.gatherSpeed = 0.3;
+        break;
+      case 5:
+        gatheringStats.yieldBonus = 0.5;
+        gatheringStats.gatherSpeed = 0.4;
+        break;
+    }
+  }
+
   switch (toolType) {
     case 'combat':
     case 'demolition':
     case 'universal':
       return { type: 'stats', power: value };
     case 'mining':
+      return { type: 'stats', perception: value, ...gatheringStats };
     case 'research':
       return { type: 'stats', perception: value };
     case 'bio':
-      return { type: 'stats', vigor: value };
+      return { type: 'stats', vigor: value, ...gatheringStats };
     case 'stealth':
       return { type: 'stats', perception: Math.round(value * 0.6), haste: Math.round(value * 0.4) };
     case 'anomaly':
@@ -95,7 +127,7 @@ export const TOOL_MINING_COMMON: ItemDefinition = {
     { trigger: 'on_equip', effect: getToolStats('mining', 'common', 1) },
   ],
   range: 1,
-  grantedAbilities: ['basic_strike'],
+  grantedAbilities: ['mine', 'basic_strike'],
 };
 
 export const TOOL_MINING_RARE: ItemDefinition = {
@@ -118,7 +150,7 @@ export const TOOL_MINING_RARE: ItemDefinition = {
     { trigger: 'on_equip', effect: getToolStats('mining', 'rare', 1) },
   ],
   range: 2,
-  grantedAbilities: ['basic_strike', 'thermal_lance'],
+  grantedAbilities: ['mine', 'basic_strike', 'thermal_lance'],
 };
 
 export const TOOL_MINING_EPIC: ItemDefinition = {
@@ -141,7 +173,7 @@ export const TOOL_MINING_EPIC: ItemDefinition = {
     { trigger: 'on_equip', effect: getToolStats('mining', 'epic', 2) },
   ],
   range: 3,
-  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst'],
+  grantedAbilities: ['mine', 'basic_strike', 'thermal_lance', 'plasma_burst'],
 };
 
 export const TOOL_MINING_EXOTIC: ItemDefinition = {
@@ -164,7 +196,7 @@ export const TOOL_MINING_EXOTIC: ItemDefinition = {
     { trigger: 'on_equip', effect: getToolStats('mining', 'exotic', 3) },
   ],
   range: 4,
-  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'void_drain'],
+  grantedAbilities: ['mine', 'basic_strike', 'thermal_lance', 'plasma_burst', 'void_drain'],
 };
 
 export const TOOL_MINING_LEGENDARY: ItemDefinition = {
@@ -187,7 +219,7 @@ export const TOOL_MINING_LEGENDARY: ItemDefinition = {
     { trigger: 'on_equip', effect: getToolStats('mining', 'legendary', 4) },
   ],
   range: 5,
-  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'void_drain', 'overload_pulse'],
+  grantedAbilities: ['mine', 'basic_strike', 'thermal_lance', 'plasma_burst', 'void_drain', 'overload_pulse'],
 };
 
 // ============================================================
@@ -453,7 +485,7 @@ export const TOOL_MINING_COMMON_MK2: ItemDefinition = {
     { trigger: 'on_equip', effect: getToolStats('mining', 'common', 2) },
   ],
   range: 1,
-  grantedAbilities: ['basic_strike', 'thermal_lance'],
+  grantedAbilities: ['mine', 'basic_strike', 'thermal_lance'],
 };
 
 export const TOOL_COMBAT_COMMON_MK2: ItemDefinition = {
@@ -523,7 +555,7 @@ export const TOOL_MINING_COMMON_MK3: ItemDefinition = {
     { trigger: 'on_equip', effect: getToolStats('mining', 'common', 3) },
   ],
   range: 2,
-  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst'],
+  grantedAbilities: ['mine', 'basic_strike', 'thermal_lance', 'plasma_burst'],
 };
 
 export const TOOL_COMBAT_COMMON_MK3: ItemDefinition = {
@@ -593,7 +625,7 @@ export const TOOL_MINING_COMMON_MK4: ItemDefinition = {
     { trigger: 'on_equip', effect: getToolStats('mining', 'common', 4) },
   ],
   range: 3,
-  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse'],
+  grantedAbilities: ['mine', 'basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse'],
 };
 
 export const TOOL_COMBAT_COMMON_MK4: ItemDefinition = {
@@ -663,7 +695,7 @@ export const TOOL_MINING_COMMON_MK5: ItemDefinition = {
     { trigger: 'on_equip', effect: getToolStats('mining', 'common', 5) },
   ],
   range: 4,
-  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse', 'void_drain'],
+  grantedAbilities: ['mine', 'basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse', 'void_drain'],
 };
 
 export const TOOL_COMBAT_COMMON_MK5: ItemDefinition = {
@@ -737,7 +769,7 @@ export const TOOL_MINING_RARE_MK2: ItemDefinition = {
     { trigger: 'on_equip', effect: getToolStats('mining', 'rare', 2) },
   ],
   range: 2,
-  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst'],
+  grantedAbilities: ['mine', 'basic_strike', 'thermal_lance', 'plasma_burst'],
 };
 
 export const TOOL_COMBAT_RARE_MK2: ItemDefinition = {
@@ -807,7 +839,7 @@ export const TOOL_MINING_RARE_MK3: ItemDefinition = {
     { trigger: 'on_equip', effect: getToolStats('mining', 'rare', 3) },
   ],
   range: 3,
-  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse'],
+  grantedAbilities: ['mine', 'basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse'],
 };
 
 export const TOOL_COMBAT_RARE_MK3: ItemDefinition = {
@@ -877,7 +909,7 @@ export const TOOL_MINING_RARE_MK4: ItemDefinition = {
     { trigger: 'on_equip', effect: getToolStats('mining', 'rare', 4) },
   ],
   range: 4,
-  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse', 'void_drain'],
+  grantedAbilities: ['mine', 'basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse', 'void_drain'],
 };
 
 export const TOOL_COMBAT_RARE_MK4: ItemDefinition = {
@@ -947,7 +979,7 @@ export const TOOL_MINING_RARE_MK5: ItemDefinition = {
     { trigger: 'on_equip', effect: getToolStats('mining', 'rare', 5) },
   ],
   range: 5,
-  grantedAbilities: ['basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse', 'void_drain', 'cryo_blast'],
+  grantedAbilities: ['mine', 'basic_strike', 'thermal_lance', 'plasma_burst', 'overload_pulse', 'void_drain', 'cryo_blast'],
 };
 
 export const TOOL_COMBAT_RARE_MK5: ItemDefinition = {
@@ -1020,7 +1052,7 @@ export const TOOL_BIO_PROBE_RARE: ItemDefinition = {
     { trigger: 'on_equip', effect: getToolStats('bio', 'rare', 1) },
   ],
   range: 2,
-  grantedAbilities: ['energy_pulse', 'analyze_specimen', 'nano_repair'],
+  grantedAbilities: ['harvest', 'energy_pulse', 'analyze_specimen', 'nano_repair'],
 };
 
 export const TOOL_DEMOLITION_EPIC: ItemDefinition = {
