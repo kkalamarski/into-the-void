@@ -19,6 +19,14 @@ import {
   TRENCH_DEEP,
   SHORE_TRANSITION,
 } from './aquatic-tiles';
+import {
+  VOID_RIFT_FLOOR,
+  VOID_RIFT_DISTORTION,
+  CRYSTALLINE_FLOOR,
+  CRYSTAL_FORMATION_LARGE,
+  BIOLUMINESCENT_FLOOR,
+  BIOLUMINESCENT_FLORA,
+} from './exotic-tiles';
 
 /**
  * All tile definitions - register these with TileRegistry
@@ -58,6 +66,13 @@ export const ALL_TILES: readonly TileDefinition[] = [
   TRENCH_FLOOR,
   TRENCH_DEEP,
   SHORE_TRANSITION,
+  // Exotic Biomes
+  VOID_RIFT_FLOOR,
+  VOID_RIFT_DISTORTION,
+  CRYSTALLINE_FLOOR,
+  CRYSTAL_FORMATION_LARGE,
+  BIOLUMINESCENT_FLOOR,
+  BIOLUMINESCENT_FLORA,
 ];
 
 /**
@@ -88,6 +103,12 @@ export const TILE_IDS = {
   TRENCH_FLOOR: 'trench_floor',
   TRENCH_DEEP: 'trench_deep',
   SHORE_TRANSITION: 'shore_transition',
+  VOID_RIFT_FLOOR: 'void_rift_floor',
+  VOID_RIFT_DISTORTION: 'void_rift_distortion',
+  CRYSTALLINE_FLOOR: 'crystalline_floor',
+  CRYSTAL_FORMATION_LARGE: 'crystal_formation_large',
+  BIOLUMINESCENT_FLOOR: 'bioluminescent_floor',
+  BIOLUMINESCENT_FLORA: 'bioluminescent_flora',
 } as const;
 
 // Re-export individual tiles for direct imports
@@ -116,4 +137,10 @@ export {
   TRENCH_FLOOR,
   TRENCH_DEEP,
   SHORE_TRANSITION,
+  VOID_RIFT_FLOOR,
+  VOID_RIFT_DISTORTION,
+  CRYSTALLINE_FLOOR,
+  CRYSTAL_FORMATION_LARGE,
+  BIOLUMINESCENT_FLOOR,
+  BIOLUMINESCENT_FLORA,
 };
