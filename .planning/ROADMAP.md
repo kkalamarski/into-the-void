@@ -52,12 +52,12 @@
   3. Game server container starts with health check responding at /health
   4. All three images use multi-stage builds and are under 200MB each
 
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 89-01: TBD
-- [ ] 89-02: TBD
-- [ ] 89-03: TBD
+- [ ] 89-01-PLAN.md — Backend Dockerfiles (API + game-server with health checks)
+- [ ] 89-02-PLAN.md — Web Dockerfile (nginx + static files)
+- [ ] 89-03-PLAN.md — Build validation and health check verification
 
 ---
 
@@ -246,7 +246,7 @@ Phases execute in numeric order: 89 → 90 → 91 → 92 → 93
 | 86. Exotic Entity Population | v1.18 | 2/2 | Complete | 2026-02-24 |
 | 87. Item Integration & Balance | v1.18 | 4/4 | Complete | 2026-02-24 |
 | 88. Content Gaps & Discovery | v1.18 | 3/3 | Complete | 2026-02-24 |
-| 89. Docker Images | v1.19 | 0/3 | Not started | - |
+| 89. Docker Images | v1.19 | 0/3 | Planned | - |
 | 90. Swarm Stack | v1.19 | 0/2 | Not started | - |
 | 91. Traefik & SSL | v1.19 | 0/2 | Not started | - |
 | 92. CI/CD Pipeline | v1.19 | 0/2 | Not started | - |
