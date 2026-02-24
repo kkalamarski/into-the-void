@@ -266,6 +266,46 @@ export const MINERAL_ANOMALY_CRYSTAL_EPIC: MineralDefinition = {
   rarity: 'epic',
 };
 
+// ===== PHASE 88 ADDITIONS =====
+
+export const MINERAL_TOXIC_CRYSTAL: MineralDefinition = {
+  id: 'mineral_toxic_crystal',
+  displayName: 'Toxic Crystal Formation',
+  description: 'Crystallized marsh toxins with unusual chemical properties. Handle with extreme caution.',
+  entityClass: 'mineral',
+  biomes: ['miasma_marshes'],
+  textureKey: 'mineral_chemical_sump',
+  color: 0x9acd32,
+  lootTableId: 'loot_mineral_toxic_crystal',
+  miningYield: [
+    { itemId: 'world_toxic_residue', minAmount: 3, maxAmount: 5, chance: 1.0 },
+    { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 2, chance: 0.35 },
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ],
+  requiredTier: 2,
+  respawnSeconds: 480,
+  rarity: 'rare',
+};
+
+export const MINERAL_MARSH_GAS_NODE: MineralDefinition = {
+  id: 'mineral_marsh_gas_node',
+  displayName: 'Concentrated Gas Vent',
+  description: 'Pressurized pocket of marsh gases. Rich in volatile compounds and extremely hazardous to extract.',
+  entityClass: 'mineral',
+  biomes: ['miasma_marshes'],
+  textureKey: 'mineral_chemical_sump',
+  color: 0x556b2f,
+  lootTableId: 'loot_mineral_marsh_gas_node',
+  miningYield: [
+    { itemId: 'world_toxic_residue', minAmount: 4, maxAmount: 7, chance: 1.0 },
+    { itemId: 'reagent_thermal_compound', minAmount: 2, maxAmount: 3, chance: 0.5 },
+    { itemId: 'reagent_volatile_extract', minAmount: 1, maxAmount: 1, chance: 0.3 },
+  ],
+  requiredTier: 3,
+  respawnSeconds: 720,
+  rarity: 'epic',
+};
+
 export const ALL_MINERALS: readonly MineralDefinition[] = [
   MINERAL_VOID_CRYSTAL,
   MINERAL_PRISMATIC_CRYSTAL,
@@ -284,4 +324,7 @@ export const ALL_MINERALS: readonly MineralDefinition[] = [
   MINERAL_COSMIC_FRAGMENT_RARE,
   // Epic variants
   MINERAL_ANOMALY_CRYSTAL_EPIC,
+  // Phase 88 miasma_marshes rare/epic
+  MINERAL_TOXIC_CRYSTAL,
+  MINERAL_MARSH_GAS_NODE,
 ];

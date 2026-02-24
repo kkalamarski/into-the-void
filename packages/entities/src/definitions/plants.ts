@@ -242,6 +242,43 @@ export const PLANT_PHASE_BLOOM_RARE: PlantDefinition = {
   rarity: 'rare',
 };
 
+// ===== PHASE 88 ADDITIONS =====
+
+export const PLANT_RARE_FUNGI: PlantDefinition = {
+  id: 'plant_rare_fungi',
+  displayName: 'Rare Bioluminescent Fungi',
+  description: 'Exceptionally bright fungal cluster with concentrated biogenic compounds. Highly sought by Verdant researchers.',
+  entityClass: 'plant',
+  biomes: ['fungal_forest'],
+  textureKey: 'plant_luminous_vine',
+  color: 0xff44ff,
+  lootTableId: 'loot_plant_rare_fungi',
+  harvestYield: [
+    { itemId: 'world_alien_flora_luminous', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_biogenic_catalyst', minAmount: 1, maxAmount: 2, chance: 0.4 },
+  ],
+  respawnSeconds: 600,
+  rarity: 'rare',
+};
+
+export const PLANT_EPIC_SPORES: PlantDefinition = {
+  id: 'plant_epic_spores',
+  displayName: 'Ancient Spore Cluster',
+  description: 'Primordial fungal formation predating colonial settlement. Spores contain unknown genetic material of extreme scientific value.',
+  entityClass: 'plant',
+  biomes: ['fungal_forest'],
+  textureKey: 'plant_luminous_vine',
+  color: 0xff00ff,
+  lootTableId: 'loot_plant_epic_spores',
+  harvestYield: [
+    { itemId: 'world_mycelial_fiber', minAmount: 2, maxAmount: 3, chance: 1.0 },
+    { itemId: 'reagent_fungal_extract', minAmount: 1, maxAmount: 2, chance: 0.6 },
+    { itemId: 'world_ancient_fragment', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ],
+  respawnSeconds: 900,
+  rarity: 'epic',
+};
+
 export const ALL_PLANTS: readonly PlantDefinition[] = [
   PLANT_LUMINOUS_VINE,
   PLANT_VOID_FERN,
@@ -259,4 +296,7 @@ export const ALL_PLANTS: readonly PlantDefinition[] = [
   PLANT_LUMINOUS_VINE_RARE,
   PLANT_LATTICE_MOSS_RARE,
   PLANT_PHASE_BLOOM_RARE,
+  // Phase 88 fungal_forest rare/epic
+  PLANT_RARE_FUNGI,
+  PLANT_EPIC_SPORES,
 ];
