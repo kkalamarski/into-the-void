@@ -16,11 +16,11 @@ Requirements for Deployment & CI/CD milestone. Each maps to roadmap phases.
 
 ### Swarm Stack
 
-- [ ] **SWARM-01**: Docker Compose file configured for Swarm mode deployment
-- [ ] **SWARM-02**: PostgreSQL service with persistent volume
-- [ ] **SWARM-03**: Redis service with persistent volume
-- [ ] **SWARM-04**: Service dependencies ensure correct startup order
-- [ ] **SWARM-05**: Resource limits defined for each service
+- [x] **SWARM-01**: Docker Compose file configured for Swarm mode deployment
+- [x] **SWARM-02**: PostgreSQL service with persistent volume
+- [x] **SWARM-03**: Redis service with persistent volume
+- [x] **SWARM-04**: Service dependencies ensure correct startup order
+- [x] **SWARM-05**: Resource limits defined for each service
 
 ### Reverse Proxy
 
