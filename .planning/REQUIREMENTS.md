@@ -32,11 +32,11 @@ Requirements for Deployment & CI/CD milestone. Each maps to roadmap phases.
 
 ### CI/CD
 
-- [ ] **CICD-01**: GitHub Actions workflow triggers on version tags
-- [ ] **CICD-02**: Build all Docker images in parallel
-- [ ] **CICD-03**: Push images to container registry (GHCR or Docker Hub)
-- [ ] **CICD-04**: Deploy to Swarm via SSH with stack update
-- [ ] **CICD-05**: Database migrations run before deployment completes
+- [x] **CICD-01**: GitHub Actions workflow triggers on version tags
+- [x] **CICD-02**: Build all Docker images in parallel
+- [x] **CICD-03**: Push images to container registry (GHCR or Docker Hub)
+- [x] **CICD-04**: Deploy to Swarm via SSH with stack update
+- [x] **CICD-05**: Database migrations run before deployment completes
 
 ### Documentation
 
