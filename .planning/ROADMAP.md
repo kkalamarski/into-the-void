@@ -120,11 +120,11 @@ Plans:
   4. SSH deployment updates Swarm stack without downtime
   5. Database migrations run automatically before new containers start
 
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 92-01: TBD
-- [ ] 92-02: TBD
+- [ ] 92-01-PLAN.md — GitHub Actions workflow with parallel Docker builds to GHCR
+- [ ] 92-02-PLAN.md — SSH deployment job with rolling stack updates
 
 ---
 
