@@ -335,7 +335,7 @@ Plans:
 **Goal**: Replace broken mini-game gathering with ability-based system where tools grant gathering abilities with cooldowns and tool stats affect yield/speed
 **Depends on**: Phase 84
 **Requirements**: Bugfix (gathering broken), Bugfix (entity collisions not set on client)
-**Plans:** 3 plans
+**Plans:** 4 plans (3 complete, 1 gap closure)
 
 **Success Criteria** (what must be TRUE):
   1. Player can use Harvest ability (granted by botany tools) on plants with cooldown
@@ -345,10 +345,10 @@ Plans:
   5. Gathering produces items in inventory and updates entity state/respawn
 
 Plans:
-- [ ] 85-01-PLAN.md — Gather ability types and definitions
-- [ ] 85-02-PLAN.md — AbilityService gather effect handling
-- [ ] 85-03-PLAN.md — Entity collision fix on client
-
+- [x] 85-01-PLAN.md — Gather ability types and definitions
+- [x] 85-02-PLAN.md — AbilityService gather effect handling
+- [x] 85-03-PLAN.md — Entity collision fix on client
+- [ ] 85-04-PLAN.md — Gap closure: Fix yieldBonus parameter passing
 ---
 
 ### Phase 86: Exotic Entity Population
