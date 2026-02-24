@@ -10,25 +10,25 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 86 of 88 (Exotic Entity Population)
-Plan: 1 of 2 in current phase
-Status: Plan 01 complete - 24 exotic entity definitions created
-Last activity: 2026-02-24 - Completed 86-01 (Exotic Entity Definitions)
+Plan: 2 of 2 in current phase
+Status: Phase 86 complete - Exotic biomes populated with spawn configs and loot tables
+Last activity: 2026-02-24 - Completed 86-02 (Exotic Entity Spawn & Loot Configuration)
 
-Progress: [####################] 100% v1.17 | [###########...] 72% v1.18
+Progress: [####################] 100% v1.17 | [###########....] 76% v1.18
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 231 (v1.0-v1.17: 222, v1.18: 9)
+- Total plans completed: 232 (v1.0-v1.17: 222, v1.18: 10)
 - Average duration: ~3 min per plan
-- Total execution time: ~11.6 hours across 17 milestones
+- Total execution time: ~11.7 hours across 17 milestones
 
 **By Milestone:**
 
 | Milestone | Phases | Plans | Timeline |
 |-----------|--------|-------|----------|
 | v1.0-v1.17 | 1-81 | 222 | 10 days |
-| v1.18 | 82-88 | 13/18 | In Progress |
+| v1.18 | 82-88 | 14/18 | In Progress |
 
 **v1.18 Phase Estimates:**
 
@@ -55,6 +55,7 @@ Progress: [####################] 100% v1.17 | [###########...] 72% v1.18
 | Phase 85 P04 | 206s | 3 tasks | 2 files |
 | Phase 86 P01 | 252s | 3 tasks | 5 files |
 | Phase 86 P01 | 252 | 3 tasks | 5 files |
+| Phase 86 P02 | 311 | 4 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,10 @@ Recent decisions affecting current work:
 - [Phase 85]: Tool yield multiplier affects both loot drop chance (capped 1.0) and quantity (min 1)
 - [Phase 86-01]: Changed MINERAL_VOID_CRYSTAL_NODE rarity from 'exotic' to 'epic' (NodeRarity constraint)
 - [Phase 86-01]: Changed MINERAL_VOID_CRYSTAL_NODE rarity from 'exotic' to 'epic' (NodeRarity constraint)
+- [Phase 86-02]: Bioluminescent depths flora-focused with plantDensity 8 (highest in exotic biomes)
+- [Phase 86-02]: Crystalline wastes mineral-focused with mineralDensity 10 (highest in game)
+- [Phase 86-02]: Void rift danger-focused with low creatureDensity 2 but includes maniac
+- [Phase 86-02]: Dimensional Aberration weight 1 matches Abyssal Leviathan and Void Horror rarity
 
 ### Pending Todos
 
@@ -122,13 +127,13 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 86-01-PLAN.md (Exotic Entity Definitions)
+Stopped at: Completed 86-02-PLAN.md (Exotic Entity Spawn & Loot Configuration)
 Resume file: None
 
 **Next steps:**
-1. Continue Phase 86 Plan 02 (Exotic Entity Spawn Configuration)
-2. Configure spawn tables and loot tables for exotic entities
-3. Complete Phase 86, then Phase 87 (Items & Balance)
+1. Begin Phase 87 (Items & Balance)
+2. Balance crafting recipes for exotic materials
+3. Complete v1.18 milestone with Phase 88 (Gaps & Discovery)
 
 ---
-*Last updated: 2026-02-24 - Phase 86 Plan 01 complete (24 exotic entity definitions)*
+*Last updated: 2026-02-24 - Phase 86 complete (exotic entity population with spawn configs and loot tables)*
