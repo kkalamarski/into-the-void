@@ -535,23 +535,27 @@ export class EntityRenderer {
       return entity.speciesId;
     }
     if (this.isMineral(entity) && entity.resourceId) {
+      // Strip _rare/_epic suffix to use base texture (rare/epic rendered larger via rarity scaling)
+      const baseResourceId = entity.resourceId.replace(/_rare$|_epic$/, '');
       // Check if this mineral has sprite variants
-      const variantCount = EntityRenderer.FEATURE_SPRITE_VARIANTS[entity.resourceId];
+      const variantCount = EntityRenderer.FEATURE_SPRITE_VARIANTS[baseResourceId];
       if (variantCount) {
         const variant = (EntityRenderer.hashEntityId(entity.id) % variantCount) + 1;
-        return `${entity.resourceId}-v${variant}`;
+        return `${baseResourceId}-v${variant}`;
       }
-      return entity.resourceId;
+      return baseResourceId;
     }
     if (this.isPlant(entity) && entity.speciesId) {
+      // Strip _rare/_epic suffix to use base texture (rare/epic rendered larger via rarity scaling)
+      const baseSpeciesId = entity.speciesId.replace(/_rare$|_epic$/, '');
       // Check if this plant species has sprite variants
-      const variantCount = EntityRenderer.FEATURE_SPRITE_VARIANTS[entity.speciesId];
+      const variantCount = EntityRenderer.FEATURE_SPRITE_VARIANTS[baseSpeciesId];
       if (variantCount) {
         // Deterministic variant selection based on entity ID
         const variant = (EntityRenderer.hashEntityId(entity.id) % variantCount) + 1;
-        return `${entity.speciesId}-v${variant}`;
+        return `${baseSpeciesId}-v${variant}`;
       }
-      return entity.speciesId;
+      return baseSpeciesId;
     }
 
     // Fall back to type-based texture
