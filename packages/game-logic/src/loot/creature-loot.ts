@@ -27,6 +27,18 @@ import type { HarvestYield } from '@into-the-void/entities';
  * - world_ancient_fragment         — Ancient Ruins legendary world item
  * - reagent_ancient_circuitry      — Ancient Ruins reagent
  * - reagent_thermal_compound       — Volcanic rare reagent
+ *
+ * Phase 87 Consumables:
+ * - pressure_pill_common           — Tier I aquatic (Tidal Pools)
+ * - kelp_salve_common              — Tier I aquatic (Tidal Pools)
+ * - brine_capacitor_rare           — Tier I aquatic (Tidal Pools)
+ * - gill_extract_rare              — Tier II aquatic (Kelp Forests)
+ * - depth_charge_epic              — Tier III aquatic (Deep Trenches)
+ * - stability_tonic_epic           — Tier III exotic (Bioluminescent/Crystalline)
+ * - phase_capsule_epic             — Tier III exotic (Bioluminescent/Crystalline)
+ * - null_patch_kit_epic            — Tier III exotic (Crystalline/Void Rift)
+ * - void_essence_vial_exotic       — Tier IV exotic (Void Rift)
+ * - dimensional_mend_exotic        — Tier IV exotic (Void Rift)
  */
 export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
   // Tier I — Void Plains (Omnivore, levels 1-5)
@@ -164,12 +176,15 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
   ['loot_creature_tide_crab', [
     { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.8 },
     { itemId: 'world_crater_dust', minAmount: 1, maxAmount: 2, chance: 0.4 },
+    { itemId: 'pressure_pill_common', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'kelp_salve_common', minAmount: 1, maxAmount: 1, chance: 0.10 },
   ]],
 
   // Tier I — Tidal Pools (Herbivore, levels 1-5)
   ['loot_creature_coastal_urchin', [
     { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.75 },
     { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 1, chance: 0.1 },
+    { itemId: 'pressure_pill_common', minAmount: 1, maxAmount: 1, chance: 0.12 },
   ]],
 
   // Tier I — Tidal Pools (Omnivore, levels 2-7)
@@ -177,6 +192,8 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 3, chance: 0.85 },
     { itemId: 'world_crater_dust', minAmount: 1, maxAmount: 2, chance: 0.3 },
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.05 },
+    { itemId: 'kelp_salve_common', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'brine_capacitor_rare', minAmount: 1, maxAmount: 1, chance: 0.05 },
   ]],
 
   // Tier II — Kelp Forests (Herbivore, levels 6-14)
@@ -184,6 +201,8 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_common', minAmount: 2, maxAmount: 3, chance: 0.85 },
     { itemId: 'world_mycelial_fiber', minAmount: 1, maxAmount: 2, chance: 0.35 },
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.1 },
+    { itemId: 'gill_extract_rare', minAmount: 1, maxAmount: 1, chance: 0.12 },
+    { itemId: 'kelp_salve_common', minAmount: 1, maxAmount: 1, chance: 0.10 },
   ]],
 
   // Tier II — Kelp Forests (Predator, levels 8-16)
@@ -191,6 +210,8 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.75 },
     { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 2, chance: 0.4 },
     { itemId: 'reagent_biogenic_catalyst', minAmount: 1, maxAmount: 1, chance: 0.2 },
+    { itemId: 'gill_extract_rare', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'brine_capacitor_rare', minAmount: 1, maxAmount: 1, chance: 0.08 },
   ]],
 
   // Tier II — Kelp Forests (Omnivore, levels 7-15)
@@ -198,6 +219,8 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_common', minAmount: 2, maxAmount: 3, chance: 0.8 },
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.12 },
     { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'pressure_pill_common', minAmount: 1, maxAmount: 1, chance: 0.10 },
+    { itemId: 'gill_extract_rare', minAmount: 1, maxAmount: 1, chance: 0.08 },
   ]],
 
   // Tier III — Deep Trenches (Herbivore, levels 12-20)
@@ -205,6 +228,8 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.8 },
     { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 1, chance: 0.3 },
     { itemId: 'world_void_crystal', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'depth_charge_epic', minAmount: 1, maxAmount: 1, chance: 0.08 },
+    { itemId: 'gill_extract_rare', minAmount: 1, maxAmount: 1, chance: 0.12 },
   ]],
 
   // Tier III — Deep Trenches (Predator, levels 14-24)
@@ -213,6 +238,8 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_void_crystal', minAmount: 1, maxAmount: 2, chance: 0.4 },
     { itemId: 'reagent_void_essence', minAmount: 1, maxAmount: 1, chance: 0.25 },
     { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.08 },
+    { itemId: 'depth_charge_epic', minAmount: 1, maxAmount: 1, chance: 0.10 },
+    { itemId: 'brine_capacitor_rare', minAmount: 1, maxAmount: 1, chance: 0.10 },
   ]],
 
   // Tier III — Deep Trenches (Omnivore, levels 13-22)
@@ -220,6 +247,8 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.75 },
     { itemId: 'world_geothermal_compound', minAmount: 1, maxAmount: 1, chance: 0.3 },
     { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.06 },
+    { itemId: 'depth_charge_epic', minAmount: 1, maxAmount: 1, chance: 0.06 },
+    { itemId: 'gill_extract_rare', minAmount: 1, maxAmount: 1, chance: 0.10 },
   ]],
 
   // Tier IV — Deep Trenches (Maniac, levels 20-32)
@@ -230,6 +259,9 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_ancient_fragment', minAmount: 1, maxAmount: 1, chance: 0.15 },
     { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 2, chance: 0.3 },
     { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.1 },
+    { itemId: 'depth_charge_epic', minAmount: 1, maxAmount: 1, chance: 0.25 },
+    { itemId: 'gill_extract_rare', minAmount: 1, maxAmount: 1, chance: 0.20 },
+    { itemId: 'brine_capacitor_rare', minAmount: 1, maxAmount: 1, chance: 0.15 },
   ]],
 
   // Tier II — Bioluminescent Depths (Herbivore, levels 6-14)
@@ -237,6 +269,7 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_common', minAmount: 2, maxAmount: 3, chance: 0.85 },
     { itemId: 'reagent_biogenic_catalyst', minAmount: 1, maxAmount: 2, chance: 0.35 },
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.1 },
+    { itemId: 'stability_tonic_epic', minAmount: 1, maxAmount: 1, chance: 0.05 },
   ]],
 
   // Tier II — Bioluminescent Depths (Herbivore, levels 7-15)
@@ -244,6 +277,7 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_common', minAmount: 2, maxAmount: 3, chance: 0.85 },
     { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.25 },
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.12 },
+    { itemId: 'phase_capsule_epic', minAmount: 1, maxAmount: 1, chance: 0.06 },
   ]],
 
   // Tier II — Bioluminescent Depths (Omnivore, levels 8-16)
@@ -251,6 +285,8 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_common', minAmount: 2, maxAmount: 3, chance: 0.8 },
     { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 1, chance: 0.15 },
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'stability_tonic_epic', minAmount: 1, maxAmount: 1, chance: 0.05 },
+    { itemId: 'null_patch_kit_epic', minAmount: 1, maxAmount: 1, chance: 0.04 },
   ]],
 
   // Tier III — Crystalline Wastes (Herbivore, levels 12-20)
@@ -258,6 +294,8 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.8 },
     { itemId: 'reagent_crystalline_dust', minAmount: 2, maxAmount: 3, chance: 0.4 },
     { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'stability_tonic_epic', minAmount: 1, maxAmount: 1, chance: 0.08 },
+    { itemId: 'null_patch_kit_epic', minAmount: 1, maxAmount: 1, chance: 0.06 },
   ]],
 
   // Tier III — Crystalline Wastes (Omnivore, levels 13-22)
@@ -265,6 +303,8 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.75 },
     { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.25 },
     { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.06 },
+    { itemId: 'phase_capsule_epic', minAmount: 1, maxAmount: 1, chance: 0.08 },
+    { itemId: 'dimensional_mend_exotic', minAmount: 1, maxAmount: 1, chance: 0.03 },
   ]],
 
   // Tier III — Crystalline Wastes (Predator, levels 14-24)
@@ -273,6 +313,8 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 2, chance: 0.35 },
     { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 2, chance: 0.3 },
     { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.08 },
+    { itemId: 'stability_tonic_epic', minAmount: 1, maxAmount: 1, chance: 0.10 },
+    { itemId: 'null_patch_kit_epic', minAmount: 1, maxAmount: 1, chance: 0.08 },
   ]],
 
   // Tier IV — Void Rift (Predator, levels 18-28)
@@ -280,6 +322,8 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_rare', minAmount: 2, maxAmount: 3, chance: 0.85 },
     { itemId: 'reagent_void_essence', minAmount: 1, maxAmount: 2, chance: 0.35 },
     { itemId: 'world_void_crystal', minAmount: 1, maxAmount: 1, chance: 0.12 },
+    { itemId: 'void_essence_vial_exotic', minAmount: 1, maxAmount: 1, chance: 0.08 },
+    { itemId: 'phase_capsule_epic', minAmount: 1, maxAmount: 1, chance: 0.10 },
   ]],
 
   // Tier IV — Void Rift (Omnivore, levels 20-30)
@@ -287,6 +331,8 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_rare', minAmount: 2, maxAmount: 3, chance: 0.8 },
     { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 2, chance: 0.3 },
     { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.1 },
+    { itemId: 'stability_tonic_epic', minAmount: 1, maxAmount: 1, chance: 0.10 },
+    { itemId: 'dimensional_mend_exotic', minAmount: 1, maxAmount: 1, chance: 0.05 },
   ]],
 
   // Tier IV — Void Rift (Predator, levels 22-32)
@@ -295,6 +341,9 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_void_crystal', minAmount: 1, maxAmount: 2, chance: 0.4 },
     { itemId: 'reagent_void_essence', minAmount: 2, maxAmount: 3, chance: 0.35 },
     { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 2, chance: 0.25 },
+    { itemId: 'void_essence_vial_exotic', minAmount: 1, maxAmount: 1, chance: 0.12 },
+    { itemId: 'dimensional_mend_exotic', minAmount: 1, maxAmount: 1, chance: 0.08 },
+    { itemId: 'null_patch_kit_epic', minAmount: 1, maxAmount: 1, chance: 0.10 },
   ]],
 
   // Tier IV — Void Rift (Maniac, levels 24-35)
@@ -304,6 +353,10 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'reagent_void_essence', minAmount: 2, maxAmount: 4, chance: 0.5 },
     { itemId: 'reagent_quantum_residue', minAmount: 2, maxAmount: 3, chance: 0.4 },
     { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 2, chance: 0.3 },
+    { itemId: 'void_essence_vial_exotic', minAmount: 1, maxAmount: 1, chance: 0.25 },
+    { itemId: 'dimensional_mend_exotic', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'phase_capsule_epic', minAmount: 1, maxAmount: 1, chance: 0.20 },
+    { itemId: 'stability_tonic_epic', minAmount: 1, maxAmount: 1, chance: 0.20 },
   ]],
 ]);
 
