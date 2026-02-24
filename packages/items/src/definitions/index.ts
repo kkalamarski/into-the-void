@@ -7,10 +7,16 @@ import { ALL_TOOLS } from './tools';
 import { ALL_CONSUMABLES } from './consumables';
 import { ALL_WORLD_ITEMS } from './world-items';
 import { ALL_REAGENTS } from './reagents';
+import { ALL_AQUATIC_SUITS } from './aquatic-suits';
+import { ALL_AQUATIC_TOOLS } from './aquatic-tools';
+import { ALL_EXOTIC_SUITS } from './exotic-suits';
+import { ALL_EXOTIC_TOOLS } from './exotic-tools';
+import { ALL_AQUATIC_CONSUMABLES } from './aquatic-consumables';
+import { ALL_EXOTIC_CONSUMABLES } from './exotic-consumables';
 
 /**
  * All item definitions — register these with ItemRegistry.
- * Total: 100 items (10 suits + 30 modules + 15 tools + 20 consumables + 15 world-items + 10 reagents)
+ * Total: 122 items (16 suits + 30 modules + 21 tools + 40 consumables + 15 world-items + 15 reagents)
  */
 export const ALL_ITEMS: readonly ItemDefinition[] = [
   ...ALL_SUITS,
@@ -19,6 +25,14 @@ export const ALL_ITEMS: readonly ItemDefinition[] = [
   ...ALL_CONSUMABLES,
   ...ALL_WORLD_ITEMS,
   ...ALL_REAGENTS,
+  // Phase 87 aquatic items
+  ...ALL_AQUATIC_SUITS,
+  ...ALL_AQUATIC_TOOLS,
+  ...ALL_AQUATIC_CONSUMABLES,
+  // Phase 87 exotic items
+  ...ALL_EXOTIC_SUITS,
+  ...ALL_EXOTIC_TOOLS,
+  ...ALL_EXOTIC_CONSUMABLES,
 ];
 
 /**
@@ -143,6 +157,40 @@ export const ITEM_IDS = {
   ANTITOXIN_EXOTIC: 'antitoxin_exotic',
   ANTITOXIN_LEGENDARY: 'antitoxin_legendary',
 
+  // ---- AQUATIC SUITS (Phase 87) ----
+  SUIT_DIVING_RARE: 'suit_diving_rare',
+  SUIT_PRESSURE_EPIC: 'suit_pressure_epic',
+  SUIT_ABYSSAL_EXOTIC: 'suit_abyssal_exotic',
+
+  // ---- AQUATIC TOOLS (Phase 87) ----
+  TOOL_HARPOON_RARE: 'tool_harpoon_rare',
+  TOOL_DIVING_PICK_EPIC: 'tool_diving_pick_epic',
+  TOOL_NET_RARE: 'tool_net_rare',
+
+  // ---- EXOTIC SUITS (Phase 87) ----
+  SUIT_VOID_TOUCHED_EXOTIC: 'suit_void_touched_exotic',
+  SUIT_ANOMALY_EXOTIC: 'suit_anomaly_exotic',
+  SUIT_NULL_LEGENDARY: 'suit_null_legendary',
+
+  // ---- EXOTIC TOOLS (Phase 87) ----
+  TOOL_PHASE_EXTRACTOR_EXOTIC: 'tool_phase_extractor_exotic',
+  TOOL_VOID_PICK_EXOTIC: 'tool_void_pick_exotic',
+  TOOL_REALITY_ANCHOR_EXOTIC: 'tool_reality_anchor_exotic',
+
+  // ---- AQUATIC CONSUMABLES (Phase 87) ----
+  PRESSURE_PILL_COMMON: 'pressure_pill_common',
+  GILL_EXTRACT_RARE: 'gill_extract_rare',
+  DEPTH_CHARGE_EPIC: 'depth_charge_epic',
+  KELP_SALVE_COMMON: 'kelp_salve_common',
+  BRINE_CAPACITOR_RARE: 'brine_capacitor_rare',
+
+  // ---- EXOTIC CONSUMABLES (Phase 87) ----
+  STABILITY_TONIC_EPIC: 'stability_tonic_epic',
+  VOID_ESSENCE_VIAL_EXOTIC: 'void_essence_vial_exotic',
+  PHASE_CAPSULE_EPIC: 'phase_capsule_epic',
+  DIMENSIONAL_MEND_EXOTIC: 'dimensional_mend_exotic',
+  NULL_PATCH_KIT_EPIC: 'null_patch_kit_epic',
+
   // ---- WORLD ITEMS ----
   WORLD_VOID_CRYSTAL: 'world_void_crystal',
   WORLD_FUNGAL_SPORE_CLUSTER: 'world_fungal_spore_cluster',
@@ -190,3 +238,9 @@ export * from './tools';
 export * from './consumables';
 export * from './world-items';
 export * from './reagents';
+export * from './aquatic-suits';
+export * from './aquatic-tools';
+export * from './exotic-suits';
+export * from './exotic-tools';
+export * from './aquatic-consumables';
+export * from './exotic-consumables';
