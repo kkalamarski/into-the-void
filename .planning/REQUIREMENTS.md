@@ -1,95 +1,112 @@
 # Requirements: Into the Void
 
-**Defined:** 2026-02-23
+**Defined:** 2026-02-24
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.18 Requirements
+## v1.19 Requirements
 
-Requirements for Content Expansion milestone. Each maps to roadmap phases.
+Requirements for Deployment & CI/CD milestone. Each maps to roadmap phases.
+
+### Docker Images
+
+- [ ] **DOCKER-01**: Web app builds as production static files served by nginx
+- [ ] **DOCKER-02**: API builds as production NestJS container with health check
+- [ ] **DOCKER-03**: Game server builds as production NestJS container with health check
+- [ ] **DOCKER-04**: All images use multi-stage builds for minimal size
+
+### Swarm Stack
+
+- [ ] **SWARM-01**: Docker Compose file configured for Swarm mode deployment
+- [ ] **SWARM-02**: PostgreSQL service with persistent volume
+- [ ] **SWARM-03**: Redis service with persistent volume
+- [ ] **SWARM-04**: Service dependencies ensure correct startup order
+- [ ] **SWARM-05**: Resource limits defined for each service
+
+### Reverse Proxy
+
+- [ ] **PROXY-01**: Traefik configured as ingress with Docker provider
+- [ ] **PROXY-02**: Let's Encrypt ACME for automatic SSL certificates
+- [ ] **PROXY-03**: Route play.intothevoid.online to web service
+- [ ] **PROXY-04**: Route api.intothevoid.online to API service (or /api path)
+- [ ] **PROXY-05**: WebSocket routing for game server with sticky sessions
+
+### CI/CD
+
+- [ ] **CICD-01**: GitHub Actions workflow triggers on version tags
+- [ ] **CICD-02**: Build all Docker images in parallel
+- [ ] **CICD-03**: Push images to container registry (GHCR or Docker Hub)
+- [ ] **CICD-04**: Deploy to Swarm via SSH with stack update
+- [ ] **CICD-05**: Database migrations run before deployment completes
+
+### Documentation
+
+- [ ] **DOCS-01**: VM setup guide (Docker, Swarm init, firewall)
+- [ ] **DOCS-02**: DNS configuration guide (GoDaddy A records)
+- [ ] **DOCS-03**: Secrets configuration (GitHub Secrets list)
+- [ ] **DOCS-04**: First deployment checklist
+
+## v1.18 Requirements (Complete)
+
+All requirements shipped 2026-02-24.
 
 ### Biomes (BIOME)
 
-#### Aquatic Biomes
-- [ ] **BIOME-01**: Tidal Pools biome (Tier I) with shallow water tiles, reduced visibility, speed modifiers
-- [ ] **BIOME-02**: Kelp Forests biome (Tier II) with dense flora, limited pathfinding corridors
-- [ ] **BIOME-03**: Deep Trenches biome (Tier III) with pressure hazard, rare resource nodes
-
-#### Exotic/Anomaly Biomes
-- [ ] **BIOME-04**: Void Rift biome (Tier IV) with reality distortion effects, unique visual palette
-- [ ] **BIOME-05**: Crystalline Wastes biome (Tier III) with crystal formations, reflective surfaces
-- [ ] **BIOME-06**: Bioluminescent Depths biome (Tier II) with glowing flora, limited base visibility
-
-#### Biome Infrastructure
-- [ ] **BIOME-07**: Shore transition tiles for water/land boundaries (no 1-tile artifacts)
-- [ ] **BIOME-08**: Per-biome visibility modifiers in fog of war system
-- [ ] **BIOME-09**: Biome-specific speed modifiers for aquatic zones
+- [x] **BIOME-01**: Coral Reef biome (Tier I) with shallow water tiles, reduced visibility, speed modifiers
+- [x] **BIOME-02**: Kelp Forests biome (Tier II) with dense flora, limited pathfinding corridors
+- [x] **BIOME-03**: Abyssal Trench biome (Tier III) with pressure hazard, rare resource nodes
+- [x] **BIOME-04**: Void Rift biome (Tier IV) with reality distortion effects, unique visual palette
+- [x] **BIOME-05**: Crystalline Wastes biome (Tier III) with crystal formations, reflective surfaces
+- [x] **BIOME-06**: Bioluminescent Depths biome (Tier II) with glowing flora, limited base visibility
+- [x] **BIOME-07**: Shore transition tiles for water/land boundaries (no 1-tile artifacts)
+- [x] **BIOME-08**: Per-biome visibility modifiers in fog of war system
+- [x] **BIOME-09**: Biome-specific speed modifiers for aquatic zones
 
 ### Entities (ENT)
 
-#### Aquatic Resources
-- [ ] **ENT-01**: 5 aquatic minerals (coral formations, sea crystals, abyssal ore, tidal stones, pearl nodes)
-- [ ] **ENT-02**: 5 aquatic plants (kelp, bioluminescent algae, pressure ferns, void kelp, thermal vents)
-- [ ] **ENT-03**: 3 aquatic artifacts (sunken tech, ancient shells, drowned relics)
-
-#### Exotic Resources
-- [ ] **ENT-04**: 5 exotic minerals (void crystals, anomaly shards, dimensional ore, null stones, phase minerals)
-- [ ] **ENT-05**: 5 exotic plants (reality moss, echo blooms, temporal fungi, void vines, null grass)
-- [ ] **ENT-06**: 4 exotic artifacts (anomaly cores, dimensional fragments, echo records, void relics)
-
-#### Existing Biome Gaps
-- [ ] **ENT-07**: Fill rare/epic variants for fungal_forest (rare fungi, epic spores)
-- [ ] **ENT-08**: Fill rare/epic variants for miasma_marshes (toxic crystals, marsh gas nodes)
-- [ ] **ENT-09**: Fill artifact gaps in toxic_wastes, volcanic_reaches, glacial_expanse
+- [x] **ENT-01**: 5 aquatic minerals (coral formations, sea crystals, abyssal ore, tidal stones, pearl nodes)
+- [x] **ENT-02**: 5 aquatic plants (kelp, bioluminescent algae, pressure ferns, void kelp, thermal vents)
+- [x] **ENT-03**: 3 aquatic artifacts (sunken tech, ancient shells, drowned relics)
+- [x] **ENT-04**: 5 exotic minerals (void crystals, anomaly shards, dimensional ore, null stones, phase minerals)
+- [x] **ENT-05**: 5 exotic plants (reality moss, echo blooms, temporal fungi, void vines, null grass)
+- [x] **ENT-06**: 4 exotic artifacts (anomaly cores, dimensional fragments, echo records, void relics)
+- [x] **ENT-07**: Fill rare/epic variants for fungal_forest (rare fungi, epic spores)
+- [x] **ENT-08**: Fill rare/epic variants for miasma_marshes (toxic crystals, marsh gas nodes)
+- [x] **ENT-09**: Fill artifact gaps in toxic_wastes, volcanic_reaches, glacial_expanse
 
 ### Creatures (CREA)
 
-#### Aquatic Creatures
-- [ ] **CREA-01**: 3 herbivore aquatic creatures (filter feeders, grazers, schooling fish)
-- [ ] **CREA-02**: 3 omnivore aquatic creatures (scavengers, opportunistic hunters)
-- [ ] **CREA-03**: 3 predator aquatic creatures (deep hunters, ambush predators, territorial)
-- [ ] **CREA-04**: 1 maniac aquatic creature (abyssal terror, Tier IV)
-
-#### Exotic Creatures
-- [ ] **CREA-05**: 3 exotic herbivores (phase grazers, echo drifters, null feeders)
-- [ ] **CREA-06**: 3 exotic omnivores (reality scavengers, dimensional hunters)
-- [ ] **CREA-07**: 3 exotic predators (void stalkers, anomaly horrors, rift hunters)
-- [ ] **CREA-08**: 1 exotic maniac creature (dimensional aberration, Tier IV)
-
-#### Existing Biome Creatures
-- [ ] **CREA-09**: 2 additional creatures for starfall_crater (alien fauna variety)
-- [ ] **CREA-10**: 2 additional creatures for ancient_ruins (guardian constructs, relic beasts)
+- [x] **CREA-01**: 3 herbivore aquatic creatures (filter feeders, grazers, schooling fish)
+- [x] **CREA-02**: 3 omnivore aquatic creatures (scavengers, opportunistic hunters)
+- [x] **CREA-03**: 3 predator aquatic creatures (deep hunters, ambush predators, territorial)
+- [x] **CREA-04**: 1 maniac aquatic creature (abyssal terror, Tier IV)
+- [x] **CREA-05**: 3 exotic herbivores (phase grazers, echo drifters, null feeders)
+- [x] **CREA-06**: 3 exotic omnivores (reality scavengers, dimensional hunters)
+- [x] **CREA-07**: 3 exotic predators (void stalkers, anomaly horrors, rift hunters)
+- [x] **CREA-08**: 1 exotic maniac creature (dimensional aberration, Tier IV)
+- [x] **CREA-09**: 2 additional creatures for starfall_crater (alien fauna variety)
+- [x] **CREA-10**: 2 additional creatures for ancient_ruins (guardian constructs, relic beasts)
 
 ### Items (ITEM)
 
-#### Aquatic Equipment
-- [ ] **ITEM-01**: 3 aquatic suit variants (diving suit, pressure suit, abyssal suit)
-- [ ] **ITEM-02**: 3 aquatic tools (harpoon, diving pick, net)
-- [ ] **ITEM-03**: 5 aquatic consumables (pressure pills, gill extract, depth charges)
-
-#### Exotic Equipment
-- [ ] **ITEM-04**: 3 exotic suit variants (void-touched suit, anomaly suit, null suit)
-- [ ] **ITEM-05**: 3 exotic tools (phase extractor, void pick, reality anchor)
-- [ ] **ITEM-06**: 5 exotic consumables (stability tonics, void essence, phase capsules)
-
-#### Materials
-- [ ] **ITEM-07**: 10 aquatic materials from new minerals/plants (crafting ingredients)
-- [ ] **ITEM-08**: 10 exotic materials from new minerals/plants (crafting ingredients)
-
-#### Progression Integration
-- [ ] **ITEM-09**: Tier I-II aquatic items accessible without high-tier prerequisites
-- [ ] **ITEM-10**: Tier III-IV items require existing Tier I-II materials (horizontal progression)
+- [x] **ITEM-01**: 3 aquatic suit variants (diving suit, pressure suit, abyssal suit)
+- [x] **ITEM-02**: 3 aquatic tools (harpoon, diving pick, net)
+- [x] **ITEM-03**: 5 aquatic consumables (pressure pills, gill extract, depth charges)
+- [x] **ITEM-04**: 3 exotic suit variants (void-touched suit, anomaly suit, null suit)
+- [x] **ITEM-05**: 3 exotic tools (phase extractor, void pick, reality anchor)
+- [x] **ITEM-06**: 5 exotic consumables (stability tonics, void essence, phase capsules)
+- [x] **ITEM-07**: 10 aquatic materials from new minerals/plants (crafting ingredients)
+- [x] **ITEM-08**: 10 exotic materials from new minerals/plants (crafting ingredients)
+- [x] **ITEM-09**: Tier I-II aquatic items accessible without high-tier prerequisites
+- [x] **ITEM-10**: Tier III-IV items require existing Tier I-II materials (horizontal progression)
 
 ### Progression (PROG)
 
-#### Tier Balance
-- [ ] **PROG-01**: Aquatic Tier I (Tidal Pools) comparable to existing Frontier zones
-- [ ] **PROG-02**: Exotic Tier IV (Void Rift) requires Tier III equipment to survive
-- [ ] **PROG-03**: No power creep: new high-tier items are sidegrades, not upgrades
-
-#### Discovery Integration
-- [ ] **PROG-04**: Zone mastery objectives for all new biomes
-- [ ] **PROG-05**: Lore fragments for aquatic and exotic zones (6-10 fragments)
-- [ ] **PROG-06**: POI types for new biomes (underwater ruins, anomaly nexuses)
+- [x] **PROG-01**: Aquatic Tier I (Tidal Pools) comparable to existing Frontier zones
+- [x] **PROG-02**: Exotic Tier IV (Void Rift) requires Tier III equipment to survive
+- [x] **PROG-03**: No power creep: new high-tier items are sidegrades, not upgrades
+- [x] **PROG-04**: Zone mastery objectives for all new biomes
+- [x] **PROG-05**: Lore fragments for aquatic and exotic zones (6-10 fragments)
+- [x] **PROG-06**: POI types for new biomes (underwater ruins, anomaly nexuses)
 
 ## v1.17 Requirements (Complete)
 
@@ -174,6 +191,19 @@ All requirements shipped 2026-02-23.
 
 Deferred to future releases. Tracked but not in current roadmap.
 
+### Monitoring (Deferred from v1.19)
+
+- **MON-01**: Container health dashboard
+- **MON-02**: Application metrics (Prometheus)
+- **MON-03**: Log aggregation
+- **MON-04**: Alerting for service failures
+
+### Scaling (Deferred from v1.19)
+
+- **SCALE-01**: Multi-node Swarm configuration
+- **SCALE-02**: Load balancing across nodes
+- **SCALE-03**: Horizontal scaling policies
+
 ### Gathering Expansion
 
 - **GATH-09**: Crafting system using gathered resources
@@ -199,7 +229,7 @@ Deferred to future releases. Tracked but not in current roadmap.
 
 - **THEME-01**: Faction-specific UI theming (colors based on player faction)
 
-### Advanced Biome Features (Deferred from v1.18)
+### Advanced Biome Features
 
 - **BIOME-10**: Depth-based vertical layers (shallow/mid/deep sub-zones)
 - **BIOME-11**: Tidal cycle mechanics (day/night resource availability)
@@ -213,77 +243,97 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Real-time mini-game PvP | Complexity, focus on PvE gathering first |
-| Full crafting system | Defer to v1.19+, needs separate design |
-| Procedural quest generation | Current hand-crafted quests sufficient |
-| Dynamic weather affecting gathering | Polish feature, not core |
-| Auto-accept/auto-complete quests | Removes player agency, breaks immersion |
-| Quest mini-map markers with GPS | Removes exploration, use zone hints instead |
-| Submarines/vehicles | Players use exo-suits, no vehicle system |
-| Anomaly zone puzzles | Anomalies are danger zones, not dungeons |
-| Water physics simulation | Tile-based approach only |
-| Continuous depth tracking | Discrete tier zones instead |
-| Procedural Anomaly generation | Fixed spawn locations during world gen |
-| Swimming skill progression | Suit equipment enables underwater zones |
-| Underwater oxygen mechanics | 2D top-down doesn't convey breath urgency |
+| Kubernetes | Docker Swarm simpler for single-node, can migrate later |
+| Managed database | Self-hosted sufficient for initial deployment |
+| CDN | Direct serving fine for initial traffic |
+| Blue-green deployment | Simple rolling updates sufficient |
+| Staging environment | Single production environment initially |
 
 ## Traceability
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-### v1.18 Requirements
+### v1.19 Requirements
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BIOME-01 | Phase 82 | Pending |
-| BIOME-02 | Phase 82 | Pending |
-| BIOME-03 | Phase 82 | Pending |
-| BIOME-04 | Phase 84 | Pending |
-| BIOME-05 | Phase 84 | Pending |
-| BIOME-06 | Phase 84 | Pending |
-| BIOME-07 | Phase 82 | Pending |
-| BIOME-08 | Phase 82 | Pending |
-| BIOME-09 | Phase 82 | Pending |
-| ENT-01 | Phase 83 | Pending |
-| ENT-02 | Phase 83 | Pending |
-| ENT-03 | Phase 83 | Pending |
-| ENT-04 | Phase 85 | Pending |
-| ENT-05 | Phase 85 | Pending |
-| ENT-06 | Phase 85 | Pending |
-| ENT-07 | Phase 87 | Pending |
-| ENT-08 | Phase 87 | Pending |
-| ENT-09 | Phase 87 | Pending |
-| CREA-01 | Phase 83 | Pending |
-| CREA-02 | Phase 83 | Pending |
-| CREA-03 | Phase 83 | Pending |
-| CREA-04 | Phase 83 | Pending |
-| CREA-05 | Phase 85 | Pending |
-| CREA-06 | Phase 85 | Pending |
-| CREA-07 | Phase 85 | Pending |
-| CREA-08 | Phase 85 | Pending |
-| CREA-09 | Phase 87 | Pending |
-| CREA-10 | Phase 87 | Pending |
-| ITEM-01 | Phase 86 | Pending |
-| ITEM-02 | Phase 86 | Pending |
-| ITEM-03 | Phase 86 | Pending |
-| ITEM-04 | Phase 86 | Pending |
-| ITEM-05 | Phase 86 | Pending |
-| ITEM-06 | Phase 86 | Pending |
-| ITEM-07 | Phase 86 | Pending |
-| ITEM-08 | Phase 86 | Pending |
-| ITEM-09 | Phase 86 | Pending |
-| ITEM-10 | Phase 86 | Pending |
-| PROG-01 | Phase 86 | Pending |
-| PROG-02 | Phase 86 | Pending |
-| PROG-03 | Phase 86 | Pending |
-| PROG-04 | Phase 87 | Pending |
-| PROG-05 | Phase 87 | Pending |
-| PROG-06 | Phase 87 | Pending |
+| DOCKER-01 | — | Pending |
+| DOCKER-02 | — | Pending |
+| DOCKER-03 | — | Pending |
+| DOCKER-04 | — | Pending |
+| SWARM-01 | — | Pending |
+| SWARM-02 | — | Pending |
+| SWARM-03 | — | Pending |
+| SWARM-04 | — | Pending |
+| SWARM-05 | — | Pending |
+| PROXY-01 | — | Pending |
+| PROXY-02 | — | Pending |
+| PROXY-03 | — | Pending |
+| PROXY-04 | — | Pending |
+| PROXY-05 | — | Pending |
+| CICD-01 | — | Pending |
+| CICD-02 | — | Pending |
+| CICD-03 | — | Pending |
+| CICD-04 | — | Pending |
+| CICD-05 | — | Pending |
+| DOCS-01 | — | Pending |
+| DOCS-02 | — | Pending |
+| DOCS-03 | — | Pending |
+| DOCS-04 | — | Pending |
 
 **Coverage:**
-- v1.18 requirements: 44 total
-- Mapped to phases: 44
-- Unmapped: 0
+- v1.19 requirements: 23 total
+- Mapped to phases: 0
+- Unmapped: 23 ⚠️
+
+### v1.18 Requirements (Complete)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| BIOME-01 | Phase 82 | Complete |
+| BIOME-02 | Phase 82 | Complete |
+| BIOME-03 | Phase 82 | Complete |
+| BIOME-04 | Phase 84 | Complete |
+| BIOME-05 | Phase 84 | Complete |
+| BIOME-06 | Phase 84 | Complete |
+| BIOME-07 | Phase 82 | Complete |
+| BIOME-08 | Phase 82 | Complete |
+| BIOME-09 | Phase 82 | Complete |
+| ENT-01 | Phase 83 | Complete |
+| ENT-02 | Phase 83 | Complete |
+| ENT-03 | Phase 83 | Complete |
+| ENT-04 | Phase 86 | Complete |
+| ENT-05 | Phase 86 | Complete |
+| ENT-06 | Phase 86 | Complete |
+| ENT-07 | Phase 88 | Complete |
+| ENT-08 | Phase 88 | Complete |
+| ENT-09 | Phase 88 | Complete |
+| CREA-01 | Phase 83 | Complete |
+| CREA-02 | Phase 83 | Complete |
+| CREA-03 | Phase 83 | Complete |
+| CREA-04 | Phase 83 | Complete |
+| CREA-05 | Phase 86 | Complete |
+| CREA-06 | Phase 86 | Complete |
+| CREA-07 | Phase 86 | Complete |
+| CREA-08 | Phase 86 | Complete |
+| CREA-09 | Phase 88 | Complete |
+| CREA-10 | Phase 88 | Complete |
+| ITEM-01 | Phase 87 | Complete |
+| ITEM-02 | Phase 87 | Complete |
+| ITEM-03 | Phase 87 | Complete |
+| ITEM-04 | Phase 87 | Complete |
+| ITEM-05 | Phase 87 | Complete |
+| ITEM-06 | Phase 87 | Complete |
+| ITEM-07 | Phase 87 | Complete |
+| ITEM-08 | Phase 87 | Complete |
+| ITEM-09 | Phase 87 | Complete |
+| ITEM-10 | Phase 87 | Complete |
+| PROG-01 | Phase 87 | Complete |
+| PROG-02 | Phase 87 | Complete |
+| PROG-03 | Phase 87 | Complete |
+| PROG-04 | Phase 88 | Complete |
+| PROG-05 | Phase 88 | Complete |
+| PROG-06 | Phase 88 | Complete |
 
 ### v1.17 Requirements (Complete)
 
@@ -318,5 +368,5 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUEST-08 | Phase 81 | Complete |
 
 ---
-*Requirements defined: 2026-02-23*
-*Last updated: 2026-02-23 after v1.18 roadmap creation - 44/44 requirements mapped*
+*Requirements defined: 2026-02-24*
+*Last updated: 2026-02-24 after v1.19 requirements definition*
