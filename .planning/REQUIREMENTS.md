@@ -9,10 +9,10 @@ Requirements for Deployment & CI/CD milestone. Each maps to roadmap phases.
 
 ### Docker Images
 
-- [ ] **DOCKER-01**: Web app builds as production static files served by nginx
-- [ ] **DOCKER-02**: API builds as production NestJS container with health check
-- [ ] **DOCKER-03**: Game server builds as production NestJS container with health check
-- [ ] **DOCKER-04**: All images use multi-stage builds for minimal size
+- [x] **DOCKER-01**: Web app builds as production static files served by nginx
+- [x] **DOCKER-02**: API builds as production NestJS container with health check
+- [x] **DOCKER-03**: Game server builds as production NestJS container with health check
+- [x] **DOCKER-04**: All images use multi-stage builds for minimal size
 
 ### Swarm Stack
 
