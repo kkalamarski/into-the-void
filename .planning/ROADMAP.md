@@ -376,7 +376,7 @@ Plans:
 **Goal**: New content yields useful equipment and materials with balanced progression across all tiers
 **Depends on**: Phase 86
 **Requirements**: ITEM-01, ITEM-02, ITEM-03, ITEM-04, ITEM-05, ITEM-06, ITEM-07, ITEM-08, ITEM-09, ITEM-10, PROG-01, PROG-02, PROG-03
-**Plans:** TBD
+**Plans:** 3 plans
 
 **Success Criteria** (what must be TRUE):
   1. Player can craft/obtain 3 aquatic suits (diving, pressure, abyssal) and 3 aquatic tools (harpoon, diving pick, net)
@@ -386,9 +386,9 @@ Plans:
   5. High-tier exotic items require existing Tier I-II materials (horizontal progression, no power creep)
 
 Plans:
-- [ ] 87-01: TBD
-- [ ] 87-02: TBD
-- [ ] 87-03: TBD
+- [ ] 87-01-PLAN.md — Aquatic equipment (3 suits + 3 tools)
+- [ ] 87-02-PLAN.md — Exotic equipment (3 suits + 3 tools)
+- [ ] 87-03-PLAN.md — Consumables & integration (5 aquatic + 5 exotic + index.ts)
 
 ---
 
@@ -511,4 +511,4 @@ Phases execute in numeric order: 82 -> 83 -> 84 -> 85 -> 86 -> 87 -> 88
 **Total:** 88 phases (86 complete, 2 pending)
 
 ---
-*Last updated: 2026-02-24 - Phase 86 complete (Exotic Entity Population)*
+*Last updated: 2026-02-24 - Phase 87 planned (Item Integration & Balance)*
