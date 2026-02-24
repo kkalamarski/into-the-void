@@ -28,6 +28,10 @@ const VERDANT_TRADER: TraderDefinition = {
     { itemId: 'antitoxin_rare', buyPrice: 300, sellPrice: 150, stock: 5 },
     { itemId: 'world_luminous_extract', buyPrice: 350, sellPrice: 175, stock: 6 },
     { itemId: 'reagent_bioluminescent_compound', buyPrice: 55, sellPrice: 28, stock: 15 },
+    { itemId: 'kelp_salve_common', buyPrice: 80, sellPrice: 40, stock: 15 },
+    { itemId: 'pressure_pill_common', buyPrice: 100, sellPrice: 50, stock: 15 },
+    { itemId: 'gill_extract_rare', buyPrice: 400, sellPrice: 200, stock: 8 },
+    { itemId: 'brine_capacitor_rare', buyPrice: 330, sellPrice: 165, stock: 10 },
   ],
   specialization: 'consumables',
 };

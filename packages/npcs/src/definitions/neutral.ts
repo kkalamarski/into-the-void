@@ -112,12 +112,14 @@ const SUIT_VENDOR: TraderDefinition = {
     // Level 5 rare
     { itemId: 'suit_reinforced_rare', buyPrice: 2400, sellPrice: 1200, stock: 3 },
     { itemId: 'suit_scout_rare', buyPrice: 2600, sellPrice: 1300, stock: 3 },
+    { itemId: 'suit_diving_rare', buyPrice: 3000, sellPrice: 1500, stock: 3 },
     // Level 8 rare
     { itemId: 'suit_hazmat_rare', buyPrice: 3600, sellPrice: 1800, stock: 3 },
     // Level 10 common
     { itemId: 'suit_worker_common', buyPrice: 1400, sellPrice: 700, stock: 4 },
     // Level 15 rare
     { itemId: 'suit_field_operative_rare', buyPrice: 5400, sellPrice: 2700, stock: 3 },
+    { itemId: 'suit_pressure_epic', buyPrice: 8400, sellPrice: 4200, stock: 2 },
     // Level 20 common
     { itemId: 'suit_industrial_common', buyPrice: 4200, sellPrice: 2100, stock: 4 },
     // Level 25 rare
@@ -157,6 +159,8 @@ const TOOL_VENDOR: TraderDefinition = {
     { itemId: 'tool_mining_rare', buyPrice: 1440, sellPrice: 720, stock: 3 },
     { itemId: 'tool_combat_rare', buyPrice: 1440, sellPrice: 720, stock: 3 },
     { itemId: 'tool_research_rare', buyPrice: 1440, sellPrice: 720, stock: 3 },
+    { itemId: 'tool_harpoon_rare', buyPrice: 2200, sellPrice: 1100, stock: 3 },
+    { itemId: 'tool_net_rare', buyPrice: 2000, sellPrice: 1000, stock: 3 },
     // Level 10 common
     { itemId: 'tool_mining_common_mk2', buyPrice: 960, sellPrice: 480, stock: 4 },
     { itemId: 'tool_combat_common_mk2', buyPrice: 960, sellPrice: 480, stock: 4 },
@@ -165,6 +169,7 @@ const TOOL_VENDOR: TraderDefinition = {
     { itemId: 'tool_mining_rare_mk2', buyPrice: 4200, sellPrice: 2100, stock: 3 },
     { itemId: 'tool_combat_rare_mk2', buyPrice: 4200, sellPrice: 2100, stock: 3 },
     { itemId: 'tool_research_rare_mk2', buyPrice: 4200, sellPrice: 2100, stock: 3 },
+    { itemId: 'tool_diving_pick_epic', buyPrice: 6000, sellPrice: 3000, stock: 2 },
     // Level 20 common
     { itemId: 'tool_mining_common_mk3', buyPrice: 3000, sellPrice: 1500, stock: 3 },
     { itemId: 'tool_combat_common_mk3', buyPrice: 3000, sellPrice: 1500, stock: 3 },

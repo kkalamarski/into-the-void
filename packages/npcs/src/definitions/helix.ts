@@ -27,6 +27,9 @@ const HELIX_TRADER: TraderDefinition = {
     { itemId: 'world_volcanic_glass', buyPrice: 120, sellPrice: 60, stock: 15 },
     { itemId: 'reagent_thermal_compound', buyPrice: 180, sellPrice: 90, stock: 10 },
     { itemId: 'reagent_frost_essence', buyPrice: 220, sellPrice: 110, stock: 8 },
+    { itemId: 'suit_diving_rare', buyPrice: 3200, sellPrice: 1600, stock: 2 },
+    { itemId: 'tool_harpoon_rare', buyPrice: 2400, sellPrice: 1200, stock: 3 },
+    { itemId: 'tool_net_rare', buyPrice: 2200, sellPrice: 1100, stock: 3 },
   ],
   specialization: 'materials',
 };
