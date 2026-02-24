@@ -358,6 +358,41 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'phase_capsule_epic', minAmount: 1, maxAmount: 1, chance: 0.20 },
     { itemId: 'stability_tonic_epic', minAmount: 1, maxAmount: 1, chance: 0.20 },
   ]],
+
+  // ===== Phase 88 — Starfall Crater & Ancient Ruins creatures =====
+
+  // Tier II — Starfall Crater (Herbivore, levels 12-22)
+  ['loot_creature_starfall_grazer', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 3, chance: 0.8 },
+    { itemId: 'world_crater_dust', minAmount: 2, maxAmount: 4, chance: 0.6 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier III — Starfall Crater (Predator, levels 15-25)
+  ['loot_creature_crater_stalker', [
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.75 },
+    { itemId: 'world_crater_dust', minAmount: 2, maxAmount: 5, chance: 0.65 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 2, chance: 0.25 },
+    { itemId: 'reagent_void_essence', minAmount: 1, maxAmount: 1, chance: 0.1 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.08 },
+  ]],
+
+  // Tier III — Ancient Ruins (Predator, levels 14-24)
+  ['loot_creature_guardian_construct', [
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.7 },
+    { itemId: 'reagent_ancient_circuitry', minAmount: 1, maxAmount: 2, chance: 0.4 },
+    { itemId: 'world_ancient_fragment', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ]],
+
+  // Tier II — Ancient Ruins (Omnivore, levels 10-20)
+  ['loot_creature_relic_beast', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.8 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.25 },
+    { itemId: 'reagent_ancient_circuitry', minAmount: 1, maxAmount: 1, chance: 0.2 },
+    { itemId: 'world_ancient_fragment', minAmount: 1, maxAmount: 1, chance: 0.08 },
+  ]],
 ]);
 
 /**
