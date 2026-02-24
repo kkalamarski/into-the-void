@@ -142,10 +142,10 @@ Plans:
   3. Secrets documentation lists all required GitHub Secrets with example values
   4. First deployment checklist provides step-by-step verification of working system
 
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 93-01: TBD
+- [ ] 93-01-PLAN.md — Complete deployment documentation (VM setup, DNS, secrets, checklist)
 
 ---
 
