@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 85 - Gathering as Ability System
+**Current focus:** Phase 86 - Exotic Entity Population
 
 ## Current Position
 
-Phase: 85 of 88 (Gathering as Ability System) - VERIFIED
-Plan: 4 of 4 in current phase (includes gap-closure)
-Status: Phase complete, verification passed
-Last activity: 2026-02-24 - Gap closure executed (85-04), all success criteria verified
+Phase: 86 of 88 (Exotic Entity Population)
+Plan: 1 of 2 in current phase
+Status: Plan 01 complete - 24 exotic entity definitions created
+Last activity: 2026-02-24 - Completed 86-01 (Exotic Entity Definitions)
 
-Progress: [####################] 100% v1.17 | [##########....] 71% v1.18
+Progress: [####################] 100% v1.17 | [###########...] 72% v1.18
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 230 (v1.0-v1.17: 222, v1.18: 8)
+- Total plans completed: 231 (v1.0-v1.17: 222, v1.18: 9)
 - Average duration: ~3 min per plan
 - Total execution time: ~11.6 hours across 17 milestones
 
@@ -28,7 +28,7 @@ Progress: [####################] 100% v1.17 | [##########....] 71% v1.18
 | Milestone | Phases | Plans | Timeline |
 |-----------|--------|-------|----------|
 | v1.0-v1.17 | 1-81 | 222 | 10 days |
-| v1.18 | 82-88 | 12/18 | In Progress |
+| v1.18 | 82-88 | 13/18 | In Progress |
 
 **v1.18 Phase Estimates:**
 
@@ -53,7 +53,8 @@ Progress: [####################] 100% v1.17 | [##########....] 71% v1.18
 | Phase 85 P03 | 234s | 5 tasks | 3 files |
 | Phase 85 P01 | 430 | 3 tasks | 4 files |
 | Phase 85 P04 | 206s | 3 tasks | 2 files |
-| Phase 85 P04 | 206 | 3 tasks | 2 files |
+| Phase 86 P01 | 252s | 3 tasks | 5 files |
+| Phase 86 P01 | 252 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,8 @@ Recent decisions affecting current work:
 - [Phase 85-04]: Tool yield multiplier affects both loot drop chance (capped 1.0) and quantity (min 1)
 - [Phase 85]: Optional yieldMultiplier parameter for backward compatibility in EntityService.handleToolUse
 - [Phase 85]: Tool yield multiplier affects both loot drop chance (capped 1.0) and quantity (min 1)
+- [Phase 86-01]: Changed MINERAL_VOID_CRYSTAL_NODE rarity from 'exotic' to 'epic' (NodeRarity constraint)
+- [Phase 86-01]: Changed MINERAL_VOID_CRYSTAL_NODE rarity from 'exotic' to 'epic' (NodeRarity constraint)
 
 ### Pending Todos
 
@@ -119,13 +122,13 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed Phase 85 Plan 04 (Tool YieldBonus Parameter Fix)
+Stopped at: Completed 86-01-PLAN.md (Exotic Entity Definitions)
 Resume file: None
 
 **Next steps:**
-1. Begin Phase 86 (Exotic Entities)
-2. Implement exotic biome entities (void creatures, crystal formations)
-3. Balance exotic entity loot and progression
+1. Continue Phase 86 Plan 02 (Exotic Entity Spawn Configuration)
+2. Configure spawn tables and loot tables for exotic entities
+3. Complete Phase 86, then Phase 87 (Items & Balance)
 
 ---
-*Last updated: 2026-02-24 - Phase 85 complete (4 plans including gap-closure)*
+*Last updated: 2026-02-24 - Phase 86 Plan 01 complete (24 exotic entity definitions)*
