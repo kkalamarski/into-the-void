@@ -10,25 +10,25 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 88 of 88 (Content Gaps & Discovery)
-Plan: 2 of 2 in current phase
-Status: Phase 88 complete - All gap-closure requirements satisfied
-Last activity: 2026-02-24 - Completed 88-02 (Discovery System Integration)
+Plan: 3 of 3 in current phase
+Status: Phase 88 complete - All gap-closure and spawn integration requirements satisfied
+Last activity: 2026-02-24 - Completed 88-03 (Biome Spawn Integration)
 
 Progress: [####################] 100% v1.17 | [####################] 100% v1.18
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 238 (v1.0-v1.17: 222, v1.18: 16)
+- Total plans completed: 239 (v1.0-v1.17: 222, v1.18: 17)
 - Average duration: ~3 min per plan
-- Total execution time: ~12.0 hours across 18 milestones
+- Total execution time: ~12.1 hours across 18 milestones
 
 **By Milestone:**
 
 | Milestone | Phases | Plans | Timeline |
 |-----------|--------|-------|----------|
 | v1.0-v1.17 | 1-81 | 222 | 10 days |
-| v1.18 | 82-88 | 18/18 | Complete |
+| v1.18 | 82-88 | 19/19 | Complete |
 
 **v1.18 Phase Estimates:**
 
@@ -61,6 +61,7 @@ Progress: [####################] 100% v1.17 | [####################] 100% v1.18
 | Phase 87 P04 | 326s | 2 tasks | 5 files |
 | Phase 88 P01 | 266s | 3 tasks | 5 files |
 | Phase 88 P02 | 235s | 3 tasks | 4 files |
+| Phase 88 P03 | 154 | 4 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -122,6 +123,10 @@ Recent decisions affecting current work:
 - [Phase 88-02]: XP rewards 75 for Tier I-II biomes, 100 for Tier III-IV biomes
 - [Phase 88-02]: Starfall crater creatures drop crater_dust and quantum_residue (anomaly connection)
 - [Phase 88-02]: Ancient ruins creatures drop ancient_circuitry and ancient_fragment (ruin theme)
+- [Phase 88-03]: Spawn weights maintain existing biome patterns (rare=2, epic=1 for plants; herbivores heavier than predators)
+- [Phase 88-03]: Contaminated relic added to toxic_wastes (weight 6, epic) matching volcanic_ridge artifact pattern
+- [Phase 88-03]: Frozen archive as secondary epic artifact in frozen_expanse (weight 5 vs primary weight 10)
+- [Phase 88-03]: Starfall grazer higher spawn weight (6) than crater stalker (4) for ecosystem balance
 
 ### Pending Todos
 
@@ -140,13 +145,13 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 88-02-PLAN.md (Discovery System Integration)
+Stopped at: Completed 88-03-PLAN.md (Biome Spawn Integration)
 Resume file: None
 
 **Next steps:**
-1. Verify all v1.18 gap-closure requirements satisfied (ENT-07-09, CREA-09-10, PROG-04-06)
+1. Verify v1.18 milestone complete - all gap-closure requirements satisfied
 2. Begin v1.19 milestone planning
-3. Consider testing lore fragment discovery mechanics in-game
+3. Consider in-game testing of Phase 88 entities (spawning, gathering, lore discovery)
 
 ---
-*Last updated: 2026-02-24 - Phase 88 complete (v1.18 milestone complete - all gap-closure requirements satisfied)*
+*Last updated: 2026-02-24 - Phase 88 complete (v1.18 milestone complete - all gap-closure and spawn integration satisfied)*
