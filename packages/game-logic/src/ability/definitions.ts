@@ -378,6 +378,44 @@ export const ABILITY_ANALYZE_SPECIMEN: AbilityDefinition = {
   iconColor: 0x88ff88,
 };
 
+// ============================================================
+// GATHERING ABILITIES
+// ============================================================
+
+/**
+ * Harvest - Gather from plants (granted by botany tools)
+ */
+export const ABILITY_HARVEST: AbilityDefinition = {
+  id: 'harvest',
+  displayName: 'Harvest',
+  description: 'Carefully harvest resources from plants and flora.',
+  category: 'utility',
+  energyCost: 5,
+  cooldownMs: 3000,
+  range: 1,
+  requiresTarget: true,
+  effects: [{ type: 'gather', gatherType: 'harvest', baseYield: 1 }],
+  iconKey: 'ability_harvest',
+  iconColor: 0x44ff44, // Green
+};
+
+/**
+ * Mine - Extract from minerals (granted by extraction tools)
+ */
+export const ABILITY_MINE: AbilityDefinition = {
+  id: 'mine',
+  displayName: 'Mine',
+  description: 'Extract valuable resources from mineral deposits.',
+  category: 'utility',
+  energyCost: 8,
+  cooldownMs: 4000,
+  range: 1,
+  requiresTarget: true,
+  effects: [{ type: 'gather', gatherType: 'mine', baseYield: 1 }],
+  iconKey: 'ability_mine',
+  iconColor: 0x888888, // Gray
+};
+
 /**
  * All abilities - complete registry
  */
@@ -407,4 +445,7 @@ export const ALL_ABILITIES: readonly AbilityDefinition[] = [
   ABILITY_OVERCLOCK,
   ABILITY_POWER_SURGE,
   ABILITY_ANALYZE_SPECIMEN,
+  // Gathering abilities (2)
+  ABILITY_HARVEST,
+  ABILITY_MINE,
 ];
