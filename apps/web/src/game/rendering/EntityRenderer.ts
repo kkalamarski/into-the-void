@@ -20,12 +20,19 @@ const ENTITY_SCALE: Record<string, number> = {
   npc: 2.2,        // NPCs slightly smaller than creatures
 };
 
-// Scale overrides for animated creatures with smaller sprite sheets (~56px)
+// Scale overrides for animated creatures with smaller sprite sheets (~48-120px)
 const ANIMATED_CREATURE_SCALE: Record<string, number> = {
   creature_void_crawler: 3.5,      // ~200px visual size
   creature_coastal_scuttler: 3.0,  // Smaller creature
   creature_crystal_hunter: 4.0,    // Larger predator
   creature_frost_stalker: 3.5,     // Similar size to void crawler
+  creature_canopy_grazer: 4.0,     // Large herbivore (48px sprite)
+  creature_tide_crab: 3.5,         // Medium crustacean (48px sprite)
+  creature_coastal_urchin: 3.0,    // Smaller spiny creature (64px sprite)
+  creature_reef_scavenger: 3.5,    // Medium aquatic scavenger (64px sprite)
+  creature_crystal_crawler: 2.5,   // Crystal bear (96px sprite)
+  creature_void_horror: 2.5,       // Creepy predator maniac (96px sprite)
+  creature_toxic_lurker: 2.0,      // Fern creature predator (120px sprite)
 };
 
 // Shadow size overrides for animated creatures { width, height }
@@ -34,6 +41,13 @@ const ANIMATED_CREATURE_SHADOW: Record<string, { width: number; height: number }
   creature_coastal_scuttler: { width: 70, height: 35 },
   creature_crystal_hunter: { width: 90, height: 45 },
   creature_frost_stalker: { width: 80, height: 40 },
+  creature_canopy_grazer: { width: 90, height: 45 },
+  creature_tide_crab: { width: 80, height: 40 },
+  creature_coastal_urchin: { width: 70, height: 35 },
+  creature_reef_scavenger: { width: 80, height: 40 },
+  creature_crystal_crawler: { width: 100, height: 50 },
+  creature_void_horror: { width: 100, height: 50 },
+  creature_toxic_lurker: { width: 110, height: 55 },
 };
 
 // Y offset overrides for animated creatures (0 = feet at shadow level)
@@ -42,6 +56,13 @@ const ANIMATED_CREATURE_Y_OFFSET: Record<string, number> = {
   creature_coastal_scuttler: 0,
   creature_crystal_hunter: 0,
   creature_frost_stalker: 0,
+  creature_canopy_grazer: 0,
+  creature_tide_crab: 0,
+  creature_coastal_urchin: 0,
+  creature_reef_scavenger: 0,
+  creature_crystal_crawler: 0,
+  creature_void_horror: 0,
+  creature_toxic_lurker: 0,
 };
 
 // Scale overrides for specific plants (speciesId -> scale multiplier)
@@ -486,6 +507,13 @@ export class EntityRenderer {
     'creature_coastal_scuttler',
     'creature_crystal_hunter',
     'creature_frost_stalker',
+    'creature_canopy_grazer',
+    'creature_tide_crab',
+    'creature_coastal_urchin',
+    'creature_reef_scavenger',
+    'creature_crystal_crawler',
+    'creature_void_horror',
+    'creature_toxic_lurker',
   ]);
 
   // Features with sprite variants: entityId -> number of variants

@@ -89,6 +89,13 @@ export class PreloadScene extends Phaser.Scene {
       'creature_coastal_scuttler': 'neon-creature',
       'creature_crystal_hunter': 'crystal-hunter',
       'creature_frost_stalker': 'frost-stalker',
+      'creature_canopy_grazer': 'canopy-grazer',
+      'creature_tide_crab': 'tide-crab',
+      'creature_coastal_urchin': 'coastal-urchin',
+      'creature_reef_scavenger': 'reef-scavenger',
+      'creature_crystal_crawler': 'crystal-crawler',
+      'creature_void_horror': 'void-horror',
+      'creature_toxic_lurker': 'toxic-lurker',
     };
 
     for (const [speciesId, folder] of Object.entries(creatureSprites)) {
@@ -441,7 +448,19 @@ export class PreloadScene extends Phaser.Scene {
 
   private createCreatureAnimations(): void {
     const directions = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
-    const animatedCreatures = ['creature_void_crawler', 'creature_coastal_scuttler', 'creature_crystal_hunter', 'creature_frost_stalker'];
+    const animatedCreatures = [
+      'creature_void_crawler',
+      'creature_coastal_scuttler',
+      'creature_crystal_hunter',
+      'creature_frost_stalker',
+      'creature_canopy_grazer',
+      'creature_tide_crab',
+      'creature_coastal_urchin',
+      'creature_reef_scavenger',
+      'creature_crystal_crawler',
+      'creature_void_horror',
+      'creature_toxic_lurker',
+    ];
 
     // Walk animations (8 frames per direction) for each animated creature
     for (const speciesId of animatedCreatures) {
