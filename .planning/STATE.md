@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-23)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 86 - Exotic Entity Population
+**Current focus:** Phase 87 - Item Integration & Balance
 
 ## Current Position
 
-Phase: 86 of 88 (Exotic Entity Population)
-Plan: 2 of 2 in current phase
-Status: Phase 86 complete - Exotic biomes populated with spawn configs and loot tables
-Last activity: 2026-02-24 - Completed 86-02 (Exotic Entity Spawn & Loot Configuration)
+Phase: 87 of 88 (Item Integration & Balance)
+Plan: 2 of 3 in current phase
+Status: In progress - Exotic equipment definitions complete
+Last activity: 2026-02-24 - Completed 87-02 (Exotic Equipment Definitions)
 
-Progress: [####################] 100% v1.17 | [###########....] 76% v1.18
+Progress: [####################] 100% v1.17 | [############...] 81% v1.18
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 232 (v1.0-v1.17: 222, v1.18: 10)
+- Total plans completed: 233 (v1.0-v1.17: 222, v1.18: 11)
 - Average duration: ~3 min per plan
 - Total execution time: ~11.7 hours across 17 milestones
 
@@ -28,7 +28,7 @@ Progress: [####################] 100% v1.17 | [###########....] 76% v1.18
 | Milestone | Phases | Plans | Timeline |
 |-----------|--------|-------|----------|
 | v1.0-v1.17 | 1-81 | 222 | 10 days |
-| v1.18 | 82-88 | 14/18 | In Progress |
+| v1.18 | 82-88 | 15/18 | In Progress |
 
 **v1.18 Phase Estimates:**
 
@@ -56,6 +56,8 @@ Progress: [####################] 100% v1.17 | [###########....] 76% v1.18
 | Phase 86 P01 | 252s | 3 tasks | 5 files |
 | Phase 86 P01 | 252 | 3 tasks | 5 files |
 | Phase 86 P02 | 311 | 4 tasks | 2 files |
+| Phase 87 P02 | 111s | 2 tasks | 2 files |
+| Phase 87 P02 | 111 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -109,6 +111,10 @@ Recent decisions affecting current work:
 - [Phase 86-02]: Crystalline wastes mineral-focused with mineralDensity 10 (highest in game)
 - [Phase 86-02]: Void rift danger-focused with low creatureDensity 2 but includes maniac
 - [Phase 86-02]: Dimensional Aberration weight 1 matches Abyssal Leviathan and Void Horror rarity
+- [Phase 87]: Scout/recon/balanced archetypes for exotic suits create horizontal progression
+- [Phase 87]: Anomaly toolType added for reality distortion resistance (Reality Anchor)
+- [Phase 87]: Scout/recon/balanced archetypes for exotic suits create horizontal progression
+- [Phase 87]: Anomaly toolType added for reality distortion resistance (Reality Anchor)
 
 ### Pending Todos
 
@@ -127,13 +133,13 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 86-02-PLAN.md (Exotic Entity Spawn & Loot Configuration)
+Stopped at: Completed 87-02-PLAN.md (Exotic Equipment Definitions)
 Resume file: None
 
 **Next steps:**
-1. Begin Phase 87 (Items & Balance)
+1. Continue Phase 87 (Plan 03 - Items & Balance)
 2. Balance crafting recipes for exotic materials
 3. Complete v1.18 milestone with Phase 88 (Gaps & Discovery)
 
 ---
-*Last updated: 2026-02-24 - Phase 86 complete (exotic entity population with spawn configs and loot tables)*
+*Last updated: 2026-02-24 - Phase 87 Plan 02 complete (exotic equipment definitions with horizontal progression)*
