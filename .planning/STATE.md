@@ -11,16 +11,16 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 89 of 93 (Docker Images)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: Executing plans
-Last activity: 2026-02-24 — Completed plan 89-02
+Last activity: 2026-02-24 — Completed plans 89-01 and 89-02
 
 Progress: [████████████████████████████████████████████████████████████████████████████████████████████░░░] 88/93 phases = 95%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 240 (v1.0-v1.19 in progress)
+- Total plans completed: 241 (v1.0-v1.19 in progress)
 - Average duration: ~3 min per plan
 - Total execution time: ~12.1 hours across 18 milestones
 
@@ -31,8 +31,8 @@ Progress: [███████████████████████
 
 **v1.19 Status:**
 - Phases: 5 total (89-93)
-- Plans: 1 completed of ~10 estimated across all phases
-- Status: Phase 89 execution in progress (plan 89-02 complete)
+- Plans: 2 completed of ~10 estimated across all phases
+- Status: Phase 89 execution in progress (plans 89-01, 89-02 complete)
 
 *Updated after each plan completion*
 
@@ -46,6 +46,9 @@ Recent decisions affecting current work:
 - All phases: 96px TILE_SIZE matches sprite specification
 - Auth: 5-second auth timeout prevents stuck connections
 - Movement: Client-side prediction for responsive feel
+- Docker (89-01): Multi-stage builds with node:20-alpine for API and game-server for minimal image size
+- Docker (89-01): NX generatePackageJson for dependency management in Docker builds
+- Docker (89-01): HEALTHCHECK directives enable container orchestration monitoring
 - Docker (89-02): Multi-stage build with node:20-alpine → nginx:alpine for minimal image size
 - Docker (89-02): VITE_* env vars baked at build time via ARG directives
 - Docker (89-02): 1-year cache for /assets/ due to Vite content-hashing
@@ -72,8 +75,8 @@ None yet (v1.19 just started).
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed plan 89-02 (web Dockerfile)
+Stopped at: Completed plans 89-01 (backend Dockerfiles) and 89-02 (web Dockerfile)
 Resume file: None - continue with remaining phase 89 plans
 
 ---
-*Last updated: 2026-02-24 — Plan 89-02 completed*
+*Last updated: 2026-02-24 — Plans 89-01 and 89-02 completed*
