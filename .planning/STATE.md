@@ -6,23 +6,23 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-**Current focus:** Phase 91 - Traefik SSL
+**Current focus:** Phase 92 - CI/CD Pipeline
 
 ## Current Position
 
-Phase: 91 of 93 (Traefik SSL) — In Progress
-Plan: 1 of 1 in current phase (91-01 complete)
-Status: Phase complete, ready for Phase 92
-Last activity: 2026-02-24 — Phase 91 execution complete
+Phase: 92 of 93 (CI/CD Pipeline) — In Progress
+Plan: 1 of ~2 in current phase (92-01 complete)
+Status: Plan 92-01 complete, ready for Plan 92-02
+Last activity: 2026-02-24 — Plan 92-01 execution complete
 
-Progress: [██████████████████████████████████████████████████████████████████████████████████████████████░░] 91/93 phases = 98%
+Progress: [██████████████████████████████████████████████████████████████████████████████████████████████░░] 92/93 phases = 99%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 244 (v1.0-v1.19 in progress)
+- Total plans completed: 245 (v1.0-v1.19 in progress)
 - Average duration: ~3 min per plan
-- Total execution time: ~12.4 hours across 18 milestones
+- Total execution time: ~12.5 hours across 18 milestones
 
 **Recent Milestones:**
 - v1.18 Content Expansion: 7 phases (82-88) completed 2026-02-24
@@ -31,8 +31,8 @@ Progress: [███████████████████████
 
 **v1.19 Status:**
 - Phases: 5 total (89-93)
-- Plans: 5 completed of ~10 estimated across all phases
-- Status: Phase 91 complete (Traefik SSL configured)
+- Plans: 6 completed of ~10 estimated across all phases
+- Status: Phase 92 in progress (CI/CD workflow created)
 
 *Updated after each plan completion*
 
@@ -59,6 +59,11 @@ Recent decisions affecting current work:
 - [Phase 091-01]: Host mode for ports 80/443 for direct ingress without overlay network overhead
 - [Phase 091-01]: Let's Encrypt production server for automatic SSL certificate management
 - [Phase 091-01]: HTTP to HTTPS redirect for security and SEO
+- [Phase 092-01]: GHCR chosen for image storage (GitHub Actions native integration)
+- [Phase 092-01]: Matrix build strategy for parallel image builds (api, game-server, web)
+- [Phase 092-01]: GitHub Actions cache for faster subsequent builds
+- [Phase 092-01]: Full monorepo context required for NX workspace builds
+- [Phase 092-01]: Semantic versioning tags (version, major.minor, latest)
 
 ### Pending Todos
 
@@ -75,15 +80,16 @@ None yet (v1.19 just started).
 - Docker Swarm not yet initialized
 - Firewall rules need configuration
 
-**Registry Decision:**
-- Need to choose between GHCR (GitHub Container Registry) or Docker Hub
-- GHCR preferred for GitHub Actions integration
+**GitHub Actions Setup:**
+- GHCR_TOKEN not needed - GITHUB_TOKEN provides automatic write:packages scope
+- Repository Actions must be enabled (Settings → Actions → General)
+- Production environment needs SSH secrets for deployment (Plan 92-02)
 
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Phase 91 complete — Traefik SSL configured
-Resume file: None - continue with /gsd:plan-phase 92
+Stopped at: Plan 92-01 complete — CI/CD workflow created
+Resume file: None - continue with Plan 92-02
 
 ---
-*Last updated: 2026-02-24 — Phase 91 complete*
+*Last updated: 2026-02-24 — Plan 92-01 complete*
