@@ -22,6 +22,11 @@ const BIOME_VISIBILITY_MODIFIERS: Record<string, number> = {
   tidal_pools: 0.85, // Slight visibility reduction (water refraction)
   kelp_forests: 0.7, // Significant reduction (dense vegetation)
   deep_trenches: 0.6, // Major reduction (darkness of the depths)
+  // Exotic biomes
+  void_rift: 0.7,               // Reduced visibility (reality distortion)
+  bioluminescent_depths: 0.75,  // Moderate reduction (uneven glow)
+  // Note: crystalline_wastes uses tile-level modifier (1.2) for INCREASED visibility
+  // No biome-level entry needed - tiles handle it
   // All other biomes default to 1.0
 };
 

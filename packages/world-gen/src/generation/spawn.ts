@@ -18,7 +18,7 @@ const FERTILITY_MULTIPLIERS: Record<FertilityType, number> = {
 const SPAWN_CAPS = {
   creatures: 15,
   minerals: 10,
-  plants: 5,
+  plants: 20,  // Increased for forests
   artifacts: 2,
   rareMinerals: 3,
   epicMinerals: 1,
@@ -48,13 +48,14 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
       { id: ENTITY_IDS.MINERAL_VOID_CRYSTAL, weight: 10, rarity: 1 },
     ],
     plants: [
-      { id: ENTITY_IDS.PLANT_DROUGHT_CACTUS, weight: 10 },
-      { id: ENTITY_IDS.PLANT_VOID_FERN, weight: 10 },
+      { id: ENTITY_IDS.PLANT_VOID_TREE, weight: 20 },  // High spawn rate - dominant feature
+      { id: ENTITY_IDS.PLANT_DROUGHT_CACTUS, weight: 8 },
+      { id: ENTITY_IDS.PLANT_VOID_FERN, weight: 8 },
     ],
     artifacts: [], // No artifacts in void_plains
     creatureDensity: 4,
     mineralDensity: 3,
-    plantDensity: 3,
+    plantDensity: 12,  // Dense forest
     artifactDensity: 1,
   },
   crystal_caves: {
@@ -292,6 +293,36 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     mineralDensity: 5,   // Rich deep mineral deposits
     plantDensity: 5,     // Aquatic biome
     artifactDensity: 1,
+  },
+  void_rift: {
+    creatures: [],      // Phase 85 will populate
+    minerals: [],
+    plants: [],
+    artifacts: [],
+    creatureDensity: 2, // Low density (dangerous environment)
+    mineralDensity: 6,  // High value resources
+    plantDensity: 1,    // Sparse vegetation
+    artifactDensity: 2, // Moderate artifact chance
+  },
+  crystalline_wastes: {
+    creatures: [],
+    minerals: [],
+    plants: [],
+    artifacts: [],
+    creatureDensity: 3,
+    mineralDensity: 8,  // Very high mineral density (crystals)
+    plantDensity: 0,    // No plants (pure crystal)
+    artifactDensity: 3, // Higher artifact chance
+  },
+  bioluminescent_depths: {
+    creatures: [],
+    minerals: [],
+    plants: [],
+    artifacts: [],
+    creatureDensity: 5,
+    mineralDensity: 3,
+    plantDensity: 8,    // High plant density (bioluminescent flora)
+    artifactDensity: 2,
   },
 };
 
