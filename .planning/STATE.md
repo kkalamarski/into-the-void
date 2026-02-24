@@ -10,25 +10,25 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 87 of 88 (Item Integration & Balance)
-Plan: 3 of 3 in current phase
-Status: Phase 87 complete - All items defined and integrated
-Last activity: 2026-02-24 - Completed 87-03 (Consumable Definitions & Item Integration)
+Plan: 4 of 4 in current phase
+Status: Phase 87 complete - Items defined, integrated, and obtainable
+Last activity: 2026-02-24 - Completed 87-04 (Loot Tables & Vendor Integration)
 
 Progress: [####################] 100% v1.17 | [############...] 79% v1.18
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 235 (v1.0-v1.17: 222, v1.18: 13)
+- Total plans completed: 236 (v1.0-v1.17: 222, v1.18: 14)
 - Average duration: ~3 min per plan
-- Total execution time: ~11.8 hours across 17 milestones
+- Total execution time: ~11.9 hours across 17 milestones
 
 **By Milestone:**
 
 | Milestone | Phases | Plans | Timeline |
 |-----------|--------|-------|----------|
 | v1.0-v1.17 | 1-81 | 222 | 10 days |
-| v1.18 | 82-88 | 17/18 | In Progress |
+| v1.18 | 82-88 | 18/18 | In Progress |
 
 **v1.18 Phase Estimates:**
 
@@ -58,6 +58,7 @@ Progress: [####################] 100% v1.17 | [############...] 79% v1.18
 | Phase 87 P01 | 128s | 2 tasks | 2 files |
 | Phase 87 P02 | 111s | 2 tasks | 2 files |
 | Phase 87 P03 | 157s | 3 tasks | 3 files |
+| Phase 87 P04 | 326s | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,10 @@ Recent decisions affecting current work:
 - [Phase 86-02]: Crystalline wastes mineral-focused with mineralDensity 10 (highest in game)
 - [Phase 86-02]: Void rift danger-focused with low creatureDensity 2 but includes maniac
 - [Phase 86-02]: Dimensional Aberration weight 1 matches Abyssal Leviathan and Void Horror rarity
+- [Phase 87-04]: Tier I-II aquatic items sold by vendors to satisfy ITEM-09 accessibility requirement
+- [Phase 87-04]: Exotic suits/tools (Level 25+) NOT in vendors - loot-only for progression gating
+- [Phase 87-04]: Consumable drop rates scaled by biome tier (0.05-0.25 for rares/epics)
+- [Phase 87-04]: Maniac creatures have highest consumable drop rates (0.15-0.25 for all rarities)
 
 ### Pending Todos
 
@@ -126,7 +131,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 87-03-PLAN.md (Consumable Definitions & Item Integration)
+Stopped at: Completed 87-04-PLAN.md (Loot Tables & Vendor Integration)
 Resume file: None
 
 **Next steps:**
@@ -135,4 +140,4 @@ Resume file: None
 3. Begin v1.19 milestone planning
 
 ---
-*Last updated: 2026-02-24 - Phase 87 complete (all item definitions and ItemRegistry integration)*
+*Last updated: 2026-02-24 - Phase 87 complete (items defined, integrated, and obtainable)*
