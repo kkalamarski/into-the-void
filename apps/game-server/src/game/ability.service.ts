@@ -213,8 +213,28 @@ export class AbilityService {
     const newEnergy = player.energy - ability.energyCost;
     this.playerService.updateEnergy(player.id, newEnergy);
 
+    // Get tool stats from equipped item (for gather abilities)
+    let toolStats = { yieldBonus: 0, gatherSpeed: 0 };
+    const inventory = this.inventoryService.getInventory(player.id);
+    if (inventory?.equipment.tool) {
+      const toolDef = ItemRegistry.get(inventory.equipment.tool.itemId);
+      if (toolDef?.stats) {
+        toolStats = {
+          yieldBonus: toolDef.stats.yieldBonus ?? 0,
+          gatherSpeed: toolDef.stats.gatherSpeed ?? 0,
+        };
+      }
+    }
+
+    // Apply gatherSpeed to cooldown calculation for gathering abilities
+    let cooldownMs = ability.cooldownMs;
+    if (ability.effects.some(e => e.type === 'gather')) {
+      const speedReduction = 1 - toolStats.gatherSpeed;
+      cooldownMs = Math.floor(cooldownMs * speedReduction);
+    }
+
     // Set cooldowns
-    const cooldownEndsAt = this.setCooldown(player.id, abilityId, ability.cooldownMs);
+    const cooldownEndsAt = this.setCooldown(player.id, abilityId, cooldownMs);
     this.setGcd(player.id);
 
     // Apply effects
@@ -362,6 +382,20 @@ export class AbilityService {
         };
 
         this.applyBuff(player.id, buff);
+      }
+
+      // Handle gather effect (harvest from plants, mine from minerals)
+      if (effect.type === 'gather') {
+        const gatherResult = await this.handleGatherEffect(
+          player.id,
+          targetEntityId!,
+          effect,
+          toolStats
+        );
+        if (!gatherResult.success) {
+          return { success: false, error: gatherResult.error };
+        }
+        // Items added to inventory, entity updated in handleGatherEffect
       }
     }
 
@@ -524,6 +558,68 @@ export class AbilityService {
       }
       this.activeBuffs.delete(playerId);
     }
+  }
+
+  /**
+   * Handle gather effect from harvest/mine abilities.
+   * Validates entity type, calculates yield with tool bonus, and processes gathering.
+   */
+  private async handleGatherEffect(
+    playerId: string,
+    targetEntityId: string,
+    effect: { type: 'gather'; gatherType: 'harvest' | 'mine'; baseYield: number },
+    toolStats: { yieldBonus: number; gatherSpeed: number }
+  ): Promise<{ success: boolean; error?: string }> {
+    // 1. Get target entity
+    const player = this.playerService.getPlayerById(playerId);
+    if (!player) {
+      return { success: false, error: 'Player not found' };
+    }
+
+    const entity = await this.zonesService.getEntity(player.position.zoneId, targetEntityId);
+    if (!entity) {
+      return { success: false, error: 'Target not found' };
+    }
+
+    // 2. Validate entity type matches gather type
+    if (effect.gatherType === 'harvest' && entity.type !== 'plant') {
+      return { success: false, error: 'Cannot harvest this target' };
+    }
+    if (effect.gatherType === 'mine' && entity.type !== 'mineral') {
+      return { success: false, error: 'Cannot mine this target' };
+    }
+
+    // 3. Calculate yield with tool bonus
+    const yieldMultiplier = 1 + toolStats.yieldBonus;
+    const finalYield = Math.floor(effect.baseYield * yieldMultiplier);
+
+    // 4. Call EntityService to process gathering
+    const result = await this.entityService.handleToolUse(
+      playerId,
+      targetEntityId,
+      finalYield
+    );
+
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
+
+    // 5. Emit events for entity update and loot
+    // (EntityService handles inventory updates internally)
+    if (result.entityChanges) {
+      this.server?.to(player.position.zoneId).emit('entity:update', {
+        entityId: targetEntityId,
+        changes: result.entityChanges,
+      });
+    }
+
+    if (result.groundItems && result.groundItems.length > 0) {
+      for (const item of result.groundItems) {
+        this.server?.to(player.position.zoneId).emit('entity:spawn', item);
+      }
+    }
+
+    return { success: true };
   }
 
   /**
