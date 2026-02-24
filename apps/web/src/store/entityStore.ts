@@ -44,7 +44,6 @@ export const useEntityStore = create<EntityState>()(
     getEntityAtPosition: (x, y, zoneId) => {
       for (const e of get().entities.values()) {
         if (e.active && e.position.x === x && e.position.y === y && e.position.zoneId === zoneId) {
-          console.debug('[EntityStore] Found entity at', x, y, zoneId, e.type, e.id);
           return e;
         }
       }

@@ -1335,7 +1335,6 @@ export class WorldScene extends Phaser.Scene {
   }
 
   spawnEntity(entity: Entity, zoneId?: string): void {
-    console.debug('[WorldScene] Spawning entity', entity.id, 'at', entity.position);
     if (this.entitySprites.has(entity.id) || !this.entityRenderer) return;
 
     // Check visibility using world coordinate distance
