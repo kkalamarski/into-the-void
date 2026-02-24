@@ -28,6 +28,9 @@ const BIOME_FEATURE_TILE_IDS: Record<BiomeType, TileId> = {
   tidal_pools: TileId.TIDAL_SHALLOW,
   kelp_forests: TileId.KELP_WALL,
   deep_trenches: TileId.TRENCH_DEEP,
+  void_rift: TileId.VOID_RIFT_DISTORTION,
+  crystalline_wastes: TileId.CRYSTAL_FORMATION_LARGE,
+  bioluminescent_depths: TileId.BIOLUMINESCENT_FLORA,
 };
 
 /**
@@ -181,6 +184,9 @@ function getFeatureTileIdForBiome(biome: BiomeType): string {
     tidal_pools: TILE_IDS.TIDAL_SHALLOW,
     kelp_forests: TILE_IDS.KELP_WALL,
     deep_trenches: TILE_IDS.TRENCH_DEEP,
+    void_rift: TILE_IDS.VOID_RIFT_DISTORTION,
+    crystalline_wastes: TILE_IDS.CRYSTAL_FORMATION_LARGE,
+    bioluminescent_depths: TILE_IDS.BIOLUMINESCENT_FLORA,
   };
   return featureTiles[biome];
 }

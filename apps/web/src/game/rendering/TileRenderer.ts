@@ -67,6 +67,12 @@ export const TILE_TEXTURE_MAP: Record<TileId, string> = {
   [TileId.TRENCH_FLOOR]: 'tile_trench_floor',
   [TileId.TRENCH_DEEP]: 'tile_trench_deep',
   [TileId.SHORE_TRANSITION]: 'tile_shore',
+  [TileId.VOID_RIFT_FLOOR]: 'tile_void_rift_floor',
+  [TileId.VOID_RIFT_DISTORTION]: 'tile_void_rift_distortion',
+  [TileId.CRYSTALLINE_FLOOR]: 'tile_crystalline_floor',
+  [TileId.CRYSTAL_FORMATION_LARGE]: 'tile_crystal_formation_large',
+  [TileId.BIOLUMINESCENT_FLOOR]: 'tile_bioluminescent_floor',
+  [TileId.BIOLUMINESCENT_FLORA]: 'tile_bioluminescent_flora',
 };
 
 /**

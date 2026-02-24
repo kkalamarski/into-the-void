@@ -23,6 +23,9 @@ const BIOME_POI_WEIGHTS: Record<BiomeType, Record<PoiType, number>> = {
   tidal_pools: { anomaly: 4, cache: 6, landmark: 5 },
   kelp_forests: { anomaly: 5, cache: 7, landmark: 4 },
   deep_trenches: { anomaly: 8, cache: 4, landmark: 6 },
+  void_rift: { anomaly: 10, cache: 2, landmark: 3 },        // High anomaly (reality distortion)
+  crystalline_wastes: { anomaly: 6, cache: 8, landmark: 7 }, // High cache/landmark (crystal formations)
+  bioluminescent_depths: { anomaly: 5, cache: 6, landmark: 5 }, // Balanced
 };
 
 /**

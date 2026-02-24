@@ -33,6 +33,12 @@ export enum TileId {
   TRENCH_FLOOR = 21,
   TRENCH_DEEP = 22,
   SHORE_TRANSITION = 23,
+  VOID_RIFT_FLOOR = 24,
+  VOID_RIFT_DISTORTION = 25,
+  CRYSTALLINE_FLOOR = 26,
+  CRYSTAL_FORMATION_LARGE = 27,
+  BIOLUMINESCENT_FLOOR = 28,
+  BIOLUMINESCENT_FLORA = 29,
 }
 
 /**
@@ -65,6 +71,12 @@ export function tileIdToString(id: TileId): string {
     [TileId.TRENCH_FLOOR]: TILE_IDS.TRENCH_FLOOR,
     [TileId.TRENCH_DEEP]: TILE_IDS.TRENCH_DEEP,
     [TileId.SHORE_TRANSITION]: TILE_IDS.SHORE_TRANSITION,
+    [TileId.VOID_RIFT_FLOOR]: TILE_IDS.VOID_RIFT_FLOOR,
+    [TileId.VOID_RIFT_DISTORTION]: TILE_IDS.VOID_RIFT_DISTORTION,
+    [TileId.CRYSTALLINE_FLOOR]: TILE_IDS.CRYSTALLINE_FLOOR,
+    [TileId.CRYSTAL_FORMATION_LARGE]: TILE_IDS.CRYSTAL_FORMATION_LARGE,
+    [TileId.BIOLUMINESCENT_FLOOR]: TILE_IDS.BIOLUMINESCENT_FLOOR,
+    [TileId.BIOLUMINESCENT_FLORA]: TILE_IDS.BIOLUMINESCENT_FLORA,
   };
   return mapping[id] ?? TILE_IDS.VOID_FLOOR;
 }
@@ -98,6 +110,9 @@ const BIOME_TILES: Record<BiomeType, { floor: TileId; wall: TileId; feature: Til
   tidal_pools: { floor: TileId.TIDAL_FLOOR, wall: TileId.TIDAL_SHALLOW, feature: TileId.TIDAL_SHALLOW },
   kelp_forests: { floor: TileId.KELP_FLOOR, wall: TileId.KELP_WALL, feature: TileId.KELP_WALL },
   deep_trenches: { floor: TileId.TRENCH_FLOOR, wall: TileId.TRENCH_DEEP, feature: TileId.TRENCH_DEEP },
+  void_rift: { floor: TileId.VOID_RIFT_FLOOR, wall: TileId.VOID_RIFT_DISTORTION, feature: TileId.VOID_RIFT_DISTORTION },
+  crystalline_wastes: { floor: TileId.CRYSTALLINE_FLOOR, wall: TileId.CRYSTAL_FORMATION_LARGE, feature: TileId.CRYSTAL_FORMATION_LARGE },
+  bioluminescent_depths: { floor: TileId.BIOLUMINESCENT_FLOOR, wall: TileId.BIOLUMINESCENT_FLORA, feature: TileId.BIOLUMINESCENT_FLORA },
 };
 
 /**
@@ -117,6 +132,9 @@ const BIOME_TILE_IDS: Record<BiomeType, { floor: string; wall: string; feature: 
   tidal_pools: { floor: TILE_IDS.TIDAL_FLOOR, wall: TILE_IDS.TIDAL_SHALLOW, feature: TILE_IDS.TIDAL_SHALLOW },
   kelp_forests: { floor: TILE_IDS.KELP_FLOOR, wall: TILE_IDS.KELP_WALL, feature: TILE_IDS.KELP_WALL },
   deep_trenches: { floor: TILE_IDS.TRENCH_FLOOR, wall: TILE_IDS.TRENCH_DEEP, feature: TILE_IDS.TRENCH_DEEP },
+  void_rift: { floor: TILE_IDS.VOID_RIFT_FLOOR, wall: TILE_IDS.VOID_RIFT_DISTORTION, feature: TILE_IDS.VOID_RIFT_DISTORTION },
+  crystalline_wastes: { floor: TILE_IDS.CRYSTALLINE_FLOOR, wall: TILE_IDS.CRYSTAL_FORMATION_LARGE, feature: TILE_IDS.CRYSTAL_FORMATION_LARGE },
+  bioluminescent_depths: { floor: TILE_IDS.BIOLUMINESCENT_FLOOR, wall: TILE_IDS.BIOLUMINESCENT_FLORA, feature: TILE_IDS.BIOLUMINESCENT_FLORA },
 };
 
 /**
@@ -137,6 +155,9 @@ const BIOME_ELEVATION_RANGES: Record<BiomeType, { min: number; max: number }> = 
   tidal_pools: { min: 0, max: 1 },         // Very flat coastal
   kelp_forests: { min: 0, max: 1 },        // Flat underwater
   deep_trenches: { min: 0, max: 0 },       // Completely flat abyss
+  void_rift: { min: 1, max: 3 },          // Moderate variation, eerie flatness
+  crystalline_wastes: { min: 2, max: 5 }, // High elevation, tall formations
+  bioluminescent_depths: { min: 0, max: 2 }, // Low, cave-like
 };
 
 /**
@@ -245,6 +266,9 @@ function getWallThreshold(biome: BiomeType): number {
     tidal_pools: 0.7,          // Few obstacles
     kelp_forests: 0.3,         // Dense kelp walls (will be carved by corridors)
     deep_trenches: 0.8,        // Open trenches
+    void_rift: 0.55,              // Moderate wall density (distortion pockets)
+    crystalline_wastes: 0.4,       // Dense crystal formations
+    bioluminescent_depths: 0.45,   // Moderate undergrowth (traversable flora)
   };
   return thresholds[biome];
 }
@@ -267,6 +291,9 @@ function isFeatureBlocking(biome: BiomeType): boolean {
     tidal_pools: false,        // Shallow water doesn't block
     kelp_forests: false,       // Kelp floor doesn't block
     deep_trenches: false,      // Deep water doesn't block
+    void_rift: true,               // Distortion blocks
+    crystalline_wastes: true,      // Crystal formations block
+    bioluminescent_depths: false,  // Flora slows but doesn't block
   };
   return blocking[biome];
 }
