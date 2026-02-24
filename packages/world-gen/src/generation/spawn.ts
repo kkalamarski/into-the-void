@@ -295,34 +295,76 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     artifactDensity: 1,
   },
   void_rift: {
-    creatures: [],      // Phase 85 will populate
-    minerals: [],
-    plants: [],
-    artifacts: [],
-    creatureDensity: 2, // Low density (dangerous environment)
-    mineralDensity: 6,  // High value resources
-    plantDensity: 1,    // Sparse vegetation
-    artifactDensity: 2, // Moderate artifact chance
+    creatures: [
+      { id: ENTITY_IDS.CREATURE_VOID_GRAZER, weight: 4, minLevel: 18, maxLevel: 28 },
+      { id: ENTITY_IDS.CREATURE_ANOMALY_SCAVENGER, weight: 3, minLevel: 20, maxLevel: 30 },
+      { id: ENTITY_IDS.CREATURE_VOID_STALKER, weight: 2, minLevel: 22, maxLevel: 32 },
+      { id: ENTITY_IDS.CREATURE_DIMENSIONAL_ABERRATION, weight: 1, minLevel: 24, maxLevel: 35 },
+    ],
+    minerals: [
+      { id: ENTITY_IDS.MINERAL_VOID_CRYSTAL_NODE, weight: 6, rarity: 3 },
+      { id: ENTITY_IDS.MINERAL_ANOMALY_SHARD, weight: 8, rarity: 2 },
+      { id: ENTITY_IDS.MINERAL_DIMENSIONAL_ORE, weight: 10, rarity: 2 },
+    ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_VOID_VINE, weight: 6 },
+      { id: ENTITY_IDS.PLANT_ECHO_BLOOM, weight: 4 },
+      { id: ENTITY_IDS.PLANT_NULL_GRASS, weight: 5 },
+    ],
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_ANOMALY_CORE, weight: 1, rarity: 'legendary' },
+      { id: ENTITY_IDS.ARTIFACT_DIMENSIONAL_FRAGMENT, weight: 3, rarity: 'exotic' },
+      { id: ENTITY_IDS.ARTIFACT_VOID_RELIC, weight: 1, rarity: 'legendary' },
+    ],
+    creatureDensity: 2,   // Tier IV extreme (very sparse, very dangerous)
+    mineralDensity: 8,    // High value resources (risk/reward)
+    plantDensity: 2,      // Minimal plants (reality distortion harsh)
+    artifactDensity: 1,
   },
   crystalline_wastes: {
-    creatures: [],
-    minerals: [],
-    plants: [],
-    artifacts: [],
-    creatureDensity: 3,
-    mineralDensity: 8,  // Very high mineral density (crystals)
-    plantDensity: 0,    // No plants (pure crystal)
-    artifactDensity: 3, // Higher artifact chance
+    creatures: [
+      { id: ENTITY_IDS.CREATURE_NULL_FEEDER, weight: 6, minLevel: 12, maxLevel: 20 },
+      { id: ENTITY_IDS.CREATURE_DIMENSIONAL_HUNTER, weight: 5, minLevel: 13, maxLevel: 22 },
+      { id: ENTITY_IDS.CREATURE_RIFT_HUNTER, weight: 4, minLevel: 14, maxLevel: 24 },
+    ],
+    minerals: [
+      { id: ENTITY_IDS.MINERAL_NULL_STONE, weight: 10, rarity: 1 },
+      { id: ENTITY_IDS.MINERAL_PHASE_MINERAL, weight: 6, rarity: 2 },
+    ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_NULL_GRASS, weight: 8 },
+    ],
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_DIMENSIONAL_FRAGMENT, weight: 6, rarity: 'exotic' },
+      { id: ENTITY_IDS.ARTIFACT_ECHO_RECORD, weight: 8, rarity: 'rare' },
+    ],
+    creatureDensity: 3,   // Tier III hostile (sparse but dangerous)
+    mineralDensity: 10,   // VERY HIGH mineral density (crystal theme)
+    plantDensity: 1,      // Minimal plants (harsh crystalline environment)
+    artifactDensity: 1,
   },
   bioluminescent_depths: {
-    creatures: [],
-    minerals: [],
-    plants: [],
-    artifacts: [],
-    creatureDensity: 5,
-    mineralDensity: 3,
-    plantDensity: 8,    // High plant density (bioluminescent flora)
-    artifactDensity: 2,
+    creatures: [
+      { id: ENTITY_IDS.CREATURE_ECHO_DRIFTER, weight: 8, minLevel: 6, maxLevel: 14 },
+      { id: ENTITY_IDS.CREATURE_PHASE_GRAZER, weight: 7, minLevel: 7, maxLevel: 15 },
+      { id: ENTITY_IDS.CREATURE_REALITY_SCAVENGER, weight: 5, minLevel: 8, maxLevel: 16 },
+    ],
+    minerals: [
+      { id: ENTITY_IDS.MINERAL_ANOMALY_SHARD, weight: 6, rarity: 2 },
+      { id: ENTITY_IDS.MINERAL_PHASE_MINERAL, weight: 8, rarity: 1 },
+    ],
+    plants: [
+      { id: ENTITY_IDS.PLANT_REALITY_MOSS, weight: 10 },
+      { id: ENTITY_IDS.PLANT_ECHO_BLOOM, weight: 6 },
+      { id: ENTITY_IDS.PLANT_TEMPORAL_FUNGUS, weight: 8 },
+    ],
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_ECHO_RECORD, weight: 10, rarity: 'rare' },
+    ],
+    creatureDensity: 5,   // Tier II hazardous (similar to kelp_forests)
+    mineralDensity: 4,
+    plantDensity: 8,      // HIGH plant density (bioluminescent flora theme)
+    artifactDensity: 1,
   },
 };
 
