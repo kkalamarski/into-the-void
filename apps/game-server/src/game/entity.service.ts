@@ -53,7 +53,11 @@ export class EntityService {
     private readonly databaseService: DatabaseService,
   ) {}
 
-  async handleToolUse(socketId: string, targetEntityId: string): Promise<ToolUseResult> {
+  async handleToolUse(
+    socketId: string,
+    targetEntityId: string,
+    yieldMultiplier?: number,
+  ): Promise<ToolUseResult> {
     const player = this.playerService.getPlayerBySocket(socketId);
     if (!player) return { success: false, error: 'Player not found' };
 
@@ -86,12 +90,15 @@ export class EntityService {
       }
     }
 
+    // Default to 1.0 for backward compatibility
+    const multiplier = yieldMultiplier ?? 1.0;
+
     // Route by entity type
     switch (entity.type) {
       case 'mineral':
-        return this.handleMine(player, entity as Mineral);
+        return this.handleMine(player, entity as Mineral, multiplier);
       case 'plant':
-        return this.handleHarvest(player, entity as Plant);
+        return this.handleHarvest(player, entity as Plant, multiplier);
       case 'creature':
         return this.handleAttack(player, entity as Creature);
       case 'artifact':
@@ -104,13 +111,15 @@ export class EntityService {
   private async handleMine(
     player: { id: string; position: { x: number; y: number; zoneId: string } },
     mineral: Mineral,
+    yieldMultiplier: number = 1.0,
   ): Promise<ToolUseResult> {
     if (mineral.yield <= 0) {
       return { success: false, error: 'Resource depleted' };
     }
 
-    // Decrement yield
-    mineral.yield -= 1;
+    // Decrement yield (minimum 1 to ensure progress)
+    const yieldAmount = Math.max(1, Math.floor(yieldMultiplier));
+    mineral.yield -= yieldAmount;
     const depleted = mineral.yield <= 0;
 
     if (depleted) {
@@ -118,7 +127,7 @@ export class EntityService {
       // Get mineral definition for loot
       const def = EntityRegistry.get(mineral.resourceId) as MineralDefinition | undefined;
       if (def?.miningYield) {
-        const loot = rollLootTable(def.miningYield);
+        const loot = rollLootTable(def.miningYield, yieldMultiplier);
         const groundItemEntities = await this.spawnGroundItems(
           loot,
           mineral.position.x,
@@ -147,19 +156,22 @@ export class EntityService {
   private async handleHarvest(
     player: { id: string; position: { x: number; y: number; zoneId: string } },
     plant: Plant,
+    yieldMultiplier: number = 1.0,
   ): Promise<ToolUseResult> {
     if (plant.yield <= 0) {
       return { success: false, error: 'Plant depleted' };
     }
 
-    plant.yield -= 1;
+    // Decrement yield (minimum 1 to ensure progress)
+    const yieldAmount = Math.max(1, Math.floor(yieldMultiplier));
+    plant.yield -= yieldAmount;
     const depleted = plant.yield <= 0;
 
     if (depleted) {
       plant.active = false;
       const def = EntityRegistry.get(plant.speciesId) as PlantDefinition | undefined;
       if (def?.harvestYield) {
-        const loot = rollLootTable(def.harvestYield);
+        const loot = rollLootTable(def.harvestYield, yieldMultiplier);
         const groundItemEntities = await this.spawnGroundItems(
           loot,
           plant.position.x,
