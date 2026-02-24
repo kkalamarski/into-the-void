@@ -272,6 +272,72 @@ export const CREATURE_PETRIFIED_LURKER: CreatureDefinition = {
   respawnSeconds: 360,
 };
 
+// ===== PHASE 88 ADDITIONS =====
+
+export const CREATURE_STARFALL_GRAZER: CreatureDefinition = {
+  id: 'creature_starfall_grazer',
+  displayName: 'Starfall Grazer',
+  description: 'Alien herbivore feeding on anomaly-mutated vegetation. Docile but unpredictable due to void exposure.',
+  entityClass: 'creature',
+  biomes: ['starfall_crater'],
+  textureKey: 'creature_starfall_grazer',
+  color: 0x4a5568,
+  lootTableId: 'loot_creature_starfall_grazer',
+  behavior: 'herbivore',
+  baseHealth: 130,
+  levelRange: [12, 22],
+  baseXp: 35,
+  respawnSeconds: 300,
+};
+
+export const CREATURE_CRATER_STALKER: CreatureDefinition = {
+  id: 'creature_crater_stalker',
+  displayName: 'Crater Stalker',
+  description: 'Apex predator adapted to anomaly zones. Uses dimensional instability to ambush prey with devastating efficiency.',
+  entityClass: 'creature',
+  biomes: ['starfall_crater'],
+  textureKey: 'creature_crater_stalker',
+  color: 0x4a0080,
+  lootTableId: 'loot_creature_crater_stalker',
+  behavior: 'predator',
+  baseHealth: 200,
+  levelRange: [15, 25],
+  baseXp: 70,
+  respawnSeconds: 420,
+};
+
+export const CREATURE_GUARDIAN_CONSTRUCT: CreatureDefinition = {
+  id: 'creature_guardian_construct',
+  displayName: 'Guardian Construct',
+  description: 'Ancient automaton still following defense protocols. Attacks trespassers in ruin zones with mechanical precision.',
+  entityClass: 'creature',
+  biomes: ['ancient_ruins'],
+  textureKey: 'creature_guardian_construct',
+  color: 0x8b7355,
+  lootTableId: 'loot_creature_guardian_construct',
+  behavior: 'predator',
+  baseHealth: 180,
+  levelRange: [14, 24],
+  baseXp: 65,
+  respawnSeconds: 420,
+};
+
+export const CREATURE_RELIC_BEAST: CreatureDefinition = {
+  id: 'creature_relic_beast',
+  displayName: 'Relic Beast',
+  description: 'Mutated creature warped by prolonged ruin exposure. Territorial and far more intelligent than its appearance suggests.',
+  entityClass: 'creature',
+  biomes: ['ancient_ruins'],
+  textureKey: 'creature_relic_beast',
+  color: 0xa0522d,
+  lootTableId: 'loot_creature_relic_beast',
+  behavior: 'omnivore',
+  baseHealth: 160,
+  levelRange: [10, 20],
+  baseXp: 50,
+  respawnSeconds: 360,
+};
+
 export const ALL_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_VOID_CRAWLER,
   CREATURE_CANOPY_GRAZER,
@@ -290,4 +356,9 @@ export const ALL_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_CRYSTAL_CRAWLER,
   CREATURE_RUIN_SEEKER,
   CREATURE_PETRIFIED_LURKER,
+  // Phase 88 starfall_crater and ancient_ruins creatures
+  CREATURE_STARFALL_GRAZER,
+  CREATURE_CRATER_STALKER,
+  CREATURE_GUARDIAN_CONSTRUCT,
+  CREATURE_RELIC_BEAST,
 ];

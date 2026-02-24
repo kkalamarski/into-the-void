@@ -65,10 +65,41 @@ export const ARTIFACT_THERMAL_CORE: ArtifactDefinition = {
   rarity: 'epic',
 };
 
+// ===== PHASE 88 ADDITIONS =====
+
+export const ARTIFACT_CONTAMINATED_RELIC: ArtifactDefinition = {
+  id: 'artifact_contaminated_relic',
+  displayName: 'Contaminated Ancient Relic',
+  description: 'Prior Inhabitant technology saturated with toxic compounds. Purpose unknown, value high despite hazardous handling requirements.',
+  entityClass: 'artifact',
+  biomes: ['toxic_wastes'],
+  textureKey: 'artifact_void_touched_relic',
+  color: 0x9acd32,
+  lootTableId: 'loot_artifact_contaminated_relic',
+  respawns: false,
+  rarity: 'rare',
+};
+
+export const ARTIFACT_FROZEN_ARCHIVE: ArtifactDefinition = {
+  id: 'artifact_frozen_archive',
+  displayName: 'Frozen Data Archive',
+  description: 'Perfectly preserved information storage device. Ice-locked for countless years, data integrity unknown.',
+  entityClass: 'artifact',
+  biomes: ['frozen_expanse'],
+  textureKey: 'artifact_ancient_data_core',
+  color: 0xb0e0e6,
+  lootTableId: 'loot_artifact_frozen_archive',
+  respawns: false,
+  rarity: 'epic',
+};
+
 export const ALL_ARTIFACTS: readonly ArtifactDefinition[] = [
   ARTIFACT_ANCIENT_DATA_CORE,
   ARTIFACT_VOID_TOUCHED_RELIC,
   ARTIFACT_CRYSTALLINE_RESONATOR,
   ARTIFACT_PRESERVED_SPECIMEN,
   ARTIFACT_THERMAL_CORE,
+  // Phase 88 biome gap artifacts
+  ARTIFACT_CONTAMINATED_RELIC,
+  ARTIFACT_FROZEN_ARCHIVE,
 ];
