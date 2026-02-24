@@ -74,8 +74,51 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy placeholder
+      - name: Set up SSH
         run: |
-          echo "Deployment job configured"
-          echo "Will be implemented in Plan 92-02"
-          echo "Tag: ${{ github.ref_name }}"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Extract version
+        id: version
+        run: echo "tag=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Copy deployment files
+        run: |
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            docker-stack.yml \
+            deploy/deploy.sh \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/itv/
+
+      - name: Create environment file
+        run: |
+          cat > /tmp/.env << 'EOF'
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          POSTGRES_USER=postgres
+          POSTGRES_DB=into_the_void
+          DOMAIN=${{ secrets.DOMAIN || 'intothevoid.online' }}
+          REGISTRY=${{ env.REGISTRY }}/${{ github.repository }}
+          TAG=${{ steps.version.outputs.tag }}
+          EOF
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            /tmp/.env \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/itv/.env
+
+      - name: Deploy to Swarm
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "cd /opt/itv && source .env && chmod +x deploy.sh && ./deploy.sh ${{ steps.version.outputs.tag }} ${{ env.REGISTRY }}/${{ github.repository }}"
+
+      - name: Verify deployment
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "docker stack services itv"
+
+      - name: Cleanup
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
