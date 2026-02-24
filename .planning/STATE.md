@@ -6,21 +6,21 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-**Current focus:** Phase 92 - CI/CD Pipeline
+**Current focus:** v1.19 Deployment & CI/CD - COMPLETE
 
 ## Current Position
 
-Phase: 92 of 93 (CI/CD Pipeline) — Complete
-Plan: 2 of 2 in current phase (both plans complete)
-Status: Phase 92 complete, ready for Phase 93
-Last activity: 2026-02-24 — Plan 92-02 execution complete
+Phase: 93 of 93 (Documentation) — Complete
+Plan: 1 of 1 in current phase (complete)
+Status: Milestone v1.19 complete, deployment documentation ready
+Last activity: 2026-02-24 — Plan 93-01 execution complete
 
-Progress: [██████████████████████████████████████████████████████████████████████████████████████████████░░] 92/93 phases = 99%
+Progress: [████████████████████████████████████████████████████████████████████████████████████████████████] 93/93 phases = 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 246 (v1.0-v1.19 in progress)
+- Total plans completed: 247 (v1.0-v1.19 complete)
 - Average duration: ~3 min per plan
 - Total execution time: ~12.5 hours across 18 milestones
 
@@ -30,9 +30,9 @@ Progress: [███████████████████████
 - v1.16 UI Polish: 5 phases (68-72) completed 2026-02-23
 
 **v1.19 Status:**
-- Phases: 5 total (89-93)
-- Plans: 7 completed of ~10 estimated across all phases
-- Status: Phase 92 complete (CI/CD pipeline with automated deployment)
+- Phases: 5 total (89-93) - ALL COMPLETE
+- Plans: 8 completed (all plans across all phases)
+- Status: Milestone v1.19 complete - deployment documentation ready
 
 *Updated after each plan completion*
 
@@ -67,6 +67,7 @@ Recent decisions affecting current work:
 - [Phase 092-02]: SSH-based deployment to Docker Swarm manager for production releases
 - [Phase 092-02]: Rolling update strategy with health checks for zero-downtime deployments
 - [Phase 092-02]: Expand-contract migration pattern for backward-compatible schema changes
+- [Phase 093]: Combined all VM setup steps in single guide for complete end-to-end provisioning
 
 ### Pending Todos
 
@@ -74,31 +75,17 @@ None yet (v1.19 just started).
 
 ### Blockers/Concerns
 
-**Domain Configuration:**
-- DNS records need to be configured at GoDaddy for play.intothevoid.online
-- SSL certificate issuance depends on correct DNS A records
-
-**VM Prerequisites:**
-- DigitalOcean VM not yet provisioned
-- Docker Swarm not yet initialized
-- Firewall rules need configuration
-
-**GitHub Actions Setup:**
-- GHCR_TOKEN not needed - GITHUB_TOKEN provides automatic write:packages scope
-- Repository Actions must be enabled (Settings → Actions → General)
-- Production environment needs SSH secrets configured:
-  - SSH_PRIVATE_KEY: SSH key for Swarm manager access
-  - DEPLOY_HOST: IP/hostname of Swarm manager
-  - DEPLOY_USER: SSH username
-  - POSTGRES_PASSWORD: Database password
-  - JWT_SECRET: JWT signing secret
-  - DOMAIN: (optional) Defaults to intothevoid.online
+None - all development complete. See `docs/deployment/` for first production deployment guide:
+- `VM_SETUP.md` - DigitalOcean provisioning
+- `DNS_CONFIGURATION.md` - GoDaddy DNS setup
+- `GITHUB_SECRETS.md` - GitHub Actions secrets
+- `FIRST_DEPLOYMENT.md` - Deployment checklist
 
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Plan 92-02 complete — CI/CD pipeline with automated deployment complete
-Resume file: None - ready for Phase 93
+Stopped at: Plan 93-01 complete — v1.19 milestone complete, deployment documentation ready
+Resume file: None - milestone complete
 
 ---
-*Last updated: 2026-02-24 — Phase 92 complete*
+*Last updated: 2026-02-24 — v1.19 Deployment & CI/CD milestone complete*
