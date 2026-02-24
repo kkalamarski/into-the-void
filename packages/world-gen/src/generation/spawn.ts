@@ -100,6 +100,8 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     creatures: [
       { id: ENTITY_IDS.CREATURE_VOID_HORROR, weight: 3, minLevel: 10, maxLevel: 25 },
       { id: ENTITY_IDS.CREATURE_RUIN_SEEKER, weight: 4, minLevel: 18, maxLevel: 30 },
+      { id: ENTITY_IDS.CREATURE_GUARDIAN_CONSTRUCT, weight: 4, minLevel: 14, maxLevel: 24 },
+      { id: ENTITY_IDS.CREATURE_RELIC_BEAST, weight: 5, minLevel: 10, maxLevel: 20 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_ANOMALY_CRYSTAL, weight: 5, rarity: 3 },
@@ -180,6 +182,8 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   starfall_crater: {
     creatures: [
       { id: ENTITY_IDS.CREATURE_VOID_HORROR, weight: 2, minLevel: 20, maxLevel: 35 },
+      { id: ENTITY_IDS.CREATURE_STARFALL_GRAZER, weight: 6, minLevel: 12, maxLevel: 22 },
+      { id: ENTITY_IDS.CREATURE_CRATER_STALKER, weight: 4, minLevel: 15, maxLevel: 25 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_COSMIC_FRAGMENT, weight: 4, rarity: 4 },
