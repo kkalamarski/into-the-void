@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-23)
 ## Current Position
 
 Phase: 85 of 88 (Gathering as Ability System) - COMPLETE
-Plan: 3 of 3 in current phase
+Plan: 4 of 4 in current phase (includes gap-closure)
 Status: Planning required
-Last activity: 2026-02-24 - Completed Phase 85 (Gathering as Ability System)
+Last activity: 2026-02-24 - Completed Phase 85 Plan 04 (Tool YieldBonus Parameter Fix)
 
 Progress: [####################] 100% v1.17 | [########......] 57% v1.18
 
@@ -52,6 +52,8 @@ Progress: [####################] 100% v1.17 | [########......] 57% v1.18
 | Phase 85 P02 | 268s | 5 tasks | 2 files |
 | Phase 85 P03 | 234s | 5 tasks | 3 files |
 | Phase 85 P01 | 430 | 3 tasks | 4 files |
+| Phase 85 P04 | 206s | 3 tasks | 2 files |
+| Phase 85 P04 | 206 | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -95,6 +97,10 @@ Recent decisions affecting current work:
 - [Phase 85-03]: Only static gatherable entities (minerals, plants) block movement
 - [Phase 85-03]: Items, NPCs, and creatures do not block pathfinding
 - [Phase 85-03]: Minerals/plants use target selection instead of auto-start gathering
+- [Phase 85-04]: Optional yieldMultiplier parameter for backward compatibility in EntityService.handleToolUse
+- [Phase 85-04]: Tool yield multiplier affects both loot drop chance (capped 1.0) and quantity (min 1)
+- [Phase 85]: Optional yieldMultiplier parameter for backward compatibility in EntityService.handleToolUse
+- [Phase 85]: Tool yield multiplier affects both loot drop chance (capped 1.0) and quantity (min 1)
 
 ### Pending Todos
 
@@ -113,7 +119,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed Phase 85 (Gathering as Ability System)
+Stopped at: Completed Phase 85 Plan 04 (Tool YieldBonus Parameter Fix)
 Resume file: None
 
 **Next steps:**
@@ -122,4 +128,4 @@ Resume file: None
 3. Balance exotic entity loot and progression
 
 ---
-*Last updated: 2026-02-24 - Phase 85 complete (gathering as ability system)*
+*Last updated: 2026-02-24 - Phase 85 complete (4 plans including gap-closure)*
