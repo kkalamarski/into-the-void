@@ -88,7 +88,9 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     plants: [
       { id: ENTITY_IDS.PLANT_ACID_FERN, weight: 10 },
     ],
-    artifacts: [], // No artifacts in toxic_wastes
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_CONTAMINATED_RELIC, weight: 6, rarity: 'epic' },
+    ],
     creatureDensity: 5,
     mineralDensity: 4,
     plantDensity: 3,
@@ -128,6 +130,7 @@ const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     ],
     artifacts: [
       { id: ENTITY_IDS.ARTIFACT_PRESERVED_SPECIMEN, weight: 10, rarity: 'rare' },
+      { id: ENTITY_IDS.ARTIFACT_FROZEN_ARCHIVE, weight: 5, rarity: 'epic' },
     ],
     creatureDensity: 3,
     mineralDensity: 4,
