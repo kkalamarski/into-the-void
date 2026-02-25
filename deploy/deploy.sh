@@ -16,31 +16,15 @@ echo "=========================================="
 
 # Step 1: Pull new images
 echo ""
-echo "Step 1/4: Pulling new images..."
+echo "Step 1/3: Pulling new images..."
 docker pull "$REGISTRY/api:$TAG"
 docker pull "$REGISTRY/game-server:$TAG"
 docker pull "$REGISTRY/web:$TAG"
 echo "✓ Images pulled successfully"
 
-# Step 2: Verify database connectivity
+# Step 2: Deploy stack with rolling update
 echo ""
-echo "Step 2/4: Verifying database connectivity..."
-docker run --rm \
-  --network itv_internal \
-  -e PGPASSWORD="${POSTGRES_PASSWORD}" \
-  postgres:16-alpine \
-  pg_isready -h postgres -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-into_the_void}"
-
-if [ $? -eq 0 ]; then
-  echo "✓ Database is reachable"
-else
-  echo "✗ Database connection failed"
-  exit 1
-fi
-
-# Step 3: Deploy stack with rolling update
-echo ""
-echo "Step 3/4: Deploying stack (rolling update)..."
+echo "Step 2/3: Deploying stack (rolling update)..."
 export TAG="$TAG"
 export REGISTRY="$REGISTRY"
 docker stack deploy -c docker-stack.yml --with-registry-auth itv
@@ -48,7 +32,7 @@ echo "✓ Stack deployment initiated"
 
 # Step 4: Wait for services to stabilize
 echo ""
-echo "Step 4/4: Waiting for services to stabilize..."
+echo "Step 3/3: Waiting for services to stabilize..."
 sleep 30
 
 # Check service status
