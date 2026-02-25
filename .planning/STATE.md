@@ -10,17 +10,17 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 
 ## Current Position
 
-Phase: 94 of 98 (World Scale Tuning)
-Plan: 02 of 02 completed
-Status: Complete
-Last activity: 2026-02-26 — Completed 94-02 (biome validation)
+Phase: 95 of 98 (Expedition Travel)
+Plan: 01 of 02 completed
+Status: In Progress
+Last activity: 2026-02-26 — Completed 95-01 (expedition NPC foundation)
 
-Progress: [████████████████████████████████████████████░░░] 96% (249/256 plans)
+Progress: [████████████████████████████████████████████░░░] 97% (250/256 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 249 (v1.0-v1.19 complete, v1.20 in progress)
+- Total plans completed: 250 (v1.0-v1.19 complete, v1.20 in progress)
 - Average duration: ~3 min per plan
 - Total execution time: ~12.5 hours across 19 milestones
 
@@ -32,7 +32,7 @@ Progress: [███████████████████████
 **v1.20 Status:**
 - Phases: 5 (94-98)
 - Plans: 9 total (2+2+1+2+2)
-- Status: Phase 94 complete (2/2 plans), Phase 95 next
+- Status: Phase 95 in progress (1/2 plans), 95-02 next
 
 *Updated after each plan completion*
 
@@ -55,6 +55,7 @@ Recent decisions affecting current work:
 - [Phase 94-01]: Proportional noise scale adjustment: 2.5x increase for 2.5x smaller regions
 - [Phase 94-02]: Biome scale changes validated - meet all gameplay requirements
 - [Phase 94-02]: Domain warping produces natural boundaries at new scale
+- [Phase 95]: Expedition NPC at (32,25) north of portal; Biome tiers I-IV per lore; Level gates 1/10/25/40
 
 ### Pending Todos
 
@@ -67,9 +68,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 94-02-PLAN.md (biome validation)
+Stopped at: Completed 95-01-PLAN.md (expedition NPC foundation)
 Resume file: None
-Next action: Begin Phase 95 (Action Bar Implementation)
+Next action: Execute 95-02 (expedition interaction)
 
 ---
-*Last updated: 2026-02-26 — Completed Phase 94 World Scale Tuning*
+*Last updated: 2026-02-26 — Completed 95-01 Expedition NPC Foundation*
