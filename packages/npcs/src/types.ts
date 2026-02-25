@@ -68,7 +68,7 @@ export interface AmbientDefinition extends BaseNpcDefinition {
 /** Service NPC - utility services */
 export interface ServiceDefinition extends BaseNpcDefinition {
   readonly npcType: 'service';
-  readonly serviceType: 'repair' | 'storage' | 'transport' | 'medical';
+  readonly serviceType: 'repair' | 'storage' | 'transport' | 'medical' | 'expedition';
 }
 
 /** Discriminated union of all NPC definitions */

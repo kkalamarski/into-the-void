@@ -122,3 +122,53 @@ export const BIOME_COLORS: Record<BiomeType, string> = {
   crystalline_wastes: '#b0e0e6',  // Pale cyan (crystal reflections)
   bioluminescent_depths: '#00ff88', // Bright cyan-green (bioluminescence)
 };
+
+/** Biome survival tiers from lore (I-IV) */
+export type BiomeTier = 1 | 2 | 3 | 4;
+
+/**
+ * Biome tier classification per world-bible.md
+ * Tier I (Frontier): Standard gear, starting zones
+ * Tier II (Hazardous): Specialized equipment
+ * Tier III (Hostile): Advanced gear, survival training
+ * Tier IV (Extreme): Elite equipment, corporate authorization
+ */
+export const BIOME_TIERS: Record<BiomeType, BiomeTier> = {
+  // Tier I - Frontier
+  void_plains: 1,
+  fungal_forest: 1,      // Luminous Canopy equivalent
+  tidal_pools: 1,        // Coastal Shallows equivalent
+  ancient_ruins: 1,      // Scarred Badlands equivalent
+
+  // Tier II - Hazardous
+  toxic_wastes: 2,       // Miasma Marshes equivalent
+  miasma_marshes: 2,
+  petrified_expanse: 2,
+  bioluminescent_depths: 2,
+  kelp_forests: 2,
+
+  // Tier III - Hostile
+  volcanic_ridge: 3,
+  crystal_caves: 3,      // Crystalline Wastes equivalent
+  crystalline_wastes: 3,
+  frozen_expanse: 3,
+  deep_trenches: 3,
+  starfall_crater: 3,    // Fungal Depths equivalent
+
+  // Tier IV - Extreme
+  void_rift: 4,          // Anomaly Zones
+};
+
+/**
+ * Level requirements to access each tier
+ * Tier I: No requirement (starting zones)
+ * Tier II: Level 10
+ * Tier III: Level 25
+ * Tier IV: Level 40
+ */
+export const TIER_LEVEL_REQUIREMENTS: Record<BiomeTier, number> = {
+  1: 1,   // No restriction
+  2: 10,
+  3: 25,
+  4: 40,
+};
