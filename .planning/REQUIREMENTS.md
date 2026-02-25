@@ -1,11 +1,43 @@
 # Requirements: Into the Void
 
-**Defined:** 2026-02-24
+**Defined:** 2026-02-25
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.19 Requirements
+## v1.20 Requirements
 
-Requirements for Deployment & CI/CD milestone. Each maps to roadmap phases.
+Requirements for World Scale & Action Bar milestone. Each maps to roadmap phases.
+
+### World Scale
+
+- [ ] **WORLD-01**: Biomes are small enough that players can reach neighboring biomes in 2-3 minutes of walking
+- [ ] **WORLD-02**: Biome transitions remain natural and gradual (no jarring edges)
+
+### Travel
+
+- [ ] **TRAV-01**: Expedition NPC exists in each faction hub
+- [ ] **TRAV-02**: Player can teleport to random world location via expedition NPC
+- [ ] **TRAV-03**: High-tier expedition destinations are locked until player reaches required level
+- [ ] **TRAV-04**: Universal home recall ability available to all players (not gear-dependent)
+- [ ] **TRAV-05**: Home recall has 5 minute cooldown
+
+### Action Bar
+
+- [ ] **ABAR-01**: Clicking ability icon triggers the ability
+- [ ] **ABAR-02**: SHIFT + drag allows relocating ability within action bar
+- [ ] **ABAR-03**: Abilities can be dragged from abilities panel to action bar
+- [ ] **ABAR-04**: Dropping ability outside action bar removes it
+- [ ] **ABAR-05**: Second action bar with 8 slots exists below/beside first bar
+- [ ] **ABAR-06**: Second bar uses Shift+1-8 keybindings
+
+### HUD
+
+- [ ] **HUD-01**: Game shortcuts are smaller
+- [ ] **HUD-02**: Game shortcuts moved to bottom-right next to minimap
+- [ ] **HUD-03**: Freed space accommodates second action bar
+
+## v1.19 Requirements (Complete)
+
+All requirements shipped 2026-02-24.
 
 ### Docker Images
 
@@ -40,10 +72,10 @@ Requirements for Deployment & CI/CD milestone. Each maps to roadmap phases.
 
 ### Documentation
 
-- [ ] **DOCS-01**: VM setup guide (Docker, Swarm init, firewall)
-- [ ] **DOCS-02**: DNS configuration guide (GoDaddy A records)
-- [ ] **DOCS-03**: Secrets configuration (GitHub Secrets list)
-- [ ] **DOCS-04**: First deployment checklist
+- [x] **DOCS-01**: VM setup guide (Docker, Swarm init, firewall)
+- [x] **DOCS-02**: DNS configuration guide (GoDaddy A records)
+- [x] **DOCS-03**: Secrets configuration (GitHub Secrets list)
+- [x] **DOCS-04**: First deployment checklist
 
 ## v1.18 Requirements (Complete)
 
@@ -243,6 +275,10 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
+| Faction outpost spawns | Future enhancement for expeditions - random location sufficient for v1.20 |
+| Expedition cost (credits) | Keeping expeditions free for now - can add economy later |
+| Expedition cooldown | No cooldown needed - tier-lock provides gating |
+| Third action bar | Two bars sufficient - reassess if needed |
 | Kubernetes | Docker Swarm simpler for single-node, can migrate later |
 | Managed database | Self-hosted sufficient for initial deployment |
 | CDN | Direct serving fine for initial traffic |
@@ -253,38 +289,59 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-### v1.19 Requirements
+### v1.20 Requirements
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DOCKER-01 | Phase 89 | Pending |
-| DOCKER-02 | Phase 89 | Pending |
-| DOCKER-03 | Phase 89 | Pending |
-| DOCKER-04 | Phase 89 | Pending |
-| SWARM-01 | Phase 90 | Pending |
-| SWARM-02 | Phase 90 | Pending |
-| SWARM-03 | Phase 90 | Pending |
-| SWARM-04 | Phase 90 | Pending |
-| SWARM-05 | Phase 90 | Pending |
-| PROXY-01 | Phase 91 | Pending |
-| PROXY-02 | Phase 91 | Pending |
-| PROXY-03 | Phase 91 | Pending |
-| PROXY-04 | Phase 91 | Pending |
-| PROXY-05 | Phase 91 | Pending |
-| CICD-01 | Phase 92 | Pending |
-| CICD-02 | Phase 92 | Pending |
-| CICD-03 | Phase 92 | Pending |
-| CICD-04 | Phase 92 | Pending |
-| CICD-05 | Phase 92 | Pending |
-| DOCS-01 | Phase 93 | Pending |
-| DOCS-02 | Phase 93 | Pending |
-| DOCS-03 | Phase 93 | Pending |
-| DOCS-04 | Phase 93 | Pending |
+| WORLD-01 | TBD | Pending |
+| WORLD-02 | TBD | Pending |
+| TRAV-01 | TBD | Pending |
+| TRAV-02 | TBD | Pending |
+| TRAV-03 | TBD | Pending |
+| TRAV-04 | TBD | Pending |
+| TRAV-05 | TBD | Pending |
+| ABAR-01 | TBD | Pending |
+| ABAR-02 | TBD | Pending |
+| ABAR-03 | TBD | Pending |
+| ABAR-04 | TBD | Pending |
+| ABAR-05 | TBD | Pending |
+| ABAR-06 | TBD | Pending |
+| HUD-01 | TBD | Pending |
+| HUD-02 | TBD | Pending |
+| HUD-03 | TBD | Pending |
 
 **Coverage:**
-- v1.19 requirements: 23 total
-- Mapped to phases: 23/23 ✓
-- Unmapped: 0
+- v1.20 requirements: 16 total
+- Mapped to phases: 0
+- Unmapped: 16
+
+### v1.19 Requirements (Complete)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| DOCKER-01 | Phase 89 | Complete |
+| DOCKER-02 | Phase 89 | Complete |
+| DOCKER-03 | Phase 89 | Complete |
+| DOCKER-04 | Phase 89 | Complete |
+| SWARM-01 | Phase 90 | Complete |
+| SWARM-02 | Phase 90 | Complete |
+| SWARM-03 | Phase 90 | Complete |
+| SWARM-04 | Phase 90 | Complete |
+| SWARM-05 | Phase 90 | Complete |
+| PROXY-01 | Phase 91 | Complete |
+| PROXY-02 | Phase 91 | Complete |
+| PROXY-03 | Phase 91 | Complete |
+| PROXY-04 | Phase 91 | Complete |
+| PROXY-05 | Phase 91 | Complete |
+| CICD-01 | Phase 92 | Complete |
+| CICD-02 | Phase 92 | Complete |
+| CICD-03 | Phase 92 | Complete |
+| CICD-04 | Phase 92 | Complete |
+| CICD-05 | Phase 92 | Complete |
+| DOCS-01 | Phase 93 | Complete |
+| DOCS-02 | Phase 93 | Complete |
+| DOCS-03 | Phase 93 | Complete |
+| DOCS-04 | Phase 93 | Complete |
 
 ### v1.18 Requirements (Complete)
 
@@ -368,5 +425,5 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUEST-08 | Phase 81 | Complete |
 
 ---
-*Requirements defined: 2026-02-24*
-*Last updated: 2026-02-24 after v1.19 roadmap creation*
+*Requirements defined: 2026-02-25*
+*Last updated: 2026-02-25 after v1.20 requirements definition*
