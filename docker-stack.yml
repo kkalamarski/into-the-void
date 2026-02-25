@@ -164,4 +164,5 @@ networks:
     driver: overlay
     internal: true  # No external access
   traefik-public:
-    external: true  # Created by Traefik stack in Phase 91
+    name: traefik_traefik-public
+    external: true  # Created by Traefik stack
