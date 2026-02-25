@@ -40,6 +40,7 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_suit_vendor', x: 15, y: 32 },      // W area - suit vendor
       { npcId: 'npc_tool_vendor', x: 49, y: 32 },      // E area - tool vendor
       { npcId: 'npc_module_vendor', x: 32, y: 49 },    // S area - module vendor
+      { npcId: 'npc_expedition_master', x: 32, y: 25 }, // N of portal - expedition coordinator
     ],
   },
   hub_helix: {
@@ -58,6 +59,7 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_suit_vendor', x: 15, y: 32 },
       { npcId: 'npc_tool_vendor', x: 49, y: 32 },
       { npcId: 'npc_module_vendor', x: 32, y: 49 },
+      { npcId: 'npc_expedition_master', x: 32, y: 25 }, // N of portal - expedition coordinator
     ],
   },
   hub_nexus: {
@@ -76,6 +78,7 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_suit_vendor', x: 15, y: 32 },
       { npcId: 'npc_tool_vendor', x: 49, y: 32 },
       { npcId: 'npc_module_vendor', x: 32, y: 49 },
+      { npcId: 'npc_expedition_master', x: 32, y: 25 }, // N of portal - expedition coordinator
     ],
   },
   hub_neutral: {
@@ -94,6 +97,7 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_suit_vendor', x: 15, y: 32 },
       { npcId: 'npc_tool_vendor', x: 49, y: 32 },
       { npcId: 'npc_module_vendor', x: 32, y: 49 },
+      { npcId: 'npc_expedition_master', x: 32, y: 25 }, // N of portal - expedition coordinator
     ],
   },
 };
