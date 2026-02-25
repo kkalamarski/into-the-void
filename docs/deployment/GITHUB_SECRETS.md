@@ -29,7 +29,7 @@ These secrets are configured in the `production` environment:
 | DEPLOY_USER | Yes | SSH username (typically `root`) |
 | POSTGRES_PASSWORD | Yes | PostgreSQL database password |
 | JWT_SECRET | Yes | JWT signing secret for authentication |
-| DOMAIN | No | Domain name (defaults to `intothevoid.online`) |
+| DOMAIN | No | Domain name (defaults to `innervoid.online`) |
 
 ## Generate Required Values
 
@@ -145,7 +145,7 @@ Value: (paste generated secret)
 #### DOMAIN (Optional)
 ```
 Name: DOMAIN
-Value: intothevoid.online
+Value: innervoid.online
 ```
 
 ### 4. Verify Configuration

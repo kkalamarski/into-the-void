@@ -80,7 +80,7 @@ services:
       - traefik-public
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`api.${DOMAIN:-intothevoid.online}`)"
+      - "traefik.http.routers.api.rule=Host(`api.${DOMAIN:-innervoid.online}`)"
       - "traefik.http.routers.api.entrypoints=websecure"
       - "traefik.http.routers.api.tls=true"
       - "traefik.http.routers.api.tls.certresolver=letsencrypt"
@@ -112,7 +112,7 @@ services:
       - traefik-public
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.game-server.rule=Host(`game.${DOMAIN:-intothevoid.online}`)"
+      - "traefik.http.routers.game-server.rule=Host(`game.${DOMAIN:-innervoid.online}`)"
       - "traefik.http.routers.game-server.entrypoints=websecure"
       - "traefik.http.routers.game-server.tls=true"
       - "traefik.http.routers.game-server.tls.certresolver=letsencrypt"
@@ -140,14 +140,14 @@ services:
     labels:
       - "traefik.enable=true"
       # HTTPS router
-      - "traefik.http.routers.web.rule=Host(`play.${DOMAIN:-intothevoid.online}`)"
+      - "traefik.http.routers.web.rule=Host(`play.${DOMAIN:-innervoid.online}`)"
       - "traefik.http.routers.web.entrypoints=websecure"
       - "traefik.http.routers.web.tls=true"
       - "traefik.http.routers.web.tls.certresolver=letsencrypt"
       # HTTP to HTTPS redirect
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
-      - "traefik.http.routers.web-http.rule=Host(`play.${DOMAIN:-intothevoid.online}`)"
+      - "traefik.http.routers.web-http.rule=Host(`play.${DOMAIN:-innervoid.online}`)"
       - "traefik.http.routers.web-http.entrypoints=web"
       - "traefik.http.routers.web-http.middlewares=redirect-to-https"
       # Load balancer

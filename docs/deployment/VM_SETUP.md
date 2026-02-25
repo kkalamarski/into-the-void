@@ -208,7 +208,7 @@ providers:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: ${ACME_EMAIL:-admin@intothevoid.online}
+      email: ${ACME_EMAIL:-admin@innervoid.online}
       storage: /letsencrypt/acme.json
       caServer: https://acme-v02.api.letsencrypt.org/directory
       httpChallenge:
@@ -252,7 +252,7 @@ services:
       labels:
         # Dashboard routing (secured)
         - "traefik.enable=true"
-        - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.${DOMAIN:-intothevoid.online}`)"
+        - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.${DOMAIN:-innervoid.online}`)"
         - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
         - "traefik.http.routers.traefik-dashboard.tls=true"
         - "traefik.http.routers.traefik-dashboard.tls.certresolver=letsencrypt"
@@ -276,8 +276,8 @@ services:
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - traefik_certs:/letsencrypt
     environment:
-      - DOMAIN=${DOMAIN:-intothevoid.online}
-      - ACME_EMAIL=${ACME_EMAIL:-admin@intothevoid.online}
+      - DOMAIN=${DOMAIN:-innervoid.online}
+      - ACME_EMAIL=${ACME_EMAIL:-admin@innervoid.online}
     networks:
       - traefik-public
 
@@ -308,8 +308,8 @@ docker network ls | grep traefik-public
 cd /opt/itv
 
 # Set environment variables (optional - uses defaults)
-export DOMAIN=intothevoid.online
-export ACME_EMAIL=admin@intothevoid.online
+export DOMAIN=innervoid.online
+export ACME_EMAIL=admin@innervoid.online
 
 # Deploy Traefik
 docker stack deploy -c traefik-stack.yml traefik

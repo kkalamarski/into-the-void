@@ -35,7 +35,7 @@ providers:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: ${ACME_EMAIL:-admin@intothevoid.online}
+      email: ${ACME_EMAIL:-admin@innervoid.online}
       storage: /letsencrypt/acme.json
       caServer: https://acme-v02.api.letsencrypt.org/directory
       httpChallenge:

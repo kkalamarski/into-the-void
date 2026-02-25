@@ -6,7 +6,7 @@ Configure GoDaddy DNS records for Into the Void production deployment.
 
 - DigitalOcean VM provisioned (see [VM_SETUP.md](./VM_SETUP.md))
 - VM public IP address
-- Access to GoDaddy account managing intothevoid.online
+- Access to GoDaddy account managing innervoid.online
 
 ## Required A Records
 
@@ -25,7 +25,7 @@ Configure GoDaddy DNS records for Into the Void production deployment.
 
 1. Log in to [GoDaddy](https://www.godaddy.com/)
 2. Navigate to **My Products** > **Domains**
-3. Find **intothevoid.online**
+3. Find **innervoid.online**
 4. Click **DNS** (or **Manage DNS**)
 
 ### 2. Add A Records
@@ -62,10 +62,10 @@ A       traefik   164.90.xxx.xxx  600 seconds
 
 ```bash
 # Check each subdomain
-dig +short play.intothevoid.online
-dig +short api.intothevoid.online
-dig +short game.intothevoid.online
-dig +short traefik.intothevoid.online
+dig +short play.innervoid.online
+dig +short api.innervoid.online
+dig +short game.innervoid.online
+dig +short traefik.innervoid.online
 
 # Expected output for each: YOUR_VM_IP
 ```
@@ -73,14 +73,14 @@ dig +short traefik.intothevoid.online
 ### Using nslookup
 
 ```bash
-nslookup play.intothevoid.online
+nslookup play.innervoid.online
 
 # Expected output:
 # Server:         xxx.xxx.xxx.xxx
 # Address:        xxx.xxx.xxx.xxx#53
 #
 # Non-authoritative answer:
-# Name:   play.intothevoid.online
+# Name:   play.innervoid.online
 # Address: YOUR_VM_IP
 ```
 
@@ -112,10 +112,10 @@ Traefik uses Let's Encrypt's HTTP-01 challenge for automatic SSL certificates. R
 ### Certificate Issuance Flow
 
 ```
-1. Browser requests https://play.intothevoid.online
+1. Browser requests https://play.innervoid.online
 2. Traefik detects no certificate exists
 3. Traefik requests certificate from Let's Encrypt
-4. Let's Encrypt makes HTTP request to http://play.intothevoid.online/.well-known/acme-challenge/xxx
+4. Let's Encrypt makes HTTP request to http://play.innervoid.online/.well-known/acme-challenge/xxx
 5. Traefik responds with challenge token
 6. Let's Encrypt issues certificate
 7. Traefik stores certificate and serves HTTPS
@@ -133,7 +133,7 @@ Traefik uses Let's Encrypt's HTTP-01 challenge for automatic SSL certificates. R
 
 ```bash
 # Check if nameservers are correct
-dig NS intothevoid.online
+dig NS innervoid.online
 
 # Verify GoDaddy is the authoritative nameserver
 # Should show: ns*.domaincontrol.com
@@ -158,7 +158,7 @@ dig NS intothevoid.online
 
 1. **Verify DNS resolves:**
    ```bash
-   dig +short play.intothevoid.online
+   dig +short play.innervoid.online
    ```
 
 2. **Verify port 80 is open on VM:**

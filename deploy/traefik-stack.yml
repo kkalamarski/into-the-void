@@ -18,7 +18,7 @@ services:
       labels:
         # Dashboard routing (secured)
         - "traefik.enable=true"
-        - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.${DOMAIN:-intothevoid.online}`)"
+        - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.${DOMAIN:-innervoid.online}`)"
         - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
         - "traefik.http.routers.traefik-dashboard.tls=true"
         - "traefik.http.routers.traefik-dashboard.tls.certresolver=letsencrypt"
@@ -42,8 +42,8 @@ services:
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - traefik_certs:/letsencrypt
     environment:
-      - DOMAIN=${DOMAIN:-intothevoid.online}
-      - ACME_EMAIL=${ACME_EMAIL:-admin@intothevoid.online}
+      - DOMAIN=${DOMAIN:-innervoid.online}
+      - ACME_EMAIL=${ACME_EMAIL:-admin@innervoid.online}
     networks:
       - traefik-public
 

@@ -19,7 +19,7 @@ Complete all prerequisites before triggering deployment:
 ### DNS
 
 - [ ] **A records configured** - play, api, game subdomains point to VM IP ([DNS_CONFIGURATION.md](./DNS_CONFIGURATION.md))
-- [ ] **DNS propagated** - `dig +short play.intothevoid.online` returns VM IP
+- [ ] **DNS propagated** - `dig +short play.innervoid.online` returns VM IP
 
 ### GitHub
 
@@ -118,14 +118,14 @@ docker service logs traefik_traefik 2>&1 | grep -i "certificate\|acme"
 
 Look for:
 ```
-level=info msg="Certificate for domain play.intothevoid.online was obtained successfully"
+level=info msg="Certificate for domain play.innervoid.online was obtained successfully"
 ```
 
 ### 2. Test HTTPS
 
 ```bash
 # From local machine
-curl -I https://play.intothevoid.online
+curl -I https://play.innervoid.online
 
 # Expected response includes:
 # HTTP/2 200
@@ -138,7 +138,7 @@ curl -I https://play.intothevoid.online
 
 ### 1. Web Client
 
-Open in browser: **https://play.intothevoid.online**
+Open in browser: **https://play.innervoid.online**
 
 Expected:
 - Page loads without SSL warnings
@@ -148,7 +148,7 @@ Expected:
 ### 2. REST API Health
 
 ```bash
-curl https://api.intothevoid.online/health
+curl https://api.innervoid.online/health
 ```
 
 Expected response:
@@ -156,11 +156,11 @@ Expected response:
 {"status":"ok"}
 ```
 
-Or test in browser: https://api.intothevoid.online/health
+Or test in browser: https://api.innervoid.online/health
 
 ### 3. WebSocket Connection
 
-In browser console on play.intothevoid.online:
+In browser console on play.innervoid.online:
 ```javascript
 // Check if Socket.IO connected
 // Should see connection logs in console
@@ -188,10 +188,10 @@ docker service logs itv_game-server 2>&1 | grep -i "connection\|socket"
 **Check:**
 ```bash
 # Verify DNS resolves
-dig +short play.intothevoid.online
+dig +short play.innervoid.online
 
 # Verify port 80 is open (needed for ACME challenge)
-curl -I http://play.intothevoid.online
+curl -I http://play.innervoid.online
 
 # Check Traefik logs for ACME errors
 docker service logs traefik_traefik 2>&1 | grep -i "error\|acme"
@@ -330,8 +330,8 @@ git push origin v1.18.0
 Deployment is successful when:
 
 - [ ] All 5 services show 1/1 replicas
-- [ ] https://play.intothevoid.online loads game client
-- [ ] https://api.intothevoid.online/health returns OK
+- [ ] https://play.innervoid.online loads game client
+- [ ] https://api.innervoid.online/health returns OK
 - [ ] WebSocket connects successfully
 - [ ] User can register, login, create character, and enter game
 - [ ] No errors in service logs
