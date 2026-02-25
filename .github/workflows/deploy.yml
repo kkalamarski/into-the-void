@@ -94,15 +94,16 @@ jobs:
 
       - name: Create environment file
         run: |
-          cat > /tmp/.env << 'EOF'
-          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-          POSTGRES_USER=postgres
-          POSTGRES_DB=into_the_void
-          DOMAIN=${{ secrets.DOMAIN || 'intothevoid.online' }}
-          REGISTRY=${{ env.REGISTRY }}/${{ github.repository }}
-          TAG=${{ steps.version.outputs.tag }}
+          cat > /tmp/.env << EOF
+          export POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          export JWT_SECRET=${{ secrets.JWT_SECRET }}
+          export POSTGRES_USER=postgres
+          export POSTGRES_DB=into_the_void
+          export DOMAIN=${{ secrets.DOMAIN || 'intothevoid.online' }}
+          export REGISTRY=${{ env.REGISTRY }}/${{ github.repository }}
+          export TAG=${{ steps.version.outputs.tag }}
           EOF
+          sed -i 's/^[[:space:]]*//' /tmp/.env
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             /tmp/.env \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/itv/.env
@@ -111,7 +112,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            "cd /opt/itv && source .env && chmod +x deploy.sh && ./deploy.sh ${{ steps.version.outputs.tag }} ${{ env.REGISTRY }}/${{ github.repository }}"
+            "cd /opt/itv && source .env && chmod +x deploy.sh && ./deploy.sh \$TAG \$REGISTRY"
 
       - name: Verify deployment
         run: |
