@@ -293,27 +293,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| WORLD-01 | TBD | Pending |
-| WORLD-02 | TBD | Pending |
-| TRAV-01 | TBD | Pending |
-| TRAV-02 | TBD | Pending |
-| TRAV-03 | TBD | Pending |
-| TRAV-04 | TBD | Pending |
-| TRAV-05 | TBD | Pending |
-| ABAR-01 | TBD | Pending |
-| ABAR-02 | TBD | Pending |
-| ABAR-03 | TBD | Pending |
-| ABAR-04 | TBD | Pending |
-| ABAR-05 | TBD | Pending |
-| ABAR-06 | TBD | Pending |
-| HUD-01 | TBD | Pending |
-| HUD-02 | TBD | Pending |
-| HUD-03 | TBD | Pending |
+| WORLD-01 | Phase 94 | Pending |
+| WORLD-02 | Phase 94 | Pending |
+| TRAV-01 | Phase 95 | Pending |
+| TRAV-02 | Phase 95 | Pending |
+| TRAV-03 | Phase 95 | Pending |
+| TRAV-04 | Phase 96 | Pending |
+| TRAV-05 | Phase 96 | Pending |
+| ABAR-01 | Phase 97 | Pending |
+| ABAR-02 | Phase 97 | Pending |
+| ABAR-03 | Phase 97 | Pending |
+| ABAR-04 | Phase 97 | Pending |
+| ABAR-05 | Phase 98 | Pending |
+| ABAR-06 | Phase 98 | Pending |
+| HUD-01 | Phase 98 | Pending |
+| HUD-02 | Phase 98 | Pending |
+| HUD-03 | Phase 98 | Pending |
 
 **Coverage:**
 - v1.20 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16
+- Mapped to phases: 16
+- Unmapped: 0
 
 ### v1.19 Requirements (Complete)
 
@@ -426,4 +426,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-25*
-*Last updated: 2026-02-25 after v1.20 requirements definition*
+*Last updated: 2026-02-25 after v1.20 roadmap creation*

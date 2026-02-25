@@ -21,138 +21,141 @@
 - ✅ **v1.16 UI Polish** - Phases 70-75 (shipped 2026-02-23)
 - ✅ **v1.17 Core Gameplay Loop** - Phases 76-81 (shipped 2026-02-23)
 - ✅ **v1.18 Content Expansion** - Phases 82-88 (shipped 2026-02-24)
-- 🚧 **v1.19 Deployment & CI/CD** - Phases 89-93 (in progress)
+- ✅ **v1.19 Deployment & CI/CD** - Phases 89-93 (shipped 2026-02-24)
+- 🚧 **v1.20 World Scale & Action Bar** - Phases 94-98 (in progress)
 
 ## Phases
 
 <details>
-<summary>✅ v1.0-v1.18 (Phases 1-88) - SHIPPED</summary>
+<summary>✅ v1.0-v1.19 (Phases 1-93) - SHIPPED</summary>
 
-[Previous milestone phases collapsed for brevity - see milestone archives and existing ROADMAP.md sections above]
+[Previous milestone phases collapsed for brevity - see milestone archives in .planning/milestones/]
 
 </details>
 
 ---
 
-## Milestone v1.19: Deployment & CI/CD
+## Milestone v1.20: World Scale & Action Bar
 
-**Goal:** Deploy the game to production with automated CI/CD pipeline on Docker Swarm with SSL.
+**Goal:** Make the world more explorable with smaller biomes, add expedition travel, and improve action bar UX.
 
-### Phase 89: Docker Images
+### Phase 94: World Scale Tuning
 
-**Goal**: Production-ready Docker images for all services with multi-stage builds
+**Goal**: Biomes are small enough to encourage exploration with natural-feeling transitions
 
-**Depends on**: Nothing (infrastructure foundation)
+**Depends on**: Nothing (tuning existing world-gen)
 
-**Requirements**: DOCKER-01, DOCKER-02, DOCKER-03, DOCKER-04
+**Requirements**: WORLD-01, WORLD-02
 
 **Success Criteria** (what must be TRUE):
-  1. Web app builds as static files served by nginx with correct asset paths
-  2. API container starts with health check responding at /health
-  3. Game server container starts with health check responding at /health
-  4. All three images use multi-stage builds and are under 200MB each
+  1. Player can walk from one biome center to another in 2-3 minutes
+  2. Biome transitions remain gradual with no jarring edges or 1-tile artifacts
+  3. Multiple biomes are visible from any high-elevation vantage point
+  4. World gen maintains consistent fertility and entity spawning across new scale
 
-**Plans**: 3 plans in 2 waves
+**Plans**: 2 plans in 1 wave
 
 Plans:
-- [ ] 89-01-PLAN.md — Backend Dockerfiles (API + game-server with health checks)
-- [ ] 89-02-PLAN.md — Web Dockerfile (nginx + static files)
-- [ ] 89-03-PLAN.md — Build validation and health check verification
+- [ ] 94-01-PLAN.md — Biome noise scale reduction and transition smoothing
+- [ ] 94-02-PLAN.md — World gen validation and edge case testing
 
 ---
 
-### Phase 90: Swarm Stack
+### Phase 95: Expedition Travel
 
-**Goal**: Docker Compose stack configured for Swarm mode with all services orchestrated
+**Goal**: Players can teleport to random world locations via expedition NPC in hubs
 
-**Depends on**: Phase 89 (requires Docker images)
+**Depends on**: Nothing (independent travel feature)
 
-**Requirements**: SWARM-01, SWARM-02, SWARM-03, SWARM-04, SWARM-05
-
-**Success Criteria** (what must be TRUE):
-  1. PostgreSQL service persists data across container restarts
-  2. Redis service persists data across container restarts
-  3. Services start in correct order (DB first, then app services)
-  4. Each service has defined resource limits preventing runaway consumption
-  5. Stack deploys successfully with docker stack deploy command
-
-**Plans**: 1 plan in 1 wave
-
-Plans:
-- [ ] 90-01-PLAN.md — Docker Swarm stack with all services, volumes, and resource limits
-
----
-
-### Phase 91: Traefik & SSL
-
-**Goal**: Traefik reverse proxy routes traffic with automatic Let's Encrypt SSL
-
-**Depends on**: Phase 90 (requires Swarm stack)
-
-**Requirements**: PROXY-01, PROXY-02, PROXY-03, PROXY-04, PROXY-05
+**Requirements**: TRAV-01, TRAV-02, TRAV-03
 
 **Success Criteria** (what must be TRUE):
-  1. Traefik automatically discovers services via Docker labels
-  2. Let's Encrypt issues valid SSL certificates for play.intothevoid.online
-  3. HTTPS traffic to play.intothevoid.online routes to web service
-  4. API requests route correctly (either api.intothevoid.online or /api path)
-  5. WebSocket connections maintain sticky sessions without drops
-
-**Plans**: 1 plan in 1 wave
-
-Plans:
-- [ ] 91-01-PLAN.md — Traefik stack with Let's Encrypt ACME and HTTPS routing
-
----
-
-### Phase 92: CI/CD Pipeline
-
-**Goal**: GitHub Actions workflow builds images and deploys to Swarm on tag push
-
-**Depends on**: Phase 91 (requires working Swarm stack with proxy)
-
-**Requirements**: CICD-01, CICD-02, CICD-03, CICD-04, CICD-05
-
-**Success Criteria** (what must be TRUE):
-  1. Workflow triggers when version tag is pushed to repository
-  2. All three Docker images build in parallel within 10 minutes
-  3. Images push to container registry with tag version
-  4. SSH deployment updates Swarm stack without downtime
-  5. Database migrations run automatically before new containers start
+  1. Expedition NPC exists in each faction hub with interaction dialogue
+  2. Player can trigger expedition to random world location appropriate for their level
+  3. High-tier destinations (Tier III-IV zones) are locked until player reaches required level
+  4. Player receives clear feedback about destination tier and level requirements
+  5. Expedition successfully teleports player to new location with proper zone transition
 
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 92-01-PLAN.md — GitHub Actions workflow with parallel Docker builds to GHCR
-- [ ] 92-02-PLAN.md — SSH deployment job with rolling stack updates
+- [ ] 95-01-PLAN.md — Expedition NPC definition and hub spawning
+- [ ] 95-02-PLAN.md — Expedition logic with tier-locked destinations
 
 ---
 
-### Phase 93: Documentation
+### Phase 96: Home Recall Ability
 
-**Goal**: Complete deployment documentation enabling first production deployment
+**Goal**: All players have universal ability to return to their faction hub
 
-**Depends on**: Phase 92 (documents the entire deployment pipeline)
+**Depends on**: Nothing (independent travel feature)
 
-**Requirements**: DOCS-01, DOCS-02, DOCS-03, DOCS-04
+**Requirements**: TRAV-04, TRAV-05
 
 **Success Criteria** (what must be TRUE):
-  1. VM setup guide covers Docker installation, Swarm init, and firewall configuration
-  2. DNS guide shows exact GoDaddy A record configuration
-  3. Secrets documentation lists all required GitHub Secrets with example values
-  4. First deployment checklist provides step-by-step verification of working system
+  1. Home recall ability appears in every player's abilities list regardless of equipment
+  2. Player can trigger home recall from abilities panel or action bar
+  3. Home recall teleports player to their faction hub
+  4. Home recall has 5 minute cooldown visible in UI
+  5. Cooldown persists across sessions and zone changes
 
 **Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 93-01-PLAN.md — Complete deployment documentation (VM setup, DNS, secrets, checklist)
+- [ ] 96-01-PLAN.md — Universal home recall ability with 5 min cooldown
+
+---
+
+### Phase 97: Action Bar UX Enhancement
+
+**Goal**: Action bar supports intuitive drag-and-drop management with click-to-trigger
+
+**Depends on**: Nothing (UI enhancement)
+
+**Requirements**: ABAR-01, ABAR-02, ABAR-03, ABAR-04
+
+**Success Criteria** (what must be TRUE):
+  1. Clicking ability icon in action bar triggers the ability
+  2. SHIFT + drag allows moving ability to different slot within action bar
+  3. Player can drag abilities from abilities panel directly into action bar slots
+  4. Dropping ability outside action bar removes it from bar
+  5. Drag interactions provide visual feedback (ghost icons, drop zones)
+
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 97-01-PLAN.md — Click-to-trigger and shift+drag relocation
+- [ ] 97-02-PLAN.md — Drag from panel and remove by drop-outside
+
+---
+
+### Phase 98: Second Action Bar
+
+**Goal**: Second action bar provides 8 additional ability slots with Shift+number keybindings
+
+**Depends on**: Phase 97 (uses enhanced action bar UX patterns)
+
+**Requirements**: ABAR-05, ABAR-06, HUD-01, HUD-02, HUD-03
+
+**Success Criteria** (what must be TRUE):
+  1. Second action bar with 8 slots appears in HUD below/beside first action bar
+  2. Second bar supports Shift+1-8 keybindings for ability triggering
+  3. Second bar supports all drag-and-drop patterns from Phase 97
+  4. Game shortcuts are smaller and repositioned to bottom-right near minimap
+  5. HUD layout accommodates both action bars without overlapping or crowding
+
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 98-01-PLAN.md — Second action bar component with Shift+1-8 bindings
+- [ ] 98-02-PLAN.md — HUD reorganization (shortcuts to bottom-right)
 
 ---
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 89 → 90 → 91 → 92 → 93
+Phases execute in numeric order: 94 → 95 → 96 → 97 → 98
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -248,9 +251,14 @@ Phases execute in numeric order: 89 → 90 → 91 → 92 → 93
 | 90. Swarm Stack | v1.19 | 1/1 | Complete | 2026-02-24 |
 | 91. Traefik & SSL | v1.19 | 1/1 | Complete | 2026-02-24 |
 | 92. CI/CD Pipeline | v1.19 | 2/2 | Complete | 2026-02-24 |
-| 93. Documentation | v1.19 | 0/1 | Not started | - |
+| 93. Documentation | v1.19 | 1/1 | Complete | 2026-02-24 |
+| 94. World Scale Tuning | v1.20 | 0/2 | Not started | - |
+| 95. Expedition Travel | v1.20 | 0/2 | Not started | - |
+| 96. Home Recall Ability | v1.20 | 0/1 | Not started | - |
+| 97. Action Bar UX Enhancement | v1.20 | 0/2 | Not started | - |
+| 98. Second Action Bar | v1.20 | 0/2 | Not started | - |
 
-**Total:** 93 phases (92 complete, 1 pending)
+**Total:** 98 phases (93 complete, 5 pending)
 
 ---
-*Last updated: 2026-02-24 - v1.19 roadmap created*
+*Last updated: 2026-02-25 - v1.20 roadmap created*
