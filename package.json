@@ -14,7 +14,8 @@
     "lint": "nx run-many -t lint",
     "db:generate": "nx run database:generate",
     "db:migrate": "nx run database:migrate",
-    "db:push": "nx run database:push"
+    "db:push": "nx run database:push",
+    "db:seed": "nx run database:seed"
   },
   "devDependencies": {
     "@anatine/esbuild-decorators": "^0.2.19",
