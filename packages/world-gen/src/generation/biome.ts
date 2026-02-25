@@ -4,7 +4,7 @@ import { SimplexNoise } from '../noise/simplex';
 /**
  * Biome generation parameters
  */
-interface BiomeParams {
+export interface BiomeParams {
   temperatureScale: number;
   moistureScale: number;
   elevationScale: number;
@@ -12,7 +12,7 @@ interface BiomeParams {
   chunkSize: number; // Tiles per chunk (ZONE_SIZE)
 }
 
-const DEFAULT_BIOME_PARAMS: BiomeParams = {
+export const DEFAULT_BIOME_PARAMS: BiomeParams = {
   temperatureScale: 0.005,
   moistureScale: 0.0075,
   elevationScale: 0.003,
