@@ -33,17 +33,17 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 
 **Codebase:** ~15,000+ LOC TypeScript
 
-## Current Milestone: v1.19 Deployment & CI/CD
+## Current Milestone: v1.20 World Scale & Action Bar
 
-**Goal:** Deploy the game to production with automated CI/CD pipeline.
+**Goal:** Make the world more explorable with smaller biomes, add expedition travel, and improve action bar UX.
 
 **Target features:**
-- Production Docker images for all services (web, API, game-server)
-- Docker Swarm stack for single-node deployment
-- Traefik reverse proxy with automatic Let's Encrypt SSL
-- GitHub Actions workflow for tag-based deployments
-- Self-hosted PostgreSQL and Redis in Swarm
-- Domain: play.intothevoid.online
+- Smaller biomes (2-3 min walk to neighboring biome)
+- Expedition NPC in hubs (teleport to random world locations, tier-locked by level)
+- Universal home recall ability (5 min cooldown)
+- Improved action bar (click to trigger, shift+drag to move, drag from panel, remove by dropping outside)
+- Second action bar (8 slots, Shift+1-8 keybindings)
+- HUD reorganization (shortcuts smaller, moved to bottom-right)
 
 ## Core Value
 
@@ -177,13 +177,13 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 ### Active
 
-- [ ] Production Dockerfiles for web, API, game-server
-- [ ] Docker Swarm stack configuration
-- [ ] Traefik reverse proxy with Let's Encrypt SSL
-- [ ] GitHub Actions CI/CD workflow (tag-triggered)
-- [ ] Self-hosted PostgreSQL and Redis services
-- [ ] VM setup documentation
-- [ ] Environment and secrets configuration
+- [ ] Reduced biome scale for walkable exploration
+- [ ] Expedition NPC with tier-locked destinations
+- [ ] Universal home recall ability (5 min cooldown)
+- [ ] Action bar click-to-trigger behavior
+- [ ] Action bar drag-and-drop management
+- [ ] Second action bar with Shift+1-8 keybindings
+- [ ] HUD shortcuts reorganization
 
 ### Out of Scope
 
@@ -228,4 +228,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-24 after v1.19 milestone start*
+*Last updated: 2026-02-25 after v1.20 milestone start*

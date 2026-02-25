@@ -6,16 +6,16 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-**Current focus:** v1.19 Deployment & CI/CD - COMPLETE
+**Current focus:** v1.20 World Scale & Action Bar
 
 ## Current Position
 
-Phase: 93 of 93 (Documentation) — Complete
-Plan: 1 of 1 in current phase (complete)
-Status: Milestone v1.19 complete, deployment documentation ready
-Last activity: 2026-02-24 — Plan 93-01 execution complete
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-25 — Milestone v1.20 started
 
-Progress: [████████████████████████████████████████████████████████████████████████████████████████████████] 93/93 phases = 100%
+Progress: Roadmap not yet created
 
 ## Performance Metrics
 
@@ -29,10 +29,10 @@ Progress: [███████████████████████
 - v1.17 Gathering & Exploration: 9 phases (73-81) completed 2026-02-23
 - v1.16 UI Polish: 5 phases (68-72) completed 2026-02-23
 
-**v1.19 Status:**
-- Phases: 5 total (89-93) - ALL COMPLETE
-- Plans: 8 completed (all plans across all phases)
-- Status: Milestone v1.19 complete - deployment documentation ready
+**v1.20 Status:**
+- Phases: TBD (roadmap not yet created)
+- Plans: TBD
+- Status: Defining requirements
 
 *Updated after each plan completion*
 
@@ -71,21 +71,17 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet (v1.19 just started).
+None yet (v1.20 just started).
 
 ### Blockers/Concerns
 
-None - all development complete. See `docs/deployment/` for first production deployment guide:
-- `VM_SETUP.md` - DigitalOcean provisioning
-- `DNS_CONFIGURATION.md` - GoDaddy DNS setup
-- `GITHUB_SECRETS.md` - GitHub Actions secrets
-- `FIRST_DEPLOYMENT.md` - Deployment checklist
+None.
 
 ## Session Continuity
 
-Last session: 2026-02-24
-Stopped at: Plan 93-01 complete — v1.19 milestone complete, deployment documentation ready
-Resume file: None - milestone complete
+Last session: 2026-02-25
+Stopped at: Defining requirements for v1.20
+Resume file: None
 
 ---
-*Last updated: 2026-02-24 — v1.19 Deployment & CI/CD milestone complete*
+*Last updated: 2026-02-25 — v1.20 World Scale & Action Bar milestone started*
