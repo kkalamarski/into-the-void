@@ -71,6 +71,7 @@ services:
           memory: 256M
       labels:
         - "traefik.enable=true"
+        - "traefik.docker.network=traefik_traefik-public"
         - "traefik.http.routers.api.rule=Host(`api.${DOMAIN:-innervoid.online}`)"
         - "traefik.http.routers.api.entrypoints=websecure"
         - "traefik.http.routers.api.tls=true"
@@ -103,6 +104,7 @@ services:
           memory: 256M
       labels:
         - "traefik.enable=true"
+        - "traefik.docker.network=traefik_traefik-public"
         - "traefik.http.routers.game-server.rule=Host(`game.${DOMAIN:-innervoid.online}`)"
         - "traefik.http.routers.game-server.entrypoints=websecure"
         - "traefik.http.routers.game-server.tls=true"
@@ -137,6 +139,7 @@ services:
           memory: 64M
       labels:
         - "traefik.enable=true"
+        - "traefik.docker.network=traefik_traefik-public"
         # HTTPS router
         - "traefik.http.routers.web.rule=Host(`play.${DOMAIN:-innervoid.online}`)"
         - "traefik.http.routers.web.entrypoints=websecure"
