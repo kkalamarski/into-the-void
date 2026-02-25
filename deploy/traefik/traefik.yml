@@ -23,10 +23,11 @@ entryPoints:
       tls:
         certResolver: letsencrypt
 
-# Swarm Provider (Traefik v3)
+# Docker Provider (Traefik v2)
 providers:
-  swarm:
+  docker:
     endpoint: "unix:///var/run/docker.sock"
+    swarmMode: true
     exposedByDefault: false
     network: traefik-public
     watch: true
@@ -35,7 +36,7 @@ providers:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: ${ACME_EMAIL:-admin@innervoid.online}
+      email: admin@innervoid.online
       storage: /letsencrypt/acme.json
       caServer: https://acme-v02.api.letsencrypt.org/directory
       httpChallenge:

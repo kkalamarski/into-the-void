@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   traefik:
-    image: traefik:v3.3
+    image: traefik:v2.11
     deploy:
       mode: global
       placement:
@@ -44,6 +44,7 @@ services:
     environment:
       - DOMAIN=${DOMAIN:-innervoid.online}
       - ACME_EMAIL=${ACME_EMAIL:-admin@innervoid.online}
+      - DOCKER_API_VERSION=1.44
     networks:
       - traefik-public
 
