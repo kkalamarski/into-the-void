@@ -83,6 +83,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      CORS_ORIGIN: https://play.${DOMAIN:-innervoid.online}
     networks:
       - internal
       - traefik-public
@@ -118,6 +119,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      CORS_ORIGIN: https://play.${DOMAIN:-innervoid.online}
     networks:
       - internal
       - traefik-public
