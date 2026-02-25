@@ -56,8 +56,8 @@
 **Plans**: 2 plans in 1 wave
 
 Plans:
-- [ ] 94-01-PLAN.md — Biome noise scale reduction and transition smoothing
-- [ ] 94-02-PLAN.md — World gen validation and edge case testing
+- [x] 94-01-PLAN.md — Biome noise scale reduction and transition smoothing
+- [x] 94-02-PLAN.md — World gen validation and edge case testing
 
 ---
 
@@ -252,13 +252,13 @@ Phases execute in numeric order: 94 → 95 → 96 → 97 → 98
 | 91. Traefik & SSL | v1.19 | 1/1 | Complete | 2026-02-24 |
 | 92. CI/CD Pipeline | v1.19 | 2/2 | Complete | 2026-02-24 |
 | 93. Documentation | v1.19 | 1/1 | Complete | 2026-02-24 |
-| 94. World Scale Tuning | v1.20 | 0/2 | Not started | - |
+| 94. World Scale Tuning | v1.20 | 2/2 | Complete | 2026-02-26 |
 | 95. Expedition Travel | v1.20 | 0/2 | Not started | - |
 | 96. Home Recall Ability | v1.20 | 0/1 | Not started | - |
 | 97. Action Bar UX Enhancement | v1.20 | 0/2 | Not started | - |
 | 98. Second Action Bar | v1.20 | 0/2 | Not started | - |
 
-**Total:** 98 phases (93 complete, 5 pending)
+**Total:** 98 phases (94 complete, 4 pending)
 
 ---
-*Last updated: 2026-02-25 - v1.20 roadmap created*
+*Last updated: 2026-02-26 - Phase 94 complete*
