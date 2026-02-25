@@ -1304,10 +1304,17 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { questId: string }
   ): Promise<void> {
-    const player = this.playerService.getPlayerBySocket(client.id);
-    if (!player) return;
+    console.log('[quest:accept] Received:', { socketId: client.id, questId: data?.questId });
 
+    const player = this.playerService.getPlayerBySocket(client.id);
+    if (!player) {
+      console.log('[quest:accept] No player found for socket');
+      return;
+    }
+
+    console.log('[quest:accept] Player:', { id: player.id, faction: player.faction });
     const result = await this.questService.acceptQuest(player.id, data.questId);
+    console.log('[quest:accept] Result:', result);
 
     if (!result.success) {
       client.emit('error', {
