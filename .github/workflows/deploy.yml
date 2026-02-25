@@ -60,7 +60,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            ${{ matrix.service == 'web' && format('VITE_API_URL=https://api.{0}', secrets.DOMAIN || 'innervoid.online') || '' }}
+            ${{ matrix.service == 'web' && format('VITE_API_URL=https://api.{0}/api', secrets.DOMAIN || 'innervoid.online') || '' }}
             ${{ matrix.service == 'web' && format('VITE_GAME_SERVER_URL=wss://game.{0}', secrets.DOMAIN || 'innervoid.online') || '' }}
 
   deploy:
