@@ -134,7 +134,7 @@ export class PreloadScene extends Phaser.Scene {
     };
 
     // NPC sprite folders
-    const npcSprites = ['npc-1', 'trader-npc', 'guard-npc'];
+    const npcSprites = ['npc-1', 'trader-npc', 'guard-npc', 'trader', 'guard', 'faction-rep', 'ambient', 'service'];
 
     for (const npcFolder of npcSprites) {
       for (const [dir, filename] of Object.entries(directionMap)) {

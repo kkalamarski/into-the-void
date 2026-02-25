@@ -417,6 +417,40 @@ export const ABILITY_MINE: AbilityDefinition = {
 };
 
 /**
+ * Basic Harvest - Inefficient gathering from plants (granted by universal tools)
+ */
+export const ABILITY_BASIC_HARVEST: AbilityDefinition = {
+  id: 'basic_harvest',
+  displayName: 'Basic Harvest',
+  description: 'Crudely gather resources from plants. Less efficient than specialized tools.',
+  category: 'utility',
+  energyCost: 8,
+  cooldownMs: 5000,
+  range: 1,
+  requiresTarget: true,
+  effects: [{ type: 'gather', gatherType: 'harvest', baseYield: 1 }],
+  iconKey: 'ability_basic_harvest',
+  iconColor: 0x44ff44, // Green
+};
+
+/**
+ * Basic Mine - Inefficient extraction from minerals (granted by universal tools)
+ */
+export const ABILITY_BASIC_MINE: AbilityDefinition = {
+  id: 'basic_mine',
+  displayName: 'Basic Mine',
+  description: 'Extract resources from mineral deposits. Less efficient than specialized tools.',
+  category: 'utility',
+  energyCost: 12,
+  cooldownMs: 6000,
+  range: 1,
+  requiresTarget: true,
+  effects: [{ type: 'gather', gatherType: 'mine', baseYield: 1 }],
+  iconKey: 'ability_basic_mine',
+  iconColor: 0x888888, // Gray
+};
+
+/**
  * All abilities - complete registry
  */
 export const ALL_ABILITIES: readonly AbilityDefinition[] = [
@@ -445,7 +479,9 @@ export const ALL_ABILITIES: readonly AbilityDefinition[] = [
   ABILITY_OVERCLOCK,
   ABILITY_POWER_SURGE,
   ABILITY_ANALYZE_SPECIMEN,
-  // Gathering abilities (2)
+  // Gathering abilities (4)
   ABILITY_HARVEST,
   ABILITY_MINE,
+  ABILITY_BASIC_HARVEST,
+  ABILITY_BASIC_MINE,
 ];

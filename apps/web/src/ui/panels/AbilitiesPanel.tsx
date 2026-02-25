@@ -7,6 +7,7 @@ import { useInventoryStore } from '../../store/inventoryStore';
 import { AbilityTooltip } from '../../components/AbilityTooltip';
 import { useDraggablePanel } from '../../hooks/useDraggablePanel';
 import type { AbilityDefinition } from '@into-the-void/shared-types';
+import { getAbilityIconStyle } from '../../utils/abilityIcons';
 import './AbilitiesPanel.css';
 
 interface DraggableAbilitySlotProps {
@@ -25,8 +26,6 @@ function DraggableAbilitySlot({ ability }: DraggableAbilitySlotProps) {
     cursor: 'grab',
   };
 
-  const iconColorHex = `#${ability.iconColor.toString(16).padStart(6, '0')}`;
-
   return (
     <AbilityTooltip ability={ability} disabled={isDragging}>
       <div
@@ -38,7 +37,7 @@ function DraggableAbilitySlot({ ability }: DraggableAbilitySlotProps) {
       >
         <div
           className="abilities-slot-icon"
-          style={{ backgroundColor: iconColorHex }}
+          style={getAbilityIconStyle(ability.id, 32)}
         />
         <div className="abilities-slot-name">{ability.displayName}</div>
       </div>

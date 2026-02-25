@@ -13,6 +13,7 @@ import {
   FloatingPortal,
 } from '@floating-ui/react';
 import type { AbilityDefinition, AbilityEffect } from '@into-the-void/shared-types';
+import { getAbilityIconStyle } from '../utils/abilityIcons';
 import './AbilityTooltip.css';
 
 interface AbilityTooltipProps {
@@ -72,7 +73,6 @@ export const AbilityTooltip: React.FC<AbilityTooltipProps> = ({
 
   const categoryColor = CATEGORY_COLORS[ability.category] ?? '#888888';
   const categoryLabel = CATEGORY_LABELS[ability.category] ?? ability.category;
-  const iconColorHex = `#${ability.iconColor.toString(16).padStart(6, '0')}`;
 
   return (
     <>
@@ -90,7 +90,7 @@ export const AbilityTooltip: React.FC<AbilityTooltipProps> = ({
             <div className="ability-tooltip-header">
               <div
                 className="ability-tooltip-icon"
-                style={{ backgroundColor: iconColorHex }}
+                style={getAbilityIconStyle(ability.id, 32)}
               />
               <div className="ability-tooltip-title">
                 <div className="ability-tooltip-name" style={{ color: categoryColor }}>

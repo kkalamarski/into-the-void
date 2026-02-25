@@ -100,7 +100,7 @@ export const TOOL_UNIVERSAL_COMMON: ItemDefinition = {
     { trigger: 'on_equip', effect: { type: 'stats', power: 3 } },
   ],
   range: 1,
-  grantedAbilities: ['basic_strike'],
+  grantedAbilities: ['basic_strike', 'basic_mine', 'basic_harvest'],
 };
 
 // ============================================================

@@ -77,6 +77,11 @@ const RARITY_SCALE_MULTIPLIER: Record<string, number> = {
   epic: 1.7,    // 70% larger
 };
 
+// NPC sprite scale (48px sprites scaled to match player character)
+// Player uses 6x width, 4.5x height for isometric squash
+const NPC_SPRITE_SCALE_X = 6;
+const NPC_SPRITE_SCALE_Y = 4.5;
+
 
 // Base sprite height for UI positioning (256px texture)
 const BASE_SPRITE_HEIGHT = 256;
@@ -147,18 +152,32 @@ export class EntityRenderer {
 
     // Get scale for this entity type (with overrides for specific species)
     let scale = ENTITY_SCALE[entity.type] ?? 1.0;
+    let scaleX = scale;
+    let scaleY = scale;
     if (this.isCreature(entity) && entity.speciesId && ANIMATED_CREATURE_SCALE[entity.speciesId]) {
       scale = ANIMATED_CREATURE_SCALE[entity.speciesId];
+      scaleX = scale;
+      scaleY = scale;
     }
     if (this.isPlant(entity) && entity.speciesId && PLANT_SCALE_OVERRIDE[entity.speciesId]) {
       scale = PLANT_SCALE_OVERRIDE[entity.speciesId];
+      scaleX = scale;
+      scaleY = scale;
+    }
+    // NPCs use player character scaling (6x width, 4.5x height for isometric squash)
+    if (this.isNpc(entity)) {
+      scaleX = NPC_SPRITE_SCALE_X;
+      scaleY = NPC_SPRITE_SCALE_Y;
+      scale = scaleY; // Use Y scale for height calculations
     }
     // Apply rarity scale multiplier for minerals and plants
     if (this.isMineral(entity) || this.isPlant(entity)) {
       const rarity = (entity as { rarity?: NodeRarity }).rarity ?? 'common';
       scale *= RARITY_SCALE_MULTIPLIER[rarity] ?? 1.0;
+      scaleX = scale;
+      scaleY = scale;
     }
-    const spriteHeight = BASE_SPRITE_HEIGHT * scale;
+    const spriteHeight = BASE_SPRITE_HEIGHT * scaleY;
 
     // Blob shadow at ground level - skip for plants and minerals (performance optimization)
     if (!this.isPlant(entity) && !this.isMineral(entity)) {
@@ -175,12 +194,17 @@ export class EntityRenderer {
           shadowHeight = shadowOverride.height;
         }
       }
+      // NPCs get same shadow as player character
+      if (this.isNpc(entity)) {
+        shadowWidth = 120;
+        shadowHeight = 60;
+      }
       const shadow = this.scene.add.ellipse(0, 0, shadowWidth, shadowHeight, 0x000000, 0.3);
       shadow.setOrigin(0.5, 0.5);
       container.add(shadow);
     }
 
-    // Entity sprite - creatures and plants at ground level, others elevated
+    // Entity sprite - creatures, NPCs, and plants at ground level, others elevated
     let spriteYOffset = -this.elevationOffset;
     if (this.isCreature(entity)) {
       // Creatures positioned with feet at shadow level
@@ -190,13 +214,17 @@ export class EntityRenderer {
         spriteYOffset = ANIMATED_CREATURE_Y_OFFSET[entity.speciesId];
       }
     }
+    if (this.isNpc(entity)) {
+      // NPCs positioned with feet at shadow level
+      spriteYOffset = 0;
+    }
     if (this.isPlant(entity) || this.isMineral(entity)) {
       // Plants and minerals positioned with base at ground level
       spriteYOffset = 0;
     }
     const sprite = this.scene.add.sprite(0, spriteYOffset, this.getEntityTexture(entity));
     sprite.setOrigin(0.5, 1.0); // Bottom-center origin for ground alignment
-    sprite.setScale(scale);
+    sprite.setScale(scaleX, scaleY);
 
     // Apply glow effect for rare/epic minerals and plants
     if (this.isMineral(entity) || this.isPlant(entity)) {
@@ -240,6 +268,12 @@ export class EntityRenderer {
     // Store speciesId for animated creatures
     if (this.isCreature(entity) && entity.speciesId && EntityRenderer.ANIMATED_CREATURES.has(entity.speciesId)) {
       container.setData('speciesId', entity.speciesId);
+      container.setData('facing', 's'); // Default facing direction
+    }
+
+    // Store npcType for directional NPCs
+    if (this.isNpc(entity) && entity.npcType) {
+      container.setData('npcType', entity.npcType);
       container.setData('facing', 's'); // Default facing direction
     }
 
@@ -586,6 +620,19 @@ export class EntityRenderer {
       return baseSpeciesId;
     }
 
+    // NPC sprites based on npcType
+    if (this.isNpc(entity) && entity.npcType) {
+      // Convert npcType to folder name (faction_rep -> faction-rep)
+      const folderName = entity.npcType.replace('_', '-');
+      // Return idle sprite facing south (default direction)
+      const spriteKey = `npc-${folderName}-s`;
+      // Check if sprite exists, fall back to player if not
+      if (this.scene.textures.exists(spriteKey)) {
+        return spriteKey;
+      }
+      return 'player-fallback';
+    }
+
     // Fall back to type-based texture
     switch (entity.type) {
       case 'creature':
@@ -599,7 +646,7 @@ export class EntityRenderer {
       case 'item':
         return 'item';
       case 'npc':
-        return 'player'; // Reuse player sprite as fallback for NPCs until NPC sprites are added
+        return 'player-fallback';
       default:
         return 'item';
     }

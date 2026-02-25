@@ -151,13 +151,13 @@ export class AbilityService {
     abilityId: string,
     targetEntityId?: string,
   ): Promise<UseAbilityResult> {
+    console.log('[useAbility] Start:', { socketId, abilityId, targetEntityId });
     const player = this.playerService.getPlayerBySocket(socketId);
-    if (!player) return { success: false, error: 'Player not found' };
-
-    // Hub zones are safe - no offensive abilities
-    if (isHubZone(player.position.zoneId)) {
-      return { success: false, error: 'Abilities are disabled in hub zones' };
+    if (!player) {
+      console.log('[useAbility] Player not found for socket:', socketId);
+      return { success: false, error: 'Player not found' };
     }
+    console.log('[useAbility] Player:', { id: player.id, zoneId: player.position.zoneId });
 
     // Check GCD
     if (this.isOnGcd(player.id)) {
@@ -166,9 +166,18 @@ export class AbilityService {
 
     // Check player has ability (from equipped items)
     const abilities = this.getPlayerAbilities(player.id);
+    console.log('[useAbility] Available abilities:', abilities.map(a => a.id));
     const ability = abilities.find(a => a.id === abilityId);
     if (!ability) {
+      console.log('[useAbility] Ability not found:', abilityId);
       return { success: false, error: 'Ability not available' };
+    }
+    console.log('[useAbility] Found ability:', { id: ability.id, requiresTarget: ability.requiresTarget });
+
+    // Hub zones are safe - no offensive abilities (but gathering is allowed)
+    const isGatherAbility = ability.effects.some(e => e.type === 'gather');
+    if (isHubZone(player.position.zoneId) && !isGatherAbility) {
+      return { success: false, error: 'Combat abilities are disabled in hub zones' };
     }
 
     // Check ability cooldown
@@ -183,29 +192,48 @@ export class AbilityService {
 
     // Handle target requirement
     let target: Creature | null = null;
+    const hasGatherEffect = ability.effects.some(e => e.type === 'gather');
+
     if (ability.requiresTarget) {
       if (!targetEntityId) {
+        console.log('[useAbility] No targetEntityId provided');
         return { success: false, error: 'Ability requires a target' };
       }
 
+      console.log('[useAbility] Looking up entity:', { zoneId: player.position.zoneId, targetEntityId });
       const entity = await this.zonesService.getEntity(player.position.zoneId, targetEntityId);
       if (!entity) {
+        console.log('[useAbility] Entity not found in zone');
         return { success: false, error: 'Target not found' };
       }
+      console.log('[useAbility] Found entity:', { id: entity.id, type: entity.type });
 
-      if (entity.type !== 'creature') {
-        return { success: false, error: 'Invalid target type' };
-      }
+      // Gather abilities can target plants/minerals, combat abilities target creatures
+      if (hasGatherEffect) {
+        if (entity.type !== 'plant' && entity.type !== 'mineral') {
+          console.log('[useAbility] Invalid target type for gathering:', entity.type);
+          return { success: false, error: 'Invalid target for gathering' };
+        }
+        // Range check for gathering
+        const rangeCheck = canInteract(player, entity, ability.range);
+        if (!rangeCheck.canInteract) {
+          return { success: false, error: rangeCheck.reason };
+        }
+      } else {
+        if (entity.type !== 'creature') {
+          return { success: false, error: 'Invalid target type' };
+        }
 
-      target = entity as Creature;
-      if (!target.active || target.health <= 0) {
-        return { success: false, error: 'Target is dead' };
-      }
+        target = entity as Creature;
+        if (!target.active || target.health <= 0) {
+          return { success: false, error: 'Target is dead' };
+        }
 
-      // Range check
-      const rangeCheck = canInteract(player, target, ability.range);
-      if (!rangeCheck.canInteract) {
-        return { success: false, error: rangeCheck.reason };
+        // Range check
+        const rangeCheck = canInteract(player, target, ability.range);
+        if (!rangeCheck.canInteract) {
+          return { success: false, error: rangeCheck.reason };
+        }
       }
     }
 
@@ -391,7 +419,7 @@ export class AbilityService {
       // Handle gather effect (harvest from plants, mine from minerals)
       if (effect.type === 'gather') {
         const gatherResult = await this.handleGatherEffect(
-          player.id,
+          socketId,
           targetEntityId!,
           effect,
           toolStats
@@ -569,13 +597,13 @@ export class AbilityService {
    * Validates entity type, calculates yield with tool bonus, and processes gathering.
    */
   private async handleGatherEffect(
-    playerId: string,
+    socketId: string,
     targetEntityId: string,
     effect: { type: 'gather'; gatherType: 'harvest' | 'mine'; baseYield: number },
     toolStats: { yieldBonus: number; gatherSpeed: number }
   ): Promise<{ success: boolean; error?: string }> {
     // 1. Get target entity
-    const player = this.playerService.getPlayerById(playerId);
+    const player = this.playerService.getPlayerBySocket(socketId);
     if (!player) {
       return { success: false, error: 'Player not found' };
     }
@@ -599,7 +627,7 @@ export class AbilityService {
 
     // 4. Call EntityService to process gathering
     const result = await this.entityService.handleToolUse(
-      playerId,
+      socketId,
       targetEntityId,
       finalYield
     );

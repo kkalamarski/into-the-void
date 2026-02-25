@@ -724,11 +724,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { abilityId: string; targetEntityId?: string },
   ): Promise<void> {
+    console.log('[ability:use] Received:', { abilityId: data.abilityId, targetEntityId: data.targetEntityId, socketId: client.id });
     const result = await this.abilityService.useAbility(
       client.id,
       data.abilityId,
       data.targetEntityId,
     );
+    console.log('[ability:use] Result:', { success: result.success, error: result.error });
 
     // Send result to the player who used the ability
     client.emit('ability:result', {
@@ -1398,7 +1400,24 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       return;
     }
 
-    const abilityId = entity.type === 'plant' ? 'harvest' : 'mine';
+    // Find the appropriate gathering ability from player's equipped abilities
+    const abilities = this.abilityService.getPlayerAbilities(player.id);
+    let abilityId: string | undefined;
+
+    if (entity.type === 'plant') {
+      // Prefer 'harvest' over 'basic_harvest'
+      abilityId = abilities.find(a => a.id === 'harvest')?.id
+        ?? abilities.find(a => a.id === 'basic_harvest')?.id;
+    } else if (entity.type === 'mineral') {
+      // Prefer 'mine' over 'basic_mine'
+      abilityId = abilities.find(a => a.id === 'mine')?.id
+        ?? abilities.find(a => a.id === 'basic_mine')?.id;
+    }
+
+    if (!abilityId) {
+      client.emit('error', { code: 'GATHERING_ERROR', message: 'No gathering ability available' });
+      return;
+    }
 
     // Delegate to ability:use
     await this.handleAbilityUse(client, {

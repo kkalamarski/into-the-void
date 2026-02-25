@@ -10,6 +10,7 @@ import { DndContext, closestCenter, DragEndEvent, DragStartEvent, DragOverlay } 
 import { SortableContext, useSortable, rectSwappingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { AbilityTooltip } from '../../components/AbilityTooltip';
+import { getAbilityIconStyle } from '../../utils/abilityIcons';
 import './ActionBar.css';
 
 const SLOT_COUNT = 8;
@@ -67,7 +68,7 @@ function AbilitySlotContent({ index, ability }: AbilitySlotContentProps) {
         <>
           <div
             className="ability-icon"
-            style={{ backgroundColor: `#${ability.iconColor.toString(16).padStart(6, '0')}` }}
+            style={getAbilityIconStyle(ability.id, 48)}
           />
           {cooldownProgress > 0 && (
             <div
