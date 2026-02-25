@@ -1316,13 +1316,14 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const result = await this.questService.acceptQuest(player.id, data.questId);
     console.log('[quest:accept] Result:', result);
 
-    if (!result.success) {
+    if (result.success) {
+      client.emit('quest:accepted', { questId: data.questId });
+    } else {
       client.emit('error', {
         code: 'QUEST_ACCEPT_FAILED',
         message: result.error || 'Failed to accept quest',
       });
     }
-    // Note: quest:progress is emitted by QuestService.acceptQuest on success
   }
 
   @SubscribeMessage('poi:discover')
