@@ -198,6 +198,22 @@ const TOOL_VENDOR: TraderDefinition = {
   specialization: 'tools',
 };
 
+const EXPEDITION_MASTER: ServiceDefinition = {
+  id: 'npc_expedition_master',
+  displayName: 'Expedition Coordinator',
+  description: 'A grizzled veteran who organizes expeditions to remote locations across Terminus.',
+  npcType: 'service',
+  faction: 'neutral',
+  textureKey: 'npc_expedition_master',
+  color: 0xd4a574, // Tan/explorer color
+  dialogue: [
+    { text: 'Looking for adventure? I can drop you anywhere on this rock.', condition: 'greeting' },
+    { text: 'Pick your poison. Some zones are friendlier than others.', condition: 'busy' },
+    { text: 'Watch yourself out there. Terminus doesn\'t forgive mistakes.', condition: 'farewell' },
+  ],
+  serviceType: 'expedition',
+};
+
 const MODULE_VENDOR: TraderDefinition = {
   id: 'npc_module_vendor',
   displayName: 'Module Technician',
@@ -263,4 +279,5 @@ export const NEUTRAL_NPCS: readonly NpcDefinition[] = [
   SUIT_VENDOR,
   TOOL_VENDOR,
   MODULE_VENDOR,
+  EXPEDITION_MASTER,
 ];
