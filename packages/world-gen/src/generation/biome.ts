@@ -13,10 +13,10 @@ interface BiomeParams {
 }
 
 const DEFAULT_BIOME_PARAMS: BiomeParams = {
-  temperatureScale: 0.002,
-  moistureScale: 0.003,
-  elevationScale: 0.0012,
-  minBiomeChunks: 10, // Minimum 10 chunks per biome region (half previous size)
+  temperatureScale: 0.005,
+  moistureScale: 0.0075,
+  elevationScale: 0.003,
+  minBiomeChunks: 4, // Minimum 4 chunks per biome region (~2 min to cross at 2 tiles/sec)
   chunkSize: ZONE_SIZE,
 };
 
@@ -80,7 +80,7 @@ export class BiomeGenerator {
    * Uses noise to offset coordinates before region lookup.
    */
   private getWarpOffset(worldX: number, worldY: number): { x: number; y: number } {
-    const warpScale = 0.003; // Controls boundary wiggle frequency
+    const warpScale = 0.006; // Controls boundary wiggle frequency
     const regionSize = this.params.minBiomeChunks * this.params.chunkSize;
     const warpStrength = regionSize * 0.4; // 40% of region size for organic edges
 
