@@ -69,31 +69,31 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
-| INFRA-03 | — | Pending |
-| INFRA-04 | — | Pending |
-| CHAN-01 | — | Pending |
-| CHAN-02 | — | Pending |
-| CHAN-03 | — | Pending |
-| CHAN-04 | — | Pending |
-| CHAN-05 | — | Pending |
-| UI-01 | — | Pending |
-| UI-02 | — | Pending |
-| UI-03 | — | Pending |
-| UI-04 | — | Pending |
-| UI-05 | — | Pending |
-| MOD-01 | — | Pending |
-| MOD-02 | — | Pending |
-| MOD-03 | — | Pending |
-| MOD-04 | — | Pending |
-| MOD-05 | — | Pending |
+| INFRA-01 | Phase 103 | Pending |
+| INFRA-02 | Phase 103 | Pending |
+| INFRA-03 | Phase 103 | Pending |
+| INFRA-04 | Phase 103 | Pending |
+| CHAN-01 | Phase 105 | Pending |
+| CHAN-02 | Phase 105 | Pending |
+| CHAN-03 | Phase 105 | Pending |
+| CHAN-04 | Phase 105 | Pending |
+| CHAN-05 | Phase 105 | Pending |
+| UI-01 | Phase 106 | Pending |
+| UI-02 | Phase 106 | Pending |
+| UI-03 | Phase 106 | Pending |
+| UI-04 | Phase 106 | Pending |
+| UI-05 | Phase 106 | Pending |
+| MOD-01 | Phase 107 | Pending |
+| MOD-02 | Phase 107 | Pending |
+| MOD-03 | Phase 107 | Pending |
+| MOD-04 | Phase 104 | Pending |
+| MOD-05 | Phase 107 | Pending |
 
 **Coverage:**
 - v1.22 requirements: 19 total
-- Mapped to phases: 0
-- Unmapped: 19 ⚠️
+- Mapped to phases: 19
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-26*
-*Last updated: 2026-02-26 after initial definition*
+*Last updated: 2026-02-26 after roadmap creation (all 19 requirements mapped)*

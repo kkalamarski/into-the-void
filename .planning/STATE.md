@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.22
 milestone_name: In-Game Chat
-status: defining_requirements
+status: roadmap_created
 last_updated: "2026-02-26"
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -18,14 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Defining requirements for v1.22
+**Current focus:** Phase 103 — Chat Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-26 — Milestone v1.22 started
+Phase: 103 of 107 (Chat Foundation)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-02-26 — v1.22 roadmap created (5 phases: 103-107)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -37,7 +39,6 @@ Last activity: 2026-02-26 — Milestone v1.22 started
 **Recent Milestones:**
 - v1.21 UI Polish & Audio: 4 phases (99-102) completed 2026-02-26
 - v1.20 World Scale & Action Bar: 5 phases (94-98) completed 2026-02-26
-- v1.19 Deployment & CI/CD: 5 phases (89-93) completed 2026-02-24
 
 ## Accumulated Context
 
@@ -45,20 +46,28 @@ Last activity: 2026-02-26 — Milestone v1.22 started
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
+Recent decisions affecting current work:
+- [v1.22 Research]: Mute is client-side display filter; block is server-enforced (security boundary)
+- [v1.22 Research]: Socket.IO rooms for broadcast (zone/faction/global); proximity distance check for local
+- [v1.22 Research]: Mute/block persist via REST API + DB, not localStorage
+
 ### Pending Todos
 
 None.
 
 ### Blockers/Concerns
 
-None.
+- [Phase 103]: `chat:message` missing from `serverEvents` in `apps/web/src/network/socket.ts` — first task of Phase 103
+- [Phase 103]: Phaser WASD capture when chat input focused — must be solved in Phase 103 before any channel work
+- [Phase 105]: `updatePlayerRooms()` on zone transition may evict faction Socket.IO room — verify and preserve in Phase 105
+- [Phase 105]: Whisper to offline player produces silent failure — add system message to sender in Phase 105
 
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Milestone v1.22 initialized
+Stopped at: Roadmap created for v1.22 (5 phases, 103-107, 19 requirements mapped)
 Resume file: None
-Next action: Define requirements, create roadmap
+Next action: `/gsd:plan-phase 103`
 
 ---
-*Last updated: 2026-02-26 — Milestone v1.22 started*
+*Last updated: 2026-02-26 — v1.22 roadmap created*
