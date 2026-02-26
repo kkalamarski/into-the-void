@@ -28,6 +28,7 @@ const SHEETS = {
   FLORA: 'flora.png',
   MISC: 'misc.png',
   MISC2: 'misc-2.png',
+  FUNGUS: 'fungus.png',
 } as const;
 
 // Sheet dimensions for CSS rendering (cols x rows)
@@ -48,6 +49,7 @@ export const SHEET_DIMENSIONS: Record<string, { cols: number; rows: number }> = 
   [SHEETS.FLORA]: { cols: 10, rows: 5 },
   [SHEETS.MISC]: { cols: 10, rows: 2 },
   [SHEETS.MISC2]: { cols: 10, rows: 5 },
+  [SHEETS.FUNGUS]: { cols: 10, rows: 5 },
 };
 
 export const ITEM_SPRITE_MAP: Record<string, ItemSpriteInfo> = {
@@ -320,9 +322,9 @@ export const ITEM_SPRITE_MAP: Record<string, ItemSpriteInfo> = {
   world_luminous_extract:       { sheet: SHEETS.FLORA, frame: 6 },
 
   // Organic / fungal
-  world_fungal_spore_cluster:  { sheet: SHEETS.MISC, frame: 10 },
-  world_mycelial_fiber:        { sheet: SHEETS.FLORA, frame: 40 },
-  world_spore_sack:            { sheet: SHEETS.MISC, frame: 11 },
+  world_fungal_spore_cluster:  { sheet: SHEETS.FUNGUS, frame: 0 },
+  world_mycelial_fiber:        { sheet: SHEETS.FUNGUS, frame: 12 },
+  world_spore_sack:            { sheet: SHEETS.FUNGUS, frame: 5 },
   world_organic_material_common: { sheet: SHEETS.FLORA, frame: 2 },
   world_organic_material_rare:   { sheet: SHEETS.FLORA, frame: 3 },
   world_organic_material_epic:   { sheet: SHEETS.FLORA, frame: 4 },
@@ -332,8 +334,8 @@ export const ITEM_SPRITE_MAP: Record<string, ItemSpriteInfo> = {
   // ================================================================
 
   reagent_crystalline_dust:       { sheet: SHEETS.DUST, frame: 0 },
-  reagent_fungal_extract:         { sheet: SHEETS.DUST, frame: 2 },
-  reagent_bioluminescent_compound: { sheet: SHEETS.POWER, frame: 9 },
+  reagent_fungal_extract:         { sheet: SHEETS.FUNGUS, frame: 20 },
+  reagent_bioluminescent_compound: { sheet: SHEETS.FUNGUS, frame: 42 },
   reagent_thermal_compound:       { sheet: SHEETS.DUST, frame: 5 },
   reagent_ancient_circuitry:      { sheet: SHEETS.MISC2, frame: 30 },
   reagent_frost_essence:          { sheet: SHEETS.CRYSTALS, frame: 11 },
