@@ -30,8 +30,8 @@ Requirements for UI Polish & Audio milestone. Each maps to roadmap phases.
 
 ### Entity Rendering
 
-- [ ] **REND-01**: Entities render anchored at base tile position, not elevated above it
-- [ ] **REND-02**: Selection indicator aligns with entity base tile position
+- [x] **REND-01**: Entities render anchored at base tile position, not elevated above it
+- [x] **REND-02**: Selection indicator aligns with entity base tile position
 
 ## Future Requirements
 
@@ -65,8 +65,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MENU-03 | Phase 101 | Pending |
 | MENU-04 | Phase 101 | Pending |
 | MENU-05 | Phase 101 | Pending |
-| REND-01 | Phase 99 | Pending |
-| REND-02 | Phase 99 | Pending |
+| REND-01 | Phase 99 | Complete |
+| REND-02 | Phase 99 | Complete |
 
 **Coverage:**
 - v1.21 requirements: 14 total

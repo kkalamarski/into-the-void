@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: 99 of 102 (Entity Rendering Fix)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-02-26 — v1.21 roadmap created, 4 phases, 14 requirements mapped
+Plan: 1 of 1 complete
+Status: Plan 01 complete
+Last activity: 2026-02-26 — Entity rendering fix: sprite anchoring and UI positioning corrected
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 25%
 
 ## Performance Metrics
 
@@ -52,6 +52,8 @@ Recent decisions affecting v1.21:
 - Audio: Zustand persist middleware for settings — already in dep tree
 - ESC: Single capture-phase handler in GameUI.tsx — prevents Phaser dual-fire
 - Game menu: React Portal to document.body — escapes .game-ui stacking context
+- Entity rendering: elevationOffset=0 preserves downstream setData pattern while eliminating floating
+- Entity rendering: uiBaseY = -spriteHeight (not -elevationOffset - spriteHeight*0.5) because origin(0.5,1.0) places top at -spriteHeight
 
 ### Pending Todos
 
@@ -66,9 +68,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Roadmap created for v1.21 — ready to plan Phase 99
+Stopped at: Completed 099-entity-rendering-fix 99-01-PLAN.md
 Resume file: None
-Next action: /gsd:plan-phase 99
+Next action: /gsd:execute-phase 99 02 (or next plan in phase)
 
 ---
 *Last updated: 2026-02-26 — v1.21 roadmap created*
