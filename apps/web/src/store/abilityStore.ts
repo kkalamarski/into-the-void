@@ -55,6 +55,7 @@ export const useAbilityStore = create<AbilityState>()(
 /**
  * Derive equipped abilities from current equipment.
  * This is a pure function, not stored in state to avoid stale data.
+ * Also includes universal abilities (home_recall).
  */
 export function getEquippedAbilities(): AbilityDefinition[] {
   const inventory = useInventoryStore.getState().inventory;
@@ -85,6 +86,9 @@ export function getEquippedAbilities(): AbilityDefinition[] {
       modDef.grantedAbilities.forEach((id) => abilityIds.add(id));
     }
   }
+
+  // Inject universal abilities
+  abilityIds.add('home_recall');
 
   // Resolve ability definitions
   const abilities: AbilityDefinition[] = [];
