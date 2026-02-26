@@ -142,7 +142,7 @@ function SortableAbilitySlot({ index, ability, slotId, shiftHeld }: SortableAbil
       style={style}
       {...attributes}
       {...listeners}
-      className={`ability-slot ${isEmpty ? 'ability-slot--empty' : ''} ${disabled ? 'ability-slot--disabled' : ''} ${isOver && shiftHeld ? 'ability-slot--drop-target' : ''}`}
+      className={`ability-slot ${isEmpty ? 'ability-slot--empty' : ''} ${disabled ? 'ability-slot--disabled' : ''} ${isDragging ? 'ability-slot--dragging' : ''} ${isOver ? 'ability-slot--drop-target' : ''}`}
       onClick={handleClick}
     >
       <AbilitySlotContent index={index} ability={ability} />

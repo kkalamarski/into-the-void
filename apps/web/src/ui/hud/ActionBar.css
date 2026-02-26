@@ -57,13 +57,19 @@
   cursor: grabbing;
 }
 
-/* Drag overlay (ghost element while dragging) */
+/* Enhanced drag overlay with pulse animation */
 .ability-slot--drag-overlay {
   opacity: 0.9;
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
   border-color: var(--color-accent);
   cursor: grabbing;
+  animation: drag-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes drag-pulse {
+  0%, 100% { transform: scale(1.08); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); }
+  50% { transform: scale(1.12); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); }
 }
 
 .ability-key {
@@ -113,4 +119,10 @@
   border-color: var(--color-accent);
   background: rgba(68, 170, 255, 0.15);
   box-shadow: 0 0 8px rgba(68, 170, 255, 0.4);
+}
+
+/* Drop target when ability dragged from panel */
+.ability-slot--can-receive {
+  border-color: var(--color-success, #4caf50);
+  background: rgba(76, 175, 80, 0.1);
 }
