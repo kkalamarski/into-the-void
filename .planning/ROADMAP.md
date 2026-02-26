@@ -101,7 +101,7 @@
 | 99. Entity Rendering Fix | 0/1 | Planned | - |
 | 100. Audio Foundation | 2/2 | Complete   | 2026-02-26 |
 | 101. Game Menu & Settings | 2/2 | Complete   | 2026-02-26 |
-| 102. ESC Centralization | 2/2 | Complete   | 2026-02-26 |
+| 102. ESC Centralization | 2/2 | Complete    | 2026-02-26 |
 
 ---
 
