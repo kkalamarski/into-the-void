@@ -6,13 +6,14 @@ import { GiShield, GiLightningFrequency, GiPoisonGas, GiCrossedSwords, GiTwoCoin
 import { useCombatStore } from '../../store/combatStore';
 import { useCombatLogStore } from '../../store/combatLogStore';
 import { ActionBar } from './ActionBar';
+import { GameShortcuts } from './GameShortcuts';
 import { TargetFrame } from './TargetFrame';
 import { CombatLog } from './CombatLog';
 import { BuffBar } from './BuffBar';
 import './HUD.css';
 
 export const HUD: React.FC = () => {
-  const { player, zoneState, toggleInventory, toggleEquipment, toggleAbilities, toggleChat, toggleQuestLog, showCombatLog, toggleCombatLog } = useGameStore();
+  const { player, zoneState, toggleQuestLog, showCombatLog, toggleCombatLog } = useGameStore();
   const { inventory } = useInventoryStore();
   const { inCombat } = useCombatStore();
 
@@ -141,31 +142,12 @@ export const HUD: React.FC = () => {
 
       <CombatLog />
 
-      <div className="hud-bottom">
-        <div className="action-bar">
-          <button className="action-btn" onClick={toggleInventory}>
-            <span>I</span>
-            <label>Inventory</label>
-          </button>
-          <button className="action-btn" onClick={toggleEquipment}>
-            <span>E</span>
-            <label>Equipment</label>
-          </button>
-          <button className="action-btn" onClick={toggleAbilities}>
-            <span>K</span>
-            <label>Abilities</label>
-          </button>
-          <button className="action-btn" onClick={toggleQuestLog}>
-            <span>Q</span>
-            <label>Quests</label>
-          </button>
-          <button className="action-btn" onClick={toggleChat}>
-            <span>C</span>
-            <label>Chat</label>
-          </button>
+      <div className="hud-bottom-area">
+        <div className="action-bars-container">
+          <ActionBar barIndex={0} />
+          <ActionBar barIndex={1} />
         </div>
-        <ActionBar barIndex={0} />
-        <ActionBar barIndex={1} />
+        <GameShortcuts />
       </div>
 
       {displayedBiome && (

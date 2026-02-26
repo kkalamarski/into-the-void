@@ -78,55 +78,39 @@
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
-.hud-bottom {
+/* Bottom area with grid layout: [spacer] [action-bars] [shortcuts] */
+.hud-bottom-area {
   position: absolute;
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  padding: 0 20px;
+  pointer-events: none;
+}
+
+.hud-bottom-area > * {
+  pointer-events: auto;
+}
+
+/* Action bars container - centered (column 2) */
+.action-bars-container {
+  grid-column: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
 }
 
-.action-bar {
-  display: flex;
-  gap: 10px;
-  background-color: var(--color-bg-secondary);
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid var(--color-bg-tertiary);
-}
-
-.action-btn {
-  width: 60px;
-  height: 60px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--color-bg-tertiary);
-  border: 1px solid #3a3a4a;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.action-btn:hover {
-  background-color: #2a2a3a;
-  border-color: var(--color-accent);
-}
-
-.action-btn span {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.action-btn label {
-  font-size: 10px;
-  color: var(--color-text-secondary);
-  margin-top: 4px;
+/* Game shortcuts - right side (column 3), positioned near minimap */
+.hud-bottom-area .game-shortcuts {
+  grid-column: 3;
+  justify-self: end;
+  align-self: end;
+  margin-right: 200px; /* Position left of minimap (180px minimap + 20px gap) */
+  margin-bottom: 0;
 }
 
 .hud-minimap {
