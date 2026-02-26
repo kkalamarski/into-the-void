@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ChatMessage, ChatChannel } from '@into-the-void/shared-types';
+import { ChatMessage } from '@into-the-void/shared-types';
 import { gameSocket } from '../network/socket';
 
 export const CHAT_CHANNELS = ['local', 'zone', 'faction', 'global', 'whisper'] as const;
