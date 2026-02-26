@@ -107,3 +107,10 @@
   z-index: 2;
   pointer-events: none;
 }
+
+/* Drop zone highlight when dragging ability over slot with Shift held */
+.ability-slot--drop-target {
+  border-color: var(--color-accent);
+  background: rgba(68, 170, 255, 0.15);
+  box-shadow: 0 0 8px rgba(68, 170, 255, 0.4);
+}

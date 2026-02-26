@@ -91,9 +91,10 @@ interface SortableAbilitySlotProps {
   index: number;
   ability: AbilityDefinition | null;
   slotId: string;
+  shiftHeld: boolean;
 }
 
-function SortableAbilitySlot({ index, ability, slotId }: SortableAbilitySlotProps) {
+function SortableAbilitySlot({ index, ability, slotId, shiftHeld }: SortableAbilitySlotProps) {
   const { isOnCooldown } = useAbilityStore();
   const player = useGameStore((state) => state.player);
   const targetEntityId = useCombatStore((state) => state.targetEntityId);
@@ -105,6 +106,7 @@ function SortableAbilitySlot({ index, ability, slotId }: SortableAbilitySlotProp
     transform,
     transition,
     isDragging,
+    isOver,
   } = useSortable({
     id: slotId,
     data: { type: 'action-bar-ability', slotIndex: index, abilityId: ability?.id }
@@ -140,7 +142,7 @@ function SortableAbilitySlot({ index, ability, slotId }: SortableAbilitySlotProp
       style={style}
       {...attributes}
       {...listeners}
-      className={`ability-slot ${isEmpty ? 'ability-slot--empty' : ''} ${disabled ? 'ability-slot--disabled' : ''}`}
+      className={`ability-slot ${isEmpty ? 'ability-slot--empty' : ''} ${disabled ? 'ability-slot--disabled' : ''} ${isOver && shiftHeld ? 'ability-slot--drop-target' : ''}`}
       onClick={handleClick}
     >
       <AbilitySlotContent index={index} ability={ability} />
@@ -165,6 +167,7 @@ export const ActionBar: React.FC = () => {
   const player = useGameStore((state) => state.player);
   const { isOnCooldown } = useAbilityStore();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [shiftHeld, setShiftHeld] = useState(false);
 
   // Derive abilities from equipment (re-renders when inventory changes)
   const equippedAbilities = inventory ? getEquippedAbilities() : [];
@@ -217,16 +220,31 @@ export const ActionBar: React.FC = () => {
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
+
+    // Detect Shift modifier from the activator event
+    const activatorEvent = event.activatorEvent as MouseEvent | TouchEvent | undefined;
+    if (activatorEvent && 'shiftKey' in activatorEvent) {
+      setShiftHeld(activatorEvent.shiftKey);
+    } else {
+      setShiftHeld(false);
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (over && active.id !== over.id) {
+
+    // Only swap if SHIFT was held during drag initiation
+    if (shiftHeld && over && active.id !== over.id) {
       const fromIndex = slotIds.indexOf(active.id as string);
       const toIndex = slotIds.indexOf(over.id as string);
-      swapAbilitySlots(fromIndex, toIndex);
+      if (fromIndex >= 0 && toIndex >= 0) {
+        swapAbilitySlots(fromIndex, toIndex);
+      }
     }
+
+    // Always reset state
     setActiveId(null);
+    setShiftHeld(false);
   };
 
   const activeSlotIndex = activeId ? slotIds.indexOf(activeId) : -1;
@@ -272,6 +290,7 @@ export const ActionBar: React.FC = () => {
               index={i}
               ability={ability}
               slotId={slotIds[i]}
+              shiftHeld={shiftHeld}
             />
           ))}
         </div>
