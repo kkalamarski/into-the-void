@@ -59,7 +59,7 @@ export const GameUI: React.FC = () => {
       // Priority 2: Clear in-game state one action per press
       // 2a. Cancel active cast
       if (useAbilityStore.getState().isCasting()) {
-        gameSocket.emit('cast:cancel');
+        gameSocket.emit('cast:cancel', {});
         return;
       }
 
