@@ -106,7 +106,9 @@
   3. Right-clicking a sender name in the chat panel shows a context menu with Mute, Block, and Whisper options
   4. A previously muted player can be unmuted and their messages become visible again immediately
   5. A previously blocked player can be unblocked and whispers from them are delivered again
-**Plans**: TBD
+**Plans**: 2 plans
+  - [ ] 107-01-PLAN.md -- moderationStore with mute/block sets, REST API integration, and chatStore mute filter (MOD-01, MOD-02, MOD-03)
+  - [ ] 107-02-PLAN.md -- Right-click context menu on ChatPanel sender names with Mute/Block/Whisper actions (MOD-05)
 
 ## Progress
 
@@ -118,7 +120,7 @@
 | 104. Moderation Persistence | 0/TBD | Complete    | 2026-02-26 |
 | 105. ChatService & Channel Routing | 2/2 | Complete    | 2026-02-26 |
 | 106. Chat Panel UI | 2/2 | Complete    | 2026-02-26 |
-| 107. Moderation Controls | 0/TBD | Not started | - |
+| 107. Moderation Controls | 0/2 | Not started | - |
 
 ---
 
