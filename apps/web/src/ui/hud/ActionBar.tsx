@@ -4,6 +4,7 @@ import { useCombatStore } from '../../store/combatStore';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { useActionBarStore } from '../../store/actionBarStore';
 import { useGameStore } from '../../store/gameStore';
+import { useUiSettingsStore } from '../../store/uiSettingsStore';
 import { gameSocket } from '../../network/socket';
 import type { AbilityDefinition } from '@into-the-void/shared-types';
 import { SortableContext, useSortable, rectSwappingStrategy } from '@dnd-kit/sortable';
@@ -164,6 +165,11 @@ export const ActionBar: React.FC<ActionBarProps> = ({ barIndex }) => {
     setAbilityOrder,
     setSecondaryAbilityOrder,
   } = useActionBarStore();
+
+  const { showSecondaryBar } = useUiSettingsStore();
+
+  // Hide secondary bar when toggled off in settings
+  if (barIndex === 1 && !showSecondaryBar) return null;
 
   // Select correct state based on barIndex
   const currentOrder = barIndex === 0 ? abilityOrder : secondaryAbilityOrder;
