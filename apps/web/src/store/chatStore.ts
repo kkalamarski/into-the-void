@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { ChatMessage } from '@into-the-void/shared-types';
 import { gameSocket } from '../network/socket';
+import { useModerationStore } from './moderationStore';
 
 export const CHAT_CHANNELS = ['local', 'zone', 'faction', 'global', 'whisper'] as const;
 export type ChatTab = (typeof CHAT_CHANNELS)[number];
@@ -47,6 +48,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
   whisperTarget: '',
 
   addMessage: (message) => {
+    // Skip messages from muted players (client-side display filter)
+    // System messages are never filtered (they have no real sender)
+    if (message.channel !== 'system' && useModerationStore.getState().mutedIds.has(message.senderId)) {
+      return;
+    }
+
     const { activeChannel } = get();
 
     set((state) => {
