@@ -102,7 +102,7 @@ export class EntityRenderer {
   private scene: Phaser.Scene;
   private tileSize: number;
   private isoTransform: IsometricTransform;
-  private elevationOffset = 24; // Pixels entities hover above ground (doubled for 256x256 sprites)
+  private elevationOffset = 0; // Pixels entities hover above ground (set to 0: sprites anchor at tile surface)
   private questMarkers: Map<string, Phaser.GameObjects.Container> = new Map();
 
   constructor(scene: Phaser.Scene, tileWidth: number = 256, tileHeight: number = 128) {
@@ -204,23 +204,11 @@ export class EntityRenderer {
       container.add(shadow);
     }
 
-    // Entity sprite - creatures, NPCs, and plants at ground level, others elevated
-    let spriteYOffset = -this.elevationOffset;
-    if (this.isCreature(entity)) {
-      // Creatures positioned with feet at shadow level
-      spriteYOffset = 0;
-      // Override Y offset for specific animated creatures if needed
-      if (entity.speciesId && entity.speciesId in ANIMATED_CREATURE_Y_OFFSET) {
-        spriteYOffset = ANIMATED_CREATURE_Y_OFFSET[entity.speciesId];
-      }
-    }
-    if (this.isNpc(entity)) {
-      // NPCs positioned with feet at shadow level
-      spriteYOffset = 0;
-    }
-    if (this.isPlant(entity) || this.isMineral(entity)) {
-      // Plants and minerals positioned with base at ground level
-      spriteYOffset = 0;
+    // Entity sprite - all entity types anchor at tile ground level (y=0 in container space)
+    let spriteYOffset = 0;
+    // Override Y offset for specific animated creatures if needed (all currently 0, reserved for future use)
+    if (this.isCreature(entity) && entity.speciesId && entity.speciesId in ANIMATED_CREATURE_Y_OFFSET) {
+      spriteYOffset = ANIMATED_CREATURE_Y_OFFSET[entity.speciesId];
     }
     const sprite = this.scene.add.sprite(0, spriteYOffset, this.getEntityTexture(entity));
     sprite.setOrigin(0.5, 1.0); // Bottom-center origin for ground alignment
@@ -278,7 +266,8 @@ export class EntityRenderer {
     }
 
     // UI positioning based on sprite height
-    const uiBaseY = -this.elevationOffset - spriteHeight * 0.5;
+    // Sprite has origin(0.5, 1.0) at y=0, so sprite top is at y = -spriteHeight in container space
+    const uiBaseY = -spriteHeight;
     const { name: displayName, gated } = this.applyPerceptionGate(entity);
 
     // Creatures get WoW-style health bar with behavior icon and name inside
@@ -906,8 +895,8 @@ export class EntityRenderer {
     const scale = container.getData('entityScale') ?? 1.0;
     const spriteHeight = BASE_SPRITE_HEIGHT * scale;
 
-    // Position above nameplate (nameplate is at uiBaseY, marker above that)
-    const markerY = -this.elevationOffset - spriteHeight * 0.5 - 60;
+    // Position above nameplate (sprite top is at -spriteHeight, marker goes 60px above that)
+    const markerY = -spriteHeight - 60;
 
     // Try to use sprite, fall back to procedural graphics
     const textureKey = markerType === 'available'

@@ -1595,10 +1595,10 @@ export class WorldScene extends Phaser.Scene {
       if (creatureChanges.health !== undefined && creatureChanges.maxHealth !== undefined) {
         if (creatureChanges.health < creatureChanges.maxHealth) {
           // Get entity scale and sprite height for correct UI positioning
+          // Sprite has origin(0.5, 1.0) at y=0, so sprite top is at y = -spriteHeight in container space
           const scale = (container.getData('entityScale') as number) ?? 2.5;
           const spriteHeight = 256 * scale; // BASE_SPRITE_HEIGHT * scale
-          const elevationOffset = (container.getData('elevationOffset') as number) ?? 24;
-          const uiBaseY = -elevationOffset - spriteHeight * 0.5;
+          const uiBaseY = -spriteHeight;
 
           // Get entity data for creature info
           const entityId = container.getData('entityId') as string;
@@ -1623,7 +1623,8 @@ export class WorldScene extends Phaser.Scene {
     if ('yield' in changes && this.entityRenderer) {
       const yieldValue = (changes as { yield: number }).yield;
       const maxYield = container.getData('maxYield') as number | undefined;
-      const elevationOffset = (container.getData('elevationOffset') as number) ?? 12;
+      const scale = (container.getData('entityScale') as number) ?? 2.5;
+      const spriteHeight = 256 * scale; // BASE_SPRITE_HEIGHT * scale
 
       if (maxYield !== undefined) {
         // Find and destroy old yield bar using stored reference (avoids fragile Y-position search)
@@ -1634,7 +1635,7 @@ export class WorldScene extends Phaser.Scene {
 
         // Create new yield bar with updated value
         const newYieldBar = this.entityRenderer.createHealthBar(yieldValue, maxYield);
-        newYieldBar.y = -elevationOffset - 24;
+        newYieldBar.y = -spriteHeight;
         container.add(newYieldBar);
 
         // Store new reference for next update
