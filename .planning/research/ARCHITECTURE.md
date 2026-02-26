@@ -1,573 +1,671 @@
 # Architecture Research
 
-**Domain:** React/Phaser MMO — UI Polish & Audio (v1.21)
+**Domain:** In-game chat system for multiplayer 2D MMO (v1.22 milestone)
 **Researched:** 2026-02-26
-**Confidence:** HIGH (full codebase read, all integration points verified)
+**Confidence:** HIGH — based on direct codebase analysis of existing game-server, shared-types, and web client
 
-## Standard Architecture
+---
 
-### System Overview
+## Current Chat State (Pre-Milestone)
+
+The codebase already has **partial chat infrastructure** in place. This research documents what exists, what is missing, and how to complete the system cleanly.
+
+### What Already Exists
+
+**shared-types (`packages/shared-types/src/network/events.ts`):**
+- `ChatChannel` type: `'zone' | 'faction' | 'whisper' | 'global' | 'system'`
+- `ChatMessage` interface: `{ id, senderId, senderName, message, channel, timestamp }`
+- `ChatMessageRequest` interface: `{ message, channel, targetId? }`
+- `ClientEvents['chat:send']` — typed socket event
+- `ServerEvents['chat:message']` — typed server broadcast
+
+**game-server (`apps/game-server/src/game/game.gateway.ts`, lines 403-437):**
+- `handleChat()` handler already implemented for `zone`, `global`, `whisper`
+- Routes zone messages via `server.to(zoneId).emit()`
+- Routes global via `server.emit()`
+- Routes whispers via `server.to(targetSocket).emit()` + echo to sender
+
+**Frontend (`apps/web/src/ui/panels/ChatPanel.tsx`):**
+- Panel component exists, draggable, renders messages, sends to zone channel only
+- `chatMessages` stored in `gameStore` with 100-message rolling window
+- Channel color-coding in CSS already defined for all 5 channels
+
+**What is Missing:**
+- `local` channel (proximity, ~15 tile radius) — not in `ChatChannel` type, no server routing
+- `faction` channel — server routing not implemented in gateway (falls through switch without a case)
+- Channel tab switching in UI — hardcoded to `zone` only
+- Mute list — no implementation anywhere
+- Block list — no implementation anywhere
+- Mute/block persistence (DB schema + queries)
+- Whisper UI (target selection, conversation threading)
+- `chat:message` not registered in `socket.ts` server event list (silent bug — messages never dispatched)
+
+---
+
+## System Overview
 
 ```
-┌───────────────────────────────────────────────────────────────────────┐
-│                         React UI Layer                                 │
-│                                                                        │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────────┐  │
-│  │  GameUI    │  │    HUD     │  │  Panels /  │  │  NEW: Game     │  │
-│  │ (DndContext│  │ (bottom    │  │  Modals    │  │  Menu + Settings│ │
-│  │  root,     │  │  action    │  │  (show*    │  │  (ESC layer)   │  │
-│  │  ESC mgr)  │  │  bars,     │  │  booleans  │  │                │  │
-│  │            │  │  shortcuts)│  │  in stores)│  │                │  │
-│  └─────┬──────┘  └─────┬──────┘  └──────┬─────┘  └───────┬────────┘  │
-│        │               │                │                 │           │
-├────────┴───────────────┴────────────────┴─────────────────┴───────────┤
-│                         Zustand Store Layer                            │
-│                                                                        │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────┐  │
-│  │gameStore │ │npcStore  │ │loreStore │ │action    │ │NEW: audio  │  │
-│  │(show*    │ │(interact-│ │(isCodex  │ │BarStore  │ │Store       │  │
-│  │ booleans,│ │ ingNpc)  │ │  Open)   │ │(secondary│ │(volumes,   │  │
-│  │ showGame │ │          │ │          │ │BarVisible│ │ mute,track)│  │
-│  │  Menu)   │ │          │ │          │ │          │ │            │  │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └────────────┘  │
-├───────────────────────────────────────────────────────────────────────┤
-│                         Phaser 3 Canvas Layer                          │
-│                                                                        │
-│  ┌────────────┐  ┌──────────────┐  ┌──────────────┐  ┌────────────┐  │
-│  │ WorldScene │  │EntityRenderer│  │DepthSorter   │  │MinimapCam  │  │
-│  │(movement,  │  │(sprites, UI  │  │(depth order  │  │(separate   │  │
-│  │ input,     │  │ above tiles) │  │ per frame)   │  │ Phaser cam)│  │
-│  │ camera)    │  │[ANCHOR FIX]  │  │              │  │            │  │
-│  └────────────┘  └──────────────┘  └──────────────┘  └────────────┘  │
-└───────────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------+
+|                    React Web Client                             |
+|  +-----------------------------------------------------------+  |
+|  |  ChatPanel (always-visible, bottom-left)                  |  |
+|  |  +--------+ +------+ +-------+ +-------+ +----------+   |  |
+|  |  | Local  | | Zone | |Faction| |Global | | Whispers |   |  |
+|  |  +--------+ +------+ +-------+ +-------+ +----------+   |  |
+|  |  [Filtered message list] [Input] [Send]                  |  |
+|  +-----------------------------------------------------------+  |
+|  +---------------------------+                                  |
+|  |  chatStore (Zustand)      |  <- receives chat:message       |
+|  |  - messages[]             |                                  |
+|  |  - activeChannel          |                                  |
+|  |  - mutedPlayerIds[]       |  <- filters messages client-side |
+|  |  - blockedPlayerIds[]     |  <- persisted via REST API       |
+|  |  - whisperTarget          |                                  |
+|  +---------------------------+                                  |
+|  +------------+                                                 |
+|  | socket.ts  | <- emit chat:send / on chat:message            |
+|  +------------+                                                 |
++--------------------------------+--------------------------------+
+                                 | Socket.IO (WSS)
++--------------------------------v--------------------------------+
+|                    NestJS Game Server                           |
+|  +----------------------------------------------------------+  |
+|  |  GameGateway                                             |  |
+|  |  @SubscribeMessage('chat:send')  handleChat()            |  |
+|  |    -> validates auth (existing guard pattern)            |  |
+|  |    -> delegates to ChatService                           |  |
+|  +-------------------+--------------------------------------+  |
+|                      |                                         |
+|  +-------------------v--------------------------------------+  |
+|  |  ChatService (NEW)                                       |  |
+|  |  - routeMessage(sender, request) -> void                 |  |
+|  |  - routeLocal(sender, msg) -> void                       |  |
+|  |  - routeWhisper(client, sender, request, msg) -> void    |  |
+|  |  - isBlocked(senderId, receiverId) -> Promise<boolean>   |  |
+|  +-------------------+--------------------------------------+  |
+|                      |                                         |
+|  +-------------------v--------------------------------------+  |
+|  |  PlayerService (EXISTING -- read-only by ChatService)    |  |
+|  |  - getPlayerById()                                       |  |
+|  |  - getPlayerBySocket()                                   |  |
+|  |  - getAllOnlinePlayers()                                  |  |
+|  |  - getSocketByPlayerId()                                  |  |
+|  |  - getPlayersInZone()         <- already exists           |  |
+|  +----------------------------------------------------------+  |
+|                                                                 |
+|  +----------------------------------------------------------+  |
+|  |  Socket.IO Rooms (existing infrastructure)               |  |
+|  |  - zoneId rooms (e.g., "z_1_2") -- players auto-join    |  |
+|  |  - factionId rooms (NEW: "faction:verdant") -- on auth   |  |
+|  +----------------------------------------------------------+  |
++--------------------------------+--------------------------------+
+                                 |
++--------------------------------v--------------------------------+
+|                    PostgreSQL (via Drizzle)                      |
+|  +----------------------------------------------------------+  |
+|  |  chat_mute_list (NEW)                                    |  |
+|  |  - id, character_id, muted_character_id, created_at     |  |
+|  +----------------------------------------------------------+  |
+|  +----------------------------------------------------------+  |
+|  |  chat_block_list (NEW)                                   |  |
+|  |  - id, character_id, blocked_character_id, created_at   |  |
+|  +----------------------------------------------------------+  |
++-----------------------------------------------------------------+
 ```
 
-### Component Responsibilities
+---
 
-| Component | Responsibility | Notes for v1.21 |
-|-----------|----------------|-----------------|
-| `GameUI.tsx` | DndContext root, conditional modal/panel rendering | Add ESC manager, `<AudioManager />`, `{showGameMenu && <GameMenu />}` |
-| `HUD.tsx` | Bottom action bars, shortcuts, status bars | Add conditional second bar render from `showSecondaryBar` |
-| `GameShortcuts.tsx` | Button grid for I/E/K/Q/C | Add Menu button (M key) calling `toggleGameMenu()` |
-| `gameStore.ts` | UI boolean flags (showInventory, etc.) | Add `showGameMenu` boolean + `toggleGameMenu()` |
-| `actionBarStore.ts` | Dual-bar slot assignments, localStorage | Add `showSecondaryBar` boolean + localStorage persist |
-| `audio.ts` util | Single fire SFX only (quest-complete.mp3) | Expand with `playLevelUpSound()`, make volume-aware via audioStore |
-| `EntityRenderer.ts` | Sprite creation, anchor positioning | Fix container.y: subtract `ISO_TILE_HEIGHT / 2` to anchor at tile base |
-| `NpcInteractionModal.tsx` | Has own ESC useEffect (lines 222-232) | Remove own ESC handler — delegate to central GameUI handler |
-| `QuestLogPanel.tsx` | Has own ESC useEffect (lines 30-38) | Remove own ESC handler — delegate to central GameUI handler |
-| `LoreCodex.tsx` | Has own ESC useEffect (lines 27-31) | Remove own ESC handler — delegate to central GameUI handler |
+## Component Responsibilities
+
+| Component | Responsibility | New vs Modified |
+|-----------|---------------|-----------------|
+| `ChatService` | Route messages by channel, enforce block lists, look up targets | **NEW** |
+| `GameGateway.handleChat()` | Receive `chat:send`, delegate to `ChatService` | **MODIFIED** (minor refactor) |
+| `GameGateway.handleAuth()` | Join player into faction Socket.IO room | **MODIFIED** (add room join) |
+| `GameGateway.handleDisconnect()` | Leave faction room on disconnect | **MODIFIED** (socket leaves automatically, optional defensive leave) |
+| `chatStore` | Hold messages, active channel, mute/block lists, whisper state | **NEW** (extracted from `gameStore`) |
+| `ChatPanel` | Tabbed UI, channel switching, whisper target input | **MODIFIED** (major rewrite) |
+| `chat_mute_list` schema | Persist mute relationships | **NEW** |
+| `chat_block_list` schema | Persist block relationships | **NEW** |
+| `shared-types ChatChannel` | Add `'local'` to union | **MODIFIED** |
+| `socket.ts` serverEvents | Register `chat:message` in event list | **MODIFIED** (bug fix) |
+
+---
 
 ## Recommended Project Structure
 
 ```
+apps/game-server/src/game/
++-- chat.service.ts          # NEW -- all routing + mute/block logic
++-- game.gateway.ts          # MODIFIED -- delegates to ChatService, joins faction rooms
++-- game.module.ts           # MODIFIED -- add ChatService to providers
+
+packages/database/src/
++-- schema/
+|   +-- chat-mute-list.ts    # NEW -- mute_list table
+|   +-- chat-block-list.ts   # NEW -- block_list table
++-- queries/
+|   +-- chat.ts              # NEW -- getMuteList, getBlockList, addMute, removeMute, addBlock, removeBlock
++-- index.ts                 # MODIFIED -- re-export new schema and queries
+
+packages/shared-types/src/network/
++-- events.ts                # MODIFIED -- add 'local' to ChatChannel
+
 apps/web/src/
-├── store/
-│   ├── gameStore.ts          # MODIFY: add showGameMenu + toggleGameMenu()
-│   ├── actionBarStore.ts     # MODIFY: add showSecondaryBar + toggleSecondaryBar() + localStorage
-│   └── audioStore.ts         # NEW: musicVolume, ambientVolume, effectsVolume, isMuted, localStorage
-├── ui/
-│   ├── GameUI.tsx            # MODIFY: add ESC manager, <AudioManager />, <GameMenu />
-│   ├── hud/
-│   │   ├── HUD.tsx           # MODIFY: conditional second ActionBar based on showSecondaryBar
-│   │   └── GameShortcuts.tsx # MODIFY: add Menu button
-│   ├── modals/
-│   │   ├── GameMenu.tsx      # NEW: overlay with Settings tab + Logout
-│   │   └── GameMenu.css      # NEW
-│   └── panels/
-│       ├── QuestLogPanel.tsx # MODIFY: remove own ESC handler
-│       └── NpcInteractionModal.tsx # MODIFY: remove own ESC handler
-├── components/
-│   ├── AudioManager.tsx      # NEW: invisible, music lifecycle, visibilitychange
-│   └── LoreCodex.tsx         # MODIFY: remove own ESC handler
-└── utils/
-│   └── audio.ts              # MODIFY: add playLevelUpSound(), volume-aware playEffect()
-└── game/
-    └── rendering/
-        └── EntityRenderer.ts # MODIFY: fix container.y anchor calculation (line 146)
++-- store/
+|   +-- chatStore.ts         # NEW -- extracted from gameStore, adds channel/mute/block state
++-- ui/panels/
+|   +-- ChatPanel.tsx        # MODIFIED -- tabbed channels, whisper UI, mute controls
+|   +-- ChatPanel.css        # MODIFIED -- tab styles
++-- network/
+    +-- socket.ts            # MODIFIED -- register chat:message in serverEvents array
 ```
 
 ### Structure Rationale
 
-- **`audioStore.ts` as new Zustand store:** Matches the existing store-per-concern pattern. Volumes need localStorage persistence + reactivity — both handled by Zustand. Avoids threading audio state through gameStore which already has a large surface area.
-- **`GameMenu.tsx` in `modals/`:** Not a panel (not draggable with useDraggablePanel), not a HUD element. Modal category is correct. Follows QuestCompleteModal placement.
-- **`AudioManager.tsx` in `components/`:** Invisible component (returns null), lifecycle-managed by React. Placed next to LevelUpNotification and LoreCodex which are also non-screen components with side effects.
-- **Settings in GameMenu:** At v1.21 scope (volumes + secondary bar toggle), settings live inside GameMenu as a panel tab. A dedicated `settingsStore` is premature — create it only if a future milestone adds keybind remapping or other orthogonal settings.
-- **ESC logic in `GameUI.tsx`:** Single handler reads store snapshots. Individual panel ESC handlers removed to prevent simultaneous multi-panel close on single keypress.
+- **`chat.service.ts` separate from `game.gateway.ts`:** Follows established pattern (combat.service, quest.service, etc.). Gateway handles only transport; service owns business logic.
+- **`chatStore.ts` extracted from `gameStore.ts`:** `gameStore` is already large. Chat state (messages, channel, mute list) is a distinct domain. Same side-effect registration pattern used by `questStore.ts`, `statsStore.ts`, etc.
+- **Database in `packages/database/`:** Consistent with all other persistence (quests, lore, zone-mastery). Drizzle schema + query functions follow existing patterns exactly.
+
+---
 
 ## Architectural Patterns
 
-### Pattern 1: ESC Modal Priority Stack
+### Pattern 1: Socket.IO Room-Based Channel Routing
 
-**What:** Single `window.addEventListener('keydown')` in `GameUI.tsx` that closes modals one-by-one in priority order. When all are closed, opens GameMenu. When GameMenu is open, ESC closes it.
+**What:** Use Socket.IO named rooms as broadcast targets. Zone rooms already exist (`zoneId` string). Faction rooms need to be added (`"faction:verdant"`, `"faction:helix"`, etc.).
 
-**When to use:** Any time multiple UI layers can be open simultaneously and ESC must close exactly one thing per keypress.
+**When to use:** Zone, faction, and global channels. Avoids iterating all players on every message.
 
-**Trade-offs:** Centralized logic vs. component isolation. Per-component ESC handlers (current approach) cause all open panels to close simultaneously. Centralized is predictable and correct.
+**Trade-offs:** Rooms are invisible to application logic — correctness depends on join/leave being called at the right lifecycle points. Missing a leave call leaks a player into the wrong room.
 
-**Priority order (closes first = highest priority):**
-
-```
-1. NPC interaction (interactingNpc in npcStore) — setInteractingNpc(null)
-2. Lore Codex (isCodexOpen in loreStore) — toggleCodex()
-3. Quest Log (isQuestLogOpen in gameStore) — toggleQuestLog()
-4. Abilities panel (showAbilities in gameStore) — toggleAbilities()
-5. Equipment panel (showEquipment in gameStore) — toggleEquipment()
-6. Inventory panel (showInventory in gameStore) — toggleInventory()
-7. Chat panel (showChat in gameStore) — toggleChat()
-8. Game Menu open → close it (toggleGameMenu)
-9. Nothing open → open Game Menu (toggleGameMenu)
-
-NOTE: showDeathScreen intentionally excluded — death screen cannot be ESC-dismissed
-```
-
-**Example implementation in `GameUI.tsx`:**
-
+**Example:**
 ```typescript
-useEffect(() => {
-  const handleEsc = (e: KeyboardEvent) => {
-    if (e.key !== 'Escape') return;
+// In GameGateway.handleAuth() -- after successful authentication
+client.join(player.position.zoneId);         // already done implicitly via server.to()
+client.join(`faction:${player.faction}`);    // NEW -- join faction room
 
-    // Read snapshots at call time — no reactive subscriptions needed
-    const npc = useNpcStore.getState();
-    const lore = useLoreStore.getState();
-    const game = useGameStore.getState();
+// Socket.IO automatically leaves all rooms on disconnect.
+// No explicit leave needed in handleDisconnect().
 
-    if (npc.interactingNpc) {
-      npc.setInteractingNpc(null);
-    } else if (lore.isCodexOpen) {
-      lore.toggleCodex();
-    } else if (game.isQuestLogOpen) {
-      game.toggleQuestLog();
-    } else if (game.showAbilities) {
-      game.toggleAbilities();
-    } else if (game.showEquipment) {
-      game.toggleEquipment();
-    } else if (game.showInventory) {
-      game.toggleInventory();
-    } else if (game.showChat) {
-      game.toggleChat();
-    } else {
-      // Nothing open OR game menu open — toggle game menu
-      game.toggleGameMenu();
-    }
-  };
-
-  window.addEventListener('keydown', handleEsc);
-  return () => window.removeEventListener('keydown', handleEsc);
-}, []); // Empty deps — reads store snapshots at event time, not at render time
+// In ChatService.routeMessage() -- faction channel
+this.server.to(`faction:${sender.faction}`).emit('chat:message', message);
 ```
 
-**Migration:** Remove existing ESC blocks from:
-- `QuestLogPanel.tsx` lines 30-38 (remove entire `if (e.key === 'Escape')` block)
-- `NpcInteractionModal.tsx` lines 222-232 (remove entire ESC block, keep other key handlers if any)
-- `LoreCodex.tsx` lines 27-31 (remove `handleEscape` function and listener)
+### Pattern 2: ChatService as Pure Router
 
-### Pattern 2: Centralized Audio Store
+**What:** `ChatService` receives the validated `sender` (already looked up from `PlayerService`) and the `ChatMessageRequest`, then decides which sockets receive the message. It does not validate auth — that happens in the gateway before delegation.
 
-**What:** Zustand store owns volume levels and mute state. An invisible `AudioManager` React component drives HTML5 Audio API. Volume changes in store instantly update audio playback.
+**When to use:** All channel types flow through a single `routeMessage()` method. Add a channel case without touching the gateway.
 
-**When to use:** Background music looping, multiple audio category volumes, settings UI that needs to preview volume changes in real-time.
+**Trade-offs:** Slightly more indirection than inline routing (as current gateway does). Worth it for testability and future channel additions.
 
-**Trade-offs:** React-managed audio means Phaser's `pauseOnBlur: true` (already set in Game.ts) does NOT pause HTML5 Audio. Must manually handle `visibilitychange`. The alternative (Phaser sound system) would integrate `pauseOnBlur` automatically but requires loading music in PreloadScene and bridging volume through the game instance reference.
-
-**AudioStore shape:**
-
+**Example:**
 ```typescript
-// store/audioStore.ts
-interface AudioState {
-  musicVolume: number;      // 0.0 - 1.0, default 0.4
-  ambientVolume: number;    // 0.0 - 1.0, default 0.3 (reserved for future ambients)
-  effectsVolume: number;    // 0.0 - 1.0, default 0.5
-  isMuted: boolean;         // master mute
-  setMusicVolume: (v: number) => void;
-  setAmbientVolume: (v: number) => void;
-  setEffectsVolume: (v: number) => void;
-  toggleMute: () => void;
-}
-// All values persisted to localStorage on change (same pattern as actionBarStore)
-```
+@Injectable()
+export class ChatService {
+  private server: Server | null = null;
 
-**AudioManager component (invisible, mounted once in GameUI):**
-
-```typescript
-// 4 tracks confirmed present in /assets/music/
-const MUSIC_TRACKS = [
-  '/assets/music/freesound_community-wandering-6394.mp3',
-  '/assets/music/freesound_community-ethereal-ambient-music-55115.mp3',
-  '/assets/music/freesound_community-ghosts-play-piano-26550.mp3',
-  '/assets/music/freesound_community-kalimba-atmosphere-32457.mp3',
-];
-
-export const AudioManager: React.FC = () => {
-  const { musicVolume, isMuted } = useAudioStore();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    const track = MUSIC_TRACKS[Math.floor(Math.random() * MUSIC_TRACKS.length)];
-    const audio = new Audio(track);
-    audio.loop = true;
-    audio.volume = isMuted ? 0 : musicVolume;
-    audioRef.current = audio;
-    audio.play().catch(() => {}); // Fail silently — autoplay policy
-
-    // Manual pause on tab hide (Phaser pauseOnBlur doesn't cover HTML Audio)
-    const handleVisibility = () => {
-      if (document.hidden) audio.pause();
-      else audio.play().catch(() => {});
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => {
-      audio.pause();
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, []); // Mount once — track chosen at game start
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : musicVolume;
-    }
-  }, [musicVolume, isMuted]);
-
-  return null;
-};
-```
-
-**SFX update in `audio.ts`:**
-
-```typescript
-export function playEffect(path: string): void {
-  const { effectsVolume, isMuted } = useAudioStore.getState(); // snapshot
-  if (isMuted) return;
-  const audio = new Audio(path);
-  audio.volume = effectsVolume;
-  audio.play().catch(() => {});
-}
-
-export function playQuestCompleteSound(): void {
-  playEffect('/assets/audio/quest-complete.mp3');
-}
-
-export function playLevelUpSound(): void {
-  playEffect('/assets/audio/quest-complete.mp3'); // Reuse file per spec
-}
-```
-
-**Wire level-up in `gameStore.ts`** (existing `player:xp` socket handler):
-
-```typescript
-gameSocket.on('player:xp', (data) => {
-  // ... existing state update ...
-  if (data.leveledUp) {
-    playLevelUpSound(); // Add this call
-    // ... existing chat message ...
+  setServer(server: Server): void {
+    this.server = server;
   }
+
+  async routeMessage(
+    client: Socket,
+    sender: Player,
+    request: ChatMessageRequest,
+  ): Promise<void> {
+    const message: ChatMessage = {
+      id: crypto.randomUUID(),
+      senderId: sender.id,
+      senderName: sender.name,
+      message: this.sanitize(request.message),
+      channel: request.channel,
+      timestamp: Date.now(),
+    };
+
+    switch (request.channel) {
+      case 'local':
+        await this.routeLocal(sender, message);
+        break;
+      case 'zone':
+        this.server!.to(sender.position.zoneId).emit('chat:message', message);
+        break;
+      case 'faction':
+        this.server!.to(`faction:${sender.faction}`).emit('chat:message', message);
+        break;
+      case 'global':
+        this.server!.emit('chat:message', message);
+        break;
+      case 'whisper':
+        await this.routeWhisper(client, sender, request, message);
+        break;
+    }
+  }
+
+  private async routeLocal(sender: Player, message: ChatMessage): Promise<void> {
+    const LOCAL_RADIUS = 15;
+    const playersInZone = this.playerService.getPlayersInZone(sender.position.zoneId);
+    for (const p of playersInZone) {
+      const dx = Math.abs(p.position.x - sender.position.x);
+      const dy = Math.abs(p.position.y - sender.position.y);
+      if (dx <= LOCAL_RADIUS && dy <= LOCAL_RADIUS) {
+        const socket = this.playerService.getSocketByPlayerId(p.id);
+        if (socket) {
+          this.server!.to(socket).emit('chat:message', message);
+        }
+      }
+    }
+  }
+
+  private async routeWhisper(
+    client: Socket,
+    sender: Player,
+    request: ChatMessageRequest,
+    message: ChatMessage,
+  ): Promise<void> {
+    if (!request.targetId) return;
+
+    const isBlocked = await this.isBlocked(sender.id, request.targetId);
+    if (isBlocked) {
+      client.emit('chat:message', {
+        ...message,
+        senderId: 'system',
+        senderName: 'System',
+        message: 'That player is not accepting messages from you.',
+        channel: 'system',
+      } as ChatMessage);
+      return;
+    }
+
+    const targetSocket = this.playerService.getSocketByPlayerId(request.targetId);
+    if (targetSocket) {
+      this.server!.to(targetSocket).emit('chat:message', message);
+      client.emit('chat:message', message); // Echo to sender
+    } else {
+      client.emit('chat:message', {
+        ...message,
+        senderId: 'system',
+        senderName: 'System',
+        message: 'That player is not online.',
+        channel: 'system',
+      } as ChatMessage);
+    }
+  }
+
+  private sanitize(text: string): string {
+    return text.trim().slice(0, 200);
+  }
+}
+```
+
+### Pattern 3: Client-Side Mute Filtering
+
+**What:** The server sends all broadcast messages (zone, faction, global) without filtering. The client's `chatStore` holds the mute list and filters messages before adding them to the display list.
+
+**When to use:** Zone, faction, global channels where recipients are many and muting is soft ("I don't want to see this person's messages").
+
+**Trade-offs:** Muted players can still see the muter's messages. This is intentional — mute is one-directional, block is bidirectional. Server-side filtering for broadcasts would require iterating all recipients per message, which is costly.
+
+**Block vs Mute distinction:**
+- **Mute:** Client-side only. Receiver filters `chatStore`. Sender's messages still reach the server and other players.
+- **Block:** Server-side enforced for whispers (`routeWhisper` checks block list before delivering). For broadcasts, same as mute — client filters. Both persist to DB.
+
+```typescript
+// chatStore.ts -- filter on incoming message
+gameSocket.on('chat:message', (msg: ChatMessage) => {
+  const { mutedPlayerIds } = useChatStore.getState();
+  if (mutedPlayerIds.includes(msg.senderId)) return; // silently drop
+  useChatStore.getState().addMessage(msg);
 });
 ```
 
-### Pattern 3: Interface Settings Co-located in Owner Store
+### Pattern 4: Dedicated chatStore (Side-Effect Registration)
 
-**What:** `showSecondaryBar` boolean lives in `actionBarStore` (not a separate settings store) because the action bar store already owns all action bar configuration. localStorage persistence follows the same pattern already used in that store.
+**What:** Follow the established pattern of `questStore.ts`, `statsStore.ts`, `loreStore.ts` — a Zustand store file that also registers its own `gameSocket.on()` listeners as a module side-effect. `GameUI.tsx` imports it to trigger registration.
 
-**When to use:** When a UI preference has an obvious natural owner among existing stores. Avoids creating a generic settings store prematurely.
+**When to use:** Any domain with both state and socket event handling. Keeps `gameStore.ts` from growing further.
 
-**Trade-offs:** Slightly violates single responsibility if settings accumulate. For v1.21 (one interface toggle), co-location is correct. Extract to `settingsStore.ts` when 3+ unrelated interface preferences exist.
-
-**Implementation:**
-
+**Example:**
 ```typescript
-// actionBarStore.ts additions
-function loadSecondaryBarVisibility(): boolean {
-  return localStorage.getItem('action_bar_secondary_visible') !== 'false'; // default true
+// apps/web/src/store/chatStore.ts
+import { create } from 'zustand';
+import { ChatMessage, ChatChannel } from '@into-the-void/shared-types';
+import { gameSocket } from '../network/socket';
+
+interface ChatState {
+  messages: ChatMessage[];
+  activeChannel: ChatChannel;
+  mutedPlayerIds: string[];
+  blockedPlayerIds: string[];
+  whisperTarget: { id: string; name: string } | null;
+  addMessage: (msg: ChatMessage) => void;
+  setActiveChannel: (channel: ChatChannel) => void;
+  setWhisperTarget: (target: { id: string; name: string } | null) => void;
+  addMute: (playerId: string) => void;
+  removeMute: (playerId: string) => void;
+  addBlock: (playerId: string) => void;
+  removeBlock: (playerId: string) => void;
+  loadModeration: (mutedIds: string[], blockedIds: string[]) => void;
 }
 
-// In store interface:
-showSecondaryBar: boolean;
-toggleSecondaryBar: () => void;
+export const useChatStore = create<ChatState>((set) => ({
+  messages: [],
+  activeChannel: 'zone',
+  mutedPlayerIds: [],
+  blockedPlayerIds: [],
+  whisperTarget: null,
+  addMessage: (msg) =>
+    set((state) => ({
+      messages: [...state.messages.slice(-199), msg],
+    })),
+  setActiveChannel: (channel) => set({ activeChannel: channel }),
+  setWhisperTarget: (target) => set({ whisperTarget: target }),
+  addMute: (id) => set((state) => ({ mutedPlayerIds: [...state.mutedPlayerIds, id] })),
+  removeMute: (id) => set((state) => ({ mutedPlayerIds: state.mutedPlayerIds.filter(x => x !== id) })),
+  addBlock: (id) => set((state) => ({ blockedPlayerIds: [...state.blockedPlayerIds, id] })),
+  removeBlock: (id) => set((state) => ({ blockedPlayerIds: state.blockedPlayerIds.filter(x => x !== id) })),
+  loadModeration: (mutedIds, blockedIds) =>
+    set({ mutedPlayerIds: mutedIds, blockedPlayerIds: blockedIds }),
+}));
 
-// In store initializer:
-showSecondaryBar: loadSecondaryBarVisibility(),
-toggleSecondaryBar: () => set((state) => {
-  const newValue = !state.showSecondaryBar;
-  localStorage.setItem('action_bar_secondary_visible', String(newValue));
-  return { showSecondaryBar: newValue };
-}),
+// Side-effect: register socket listener (activated when GameUI.tsx imports this module)
+gameSocket.on('chat:message', (msg: ChatMessage) => {
+  const { mutedPlayerIds, addMessage } = useChatStore.getState();
+  if (mutedPlayerIds.includes(msg.senderId)) return;
+  addMessage(msg);
+});
 ```
 
-```tsx
-// HUD.tsx modification
-const { showSecondaryBar } = useActionBarStore();
-
-<div className="action-bars-container">
-  <ActionBar barIndex={0} />
-  {showSecondaryBar && <ActionBar barIndex={1} />}
-</div>
-```
-
-### Pattern 4: Entity Anchor Fix — Tile Base Origin
-
-**What:** Fix `EntityRenderer.createEntityContainer()` to position the container at the tile's top-face base edge (where the tile surface is visible), not at the tile's screen-center.
-
-**Root cause:** `IsometricTransform.gridToScreen()` returns the visual center of a tile face, which is `ISO_TILE_HEIGHT / 2 = 64px` above the bottom edge of the top face. With sprite `origin(0.5, 1.0)` (bottom-center), the sprite feet land 64px too high for flat tiles, and higher still on elevated tiles.
-
-**Fix (EntityRenderer.ts line 146):**
-
-```typescript
-// BEFORE (buggy)
-const container = this.scene.add.container(screenPos.x, screenPos.y - elevationOffset);
-
-// AFTER (correct)
-// ISO_TILE_HEIGHT = 128, so half = 64 — this is the distance from tile center to base
-const tileBase = screenPos.y + (ISO_TILE_HEIGHT / 2);
-const container = this.scene.add.container(screenPos.x, tileBase - elevationOffset);
-```
-
-**Note on ISO_TILE_HEIGHT direction:** In isometric rendering, larger Y = lower on screen. The tile's bottom-visible-edge (where entities stand) is at `screenPos.y + (ISO_TILE_HEIGHT / 2)` because the tile center is above the base in screen space.
-
-**TargetHighlight:** The selection indicator follows `container.y` automatically (it attaches to the container). Fixing the container position fixes the selection ring alignment without changes to `TargetHighlight.ts`.
-
-**Update moved-entity position** (`EntityRenderer.updateEntityPosition`, line 763-765 in EntityRenderer.ts):
-
-```typescript
-// Same fix needed when updating position on move
-const tileBase = screenPos.y + (ISO_TILE_HEIGHT / 2);
-container.setPosition(screenPos.x, tileBase - elevationOffset);
-```
+---
 
 ## Data Flow
 
-### ESC Key Flow (new centralized)
+### Channel Routing (Server)
 
 ```
-User presses ESC
-    ↓
-GameUI.tsx single window keydown listener
-    ↓
-Reads store snapshots (getState() — no subscriptions)
-    ↓
-If/else priority chain: first truthy open modal wins
-    ↓
-Calls store close action for that modal
-    ↓
-Zustand notifies subscribers → React re-renders
-    ↓
-GameUI conditional hides that one component
-    ↓
-Next ESC press: re-evaluates remaining open modals
+Client emits 'chat:send' { message, channel, targetId? }
+    |
+    v
+GameGateway.handleChat()
+    | playerService.getPlayerBySocket(client.id)
+    | validates player is authenticated
+    |
+    v
+ChatService.routeMessage(client, player, request)
+    |
+    +-- channel = 'local'   -> iterate zone players, distance check, emit per-socket
+    +-- channel = 'zone'    -> server.to(zoneId).emit('chat:message', msg)
+    +-- channel = 'faction' -> server.to('faction:verdant').emit('chat:message', msg)
+    +-- channel = 'global'  -> server.emit('chat:message', msg)
+    +-- channel = 'whisper' -> check block list -> server.to(targetSocket).emit() + echo
 ```
 
-### Audio Flow (new)
+### Message Display (Client)
 
 ```
-GameContainer mounts → GameUI mounts → AudioManager mounts
-    ↓
-AudioManager picks random track from MUSIC_TRACKS[]
-Creates HTML5 Audio element, sets loop=true
-Calls audio.play() — fails silently if autoplay blocked
-    ↓
-[User interacts with page — autoplay policy satisfied]
-Music begins playing at musicVolume from audioStore
-    ↓
-[Server emits player:xp with leveledUp: true]
-gameStore.ts handler calls playLevelUpSound()
-audio.ts reads effectsVolume from audioStore.getState()
-Creates new Audio element for quest-complete.mp3, plays once
-    ↓
-[User opens Game Menu → Settings tab]
-Moves music volume slider → calls audioStore.setMusicVolume(v)
-audioStore updates + saves to localStorage
-AudioManager useEffect fires → audioRef.current.volume = v
+Server emits 'chat:message'
+    |
+    v
+socket.ts dispatch()
+    |
+    v
+chatStore listener (gameSocket.on 'chat:message')
+    | check mutedPlayerIds -- drop if muted
+    | addMessage()
+    |
+    v
+ChatPanel re-renders
+    | filter messages by activeChannel tab
+    | display formatted with channel color
 ```
 
-### Settings Flow (new)
+### Mute/Block Persistence Flow
 
 ```
-User presses ESC (nothing else open)
-    ↓
-GameUI ESC handler: toggleGameMenu()
-gameStore.showGameMenu = true
-    ↓
-GameMenu renders as overlay
-    ↓
-User clicks Settings tab
-SettingsPanel renders:
-  - Music volume slider → audioStore.musicVolume
-  - Effects volume slider → audioStore.effectsVolume
-  - Mute toggle → audioStore.isMuted
-  - Show secondary bar toggle → actionBarStore.showSecondaryBar
-    ↓
-User toggles secondary bar
-    ↓
-actionBarStore.toggleSecondaryBar() called
-localStorage.setItem('action_bar_secondary_visible', 'false')
-    ↓
-HUD.tsx subscribed to showSecondaryBar — re-renders
-Second ActionBar disappears from HUD bottom area
-    ↓
-User clicks Logout
-gameSocket.disconnect()
-navigate('/login')
+Player right-clicks name -> "Mute [Name]"
+    |
+    v
+chatStore.addMute(playerId)  <- immediate UI effect
+    |
+    v
+REST API call: POST /api/characters/:id/chat/mute { targetId }
+    |
+    v
+API controller -> DB insert into chat_mute_list
+
+On login (auth:success):
+    |
+    v
+REST API call: GET /api/characters/:id/chat/moderation
+    | returns { mutedIds: [], blockedIds: [] }
+    |
+    v
+chatStore.loadModeration(mutedIds, blockedIds)
 ```
 
-### Entity Rendering Fix Flow
+**Note on transport for mute/block:** These are persisted via the REST API (`apps/api`), not WebSocket. Mute/block operations are infrequent, not latency-sensitive, and benefit from standard HTTP error handling.
+
+### Faction Room Lifecycle
 
 ```
-Server sends entity data (zone:state or entity:spawn)
-    ↓
-WorldScene.spawnEntity() → EntityRenderer.createEntityContainer()
-    ↓
-isoTransform.gridToScreen(worldX, worldY) → { x, y: tile_center }
-    ↓
-[FIXED] tileBase = screenPos.y + (ISO_TILE_HEIGHT / 2)
-container.y = tileBase - elevationOffset
-    ↓
-Sprite added with origin(0.5, 1.0)
-Sprite feet land exactly at container.y = tile surface
-    ↓
-Entity visually stands on tile, not floating above it
-Selection indicator at container.y matches entity feet
+Client connects -> handleConnection() (no room join yet)
+    |
+    v
+Client authenticates -> handleAuth()
+    | playerService.authenticate()
+    | client.join(player.position.zoneId)          <- existing
+    | client.join(`faction:${player.faction}`)     <- NEW
+    | emit zone:state, auth:success
+
+Client disconnects -> handleDisconnect()
+    | Socket.IO automatically leaves all rooms on disconnect
+    | (no explicit leave needed)
 ```
+
+---
 
 ## Integration Points
 
-### New vs. Modified Components
+### Existing Components That Require Modification
 
-| Component | Status | Change Summary |
-|-----------|--------|---------------|
-| `gameStore.ts` | MODIFY | Add `showGameMenu: boolean`, `toggleGameMenu()` |
-| `actionBarStore.ts` | MODIFY | Add `showSecondaryBar: boolean`, `toggleSecondaryBar()`, localStorage |
-| `audioStore.ts` | NEW | Zustand store: musicVolume, ambientVolume, effectsVolume, isMuted |
-| `AudioManager.tsx` | NEW | Invisible component: HTML5 Audio lifecycle, 4 music tracks, visibilitychange |
-| `GameMenu.tsx` | NEW | Overlay modal: Settings panel (volumes + secondary bar toggle) + Logout button |
-| `GameMenu.css` | NEW | Overlay styling using existing CSS variables |
-| `GameUI.tsx` | MODIFY | Add: central ESC handler, `<AudioManager />` (always mounted), `{showGameMenu && <GameMenu />}` |
-| `HUD.tsx` | MODIFY | Add: `showSecondaryBar` from actionBarStore, conditional `{showSecondaryBar && <ActionBar barIndex={1} />}` |
-| `GameShortcuts.tsx` | MODIFY | Add: Menu button (M key label) calling `toggleGameMenu()` |
-| `audio.ts` | MODIFY | Add: `playLevelUpSound()`, refactor `playEffect()` to read volume from audioStore |
-| `gameStore.ts` player:xp handler | MODIFY | Add: `playLevelUpSound()` call when `data.leveledUp === true` |
-| `QuestLogPanel.tsx` | MODIFY | Remove own ESC handler (lines 30-38) |
-| `NpcInteractionModal.tsx` | MODIFY | Remove own ESC handler (lines 222-232) |
-| `LoreCodex.tsx` | MODIFY | Remove own ESC handler (lines 27-31) |
-| `EntityRenderer.ts` | MODIFY | Fix container.y calculation (line 146) and updateEntityPosition (line 764) |
-| `ActionBar.tsx` | NO CHANGE | Already parameterized by `barIndex` — behavior unchanged |
+| Component | Change | Why |
+|-----------|--------|-----|
+| `GameGateway.handleAuth()` | Add `client.join('faction:' + player.faction)` | Enable faction room routing |
+| `GameGateway.handleChat()` | Replace inline switch with `chatService.routeMessage()` | Delegate to ChatService |
+| `GameGateway` constructor + `afterInit()` | Inject and set server on ChatService | Follow established pattern |
+| `GameModule` providers + exports | Add `ChatService` | NestJS DI registration |
+| `socket.ts` serverEvents array | Add `'chat:message'` | Currently missing -- messages never dispatched to handlers |
+| `gameStore.ts` chat socket handler | Remove inline `chat:message` listener | Moved to chatStore |
+| `shared-types/events.ts` ChatChannel | Add `'local'` to union | New channel type |
+| `GameUI.tsx` imports | Add `import '../store/chatStore'` as side-effect | Register socket listener |
+
+### New Components
+
+| Component | Integrates With | Notes |
+|-----------|----------------|-------|
+| `ChatService` | `PlayerService` (read-only), `Server` (Socket.IO) | Must call `setServer()` in `afterInit()` |
+| `chatStore` | `gameSocket`, existing `ChatPanel` | Replace `gameStore.chatMessages` usage in panel |
+| `chat_mute_list` schema | `packages/database` | Drizzle table, follow `quest-progress.ts` as template |
+| `chat_block_list` schema | `packages/database` | Same pattern |
+| REST endpoints (moderation) | `apps/api` CharactersController | GET moderation data, POST/DELETE mute, POST/DELETE block |
 
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| `audioStore` ↔ `AudioManager.tsx` | Zustand subscription | AudioManager is the sole consumer that directly calls `.play()` / `.volume` on Audio elements |
-| `audioStore` ↔ `audio.ts` | `useAudioStore.getState()` snapshot | SFX reads volume at fire time; no subscription needed |
-| `audioStore` ↔ `GameMenu/SettingsPanel` | Zustand subscription | Sliders two-way bind to store state |
-| `actionBarStore` ↔ `HUD.tsx` | Zustand subscription | `showSecondaryBar` consumed in HUD for conditional render |
-| `actionBarStore` ↔ `GameMenu/SettingsPanel` | Zustand subscription | Toggle in settings writes to store |
-| `gameStore` ↔ `GameMenu.tsx` | Zustand subscription | `showGameMenu` controls render in GameUI |
-| `GameUI.tsx` ↔ all stores | `getState()` snapshots in ESC handler | Event handler does not subscribe; reads current state at keypress time |
-| `EntityRenderer.ts` ↔ `IsometricTransform` | Direct call `gridToScreen()` | Fix adds `+ ISO_TILE_HEIGHT / 2` to result — IsometricTransform unchanged |
+| `ChatService` <-> `PlayerService` | Direct method calls | No circular dep -- ChatService depends on PlayerService only |
+| `ChatService` <-> `Socket.IO Server` | Direct `server.to().emit()` | Same pattern as ZonesService, CombatService |
+| `chatStore` <-> `ChatPanel` | Zustand subscribe | ChatPanel reads `messages`, `activeChannel`, `mutedPlayerIds` |
+| `chatStore` <-> `apps/api` | REST fetch calls | Mute/block loaded on auth:success, persisted on change |
+| `gameStore` <-> `chatStore` | None after migration | System messages written to chatStore going forward |
 
-### Phaser ↔ React Boundary
+---
 
-The audio system lives entirely in React (HTML5 Audio), not in Phaser. This is correct for v1.21 because:
+## Database Schema
 
-1. The 4 music files are in `/assets/music/` and not preloaded in `PreloadScene.ts`. Adding them to Phaser requires modifying PreloadScene and using `this.sound.add()`.
-2. Volume control from React UI settings would require bridging through `useGameStore.getState().game` (the Phaser game instance) to reach `game.sound.setVolume()`.
-3. `AudioManager.tsx` as a React component is simpler: it reads from `audioStore` directly.
+### `chat_mute_list`
 
-**Limitation to acknowledge:** `document.visibilitychange` must be manually handled in `AudioManager` since Phaser's `pauseOnBlur: true` (configured in `Game.ts`) only pauses Phaser's own sound pipeline.
+```typescript
+// packages/database/src/schema/chat-mute-list.ts
+import { pgTable, uuid, timestamp, unique } from 'drizzle-orm/pg-core';
+import { characters } from './characters';
 
-## Build Order and Dependencies
+export const chatMuteList = pgTable('chat_mute_list', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  characterId: uuid('character_id')
+    .notNull()
+    .references(() => characters.id, { onDelete: 'cascade' }),
+  mutedCharacterId: uuid('muted_character_id')
+    .notNull()
+    .references(() => characters.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  uniqueMute: unique().on(table.characterId, table.mutedCharacterId),
+}));
+```
 
-### Phase 1: Entity Rendering Fix (independent, no deps)
+### `chat_block_list`
 
-1. Modify `EntityRenderer.ts` — fix `tileBase` calculation at line 146 and line 764
-2. Manual test: entity on elevated tile sits on tile surface, selection ring at feet
+```typescript
+// packages/database/src/schema/chat-block-list.ts
+import { pgTable, uuid, timestamp, unique } from 'drizzle-orm/pg-core';
+import { characters } from './characters';
 
-### Phase 2: Audio Foundation (no UI deps)
+export const chatBlockList = pgTable('chat_block_list', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  characterId: uuid('character_id')
+    .notNull()
+    .references(() => characters.id, { onDelete: 'cascade' }),
+  blockedCharacterId: uuid('blocked_character_id')
+    .notNull()
+    .references(() => characters.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  uniqueBlock: unique().on(table.characterId, table.blockedCharacterId),
+}));
+```
 
-3. Create `audioStore.ts` — volumes, mute, localStorage persistence
-4. Modify `audio.ts` — add `playLevelUpSound()`, refactor `playEffect()` to read from audioStore
-5. Wire level-up sound in `gameStore.ts` `player:xp` handler
-6. Create `AudioManager.tsx` — invisible component with music loop + visibilitychange
-
-### Phase 3: Game Menu + Settings (depends on Phase 2 for audioStore)
-
-7. Add `showGameMenu` + `toggleGameMenu()` to `gameStore.ts`
-8. Create `GameMenu.tsx` + `GameMenu.css`
-   - Settings panel: sliders bound to audioStore, secondary bar toggle bound to actionBarStore
-   - Logout: `gameSocket.disconnect()` + `navigate('/login')`
-9. Add `{showGameMenu && <GameMenu />}` to `GameUI.tsx`
-10. Add `<AudioManager />` to `GameUI.tsx` (always mounted, inside player guard)
-
-### Phase 4: ESC Stack + Secondary Bar + Shortcuts (depends on Phase 3 for GameMenu)
-
-11. Add `showSecondaryBar` + `toggleSecondaryBar()` to `actionBarStore.ts` with localStorage
-12. Modify `HUD.tsx` — conditional second ActionBar
-13. Add central ESC handler to `GameUI.tsx`
-14. Remove own ESC handlers from `QuestLogPanel.tsx`, `NpcInteractionModal.tsx`, `LoreCodex.tsx`
-15. Add Menu button to `GameShortcuts.tsx`
-
-### Dependency Rationale
-
-- Phase 1 (entity fix) ships first because it's entirely self-contained and validates the positioning logic before other UI work.
-- Phase 2 (audio) must precede Phase 3 because the Settings panel in GameMenu reads from `audioStore`.
-- Phase 3 (GameMenu) must precede Phase 4 ESC handler, because ESC's "open when nothing else open" branch targets GameMenu.
-- Secondary bar toggle in Phase 4: the actionBarStore change is simple, but testing it properly requires the Settings UI from Phase 3 to already exist.
+---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Per-Component ESC Handlers
+### Anti-Pattern 1: Server-Side Mute Filtering for Broadcasts
 
-**What people do:** Each panel adds its own `window.addEventListener('keydown')` checking `e.key === 'Escape'`.
+**What people do:** Check every recipient's mute list server-side before broadcasting zone/faction/global messages.
 
-**Why it's wrong:** When three panels are open simultaneously and ESC is pressed, all three handlers fire in the same event loop tick. All three panels close at once instead of one-by-one.
+**Why it's wrong:** O(players x mute_list_size) database or cache lookups per message. For zone chat with 20 players each having a 50-entry mute list, that is 1000 checks per message. This becomes the hot path.
 
-**Do this instead:** Single handler in `GameUI.tsx` with an ordered if/else chain. Closes exactly one modal per keypress.
+**Do this instead:** Server broadcasts to all recipients; client filters using its loaded mute list. Mute is a soft social feature -- occasional display of a muted message (e.g., when list is loading) is acceptable.
 
-### Anti-Pattern 2: Phaser Sound for Background Music
+### Anti-Pattern 2: Routing Faction Chat by Iterating All Players
 
-**What people do:** Load music in `PreloadScene.ts`, then `this.sound.add('track').play({ loop: true })` in WorldScene.
+**What people do:** Loop through `playerService.getAllOnlinePlayers()`, filter by `player.faction`, and emit per-socket.
 
-**Why it's wrong:** Requires modifying PreloadScene + loading time for 4 music files + bridging volume control through the Phaser game instance reference stored in gameStore. Phaser's `pauseOnBlur` is a bonus, but `visibilitychange` is a 2-line equivalent.
+**Why it's wrong:** O(n) iteration every message. With 200 online players, this is 200 Map lookups and potential socket emits per faction message.
 
-**Do this instead:** `AudioManager.tsx` React component with HTML5 Audio. Direct connection to audioStore. Zero Phaser coupling.
+**Do this instead:** Use Socket.IO rooms. `server.to('faction:verdant')` uses Socket.IO's internal room index, which is O(room_size) without the full-player iteration.
 
-### Anti-Pattern 3: Generic settingsStore at v1.21 Scope
+### Anti-Pattern 3: Storing Chat History in Database
 
-**What people do:** Create a monolithic `settingsStore.ts` with fields for every possible preference.
+**What people do:** Persist chat messages to a messages table for history/replay.
 
-**Why it's wrong:** Over-engineering for a milestone with exactly 2 settings: audio volumes (audioStore) and secondary bar visibility (actionBarStore). Settings that already have a natural owner store belong in that store.
+**Why it's wrong:** The milestone spec explicitly requires ephemeral messages. Even setting that aside, chat volume would rapidly bloat the database with low-value data.
 
-**Do this instead:** Add to the natural owner store. Create `settingsStore.ts` in a future milestone when there are 3+ orthogonal preferences without a natural owner (keybind remapping, language, color theme).
+**Do this instead:** Messages exist only in-memory on the server (in-flight) and in the client's `chatStore` ring buffer (200 messages max). On reconnect, no history is replayed.
 
-### Anti-Pattern 4: Entity Anchored at Tile Visual Center
+### Anti-Pattern 4: Adding Whisper Target as Global State
 
-**What people do:** Use `gridToScreen(x, y)` as the container position directly, then add sprite with `origin(0.5, 1.0)`.
+**What people do:** Store "current whisper recipient" as a top-level global or route parameter.
 
-**Why it's wrong:** `gridToScreen()` returns the visual center of the tile's top face. The tile's base (where entities stand) is at `screenPos.y + (ISO_TILE_HEIGHT / 2)`. For elevated tiles, the error multiplies: an entity at elevation 3 floats `3 * ELEVATION_HEIGHT_STEP + 64` pixels above the expected position.
+**Why it's wrong:** Whisper conversations are UI-local to the chat panel. Making them global state creates unnecessary coupling.
 
-**Do this instead:** `container.y = screenPos.y + (ISO_TILE_HEIGHT / 2) - elevationOffset`. Sprite origin(0.5, 1.0) then places feet at exactly the tile surface.
+**Do this instead:** `whisperTarget: { id, name } | null` lives in `chatStore` only. `ChatPanel` reads it to pre-fill the channel tab and target field. Nothing else needs it.
+
+### Anti-Pattern 5: Skipping the chat:message Socket Registration Bug Fix
+
+**What people do:** Build new chat features on top of the existing `socket.ts` without noticing that `chat:message` is missing from the `serverEvents` array.
+
+**Why it's wrong:** Server emits `chat:message` but the client never registered a listener for it. The `dispatch()` function is never called for chat events. All existing chat is silently broken at the client level. This is the first fix needed before any other chat work.
+
+**Do this instead:** Add `'chat:message'` to the `serverEvents` array in `socket.ts` as the very first task.
+
+---
+
+## Build Order (Dependency-Considered)
+
+The order below ensures each step is testable before the next builds on it.
+
+```
+Step 1: Foundation -- fix the silent bug + extend types
+  - Add 'local' to ChatChannel in shared-types/events.ts
+  - Add 'chat:message' to serverEvents array in socket.ts
+  - Verify zone chat works end-to-end before proceeding
+
+Step 2: Database -- mute/block persistence schema
+  - Create chat_mute_list schema + Drizzle migration
+  - Create chat_block_list schema + Drizzle migration
+  - Create chat queries (getMuteList, getBlockList, addMute, removeMute, addBlock, removeBlock)
+  - Export from packages/database index
+
+Step 3: REST API endpoints -- moderation data access
+  - GET /characters/:id/chat/moderation (returns mutedIds + blockedIds)
+  - POST /characters/:id/chat/mute + DELETE /:targetId
+  - POST /characters/:id/chat/block + DELETE /:targetId
+
+Step 4: ChatService -- server routing
+  - Create ChatService with routeMessage(), routeLocal(), routeWhisper()
+  - Inject PlayerService and DatabaseService
+  - Add to GameModule providers
+  - Refactor GameGateway.handleChat() to delegate
+  - Add faction room join in handleAuth()
+  - Wire setServer() in afterInit()
+  - Implement faction channel routing (currently missing from gateway switch)
+
+Step 5: chatStore -- client state
+  - Create chatStore.ts with messages, activeChannel, mute/block state
+  - Register chat:message socket listener with client-side mute filtering
+  - Load moderation data via REST on auth:success
+  - Import in GameUI.tsx as side-effect
+  - Migrate ChatPanel to use chatStore instead of gameStore.chatMessages
+
+Step 6: ChatPanel UI -- tabbed interface + whisper + moderation controls
+  - Add channel tabs (Local, Zone, Faction, Global, Whispers)
+  - Filter displayed messages by activeChannel
+  - Whisper tab: target name input, conversation view
+  - Right-click context menu on sender name: Mute / Block / Whisper
+  - Mute/block actions call REST API + update chatStore immediately
+```
+
+---
 
 ## Scaling Considerations
 
-| Scale | Concern | Approach |
-|-------|---------|----------|
-| v1.21 (8 modal types) | ESC handler if/else chain | Simple ordered if/else — adequate and readable |
-| +5 future modals | ESC handler maintainability | Extract to priority array: `const MODAL_STACK = [{test: () => bool, close: () => void}]` |
-| Future audio features | Music crossfades, positional audio | Migrate to Phaser sound system or Web Audio API (AudioContext + gain nodes) |
-| Future settings growth | Many unrelated UI preferences | Extract to `settingsStore.ts` at that point; audioStore keeps audio-specific state |
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| 0-500 concurrent | Current architecture sufficient. In-memory player map handles routing. |
+| 500-5000 concurrent | Global channel becomes noisy. Rate-limit per player (1 msg/sec). Zone and faction rooms scale well with Socket.IO. |
+| 5000+ concurrent | Multiple game-server instances break faction rooms (rooms are per-process). Add Redis adapter for Socket.IO room distribution. |
+
+**First bottleneck:** Global channel at high concurrency. Rate-limit `global` more aggressively (e.g., 1 msg/2sec) compared to zone (1 msg/sec).
+
+**Second bottleneck:** Local channel proximity calculation (`routeLocal`) is O(zone_players) per message. Acceptable for current scale (zones hold at most ~50 players by zone cap design).
+
+---
 
 ## Sources
 
-- Codebase: `apps/web/src/ui/GameUI.tsx` (full read)
-- Codebase: `apps/web/src/ui/hud/HUD.tsx`, `HUD.css`, `GameShortcuts.tsx`, `ActionBar.tsx`
-- Codebase: `apps/web/src/store/gameStore.ts`, `actionBarStore.ts`, `loreStore.ts`
-- Codebase: `apps/web/src/utils/audio.ts`
-- Codebase: `apps/web/src/game/rendering/EntityRenderer.ts` (first 350 lines)
-- Codebase: `apps/web/src/game/scenes/WorldScene.ts`, `PreloadScene.ts`, `GameContainer.tsx`
-- Codebase: `apps/web/src/ui/panels/QuestLogPanel.tsx`, `NpcInteractionModal.tsx`
-- Codebase: `apps/web/src/components/LoreCodex.tsx`
-- ESC handler audit: QuestLogPanel line 30, NpcInteractionModal line 222, LoreCodex line 27 — all confirmed
-- Audio assets confirmed: 4 MP3 tracks in `/assets/music/`, 1 SFX in `/assets/audio/`
-- Prior research: `.planning/research/ARCHITECTURE-UI-POLISH.md` (NPC modal unification, v1.16)
+- Direct codebase analysis: `apps/game-server/src/game/game.gateway.ts` (lines 403-437, existing handleChat)
+- Direct codebase analysis: `packages/shared-types/src/network/events.ts` (ChatMessage, ChatChannel, ClientEvents, ServerEvents)
+- Direct codebase analysis: `apps/web/src/network/socket.ts` (serverEvents array -- confirmed `chat:message` is absent)
+- Direct codebase analysis: `apps/web/src/ui/panels/ChatPanel.tsx` (current UI state, hardcoded zone channel)
+- Direct codebase analysis: `apps/web/src/store/gameStore.ts` (chatMessages location, system message patterns)
+- Direct codebase analysis: `packages/database/src/schema/characters.ts` (Drizzle schema patterns)
+- Direct codebase analysis: `apps/game-server/src/game/game.module.ts` (NestJS module structure)
+- Existing service patterns: `combat.service.ts`, `quest.service.ts`, `lore.service.ts` (setServer pattern, injection pattern)
+- Socket.IO: room-based broadcasting is O(room_size), automatic room leave on socket disconnect
 
 ---
-*Architecture research for: v1.21 UI Polish & Audio — Game menu, audio system, ESC modal stack, entity rendering fix*
+
+*Architecture research for: In-game chat system (v1.22 milestone)*
 *Researched: 2026-02-26*

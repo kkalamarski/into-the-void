@@ -1,272 +1,164 @@
 # Stack Research
 
-**Domain:** UI Polish & Audio — Game Menu, Audio System, Settings Persistence, ESC Modal Management
+**Domain:** In-game chat system (multi-channel, whispers, mute/block moderation)
 **Researched:** 2026-02-26
 **Confidence:** HIGH
 
-## Context
+---
 
-This is a milestone-scoped stack file. The base project stack (React 18, Phaser 3, Zustand 4.5, NestJS, PostgreSQL, Drizzle ORM, NX monorepo) is already validated and in production. This document covers only the NEW capabilities needed for v1.21: audio system with volume controls, settings persistence, and ESC key management.
+## Context: What Already Exists
 
-The existing codebase has:
-- `apps/web/src/utils/audio.ts` — fires one-shot sounds via `new Audio()` with no volume control
-- 4 music tracks already present in `/public/assets/music/*.mp3`
-- 1 SFX track in `/public/assets/audio/quest-complete.mp3`
-- Multiple `window.addEventListener('keydown', ...)` listeners in individual components (LoreCodex, NpcInteractionModal, HUD, QuestLogPanel, ActionBar) with no central ESC coordination
-- `localStorage` usage pattern already established (actionBarStore, questStore, FogPersistence)
-- Zustand 4.5 with `immer` middleware already installed
+This is a stack *addendum*, not a greenfield stack. The game already has:
+
+- `socket.io@^4.7.0` + `@nestjs/platform-socket.io@^10.3.0` — existing WebSocket transport
+- `socket.io-client@^4.7.0` — existing client connection
+- `ioredis@^5.4.0` + Redis on Docker port 6379 — already running, unused by game logic
+- `drizzle-orm@^0.30.0` + PostgreSQL — existing persistence layer
+- `zustand@^4.5.0` — existing client-side state management
+- Chat types already stubbed in `shared-types`: `ChatMessage`, `ChatMessageRequest`, `ChatChannel`, `chat:send` client event, `chat:message` server event
+- `chat:send` handler already in `GameGateway` — handles `zone` and `global` channels
+
+**Conclusion: Chat requires zero new runtime infrastructure.** It piggybacks on the existing Socket.IO connection and extends existing patterns.
 
 ---
 
 ## Recommended Stack
 
-### Core Technologies
+### Core Technologies (ALL already installed)
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Web Audio API | Native (browser) | Music looping, volume control via GainNode, audio graph routing | Provides gapless looping that HTML5 `<audio>` cannot. Multiple GainNode channels (music, ambient, sfx) map directly to the 3-category volume slider requirement. No install needed — native browser API available in all target browsers since 2013. |
-| Zustand `persist` middleware | Included in `zustand@4.5` | Settings persistence (volumes, UI toggles) to localStorage | Already in the dependency tree — `zustand/middleware` ships with Zustand. The `partialize` option persists only settings values (numbers/booleans), not functions. Matches existing localStorage pattern used by actionBarStore. No new package required. |
-| Plain CSS | CSS3 | Game menu modal, settings panel UI | Consistent with all existing UI. Glassmorphism variables already defined in `global.css` (`--glass-blur`, `--glass-tint`, `--modal-backdrop-blur`). Zero new dependency. |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `socket.io` | `^4.7.0` | Chat message transport | Already the real-time backbone; rooms handle channel scoping natively; no separate chat server needed |
+| `@nestjs/websockets` + `@nestjs/platform-socket.io` | `^10.3.0` | NestJS gateway handles `chat:send` | `@SubscribeMessage('chat:send')` pattern is already implemented in `GameGateway` |
+| `zustand` | `^4.5.0` | Client chat state (`chatStore`) | Matches `combatLogStore` pattern exactly — socket event wired at module load, capped array of messages |
+| `drizzle-orm` | `^0.30.0` | Mute/block list persistence | Existing ORM; a new `player_moderation` table with Drizzle schema is all that is needed |
 
-### Supporting Libraries
+### New Library: Rate Limiting
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| howler.js | 2.2.4 | Audio manager abstraction over Web Audio API | **OPTIONAL enhancement.** Use if autoplay policy resumption complexity and cross-browser edge cases become problematic during implementation. At 7kB gzipped with no dependencies, cost is low. The project already handles `new Audio()` failures silently — howler.js makes that pattern systematic. Evaluate after implementing raw Web Audio API; switch only if cross-browser bugs appear. |
+| `@nestjs/throttler` | `^6.x` (latest: 6.4.0) | Per-socket rate limiting on `chat:send` | Apply a `WsThrottlerGuard` to the `handleChat` handler — prevents chat spam without Redis dependency at this scale |
 
-### Development Tools
+Install command:
+
+```bash
+pnpm add @nestjs/throttler
+```
+
+No other new npm packages are needed.
+
+### Development Tools (no changes)
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| Chrome DevTools > Application > Local Storage | Verify settings persistence key/values | Audio volume settings will be stored under a key like `itv-settings`. Check here to validate persist middleware writes correctly on slider change. |
-| Chrome DevTools > Sources > AudioContext inspector | Debug audio graph | Chrome 122+ shows active AudioContext nodes in DevTools. Useful for verifying GainNode connections and detecting leaked audio nodes. |
+| NX | Build/test orchestration | No changes needed |
+| Drizzle Kit | Schema migration (`pnpm db:generate && pnpm db:migrate`) | Run after adding `player_moderation` table |
 
 ---
 
 ## Installation
 
 ```bash
-# NO NEW REQUIRED DEPENDENCIES
-# All needed capabilities are in existing packages or native browser APIs.
-
-# OPTIONAL: howler.js (only if cross-browser audio edge cases surface)
-pnpm add howler
-pnpm add -D @types/howler
+# Only one new package needed
+pnpm add @nestjs/throttler
 ```
+
+No changes to `docker-compose.yml` or infrastructure.
 
 ---
 
-## Implementation Patterns
+## Integration: How Chat Fits Into Existing Socket.IO
 
-### Pattern 1: Web Audio API Audio Service (Primary Recommendation)
+### The existing room system covers 4 of 5 channels with no new concepts
 
-Create `apps/web/src/utils/audioService.ts` as a singleton that owns the `AudioContext`, GainNodes, and music playback loop. This is the appropriate architecture because:
+The gateway already uses Socket.IO rooms for zone broadcasting (`z_X_Y` rooms). The same mechanism handles all chat scopes:
 
-- `AudioContext` must be created once and resumed on user gesture (browser autoplay policy requires a user gesture before `AudioContext` can produce sound)
-- GainNodes for music/ambient/sfx are cheap to create but expensive to recreate — own them in a singleton
-- The existing `playQuestCompleteSound()` in `audio.ts` can be replaced or delegated to the service
+| Chat Channel | Socket.IO Mechanism | Status |
+|-------------|--------------------|----|
+| **Global** | `this.server.emit('chat:message', msg)` | Already implemented in gateway |
+| **Zone** | `this.server.to(player.position.zoneId).emit(...)` | Already implemented in gateway |
+| **Faction** | `this.server.to('faction:' + player.faction).emit(...)` | Not yet implemented — player joins `faction:verdant`/`faction:helix`/`faction:nexus`/`faction:neutral` room on auth |
+| **Whisper** | Direct `server.to(targetSocketId).emit(...)` | Already implemented in gateway; needs block list check added |
+| **Local** | Filter players in-memory by Euclidean distance <= local range (e.g. 15 tiles) | Not yet implemented — iterate `playerService.getPlayersInZone(zoneId)`, compute distance, emit per socket |
+
+### Faction room management
+
+Players join their faction room at auth time (alongside zone rooms). No new room infrastructure — just one `client.join('faction:' + player.faction)` call in `handleAuth`. Players never change faction, so no room-leave logic needed.
+
+### Local chat does NOT need a separate room
+
+Local chat is proximity-filtered server-side: iterate `playerService.getPlayersInZone(zoneId)`, compute tile distance, emit `chat:message` individually to sockets within range. No new room. No new concept. Matches how the AI service queries zone players today.
+
+### Mute/block persistence
+
+A new Drizzle table is needed. No external service:
 
 ```typescript
-// apps/web/src/utils/audioService.ts — skeleton pattern
-
-class AudioService {
-  private ctx: AudioContext | null = null;
-  private musicGain: GainNode | null = null;
-  private sfxGain: GainNode | null = null;
-  private ambientGain: GainNode | null = null;
-  private currentMusicSource: AudioBufferSourceNode | null = null;
-
-  // Called once on first user interaction (keydown, click)
-  async init(): Promise<void> {
-    if (this.ctx) return; // Already initialized
-    this.ctx = new AudioContext();
-    const master = this.ctx.createGain();
-    master.connect(this.ctx.destination);
-
-    this.musicGain = this.ctx.createGain();
-    this.ambientGain = this.ctx.createGain();
-    this.sfxGain = this.ctx.createGain();
-
-    this.musicGain.connect(master);
-    this.ambientGain.connect(master);
-    this.sfxGain.connect(master);
-  }
-
-  // Resume suspended context if needed (Chrome autoplay policy)
-  async resume(): Promise<void> {
-    if (this.ctx?.state === 'suspended') {
-      await this.ctx.resume();
-    }
-  }
-
-  setMusicVolume(value: number): void { // 0.0 to 1.0
-    if (this.musicGain) this.musicGain.gain.value = value;
-  }
-
-  setSfxVolume(value: number): void {
-    if (this.sfxGain) this.sfxGain.gain.value = value;
-  }
-
-  setAmbientVolume(value: number): void {
-    if (this.ambientGain) this.ambientGain.gain.value = value;
-  }
-
-  async playMusic(url: string, loop = true): Promise<void> {
-    if (!this.ctx || !this.musicGain) return;
-    // Stop existing track
-    this.currentMusicSource?.stop();
-    // Fetch, decode, create source, connect to musicGain, start looping
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = await this.ctx.decodeAudioData(arrayBuffer);
-    const source = this.ctx.createBufferSource();
-    source.buffer = buffer;
-    source.loop = loop;
-    source.connect(this.musicGain);
-    source.start();
-    this.currentMusicSource = source;
-  }
-
-  async playSfx(url: string): Promise<void> {
-    if (!this.ctx || !this.sfxGain) return;
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = await this.ctx.decodeAudioData(arrayBuffer);
-    const source = this.ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(this.sfxGain);
-    source.start();
-    // Source auto-disconnects when playback ends
-  }
-}
-
-export const audioService = new AudioService();
+// packages/database/src/schema/player-moderation.ts
+export const playerModeration = pgTable('player_moderation', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  actorId: uuid('actor_id').notNull().references(() => characters.id, { onDelete: 'cascade' }),
+  targetId: uuid('target_id').notNull().references(() => characters.id, { onDelete: 'cascade' }),
+  type: varchar('type', { length: 10 }).notNull(), // 'mute' | 'block'
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  unique: uniqueIndex('player_moderation_actor_target_type').on(t.actorId, t.targetId, t.type),
+}));
 ```
 
-**Autoplay policy compliance:** Call `audioService.init()` inside the first keyboard or click event handler that fires after the game loads (e.g., first `keydown` in HUD, or on the game menu open). `AudioContext` created before user gesture starts in `suspended` state and must be `resumed()`.
+Mute/block lists are loaded into memory per player on auth (like ability cooldowns are loaded in `abilityService.restoreCooldowns`) and checked server-side before dispatching chat messages. A muted player's messages are simply not sent to the muting player's socket. A blocked player's whispers are rejected at the gateway with an error reply.
 
-### Pattern 2: Settings Store with Zustand `persist`
+### Client-side chat store
+
+Copy `combatLogStore.ts` pattern exactly:
 
 ```typescript
-// apps/web/src/store/settingsStore.ts
-
+// apps/web/src/store/chatStore.ts
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { ChatMessage, ChatChannel } from '@into-the-void/shared-types';
+import { gameSocket } from '../network/socket';
 
-interface SettingsState {
-  // Audio
-  musicVolume: number;       // 0.0 to 1.0
-  ambientVolume: number;     // 0.0 to 1.0
-  sfxVolume: number;         // 0.0 to 1.0
-  // Interface
-  showSecondActionBar: boolean;
-  // Actions
-  setMusicVolume: (v: number) => void;
-  setAmbientVolume: (v: number) => void;
-  setSfxVolume: (v: number) => void;
-  setShowSecondActionBar: (v: boolean) => void;
+interface ChatState {
+  messages: ChatMessage[];
+  activeChannel: ChatChannel;
+  mutedPlayerIds: Set<string>;
+  addMessage: (msg: ChatMessage) => void;
+  setChannel: (channel: ChatChannel) => void;
+  mutePlayer: (id: string) => void;
+  unmutePlayer: (id: string) => void;
 }
 
-export const useSettingsStore = create<SettingsState>()(
-  persist(
-    (set) => ({
-      musicVolume: 0.4,
-      ambientVolume: 0.2,
-      sfxVolume: 0.5,
-      showSecondActionBar: true,
-      setMusicVolume: (v) => set({ musicVolume: v }),
-      setAmbientVolume: (v) => set({ ambientVolume: v }),
-      setSfxVolume: (v) => set({ sfxVolume: v }),
-      setShowSecondActionBar: (v) => set({ showSecondActionBar: v }),
-    }),
-    {
-      name: 'itv-settings',
-      // partialize saves ONLY state values, not action functions.
-      // Functions cannot be serialized to JSON.
-      partialize: (state) => ({
-        musicVolume: state.musicVolume,
-        ambientVolume: state.ambientVolume,
-        sfxVolume: state.sfxVolume,
-        showSecondActionBar: state.showSecondActionBar,
-      }),
-    }
-  )
-);
+export const useChatStore = create<ChatState>((set) => ({
+  messages: [],
+  activeChannel: 'zone',
+  mutedPlayerIds: new Set(),
+  addMessage: (msg) => set((state) => ({
+    messages: [...state.messages.slice(-199), msg],
+  })),
+  // ...
+}));
+
+// Wire socket at module load (same pattern as combatLogStore)
+gameSocket.on('chat:message', (msg: ChatMessage) => {
+  const { mutedPlayerIds } = useChatStore.getState();
+  if (mutedPlayerIds.has(msg.senderId)) return;
+  useChatStore.getState().addMessage(msg);
+});
 ```
 
-Wire `settingsStore` subscriptions to `audioService` setter calls. On store hydration (page load), restore volumes immediately by subscribing to the store's hydration callback or using a `useEffect` that fires on mount.
-
-### Pattern 3: ESC Key Modal Stack Management
-
-The existing codebase has fragmented ESC handling: LoreCodex, NpcInteractionModal, and QuestLogPanel each register their own `window.addEventListener('keydown')` handler. This creates race conditions when multiple modals are open — all handlers fire simultaneously with no priority ordering.
-
-**Solution: centralized modal stack in `gameStore`**
-
-Add to `gameStore`:
-```typescript
-// Modal stack (ordered by open time — last entry is topmost/most recent)
-openModalStack: string[];
-pushModal: (id: 'inventory' | 'equipment' | 'abilities' | 'questLog' | 'npc' | 'lore' | 'storage' | 'gameMenu') => void;
-popModal: () => void;
-```
-
-A single `keydown` handler at the `GameUI` level handles ESC:
-```typescript
-// In GameUI.tsx — one listener replaces all individual ESC handlers
-useEffect(() => {
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key !== 'Escape') return;
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-    const { openModalStack, popModal, setShowGameMenu } = useGameStore.getState();
-    if (openModalStack.length > 0) {
-      popModal(); // Closes topmost modal, individual panels react via store subscription
-    } else {
-      setShowGameMenu(true); // No modals open — open game menu
-    }
-  };
-  window.addEventListener('keydown', handleKeyDown);
-  return () => window.removeEventListener('keydown', handleKeyDown);
-}, []);
-```
-
-Each panel registers itself when mounted:
-```typescript
-// In InventoryPanel.tsx
-useEffect(() => {
-  useGameStore.getState().pushModal('inventory');
-  return () => useGameStore.getState().popModal();
-}, []);
-```
-
-Individual components remove their own `Escape` key listeners — the central handler owns it.
-
-**Why this is the right pattern:** The current approach (each component listens independently) means all handlers fire simultaneously. A stack model is the standard approach used in complex game UIs and is what the milestone feature description implies ("close modals one-by-one, then open menu").
-
-### Pattern 4: Game Menu Modal (Pure React + CSS)
-
-The game menu is a React component with a semi-transparent overlay, matching existing modal patterns (DeathScreen, QuestCompleteModal). No new library needed.
-
-```tsx
-// apps/web/src/ui/modals/GameMenu.tsx
-// Sections:
-// - Audio Settings: three <input type="range"> sliders (music, ambient, sfx)
-// - Interface Settings: toggle for second action bar visibility
-// - Logout button: clears auth store, navigates to login
-```
-
-Settings panel uses HTML `<input type="range" min="0" max="1" step="0.01">` — native, accessible, no library needed. Wire `onChange` to `useSettingsStore` setters, which trigger `audioService` volume updates via a `useEffect` subscription.
+Note: `mutedPlayerIds` here is client-side fast-path filtering for immediate UI response. The authoritative mute enforcement is server-side.
 
 ---
 
 ## Alternatives Considered
 
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| Web Audio API (direct) | howler.js | Use howler.js if cross-browser audio bugs appear (iOS Safari quirks, Chrome autoplay edge cases). Howler wraps Web Audio API, so switching is non-breaking — just replace AudioService internals. |
-| Web Audio API (direct) | Phaser Sound Manager | Phaser has a built-in sound manager (`this.sound`) but it is scoped to Phaser scenes. The game menu, settings panel, and level-up notification are React components outside of Phaser scenes. Accessing Phaser audio from React requires coupling through the Game instance, which is fragile. Do not use. |
-| `zustand/middleware` persist | Manual `localStorage` calls | Manual calls (existing pattern in actionBarStore) work but require write boilerplate everywhere. `persist` middleware centralizes this. For a settings store with 4 keys, the middleware is the cleaner choice. |
-| Centralized ESC modal stack | Per-component ESC listeners | Per-component listeners (current approach) work for isolated panels but break when multiple modals are open. Stack pattern is required for the milestone's "close one-by-one" requirement. |
-| HTML `<input type="range">` | Custom slider library | Native range inputs with CSS styling are sufficient. No visual complexity justifies adding a library. |
+| Recommended | Alternative | Why Not |
+|-------------|-------------|---------|
+| Existing Socket.IO connection for all channels | Separate WebSocket server for chat | Unnecessary operational complexity; single connection is standard for games at this scale; faction/zone rooms already work |
+| In-memory mute/block checked server-side | Client-side filtering only | Security issue — clients could bypass; server-side is authoritative |
+| `@nestjs/throttler` WsThrottlerGuard | Manual timestamp tracking per socket | Throttler is maintained, tested, and integrates with NestJS decorator system cleanly |
+| Drizzle table for mute/block | Redis SET per player | Redis adds infrastructure dependency for data that is low-volume and session-persistent; Postgres is already authoritative for all player data |
+| `@socket.io/redis-adapter` for multi-server | Not needed currently | Single-server deployment; the in-memory adapter is already in use and sufficient; add redis-adapter if horizontal scaling is required later |
 
 ---
 
@@ -274,75 +166,54 @@ Settings panel uses HTML `<input type="range" min="0" max="1" step="0.01">` — 
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| Phaser Sound Manager for UI sounds | Phaser audio API is scoped to scenes. Accessing it from React components requires `game.getWorldScene().sound` — fragile coupling that breaks if the scene is not active. | Web Audio API singleton service |
-| `new Audio()` for music loops | HTML5 Audio has an audible gap at the loop point — browsers re-buffer briefly. `new Audio()` also creates a new element per call, leaking memory if not tracked. Acceptable for one-shot SFX currently; unacceptable for continuous background music. | Web Audio API `AudioBufferSourceNode` with `loop = true` |
-| Separate `localStorage` calls for each setting | Duplicates the write-on-change boilerplate already seen in actionBarStore. Settings are a cohesive group — manage them in one `persist` store. | `zustand/middleware` persist with partialize |
-| `e.stopPropagation()` on individual modal ESC handlers | Fragile — handler registration order determines which fires first. No guaranteed priority. | Central ESC handler reading modal stack from gameStore |
-| Playing music before first user interaction | Browser autoplay policy blocks `AudioContext.resume()` until user gesture. Attempting to play immediately results in silent failure or console errors in Chrome, Safari, and Edge. | Initialize `AudioContext` inside first keyboard/click handler after game loads |
-| Preloading all music tracks up front | 4 tracks × average music file size adds several MB to initial load. Use lazy fetch-and-decode inside `playMusic()` instead. | Fetch and decode on first play; cache buffer for subsequent plays with a `Map<string, AudioBuffer>`. |
+| A separate chat microservice / third-party chat API | Adds operational cost, breaks shared auth context, requires API bridging | Existing Socket.IO in `game-server`; chat is a feature, not a separate service |
+| `socket.io-redis` (v5 era package name) | Deprecated; superseded | If scaling is ever needed, use `@socket.io/redis-adapter@^8.x` with the existing `ioredis` client |
+| Persisting all chat messages to PostgreSQL | Project explicitly states ephemeral messages (no DB persistence) | In-memory in `chatStore` with a capped array (200 messages); messages are lost on page refresh — intentional per PROJECT.md |
+| Broadcasting to entire server for faction chat | Global `server.emit()` hits all sockets | Socket.IO room `faction:<id>` — player joins at auth, never leaves (faction is immutable) |
+| Socket.IO rooms for local chat | Room membership changes on every tile move — O(n) join/leave per step | Euclidean distance filter server-side: iterate zone players, filter by range, emit individually |
 
 ---
 
 ## Stack Patterns by Variant
 
-**If music track needs to crossfade on zone change:**
-- Use two `AudioBufferSourceNode` instances connected to `musicGain`, fade one out with `gainNode.gain.linearRampToValueAtTime()` while fading the other in
-- Do not create a new `AudioContext` — reuse the singleton
+**If single-server (current, Docker Swarm single node):**
+- Use in-memory Socket.IO adapter (already the default — no config needed)
+- Mute/block lists loaded on auth from DB, stored in a `ChatService` Map keyed by `playerId`
+- No Redis involvement for chat
 
-**If the game menu is opened mid-combat:**
-- ESC modal stack should NOT pause the game (Phaser continues running)
-- The menu is a React overlay; the game canvas keeps running beneath it
-- This is intentional for v1.21 — pausing Phaser would require additional scene management work
+**If multi-server horizontal scaling is added later:**
+- Add `@socket.io/redis-adapter@^8.x` using the existing `ioredis` client
+- This is a ~10-line change to `main.ts` in `game-server`
+- Faction rooms automatically work cross-server via the adapter
 
-**If settings need to apply immediately (not on close):**
-- Wire slider `onChange` directly to `setMusicVolume` which calls `audioService.setMusicVolume()` in real time
-- No "Apply" button needed — real-time feedback is the correct UX for volume sliders
+**If chat moderation tooling is added (future milestone):**
+- Add a `chat_logs` table at that point (not now — explicitly out of scope per PROJECT.md)
+- Add profanity filter as a pure function in the `game-logic` package (strategy pattern fits)
 
 ---
 
 ## Version Compatibility
 
-| Package | Version in Use | Compatible With | Notes |
-|---------|---------------|-----------------|-------|
-| zustand | 4.5.x | `zustand/middleware` persist | `persist` middleware is bundled with Zustand 4.x. No separate install. Works with `immer` middleware already in use — wrap order matters: `create(persist(immer(...)))` or `create(immer(persist(...)))` depending on whether persisted state is mutable. |
-| Web Audio API | Browser native | All modern browsers | Chrome 35+, Firefox 25+, Safari 14.1+, Edge 79+. Universal in all 2026 browsers. No polyfill needed. |
-| howler.js (optional) | 2.2.4 | All modern browsers | Last release September 2024. Stable API, 7kB gzipped. Falls back to HTML5 Audio for environments without Web Audio API. |
-
----
-
-## Integration Points
-
-### Where `audioService` is initialized
-- First `keydown` event in `HUD.tsx` (already has a handler) — add `audioService.init()` call there, or add a one-time `onClick` on the game canvas in `GameContainer`
-
-### Where volume changes are wired
-- `settingsStore` subscriptions (via `useEffect` or `subscribe` callback) call `audioService.setMusicVolume(v)` etc.
-- Wiring lives in a single `useAudioSync` hook or at the top of `GameUI.tsx`
-
-### Where music plays
-- On `zone:state` socket event: pick a track by zone type (hub vs world biome) and call `audioService.playMusic(url)`
-- Existing socket handler in `gameStore.ts` is the integration point
-
-### Where level-up SFX fires
-- In `statsStore` socket handler (existing `player:xp` or `player:level` event) — add `audioService.playSfx('/assets/audio/quest-complete.mp3')` when `leveledUp === true`
-
-### Where modal stack lives
-- Add `openModalStack`, `pushModal`, `popModal` to `gameStore.ts` (already the central UI state store)
-- Each panel that can be ESC-closed registers itself on mount and deregisters on unmount
+| Package | Compatible With | Notes |
+|---------|-----------------|-------|
+| `@nestjs/throttler@^6.x` | `@nestjs/common@^10.x` | v6.x supports NestJS 10; v6.4.0 is latest as of Feb 2026 |
+| `socket.io@^4.7.0` | `@nestjs/platform-socket.io@^10.3.0` | Already in use and working — no version concern |
+| `drizzle-orm@^0.30.0` | New `player_moderation` table schema | Additive schema change; no breaking migration |
 
 ---
 
 ## Sources
 
-- [Audio for Web Games — MDN](https://developer.mozilla.org/en-US/docs/Games/Techniques/Audio_for_Web_Games) — Web Audio API game patterns, GainNode channel architecture, autoplay policy compliance (HIGH confidence, official)
-- [Autoplay guide for media and Web Audio APIs — MDN](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay) — Browser autoplay policy behavior, AudioContext suspend/resume lifecycle (HIGH confidence, official)
-- [howler.js releases — GitHub](https://github.com/goldfire/howler.js/releases) — Confirmed latest version 2.2.4, September 2024 (HIGH confidence, official)
-- [Phaser Audio Concepts — Phaser Docs](https://docs.phaser.io/phaser/concepts/audio) — Phaser Sound Manager scope limitation confirmed (scene-only, game-global management requires manual tracking) (HIGH confidence, official)
-- [zustand persist middleware — pmndrs/zustand](https://github.com/pmndrs/zustand) — `persist` + `partialize` pattern confirmed for v4.5 (HIGH confidence, official repo)
-- [Web Audio API — MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) — AudioContext, GainNode, AudioBufferSourceNode API reference (HIGH confidence, official)
+- Codebase audit: `/packages/shared-types/src/network/events.ts` — `ChatMessage`, `ChatChannel`, `chat:send`/`chat:message` already defined; `ChatMessageRequest` includes `targetId` for whispers
+- Codebase audit: `/apps/game-server/src/game/game.gateway.ts` lines 403-437 — `handleChat` already handles `zone` and `global` channels; whisper uses `playerService.getSocketByPlayerId`
+- Codebase audit: `/apps/game-server/src/game/game.gateway.ts` lines 1675-1705 — `updatePlayerRooms` shows Socket.IO room join/leave pattern; faction room follows same model
+- Codebase audit: `/apps/web/src/store/combatLogStore.ts` — exact template for `chatStore`; socket wired at module load, capped array, player-id filtering
+- Codebase audit: `package.json` root — confirms `socket.io@^4.7.0`, `ioredis@^5.4.0`, `drizzle-orm@^0.30.0`, `zustand@^4.5.0`
+- [NestJS Throttler GitHub](https://github.com/nestjs/throttler) — WebSocket support confirmed, v6.4.0 latest for NestJS 10
+- [Socket.IO Rooms documentation](https://socket.io/docs/v3/rooms/) — room broadcast API confirmed
+- [NestJS WebSocket Rate Limiting guide](https://www.delightfulengineering.com/blog/nest-websockets/rate-limiting-acknowledgements) — WsThrottlerGuard pattern, MEDIUM confidence (WebSearch, consistent with official throttler docs)
 
 ---
 
-*Stack research for: UI Polish & Audio — Game Menu, Audio System, Settings Persistence (Into the Void v1.21)*
+*Stack research for: In-game chat system (v1.22)*
 *Researched: 2026-02-26*
-*Confidence: HIGH — all recommendations based on official MDN documentation, official library releases, and direct codebase inspection*
