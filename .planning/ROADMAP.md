@@ -38,7 +38,7 @@
 
 **Milestone Goal:** Add game menu, audio system, settings persistence, and fix entity rendering so players have polished controls and auditory feedback.
 
-- [ ] **Phase 99: Entity Rendering Fix** - Anchor entities at tile base to eliminate floating sprites on elevated terrain
+- [x] **Phase 99: Entity Rendering Fix** - Anchor entities at tile base to eliminate floating sprites on elevated terrain (2026-02-26)
 - [ ] **Phase 100: Audio Foundation** - Wire up background music loop, level-up sound, and per-category volume via audioStore
 - [ ] **Phase 101: Game Menu & Settings** - Game menu overlay with audio sliders, secondary bar toggle, and logout
 - [ ] **Phase 102: ESC Centralization** - Single ESC handler closes modals LIFO then opens game menu when stack empty
@@ -54,7 +54,7 @@
   2. The selection ring indicator appears at the entity's base tile position, not at sprite visual height
   3. Entity shadows (if present) align with the tile base after the coordinate fix
 **Plans**: 1 plan
-- [ ] 99-01-PLAN.md — Fix entity anchor math and verify rendering
+- [x] 99-01-PLAN.md — Fix entity anchor math and verify rendering
 
 ### Phase 100: Audio Foundation
 **Goal**: Background music plays on a continuous gapless loop and game events trigger sound effects, all volume-controlled per category
