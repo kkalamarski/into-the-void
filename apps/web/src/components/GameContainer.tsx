@@ -146,6 +146,22 @@ const GameContainer: React.FC = () => {
       if (chunk && chunk.tiles && chunk.tiles.length > 0) {
         worldScene.loadZoneFromState(chunk, biome);
       }
+
+      // Reposition player sprite to new zone coordinates
+      const playerPos = useGameStore.getState().player?.position;
+      if (playerPos) {
+        worldScene.updateLocalPlayer(playerPos);
+      }
+
+      // Progress and dismiss loading screen after tiles have rendered
+      if (useGameStore.getState().isTeleporting) {
+        useGameStore.getState().setLoadingProgress(90);
+        setTimeout(() => {
+          useGameStore.getState().setLoadingProgress(100);
+          useGameStore.getState().setLoadingStage('ready');
+          useGameStore.getState().setIsTeleporting(false);
+        }, 600);
+      }
     }
 
     // CRITICAL: Set collision map for pathfinding and movement validation

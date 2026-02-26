@@ -17,7 +17,19 @@ const LOADING_TIPS = [
   "On Terminus, you are what you do. Your past doesn't matter.",
 ];
 
-const getStageText = (stage: string): string => {
+const getStageText = (stage: string, isTeleporting: boolean): string => {
+  if (isTeleporting) {
+    switch (stage) {
+      case 'loading-world':
+        return 'Teleporting...';
+      case 'spawning':
+        return 'Arriving at destination...';
+      case 'ready':
+        return 'Ready!';
+      default:
+        return 'Teleporting...';
+    }
+  }
   switch (stage) {
     case 'connecting':
       return 'Connecting to server...';
@@ -38,6 +50,7 @@ export const LoadingScreen: React.FC = () => {
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const loadingStage = useGameStore((state) => state.loadingStage);
   const loadingProgress = useGameStore((state) => state.loadingProgress);
+  const isTeleporting = useGameStore((state) => state.isTeleporting);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -49,7 +62,7 @@ export const LoadingScreen: React.FC = () => {
 
   return (
     <div className="loading-screen">
-      <div className="loading-stage-text">{getStageText(loadingStage)}</div>
+      <div className="loading-stage-text">{getStageText(loadingStage, isTeleporting)}</div>
 
       <div className="loading-progress-container">
         <div

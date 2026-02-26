@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuthStore } from '../store/authStore';
 import { useCharacterStore } from '../store/characterStore';
@@ -17,6 +17,13 @@ const GameScreen: React.FC = () => {
   const { token } = useAuthStore();
   const { selectedCharacterId } = useCharacterStore();
   const { loadingStage, setLoadingStage, setLoadingProgress, setPlayer, setConnectionState } = useGameStore();
+
+  // Track if GameContainer has ever been ready — keep it mounted after first ready
+  // so Phaser game isn't destroyed during teleport loading screens
+  const hasBeenReadyRef = useRef(false);
+  if (loadingStage === 'ready') {
+    hasBeenReadyRef.current = true;
+  }
 
   // Connection flow
   useEffect(() => {
@@ -124,7 +131,7 @@ const GameScreen: React.FC = () => {
         <LoadingScreen />
       )}
 
-      {loadingStage === 'ready' && (
+      {(loadingStage === 'ready' || hasBeenReadyRef.current) && (
         <GameContainer />
       )}
     </>

@@ -82,6 +82,10 @@ interface GameState {
   addChatMessage: (message: ChatMessage) => void;
   clearChat: () => void;
 
+  // Teleport loading
+  isTeleporting: boolean;
+  setIsTeleporting: (teleporting: boolean) => void;
+
   // Discovered resources (rare nodes)
   discoveredResources: DiscoveredResource[];
   setDiscoveredResources: (resources: DiscoveredResource[]) => void;
@@ -157,6 +161,10 @@ export const useGameStore = create<GameState>((set) => ({
     })),
   clearChat: () => set({ chatMessages: [] }),
 
+  // Teleport loading
+  isTeleporting: false,
+  setIsTeleporting: (teleporting) => set({ isTeleporting: teleporting }),
+
   // Discovered resources
   discoveredResources: [],
   setDiscoveredResources: (resources: DiscoveredResource[]) =>
@@ -175,6 +183,16 @@ gameSocket.on('zone:state', (data: ZoneState) => {
 
   // Detect zone transition
   const isZoneTransition = currentZoneId !== null && currentZoneId !== zoneId;
+
+  // Show loading screen for hub transitions (teleportation)
+  if (isZoneTransition) {
+    const isHubTransition = isHubZone(zoneId) || (currentZoneId && isHubZone(currentZoneId));
+    if (isHubTransition) {
+      useGameStore.getState().setIsTeleporting(true);
+      useGameStore.getState().setLoadingStage('loading-world');
+      useGameStore.getState().setLoadingProgress(40);
+    }
+  }
 
   // Store zone data and entities
   useGameStore.getState().setZoneState(data);
