@@ -112,7 +112,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 103. Chat Foundation | 0/2 | Planned | - |
+| 103. Chat Foundation | 1/2 | In Progress|  |
 | 104. Moderation Persistence | 0/TBD | Not started | - |
 | 105. ChatService & Channel Routing | 0/TBD | Not started | - |
 | 106. Chat Panel UI | 0/TBD | Not started | - |

@@ -9,8 +9,8 @@ Requirements for In-Game Chat milestone. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Chat messages are delivered from server to client (fix socket dispatch bug)
-- [ ] **INFRA-02**: Chat input does not trigger Phaser keyboard movement while typing
+- [x] **INFRA-01**: Chat messages are delivered from server to client (fix socket dispatch bug)
+- [x] **INFRA-02**: Chat input does not trigger Phaser keyboard movement while typing
 - [ ] **INFRA-03**: Chat messages are rate-limited to prevent spam
 - [ ] **INFRA-04**: Chat messages are validated server-side (non-empty, max length)
 
@@ -69,8 +69,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 103 | Pending |
-| INFRA-02 | Phase 103 | Pending |
+| INFRA-01 | Phase 103 | Complete |
+| INFRA-02 | Phase 103 | Complete |
 | INFRA-03 | Phase 103 | Pending |
 | INFRA-04 | Phase 103 | Pending |
 | CHAN-01 | Phase 105 | Pending |
