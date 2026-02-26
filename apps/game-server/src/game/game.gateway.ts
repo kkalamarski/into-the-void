@@ -200,6 +200,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         // Send initial stats (PRIVATE - only to this client)
         this.emitStats(client, result.player.id);
 
+        // Restore persistent cooldowns (PRIVATE - only to this client)
+        await this.abilityService.restoreCooldowns(result.player.id, client.id);
+
         // Emit zone entry event for quest tracking on login
         const biome = this.resolveZoneBiome(playerZoneId);
         this.eventEmitter.emit('zone.entered', {

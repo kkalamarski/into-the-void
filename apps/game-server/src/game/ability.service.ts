@@ -7,10 +7,12 @@ import { ZonesService } from '../zones/zones.service';
 import { InventoryService } from './inventory.service';
 import { EntityService } from './entity.service';
 import { CombatService } from './combat.service';
+import { DatabaseService } from '../database/database.service';
 import { Creature, ItemEntity, isHubZone } from '@into-the-void/shared-types';
 import { AbilityRegistry, canInteract, calculateDamage, computeCharStats, rollLootTable, getCreatureLoot } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
 import { EntityRegistry } from '@into-the-void/entities';
+import { saveCooldown, loadCooldowns } from '@into-the-void/database';
 import type { CreatureDefinition } from '@into-the-void/entities';
 import type { AbilityDefinition, Buff } from '@into-the-void/shared-types';
 import type { EquipmentJson } from '@into-the-void/database';
@@ -32,6 +34,9 @@ interface UseAbilityResult {
 
 /** Global cooldown in milliseconds - prevents ability spam */
 const GCD_MS = 500;
+
+/** Cooldowns >= this threshold are persisted to database (1 minute) */
+const PERSISTENCE_THRESHOLD_MS = 60000;
 
 @Injectable()
 export class AbilityService {
@@ -57,6 +62,7 @@ export class AbilityService {
     private readonly entityService: EntityService,
     @Inject(forwardRef(() => CombatService))
     private readonly combatService: CombatService,
+    private readonly databaseService: DatabaseService,
   ) {}
 
   setServer(server: Server): void {
@@ -66,6 +72,7 @@ export class AbilityService {
 
   /**
    * Get all abilities available to a player from their equipped items.
+   * Also includes universal abilities (home_recall).
    */
   getPlayerAbilities(playerId: string): AbilityDefinition[] {
     const inventory = this.inventoryService.getInventory(playerId);
@@ -96,6 +103,9 @@ export class AbilityService {
         modDef.grantedAbilities.forEach(id => abilityIds.add(id));
       }
     }
+
+    // Inject universal abilities
+    abilityIds.add('home_recall');
 
     // Resolve ability definitions
     const abilities: AbilityDefinition[] = [];
@@ -128,11 +138,21 @@ export class AbilityService {
 
   /**
    * Set ability cooldown for a player.
+   * If cooldown >= PERSISTENCE_THRESHOLD_MS, also persist to database.
    */
   setCooldown(playerId: string, abilityId: string, cooldownMs: number): number {
     const key = `${playerId}:${abilityId}`;
     const endsAt = Date.now() + cooldownMs;
     this.cooldowns.set(key, endsAt);
+
+    // Persist long cooldowns to database
+    if (cooldownMs >= PERSISTENCE_THRESHOLD_MS) {
+      const db = this.databaseService.getClient();
+      saveCooldown(db, playerId, abilityId, new Date(endsAt)).catch((err) => {
+        console.error('[AbilityService] Failed to persist cooldown:', err);
+      });
+    }
+
     return endsAt;
   }
 
@@ -141,6 +161,41 @@ export class AbilityService {
    */
   setGcd(playerId: string): void {
     this.globalCooldowns.set(playerId, Date.now() + GCD_MS);
+  }
+
+  /**
+   * Load cooldowns from database and populate in-memory map.
+   * Returns list of active cooldowns for emission to client.
+   */
+  async loadCooldownsFromDb(playerId: string): Promise<AbilityCooldown[]> {
+    const db = this.databaseService.getClient();
+    const dbCooldowns = await loadCooldowns(db, playerId);
+
+    const activeCooldowns: AbilityCooldown[] = [];
+    for (const cd of dbCooldowns) {
+      const endsAt = cd.expiresAt.getTime();
+      const key = `${playerId}:${cd.abilityId}`;
+      this.cooldowns.set(key, endsAt);
+      activeCooldowns.push({ abilityId: cd.abilityId, endsAt });
+    }
+
+    return activeCooldowns;
+  }
+
+  /**
+   * Restore cooldowns from DB and emit to client.
+   * Called on player auth/reconnect.
+   */
+  async restoreCooldowns(playerId: string, socketId: string): Promise<void> {
+    const cooldowns = await this.loadCooldownsFromDb(playerId);
+
+    // Emit each cooldown to socket
+    for (const cd of cooldowns) {
+      this.server?.to(socketId).emit('ability:cooldown', {
+        abilityId: cd.abilityId,
+        cooldownEndsAt: cd.endsAt,
+      });
+    }
   }
 
   /**
@@ -235,6 +290,40 @@ export class AbilityService {
           return { success: false, error: rangeCheck.reason };
         }
       }
+    }
+
+    // Handle home_recall special effect
+    if (abilityId === 'home_recall') {
+      // Check not already in hub
+      if (isHubZone(player.position.zoneId)) {
+        return { success: false, error: 'Already in hub' };
+      }
+
+      // Teleport to hub
+      const result = await this.playerService.teleportToHub(player.id);
+      if (!result.success) {
+        return { success: false, error: result.error };
+      }
+
+      // Set cooldown
+      const cooldownEndsAt = this.setCooldown(player.id, abilityId, ability.cooldownMs);
+      this.setGcd(player.id);
+
+      // Emit zone transition events (gateway will handle zone:state emission)
+      if (result.oldZoneId) {
+        this.server?.to(result.oldZoneId).emit('player:left', { playerId: player.id });
+      }
+
+      // Emit teleport event to trigger gateway zone state refresh
+      this.server?.to(socketId).emit('player:teleported', {
+        zoneId: result.newZoneId,
+        position: player.position,
+      });
+
+      return {
+        success: true,
+        cooldownEndsAt,
+      };
     }
 
     // Consume energy
