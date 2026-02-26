@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { useLoreStore, handleLoreHotkey } from '../store/loreStore';
+import { useModalStack } from '../hooks/useModalStack';
 import { LoreRegistry } from '@into-the-void/lore';
 import { LORE_CATEGORIES, type LoreCategory } from '@into-the-void/shared-types';
 import './LoreCodex.css';
@@ -12,35 +13,26 @@ const CATEGORY_LABELS: Record<LoreCategory | 'all', string> = {
   biome_ecology: 'Biome Ecology',
 };
 
-export function LoreCodex() {
+interface LoreCodexContentProps {
+  onClose: () => void;
+}
+
+function LoreCodexContent({ onClose }: LoreCodexContentProps) {
   const {
-    isCodexOpen, toggleCodex, collectedLore, selectedCategory,
+    collectedLore, selectedCategory,
     setSelectedCategory, selectedLoreId, setSelectedLore, markAsRead, getUnreadCount,
   } = useLoreStore();
 
-  useEffect(() => {
-    window.addEventListener('keydown', handleLoreHotkey);
-    return () => window.removeEventListener('keydown', handleLoreHotkey);
-  }, []);
-
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isCodexOpen) toggleCodex();
-    };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isCodexOpen, toggleCodex]);
+  useModalStack('lore-codex', onClose);
 
   const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) toggleCodex();
-  }, [toggleCodex]);
+    if (e.target === e.currentTarget) onClose();
+  }, [onClose]);
 
   const handleFragmentClick = useCallback((loreId: string, isRead: boolean) => {
     setSelectedLore(loreId);
     if (!isRead) markAsRead(loreId);
   }, [setSelectedLore, markAsRead]);
-
-  if (!isCodexOpen) return null;
 
   const filteredLore = collectedLore.filter((entry) => {
     if (selectedCategory === 'all') return true;
@@ -56,7 +48,7 @@ export function LoreCodex() {
         <div className="lore-codex-header">
           <h2>Codex</h2>
           <span className="lore-unread-badge">{getUnreadCount()} unread</span>
-          <button className="lore-close-btn" onClick={toggleCodex}>&times;</button>
+          <button className="lore-close-btn" onClick={onClose}>&times;</button>
         </div>
         <div className="lore-codex-content">
           <div className="lore-category-tabs">
@@ -109,4 +101,17 @@ export function LoreCodex() {
       </div>
     </div>
   );
+}
+
+export function LoreCodex() {
+  const { isCodexOpen, toggleCodex } = useLoreStore();
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleLoreHotkey);
+    return () => window.removeEventListener('keydown', handleLoreHotkey);
+  }, []);
+
+  if (!isCodexOpen) return null;
+
+  return <LoreCodexContent onClose={toggleCodex} />;
 }

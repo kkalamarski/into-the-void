@@ -35,18 +35,6 @@ export const CastBar: React.FC = () => {
     gameSocket.emit('cast:cancel', {});
   }, []);
 
-  // Escape key cancels cast
-  useEffect(() => {
-    if (!activeCast) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        gameSocket.emit('cast:cancel', {});
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [activeCast]);
-
   if (!activeCast) return null;
 
   const ability = AbilityRegistry.get(activeCast.abilityId);
