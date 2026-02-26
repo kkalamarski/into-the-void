@@ -52,6 +52,18 @@ export const GameUI: React.FC = () => {
 
     const overId = String(over.id);
     const activeId = String(active.id);
+    const dragData = active.data.current;
+
+    // Ability from panel to action bar slot
+    if (dragData?.type === 'ability' && overId.startsWith('slot-')) {
+      const abilityId = dragData.abilityId;
+      const slotIndex = parseInt(overId.replace('slot-', ''), 10);
+
+      if (!isNaN(slotIndex) && slotIndex >= 0 && slotIndex < 8) {
+        useActionBarStore.getState().assignAbility(slotIndex, abilityId);
+      }
+      return;
+    }
 
     // Dropped on hotbar slot — assign to action bar
     if (overId.startsWith('hotbar-')) {
