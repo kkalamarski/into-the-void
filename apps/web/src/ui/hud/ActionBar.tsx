@@ -161,7 +161,7 @@ function SortableAbilitySlot({ index, ability, slotId, shiftHeld }: SortableAbil
 }
 
 export const ActionBar: React.FC = () => {
-  const { abilityOrder, swapAbilitySlots, setAbilityOrder } = useActionBarStore();
+  const { abilityOrder, swapAbilitySlots, setAbilityOrder, removeAbilityFromSlot } = useActionBarStore();
   const inventory = useInventoryStore((state) => state.inventory);
   const targetEntityId = useCombatStore((state) => state.targetEntityId);
   const player = useGameStore((state) => state.player);
@@ -232,9 +232,24 @@ export const ActionBar: React.FC = () => {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    const dragData = active.data.current;
+
+    // Dropped outside any droppable zone - remove from action bar
+    if (over === null) {
+      if (dragData?.type === 'action-bar-ability') {
+        const slotIndex = dragData.slotIndex;
+        if (typeof slotIndex === 'number' && slotIndex >= 0 && slotIndex < 8) {
+          removeAbilityFromSlot(slotIndex);
+        }
+      }
+      // Reset state and return
+      setActiveId(null);
+      setShiftHeld(false);
+      return;
+    }
 
     // Only swap if SHIFT was held during drag initiation
-    if (shiftHeld && over && active.id !== over.id) {
+    if (shiftHeld && active.id !== over.id) {
       const fromIndex = slotIds.indexOf(active.id as string);
       const toIndex = slotIds.indexOf(over.id as string);
       if (fromIndex >= 0 && toIndex >= 0) {
