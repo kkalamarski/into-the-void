@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 106 — Chat Panel UI
+**Current focus:** Phase 107 — Moderation Controls
 
 ## Current Position
 
-Phase: 106 of 106 (Chat Panel UI)
+Phase: 107 of 107 (Moderation Controls)
 Plan: 2 of 2 complete
 Status: Complete
-Last activity: 2026-02-26 — 106-02 completed (tabbed ChatPanel with unread badges, timestamps, always-visible)
+Last activity: 2026-02-26 — 107-02 completed (right-click context menu on ChatPanel sender names)
 
 Progress: [██████████] 100%
 
@@ -37,12 +37,12 @@ Progress: [██████████] 100%
 - Total execution time: ~13 hours across 21 milestones
 
 **Recent Plans:**
+- 107-02 (2026-02-26, 3min, 1 task, 2 files): right-click context menu on sender names with Mute/Block/Whisper actions
+- 107-01 (2026-02-26, 3min, 2 tasks, 3 files): moderationStore with REST-backed mute/block Sets and chatStore mute filter
 - 106-02 (2026-02-26, 4min, 2 tasks, 5 files): tabbed ChatPanel with unread badges, timestamps, channel colors, always-visible
 - 106-01 (2026-02-26, 8min, 2 tasks, 2 files): chatStore with per-channel messages, unread tracking, socket rewiring
 - 105-02 (2026-02-26, 6min, 2 tasks, 2 files): ChatService wired into GameGateway, faction rooms joined on auth, updatePlayerRooms fixed
 - 105-01 (2026-02-26, 8min, 2 tasks, 2 files): ChatService with five-channel routing (zone/global/faction/local/whisper)
-- 104-02 (2026-02-26, 5min, 2 tasks, 5 files): NestJS REST moderation module with CRUD endpoints
-- 104-01 (2026-02-26, 8min, 2 tasks, 5 files): mute/block DB schema tables + query functions
 
 **Recent Milestones:**
 - v1.21 UI Polish & Audio: 4 phases (99-102) completed 2026-02-26
@@ -71,6 +71,9 @@ Recent decisions affecting current work:
 - [Phase 106-chat-panel-ui]: chatStore module-level chat:message listener replaces gameStore chat wiring; chat state removed from gameStore
 - [106-02]: ChatPanel always visible — no toggle state; showChat/toggleChat removed from gameStore; Chat shortcut button removed
 - [106-02]: chatStore side-effect import in GameUI ensures chat:message listener registered on UI mount
+- [107-01]: moderationStore uses gameStore.subscribe to auto-load on player auth — follows actionBarStore pattern
+- [107-01]: Mute filter uses imperative useModerationStore.getState() in chatStore (non-React context)
+- [107-02]: Scoped .chat-context-menu CSS class (not generic .context-menu) to avoid InventoryPanel style collisions
 
 ### Pending Todos
 
@@ -86,9 +89,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 106-02-PLAN.md (tabbed ChatPanel with unread badges, timestamps, always-visible)
+Stopped at: Completed 107-02-PLAN.md (right-click context menu on ChatPanel sender names)
 Resume file: None
-Next action: Phase 106 complete — milestone v1.0 In-Game Chat achieved
+Next action: Phase 107 complete — verify phase goal achievement
 
 ---
-*Last updated: 2026-02-26 — 106-02 completed*
+*Last updated: 2026-02-26 — 107-02 completed*
