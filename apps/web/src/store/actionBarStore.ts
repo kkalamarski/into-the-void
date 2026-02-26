@@ -68,6 +68,8 @@ interface ActionBarState {
   abilityOrder: (string | null)[];
   setAbilityOrder: (order: (string | null)[]) => void;
   swapAbilitySlots: (fromIndex: number, toIndex: number) => void;
+  assignAbility: (slotIndex: number, abilityId: string) => void;
+  removeAbilityFromSlot: (slotIndex: number) => void;
 }
 
 export const useActionBarStore = create<ActionBarState>()(
@@ -123,6 +125,20 @@ export const useActionBarStore = create<ActionBarState>()(
         state.abilityOrder[fromIndex] = state.abilityOrder[toIndex];
         state.abilityOrder[toIndex] = temp;
 
+        saveAbilityOrderToStorage(state.abilityOrder as (string | null)[]);
+      }),
+
+    assignAbility: (slotIndex: number, abilityId: string) =>
+      set((state) => {
+        if (slotIndex < 0 || slotIndex >= SLOT_COUNT) return;
+        state.abilityOrder[slotIndex] = abilityId;
+        saveAbilityOrderToStorage(state.abilityOrder as (string | null)[]);
+      }),
+
+    removeAbilityFromSlot: (slotIndex: number) =>
+      set((state) => {
+        if (slotIndex < 0 || slotIndex >= SLOT_COUNT) return;
+        state.abilityOrder[slotIndex] = null;
         saveAbilityOrderToStorage(state.abilityOrder as (string | null)[]);
       }),
   }))
