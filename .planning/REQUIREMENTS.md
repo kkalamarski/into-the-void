@@ -3,49 +3,65 @@
 **Defined:** 2026-02-26
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.21 Requirements
+## v1.22 Requirements
 
-Requirements for UI Polish & Audio milestone. Each maps to roadmap phases.
+Requirements for In-Game Chat milestone. Each maps to roadmap phases.
 
-### ESC Management
+### Infrastructure
 
-- [x] **ESC-01**: Player can close the topmost open modal by pressing ESC
-- [x] **ESC-02**: ESC closes modals one-by-one in LIFO order until none remain
-- [x] **ESC-03**: Pressing ESC when no modals are open opens the game menu
+- [ ] **INFRA-01**: Chat messages are delivered from server to client (fix socket dispatch bug)
+- [ ] **INFRA-02**: Chat input does not trigger Phaser keyboard movement while typing
+- [ ] **INFRA-03**: Chat messages are rate-limited to prevent spam
+- [ ] **INFRA-04**: Chat messages are validated server-side (non-empty, max length)
 
-### Audio
+### Channels
 
-- [x] **AUD-01**: Background music plays on a continuous gapless loop
-- [x] **AUD-02**: Music starts after first user interaction (autoplay policy compliance)
-- [x] **AUD-03**: Level-up event plays the quest-complete sound effect
-- [x] **AUD-04**: Music, effects, and ambient volumes are independently adjustable
+- [ ] **CHAN-01**: User can send and receive messages in zone-wide chat
+- [ ] **CHAN-02**: User can send and receive messages in global (server-wide) chat
+- [ ] **CHAN-03**: User can send and receive messages in faction-only chat
+- [ ] **CHAN-04**: User can send and receive messages in local (proximity) chat to nearby players
+- [ ] **CHAN-05**: User can send and receive private whisper messages to/from a specific player
 
-### Game Menu & Settings
+### Chat UI
 
-- [x] **MENU-01**: Player can open/close game menu overlay
-- [x] **MENU-02**: Game menu shows audio settings with sliders for music, effects, and ambient
-- [x] **MENU-03**: Game menu shows interface setting to toggle secondary action bar visibility
-- [x] **MENU-04**: Player can log out from the game menu
-- [x] **MENU-05**: Settings persist across browser sessions via localStorage
+- [ ] **UI-01**: Chat panel is visible in bottom-left of game HUD
+- [ ] **UI-02**: User can switch between channel tabs (Local, Zone, Faction, Global, Whispers)
+- [ ] **UI-03**: User can type and send messages via text input with Enter key
+- [ ] **UI-04**: Unread message indicators shown on inactive channel tabs
+- [ ] **UI-05**: Messages display sender name, timestamp, and channel-colored text
 
-### Entity Rendering
+### Moderation
 
-- [x] **REND-01**: Entities render anchored at base tile position, not elevated above it
-- [x] **REND-02**: Selection indicator aligns with entity base tile position
+- [ ] **MOD-01**: User can mute a player to hide their messages in chat
+- [ ] **MOD-02**: User can block a player to prevent receiving whispers from them
+- [ ] **MOD-03**: User can unmute/unblock previously muted/blocked players
+- [ ] **MOD-04**: Mute and block lists persist across sessions (DB-backed)
+- [ ] **MOD-05**: Right-click on a player name in chat shows mute/block context menu
 
 ## Future Requirements
 
-None identified for this milestone.
+### Party System
+- **PARTY-01**: User can invite another player to a party
+- **PARTY-02**: Party members see each other on minimap
+- **PARTY-03**: Party chat channel for group communication
+- **PARTY-04**: Shared XP for party members in proximity
+
+### Chat Enhancements
+- **CHATENH-01**: Speech bubbles above characters for local chat
+- **CHATENH-02**: Chat message history persistence (DB-backed)
+- **CHATENH-03**: Slash commands (/whisper, /zone, etc.)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Zone-specific music tracks | Single playlist loop sufficient for v1.21; zone-aware audio in future |
-| Ambient sound effects (environmental) | Ambient volume slider included but no ambient audio assets exist yet |
-| Keybinding remapping | Settings scope limited to audio + interface for this milestone |
-| Graphics settings (quality, resolution) | Not needed for color-tile rendering |
-| Accessibility settings (colorblind, font size) | Future milestone |
+| Speech bubbles above characters | Panel-only for this milestone; defer to future |
+| Chat message persistence (DB) | Ephemeral messages — clean slate each login |
+| Profanity filter | Moderation via mute/block sufficient for now |
+| Group/party chat channel | No party system yet; separate milestone |
+| Slash commands | Tab switching sufficient for channel selection |
+| Emotes/stickers | Text-only for v1 chat |
+| Chat message editing/deletion | Ephemeral messages; not needed |
 
 ## Traceability
 
@@ -53,26 +69,31 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ESC-01 | Phase 102 | Complete |
-| ESC-02 | Phase 102 | Complete |
-| ESC-03 | Phase 102 | Complete |
-| AUD-01 | Phase 100 | Complete |
-| AUD-02 | Phase 100 | Complete |
-| AUD-03 | Phase 100 | Complete |
-| AUD-04 | Phase 100 | Complete |
-| MENU-01 | Phase 101 | Complete |
-| MENU-02 | Phase 101 | Complete |
-| MENU-03 | Phase 101 | Complete |
-| MENU-04 | Phase 101 | Complete |
-| MENU-05 | Phase 101 | Complete |
-| REND-01 | Phase 99 | Complete |
-| REND-02 | Phase 99 | Complete |
+| INFRA-01 | — | Pending |
+| INFRA-02 | — | Pending |
+| INFRA-03 | — | Pending |
+| INFRA-04 | — | Pending |
+| CHAN-01 | — | Pending |
+| CHAN-02 | — | Pending |
+| CHAN-03 | — | Pending |
+| CHAN-04 | — | Pending |
+| CHAN-05 | — | Pending |
+| UI-01 | — | Pending |
+| UI-02 | — | Pending |
+| UI-03 | — | Pending |
+| UI-04 | — | Pending |
+| UI-05 | — | Pending |
+| MOD-01 | — | Pending |
+| MOD-02 | — | Pending |
+| MOD-03 | — | Pending |
+| MOD-04 | — | Pending |
+| MOD-05 | — | Pending |
 
 **Coverage:**
-- v1.21 requirements: 14 total
-- Mapped to phases: 14
-- Unmapped: 0 ✓
+- v1.22 requirements: 19 total
+- Mapped to phases: 0
+- Unmapped: 19 ⚠️
 
 ---
 *Requirements defined: 2026-02-26*
-*Last updated: 2026-02-26 — traceability populated after roadmap creation*
+*Last updated: 2026-02-26 after initial definition*
