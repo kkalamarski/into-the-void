@@ -117,14 +117,6 @@ class GameSocket {
       });
     }
 
-    // Handle teleport (home_recall) — full page reload for clean scene reset
-    // Guard: only reload when game is fully loaded (prevents infinite loop on reconnect)
-    this.socket.on('player:teleported', () => {
-      const { loadingStage } = useGameStore.getState();
-      if (loadingStage === 'ready') {
-        window.location.reload();
-      }
-    });
   }
 
   disconnect(): void {

@@ -493,10 +493,12 @@ export class AbilityService {
         this.server?.to(result.oldZoneId).emit('player:left', { playerId: player.id });
       }
 
-      // Emit teleport event to trigger gateway zone state refresh
-      this.server?.to(socketId).emit('player:teleported', {
-        zoneId: result.newZoneId,
-        position: player.position,
+      // Emit domain event so gateway can handle room changes + zone:state
+      this.eventEmitter.emit('player.teleported', {
+        playerId: player.id,
+        socketId,
+        oldZoneId: result.oldZoneId,
+        newZoneId: result.newZoneId,
       });
 
       return {

@@ -176,16 +176,6 @@ gameSocket.on('zone:state', (data: ZoneState) => {
   // Detect zone transition
   const isZoneTransition = currentZoneId !== null && currentZoneId !== zoneId;
 
-  // Full page reload for hub transitions (teleportation)
-  // This gives a clean slate — loading screen, fresh Phaser scene, etc.
-  if (isZoneTransition) {
-    const isHubTransition = isHubZone(zoneId) || (currentZoneId && isHubZone(currentZoneId));
-    if (isHubTransition) {
-      window.location.reload();
-      return;
-    }
-  }
-
   // Store zone data and entities
   useGameStore.getState().setZoneState(data);
 
