@@ -14,9 +14,9 @@ Requirements for World Scale & Action Bar milestone. Each maps to roadmap phases
 
 ### Travel
 
-- [ ] **TRAV-01**: Expedition NPC exists in each faction hub
-- [ ] **TRAV-02**: Player can teleport to random world location via expedition NPC
-- [ ] **TRAV-03**: High-tier expedition destinations are locked until player reaches required level
+- [x] **TRAV-01**: Expedition NPC exists in each faction hub
+- [x] **TRAV-02**: Player can teleport to random world location via expedition NPC
+- [x] **TRAV-03**: High-tier expedition destinations are locked until player reaches required level
 - [ ] **TRAV-04**: Universal home recall ability available to all players (not gear-dependent)
 - [ ] **TRAV-05**: Home recall has 5 minute cooldown
 

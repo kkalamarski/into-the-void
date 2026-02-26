@@ -79,8 +79,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 95-01-PLAN.md — Expedition NPC definition and hub spawning
-- [ ] 95-02-PLAN.md — Expedition logic with tier-locked destinations
+- [x] 95-01-PLAN.md — Expedition NPC definition and hub spawning
+- [x] 95-02-PLAN.md — Expedition logic with tier-locked destinations
 
 ---
 
@@ -253,12 +253,12 @@ Phases execute in numeric order: 94 → 95 → 96 → 97 → 98
 | 92. CI/CD Pipeline | v1.19 | 2/2 | Complete | 2026-02-24 |
 | 93. Documentation | v1.19 | 1/1 | Complete | 2026-02-24 |
 | 94. World Scale Tuning | v1.20 | 2/2 | Complete | 2026-02-26 |
-| 95. Expedition Travel | v1.20 | 0/2 | Not started | - |
+| 95. Expedition Travel | v1.20 | 2/2 | Complete | 2026-02-26 |
 | 96. Home Recall Ability | v1.20 | 0/1 | Not started | - |
 | 97. Action Bar UX Enhancement | v1.20 | 0/2 | Not started | - |
 | 98. Second Action Bar | v1.20 | 0/2 | Not started | - |
 
-**Total:** 98 phases (94 complete, 4 pending)
+**Total:** 98 phases (95 complete, 3 pending)
 
 ---
-*Last updated: 2026-02-26 - Phase 94 complete*
+*Last updated: 2026-02-26 - Phase 95 complete*
