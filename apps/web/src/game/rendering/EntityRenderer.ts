@@ -68,6 +68,7 @@ const ANIMATED_CREATURE_Y_OFFSET: Record<string, number> = {
 // Scale overrides for specific plants (speciesId -> scale multiplier)
 const PLANT_SCALE_OVERRIDE: Record<string, number> = {
   plant_void_tree: 3.5,  // Large tree - towering over players (128px sprite)
+  plant_tendril_tree: 3.0,  // Large fungal tree (256px sprite)
 };
 
 // Scale multipliers for rare/epic resource nodes
@@ -549,6 +550,7 @@ export class EntityRenderer {
     plant_void_tree: 8,
     plant_void_fern: 2,
     plant_drought_cactus: 1,
+    plant_tendril_tree: 1,
     // Minerals
     mineral_void_crystal: 1,
   };

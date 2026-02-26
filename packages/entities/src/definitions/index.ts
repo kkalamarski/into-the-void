@@ -92,6 +92,7 @@ export const ENTITY_IDS = {
   PLANT_LUMINOUS_VINE_RARE: 'plant_luminous_vine_rare',
   PLANT_LATTICE_MOSS_RARE: 'plant_lattice_moss_rare',
   PLANT_PHASE_BLOOM_RARE: 'plant_phase_bloom_rare',
+  PLANT_TENDRIL_TREE: 'plant_tendril_tree',
   // Phase 88 fungal_forest rare/epic
   PLANT_RARE_FUNGI: 'plant_rare_fungi',
   PLANT_EPIC_SPORES: 'plant_epic_spores',

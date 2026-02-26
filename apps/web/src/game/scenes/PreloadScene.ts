@@ -154,6 +154,8 @@ export class PreloadScene extends Phaser.Scene {
       { entityId: 'plant_void_tree', folder: 'void-tree', variants: 8 },
       { entityId: 'plant_void_fern', folder: 'void-fern', variants: 2 },
       { entityId: 'plant_drought_cactus', folder: 'drought-cactus', variants: 1 },
+      // Plants - fungal forest
+      { entityId: 'plant_tendril_tree', folder: 'tendril-tree', variants: 1 },
       // Minerals - void plains
       { entityId: 'mineral_void_crystal', folder: 'void-crystal', variants: 1 },
     ];

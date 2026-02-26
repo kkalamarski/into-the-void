@@ -188,6 +188,22 @@ export const PLANT_STAR_LICHEN: PlantDefinition = {
   respawnSeconds: 600,
 };
 
+export const PLANT_TENDRIL_TREE: PlantDefinition = {
+  id: 'plant_tendril_tree',
+  displayName: 'Tendril Tree',
+  description: 'Towering fungal tree with grasping bioluminescent tendrils. Its purple bark pulses with soft light, and green-tipped branches sway without wind.',
+  entityClass: 'plant',
+  biomes: ['fungal_forest'],
+  textureKey: 'plant_tendril_tree',
+  color: 0x7744cc,
+  lootTableId: 'loot_plant_tendril_tree',
+  harvestYield: [
+    { itemId: 'world_alien_flora_luminous', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_biogenic_catalyst', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ],
+  respawnSeconds: 360,
+};
+
 // ===== RARE VARIANTS =====
 // Higher yield (1.5x), slower respawn (2x), increased bonus drop rates
 
@@ -292,6 +308,7 @@ export const ALL_PLANTS: readonly PlantDefinition[] = [
   PLANT_ACID_FERN,
   PLANT_PHASE_BLOOM,
   PLANT_STAR_LICHEN,
+  PLANT_TENDRIL_TREE,
   // Rare variants
   PLANT_LUMINOUS_VINE_RARE,
   PLANT_LATTICE_MOSS_RARE,
