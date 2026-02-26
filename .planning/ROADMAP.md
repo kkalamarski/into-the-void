@@ -66,8 +66,8 @@
   3. A level-up event plays the quest-complete sound effect audibly
   4. Music, effects, and ambient volume categories can be set independently and the change is heard immediately
 **Plans**: 2 plans
-- [ ] 100-01-PLAN.md — AudioManager singleton + audioStore with Zustand persist
-- [ ] 100-02-PLAN.md — Wire audio lifecycle, SFX triggers, and audio assets
+- [x] 100-01-PLAN.md — AudioManager singleton + audioStore with Zustand persist
+- [x] 100-02-PLAN.md — Wire audio lifecycle, SFX triggers, and audio assets
 
 ### Phase 101: Game Menu & Settings
 **Goal**: Player can open a game menu from within the game, adjust audio and interface settings, and log out cleanly
