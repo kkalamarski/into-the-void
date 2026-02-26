@@ -105,7 +105,10 @@ function SortableAbilitySlot({ index, ability, slotId }: SortableAbilitySlotProp
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: slotId });
+  } = useSortable({
+    id: slotId,
+    data: { type: 'action-bar-ability', slotIndex: index, abilityId: ability?.id }
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -115,6 +118,7 @@ function SortableAbilitySlot({ index, ability, slotId }: SortableAbilitySlotProp
   };
 
   const handleClick = () => {
+    if (isDragging) return; // CRITICAL: prevents click during drag release
     if (!ability) return;
     if (isOnCooldown(ability.id)) return;
     if (!player || player.energy < ability.energyCost) return;
