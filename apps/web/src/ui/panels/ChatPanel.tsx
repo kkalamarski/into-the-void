@@ -17,6 +17,16 @@ export const ChatPanel: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
+  const handleInputFocus = () => {
+    const worldScene = useGameStore.getState().game?.getWorldScene();
+    worldScene?.setKeyboardEnabled(false);
+  };
+
+  const handleInputBlur = () => {
+    const worldScene = useGameStore.getState().game?.getWorldScene();
+    worldScene?.setKeyboardEnabled(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
@@ -57,8 +67,10 @@ export const ChatPanel: React.FC = () => {
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
           placeholder="Type a message..."
-          maxLength={200}
+          maxLength={280}
         />
         <button type="submit">Send</button>
       </form>
