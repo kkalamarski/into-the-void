@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: 100 of 102 (Audio Foundation)
-Plan: 0 of TBD
-Status: Ready to plan
-Last activity: 2026-02-26 — Phase 99 (Entity Rendering Fix) complete and verified
+Plan: 1 of TBD
+Status: Executing
+Last activity: 2026-02-26 — Phase 100 Plan 01 (AudioManager + audioStore foundation) complete
 
 Progress: [███░░░░░░░] 25%
 
@@ -48,6 +48,10 @@ Progress: [███░░░░░░░] 25%
 Decisions are logged in PROJECT.md Key Decisions table.
 
 Recent decisions affecting v1.21:
+- Audio 100-01: AudioContext created synchronously in init() before any await (Safari gesture requirement)
+- Audio 100-01: Lazy require() in syncVolumesFromStore() breaks audioStore<->audioManager circular dep
+- Audio 100-01: musicStarted boolean guard prevents music restart on zone transitions; stopMusic() resets it
+- Audio 100-01: sfxCache Map<string, AudioBuffer> caches decoded buffers to skip fetch+decode on repeat plays
 - Audio: Web Audio API (native) for gapless music loop — no new deps needed
 - Audio: Zustand persist middleware for settings — already in dep tree
 - ESC: Single capture-phase handler in GameUI.tsx — prevents Phaser dual-fire
@@ -68,9 +72,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Phase 99 verified and complete
+Stopped at: Completed 100-01-PLAN.md (AudioManager + audioStore)
 Resume file: None
-Next action: /gsd:plan-phase 100
+Next action: Execute 100-02 (callers migration — fix playQuestCompleteSound in questStore.ts)
 
 ---
-*Last updated: 2026-02-26 — Phase 99 complete*
+*Last updated: 2026-02-26 — Phase 100 Plan 01 complete*
