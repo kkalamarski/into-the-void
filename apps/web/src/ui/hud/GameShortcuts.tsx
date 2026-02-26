@@ -2,7 +2,11 @@ import React from 'react';
 import { useGameStore } from '../../store/gameStore';
 import './GameShortcuts.css';
 
-export const GameShortcuts: React.FC = () => {
+interface GameShortcutsProps {
+  onMenuOpen?: () => void;
+}
+
+export const GameShortcuts: React.FC<GameShortcutsProps> = ({ onMenuOpen }) => {
   const {
     toggleInventory,
     toggleEquipment,
@@ -32,6 +36,10 @@ export const GameShortcuts: React.FC = () => {
       <button className="game-shortcut-btn" onClick={toggleChat} title="Chat (C)">
         <span>C</span>
         <label>Chat</label>
+      </button>
+      <button className="game-shortcut-btn" onClick={onMenuOpen} title="Menu (ESC)">
+        <span>&#9776;</span>
+        <label>Menu</label>
       </button>
     </div>
   );

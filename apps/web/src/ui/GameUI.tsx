@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -17,6 +17,7 @@ import { useActionBarStore } from '../store/actionBarStore';
 import { useNpcStore } from '../store/npcStore';
 import { gameSocket } from '../network/socket';
 import { HUD } from './hud/HUD';
+import { GameMenu } from './modals/GameMenu';
 import { ChatPanel } from './panels/ChatPanel';
 import { InventoryPanel } from './panels/InventoryPanel';
 import { EquipmentPanel } from './panels/EquipmentPanel';
@@ -36,6 +37,19 @@ export const GameUI: React.FC = () => {
   const { showChat, showInventory, showEquipment, showAbilities, showDeathScreen, isQuestLogOpen, player } = useGameStore();
   const { interactingNpc } = useNpcStore();
   const [shiftHeld, setShiftHeld] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        e.preventDefault();
+        setIsMenuOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -192,7 +206,7 @@ export const GameUI: React.FC = () => {
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="game-ui">
-        <HUD />
+        <HUD onMenuOpen={() => setIsMenuOpen(true)} />
         <QuestTracker />
         <ZoneMasteryHUD />
         {showChat && <ChatPanel />}
@@ -209,5 +223,6 @@ export const GameUI: React.FC = () => {
         <div className="minimap-border" />
       </div>
     </DndContext>
+    {isMenuOpen && <GameMenu onClose={() => setIsMenuOpen(false)} />}
   );
 };

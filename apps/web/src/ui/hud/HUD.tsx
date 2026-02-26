@@ -13,7 +13,7 @@ import { CombatLog } from './CombatLog';
 import { BuffBar } from './BuffBar';
 import './HUD.css';
 
-export const HUD: React.FC = () => {
+export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
   const { player, zoneState, toggleQuestLog, showCombatLog, toggleCombatLog } = useGameStore();
   const { inventory } = useInventoryStore();
   const { inCombat } = useCombatStore();
@@ -149,7 +149,7 @@ export const HUD: React.FC = () => {
           <ActionBar barIndex={0} />
           <ActionBar barIndex={1} />
         </div>
-        <GameShortcuts />
+        <GameShortcuts onMenuOpen={onMenuOpen} />
       </div>
 
       {displayedBiome && (
