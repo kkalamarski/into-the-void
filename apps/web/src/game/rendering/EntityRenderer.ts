@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { Entity, Creature, Mineral, Plant, Npc, CreatureBehavior, Position, ZONE_SIZE } from '@into-the-void/shared-types';
-import type { NodeRarity } from '@into-the-void/shared-types';
+import type { NodeRarity, ItemEntity } from '@into-the-void/shared-types';
+import { getItemSprite } from '../../config/itemSpriteMap';
 import { IsometricTransform } from '../utils/IsometricTransform';
 import { useStatsStore } from '../../store/statsStore';
 import { applyRareNodeFX } from './RareNodeFX';
@@ -209,7 +210,8 @@ export class EntityRenderer {
     if (this.isCreature(entity) && entity.speciesId && entity.speciesId in ANIMATED_CREATURE_Y_OFFSET) {
       spriteYOffset = ANIMATED_CREATURE_Y_OFFSET[entity.speciesId];
     }
-    const sprite = this.scene.add.sprite(0, spriteYOffset, this.getEntityTexture(entity));
+    const { key: textureKey, frame: textureFrame } = this.getEntityTexture(entity);
+    const sprite = this.scene.add.sprite(0, spriteYOffset, textureKey, textureFrame);
     sprite.setOrigin(0.5, 1.0); // Bottom-center origin for ground alignment
     sprite.setScale(scaleX, scaleY);
 
@@ -579,16 +581,16 @@ export class EntityRenderer {
    * Uses species-specific or resource-specific texture for enriched entities,
    * falling back to type-based texture if unavailable.
    */
-  private getEntityTexture(entity: Entity): string {
+  private getEntityTexture(entity: Entity): { key: string; frame?: number } {
     // Use species-specific texture if available (enriched entities)
     if (this.isCreature(entity) && entity.speciesId) {
       // Check if this creature has animated sprites
       if (EntityRenderer.ANIMATED_CREATURES.has(entity.speciesId)) {
         // Return idle sprite facing south (default direction)
-        return `${entity.speciesId}-idle-s`;
+        return { key: `${entity.speciesId}-idle-s` };
       }
       // Try species-specific texture, fall back to generic 'creature'
-      return entity.speciesId;
+      return { key: entity.speciesId };
     }
     if (this.isMineral(entity) && entity.resourceId) {
       // Strip _rare/_epic suffix to use base texture (rare/epic rendered larger via rarity scaling)
@@ -597,9 +599,9 @@ export class EntityRenderer {
       const variantCount = EntityRenderer.FEATURE_SPRITE_VARIANTS[baseResourceId];
       if (variantCount) {
         const variant = (EntityRenderer.hashEntityId(entity.id) % variantCount) + 1;
-        return `${baseResourceId}-v${variant}`;
+        return { key: `${baseResourceId}-v${variant}` };
       }
-      return baseResourceId;
+      return { key: baseResourceId };
     }
     if (this.isPlant(entity) && entity.speciesId) {
       // Strip _rare/_epic suffix to use base texture (rare/epic rendered larger via rarity scaling)
@@ -609,9 +611,9 @@ export class EntityRenderer {
       if (variantCount) {
         // Deterministic variant selection based on entity ID
         const variant = (EntityRenderer.hashEntityId(entity.id) % variantCount) + 1;
-        return `${baseSpeciesId}-v${variant}`;
+        return { key: `${baseSpeciesId}-v${variant}` };
       }
-      return baseSpeciesId;
+      return { key: baseSpeciesId };
     }
 
     // NPC sprites based on npcType
@@ -622,27 +624,38 @@ export class EntityRenderer {
       const spriteKey = `npc-${folderName}-s`;
       // Check if sprite exists, fall back to player if not
       if (this.scene.textures.exists(spriteKey)) {
-        return spriteKey;
+        return { key: spriteKey };
       }
-      return 'player-fallback';
+      return { key: 'player-fallback' };
+    }
+
+    // Ground items: use spritesheet frame if mapping exists
+    if (entity.type === 'item') {
+      const itemEntity = entity as ItemEntity;
+      const spriteInfo = getItemSprite(itemEntity.itemId);
+      if (spriteInfo) {
+        const sheetKey = `item-sheet-${spriteInfo.sheet.replace('.png', '')}`;
+        if (this.scene.textures.exists(sheetKey)) {
+          return { key: sheetKey, frame: spriteInfo.frame };
+        }
+      }
+      return { key: 'item' };
     }
 
     // Fall back to type-based texture
     switch (entity.type) {
       case 'creature':
-        return 'creature';
+        return { key: 'creature' };
       case 'mineral':
-        return 'mineral';
+        return { key: 'mineral' };
       case 'plant':
-        return 'plant';
+        return { key: 'plant' };
       case 'artifact':
-        return 'artifact';
-      case 'item':
-        return 'item';
+        return { key: 'artifact' };
       case 'npc':
-        return 'player-fallback';
+        return { key: 'player-fallback' };
       default:
-        return 'item';
+        return { key: 'item' };
     }
   }
 

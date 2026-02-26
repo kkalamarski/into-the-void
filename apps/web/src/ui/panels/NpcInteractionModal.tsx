@@ -8,6 +8,7 @@ import { gameSocket } from '../../network/socket';
 import { ItemRegistry, type ItemDefinition } from '@into-the-void/items';
 import type { InventoryEquipment } from '@into-the-void/shared-types';
 import { ItemTooltip } from '../../components/ItemTooltip';
+import { ItemIcon } from '../../components/ItemIcon';
 import { RARITY_COLORS } from '../constants';
 import './NpcInteractionModal.css';
 
@@ -120,13 +121,7 @@ const TradeTab: React.FC<TradeTabProps> = ({ npc, tradeError, setTradeError }) =
               return (
                 <div key={item.itemId} className={`npc-trade-item ${!canAfford ? 'cannot-afford' : ''}`}>
                   <ItemTooltip item={itemDef} equippedItem={equippedItemDef}>
-                    <div
-                      className="npc-trade-item-icon"
-                      style={{
-                        backgroundColor: `#${(itemDef?.color ?? 0x888888).toString(16).padStart(6, '0')}`,
-                        borderColor: rarityColor,
-                      }}
-                    />
+                    <ItemIcon itemId={item.itemId} fallbackColor={itemDef?.color ?? 0x888888} size={32} className="npc-trade-item-icon" style={{ borderColor: rarityColor }} />
                   </ItemTooltip>
                   <div className="npc-trade-item-info">
                     <span className="npc-trade-item-name" style={{ color: rarityColor }}>
@@ -165,13 +160,7 @@ const TradeTab: React.FC<TradeTabProps> = ({ npc, tradeError, setTradeError }) =
               return (
                 <div key={item.instanceId} className="npc-trade-item">
                   <ItemTooltip item={itemDef}>
-                    <div
-                      className="npc-trade-item-icon"
-                      style={{
-                        backgroundColor: `#${(itemDef?.color ?? 0x888888).toString(16).padStart(6, '0')}`,
-                        borderColor: rarityColor,
-                      }}
-                    />
+                    <ItemIcon itemId={item.itemId} fallbackColor={itemDef?.color ?? 0x888888} size={32} className="npc-trade-item-icon" style={{ borderColor: rarityColor }} />
                   </ItemTooltip>
                   <div className="npc-trade-item-info">
                     <span className="npc-trade-item-name" style={{ color: rarityColor }}>

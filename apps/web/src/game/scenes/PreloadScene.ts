@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { SHEET_DIMENSIONS } from '../../config/itemSpriteMap';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -63,6 +64,9 @@ export class PreloadScene extends Phaser.Scene {
 
     // Load feature sprites (plants, minerals, artifacts)
     this.loadFeatureSprites();
+
+    // Load item spritesheets (for ground items in game world)
+    this.loadItemSpritesheets();
 
     // Generate procedural textures for walls, formations, and entities
     this.generateTileTextures();
@@ -167,6 +171,19 @@ export class PreloadScene extends Phaser.Scene {
           `sprites/features/${folder}/variant_${v}.png`
         );
       }
+    }
+  }
+
+  private loadItemSpritesheets(): void {
+    // Load each item spritesheet so Phaser can render ground items with the correct frame.
+    // The sheet key is the filename without extension (e.g., 'exo-suits').
+    for (const [filename, dims] of Object.entries(SHEET_DIMENSIONS)) {
+      const key = `item-sheet-${filename.replace('.png', '')}`;
+      this.load.spritesheet(key, `sprites/items/${filename}`, {
+        frameWidth: 128,
+        frameHeight: 128,
+        endFrame: dims.cols * dims.rows - 1,
+      });
     }
   }
 

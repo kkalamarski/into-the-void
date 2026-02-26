@@ -428,8 +428,6 @@
 }
 
 .npc-trade-item-icon {
-  width: 32px;
-  height: 32px;
   border-radius: 4px;
   border: 2px solid;
   flex-shrink: 0;

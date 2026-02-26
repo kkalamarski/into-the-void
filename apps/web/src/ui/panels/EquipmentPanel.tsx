@@ -9,6 +9,7 @@ import { gameSocket } from '../../network/socket';
 import { ItemRegistry } from '@into-the-void/items';
 import { RARITY_COLORS, STAT_DISPLAY_ORDER } from '../constants';
 import { ItemTooltip } from '../../components/ItemTooltip';
+import { ItemIcon } from '../../components/ItemIcon';
 import { useDraggablePanel } from '../../hooks/useDraggablePanel';
 import type { InventoryItem } from '@into-the-void/shared-types';
 import {
@@ -48,9 +49,10 @@ interface EquipSlotProps {
 interface DraggableEquipItemProps {
   item: InventoryItem;
   onUnequip: (instanceId: string) => void;
+  iconSize?: number;
 }
 
-function DraggableEquipItem({ item, onUnequip }: DraggableEquipItemProps) {
+function DraggableEquipItem({ item, onUnequip, iconSize = 33 }: DraggableEquipItemProps) {
   const itemDef = ItemRegistry.get(item.itemId);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: item.instanceId,
@@ -80,13 +82,7 @@ function DraggableEquipItem({ item, onUnequip }: DraggableEquipItemProps) {
         {...listeners}
         onContextMenu={handleContextMenu}
       >
-        <div
-          className="slot-icon"
-          style={{
-            backgroundColor: `#${itemDef.color.toString(16).padStart(6, '0')}`,
-            borderColor: RARITY_COLORS[itemDef.rarity],
-          }}
-        />
+        <ItemIcon itemId={item.itemId} fallbackColor={itemDef.color} size={iconSize} className="slot-icon" style={{ borderColor: RARITY_COLORS[itemDef.rarity] }} />
       </div>
     </ItemTooltip>
   );
@@ -112,7 +108,7 @@ function EquipSlot({ slotId, label, item, disabled, onUnequip, size = 'normal' }
   return (
     <div ref={setNodeRef} className={slotClasses}>
       {item && onUnequip ? (
-        <DraggableEquipItem item={item} onUnequip={onUnequip} />
+        <DraggableEquipItem item={item} onUnequip={onUnequip} iconSize={size === 'large' ? 48 : 33} />
       ) : (
         <span className="equip-slot-label">{label}</span>
       )}

@@ -14,6 +14,7 @@ import { ItemRegistry } from '@into-the-void/items';
 import type { InventoryEquipment } from '@into-the-void/shared-types';
 import { RARITY_COLORS } from '../constants';
 import { ItemTooltip } from '../../components/ItemTooltip';
+import { ItemIcon } from '../../components/ItemIcon';
 import { useDraggablePanel } from '../../hooks/useDraggablePanel';
 import './InventoryPanel.css';
 
@@ -71,10 +72,7 @@ function SortableSlot({ instanceId, itemId, quantity, onContextMenu, equipment }
         {...listeners}
         onContextMenu={(e) => onContextMenu(e, instanceId, itemId)}
       >
-        <div
-          className="slot-icon"
-          style={{ backgroundColor: `#${itemDef.color.toString(16).padStart(6, '0')}` }}
-        />
+        <ItemIcon itemId={itemId} fallbackColor={itemDef.color} size={40} className="slot-icon" />
         {quantity > 1 && <span className="slot-quantity">{quantity}</span>}
       </div>
     </ItemTooltip>

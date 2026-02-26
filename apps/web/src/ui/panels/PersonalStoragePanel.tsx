@@ -5,6 +5,7 @@ import { gameSocket } from '../../network/socket';
 import { ItemRegistry } from '@into-the-void/items';
 import { RARITY_COLORS } from '../constants';
 import { ItemTooltip } from '../../components/ItemTooltip';
+import { ItemIcon } from '../../components/ItemIcon';
 import { useDraggablePanel } from '../../hooks/useDraggablePanel';
 import './PersonalStoragePanel.css';
 
@@ -84,10 +85,7 @@ export const PersonalStoragePanel: React.FC = () => {
                 className="storage-slot storage-slot--filled"
                 style={{ borderColor: RARITY_COLORS[itemDef.rarity] }}
               >
-                <div
-                  className="slot-icon"
-                  style={{ backgroundColor: `#${itemDef.color.toString(16).padStart(6, '0')}` }}
-                />
+                <ItemIcon itemId={item.itemId} fallbackColor={itemDef.color} size={40} className="slot-icon" />
                 {item.quantity > 1 && (
                   <span className="slot-quantity">{item.quantity}</span>
                 )}

@@ -161,15 +161,8 @@
 }
 
 .equip-slot--filled .slot-icon {
-  width: 75%;
-  height: 75%;
   border-radius: 3px;
   border: 2px solid transparent;
-}
-
-.equip-slot--large.equip-slot--filled .slot-icon {
-  width: 48px;
-  height: 48px;
 }
 
 .equip-slot--disabled {
