@@ -26,6 +26,7 @@ import { GatheringService } from './gathering.service';
 import { LoreService } from './lore.service';
 import { ZoneMasteryService } from './zone-mastery.service';
 import { ExpeditionService } from './expedition.service';
+import { ChatService } from './chat.service';
 import {
   ClientEvents,
   Direction,
@@ -93,6 +94,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly loreService: LoreService,
     private readonly zoneMasteryService: ZoneMasteryService,
     private readonly expeditionService: ExpeditionService,
+    private readonly chatService: ChatService,
   ) {}
 
   afterInit(server: Server) {
@@ -105,6 +107,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.loreService.setServer(server);
     this.zoneMasteryService.setServer(server);
     this.expeditionService.setServer(server);
+    this.chatService.setServer(server);
     this.playerService.setZoneStateProvider((zoneId) => this.gameService.getZoneState(zoneId));
     // Wire aggro checker to ZonesService for immediate aggro on creature respawn
     this.zonesService.setAggroChecker(this.aiService);
@@ -172,6 +175,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       if (result.success && result.player) {
         // Join player to 3x3 grid of zone rooms (current + 8 adjacent)
         this.updatePlayerRooms(client, result.player.position.zoneId);
+
+        // Join faction room for faction chat (CHAN-03)
+        if (result.player.faction !== 'neutral') {
+          client.join(`faction:${result.player.faction}`);
+        }
 
         const playerZoneId = result.player.position.zoneId;
         const zoneAlreadyActive = this.aiService.isZoneActive(playerZoneId);
@@ -433,32 +441,15 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     // Rate limit check (INFRA-03)
     if (!this.canSendChat(player.id)) return; // silently drop burst excess
 
-    const message = {
-      id: crypto.randomUUID(),
-      senderId: player.id,
-      senderName: player.name,
-      message: trimmed,
-      channel: data.channel,
-      timestamp: Date.now(),
-    };
-
-    switch (data.channel) {
-      case 'zone':
-        this.server.to(player.position.zoneId).emit('chat:message', message);
-        break;
-      case 'global':
-        this.server.emit('chat:message', message);
-        break;
-      case 'whisper':
-        if (data.targetId) {
-          const targetSocket = this.playerService.getSocketByPlayerId(data.targetId);
-          if (targetSocket) {
-            this.server.to(targetSocket).emit('chat:message', message);
-            client.emit('chat:message', message);
-          }
-        }
-        break;
-    }
+    // Delegate to ChatService for channel routing (CHAN-01 through CHAN-05)
+    await this.chatService.handleMessage(
+      client,
+      player.id,
+      player.name,
+      data.channel,
+      trimmed,
+      data.targetId,
+    );
   }
 
   @SubscribeMessage('ping')
@@ -1737,8 +1728,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
    * Leaves old rooms and joins new rooms based on current position.
    */
   private updatePlayerRooms(client: Socket, playerZoneId: string): void {
-    // Get current rooms (exclude socket ID default room)
-    const currentRooms = Array.from(client.rooms).filter(r => r !== client.id);
+    // Get current zone rooms only (exclude socket ID default room and non-zone rooms like faction:*)
+    const currentRooms = Array.from(client.rooms).filter(r => r !== client.id && r.startsWith('z_'));
 
     // Parse player zone coordinates (format: z_X_Y)
     const parts = playerZoneId.split('_');
