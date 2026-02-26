@@ -120,7 +120,7 @@
 | 104. Moderation Persistence | 0/TBD | Complete    | 2026-02-26 |
 | 105. ChatService & Channel Routing | 2/2 | Complete    | 2026-02-26 |
 | 106. Chat Panel UI | 2/2 | Complete    | 2026-02-26 |
-| 107. Moderation Controls | 0/2 | Not started | - |
+| 107. Moderation Controls | 1/2 | In Progress|  |
 
 ---
 
