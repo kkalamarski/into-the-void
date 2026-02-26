@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router';
 import { useAudioStore } from '../../store/audioStore';
 import { useUiSettingsStore } from '../../store/uiSettingsStore';
+import { useModalStack } from '../../hooks/useModalStack';
 import { gameSocket } from '../../network/socket';
 import './GameMenu.css';
 
@@ -16,6 +17,7 @@ type AudioChannel = 'master' | 'music' | 'effects' | 'ambient';
 
 export function GameMenu({ onClose }: GameMenuProps) {
   const navigate = useNavigate();
+  useModalStack('game-menu', onClose);
   const [activeTab, setActiveTab] = useState<Tab>('settings');
   const [confirming, setConfirming] = useState(false);
 

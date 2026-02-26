@@ -15,6 +15,9 @@ import '../store/loreStore'; // Side-effect: registers lore socket handlers
 import '../store/zoneMasteryStore'; // Side-effect: registers mastery socket handlers
 import { useActionBarStore } from '../store/actionBarStore';
 import { useNpcStore } from '../store/npcStore';
+import { useModalStackStore } from '../store/modalStackStore';
+import { useCombatStore } from '../store/combatStore';
+import { useAbilityStore } from '../store/abilityStore';
 import { gameSocket } from '../network/socket';
 import { HUD } from './hud/HUD';
 import { GameMenu } from './modals/GameMenu';
@@ -41,11 +44,41 @@ export const GameUI: React.FC = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        e.preventDefault();
-        setIsMenuOpen(prev => !prev);
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      e.preventDefault();
+
+      // Priority 1: Pop topmost modal from stack
+      const topModal = useModalStackStore.getState().peek();
+      if (topModal) {
+        useModalStackStore.getState().pop();
+        topModal.onClose();
+        return;
       }
+
+      // Priority 2: Clear in-game state one action per press
+      // 2a. Cancel active cast
+      if (useAbilityStore.getState().isCasting()) {
+        gameSocket.emit('cast:cancel');
+        return;
+      }
+
+      // 2b. Cancel active pathfinding
+      const game = useGameStore.getState().game;
+      const pathfindingController = game?.getWorldScene()?.getPathfindingController();
+      if (pathfindingController?.isPathActive()) {
+        pathfindingController.cancelPath();
+        return;
+      }
+
+      // 2c. Clear selected combat target
+      if (useCombatStore.getState().selectedTarget !== null) {
+        useCombatStore.getState().selectTarget(null);
+        return;
+      }
+
+      // Priority 3: Nothing to clear — open the game menu
+      setIsMenuOpen(true);
     };
     window.addEventListener('keydown', handleKeyDown, { capture: true });
     return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
