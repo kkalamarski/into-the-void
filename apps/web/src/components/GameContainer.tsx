@@ -137,9 +137,15 @@ const GameContainer: React.FC = () => {
         worldScene.loadZoneFromState(chunk, biome);
       }
     } else if (isZoneTransition) {
-      // ZONE TRANSITION: Just update chunks, don't re-render current zone
+      // ZONE TRANSITION: Notify WorldScene of zone change
       console.log('[GameContainer] Zone transition to', zoneId);
       worldScene.onPlayerZoneChanged(zoneId!, biome);
+
+      // For teleportation (hub transitions), fullZoneReset clears all chunks.
+      // Re-load the zone data from the zone:state event so tiles render.
+      if (chunk && chunk.tiles && chunk.tiles.length > 0) {
+        worldScene.loadZoneFromState(chunk, biome);
+      }
     }
 
     // CRITICAL: Set collision map for pathfinding and movement validation

@@ -177,8 +177,6 @@ export class EntityRenderer {
       scaleX = scale;
       scaleY = scale;
     }
-    const spriteHeight = BASE_SPRITE_HEIGHT * scaleY;
-
     // Blob shadow at ground level - skip for plants and minerals (performance optimization)
     if (!this.isPlant(entity) && !this.isMineral(entity)) {
       let shadowWidth = 60 * scale;
@@ -249,6 +247,11 @@ export class EntityRenderer {
     container.setData('entityScale', scale); // Store for UI positioning
     container.setData('entitySprite', sprite); // Store sprite reference for animation
 
+    // Compute actual visual sprite height for UI positioning
+    // sprite.height is the raw frame height; multiplied by scaleY gives screen pixels
+    const actualSpriteHeight = sprite.height * scaleY;
+    container.setData('actualSpriteHeight', actualSpriteHeight);
+
     // Store entity identity on container for click handling in WorldScene
     container.setData('entityId', entity.id);
     container.setData('entityType', entity.type);
@@ -265,9 +268,9 @@ export class EntityRenderer {
       container.setData('facing', 's'); // Default facing direction
     }
 
-    // UI positioning based on sprite height
-    // Sprite has origin(0.5, 1.0) at y=0, so sprite top is at y = -spriteHeight in container space
-    const uiBaseY = -spriteHeight;
+    // UI positioning based on actual sprite height (not BASE_SPRITE_HEIGHT)
+    // Sprite has origin(0.5, 1.0) at y=0, so sprite top is at y = -actualSpriteHeight in container space
+    const uiBaseY = -actualSpriteHeight - 20; // 20px padding above sprite top
     const { name: displayName, gated } = this.applyPerceptionGate(entity);
 
     // Creatures get WoW-style health bar with behavior icon and name inside
@@ -891,12 +894,12 @@ export class EntityRenderer {
 
     const markerContainer = this.scene.add.container(0, 0);
 
-    // Get entity scale for positioning
+    // Get actual sprite height for positioning (falls back to BASE_SPRITE_HEIGHT * scale)
     const scale = container.getData('entityScale') ?? 1.0;
-    const spriteHeight = BASE_SPRITE_HEIGHT * scale;
+    const actualHeight = (container.getData('actualSpriteHeight') as number) ?? BASE_SPRITE_HEIGHT * scale;
 
-    // Position above nameplate (sprite top is at -spriteHeight, marker goes 60px above that)
-    const markerY = -spriteHeight - 60;
+    // Position above nameplate (sprite top is at -actualHeight, marker goes 40px above that)
+    const markerY = -actualHeight - 40;
 
     // Try to use sprite, fall back to procedural graphics
     const textureKey = markerType === 'available'

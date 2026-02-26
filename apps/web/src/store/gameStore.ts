@@ -253,6 +253,9 @@ gameSocket.on('zone:state', (data: ZoneState) => {
         worldScene.spawnEntity(entity, zoneId);
       }
 
+      // Update entity collision positions for movement prediction
+      worldScene.updateEntityCollisionPositions();
+
       // Spawn other players (not ourselves)
       const currentPlayerId = currentPlayer?.id;
       for (const player of players) {
@@ -302,6 +305,7 @@ gameSocket.on('entity:spawn', (entity: Entity) => {
   const worldScene = game?.getWorldScene();
   if (worldScene) {
     worldScene.spawnEntity(entity);
+    worldScene.updateEntityCollisionPositions();
   }
   // Also add to entities array in store
   const entities = useGameStore.getState().entities;
@@ -314,6 +318,7 @@ gameSocket.on('entity:despawn', ({ entityId }: { entityId: string }) => {
   const worldScene = game?.getWorldScene();
   if (worldScene) {
     worldScene.despawnEntity(entityId);
+    worldScene.updateEntityCollisionPositions();
   }
   // Remove from entities array
   const entities = useGameStore.getState().entities;
@@ -326,6 +331,10 @@ gameSocket.on('entity:update', ({ entityId, changes }: { entityId: string; chang
   const worldScene = game?.getWorldScene();
   if (worldScene) {
     worldScene.updateEntity(entityId, changes);
+    // Update collision positions if entity moved
+    if ('position' in changes) {
+      worldScene.updateEntityCollisionPositions();
+    }
   }
   // Update entity in store
   const entities = useGameStore.getState().entities;
@@ -343,6 +352,8 @@ gameSocket.on('entity:batch', ({ updates }: { updates: Array<{ entityId: string;
     for (const { entityId, changes } of updates) {
       worldScene.updateEntity(entityId, changes);
     }
+    // Batch updates often contain position changes (creature movement)
+    worldScene.updateEntityCollisionPositions();
   }
 });
 

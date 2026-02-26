@@ -13,10 +13,19 @@ export class MovementController {
   private pendingInputs: PendingInput[] = [];
   private inputSequence = 0;
   private collisionMap: boolean[][] | null = null;
+  private entityPositions: Set<string> = new Set(); // "zoneId:x,y" keys for entity blocking
   private onPositionUpdate: ((position: Position, reconciling: boolean) => void) | null = null;
 
   setCollisionMap(map: boolean[][]): void {
     this.collisionMap = map;
+  }
+
+  /**
+   * Update the set of entity-occupied positions for client-side collision prediction.
+   * Keys are "zoneId:x,y" strings matching entity grid positions.
+   */
+  setEntityPositions(positions: Set<string>): void {
+    this.entityPositions = positions;
   }
 
   setPositionUpdateHandler(handler: (position: Position, reconciling: boolean) => void): void {
@@ -27,14 +36,17 @@ export class MovementController {
     const player = useGameStore.getState().player;
     if (!player) return;
 
-    // Check collision map before predicting (basic client-side validation)
-    if (this.collisionMap) {
-      const newPos = calculateNewPosition(player.position, direction);
-      // Only validate if staying in same zone (zone transitions handled by server)
-      if (newPos.zoneId === player.position.zoneId) {
-        if (this.collisionMap[newPos.y]?.[newPos.x]) {
-          return; // Blocked, don't predict or send
-        }
+    // Check collision map and entity positions before predicting (client-side validation)
+    const newPos = calculateNewPosition(player.position, direction);
+    // Only validate if staying in same zone (zone transitions handled by server)
+    if (newPos.zoneId === player.position.zoneId) {
+      if (this.collisionMap && this.collisionMap[newPos.y]?.[newPos.x]) {
+        return; // Blocked by terrain, don't predict or send
+      }
+      // Check entity blocking (EBLK-01 client prediction)
+      const posKey = `${newPos.zoneId}:${newPos.x},${newPos.y}`;
+      if (this.entityPositions.has(posKey)) {
+        return; // Blocked by entity, don't predict or send
       }
     }
 
