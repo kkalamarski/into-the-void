@@ -116,7 +116,7 @@
 |-------|----------------|--------|-----------|
 | 103. Chat Foundation | 2/2 | Complete    | 2026-02-26 |
 | 104. Moderation Persistence | 0/TBD | Complete    | 2026-02-26 |
-| 105. ChatService & Channel Routing | 0/TBD | Not started | - |
+| 105. ChatService & Channel Routing | 1/2 | In Progress|  |
 | 106. Chat Panel UI | 0/TBD | Not started | - |
 | 107. Moderation Controls | 0/TBD | Not started | - |
 

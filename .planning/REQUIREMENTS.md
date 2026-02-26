@@ -16,11 +16,11 @@ Requirements for In-Game Chat milestone. Each maps to roadmap phases.
 
 ### Channels
 
-- [ ] **CHAN-01**: User can send and receive messages in zone-wide chat
-- [ ] **CHAN-02**: User can send and receive messages in global (server-wide) chat
-- [ ] **CHAN-03**: User can send and receive messages in faction-only chat
-- [ ] **CHAN-04**: User can send and receive messages in local (proximity) chat to nearby players
-- [ ] **CHAN-05**: User can send and receive private whisper messages to/from a specific player
+- [x] **CHAN-01**: User can send and receive messages in zone-wide chat
+- [x] **CHAN-02**: User can send and receive messages in global (server-wide) chat
+- [x] **CHAN-03**: User can send and receive messages in faction-only chat
+- [x] **CHAN-04**: User can send and receive messages in local (proximity) chat to nearby players
+- [x] **CHAN-05**: User can send and receive private whisper messages to/from a specific player
 
 ### Chat UI
 
@@ -73,11 +73,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-02 | Phase 103 | Complete |
 | INFRA-03 | Phase 103 | Complete |
 | INFRA-04 | Phase 103 | Complete |
-| CHAN-01 | Phase 105 | Pending |
-| CHAN-02 | Phase 105 | Pending |
-| CHAN-03 | Phase 105 | Pending |
-| CHAN-04 | Phase 105 | Pending |
-| CHAN-05 | Phase 105 | Pending |
+| CHAN-01 | Phase 105 | Complete |
+| CHAN-02 | Phase 105 | Complete |
+| CHAN-03 | Phase 105 | Complete |
+| CHAN-04 | Phase 105 | Complete |
+| CHAN-05 | Phase 105 | Complete |
 | UI-01 | Phase 106 | Pending |
 | UI-02 | Phase 106 | Pending |
 | UI-03 | Phase 106 | Pending |
