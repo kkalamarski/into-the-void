@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: In-Game Chat
 status: unknown
-last_updated: "2026-02-26T20:18:49.882Z"
+last_updated: "2026-02-26T20:31:00.000Z"
 progress:
   total_phases: 107
-  completed_phases: 104
+  completed_phases: 105
   total_plans: 273
-  completed_plans: 272
+  completed_plans: 273
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: 105 of 107 (ChatService Channel Routing)
-Plan: 1 of 2 complete
-Status: In Progress
-Last activity: 2026-02-26 — 105-01 completed (ChatService with five-channel routing)
+Plan: 2 of 2 complete
+Status: Phase Complete
+Last activity: 2026-02-26 — 105-02 completed (ChatService wired into GameGateway, faction rooms, updatePlayerRooms fix)
 
-Progress: [████░░░░░░] 40%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
@@ -37,6 +37,7 @@ Progress: [████░░░░░░] 40%
 - Total execution time: ~13 hours across 21 milestones
 
 **Recent Plans:**
+- 105-02 (2026-02-26, 6min, 2 tasks, 2 files): ChatService wired into GameGateway, faction rooms joined on auth, updatePlayerRooms fixed
 - 105-01 (2026-02-26, 8min, 2 tasks, 2 files): ChatService with five-channel routing (zone/global/faction/local/whisper)
 - 104-02 (2026-02-26, 5min, 2 tasks, 5 files): NestJS REST moderation module with CRUD endpoints
 - 104-01 (2026-02-26, 8min, 2 tasks, 5 files): mute/block DB schema tables + query functions
@@ -63,6 +64,8 @@ Recent decisions affecting current work:
 - [105-01]: FactionId type uses 'neutral' (not 'unaffiliated') — neutral faction excluded from faction chat
 - [105-01]: ChatService follows setServer() pattern; sendLocal uses getPlayersInZone + isPositionVisible loop
 - [Phase 105]: Whisper to offline player produces silent failure — RESOLVED 105-01 with system message to sender
+- [105-02]: updatePlayerRooms filters to z_ prefix only — faction rooms are join-once on auth and never evicted during zone transitions
+- [105-02]: Validation and rate limiting stay in gateway; only routing delegated to ChatService
 
 ### Pending Todos
 
@@ -72,15 +75,15 @@ None.
 
 - ~~[Phase 103]: `chat:message` missing from `serverEvents` in `apps/web/src/network/socket.ts`~~ RESOLVED 103-01
 - ~~[Phase 103]: Phaser WASD capture when chat input focused~~ RESOLVED 103-01
-- [Phase 105]: `updatePlayerRooms()` on zone transition may evict faction Socket.IO room — verify and preserve in Phase 105
+- ~~[Phase 105]: `updatePlayerRooms()` on zone transition may evict faction Socket.IO room~~ RESOLVED 105-02
 - ~~[Phase 105]: Whisper to offline player produces silent failure~~ RESOLVED 105-01
 
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 105-01-PLAN.md (ChatService with five-channel routing)
+Stopped at: Completed 105-02-PLAN.md (ChatService wired into GameGateway, faction rooms, updatePlayerRooms fix)
 Resume file: None
-Next action: Execute 105-02 (wire ChatService into GameGateway, faction room join/preserve)
+Next action: Execute Phase 106 (next phase in roadmap)
 
 ---
-*Last updated: 2026-02-26 — 105-01 completed*
+*Last updated: 2026-02-26 — 105-02 completed*
