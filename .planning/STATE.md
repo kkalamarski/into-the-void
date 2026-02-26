@@ -10,19 +10,19 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 
 ## Current Position
 
-Phase: 96 of 98 (Home Recall Ability) - COMPLETE
-Plan: 01 of 01 completed
-Status: Phase Complete
-Last activity: 2026-02-26 — Completed Phase 96 (home recall ability)
+Phase: 97 of 98 (Action Bar UX Enhancement) - IN PROGRESS
+Plan: 01 of 02 completed
+Status: Active
+Last activity: 2026-02-26 — Completed 97-01 (click-to-trigger and shift-drag)
 
-Progress: [█████████████████████████████████████████████░░░] 98% (252/256 plans)
+Progress: [█████████████████████████████████████████████░░░] 99% (253/256 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 252 (v1.0-v1.19 complete, v1.20 in progress)
+- Total plans completed: 253 (v1.0-v1.19 complete, v1.20 in progress)
 - Average duration: ~3 min per plan
-- Total execution time: ~12.6 hours across 19 milestones
+- Total execution time: ~12.65 hours across 19 milestones
 
 **Recent Milestones:**
 - v1.19 Deployment & CI/CD: 5 phases (89-93) completed 2026-02-24
@@ -32,7 +32,7 @@ Progress: [███████████████████████
 **v1.20 Status:**
 - Phases: 5 (94-98)
 - Plans: 9 total (2+2+1+2+2)
-- Status: Phase 96 complete (1/1 plans), Phase 97 next
+- Status: Phase 96 complete (1/1 plans), Phase 97 in progress (1/2 plans)
 
 *Updated after each plan completion*
 
@@ -58,6 +58,7 @@ Recent decisions affecting current work:
 - [Phase 95]: Expedition NPC at (32,25) north of portal; Biome tiers I-IV per lore; Level gates 1/10/25/40
 - [Phase 95-02]: Expanding ring search for biomes from origin; Tier colors green(I)->yellow(II)->orange(III)->red(IV)
 - [Phase 96-01]: Cooldown persistence threshold 1 minute; home_recall has no energy cost; universal abilities injected in getPlayerAbilities()
+- [Phase 97-01]: Click-to-trigger uses isDragging guard; Shift+drag for slot relocation; activatorEvent.shiftKey for modifier detection
 
 ### Pending Todos
 
@@ -70,9 +71,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed Phase 96 (home recall ability)
+Stopped at: Completed 97-01 (click-to-trigger and shift-drag)
 Resume file: None
-Next action: Plan Phase 97 (action bar UX enhancement)
+Next action: Execute 97-02 (abilities panel drag-to-assign)
 
 ---
-*Last updated: 2026-02-26 — Completed Phase 96 Home Recall Ability*
+*Last updated: 2026-02-26 — Completed 97-01 Action Bar Click & Shift-Drag*
