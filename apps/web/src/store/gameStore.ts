@@ -5,6 +5,7 @@ import { gameSocket } from '../network/socket';
 import { useEntityStore } from './entityStore';
 import { useAlertStore } from './alertStore';
 import { audioManager } from '../utils/audio';
+import { useChatStore } from './chatStore';
 
 export interface DiscoveredResource {
   entityId: string;
@@ -77,11 +78,6 @@ interface GameState {
   isQuestLogOpen: boolean;
   toggleQuestLog: () => void;
 
-  // Chat
-  chatMessages: ChatMessage[];
-  addChatMessage: (message: ChatMessage) => void;
-  clearChat: () => void;
-
   // Discovered resources (rare nodes)
   discoveredResources: DiscoveredResource[];
   setDiscoveredResources: (resources: DiscoveredResource[]) => void;
@@ -148,14 +144,6 @@ export const useGameStore = create<GameState>((set) => ({
   // Quest log
   isQuestLogOpen: false,
   toggleQuestLog: () => set((state) => ({ isQuestLogOpen: !state.isQuestLogOpen })),
-
-  // Chat
-  chatMessages: [],
-  addChatMessage: (message) =>
-    set((state) => ({
-      chatMessages: [...state.chatMessages.slice(-99), message],
-    })),
-  clearChat: () => set({ chatMessages: [] }),
 
   // Discovered resources
   discoveredResources: [],
@@ -404,7 +392,7 @@ gameSocket.on('player:death', ({ playerId, killerId, position }: { playerId: str
       channel: 'system',
       timestamp: Date.now(),
     };
-    useGameStore.getState().addChatMessage(chatMessage);
+    useChatStore.getState().addMessage(chatMessage);
     // Disable movement in WorldScene
     if (worldScene) {
       worldScene.handlePlayerDeath();
@@ -444,7 +432,7 @@ gameSocket.on('player:respawn', ({ playerId, position, health, maxHealth }: { pl
       channel: 'system',
       timestamp: Date.now(),
     };
-    useGameStore.getState().addChatMessage(chatMessage);
+    useChatStore.getState().addMessage(chatMessage);
     // Re-enable movement and update position
     if (worldScene) {
       worldScene.handlePlayerRespawn(position);
@@ -518,12 +506,7 @@ gameSocket.on('error', ({ code, message }: { code: string; message: string }) =>
     channel: 'system',
     timestamp: Date.now(),
   };
-  useGameStore.getState().addChatMessage(chatMessage);
-});
-
-// Listen for chat messages from server
-gameSocket.on('chat:message', (message: ChatMessage) => {
-  useGameStore.getState().addChatMessage(message);
+  useChatStore.getState().addMessage(chatMessage);
 });
 
 // Listen for credits updates (from trading)
@@ -559,7 +542,7 @@ gameSocket.on('player:xp', (data: { playerId: string; xp: number; xpToNextLevel:
         channel: 'system',
         timestamp: Date.now(),
       };
-      useGameStore.getState().addChatMessage(chatMessage);
+      useChatStore.getState().addMessage(chatMessage);
     }
   }
 });
