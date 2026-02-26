@@ -148,7 +148,7 @@ Plans:
 
 Plans:
 - [x] 98-01-PLAN.md — Second action bar component with Shift+1-8 bindings
-- [ ] 98-02-PLAN.md — HUD reorganization (shortcuts to bottom-right)
+- [x] 98-02-PLAN.md — HUD reorganization (shortcuts to bottom-right)
 
 ---
 
