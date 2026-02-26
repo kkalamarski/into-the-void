@@ -107,6 +107,8 @@ class GameSocket {
       'npc:quest-markers',
       'gathering:challenge',
       'gathering:result',
+      'cast:start',
+      'cast:interrupt',
     ];
 
     for (const event of serverEvents) {
