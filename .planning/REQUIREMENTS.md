@@ -17,7 +17,7 @@ Requirements for UI Polish & Audio milestone. Each maps to roadmap phases.
 
 - [x] **AUD-01**: Background music plays on a continuous gapless loop
 - [x] **AUD-02**: Music starts after first user interaction (autoplay policy compliance)
-- [ ] **AUD-03**: Level-up event plays the quest-complete sound effect
+- [x] **AUD-03**: Level-up event plays the quest-complete sound effect
 - [x] **AUD-04**: Music, effects, and ambient volumes are independently adjustable
 
 ### Game Menu & Settings
@@ -58,7 +58,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ESC-03 | Phase 102 | Pending |
 | AUD-01 | Phase 100 | Complete |
 | AUD-02 | Phase 100 | Complete |
-| AUD-03 | Phase 100 | Pending |
+| AUD-03 | Phase 100 | Complete |
 | AUD-04 | Phase 100 | Complete |
 | MENU-01 | Phase 101 | Pending |
 | MENU-02 | Phase 101 | Pending |

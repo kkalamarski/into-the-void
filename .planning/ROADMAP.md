@@ -39,7 +39,7 @@
 **Milestone Goal:** Add game menu, audio system, settings persistence, and fix entity rendering so players have polished controls and auditory feedback.
 
 - [x] **Phase 99: Entity Rendering Fix** - Anchor entities at tile base to eliminate floating sprites on elevated terrain (2026-02-26)
-- [ ] **Phase 100: Audio Foundation** - Wire up background music loop, level-up sound, and per-category volume via audioStore
+- [x] **Phase 100: Audio Foundation** - Wire up background music loop, level-up sound, and per-category volume via audioStore (completed 2026-02-26)
 - [ ] **Phase 101: Game Menu & Settings** - Game menu overlay with audio sliders, secondary bar toggle, and logout
 - [ ] **Phase 102: ESC Centralization** - Single ESC handler closes modals LIFO then opens game menu when stack empty
 
@@ -99,7 +99,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 99. Entity Rendering Fix | 0/1 | Planned | - |
-| 100. Audio Foundation | 1/2 | In Progress|  |
+| 100. Audio Foundation | 2/2 | Complete   | 2026-02-26 |
 | 101. Game Menu & Settings | 0/TBD | Not started | - |
 | 102. ESC Centralization | 0/TBD | Not started | - |
 

@@ -7,8 +7,8 @@ last_updated: "2026-02-26"
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 2
+  completed_plans: 2
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: 100 of 102 (Audio Foundation)
-Plan: 1 of TBD
+Plan: 2 of TBD
 Status: Executing
-Last activity: 2026-02-26 — Phase 100 Plan 01 (AudioManager + audioStore foundation) complete
+Last activity: 2026-02-26 — Phase 100 Plan 02 (AudioManager integration into game lifecycle + SFX assets) complete
 
-Progress: [███░░░░░░░] 25%
+Progress: [████░░░░░░] 30%
 
 ## Performance Metrics
 
@@ -48,6 +48,9 @@ Progress: [███░░░░░░░] 25%
 Decisions are logged in PROJECT.md Key Decisions table.
 
 Recent decisions affecting v1.21:
+- Audio 100-02: SFX assets synthesized with ffmpeg (no auth-free download sources available)
+- Audio 100-02: combat:damage SFX plays for all received events (not just local player), server already filters by zone
+- Audio 100-02: statsStore audioManager.playEffect safe inside immer set() callback (fire-and-forget, no state mutation)
 - Audio 100-01: AudioContext created synchronously in init() before any await (Safari gesture requirement)
 - Audio 100-01: Lazy require() in syncVolumesFromStore() breaks audioStore<->audioManager circular dep
 - Audio 100-01: musicStarted boolean guard prevents music restart on zone transitions; stopMusic() resets it
@@ -72,9 +75,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 100-01-PLAN.md (AudioManager + audioStore)
+Stopped at: Completed 100-02-PLAN.md (AudioManager integration + SFX assets)
 Resume file: None
-Next action: Execute 100-02 (callers migration — fix playQuestCompleteSound in questStore.ts)
+Next action: Execute next plan in Phase 100 if any, or advance to Phase 101
 
 ---
-*Last updated: 2026-02-26 — Phase 100 Plan 01 complete*
+*Last updated: 2026-02-26 — Phase 100 Plan 02 complete*
