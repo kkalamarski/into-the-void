@@ -124,8 +124,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 97-01-PLAN.md — Click-to-trigger and shift+drag relocation
-- [ ] 97-02-PLAN.md — Drag from panel and remove by drop-outside
+- [x] 97-01-PLAN.md — Click-to-trigger and shift+drag relocation
+- [x] 97-02-PLAN.md — Drag from panel and remove by drop-outside
 
 ---
 
@@ -255,10 +255,10 @@ Phases execute in numeric order: 94 → 95 → 96 → 97 → 98
 | 94. World Scale Tuning | v1.20 | 2/2 | Complete | 2026-02-26 |
 | 95. Expedition Travel | v1.20 | 2/2 | Complete | 2026-02-26 |
 | 96. Home Recall Ability | v1.20 | 1/1 | Complete | 2026-02-26 |
-| 97. Action Bar UX Enhancement | v1.20 | 0/2 | Not started | - |
+| 97. Action Bar UX Enhancement | v1.20 | 2/2 | Complete | 2026-02-26 |
 | 98. Second Action Bar | v1.20 | 0/2 | Not started | - |
 
-**Total:** 98 phases (96 complete, 2 pending)
+**Total:** 98 phases (97 complete, 1 pending)
 
 ---
-*Last updated: 2026-02-26 - Phase 96 complete*
+*Last updated: 2026-02-26 - Phase 97 complete*
