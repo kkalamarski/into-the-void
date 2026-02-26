@@ -536,3 +536,76 @@
   color: var(--color-text-secondary);
   font-style: italic;
 }
+
+/* Expedition tab styles */
+.npc-expedition-tab {
+  padding: 8px;
+}
+
+.npc-expedition-info {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.npc-expedition-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.npc-expedition-destination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border, #333);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.npc-expedition-destination:hover:not(.locked):not(:disabled) {
+  background: var(--color-bg-hover, #2a2a2a);
+  border-color: var(--color-accent);
+}
+
+.npc-expedition-destination.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.npc-expedition-destination:disabled {
+  cursor: not-allowed;
+}
+
+.dest-name {
+  font-weight: 500;
+  flex: 1;
+}
+
+.dest-tier {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--color-bg-tertiary);
+  margin: 0 12px;
+}
+
+.npc-expedition-destination.tier-1 .dest-tier { color: #88cc88; }
+.npc-expedition-destination.tier-2 .dest-tier { color: #cccc44; }
+.npc-expedition-destination.tier-3 .dest-tier { color: #cc8844; }
+.npc-expedition-destination.tier-4 .dest-tier { color: #cc4444; }
+
+.dest-locked {
+  font-size: 12px;
+  color: var(--color-error, #cc4444);
+}
+
+.dest-available {
+  font-size: 12px;
+  color: var(--color-success, #44cc44);
+}

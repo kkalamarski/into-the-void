@@ -25,6 +25,7 @@ const SERVICE_LABELS: Record<string, string> = {
   storage: 'Storage',
   transport: 'Travel',
   medical: 'Heal',
+  expedition: 'Expeditions',
 };
 
 // Helper to get equipped item for a slot
@@ -201,10 +202,11 @@ const TradeTab: React.FC<TradeTabProps> = ({ npc, tradeError, setTradeError }) =
 };
 
 export const NpcInteractionModal: React.FC = () => {
-  const { interactingNpc, closeInteraction, activeTab, setActiveTab, tradeError, setTradeError, acceptQuest, completeQuestAtNpc } = useNpcStore();
+  const { interactingNpc, closeInteraction, activeTab, setActiveTab, tradeError, setTradeError, acceptQuest, completeQuestAtNpc, startExpedition } = useNpcStore();
   const tradePending = useNpcStore(state => state.tradePending);
   const questPending = useNpcStore(state => state.questPending);
-  const isPending = tradePending || questPending;
+  const expeditionPending = useNpcStore(state => state.expeditionPending);
+  const isPending = tradePending || questPending || expeditionPending;
   const { position, isDragging, handleMouseDown } = useDraggablePanel();
 
   // Clear any stuck movement keys when modal opens
@@ -231,10 +233,12 @@ export const NpcInteractionModal: React.FC = () => {
     };
   }, [closeInteraction, isPending]);
 
-  // Default to quests tab if NPC has ready or available quests
+  // Default to appropriate tab based on NPC type
   useEffect(() => {
     if (interactingNpc) {
-      if (interactingNpc.readyQuests?.length || interactingNpc.availableQuests?.length) {
+      if (interactingNpc.serviceType === 'expedition' && interactingNpc.expeditionDestinations?.length) {
+        setActiveTab('expedition');
+      } else if (interactingNpc.readyQuests?.length || interactingNpc.availableQuests?.length) {
         setActiveTab('quests');
       } else {
         setActiveTab('dialogue');
@@ -256,6 +260,10 @@ export const NpcInteractionModal: React.FC = () => {
   const hasQuests = interactingNpc.availableQuests?.length ||
                     interactingNpc.activeQuests?.length ||
                     interactingNpc.readyQuests?.length;
+
+  // Check if NPC has expedition destinations
+  const hasExpeditions = interactingNpc.serviceType === 'expedition' &&
+                         interactingNpc.expeditionDestinations?.length;
 
   // Render quests tab content
   const renderQuestsTab = () => {
@@ -322,6 +330,41 @@ export const NpcInteractionModal: React.FC = () => {
     );
   };
 
+  // Render expedition tab content
+  const renderExpeditionTab = () => {
+    if (!hasExpeditions) return <p className="npc-empty-message">No expeditions available.</p>;
+
+    // Group destinations by tier
+    const tierNames = ['I', 'II', 'III', 'IV'];
+
+    return (
+      <div className="npc-expedition-tab">
+        <p className="npc-expedition-info">
+          Select a biome to explore. Higher tier zones offer better rewards but require more experience.
+        </p>
+        <div className="npc-expedition-list">
+          {interactingNpc.expeditionDestinations?.map((dest) => (
+            <button
+              key={dest.biome}
+              className={`npc-expedition-destination tier-${dest.tier} ${dest.locked ? 'locked' : ''}`}
+              disabled={dest.locked || expeditionPending}
+              onClick={() => startExpedition(dest.biome)}
+            >
+              <span className="dest-name">{dest.displayName}</span>
+              <span className="dest-tier">Tier {tierNames[dest.tier - 1]}</span>
+              {dest.locked ? (
+                <span className="dest-locked">Requires Level {dest.requiredLevel}</span>
+              ) : (
+                <span className="dest-available">Available</span>
+              )}
+              {expeditionPending && <span className="spinner-small" />}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   // Render action buttons based on NPC type
   const renderActionButtons = () => {
     if (!interactingNpc) return null;
@@ -341,6 +384,17 @@ export const NpcInteractionModal: React.FC = () => {
         const serviceLabel = interactingNpc.serviceType
           ? SERVICE_LABELS[interactingNpc.serviceType] ?? 'Service'
           : 'Service';
+        // Expedition service uses tabs, not action buttons
+        if (interactingNpc.serviceType === 'expedition') {
+          return (
+            <button
+              className="npc-action-btn npc-action-btn--primary"
+              onClick={() => setActiveTab('expedition')}
+            >
+              View Expeditions
+            </button>
+          );
+        }
         return (
           <button
             className="npc-action-btn npc-action-btn--primary"
@@ -417,8 +471,8 @@ export const NpcInteractionModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Tab navigation - only show if trader or has quests */}
-        {(interactingNpc.npcType === 'trader' || hasQuests) && (
+        {/* Tab navigation - only show if trader, has quests, or has expeditions */}
+        {(interactingNpc.npcType === 'trader' || hasQuests || hasExpeditions) && (
           <div className="npc-tabs">
             <button
               className={`npc-tab ${activeTab === 'dialogue' ? 'npc-tab--active' : ''}`}
@@ -442,6 +496,14 @@ export const NpcInteractionModal: React.FC = () => {
                 Quests {interactingNpc.availableQuests?.length ? `(${interactingNpc.availableQuests.length})` : ''}
               </button>
             )}
+            {hasExpeditions && (
+              <button
+                className={`npc-tab ${activeTab === 'expedition' ? 'npc-tab--active' : ''}`}
+                onClick={() => setActiveTab('expedition')}
+              >
+                Expeditions
+              </button>
+            )}
           </div>
         )}
 
@@ -458,6 +520,7 @@ export const NpcInteractionModal: React.FC = () => {
         )}
         {activeTab === 'trade' && <TradeTab npc={interactingNpc} tradeError={tradeError} setTradeError={setTradeError} />}
         {activeTab === 'quests' && renderQuestsTab()}
+        {activeTab === 'expedition' && renderExpeditionTab()}
       </div>
       </div>
     </div>

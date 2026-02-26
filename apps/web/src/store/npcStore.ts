@@ -23,6 +23,14 @@ interface ReadyQuestInfo {
   displayName: string;
 }
 
+export interface ExpeditionDestination {
+  biome: string;
+  displayName: string;
+  tier: number;
+  requiredLevel: number;
+  locked: boolean;
+}
+
 export interface NpcInteraction {
   npcId: string;
   displayName: string;
@@ -33,29 +41,34 @@ export interface NpcInteraction {
   color: number;
   // Type-specific fields (optional):
   inventory?: Array<{ itemId: string; buyPrice: number; sellPrice: number; stock: number }>;
-  serviceType?: 'repair' | 'storage' | 'transport' | 'medical';
+  serviceType?: 'repair' | 'storage' | 'transport' | 'medical' | 'expedition';
   title?: string;
   role?: string;
   // Quest-related fields (optional):
   availableQuests?: QuestPreview[];
   activeQuests?: ActiveQuestInfo[];
   readyQuests?: ReadyQuestInfo[];
+  // Expedition-related fields (optional):
+  expeditionDestinations?: ExpeditionDestination[];
 }
 
 interface NpcState {
   interactingNpc: NpcInteraction | null;
-  activeTab: 'dialogue' | 'trade' | 'quests';
+  activeTab: 'dialogue' | 'trade' | 'quests' | 'expedition';
   tradeError: string | null;
   tradePending: boolean;
   questPending: boolean;
+  expeditionPending: boolean;
   setInteractingNpc: (npc: NpcInteraction | null) => void;
   closeInteraction: () => void;
-  setActiveTab: (tab: 'dialogue' | 'trade' | 'quests') => void;
+  setActiveTab: (tab: 'dialogue' | 'trade' | 'quests' | 'expedition') => void;
   setTradeError: (error: string | null) => void;
   setTradePending: (pending: boolean) => void;
   setQuestPending: (pending: boolean) => void;
+  setExpeditionPending: (pending: boolean) => void;
   acceptQuest: (questId: string) => void;
   completeQuestAtNpc: (questId: string) => void;
+  startExpedition: (biome: string) => void;
 }
 
 export const useNpcStore = create<NpcState>((set) => ({
@@ -64,6 +77,7 @@ export const useNpcStore = create<NpcState>((set) => ({
   tradeError: null,
   tradePending: false,
   questPending: false,
+  expeditionPending: false,
   setInteractingNpc: (npc) => set({ interactingNpc: npc }),
   closeInteraction: () => set({
     interactingNpc: null,
@@ -71,11 +85,13 @@ export const useNpcStore = create<NpcState>((set) => ({
     tradeError: null,
     tradePending: false,
     questPending: false,
+    expeditionPending: false,
   }),
   setActiveTab: (tab) => set({ activeTab: tab }),
   setTradeError: (error) => set({ tradeError: error }),
   setTradePending: (pending) => set({ tradePending: pending }),
   setQuestPending: (pending) => set({ questPending: pending }),
+  setExpeditionPending: (pending) => set({ expeditionPending: pending }),
   acceptQuest: (questId: string) => {
     set({ questPending: true });
     gameSocket.emit('quest:accept', { questId });
@@ -83,6 +99,10 @@ export const useNpcStore = create<NpcState>((set) => ({
   completeQuestAtNpc: (questId: string) => {
     set({ questPending: true });
     gameSocket.emit('quest:complete', { questId });
+  },
+  startExpedition: (biome: string) => {
+    set({ expeditionPending: true });
+    gameSocket.emit('expedition:start', { biome });
   },
 }));
 
@@ -114,4 +134,10 @@ gameSocket.on('quest:completed', () => {
 gameSocket.on('quest:error', (data: { message: string }) => {
   useAlertStore.getState().addAlert(data.message, 'error');
   useNpcStore.getState().setQuestPending(false);
+});
+
+// Listen for expedition:complete - reset pending state and close modal on success
+gameSocket.on('expedition:complete', () => {
+  useNpcStore.getState().setExpeditionPending(false);
+  useNpcStore.getState().closeInteraction();
 });
