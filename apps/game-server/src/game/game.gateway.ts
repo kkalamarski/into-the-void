@@ -742,7 +742,10 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       data.abilityId,
       data.targetEntityId,
     );
-    console.log('[ability:use] Result:', { success: result.success, error: result.error });
+    console.log('[ability:use] Result:', { success: result.success, error: result.error, casting: result.casting });
+
+    // If a cast started, don't emit ability:result yet — completeCast will emit it when done
+    if (result.casting) return;
 
     // Send result to the player who used the ability
     client.emit('ability:result', {

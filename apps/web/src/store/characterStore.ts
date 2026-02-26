@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface CharacterState {
   selectedCharacterId: string | null;
@@ -6,8 +7,18 @@ interface CharacterState {
   clearSelection: () => void;
 }
 
-export const useCharacterStore = create<CharacterState>((set) => ({
-  selectedCharacterId: null,
-  selectCharacter: (id) => set({ selectedCharacterId: id }),
-  clearSelection: () => set({ selectedCharacterId: null }),
-}));
+export const useCharacterStore = create<CharacterState>()(
+  persist(
+    (set) => ({
+      selectedCharacterId: null,
+      selectCharacter: (id) => set({ selectedCharacterId: id }),
+      clearSelection: () => set({ selectedCharacterId: null }),
+    }),
+    {
+      name: 'character-storage',
+      partialize: (state) => ({
+        selectedCharacterId: state.selectedCharacterId,
+      }),
+    }
+  )
+);
