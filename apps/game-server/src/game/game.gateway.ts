@@ -25,6 +25,7 @@ import { DiscoveryService } from './discovery.service';
 import { GatheringService } from './gathering.service';
 import { LoreService } from './lore.service';
 import { ZoneMasteryService } from './zone-mastery.service';
+import { ExpeditionService } from './expedition.service';
 import {
   ClientEvents,
   Direction,
@@ -36,6 +37,7 @@ import {
   Npc,
   Mineral,
   Plant,
+  BiomeType,
 } from '@into-the-void/shared-types';
 import { computeCharStats } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
@@ -76,6 +78,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly gatheringService: GatheringService,
     private readonly loreService: LoreService,
     private readonly zoneMasteryService: ZoneMasteryService,
+    private readonly expeditionService: ExpeditionService,
   ) {}
 
   afterInit(server: Server) {
@@ -87,10 +90,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.questService.setServer(server);
     this.loreService.setServer(server);
     this.zoneMasteryService.setServer(server);
+    this.expeditionService.setServer(server);
     this.playerService.setZoneStateProvider((zoneId) => this.gameService.getZoneState(zoneId));
     // Wire aggro checker to ZonesService for immediate aggro on creature respawn
     this.zonesService.setAggroChecker(this.aiService);
-    console.log('[GameGateway] WebSocket server initialized, ZonesService, AiService, CombatService, AbilityService, QuestService, LoreService, ZoneMasteryService, and PlayerService connected');
+    console.log('[GameGateway] WebSocket server initialized, ZonesService, AiService, CombatService, AbilityService, QuestService, LoreService, ZoneMasteryService, ExpeditionService, and PlayerService connected');
   }
 
   async handleConnection(client: Socket) {
@@ -1138,6 +1142,12 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       response.readyQuests = questData.ready;
     }
 
+    // Add expedition destinations for expedition service NPCs
+    if (npcDef.npcType === 'service' && 'serviceType' in npcDef && npcDef.serviceType === 'expedition') {
+      const destinations = this.expeditionService.getDestinations(player.level);
+      (response as { expeditionDestinations?: typeof destinations }).expeditionDestinations = destinations;
+    }
+
     client.emit('npc:interact:response', response);
   }
 
@@ -1468,6 +1478,98 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     if (progress) {
       client.emit('mastery:progress', { biome: data.biome, progress });
+    }
+  }
+
+  @SubscribeMessage('expedition:start')
+  async handleExpeditionStart(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { biome: string },
+  ): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      // Must be in a hub to use expedition
+      if (!isHubZone(player.position.zoneId)) {
+        client.emit('error', {
+          code: 'NOT_IN_HUB',
+          message: 'Must be in a hub to start an expedition',
+        });
+        return;
+      }
+
+      const result = await this.expeditionService.startExpedition(
+        player.id,
+        data.biome as BiomeType,
+      );
+
+      if (!result.success) {
+        client.emit('error', {
+          code: 'EXPEDITION_FAILED',
+          message: result.error || 'Failed to start expedition',
+        });
+        return;
+      }
+
+      // Update room subscriptions for new zone
+      if (result.oldZoneId && result.newZoneId) {
+        this.updatePlayerRooms(client, result.newZoneId);
+
+        // Notify old zone that player left
+        this.server.to(result.oldZoneId).emit('player:left', { playerId: player.id });
+
+        // Activate AI for the new zone
+        const newZoneAlreadyActive = this.aiService.isZoneActive(result.newZoneId);
+        this.aiService.activateZone(result.newZoneId);
+
+        // If zone was already active, trigger immediate aggro for this player
+        if (newZoneAlreadyActive) {
+          this.aiService.checkImmediateAggroForPlayer(result.newZoneId, player.id);
+        }
+
+        // Send new zone state to player
+        const newZoneState = await this.gameService.getZoneState(result.newZoneId);
+        client.emit('zone:state', newZoneState);
+
+        // Send NPC quest markers for the new zone
+        this.emitNpcQuestMarkers(
+          client,
+          player.id,
+          player.faction,
+          newZoneState.entities as Array<{ type: string; npcId?: string }>
+        );
+
+        // Emit zone entry event for quest tracking
+        const biome = this.resolveZoneBiome(result.newZoneId);
+        this.eventEmitter.emit('zone.entered', {
+          characterId: player.id,
+          zoneId: result.newZoneId,
+          biome,
+        });
+
+        // Notify new zone of player arrival
+        client.to(result.newZoneId).emit('player:joined', {
+          id: player.id,
+          name: player.name,
+          faction: player.faction,
+          position: result.position,
+          level: player.level,
+          inCombat: player.inCombat,
+          credits: player.credits,
+        });
+
+        // Confirm expedition success to player
+        client.emit('expedition:complete', {
+          biome: data.biome,
+          position: result.position,
+        });
+      }
+    } catch (error) {
+      client.emit('error', {
+        code: 'SERVER_ERROR',
+        message: 'Failed to process expedition',
+      });
     }
   }
 

@@ -2,6 +2,17 @@ import type { TimingChallenge, TimingResult, GatheringAccuracy, ResourceCategory
 import type { ZoneMasteryProgress, MasteryTier, MasteryReward } from '../game/zone-mastery';
 
 /**
+ * Expedition destination with tier and lock status
+ */
+export interface ExpeditionDestination {
+  biome: string;
+  displayName: string;
+  tier: number;
+  requiredLevel: number;
+  locked: boolean;
+}
+
+/**
  * Game event base interface
  */
 export interface GameEvent<T = unknown> {
@@ -131,6 +142,7 @@ export interface ClientEvents {
   'gathering:complete': TimingResult;
   'lore:collect': { loreId: string; worldX: number; worldY: number };
   'mastery:query': { biome: string };
+  'expedition:start': { biome: string };
 }
 
 /**
@@ -219,7 +231,7 @@ export interface ServerEvents {
     dialogue: Array<{ text: string; condition?: string }>;
     color: number;
     inventory?: Array<{ itemId: string; buyPrice: number; sellPrice: number; stock: number }>;
-    serviceType?: 'repair' | 'storage' | 'transport' | 'medical';
+    serviceType?: 'repair' | 'storage' | 'transport' | 'medical' | 'expedition';
     title?: string;
     role?: string;
     availableQuests?: Array<{
@@ -240,6 +252,7 @@ export interface ServerEvents {
       questId: string;
       displayName: string;
     }>;
+    expeditionDestinations?: ExpeditionDestination[];
   };
   'ability:result': {
     success: boolean;
@@ -342,6 +355,7 @@ export interface ServerEvents {
   'lore:already_collected': { loreId: string };
   'mastery:progress': { biome: string; progress: ZoneMasteryProgress };
   'mastery:completed': { biome: string; tier: MasteryTier; rewards: MasteryReward[] };
+  'expedition:complete': { biome: string; position: import('../core/position').Position };
 }
 
 /**
