@@ -14,6 +14,7 @@ import '../store/questStore'; // Side-effect: registers quest socket handlers
 import '../store/loreStore'; // Side-effect: registers lore socket handlers
 import '../store/zoneMasteryStore'; // Side-effect: registers mastery socket handlers
 import '../store/chatStore'; // Side-effect: registers chat:message socket handler
+import '../store/moderationStore'; // Side-effect: auto-loads mute/block lists when player authenticates
 import { useActionBarStore } from '../store/actionBarStore';
 import { useNpcStore } from '../store/npcStore';
 import { useModalStackStore } from '../store/modalStackStore';
