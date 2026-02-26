@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.20
-milestone_name: World Scale & Action Bar
-status: milestone_complete
+milestone: v1.21
+milestone_name: UI Polish & Audio
+status: defining_requirements
 last_updated: "2026-02-26"
 progress:
-  total_phases: 98
-  completed_phases: 98
-  total_plans: 260
-  completed_plans: 260
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -19,12 +19,14 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-**Current focus:** Planning next milestone
+**Current focus:** Defining requirements for v1.21
 
 ## Current Position
 
-Milestone v1.20 World Scale & Action Bar — COMPLETE (shipped 2026-02-26)
-All 98 phases, 260 plans completed across 20 milestones (v1.0-v1.20).
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-26 — Milestone v1.21 started
 
 ## Performance Metrics
 
@@ -55,9 +57,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: v1.20 milestone complete
+Stopped at: Defining v1.21 requirements
 Resume file: None
-Next action: /gsd:new-milestone
+Next action: Define requirements → create roadmap
 
 ---
-*Last updated: 2026-02-26 — v1.20 milestone archived*
+*Last updated: 2026-02-26 — v1.21 milestone started*

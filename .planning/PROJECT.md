@@ -174,9 +174,28 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Second action bar with Shift+1-8 keybindings — v1.20
 - ✓ HUD shortcuts reorganization — v1.20
 
+## Current Milestone: v1.21 UI Polish & Audio
+
+**Goal:** Add game menu, audio system, settings, and fix entity rendering
+
+**Target features:**
+- ESC key modal management (close modals one-by-one, then open menu)
+- Game menu with settings and logout
+- Music integration (loop existing tracks)
+- Level-up sound effect (reuse quest-complete.mp3)
+- Audio settings (ambient, music, effects volume)
+- Interface settings (show/hide second action bar)
+- Fix entity rendering anchor (base position, not elevated)
+
 ### Active
 
-(None — planning next milestone)
+- [ ] ESC closes open modals one by one; opens game menu when none open
+- [ ] Game menu with settings panel and logout button
+- [ ] Background music playing on loop from existing tracks
+- [ ] Level-up sound effect triggers on level gain
+- [ ] Audio settings with separate ambient/music/effects volume
+- [ ] Interface settings to toggle second action bar visibility
+- [ ] Entity rendering anchored at base tile, selection indicator aligned
 
 ### Out of Scope
 
@@ -227,4 +246,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-26 after v1.20 milestone*
+*Last updated: 2026-02-26 after v1.21 milestone started*
