@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: In-Game Chat
 status: unknown
-last_updated: "2026-02-26T20:31:00.000Z"
+last_updated: "2026-02-26T20:45:32.003Z"
 progress:
-  total_phases: 107
+  total_phases: 105
   completed_phases: 105
   total_plans: 273
   completed_plans: 273
