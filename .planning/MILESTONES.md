@@ -81,3 +81,13 @@
 
 ---
 
+
+## v1.20 World Scale & Action Bar (Shipped: 2026-02-26)
+
+**Phases completed:** 98 phases, 260 plans, 120 tasks
+
+**Key accomplishments:**
+- (none recorded)
+
+---
+

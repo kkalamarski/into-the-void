@@ -2,48 +2,40 @@
 
 ## What This Is
 
-A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, and a complete auth-to-gameplay flow.
+A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, expedition travel, and a dual action bar system for ability management.
 
-## Current State (v1.18 shipped)
+## Current State (v1.20 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
-- World: Procedural biomes, elevation, structures, seamless chunk streaming
+- World: Procedural biomes (reduced scale for walkable exploration), elevation, structures, seamless chunk streaming
 - Movement: 8-directional WASD, click-to-move pathfinding, client prediction
 - Inventory: 100+ items, exo-suit equipment, module slots, action bar, storage
 - Stats: 8 primary stats with equipment bonuses, level scaling
 - Entities: 60+ definitions, fertility-based spawning, creature AI, tool interaction, loot, respawn
 - Combat: Ability-based system with energy costs and cooldowns, creature aggro AI, player death/respawn, balanced TTK
 - Abilities: 21 abilities across offensive/defensive/utility, item-granted, buff system with durations
-- NPCs: Definition system, 5 types (Trader/Guard/Rep/Ambient/Service), interaction modal, dialogue
+- NPCs: Definition system, 5 types (Trader/Guard/Rep/Ambient/Service/Expedition), interaction modal, dialogue
 - Trading: Buy/sell with credits, trader inventory, credit balance in HUD
-- Hubs: 4 orbital faction stations, portal travel, H key recall
+- Hubs: 4 orbital faction stations, portal travel, home recall ability (5 min cooldown)
+- Travel: Expedition NPC teleport to random world locations with tier-locked destinations
 - Persistence: Player position saves across sessions, starter kit for new players
 - Quests: Definition system, NPC quest offering, quest log UI, objective tracking, chains, bounties
 - UI Polish: Unified NPC modal, quest tracker HUD, glassmorphism, quest markers, completion feedback
 - Gathering: Timing mini-game, proficiency progression, rare/epic node variants, risk/reward placement
 - Exploration: Fog of war, POI discovery, lore fragments, zone mastery system
 - Content: 6 new biomes (aquatic + exotic), 30+ new gatherables, 20+ new creatures, 40+ new items
+- Action Bar: Dual bars (16 slots), click-to-trigger, shift+drag relocation, panel-to-bar drag, drop-outside-to-remove
+- HUD: Compact shortcuts bottom-right near minimap, CSS Grid layout
 
 **Tech stack:**
 - Frontend: React 18, Phaser 3, Zustand, React Router v7
 - Backend: NestJS (API + WebSocket game server)
 - Database: PostgreSQL with Drizzle ORM
 - Monorepo: NX with 3 apps + 5 shared packages
+- Deployment: Docker Swarm, Traefik reverse proxy, GitHub Actions CI/CD
 
-**Codebase:** ~15,000+ LOC TypeScript
-
-## Current Milestone: v1.20 World Scale & Action Bar
-
-**Goal:** Make the world more explorable with smaller biomes, add expedition travel, and improve action bar UX.
-
-**Target features:**
-- Smaller biomes (2-3 min walk to neighboring biome)
-- Expedition NPC in hubs (teleport to random world locations, tier-locked by level)
-- Universal home recall ability (5 min cooldown)
-- Improved action bar (click to trigger, shift+drag to move, drag from panel, remove by dropping outside)
-- Second action bar (8 slots, Shift+1-8 keybindings)
-- HUD reorganization (shortcuts smaller, moved to bottom-right)
+**Codebase:** ~52,700 LOC TypeScript/CSS
 
 ## Core Value
 
@@ -174,30 +166,32 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ 40+ new items (materials, consumables, equipment) — v1.18
 - ✓ All biome resource gaps filled — v1.18
 - ✓ Tier progression balanced (starter → endgame) — v1.18
+- ✓ Reduced biome scale for walkable exploration — v1.20
+- ✓ Expedition NPC with tier-locked destinations — v1.20
+- ✓ Universal home recall ability (5 min cooldown) — v1.20
+- ✓ Action bar click-to-trigger behavior — v1.20
+- ✓ Action bar drag-and-drop management — v1.20
+- ✓ Second action bar with Shift+1-8 keybindings — v1.20
+- ✓ HUD shortcuts reorganization — v1.20
 
 ### Active
 
-- [ ] Reduced biome scale for walkable exploration
-- [ ] Expedition NPC with tier-locked destinations
-- [ ] Universal home recall ability (5 min cooldown)
-- [ ] Action bar click-to-trigger behavior
-- [ ] Action bar drag-and-drop management
-- [ ] Second action bar with Shift+1-8 keybindings
-- [ ] HUD shortcuts reorganization
+(None — planning next milestone)
 
 ### Out of Scope
 
 - OAuth/social login — email/password sufficient
 - Sprite-based rendering — color tiles only until art pipeline ready
 - PvP combat — PvE first, PvP in future milestone
-- Status effects / debuffs — future expansion (v1.13 buffs are simple duration-based, no stacking/complex interactions)
+- Status effects / debuffs — future expansion
 - Chat system — separate milestone
 - Sound/music — polish phase
 - Mobile controls — web-first
 - Surface faction HQs (Canopy, Ironhold, Meridian) — orbital first, surface later
 - Shared city at 0,0 — designed in future milestone
-- Faction reputation system — v1.17+ (after UI polish)
+- Faction reputation system — future milestone
 - Branching dialogue — simple linear sufficient for now
+- Third action bar — two bars sufficient, reassess if needed
 
 ## Constraints
 
@@ -221,6 +215,11 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 | Phaser multi-camera minimap | Reuses tile rendering | ✓ Good |
 | 96px TILE_SIZE | Matches sprite specification | ✓ Good |
 | pauseOnBlur enabled | Prevents memory leaks on tab switch | ✓ Good |
+| Biome scale 256 tiles | 2-3 min walk encourages exploration | ✓ Good |
+| Expedition NPC (free, no cooldown) | Tier-lock sufficient gating | ✓ Good |
+| Home recall as universal ability | Available without equipment dependency | ✓ Good |
+| Dual action bars with bar-prefixed DnD | Prevents slot ID collisions | ✓ Good |
+| CSS Grid HUD layout | Clean separation of bars and shortcuts | ✓ Good |
 
 ## Known Issues
 
@@ -228,4 +227,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-25 after v1.20 milestone start*
+*Last updated: 2026-02-26 after v1.20 milestone*
