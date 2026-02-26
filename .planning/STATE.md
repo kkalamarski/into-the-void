@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: UI Polish & Audio
 status: unknown
-last_updated: "2026-02-26T14:24:17.905Z"
+last_updated: "2026-02-26T14:27:32.359Z"
 progress:
   total_phases: 101
-  completed_phases: 100
+  completed_phases: 101
   total_plans: 265
-  completed_plans: 264
+  completed_plans: 265
 ---
 
 # Project State
@@ -63,6 +63,8 @@ Recent decisions affecting v1.21:
 - Entity rendering: uiBaseY = -spriteHeight (not -elevationOffset - spriteHeight*0.5) because origin(0.5,1.0) places top at -spriteHeight
 - [Phase 101]: Mute toggle uses useRef to persist pre-mute values without re-persisting to localStorage
 - [Phase 101]: GameMenu renders via createPortal to document.body to escape .game-ui stacking context
+- [Phase 101]: ESC handler uses capture-phase + stopPropagation to prevent Phaser dual-fire
+- [Phase 101]: useUiSettingsStore called unconditionally in ActionBar before early return (React hooks rules)
 
 ### Pending Todos
 
