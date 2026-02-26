@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { gameSocket } from '../network/socket';
+import { useModalStackStore } from './modalStackStore';
 import type { CollectedLoreEntry, LoreCategory } from '@into-the-void/shared-types';
 
 interface LoreState {
@@ -65,6 +66,12 @@ gameSocket.on('lore:collected', (data: { loreId: string; title: string; category
 export function handleLoreHotkey(e: KeyboardEvent): void {
   if (e.key === 'l' || e.key === 'L') {
     if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
+      return;
+    }
+    const { isCodexOpen } = useLoreStore.getState();
+    const top = useModalStackStore.getState().peek();
+    // Closing only allowed if codex is the topmost modal; opening always allowed
+    if (isCodexOpen && top?.id !== 'lore-codex') {
       return;
     }
     useLoreStore.getState().toggleCodex();
