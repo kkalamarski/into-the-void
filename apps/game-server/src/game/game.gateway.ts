@@ -1051,13 +1051,26 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     if (!player) return;
 
     this.updatePlayerRooms(client, data.newZoneId);
-    this.aiService.activateZone(data.newZoneId);
+
+    // Notify old zone that player left
+    this.server.to(data.oldZoneId).emit('player:left', { playerId: player.id });
+
+    // Deactivate old zone if no players remain
     if (this.playerService.getPlayersInZone(data.oldZoneId).length === 0) {
       this.aiService.deactivateZone(data.oldZoneId);
     }
+    this.aiService.activateZone(data.newZoneId);
 
     const newZoneState = await this.gameService.getZoneState(data.newZoneId);
     client.emit('zone:state', newZoneState);
+
+    // Send NPC quest markers for the new zone
+    this.emitNpcQuestMarkers(
+      client,
+      player.id,
+      player.faction,
+      newZoneState.entities as Array<{ type: string; npcId?: string }>
+    );
 
     client.to(data.newZoneId).emit('player:joined', {
       id: player.id, name: player.name, faction: player.faction,

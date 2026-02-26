@@ -23,6 +23,7 @@ class AudioManager {
   private musicStarted: boolean = false;
   private sfxCache: Map<string, AudioBuffer> = new Map();
   private initialized: boolean = false;
+  private pendingMusicSrc: string | null = null;
 
   /**
    * Initialize the Web Audio graph. Must be called on first user gesture.
@@ -48,6 +49,13 @@ class AudioManager {
 
     // Apply persisted volume values from store
     this.syncVolumesFromStore();
+
+    // Start any music that was requested before init
+    if (this.pendingMusicSrc) {
+      const src = this.pendingMusicSrc;
+      this.pendingMusicSrc = null;
+      this.startMusic(src);
+    }
   }
 
   /**
@@ -65,7 +73,12 @@ class AudioManager {
    * Guard: does not restart if music is already playing (safe across zone transitions).
    */
   async startMusic(src: string): Promise<void> {
-    if (!this.ctx || this.musicStarted) return;
+    if (this.musicStarted) return;
+    if (!this.ctx) {
+      // AudioContext not ready yet — queue for after init()
+      this.pendingMusicSrc = src;
+      return;
+    }
 
     await this.ensureRunning();
 
