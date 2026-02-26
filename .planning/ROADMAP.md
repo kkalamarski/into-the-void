@@ -102,7 +102,7 @@ Plans:
 **Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 96-01-PLAN.md — Universal home recall ability with 5 min cooldown
+- [x] 96-01-PLAN.md — Universal home recall ability with 5 min cooldown
 
 ---
 
@@ -254,11 +254,11 @@ Phases execute in numeric order: 94 → 95 → 96 → 97 → 98
 | 93. Documentation | v1.19 | 1/1 | Complete | 2026-02-24 |
 | 94. World Scale Tuning | v1.20 | 2/2 | Complete | 2026-02-26 |
 | 95. Expedition Travel | v1.20 | 2/2 | Complete | 2026-02-26 |
-| 96. Home Recall Ability | v1.20 | 0/1 | Not started | - |
+| 96. Home Recall Ability | v1.20 | 1/1 | Complete | 2026-02-26 |
 | 97. Action Bar UX Enhancement | v1.20 | 0/2 | Not started | - |
 | 98. Second Action Bar | v1.20 | 0/2 | Not started | - |
 
-**Total:** 98 phases (95 complete, 3 pending)
+**Total:** 98 phases (96 complete, 2 pending)
 
 ---
-*Last updated: 2026-02-26 - Phase 95 complete*
+*Last updated: 2026-02-26 - Phase 96 complete*
