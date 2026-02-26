@@ -32,11 +32,11 @@ Requirements for In-Game Chat milestone. Each maps to roadmap phases.
 
 ### Moderation
 
-- [ ] **MOD-01**: User can mute a player to hide their messages in chat
-- [ ] **MOD-02**: User can block a player to prevent receiving whispers from them
-- [ ] **MOD-03**: User can unmute/unblock previously muted/blocked players
-- [ ] **MOD-04**: Mute and block lists persist across sessions (DB-backed)
-- [ ] **MOD-05**: Right-click on a player name in chat shows mute/block context menu
+- [x] **MOD-01**: User can mute a player to hide their messages in chat
+- [x] **MOD-02**: User can block a player to prevent receiving whispers from them
+- [x] **MOD-03**: User can unmute/unblock previously muted/blocked players
+- [x] **MOD-04**: Mute and block lists persist across sessions (DB-backed)
+- [x] **MOD-05**: Right-click on a player name in chat shows mute/block context menu
 
 ## Future Requirements
 
@@ -83,11 +83,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-03 | Phase 106 | Complete |
 | UI-04 | Phase 106 | Complete |
 | UI-05 | Phase 106 | Complete |
-| MOD-01 | Phase 107 | Pending |
-| MOD-02 | Phase 107 | Pending |
-| MOD-03 | Phase 107 | Pending |
-| MOD-04 | Phase 104 | Pending |
-| MOD-05 | Phase 107 | Pending |
+| MOD-01 | Phase 107 | Complete |
+| MOD-02 | Phase 107 | Complete |
+| MOD-03 | Phase 107 | Complete |
+| MOD-04 | Phase 104 | Complete |
+| MOD-05 | Phase 107 | Complete |
 
 **Coverage:**
 - v1.22 requirements: 19 total
