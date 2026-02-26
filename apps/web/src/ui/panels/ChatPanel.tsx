@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useChatStore, CHAT_CHANNELS, CHANNEL_CONFIG, formatChatTimestamp } from '../../store/chatStore';
-import type { ChatTab } from '../../store/chatStore';
 import { useGameStore } from '../../store/gameStore';
 import './ChatPanel.css';
 

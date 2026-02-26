@@ -259,12 +259,6 @@ export class WorldScene extends Phaser.Scene {
         }
       });
 
-      this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C).on('down', () => {
-        if (this.input.keyboard?.enabled) {
-          useGameStore.getState().toggleChat();
-        }
-      });
-
       // K=Abilities (skills) panel
       this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K).on('down', () => {
         if (this.input.keyboard?.enabled) {
