@@ -147,7 +147,7 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 98-01-PLAN.md — Second action bar component with Shift+1-8 bindings
+- [x] 98-01-PLAN.md — Second action bar component with Shift+1-8 bindings
 - [ ] 98-02-PLAN.md — HUD reorganization (shortcuts to bottom-right)
 
 ---
@@ -256,7 +256,7 @@ Phases execute in numeric order: 94 → 95 → 96 → 97 → 98
 | 95. Expedition Travel | v1.20 | 2/2 | Complete | 2026-02-26 |
 | 96. Home Recall Ability | v1.20 | 1/1 | Complete | 2026-02-26 |
 | 97. Action Bar UX Enhancement | v1.20 | 2/2 | Complete | 2026-02-26 |
-| 98. Second Action Bar | v1.20 | 0/2 | Not started | - |
+| 98. Second Action Bar | v1.20 | 1/2 | In Progress | 98-01-SUMMARY.md |
 
 **Total:** 98 phases (97 complete, 1 pending)
 
