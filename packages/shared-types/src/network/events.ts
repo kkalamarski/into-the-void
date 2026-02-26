@@ -396,4 +396,4 @@ export interface ChatMessage {
 /**
  * Chat channels
  */
-export type ChatChannel = 'zone' | 'faction' | 'whisper' | 'global' | 'system';
+export type ChatChannel = 'local' | 'zone' | 'faction' | 'whisper' | 'global' | 'system';
