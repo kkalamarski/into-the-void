@@ -9,9 +9,9 @@ Requirements for UI Polish & Audio milestone. Each maps to roadmap phases.
 
 ### ESC Management
 
-- [ ] **ESC-01**: Player can close the topmost open modal by pressing ESC
-- [ ] **ESC-02**: ESC closes modals one-by-one in LIFO order until none remain
-- [ ] **ESC-03**: Pressing ESC when no modals are open opens the game menu
+- [x] **ESC-01**: Player can close the topmost open modal by pressing ESC
+- [x] **ESC-02**: ESC closes modals one-by-one in LIFO order until none remain
+- [x] **ESC-03**: Pressing ESC when no modals are open opens the game menu
 
 ### Audio
 
@@ -53,9 +53,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ESC-01 | Phase 102 | Pending |
-| ESC-02 | Phase 102 | Pending |
-| ESC-03 | Phase 102 | Pending |
+| ESC-01 | Phase 102 | Complete |
+| ESC-02 | Phase 102 | Complete |
+| ESC-03 | Phase 102 | Complete |
 | AUD-01 | Phase 100 | Complete |
 | AUD-02 | Phase 100 | Complete |
 | AUD-03 | Phase 100 | Complete |

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: UI Polish & Audio
 status: unknown
-last_updated: "2026-02-26T14:27:32.359Z"
+last_updated: "2026-02-26T15:01:09.068Z"
 progress:
-  total_phases: 101
+  total_phases: 102
   completed_phases: 101
-  total_plans: 265
-  completed_plans: 265
+  total_plans: 267
+  completed_plans: 266
 ---
 
 # Project State
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 101 — Game Menu & Settings
+**Current focus:** Phase 102 — ESC Centralization
 
 ## Current Position
 
-Phase: 101 of 102 (Game Menu & Settings)
-Plan: 1 of TBD
+Phase: 102 of 102 (ESC Centralization)
+Plan: 2 of 2
 Status: Executing
-Last activity: 2026-02-26 — Phase 101 Plan 01 complete (uiSettingsStore + GameMenu component)
+Last activity: 2026-02-26 — Phase 102 Plan 01 complete (modalStackStore + useModalStack + centralized ESC dispatcher + GameMenu registration)
 
 Progress: [█████░░░░░] 50%
 
@@ -65,6 +65,9 @@ Recent decisions affecting v1.21:
 - [Phase 101]: GameMenu renders via createPortal to document.body to escape .game-ui stacking context
 - [Phase 101]: ESC handler uses capture-phase + stopPropagation to prevent Phaser dual-fire
 - [Phase 101]: useUiSettingsStore called unconditionally in ActionBar before early return (React hooks rules)
+- [Phase 102]: Idempotent push guard in modalStackStore prevents duplicate registrations
+- [Phase 102]: ESC priority chain: modal stack pop > cast cancel > path cancel > target clear > open menu
+- [Phase 102]: useModalStack hook uses onCloseRef pattern to prevent stale closures without re-registering the effect
 
 ### Pending Todos
 
@@ -79,9 +82,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 101-01-PLAN.md
+Stopped at: Completed 102-01-PLAN.md
 Resume file: None
-Next action: /gsd:execute-phase 101 02
+Next action: /gsd:execute-phase 102 02
 
 ---
-*Last updated: 2026-02-26 — Phase 101 Plan 01 complete*
+*Last updated: 2026-02-26 — Phase 102 Plan 01 complete*
