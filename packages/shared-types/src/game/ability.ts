@@ -13,7 +13,7 @@ export type AbilityEffect =
   | { readonly type: 'debuff'; readonly stat: string; readonly amount: number; readonly duration: number }
   | { readonly type: 'dot'; readonly damagePerTick: number; readonly tickInterval: number; readonly duration: number }
   | { readonly type: 'hot'; readonly healPerTick: number; readonly tickInterval: number; readonly duration: number }
-  | { readonly type: 'gather'; readonly gatherType: 'harvest' | 'mine'; readonly baseYield: number };
+  | { readonly type: 'gather'; readonly gatherType: 'harvest' | 'mine' | 'universal'; readonly baseYield: number };
 
 /**
  * Complete ability definition
@@ -31,6 +31,8 @@ export interface AbilityDefinition {
   readonly energyCost: number;
   /** Cooldown in milliseconds */
   readonly cooldownMs: number;
+  /** Cast time in milliseconds (0 or omitted = instant) */
+  readonly castTimeMs?: number;
   /** Range in tiles (0 = self-only, 1+ = targetable range) */
   readonly range: number;
   /** Whether ability requires a target (false for self-buffs) */

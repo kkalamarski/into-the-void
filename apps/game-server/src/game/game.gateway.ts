@@ -250,6 +250,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const player = this.playerService.getPlayerBySocket(client.id);
       if (!player) return;
 
+      // Interrupt cast on movement
+      if (this.abilityService.isPlayerCasting(player.id)) {
+        this.abilityService.interruptCast(player.id, 'moved');
+      }
+
       const now = Date.now();
       const lastMoveTime = this.playerService.getLastMoveTime(player.id);
 
@@ -758,6 +763,15 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         cooldownEndsAt: result.cooldownEndsAt,
       });
     }
+  }
+
+  @SubscribeMessage('cast:cancel')
+  handleCastCancel(
+    @ConnectedSocket() client: Socket,
+  ): void {
+    const player = this.playerService.getPlayerBySocket(client.id);
+    if (!player) return;
+    this.abilityService.interruptCast(player.id, 'cancelled');
   }
 
   @SubscribeMessage('respawn:sos')
@@ -1426,13 +1440,17 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     let abilityId: string | undefined;
 
     if (entity.type === 'plant') {
-      // Prefer 'harvest' over 'basic_harvest'
+      // Prefer specialized 'harvest' over 'basic_harvest', fall back to universal 'gather'
       abilityId = abilities.find(a => a.id === 'harvest')?.id
-        ?? abilities.find(a => a.id === 'basic_harvest')?.id;
+        ?? abilities.find(a => a.id === 'basic_harvest')?.id
+        ?? abilities.find(a => a.id === 'gather')?.id;
     } else if (entity.type === 'mineral') {
-      // Prefer 'mine' over 'basic_mine'
+      // Prefer specialized 'mine' over 'basic_mine', fall back to universal 'gather'
       abilityId = abilities.find(a => a.id === 'mine')?.id
-        ?? abilities.find(a => a.id === 'basic_mine')?.id;
+        ?? abilities.find(a => a.id === 'basic_mine')?.id
+        ?? abilities.find(a => a.id === 'gather')?.id;
+    } else if (entity.type === 'artifact') {
+      abilityId = abilities.find(a => a.id === 'gather')?.id;
     }
 
     if (!abilityId) {

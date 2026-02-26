@@ -313,10 +313,11 @@ export const ABILITY_ENERGY_BARRIER: AbilityDefinition = {
 export const ABILITY_HOME_RECALL: AbilityDefinition = {
   id: 'home_recall',
   displayName: 'Home Recall',
-  description: 'Teleport to your faction hub. 5 minute cooldown.',
+  description: 'Teleport to your faction hub. 5 minute cooldown. Cast time: 5s.',
   category: 'utility',
   energyCost: 0,
   cooldownMs: 300000, // 5 minutes
+  castTimeMs: 5000,
   range: 0,
   requiresTarget: false,
   effects: [], // Special handling in AbilityService
@@ -468,6 +469,24 @@ export const ABILITY_BASIC_MINE: AbilityDefinition = {
 };
 
 /**
+ * Gather - Universal gathering ability (always available)
+ */
+export const ABILITY_GATHER: AbilityDefinition = {
+  id: 'gather',
+  displayName: 'Gather',
+  description: 'Gather resources from plants, minerals, or artifacts. Haste reduces cast time. Perception improves yield.',
+  category: 'utility',
+  energyCost: 5,
+  cooldownMs: 0,
+  castTimeMs: 2000,
+  range: 1,
+  requiresTarget: true,
+  effects: [{ type: 'gather', gatherType: 'universal', baseYield: 1 }],
+  iconKey: 'ability_gather',
+  iconColor: 0x88cc44,
+};
+
+/**
  * All abilities - complete registry
  */
 export const ALL_ABILITIES: readonly AbilityDefinition[] = [
@@ -497,7 +516,8 @@ export const ALL_ABILITIES: readonly AbilityDefinition[] = [
   ABILITY_OVERCLOCK,
   ABILITY_POWER_SURGE,
   ABILITY_ANALYZE_SPECIMEN,
-  // Gathering abilities (4)
+  // Gathering abilities (5)
+  ABILITY_GATHER,
   ABILITY_HARVEST,
   ABILITY_MINE,
   ABILITY_BASIC_HARVEST,

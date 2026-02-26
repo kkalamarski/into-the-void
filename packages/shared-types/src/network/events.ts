@@ -57,7 +57,8 @@ export type ClientEventType =
   | 'quest:accept'
   | 'poi:discover'
   | 'gathering:start'
-  | 'gathering:complete';
+  | 'gathering:complete'
+  | 'cast:cancel';
 
 /**
  * Server-to-client event types
@@ -102,7 +103,9 @@ export type ServerEventType =
   | 'poi:discovered'
   | 'poi:already_discovered'
   | 'gathering:challenge'
-  | 'gathering:result';
+  | 'gathering:result'
+  | 'cast:start'
+  | 'cast:interrupt';
 
 /**
  * Socket.io event map for type safety
@@ -140,6 +143,7 @@ export interface ClientEvents {
   'poi:discover': { poiId: string; worldX: number; worldY: number };
   'gathering:start': { targetEntityId: string };
   'gathering:complete': TimingResult;
+  'cast:cancel': Record<string, never>;
   'lore:collect': { loreId: string; worldX: number; worldY: number };
   'mastery:query': { biome: string };
   'expedition:start': { biome: string };
@@ -340,6 +344,16 @@ export interface ServerEvents {
     worldY: number;
     resourceId: string;
   }) => void;
+  'cast:start': {
+    abilityId: string;
+    targetEntityId?: string;
+    castTimeMs: number;
+    castEndsAt: number;
+  };
+  'cast:interrupt': {
+    abilityId: string;
+    reason: 'moved' | 'damaged' | 'cancelled' | 'died';
+  };
   'gathering:challenge': TimingChallenge;
   'gathering:result': {
     success: boolean;

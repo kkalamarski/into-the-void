@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Server } from 'socket.io';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PlayerService } from './player.service';
 import { ZonesService } from '../zones/zones.service';
 import { InventoryService } from './inventory.service';
@@ -47,6 +48,7 @@ export class CombatService {
   private server: Server | null = null;
 
   constructor(
+    private readonly eventEmitter: EventEmitter2,
     private readonly playerService: PlayerService,
     private readonly zonesService: ZonesService,
     private readonly inventoryService: InventoryService,
@@ -232,6 +234,9 @@ export class CombatService {
 
     // Update player health via PlayerService
     this.playerService.updateHealth(player.id, newHealth);
+
+    // Emit player.damaged event (interrupts casting, etc.)
+    this.eventEmitter.emit('player.damaged', { playerId: session.targetPlayerId });
 
     if (killed) {
       // Mark player as dead

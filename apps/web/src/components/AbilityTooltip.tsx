@@ -110,9 +110,15 @@ export const AbilityTooltip: React.FC<AbilityTooltipProps> = ({
                 <span className="ability-tooltip-stat-label">Energy Cost</span>
                 <span className="ability-tooltip-stat-value">{ability.energyCost}</span>
               </div>
+              {ability.castTimeMs != null && ability.castTimeMs > 0 && (
+                <div className="ability-tooltip-stat">
+                  <span className="ability-tooltip-stat-label">Cast Time</span>
+                  <span className="ability-tooltip-stat-value">{(ability.castTimeMs / 1000).toFixed(1)}s</span>
+                </div>
+              )}
               <div className="ability-tooltip-stat">
                 <span className="ability-tooltip-stat-label">Cooldown</span>
-                <span className="ability-tooltip-stat-value">{(ability.cooldownMs / 1000).toFixed(1)}s</span>
+                <span className="ability-tooltip-stat-value">{ability.cooldownMs > 0 ? `${(ability.cooldownMs / 1000).toFixed(1)}s` : 'None'}</span>
               </div>
               {ability.range > 0 && (
                 <div className="ability-tooltip-stat">

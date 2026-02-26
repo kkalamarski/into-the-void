@@ -1,6 +1,6 @@
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { Server } from 'socket.io';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import * as crypto from 'crypto';
 import { PlayerService } from './player.service';
 import { ZonesService } from '../zones/zones.service';
@@ -30,6 +30,16 @@ interface UseAbilityResult {
   targetMaxHealth?: number;
   energyRemaining?: number;
   cooldownEndsAt?: number;
+  casting?: boolean;
+}
+
+interface ActiveCast {
+  playerId: string;
+  socketId: string;
+  abilityId: string;
+  targetEntityId?: string;
+  castEndsAt: number;
+  timeoutHandle: NodeJS.Timeout;
 }
 
 /** Global cooldown in milliseconds - prevents ability spam */
@@ -48,6 +58,9 @@ export class AbilityService {
 
   /** Active buffs indexed by playerId */
   private activeBuffs: Map<string, Buff[]> = new Map();
+
+  /** Active casts indexed by playerId */
+  private activeCasts: Map<string, ActiveCast> = new Map();
 
   /** Buff expiration tick interval handle */
   private buffTickInterval: NodeJS.Timeout | null = null;
@@ -106,6 +119,8 @@ export class AbilityService {
 
     // Inject universal abilities
     abilityIds.add('home_recall');
+    abilityIds.add('basic_strike');
+    abilityIds.add('gather');
 
     // Resolve ability definitions
     const abilities: AbilityDefinition[] = [];
@@ -199,7 +214,39 @@ export class AbilityService {
   }
 
   /**
+   * Check if player is currently casting an ability.
+   */
+  isPlayerCasting(playerId: string): boolean {
+    return this.activeCasts.has(playerId);
+  }
+
+  /**
+   * Interrupt an active cast for a player.
+   */
+  interruptCast(playerId: string, reason: 'moved' | 'damaged' | 'cancelled' | 'died'): void {
+    const cast = this.activeCasts.get(playerId);
+    if (!cast) return;
+
+    clearTimeout(cast.timeoutHandle);
+    this.activeCasts.delete(playerId);
+
+    this.server?.to(cast.socketId).emit('cast:interrupt', {
+      abilityId: cast.abilityId,
+      reason,
+    });
+  }
+
+  /**
+   * Handle player.damaged event — interrupt any active cast.
+   */
+  @OnEvent('player.damaged')
+  handlePlayerDamaged(payload: { playerId: string }): void {
+    this.interruptCast(payload.playerId, 'damaged');
+  }
+
+  /**
    * Use an ability. Validates and executes ability, returning result.
+   * Abilities with castTimeMs > 0 will begin a cast and complete after the timer.
    */
   async useAbility(
     socketId: string,
@@ -213,6 +260,11 @@ export class AbilityService {
       return { success: false, error: 'Player not found' };
     }
     console.log('[useAbility] Player:', { id: player.id, zoneId: player.position.zoneId });
+
+    // Block ability use while casting
+    if (this.isPlayerCasting(player.id)) {
+      return { success: false, error: 'Cannot use abilities while casting' };
+    }
 
     // Check GCD
     if (this.isOnGcd(player.id)) {
@@ -229,9 +281,10 @@ export class AbilityService {
     }
     console.log('[useAbility] Found ability:', { id: ability.id, requiresTarget: ability.requiresTarget });
 
-    // Hub zones are safe - no offensive abilities (but gathering is allowed)
+    // Hub zones are safe - no offensive abilities (but gathering and utility are allowed)
     const isGatherAbility = ability.effects.some(e => e.type === 'gather');
-    if (isHubZone(player.position.zoneId) && !isGatherAbility) {
+    const isUtilityAbility = ability.category === 'utility';
+    if (isHubZone(player.position.zoneId) && !isGatherAbility && !isUtilityAbility) {
       return { success: false, error: 'Combat abilities are disabled in hub zones' };
     }
 
@@ -246,7 +299,6 @@ export class AbilityService {
     }
 
     // Handle target requirement
-    let target: Creature | null = null;
     const hasGatherEffect = ability.effects.some(e => e.type === 'gather');
 
     if (ability.requiresTarget) {
@@ -263,9 +315,9 @@ export class AbilityService {
       }
       console.log('[useAbility] Found entity:', { id: entity.id, type: entity.type });
 
-      // Gather abilities can target plants/minerals, combat abilities target creatures
+      // Gather abilities can target plants/minerals/artifacts, combat abilities target creatures
       if (hasGatherEffect) {
-        if (entity.type !== 'plant' && entity.type !== 'mineral') {
+        if (entity.type !== 'plant' && entity.type !== 'mineral' && entity.type !== 'artifact') {
           console.log('[useAbility] Invalid target type for gathering:', entity.type);
           return { success: false, error: 'Invalid target for gathering' };
         }
@@ -279,7 +331,7 @@ export class AbilityService {
           return { success: false, error: 'Invalid target type' };
         }
 
-        target = entity as Creature;
+        const target = entity as Creature;
         if (!target.active || target.health <= 0) {
           return { success: false, error: 'Target is dead' };
         }
@@ -292,13 +344,140 @@ export class AbilityService {
       }
     }
 
-    // Handle home_recall special effect
+    // home_recall: extra validation (but don't execute yet — cast time handles it)
     if (abilityId === 'home_recall') {
-      // Check not already in hub
       if (isHubZone(player.position.zoneId)) {
         return { success: false, error: 'Already in hub' };
       }
+    }
 
+    // Cast time branching: if ability has a cast time, start casting instead of executing
+    const castTimeMs = ability.castTimeMs ?? 0;
+    if (castTimeMs > 0) {
+      // Compute effective cast time (haste reduces by 1% per point, cap 50%)
+      const inventory = this.inventoryService.getInventory(player.id);
+      const playerEquipment = inventory?.equipment as EquipmentJson ?? { modules: [] };
+      const playerBuffs = this.getActiveBuffs(player.id);
+      const playerStats = computeCharStats(player.level, playerEquipment, 'player', playerBuffs);
+      const hasteReduction = Math.min(0.5, playerStats.haste * 0.01);
+      const effectiveCastTime = Math.floor(castTimeMs * (1 - hasteReduction));
+
+      const castEndsAt = Date.now() + effectiveCastTime;
+      const timeoutHandle = setTimeout(() => {
+        this.completeCast(player.id);
+      }, effectiveCastTime);
+
+      this.activeCasts.set(player.id, {
+        playerId: player.id,
+        socketId,
+        abilityId,
+        targetEntityId,
+        castEndsAt,
+        timeoutHandle,
+      });
+
+      this.server?.to(socketId).emit('cast:start', {
+        abilityId,
+        targetEntityId,
+        castTimeMs: effectiveCastTime,
+        castEndsAt,
+      });
+
+      this.setGcd(player.id);
+      return { success: true, casting: true };
+    }
+
+    // Instant execution path
+    return this.executeAbilityEffects(socketId, ability, targetEntityId);
+  }
+
+  /**
+   * Complete a cast — re-validates and executes the ability.
+   */
+  private async completeCast(playerId: string): Promise<void> {
+    const cast = this.activeCasts.get(playerId);
+    if (!cast) return;
+
+    this.activeCasts.delete(playerId);
+
+    const player = this.playerService.getPlayerById(playerId);
+    if (!player) return;
+
+    const ability = AbilityRegistry.get(cast.abilityId);
+    if (!ability) return;
+
+    // Re-validate energy
+    if (player.energy < ability.energyCost) {
+      this.server?.to(cast.socketId).emit('ability:result', {
+        success: false,
+        abilityId: cast.abilityId,
+        error: 'Not enough energy',
+      });
+      return;
+    }
+
+    // Re-validate target if required
+    if (ability.requiresTarget && cast.targetEntityId) {
+      const entity = await this.zonesService.getEntity(player.position.zoneId, cast.targetEntityId);
+      if (!entity) {
+        this.server?.to(cast.socketId).emit('ability:result', {
+          success: false,
+          abilityId: cast.abilityId,
+          error: 'Target no longer available',
+        });
+        return;
+      }
+      // For combat targets, check still alive
+      if (entity.type === 'creature') {
+        const creature = entity as Creature;
+        if (!creature.active || creature.health <= 0) {
+          this.server?.to(cast.socketId).emit('ability:result', {
+            success: false,
+            abilityId: cast.abilityId,
+            error: 'Target is dead',
+          });
+          return;
+        }
+      }
+    }
+
+    // Execute the ability effects
+    const result = await this.executeAbilityEffects(cast.socketId, ability, cast.targetEntityId);
+
+    // Emit result to client
+    this.server?.to(cast.socketId).emit('ability:result', {
+      success: result.success,
+      abilityId: cast.abilityId,
+      error: result.error,
+      damage: result.damage,
+      targetHealth: result.targetHealth,
+      targetMaxHealth: result.targetMaxHealth,
+      energyRemaining: result.energyRemaining,
+      cooldownEndsAt: result.cooldownEndsAt,
+    });
+
+    if (result.success && result.cooldownEndsAt) {
+      this.server?.to(cast.socketId).emit('ability:cooldown', {
+        abilityId: cast.abilityId,
+        cooldownEndsAt: result.cooldownEndsAt,
+      });
+    }
+  }
+
+  /**
+   * Execute ability effects (energy consumption, cooldowns, effects).
+   * Called by both instant path and completeCast.
+   */
+  private async executeAbilityEffects(
+    socketId: string,
+    ability: AbilityDefinition,
+    targetEntityId?: string,
+  ): Promise<UseAbilityResult> {
+    const player = this.playerService.getPlayerBySocket(socketId);
+    if (!player) return { success: false, error: 'Player not found' };
+
+    // Handle home_recall special effect
+    if (ability.id === 'home_recall') {
       // Teleport to hub
       const result = await this.playerService.teleportToHub(player.id);
       if (!result.success) {
@@ -306,7 +485,7 @@ export class AbilityService {
       }
 
       // Set cooldown
-      const cooldownEndsAt = this.setCooldown(player.id, abilityId, ability.cooldownMs);
+      const cooldownEndsAt = this.setCooldown(player.id, ability.id, ability.cooldownMs);
       this.setGcd(player.id);
 
       // Emit zone transition events (gateway will handle zone:state emission)
@@ -355,7 +534,7 @@ export class AbilityService {
     }
 
     // Set cooldowns
-    const cooldownEndsAt = this.setCooldown(player.id, abilityId, cooldownMs);
+    const cooldownEndsAt = this.setCooldown(player.id, ability.id, cooldownMs);
     this.setGcd(player.id);
 
     // Apply effects
@@ -364,10 +543,16 @@ export class AbilityService {
     let targetMaxHealth: number | undefined;
 
     for (const effect of ability.effects) {
-      if (effect.type === 'damage' && target) {
+      if (effect.type === 'damage') {
+        // Need creature target for damage
+        if (!targetEntityId) continue;
+        const entity = await this.zonesService.getEntity(player.position.zoneId, targetEntityId);
+        if (!entity || entity.type !== 'creature') continue;
+        const target = entity as Creature;
+
         // Calculate damage
-        const inventory = this.inventoryService.getInventory(player.id);
-        const playerEquipment = inventory?.equipment as EquipmentJson ?? { modules: [] };
+        const inv = this.inventoryService.getInventory(player.id);
+        const playerEquipment = inv?.equipment as EquipmentJson ?? { modules: [] };
         const playerBuffs = this.getActiveBuffs(player.id);
         const playerStats = computeCharStats(player.level, playerEquipment, 'player', playerBuffs);
 
@@ -381,7 +566,7 @@ export class AbilityService {
           attackerStats: playerStats,
           defenderStats: creatureStats,
           weaponDamage: effect.baseDamage * effect.scaling,
-          armorReduction: creatureStats.toughness * 0.1, // Base armor, toughness adds multiplier in formula
+          armorReduction: creatureStats.toughness * 0.1,
         });
 
         damage = damageResult.damage;
@@ -393,26 +578,21 @@ export class AbilityService {
         let groundItems: ItemEntity[] = [];
 
         // Update entity in zone
-        await this.zonesService.updateEntity(player.position.zoneId, targetEntityId!, {
+        await this.zonesService.updateEntity(player.position.zoneId, targetEntityId, {
           health: target.health,
           active: !killed,
         } as Partial<Creature>);
 
         // Trigger creature retaliation if not killed
         if (!killed) {
-          // Provoke omnivores so they fight back
           if (target.behavior === 'omnivore') {
-            await this.combatService.provokeCreature(player.position.zoneId, targetEntityId!);
+            await this.combatService.provokeCreature(player.position.zoneId, targetEntityId);
           }
-
-          // Set combatTarget so creature knows who attacked it
-          await this.zonesService.updateEntity(player.position.zoneId, targetEntityId!, {
+          await this.zonesService.updateEntity(player.position.zoneId, targetEntityId, {
             combatTarget: player.id,
           } as Partial<Creature>);
-
-          // Start creature combat for aggressive creatures (predator, maniac, omnivore)
           if (target.behavior === 'predator' || target.behavior === 'maniac' || target.behavior === 'omnivore') {
-            await this.combatService.startCreatureCombat(targetEntityId!, player.id, player.position.zoneId);
+            await this.combatService.startCreatureCombat(targetEntityId, player.id, player.position.zoneId);
           }
         }
 
@@ -424,23 +604,15 @@ export class AbilityService {
 
         // Handle creature death: spawn loot and schedule respawn
         if (killed) {
-          // Stop any creature combat session (prevents stale sessions from blocking re-aggro)
-          this.combatService.stopCreatureCombat(targetEntityId!);
-
+          this.combatService.stopCreatureCombat(targetEntityId);
           groundItems = await this.handleCreatureDeath(target, player.position.zoneId);
-
-          // Emit entity:spawn for each loot item so clients render them
           for (const item of groundItems) {
             this.server?.to(player.position.zoneId).emit('entity:spawn', item);
           }
-
-          // Grant XP to player based on creature level
           const levelDiff = target.level - player.level;
           const levelBonus = levelDiff > 0 ? 1 + levelDiff * 0.1 : 1;
           const xpReward = Math.floor(10 * target.level * levelBonus);
           this.playerService.grantXp(player.id, xpReward);
-
-          // Emit kill event for quest tracking (CRITICAL: use speciesId, not target.id)
           this.eventEmitter.emit('entity.killed', {
             characterId: player.id,
             entityId: target.speciesId,
@@ -448,8 +620,6 @@ export class AbilityService {
             creatureLevel: target.level,
             zoneId: player.position.zoneId,
           });
-
-          // Despawn the creature entity
           this.server?.to(player.position.zoneId).emit('entity:despawn', { entityId: targetEntityId });
         }
 
@@ -457,7 +627,7 @@ export class AbilityService {
         this.server?.to(player.position.zoneId).emit('combat:damage', {
           attackerId: player.id,
           attackerName: player.name,
-          defenderId: targetEntityId!,
+          defenderId: targetEntityId,
           defenderName: target.name,
           damage,
           defenderHealth: target.health,
@@ -471,9 +641,8 @@ export class AbilityService {
 
       // Handle heal effect (self-heal)
       if (effect.type === 'heal') {
-        // Calculate heal amount: baseHeal + (scaling * power)
-        const inventory = this.inventoryService.getInventory(player.id);
-        const playerEquipment = inventory?.equipment as EquipmentJson ?? { modules: [] };
+        const inv = this.inventoryService.getInventory(player.id);
+        const playerEquipment = inv?.equipment as EquipmentJson ?? { modules: [] };
         const playerBuffs = this.getActiveBuffs(player.id);
         const playerStats = computeCharStats(player.level, playerEquipment, 'player', playerBuffs);
 
@@ -482,7 +651,6 @@ export class AbilityService {
 
         this.playerService.updateHealth(player.id, newHealth);
 
-        // Emit heal event to zone for visual feedback
         this.server?.to(player.position.zoneId).emit('player:health', {
           playerId: player.id,
           health: newHealth,
@@ -501,11 +669,10 @@ export class AbilityService {
           displayName: ability.displayName,
           iconColor: ability.iconColor,
         };
-
         this.applyBuff(player.id, buff);
       }
 
-      // Handle gather effect (harvest from plants, mine from minerals)
+      // Handle gather effect (harvest from plants, mine from minerals, universal)
       if (effect.type === 'gather') {
         const gatherResult = await this.handleGatherEffect(
           socketId,
@@ -516,7 +683,6 @@ export class AbilityService {
         if (!gatherResult.success) {
           return { success: false, error: gatherResult.error };
         }
-        // Items added to inventory, entity updated in handleGatherEffect
       }
     }
 
@@ -534,6 +700,9 @@ export class AbilityService {
    * Clean up cooldowns for disconnected player.
    */
   handleDisconnect(playerId: string): void {
+    // Interrupt any active cast
+    this.interruptCast(playerId, 'died');
+
     // Clear all active buffs
     this.clearBuffs(playerId);
 
@@ -688,7 +857,7 @@ export class AbilityService {
   private async handleGatherEffect(
     socketId: string,
     targetEntityId: string,
-    effect: { type: 'gather'; gatherType: 'harvest' | 'mine'; baseYield: number },
+    effect: { type: 'gather'; gatherType: 'harvest' | 'mine' | 'universal'; baseYield: number },
     toolStats: { yieldBonus: number; gatherSpeed: number }
   ): Promise<{ success: boolean; error?: string }> {
     // 1. Get target entity
@@ -702,19 +871,45 @@ export class AbilityService {
       return { success: false, error: 'Target not found' };
     }
 
-    // 2. Validate entity type matches gather type
-    if (effect.gatherType === 'harvest' && entity.type !== 'plant') {
-      return { success: false, error: 'Cannot harvest this target' };
-    }
-    if (effect.gatherType === 'mine' && entity.type !== 'mineral') {
-      return { success: false, error: 'Cannot mine this target' };
+    // 2. Resolve gather type for universal
+    let resolvedType = effect.gatherType;
+    if (resolvedType === 'universal') {
+      if (entity.type === 'plant') {
+        resolvedType = 'harvest';
+      } else if (entity.type === 'mineral') {
+        resolvedType = 'mine';
+      } else if (entity.type === 'artifact') {
+        // Artifacts use handleToolUse directly — no special resolution needed
+        resolvedType = 'harvest'; // Placeholder; artifact path below
+      } else {
+        return { success: false, error: 'Cannot gather from this target' };
+      }
     }
 
-    // 3. Calculate yield with tool bonus
-    const yieldMultiplier = 1 + toolStats.yieldBonus;
-    const finalYield = Math.floor(effect.baseYield * yieldMultiplier);
+    // 3. Validate entity type matches resolved gather type (non-universal)
+    if (effect.gatherType !== 'universal') {
+      if (resolvedType === 'harvest' && entity.type !== 'plant') {
+        return { success: false, error: 'Cannot harvest this target' };
+      }
+      if (resolvedType === 'mine' && entity.type !== 'mineral') {
+        return { success: false, error: 'Cannot mine this target' };
+      }
+    }
 
-    // 4. Call EntityService to process gathering
+    // 4. Calculate yield with tool bonus + perception bonus for universal gather
+    let yieldMultiplier = 1 + toolStats.yieldBonus;
+    if (effect.gatherType === 'universal') {
+      // Perception bonus: 1% per point, cap 50%
+      const inventory = this.inventoryService.getInventory(player.id);
+      const playerEquipment = inventory?.equipment as EquipmentJson ?? { modules: [] };
+      const playerBuffs = this.getActiveBuffs(player.id);
+      const playerStats = computeCharStats(player.level, playerEquipment, 'player', playerBuffs);
+      const perceptionBonus = Math.min(0.5, playerStats.perception * 0.01);
+      yieldMultiplier += perceptionBonus;
+    }
+    const finalYield = Math.max(1, Math.floor(effect.baseYield * yieldMultiplier));
+
+    // 5. Call EntityService to process gathering
     const result = await this.entityService.handleToolUse(
       socketId,
       targetEntityId,
@@ -725,8 +920,7 @@ export class AbilityService {
       return { success: false, error: result.error };
     }
 
-    // 5. Emit events for entity update and loot
-    // (EntityService handles inventory updates internally)
+    // 6. Emit events for entity update and loot
     if (result.entityChanges) {
       this.server?.to(player.position.zoneId).emit('entity:update', {
         entityId: targetEntityId,

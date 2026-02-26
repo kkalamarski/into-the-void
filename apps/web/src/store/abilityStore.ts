@@ -6,9 +6,18 @@ import { ItemRegistry } from '@into-the-void/items';
 import { AbilityRegistry } from '@into-the-void/game-logic';
 import type { AbilityDefinition } from '@into-the-void/shared-types';
 
+interface ActiveCast {
+  abilityId: string;
+  targetEntityId?: string;
+  castTimeMs: number;
+  castEndsAt: number;
+}
+
 interface AbilityState {
   /** Cooldowns indexed by abilityId -> endsAt timestamp */
   cooldowns: Map<string, number>;
+  /** Currently active cast (null if not casting) */
+  activeCast: ActiveCast | null;
   /** Set cooldown for an ability */
   setCooldown: (abilityId: string, endsAt: number) => void;
   /** Check if ability is on cooldown */
@@ -17,11 +26,18 @@ interface AbilityState {
   getRemainingCooldown: (abilityId: string) => number;
   /** Clear expired cooldowns */
   clearExpiredCooldowns: () => void;
+  /** Start a cast */
+  startCast: (cast: ActiveCast) => void;
+  /** Clear the active cast */
+  clearCast: () => void;
+  /** Check if currently casting */
+  isCasting: () => boolean;
 }
 
 export const useAbilityStore = create<AbilityState>()(
   immer((set, get) => ({
     cooldowns: new Map(),
+    activeCast: null,
 
     setCooldown: (abilityId: string, endsAt: number) =>
       set((state) => {
@@ -49,13 +65,25 @@ export const useAbilityStore = create<AbilityState>()(
           }
         }
       }),
+
+    startCast: (cast: ActiveCast) =>
+      set((state) => {
+        state.activeCast = cast;
+      }),
+
+    clearCast: () =>
+      set((state) => {
+        state.activeCast = null;
+      }),
+
+    isCasting: () => get().activeCast !== null,
   }))
 );
 
 /**
  * Derive equipped abilities from current equipment.
  * This is a pure function, not stored in state to avoid stale data.
- * Also includes universal abilities (home_recall).
+ * Also includes universal abilities (home_recall, basic_strike, gather).
  */
 export function getEquippedAbilities(): AbilityDefinition[] {
   const inventory = useInventoryStore.getState().inventory;
@@ -89,6 +117,8 @@ export function getEquippedAbilities(): AbilityDefinition[] {
 
   // Inject universal abilities
   abilityIds.add('home_recall');
+  abilityIds.add('basic_strike');
+  abilityIds.add('gather');
 
   // Resolve ability definitions
   const abilities: AbilityDefinition[] = [];
@@ -105,10 +135,27 @@ gameSocket.on('ability:result', (data) => {
   if (data.success && data.cooldownEndsAt) {
     useAbilityStore.getState().setCooldown(data.abilityId, data.cooldownEndsAt);
   }
+  // Clear cast on successful ability completion
+  if (data.success) {
+    useAbilityStore.getState().clearCast();
+  }
 });
 
 gameSocket.on('ability:cooldown', (data) => {
   useAbilityStore.getState().setCooldown(data.abilityId, data.cooldownEndsAt);
+});
+
+gameSocket.on('cast:start', (data) => {
+  useAbilityStore.getState().startCast({
+    abilityId: data.abilityId,
+    targetEntityId: data.targetEntityId,
+    castTimeMs: data.castTimeMs,
+    castEndsAt: data.castEndsAt,
+  });
+});
+
+gameSocket.on('cast:interrupt', () => {
+  useAbilityStore.getState().clearCast();
 });
 
 // Periodically clean expired cooldowns (every second)

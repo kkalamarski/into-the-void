@@ -6,6 +6,7 @@ import { GiShield, GiLightningFrequency, GiPoisonGas, GiCrossedSwords, GiTwoCoin
 import { useCombatStore } from '../../store/combatStore';
 import { useCombatLogStore } from '../../store/combatLogStore';
 import { ActionBar } from './ActionBar';
+import { CastBar } from './CastBar';
 import { GameShortcuts } from './GameShortcuts';
 import { TargetFrame } from './TargetFrame';
 import { CombatLog } from './CombatLog';
@@ -143,6 +144,7 @@ export const HUD: React.FC = () => {
       <CombatLog />
 
       <div className="hud-bottom-area">
+        <CastBar />
         <div className="action-bars-container">
           <ActionBar barIndex={0} />
           <ActionBar barIndex={1} />

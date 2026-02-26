@@ -109,9 +109,12 @@ function SortableAbilitySlot({ index, ability, slotId, barIndex }: SortableAbili
     zIndex: isDragging ? 100 : undefined,
   };
 
+  const isCasting = useAbilityStore((s) => s.isCasting);
+
   const handleClick = () => {
     if (isDragging) return; // CRITICAL: prevents click during drag release
     if (!ability) return;
+    if (isCasting()) return; // Block while casting
     if (isOnCooldown(ability.id)) return;
     if (!player || player.energy < ability.energyCost) return;
 
@@ -242,6 +245,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({ barIndex }) => {
 
       const ability = slots[slotIndex];
       if (!ability) return;
+      if (useAbilityStore.getState().isCasting()) return; // Block while casting
       if (isOnCooldown(ability.id)) return;
       if (!player || player.energy < ability.energyCost) return;
 

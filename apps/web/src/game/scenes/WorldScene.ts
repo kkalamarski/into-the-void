@@ -19,6 +19,7 @@ import { useGameStore } from '../../store/gameStore';
 import { useEntityStore } from '../../store/entityStore';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { useAlertStore } from '../../store/alertStore';
+import { useAbilityStore } from '../../store/abilityStore';
 import { useCombatStore } from '../../store/combatStore';
 import { useQuestStore } from '../../store/questStore';
 import { gameSocket } from '../../network/socket';
@@ -919,6 +920,12 @@ export class WorldScene extends Phaser.Scene {
     }
 
     if (direction) {
+      // Cancel any active cast when moving
+      if (useAbilityStore.getState().isCasting()) {
+        gameSocket.emit('cast:cancel', {});
+        useAbilityStore.getState().clearCast();
+      }
+
       // Cancel any active pathfinding when keyboard is used
       if (this.pathfindingController?.isPathActive()) {
         this.pathfindingController.cancelPath();
@@ -1103,6 +1110,16 @@ export class WorldScene extends Phaser.Scene {
   onPlayerZoneChanged(newZoneId: string, biome: BiomeType): void {
     console.log('[WorldScene] onPlayerZoneChanged:', { from: this.currentZoneId, to: newZoneId });
 
+    // Detect teleportation: hub transitions require full scene reset
+    const wasHub = isHubZone(this.currentZoneId);
+    const isHub = isHubZone(newZoneId);
+    if (wasHub !== isHub || (wasHub && isHub && this.currentZoneId !== newZoneId)) {
+      // Hub <-> world or hub <-> different hub: full reset required
+      console.log('[WorldScene] Teleportation detected, performing full zone reset');
+      this.fullZoneReset(newZoneId, biome);
+      return;
+    }
+
     // Get current player position to determine tile depth inside new zone
     const position = useGameStore.getState().player?.position;
 
@@ -1125,6 +1142,67 @@ export class WorldScene extends Phaser.Scene {
       this.pendingBiome = biome;
       console.log('[WorldScene] Zone transition pending at depth', depth, '- awaiting', HYSTERESIS_TILES, 'tiles');
     }
+  }
+
+  /**
+   * Full zone reset for teleportation (hub recall, NPC portals).
+   * Clears all chunk state, entity containers, and tile sprites, then re-requests
+   * the new zone's chunks from scratch.
+   */
+  fullZoneReset(newZoneId: string, biome: BiomeType): void {
+    console.log('[WorldScene] fullZoneReset:', { from: this.currentZoneId, to: newZoneId });
+
+    // Cancel any pending zone transition
+    this.pendingZoneId = null;
+    this.pendingBiome = null;
+
+    // Clear all rendered tiles
+    this.chunkTiles.forEach(tiles => {
+      tiles.forEach(tile => {
+        const children = tile.getAll();
+        children.forEach(child => child.destroy());
+        tile.removeAll(true);
+        tile.destroy();
+      });
+    });
+    this.chunkTiles.clear();
+
+    // Clear all entities
+    this.clearEntities();
+
+    // Clear all other players
+    this.clearOtherPlayers();
+
+    // Clear chunk manager state and re-request
+    if (this.chunkManager) {
+      this.chunkManager.clear();
+    }
+
+    // Rebuild fog from saved state for the new zone
+    if (this.fogRenderer && this.fogManager) {
+      this.fogRenderer.redrawFromState(this.fogManager);
+    }
+
+    // Clear rare node markers
+    if (this.entityRenderer) {
+      this.entityRenderer.clearAllQuestMarkers();
+    }
+
+    // Update zone state
+    this.currentZoneId = newZoneId;
+    this.currentBiome = biome;
+
+    // Update HUD
+    if (this.zoneHUD) {
+      this.zoneHUD.updateZone(newZoneId, biome);
+    }
+
+    // Show transition alert
+    const biomeName = this.formatBiomeName(biome);
+    useAlertStore.getState().addAlert(`Entering ${biomeName}`, 'info');
+
+    // The new zone data will arrive via zone:state -> loadZoneFromState
+    // which will call chunkManager.receiveChunk and updateChunks
   }
 
   /**
@@ -1626,8 +1704,7 @@ export class WorldScene extends Phaser.Scene {
     if ('yield' in changes && this.entityRenderer) {
       const yieldValue = (changes as { yield: number }).yield;
       const maxYield = container.getData('maxYield') as number | undefined;
-      const scale = (container.getData('entityScale') as number) ?? 2.5;
-      const spriteHeight = 256 * scale; // BASE_SPRITE_HEIGHT * scale
+      const actualSpriteHeight = (container.getData('actualSpriteHeight') as number) ?? 256 * ((container.getData('entityScale') as number) ?? 2.5);
 
       if (maxYield !== undefined) {
         // Find and destroy old yield bar using stored reference (avoids fragile Y-position search)
@@ -1638,7 +1715,7 @@ export class WorldScene extends Phaser.Scene {
 
         // Create new yield bar with updated value
         const newYieldBar = this.entityRenderer.createHealthBar(yieldValue, maxYield);
-        newYieldBar.y = -spriteHeight;
+        newYieldBar.y = -actualSpriteHeight - 20;
         container.add(newYieldBar);
 
         // Store new reference for next update
@@ -2114,6 +2191,22 @@ export class WorldScene extends Phaser.Scene {
     if (this.movementController) {
       this.movementController.setCollisionMap(collisionMap);
     }
+  }
+
+  /**
+   * Rebuild entity position set from entityStore and push to MovementController.
+   * Called after entity spawn/despawn/batch events to keep collision prediction in sync.
+   */
+  updateEntityCollisionPositions(): void {
+    if (!this.movementController) return;
+    const positions = new Set<string>();
+    const entities = useEntityStore.getState().entities;
+    for (const entity of entities.values()) {
+      if (entity.active) {
+        positions.add(`${entity.position.zoneId}:${entity.position.x},${entity.position.y}`);
+      }
+    }
+    this.movementController.setEntityPositions(positions);
   }
 
   shutdown(): void {

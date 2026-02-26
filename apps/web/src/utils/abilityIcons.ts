@@ -34,7 +34,11 @@ export const ABILITY_ICON_MAP: Record<string, { sheet: number; row: number; col:
   power_surge: { sheet: 2, row: 2, col: 2 },
   analyze_specimen: { sheet: 2, row: 0, col: 3 },
 
+  // Utility - recall
+  home_recall: { sheet: 1, row: 2, col: 1 },
+
   // Gathering abilities
+  gather: { sheet: 3, row: 3, col: 2 },
   mine: { sheet: 1, row: 3, col: 0 },
   harvest: { sheet: 3, row: 3, col: 2 },
   basic_mine: { sheet: 1, row: 3, col: 0 },
