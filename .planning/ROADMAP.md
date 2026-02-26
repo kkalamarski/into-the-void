@@ -56,7 +56,9 @@
   2. A player typing WASD letters into the chat input does not move their character
   3. A message exceeding 280 characters or an empty message is rejected by the server with no delivery to any client
   4. Sending more than 5 messages in rapid succession results in subsequent messages being silently dropped by the rate limiter
-**Plans**: TBD
+**Plans**: 2 plans
+  - [ ] 103-01-PLAN.md -- Client-side chat delivery fix and keyboard isolation (INFRA-01, INFRA-02)
+  - [ ] 103-02-PLAN.md -- Server-side message validation and rate limiting (INFRA-03, INFRA-04)
 
 ### Phase 104: Moderation Persistence
 **Goal**: The database has mute and block tables and the REST API exposes CRUD endpoints for them, so moderation state can be loaded on login and enforced server-side before any moderation UI is built
@@ -110,7 +112,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 103. Chat Foundation | 0/TBD | Not started | - |
+| 103. Chat Foundation | 0/2 | Planned | - |
 | 104. Moderation Persistence | 0/TBD | Not started | - |
 | 105. ChatService & Channel Routing | 0/TBD | Not started | - |
 | 106. Chat Panel UI | 0/TBD | Not started | - |
