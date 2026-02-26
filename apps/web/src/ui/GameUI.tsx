@@ -204,6 +204,7 @@ export const GameUI: React.FC = () => {
   }
 
   return (
+    <>
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="game-ui">
         <HUD onMenuOpen={() => setIsMenuOpen(true)} />
@@ -224,5 +225,6 @@ export const GameUI: React.FC = () => {
       </div>
     </DndContext>
     {isMenuOpen && <GameMenu onClose={() => setIsMenuOpen(false)} />}
+    </>
   );
 };
