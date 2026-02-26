@@ -40,7 +40,7 @@
 **Milestone Goal:** Add a full in-game chat system with five channel types (Local, Zone, Faction, Global, Whisper), ephemeral message delivery, and DB-persisted player mute/block moderation.
 
 - [x] **Phase 103: Chat Foundation** - Fix the socket dispatch bug, add keyboard isolation, and harden server validation so the full pipeline is testable end-to-end (completed 2026-02-26)
-- [ ] **Phase 104: Moderation Persistence** - Add mute/block DB tables, query functions, and REST endpoints so cross-session moderation state exists before the server needs to enforce it
+- [x] **Phase 104: Moderation Persistence** - Add mute/block DB tables, query functions, and REST endpoints so cross-session moderation state exists before the server needs to enforce it (completed 2026-02-26)
 - [ ] **Phase 105: ChatService & Channel Routing** - Implement the server-side ChatService with all five channel routing cases, rate limiting, block enforcement, and faction room management
 - [ ] **Phase 106: Chat Panel UI** - Rewrite ChatPanel with tabbed channels, whisper target input, timestamp rendering, and unread indicators wired to the new chatStore
 - [ ] **Phase 107: Moderation Controls** - Add mute/unmute and block/unblock actions with right-click context menu on sender names, completing the full moderation loop
@@ -115,7 +115,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 103. Chat Foundation | 2/2 | Complete    | 2026-02-26 |
-| 104. Moderation Persistence | 0/TBD | Not started | - |
+| 104. Moderation Persistence | 0/TBD | Complete    | 2026-02-26 |
 | 105. ChatService & Channel Routing | 0/TBD | Not started | - |
 | 106. Chat Panel UI | 0/TBD | Not started | - |
 | 107. Moderation Controls | 0/TBD | Not started | - |
