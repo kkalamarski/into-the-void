@@ -40,3 +40,6 @@ export * from './gathering-proficiency';
 export * from './collected-lore';
 export * from './zone-mastery';
 export * from './character-rewards';
+
+// Moderation (MOD-04)
+export * from './moderation';
