@@ -9,7 +9,7 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { GameService } from './game.service';
 import { PlayerService } from './player.service';
 import { InventoryService } from './inventory.service';
@@ -60,6 +60,20 @@ import { PoiType } from '@into-the-void/shared-types';
 export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
+
+  private readonly chatBurstWindow: Map<string, number[]> = new Map();
+  private readonly CHAT_BURST_LIMIT = 5;
+  private readonly CHAT_BURST_WINDOW_MS = 5000;
+
+  private canSendChat(playerId: string): boolean {
+    const now = Date.now();
+    const recent = (this.chatBurstWindow.get(playerId) || [])
+      .filter(t => now - t < this.CHAT_BURST_WINDOW_MS);
+    if (recent.length >= this.CHAT_BURST_LIMIT) return false;
+    recent.push(now);
+    this.chatBurstWindow.set(playerId, recent);
+    return true;
+  }
 
   constructor(
     private readonly eventEmitter: EventEmitter2,
@@ -408,11 +422,22 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const player = this.playerService.getPlayerBySocket(client.id);
     if (!player) return;
 
+    // Validate message content (INFRA-04)
+    const trimmed = data.message?.trim() ?? '';
+    if (trimmed.length === 0) return; // silently discard empty/whitespace
+    if (trimmed.length > 280) {
+      client.emit('error', { code: 'INVALID_ACTION', message: 'Message too long (max 280 characters).' });
+      return;
+    }
+
+    // Rate limit check (INFRA-03)
+    if (!this.canSendChat(player.id)) return; // silently drop burst excess
+
     const message = {
       id: crypto.randomUUID(),
       senderId: player.id,
       senderName: player.name,
-      message: data.message,
+      message: trimmed,
       channel: data.channel,
       timestamp: Date.now(),
     };
@@ -1016,6 +1041,29 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         message: 'Failed to process recall',
       });
     }
+  }
+
+  @OnEvent('player.teleported')
+  async handlePlayerTeleported(data: { playerId: string; socketId: string; oldZoneId: string; newZoneId: string }): Promise<void> {
+    const client = this.server.sockets.sockets.get(data.socketId);
+    if (!client) return;
+    const player = this.playerService.getPlayerBySocket(data.socketId);
+    if (!player) return;
+
+    this.updatePlayerRooms(client, data.newZoneId);
+    this.aiService.activateZone(data.newZoneId);
+    if (this.playerService.getPlayersInZone(data.oldZoneId).length === 0) {
+      this.aiService.deactivateZone(data.oldZoneId);
+    }
+
+    const newZoneState = await this.gameService.getZoneState(data.newZoneId);
+    client.emit('zone:state', newZoneState);
+
+    client.to(data.newZoneId).emit('player:joined', {
+      id: player.id, name: player.name, faction: player.faction,
+      position: player.position, level: player.level,
+      inCombat: player.inCombat, credits: player.credits,
+    });
   }
 
   @SubscribeMessage('hub:leave')
