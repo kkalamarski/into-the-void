@@ -164,7 +164,8 @@ export const HUD: React.FC = () => {
             <label>Chat</label>
           </button>
         </div>
-        <ActionBar />
+        <ActionBar barIndex={0} />
+        <ActionBar barIndex={1} />
       </div>
 
       {displayedBiome && (
