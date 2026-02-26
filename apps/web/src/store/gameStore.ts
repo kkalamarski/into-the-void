@@ -4,6 +4,7 @@ import { Game } from '../game/Game';
 import { gameSocket } from '../network/socket';
 import { useEntityStore } from './entityStore';
 import { useAlertStore } from './alertStore';
+import { audioManager } from '../utils/audio';
 
 export interface DiscoveredResource {
   entityId: string;
@@ -469,6 +470,9 @@ gameSocket.on('combat:damage', (data: {
 
   if (!worldScene) return;
 
+  // Play combat hit SFX (AUD-04 — overlapping playback for rapid hits)
+  audioManager.playEffect('/assets/audio/sfx-combat-hit.mp3');
+
   // Determine if this is damage to the local player
   const isLocalPlayer = currentPlayer?.id === data.defenderId;
 
@@ -615,6 +619,9 @@ gameSocket.on('gathering:result', (result: {
     useAlertStore.getState().addAlert(result.error, 'error');
     return;
   }
+
+  // Play gathering success SFX (AUD-04)
+  audioManager.playEffect('/assets/audio/sfx-gathering.mp3');
 
   // Show accuracy feedback
   const accuracyMessages = {

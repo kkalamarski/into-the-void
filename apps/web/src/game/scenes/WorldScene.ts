@@ -14,6 +14,7 @@ import { MovementController } from '../systems/MovementController';
 import { PathfindingController } from '../systems/PathfindingController';
 import { IsometricTransform } from '../utils/IsometricTransform';
 import { DepthSorter } from '../rendering/DepthSorter';
+import { audioManager } from '../../utils/audio';
 import { useGameStore } from '../../store/gameStore';
 import { useEntityStore } from '../../store/entityStore';
 import { useInventoryStore } from '../../store/inventoryStore';
@@ -479,6 +480,10 @@ export class WorldScene extends Phaser.Scene {
         return;
       }
     });
+
+    // Start background music — loops gaplessly via Web Audio API (AUD-01)
+    // By the time WorldScene loads, user has interacted (login flow), so AudioContext is ready
+    audioManager.startMusic('/assets/music/freesound_community-ethereal-ambient-music-55115.mp3');
   }
 
   /**
@@ -1594,11 +1599,9 @@ export class WorldScene extends Phaser.Scene {
       const creatureChanges = changes as Partial<Creature>;
       if (creatureChanges.health !== undefined && creatureChanges.maxHealth !== undefined) {
         if (creatureChanges.health < creatureChanges.maxHealth) {
-          // Get entity scale and sprite height for correct UI positioning
-          // Sprite has origin(0.5, 1.0) at y=0, so sprite top is at y = -spriteHeight in container space
-          const scale = (container.getData('entityScale') as number) ?? 2.5;
-          const spriteHeight = 256 * scale; // BASE_SPRITE_HEIGHT * scale
-          const uiBaseY = -spriteHeight;
+          // Get actual sprite height for correct UI positioning
+          const actualSpriteHeight = (container.getData('actualSpriteHeight') as number) ?? 256 * ((container.getData('entityScale') as number) ?? 2.5);
+          const uiBaseY = -actualSpriteHeight - 20;
 
           // Get entity data for creature info
           const entityId = container.getData('entityId') as string;

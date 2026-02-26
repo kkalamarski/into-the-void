@@ -6,6 +6,7 @@ import { useEntityStore } from '../store/entityStore';
 import { ConnectionIndicator } from './ConnectionIndicator';
 import { ReconnectOverlay } from './ReconnectOverlay';
 import { gameSocket } from '../network/socket';
+import { audioManager } from '../utils/audio';
 import { ChunkData, BiomeType, Entity } from '@into-the-void/shared-types';
 
 const GameContainer: React.FC = () => {
@@ -174,6 +175,34 @@ const GameContainer: React.FC = () => {
     }
 
   }, [worldSceneReady, zoneId, player?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Audio: First-gesture gate — initializes AudioContext on first click or keydown (AUD-02)
+  useEffect(() => {
+    const handleFirstGesture = async () => {
+      await audioManager.init();
+      // Remove both listeners (whichever fired first)
+      document.removeEventListener('click', handleFirstGesture);
+      document.removeEventListener('keydown', handleFirstGesture);
+    };
+
+    document.addEventListener('click', handleFirstGesture, { once: true });
+    document.addEventListener('keydown', handleFirstGesture, { once: true });
+
+    return () => {
+      document.removeEventListener('click', handleFirstGesture);
+      document.removeEventListener('keydown', handleFirstGesture);
+    };
+  }, []);
+
+  // Audio: Tab visibility — pause music on blur, resume on focus (AUD-04)
+  useEffect(() => {
+    const handleVisibility = () => {
+      audioManager.handleVisibilityChange(document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
 
   // Initial player spawn only - position updates handled by MovementController
   const playerSpawnedRef = useRef(false);

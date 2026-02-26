@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { gameSocket } from '../network/socket';
 import { QuestProgressPayload } from '@into-the-void/shared-types';
-import { playQuestCompleteSound } from '../utils/audio';
+import { audioManager } from '../utils/audio';
 
 /**
  * Completed quest metadata for history tracking
@@ -172,7 +172,7 @@ gameSocket.on(
     store.addCompletedReward(data);
 
     // Play audio cue after state update
-    playQuestCompleteSound();
+    audioManager.playEffect('/assets/audio/quest-complete.mp3');
   }
 );
 

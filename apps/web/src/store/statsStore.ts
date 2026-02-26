@@ -4,6 +4,7 @@ import type { CharStatsPayload, CharacterStats } from '@into-the-void/shared-typ
 import { gameSocket } from '../network/socket';
 import { STAT_DISPLAY_ORDER } from '../ui/constants';
 import { useGameStore } from './gameStore';
+import { audioManager } from '../utils/audio';
 
 interface StatsState {
   stats: CharStatsPayload | null;
@@ -32,6 +33,8 @@ export const useStatsStore = create<StatsState>()(
           }
           if (Object.keys(deltas).length > 0) {
             state.levelUpDeltas = deltas;
+            // Play quest-complete fanfare for level-up (AUD-03)
+            audioManager.playEffect('/assets/audio/quest-complete.mp3');
           }
         }
         state.stats = payload;
