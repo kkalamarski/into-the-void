@@ -173,29 +173,35 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Action bar drag-and-drop management — v1.20
 - ✓ Second action bar with Shift+1-8 keybindings — v1.20
 - ✓ HUD shortcuts reorganization — v1.20
+- ✓ ESC closes open modals one by one; opens game menu when none open — v1.21
+- ✓ Game menu with settings panel and logout button — v1.21
+- ✓ Background music playing on loop from existing tracks — v1.21
+- ✓ Level-up sound effect triggers on level gain — v1.21
+- ✓ Audio settings with separate ambient/music/effects volume — v1.21
+- ✓ Interface settings to toggle second action bar visibility — v1.21
+- ✓ Entity rendering anchored at base tile, selection indicator aligned — v1.21
 
-## Current Milestone: v1.21 UI Polish & Audio
+## Current Milestone: v1.22 In-Game Chat
 
-**Goal:** Add game menu, audio system, settings, and fix entity rendering
+**Goal:** Add a full in-game chat system with multiple channels, whispers, and player moderation
 
 **Target features:**
-- ESC key modal management (close modals one-by-one, then open menu)
-- Game menu with settings and logout
-- Music integration (loop existing tracks)
-- Level-up sound effect (reuse quest-complete.mp3)
-- Audio settings (ambient, music, effects volume)
-- Interface settings (show/hide second action bar)
-- Fix entity rendering anchor (base position, not elevated)
+- Chat panel (bottom-left, always visible, tabbed channels)
+- 5 channel types: Local, Zone, Faction, Global, Whispers
+- Player moderation: mute and block
+- Ephemeral messages (no DB persistence)
 
 ### Active
 
-- [ ] ESC closes open modals one by one; opens game menu when none open
-- [ ] Game menu with settings panel and logout button
-- [ ] Background music playing on loop from existing tracks
-- [ ] Level-up sound effect triggers on level gain
-- [ ] Audio settings with separate ambient/music/effects volume
-- [ ] Interface settings to toggle second action bar visibility
-- [ ] Entity rendering anchored at base tile, selection indicator aligned
+- [ ] Chat panel UI with tabbed channel navigation
+- [ ] Local chat (proximity-based, nearby players)
+- [ ] Zone-wide chat channel
+- [ ] Faction chat channel (faction members only)
+- [ ] Global chat channel (server-wide)
+- [ ] Whisper system (private 1-on-1 messages)
+- [ ] Player mute (hide messages from specific players)
+- [ ] Player block (prevent whispers from specific players)
+- [ ] Mute/block lists persist across sessions
 
 ### Out of Scope
 
@@ -203,7 +209,7 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - Sprite-based rendering — color tiles only until art pipeline ready
 - PvP combat — PvE first, PvP in future milestone
 - Status effects / debuffs — future expansion
-- Chat system — separate milestone
+- Chat speech bubbles above characters — panel-only for now
 - Sound/music — polish phase
 - Mobile controls — web-first
 - Surface faction HQs (Canopy, Ironhold, Meridian) — orbital first, surface later
@@ -246,4 +252,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-26 after v1.21 milestone started*
+*Last updated: 2026-02-26 after v1.22 milestone started*
