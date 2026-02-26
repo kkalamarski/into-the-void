@@ -65,7 +65,9 @@
   2. Music does not start on page load before any user gesture (browser autoplay policy compliance)
   3. A level-up event plays the quest-complete sound effect audibly
   4. Music, effects, and ambient volume categories can be set independently and the change is heard immediately
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 100-01-PLAN.md — AudioManager singleton + audioStore with Zustand persist
+- [ ] 100-02-PLAN.md — Wire audio lifecycle, SFX triggers, and audio assets
 
 ### Phase 101: Game Menu & Settings
 **Goal**: Player can open a game menu from within the game, adjust audio and interface settings, and log out cleanly
@@ -97,10 +99,10 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 99. Entity Rendering Fix | 0/1 | Planned | - |
-| 100. Audio Foundation | 0/TBD | Not started | - |
+| 100. Audio Foundation | 0/2 | Planned | - |
 | 101. Game Menu & Settings | 0/TBD | Not started | - |
 | 102. ESC Centralization | 0/TBD | Not started | - |
 
 ---
 
-*Last updated: 2026-02-26 - v1.21 roadmap created*
+*Last updated: 2026-02-26 - Phase 100 planned (2 plans, 2 waves)*
