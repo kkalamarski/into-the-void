@@ -8,7 +8,7 @@ progress:
   total_phases: 103
   completed_phases: 102
   total_plans: 269
-  completed_plans: 268
+  completed_plans: 269
 ---
 
 # Project State
@@ -23,20 +23,21 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: 103 of 107 (Chat Foundation)
-Plan: 1 of 4 complete
+Plan: 2 of 4 complete
 Status: In progress
-Last activity: 2026-02-26 — 103-01 completed (chat message delivery + keyboard isolation)
+Last activity: 2026-02-26 — 103-02 completed (server-side message validation + burst rate limiting)
 
-Progress: [█░░░░░░░░░] 5%
+Progress: [██░░░░░░░░] 10%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 268 (v1.0-v1.21 complete + 103-01)
+- Total plans completed: 269 (v1.0-v1.21 complete + 103-01 + 103-02)
 - Average duration: ~3 min per plan
 - Total execution time: ~13 hours across 21 milestones
 
 **Recent Plans:**
+- 103-02 (2026-02-26, 3min, 1 task, 1 file): server-side message validation + burst rate limiting
 - 103-01 (2026-02-26, 51s, 2 tasks, 2 files): chat:message listener + keyboard isolation
 
 **Recent Milestones:**
@@ -55,6 +56,8 @@ Recent decisions affecting current work:
 - [v1.22 Research]: Mute/block persist via REST API + DB, not localStorage
 - [Phase 103-chat-foundation]: Socket listeners registered at module level in store files, not React components
 - [Phase 103-chat-foundation]: onFocus/onBlur used for keyboard isolation (not useEffect) because ChatPanel is always-visible
+- [103-02]: Manual sliding-window token bucket (Map<string, number[]>) used over @nestjs/throttler — no new dependencies, matches existing pattern
+- [103-02]: Empty/whitespace and burst excess silently dropped — no error events to avoid leaking filter details
 
 ### Pending Todos
 
@@ -70,9 +73,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 103-01-PLAN.md (chat message delivery + keyboard isolation)
+Stopped at: Completed 103-02-PLAN.md (server-side message validation + burst rate limiting)
 Resume file: None
-Next action: Execute 103-02
+Next action: Execute 103-03
 
 ---
-*Last updated: 2026-02-26 — 103-01 completed*
+*Last updated: 2026-02-26 — 103-02 completed*
