@@ -53,7 +53,8 @@
   1. Entity sprites sit flush with the tile they occupy, with no floating gap above elevated tiles
   2. The selection ring indicator appears at the entity's base tile position, not at sprite visual height
   3. Entity shadows (if present) align with the tile base after the coordinate fix
-**Plans**: TBD
+**Plans**: 1 plan
+- [ ] 99-01-PLAN.md — Fix entity anchor math and verify rendering
 
 ### Phase 100: Audio Foundation
 **Goal**: Background music plays on a continuous gapless loop and game events trigger sound effects, all volume-controlled per category
@@ -95,7 +96,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 99. Entity Rendering Fix | 0/TBD | Not started | - |
+| 99. Entity Rendering Fix | 0/1 | Planned | - |
 | 100. Audio Foundation | 0/TBD | Not started | - |
 | 101. Game Menu & Settings | 0/TBD | Not started | - |
 | 102. ESC Centralization | 0/TBD | Not started | - |
