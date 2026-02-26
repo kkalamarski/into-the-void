@@ -68,7 +68,9 @@
   1. A mute entry created via the REST API is present in the database and returned by the GET moderation endpoint on a subsequent request
   2. A block entry survives a full browser refresh and is returned correctly when the client loads moderation state after re-authentication
   3. Deleting a mute or block entry via the REST API removes it from the DB and subsequent GET responses no longer include it
-**Plans**: TBD
+**Plans**: 2 plans
+  - [ ] 104-01-PLAN.md -- DB schema tables (player_mutes, player_blocks) + query functions (MOD-04)
+  - [ ] 104-02-PLAN.md -- NestJS REST moderation module with CRUD endpoints (MOD-04)
 
 ### Phase 105: ChatService & Channel Routing
 **Goal**: All five chat channels route correctly from a single server-side ChatService — zone and global via Socket.IO rooms, faction via faction rooms joined at auth (and preserved across zone transitions), local via proximity distance check, and whispers via target lookup with server-enforced block

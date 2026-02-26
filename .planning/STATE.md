@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 103 — Chat Foundation
+**Current focus:** Phase 104 — Moderation Persistence
 
 ## Current Position
 
-Phase: 103 of 107 (Chat Foundation)
-Plan: 2 of 4 complete
+Phase: 104 of 107 (Moderation Persistence)
+Plan: 1 of 2 complete
 Status: In progress
-Last activity: 2026-02-26 — 103-02 completed (server-side message validation + burst rate limiting)
+Last activity: 2026-02-26 — 104-01 completed (mute/block DB schema + query functions)
 
-Progress: [██░░░░░░░░] 10%
+Progress: [███░░░░░░░] 30%
 
 ## Performance Metrics
 
@@ -37,6 +37,7 @@ Progress: [██░░░░░░░░] 10%
 - Total execution time: ~13 hours across 21 milestones
 
 **Recent Plans:**
+- 104-01 (2026-02-26, 8min, 2 tasks, 5 files): mute/block DB schema tables + query functions
 - 103-02 (2026-02-26, 3min, 1 task, 1 file): server-side message validation + burst rate limiting
 - 103-01 (2026-02-26, 51s, 2 tasks, 2 files): chat:message listener + keyboard isolation
 
@@ -73,9 +74,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 103-02-PLAN.md (server-side message validation + burst rate limiting)
+Stopped at: Completed 104-01-PLAN.md (mute/block DB schema + query functions)
 Resume file: None
-Next action: Execute 103-03
+Next action: Execute 104-02
 
 ---
-*Last updated: 2026-02-26 — 103-02 completed*
+*Last updated: 2026-02-26 — 104-01 completed*
