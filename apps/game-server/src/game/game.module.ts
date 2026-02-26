@@ -17,6 +17,7 @@ import { DiscoveryService } from './discovery.service';
 import { GatheringService } from './gathering.service';
 import { LoreService } from './lore.service';
 import { ZoneMasteryService } from './zone-mastery.service';
+import { ExpeditionService } from './expedition.service';
 import { ZonesModule } from '../zones/zones.module';
 
 @Module({
@@ -32,7 +33,7 @@ import { ZonesModule } from '../zones/zones.module';
     }),
     ZonesModule,
   ],
-  providers: [GameGateway, GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService, QuestService, DiscoveryService, GatheringService, LoreService, ZoneMasteryService],
-  exports: [GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService, QuestService, DiscoveryService, GatheringService, LoreService, ZoneMasteryService],
+  providers: [GameGateway, GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService, QuestService, DiscoveryService, GatheringService, LoreService, ZoneMasteryService, ExpeditionService],
+  exports: [GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService, QuestService, DiscoveryService, GatheringService, LoreService, ZoneMasteryService, ExpeditionService],
 })
 export class GameModule {}
