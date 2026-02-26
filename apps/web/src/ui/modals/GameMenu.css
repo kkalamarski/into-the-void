@@ -1,0 +1,390 @@
+/* GameMenu Overlay — renders as React Portal to document.body */
+
+.game-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  pointer-events: all;
+}
+
+.game-menu-modal {
+  background: var(--color-bg-panel, #1a1d2e);
+  border: 1px solid var(--color-border, #2e3250);
+  border-radius: 10px;
+  padding: 0;
+  width: 60%;
+  max-width: 700px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* Header */
+.game-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--color-border, #2e3250);
+}
+
+.game-menu-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text, #e2e8f0);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.game-menu-close {
+  background: none;
+  border: none;
+  color: var(--color-text-muted, #8892a4);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+}
+
+.game-menu-close:hover {
+  color: var(--color-text, #e2e8f0);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Tabs */
+.game-menu-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border, #2e3250);
+  padding: 0 20px;
+}
+
+.game-menu-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 10px 16px;
+  margin-bottom: -1px;
+  cursor: pointer;
+  color: var(--color-text-muted, #8892a4);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.game-menu-tab:hover {
+  color: var(--color-text, #e2e8f0);
+}
+
+.game-menu-tab.active {
+  color: var(--color-accent, #6c8eff);
+  border-bottom-color: var(--color-accent, #6c8eff);
+}
+
+/* Content area */
+.game-menu-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* Sections */
+.game-menu-section {
+  margin-bottom: 24px;
+}
+
+.game-menu-section:last-child {
+  margin-bottom: 0;
+}
+
+.game-menu-section-title {
+  margin: 0 0 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted, #8892a4);
+}
+
+/* Slider rows */
+.game-menu-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.game-menu-slider-label {
+  width: 70px;
+  font-size: 0.875rem;
+  color: var(--color-text, #e2e8f0);
+  flex-shrink: 0;
+}
+
+.game-menu-slider {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--color-border, #2e3250);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.game-menu-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent, #6c8eff);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.game-menu-slider::-webkit-slider-thumb:hover {
+  background: var(--color-accent-hover, #8aaaff);
+  transform: scale(1.15);
+}
+
+.game-menu-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent, #6c8eff);
+  border: none;
+  cursor: pointer;
+}
+
+.game-menu-mute-btn {
+  background: none;
+  border: 1px solid var(--color-border, #2e3250);
+  border-radius: 4px;
+  color: var(--color-text-muted, #8892a4);
+  cursor: pointer;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.game-menu-mute-btn:hover {
+  color: var(--color-text, #e2e8f0);
+  border-color: var(--color-accent, #6c8eff);
+}
+
+.game-menu-mute-btn.muted {
+  color: var(--color-accent, #6c8eff);
+  border-color: var(--color-accent, #6c8eff);
+}
+
+/* Toggle switch (Interface section) */
+.game-menu-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.game-menu-toggle-label {
+  font-size: 0.875rem;
+  color: var(--color-text, #e2e8f0);
+}
+
+.game-menu-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.game-menu-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.game-menu-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--color-border, #2e3250);
+  border-radius: 22px;
+  transition: background 0.2s;
+}
+
+.game-menu-toggle-slider::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 16px;
+  height: 16px;
+  background: var(--color-text-muted, #8892a4);
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.game-menu-toggle-switch input:checked + .game-menu-toggle-slider {
+  background: var(--color-accent, #6c8eff);
+}
+
+.game-menu-toggle-switch input:checked + .game-menu-toggle-slider::before {
+  transform: translateX(18px);
+  background: #fff;
+}
+
+/* About tab */
+.game-menu-about {
+  text-align: center;
+  padding: 12px 0;
+}
+
+.game-menu-about-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-accent, #6c8eff);
+  margin: 0 0 4px;
+}
+
+.game-menu-about-version {
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #8892a4);
+  margin: 0 0 12px;
+}
+
+.game-menu-about-desc {
+  font-size: 0.95rem;
+  color: var(--color-text, #e2e8f0);
+  margin: 0 0 20px;
+}
+
+.game-menu-about-factions {
+  text-align: left;
+  display: inline-block;
+  margin: 0 auto 20px;
+}
+
+.game-menu-about-factions-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted, #8892a4);
+  margin: 0 0 8px;
+}
+
+.game-menu-about-factions ul {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--color-text, #e2e8f0);
+  font-size: 0.875rem;
+  line-height: 1.8;
+}
+
+.game-menu-about-credits {
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #8892a4);
+  margin: 0;
+  font-style: italic;
+}
+
+/* Footer / Leave Game */
+.game-menu-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--color-border, #2e3250);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.game-menu-btn-leave {
+  background: none;
+  border: 1px solid #e53e3e;
+  color: #e53e3e;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.game-menu-btn-leave:hover {
+  background: #e53e3e;
+  color: #fff;
+}
+
+/* Confirm dialog */
+.game-menu-confirm {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.game-menu-confirm-text {
+  font-size: 0.875rem;
+  color: var(--color-text, #e2e8f0);
+}
+
+.game-menu-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.game-menu-btn-cancel {
+  background: none;
+  border: 1px solid var(--color-border, #2e3250);
+  color: var(--color-text-muted, #8892a4);
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.game-menu-btn-cancel:hover {
+  color: var(--color-text, #e2e8f0);
+  border-color: var(--color-text-muted, #8892a4);
+}
+
+.game-menu-btn-leave-confirm {
+  background: #e53e3e;
+  border: 1px solid #e53e3e;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.game-menu-btn-leave-confirm:hover {
+  background: #c53030;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .game-menu-modal {
+    width: 90%;
+    max-width: 90%;
+  }
+}
