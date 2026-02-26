@@ -13,6 +13,7 @@ import '../store/statsStore'; // Side-effect: registers stats:update socket hand
 import '../store/questStore'; // Side-effect: registers quest socket handlers
 import '../store/loreStore'; // Side-effect: registers lore socket handlers
 import '../store/zoneMasteryStore'; // Side-effect: registers mastery socket handlers
+import '../store/chatStore'; // Side-effect: registers chat:message socket handler
 import { useActionBarStore } from '../store/actionBarStore';
 import { useNpcStore } from '../store/npcStore';
 import { useModalStackStore } from '../store/modalStackStore';
@@ -37,7 +38,7 @@ import { ZoneMasteryHUD } from '../components/ZoneMasteryHUD';
 import './GameUI.css';
 
 export const GameUI: React.FC = () => {
-  const { showChat, showInventory, showEquipment, showAbilities, showDeathScreen, isQuestLogOpen, player } = useGameStore();
+  const { showInventory, showEquipment, showAbilities, showDeathScreen, isQuestLogOpen, player } = useGameStore();
   const { interactingNpc } = useNpcStore();
   const [shiftHeld, setShiftHeld] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -243,7 +244,7 @@ export const GameUI: React.FC = () => {
         <HUD onMenuOpen={() => setIsMenuOpen(true)} />
         <QuestTracker />
         <ZoneMasteryHUD />
-        {showChat && <ChatPanel />}
+        <ChatPanel />
         {showInventory && <InventoryPanel />}
         {showEquipment && <EquipmentPanel />}
         {showAbilities && <AbilitiesPanel />}

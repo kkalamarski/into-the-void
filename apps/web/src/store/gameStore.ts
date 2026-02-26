@@ -59,9 +59,6 @@ interface GameState {
   showStorage: boolean;
   toggleStorage: () => void;
 
-  showChat: boolean;
-  toggleChat: () => void;
-
   // Death screen
   showDeathScreen: boolean;
   setShowDeathScreen: (show: boolean) => void;
@@ -125,9 +122,6 @@ export const useGameStore = create<GameState>((set) => ({
 
   showStorage: false,
   toggleStorage: () => set((state) => ({ showStorage: !state.showStorage })),
-
-  showChat: false,
-  toggleChat: () => set((state) => ({ showChat: !state.showChat })),
 
   // Death screen
   showDeathScreen: false,

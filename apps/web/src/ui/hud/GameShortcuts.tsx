@@ -12,7 +12,6 @@ export const GameShortcuts: React.FC<GameShortcutsProps> = ({ onMenuOpen }) => {
     toggleEquipment,
     toggleAbilities,
     toggleQuestLog,
-    toggleChat,
   } = useGameStore();
 
   return (
@@ -32,10 +31,6 @@ export const GameShortcuts: React.FC<GameShortcutsProps> = ({ onMenuOpen }) => {
       <button className="game-shortcut-btn" onClick={toggleQuestLog} title="Quests (Q)">
         <span>Q</span>
         <label>Quest</label>
-      </button>
-      <button className="game-shortcut-btn" onClick={toggleChat} title="Chat (C)">
-        <span>C</span>
-        <label>Chat</label>
       </button>
       <button className="game-shortcut-btn" onClick={onMenuOpen} title="Menu (ESC)">
         <span>&#9776;</span>
