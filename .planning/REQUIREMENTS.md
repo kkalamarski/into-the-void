@@ -53,26 +53,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ESC-01 | — | Pending |
-| ESC-02 | — | Pending |
-| ESC-03 | — | Pending |
-| AUD-01 | — | Pending |
-| AUD-02 | — | Pending |
-| AUD-03 | — | Pending |
-| AUD-04 | — | Pending |
-| MENU-01 | — | Pending |
-| MENU-02 | — | Pending |
-| MENU-03 | — | Pending |
-| MENU-04 | — | Pending |
-| MENU-05 | — | Pending |
-| REND-01 | — | Pending |
-| REND-02 | — | Pending |
+| ESC-01 | Phase 102 | Pending |
+| ESC-02 | Phase 102 | Pending |
+| ESC-03 | Phase 102 | Pending |
+| AUD-01 | Phase 100 | Pending |
+| AUD-02 | Phase 100 | Pending |
+| AUD-03 | Phase 100 | Pending |
+| AUD-04 | Phase 100 | Pending |
+| MENU-01 | Phase 101 | Pending |
+| MENU-02 | Phase 101 | Pending |
+| MENU-03 | Phase 101 | Pending |
+| MENU-04 | Phase 101 | Pending |
+| MENU-05 | Phase 101 | Pending |
+| REND-01 | Phase 99 | Pending |
+| REND-02 | Phase 99 | Pending |
 
 **Coverage:**
 - v1.21 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14 ⚠️
+- Mapped to phases: 14
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-26*
-*Last updated: 2026-02-26 after initial definition*
+*Last updated: 2026-02-26 — traceability populated after roadmap creation*

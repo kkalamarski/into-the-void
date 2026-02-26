@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.21
 milestone_name: UI Polish & Audio
-status: defining_requirements
+status: ready_to_plan
 last_updated: "2026-02-26"
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -18,15 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-
-**Current focus:** Defining requirements for v1.21
+**Current focus:** Phase 99 — Entity Rendering Fix
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-26 — Milestone v1.21 started
+Phase: 99 of 102 (Entity Rendering Fix)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-02-26 — v1.21 roadmap created, 4 phases, 14 requirements mapped
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -46,20 +47,28 @@ Last activity: 2026-02-26 — Milestone v1.21 started
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
+Recent decisions affecting v1.21:
+- Audio: Web Audio API (native) for gapless music loop — no new deps needed
+- Audio: Zustand persist middleware for settings — already in dep tree
+- ESC: Single capture-phase handler in GameUI.tsx — prevents Phaser dual-fire
+- Game menu: React Portal to document.body — escapes .game-ui stacking context
+
 ### Pending Todos
 
 None.
 
 ### Blockers/Concerns
 
-None.
+- [Phase 100]: iOS Safari autoplay restrictions may differ from Chrome/Firefox — validate on device during execution
+- [Phase 102]: Confirm exact isPending field name in npcStore before removing per-component ESC handlers
+- [Phase 102]: Verify Phaser 3 keyboard capture behavior with { capture: true } + stopPropagation() against version in use
 
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Defining v1.21 requirements
+Stopped at: Roadmap created for v1.21 — ready to plan Phase 99
 Resume file: None
-Next action: Define requirements → create roadmap
+Next action: /gsd:plan-phase 99
 
 ---
-*Last updated: 2026-02-26 — v1.21 milestone started*
+*Last updated: 2026-02-26 — v1.21 roadmap created*
