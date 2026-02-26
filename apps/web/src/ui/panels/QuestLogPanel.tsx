@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuestStore } from '../../store/questStore';
 import { useGameStore } from '../../store/gameStore';
 import { useDraggablePanel } from '../../hooks/useDraggablePanel';
+import { useModalStack } from '../../hooks/useModalStack';
 import { gameSocket } from '../../network/socket';
 import './QuestLogPanel.css';
 
@@ -10,6 +11,8 @@ export const QuestLogPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
   const { activeQuests, completedQuests, trackedQuests, toggleTracked } = useQuestStore();
   const toggleQuestLog = useGameStore(state => state.toggleQuestLog);
+
+  useModalStack('quest-log', toggleQuestLog);
 
   // Disable Phaser keyboard when panel is open
   useEffect(() => {
@@ -26,17 +29,6 @@ export const QuestLogPanel: React.FC = () => {
       }
     };
   }, []);
-
-  // Handle Escape key to close panel
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        toggleQuestLog();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleQuestLog]);
 
   const handleAbandonQuest = (questId: string) => {
     if (confirm('Are you sure you want to abandon this quest?')) {

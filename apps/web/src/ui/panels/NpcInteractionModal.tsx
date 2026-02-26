@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNpcStore, type NpcInteraction } from '../../store/npcStore';
 import { useGameStore } from '../../store/gameStore';
 import { useDraggablePanel } from '../../hooks/useDraggablePanel';
+import { useModalStack } from '../../hooks/useModalStack';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { gameSocket } from '../../network/socket';
 import { ItemRegistry, type ItemDefinition } from '@into-the-void/items';
@@ -209,6 +210,8 @@ export const NpcInteractionModal: React.FC = () => {
   const isPending = tradePending || questPending || expeditionPending;
   const { position, isDragging, handleMouseDown } = useDraggablePanel();
 
+  useModalStack('npc-interaction', closeInteraction);
+
   // Clear any stuck movement keys when modal opens
   useEffect(() => {
     const game = useGameStore.getState().game;
@@ -218,20 +221,6 @@ export const NpcInteractionModal: React.FC = () => {
       worldScene.resetMovementInput?.();
     }
   }, []);
-
-  // Handle Escape key to close modal (blocked during pending operations)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isPending) {
-        closeInteraction();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [closeInteraction, isPending]);
 
   // Default to appropriate tab based on NPC type
   useEffect(() => {

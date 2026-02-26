@@ -138,9 +138,9 @@ export class WorldScene extends Phaser.Scene {
     // Initialize IsometricTransform
     this.isoTransform = new IsometricTransform(ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
 
-    // Initialize fog rendering (will redraw from state once character loads)
-    this.fogRenderer = new FogRenderer(this, this.isoTransform);
-    this.fogRenderer.create();
+    // Fog of war rendering disabled — RenderTexture approach doesn't track camera properly
+    // this.fogRenderer = new FogRenderer(this, this.isoTransform);
+    // this.fogRenderer.create();
 
     // Initialize POI renderer
     this.poiRenderer = new PoiRenderer(this, this.isoTransform);

@@ -143,8 +143,8 @@ export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
 
       <CombatLog />
 
+      <CastBar />
       <div className="hud-bottom-area">
-        <CastBar />
         <div className="action-bars-container">
           <ActionBar barIndex={0} />
           <ActionBar barIndex={1} />
