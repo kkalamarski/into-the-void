@@ -1,18 +1,23 @@
 import React from 'react';
 import { useQuestStore } from '../../store/questStore';
+import { useModalStack } from '../../hooks/useModalStack';
 import './QuestCompleteModal.css';
 
-export const QuestCompleteModal: React.FC = () => {
+interface QuestCompleteContentProps {
+  onClose: () => void;
+}
+
+const QuestCompleteContent: React.FC<QuestCompleteContentProps> = ({ onClose }) => {
   const completedRewards = useQuestStore(state => state.completedRewards);
   const removeCompletedReward = useQuestStore(state => state.removeCompletedReward);
+
+  useModalStack('quest-complete', onClose);
 
   // Click-to-dismiss handler with event propagation stopping
   const handleDismiss = (e: React.MouseEvent, questId: string) => {
     e.stopPropagation(); // Prevent click from reaching game canvas
     removeCompletedReward(questId);
   };
-
-  if (completedRewards.length === 0) return null;
 
   return (
     <div className="quest-complete-overlay">
@@ -54,4 +59,20 @@ export const QuestCompleteModal: React.FC = () => {
       })}
     </div>
   );
+};
+
+export const QuestCompleteModal: React.FC = () => {
+  const completedRewards = useQuestStore(state => state.completedRewards);
+  const removeCompletedReward = useQuestStore(state => state.removeCompletedReward);
+
+  if (completedRewards.length === 0) return null;
+
+  // Dismiss the first reward on ESC (LIFO within one component = dismiss oldest first)
+  const handleEscClose = () => {
+    if (completedRewards.length > 0) {
+      removeCompletedReward(completedRewards[0].questId);
+    }
+  };
+
+  return <QuestCompleteContent onClose={handleEscClose} />;
 };

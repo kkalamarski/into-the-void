@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { useInventoryStore } from '../../store/inventoryStore';
+import { useModalStackStore } from '../../store/modalStackStore';
 import { BIOME_DISPLAY_NAMES, BIOME_COLORS, BiomeType } from '@into-the-void/shared-types';
 import { GiShield, GiLightningFrequency, GiPoisonGas, GiCrossedSwords, GiTwoCoins } from 'react-icons/gi';
 import { useCombatStore } from '../../store/combatStore';
@@ -48,6 +49,7 @@ export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
   }, [showCombatLog]);
 
   // Wire L key to toggle combat log visibility, Q key for quest log
+  // Guard: closing only works when that panel is the topmost modal; opening is unrestricted
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger if typing in input or textarea
@@ -59,16 +61,29 @@ export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
       }
 
       const key = e.key.toLowerCase();
+      const top = useModalStackStore.getState().peek();
+
       if (key === 'l') {
-        toggleCombatLog();
+        // Combat log: opening always allowed; closing only if it's topmost
+        if (showCombatLog && top?.id === 'combat-log') {
+          toggleCombatLog();
+        } else if (!showCombatLog) {
+          toggleCombatLog();
+        }
       } else if (key === 'q') {
-        toggleQuestLog(); // QUEST-45: Q toggles quest log
+        // Quest log: opening always allowed; closing only if it's topmost
+        const isOpen = useGameStore.getState().isQuestLogOpen;
+        if (isOpen && top?.id === 'quest-log') {
+          toggleQuestLog();
+        } else if (!isOpen) {
+          toggleQuestLog(); // QUEST-45: Q toggles quest log
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleCombatLog, toggleQuestLog]);
+  }, [toggleCombatLog, toggleQuestLog, showCombatLog]);
 
   if (!player) return null;
 

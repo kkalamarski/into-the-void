@@ -8,6 +8,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { useGameStore } from '../../store/gameStore';
+import { useModalStack } from '../../hooks/useModalStack';
 import { gameSocket } from '../../network/socket';
 import { ItemRegistry } from '@into-the-void/items';
 import type { InventoryEquipment } from '@into-the-void/shared-types';
@@ -100,6 +101,8 @@ export const InventoryPanel: React.FC = () => {
   const { inventory, pendingReorder } = useInventoryStore();
   const { toggleInventory } = useGameStore();
   const { position, isDragging, handleMouseDown } = useDraggablePanel();
+
+  useModalStack('inventory', toggleInventory);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;

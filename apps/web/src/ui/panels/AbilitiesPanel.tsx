@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useGameStore } from '../../store/gameStore';
 import { getEquippedAbilities } from '../../store/abilityStore';
 import { useInventoryStore } from '../../store/inventoryStore';
+import { useModalStack } from '../../hooks/useModalStack';
 import { AbilityTooltip } from '../../components/AbilityTooltip';
 import { useDraggablePanel } from '../../hooks/useDraggablePanel';
 import type { AbilityDefinition } from '@into-the-void/shared-types';
@@ -49,6 +50,8 @@ export const AbilitiesPanel: React.FC = () => {
   const { toggleAbilities } = useGameStore();
   const inventory = useInventoryStore((state) => state.inventory);
   const { position, isDragging, handleMouseDown } = useDraggablePanel();
+
+  useModalStack('abilities', toggleAbilities);
 
   // Derive abilities from equipment
   const equippedAbilities = inventory ? getEquippedAbilities() : [];

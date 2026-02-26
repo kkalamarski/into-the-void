@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useGameStore } from '../../store/gameStore';
+import { useModalStack } from '../../hooks/useModalStack';
 import { gameSocket } from '../../network/socket';
 import { useDraggablePanel } from '../../hooks/useDraggablePanel';
 import './ChatPanel.css';
@@ -9,6 +10,8 @@ export const ChatPanel: React.FC = () => {
   const [message, setMessage] = useState('');
   const { position, isDragging, handleMouseDown } = useDraggablePanel();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useModalStack('chat', toggleChat);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { useStatsStore } from '../../store/statsStore';
 import { useGameStore } from '../../store/gameStore';
+import { useModalStack } from '../../hooks/useModalStack';
 import { gameSocket } from '../../network/socket';
 import { ItemRegistry } from '@into-the-void/items';
 import { RARITY_COLORS, STAT_DISPLAY_ORDER } from '../constants';
@@ -146,6 +147,8 @@ export const EquipmentPanel: React.FC = () => {
   const { stats } = useStatsStore();
   const { toggleEquipment, player } = useGameStore();
   const { position, isDragging, handleMouseDown } = useDraggablePanel();
+
+  useModalStack('equipment', toggleEquipment);
 
   // Disable Phaser keyboard when equipment panel is open
   useEffect(() => {
