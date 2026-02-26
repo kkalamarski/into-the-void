@@ -12,3 +12,4 @@ export * from './queries/storage';
 export * from './queries/quests';
 export * from './queries/lore';
 export * from './queries/zone-mastery';
+export * from './queries/ability-cooldowns';

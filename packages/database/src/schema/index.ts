@@ -5,6 +5,7 @@ export * from './sessions';
 // Characters
 export * from './characters';
 export * from './inventories';
+export * from './ability-cooldowns';
 
 // Reference data
 export * from './factions';

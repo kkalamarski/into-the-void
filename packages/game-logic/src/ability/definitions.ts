@@ -308,6 +308,23 @@ export const ABILITY_ENERGY_BARRIER: AbilityDefinition = {
 // ============================================================
 
 /**
+ * Home Recall - Universal teleport to faction hub
+ */
+export const ABILITY_HOME_RECALL: AbilityDefinition = {
+  id: 'home_recall',
+  displayName: 'Home Recall',
+  description: 'Teleport to your faction hub. 5 minute cooldown.',
+  category: 'utility',
+  energyCost: 0,
+  cooldownMs: 300000, // 5 minutes
+  range: 0,
+  requiresTarget: false,
+  effects: [], // Special handling in AbilityService
+  iconKey: 'ability_home_recall',
+  iconColor: 0x44aaff,
+};
+
+/**
  * Resource Scan - Perception buff for resource detection
  */
 export const ABILITY_RESOURCE_SCAN: AbilityDefinition = {
@@ -474,7 +491,8 @@ export const ALL_ABILITIES: readonly AbilityDefinition[] = [
   ABILITY_REGENERATION_PROTOCOL,
   ABILITY_FORTIFY_SYSTEMS,
   ABILITY_ENERGY_BARRIER,
-  // Utility abilities (4)
+  // Utility abilities (5)
+  ABILITY_HOME_RECALL,
   ABILITY_RESOURCE_SCAN,
   ABILITY_OVERCLOCK,
   ABILITY_POWER_SURGE,
