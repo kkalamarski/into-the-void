@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '../database/database.module';
 import { AuthModule } from '../auth/auth.module';
 import { CharactersModule } from '../characters/characters.module';
+import { ModerationModule } from '../moderation/moderation.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -14,6 +15,7 @@ import { HealthController } from './health.controller';
     DatabaseModule,
     AuthModule,
     CharactersModule,
+    ModerationModule,
   ],
   controllers: [HealthController],
 })
