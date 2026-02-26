@@ -116,6 +116,11 @@ class GameSocket {
         this.dispatch(event, data as ServerEvents[typeof event]);
       });
     }
+
+    // Handle teleport (home_recall) — full page reload for clean scene reset
+    this.socket.on('player:teleported', () => {
+      window.location.reload();
+    });
   }
 
   disconnect(): void {

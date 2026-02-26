@@ -655,3 +655,4 @@ gameSocket.on('gathering:result', (result: {
 
   useAlertStore.getState().addAlert(`${message} +${result.proficiencyXP} XP`, alertType);
 });
+

@@ -146,11 +146,12 @@ gameSocket.on('ability:cooldown', (data) => {
 });
 
 gameSocket.on('cast:start', (data) => {
+  // Use client-side Date.now() to avoid server/client clock skew
   useAbilityStore.getState().startCast({
     abilityId: data.abilityId,
     targetEntityId: data.targetEntityId,
     castTimeMs: data.castTimeMs,
-    castEndsAt: data.castEndsAt,
+    castEndsAt: Date.now() + data.castTimeMs,
   });
 });
 
