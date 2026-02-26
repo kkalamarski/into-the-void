@@ -23,86 +23,99 @@
 - ✅ **v1.18 Content Expansion** - Phases 82-88 (shipped 2026-02-24)
 - ✅ **v1.19 Deployment & CI/CD** - Phases 89-93 (shipped 2026-02-24)
 - ✅ **v1.20 World Scale & Action Bar** - Phases 94-98 (shipped 2026-02-26)
-- 🚧 **v1.21 UI Polish & Audio** - Phases 99-102 (in progress)
+- ✅ **v1.21 UI Polish & Audio** - Phases 99-102 (shipped 2026-02-26)
+- 🚧 **v1.22 In-Game Chat** - Phases 103-107 (in progress)
 
 ## Phases
 
 <details>
-<summary>✅ v1.0-v1.20 (Phases 1-98) - SHIPPED</summary>
+<summary>✅ v1.0-v1.21 (Phases 1-102) - SHIPPED</summary>
 
 [All milestone phases completed - see milestone archives in .planning/milestones/]
 
 </details>
 
-### 🚧 v1.21 UI Polish & Audio (In Progress)
+### 🚧 v1.22 In-Game Chat (In Progress)
 
-**Milestone Goal:** Add game menu, audio system, settings persistence, and fix entity rendering so players have polished controls and auditory feedback.
+**Milestone Goal:** Add a full in-game chat system with five channel types (Local, Zone, Faction, Global, Whisper), ephemeral message delivery, and DB-persisted player mute/block moderation.
 
-- [x] **Phase 99: Entity Rendering Fix** - Anchor entities at tile base to eliminate floating sprites on elevated terrain (2026-02-26)
-- [x] **Phase 100: Audio Foundation** - Wire up background music loop, level-up sound, and per-category volume via audioStore (completed 2026-02-26)
-- [x] **Phase 101: Game Menu & Settings** - Game menu overlay with audio sliders, secondary bar toggle, and logout (completed 2026-02-26)
-- [x] **Phase 102: ESC Centralization** - Single ESC handler closes modals LIFO then opens game menu when stack empty (completed 2026-02-26)
+- [ ] **Phase 103: Chat Foundation** - Fix the socket dispatch bug, add keyboard isolation, and harden server validation so the full pipeline is testable end-to-end
+- [ ] **Phase 104: Moderation Persistence** - Add mute/block DB tables, query functions, and REST endpoints so cross-session moderation state exists before the server needs to enforce it
+- [ ] **Phase 105: ChatService & Channel Routing** - Implement the server-side ChatService with all five channel routing cases, rate limiting, block enforcement, and faction room management
+- [ ] **Phase 106: Chat Panel UI** - Rewrite ChatPanel with tabbed channels, whisper target input, timestamp rendering, and unread indicators wired to the new chatStore
+- [ ] **Phase 107: Moderation Controls** - Add mute/unmute and block/unblock actions with right-click context menu on sender names, completing the full moderation loop
 
 ## Phase Details
 
-### Phase 99: Entity Rendering Fix
-**Goal**: Entities render anchored at their tile ground plane, not elevated above it
-**Depends on**: Nothing (isolated Phaser coordinate fix)
-**Requirements**: REND-01, REND-02
+### Phase 103: Chat Foundation
+**Goal**: The end-to-end chat pipeline is unbroken — messages dispatched by the server actually arrive at clients, the shared type system covers all five channels, typing in chat does not move the player, and every incoming message is validated server-side before routing
+**Depends on**: Phase 102 (ESC Centralization)
+**Requirements**: INFRA-01, INFRA-02, INFRA-03, INFRA-04
 **Success Criteria** (what must be TRUE):
-  1. Entity sprites sit flush with the tile they occupy, with no floating gap above elevated tiles
-  2. The selection ring indicator appears at the entity's base tile position, not at sprite visual height
-  3. Entity shadows (if present) align with the tile base after the coordinate fix
-**Plans**: 1 plan
-- [x] 99-01-PLAN.md — Fix entity anchor math and verify rendering
-
-### Phase 100: Audio Foundation
-**Goal**: Background music plays on a continuous gapless loop and game events trigger sound effects, all volume-controlled per category
-**Depends on**: Phase 99
-**Requirements**: AUD-01, AUD-02, AUD-03, AUD-04
-**Success Criteria** (what must be TRUE):
-  1. Background music starts playing after the first user interaction and loops without an audible gap at the loop point
-  2. Music does not start on page load before any user gesture (browser autoplay policy compliance)
-  3. A level-up event plays the quest-complete sound effect audibly
-  4. Music, effects, and ambient volume categories can be set independently and the change is heard immediately
-**Plans**: 2 plans
-- [x] 100-01-PLAN.md — AudioManager singleton + audioStore with Zustand persist
-- [x] 100-02-PLAN.md — Wire audio lifecycle, SFX triggers, and audio assets
-
-### Phase 101: Game Menu & Settings
-**Goal**: Player can open a game menu from within the game, adjust audio and interface settings, and log out cleanly
-**Depends on**: Phase 100
-**Requirements**: MENU-01, MENU-02, MENU-03, MENU-04, MENU-05
-**Success Criteria** (what must be TRUE):
-  1. Player can open and close the game menu overlay while in-game without disrupting gameplay
-  2. Audio sliders in the settings panel update music, effects, and ambient volume in real time
-  3. The secondary action bar can be toggled on/off from the interface settings panel
-  4. Clicking Logout disconnects the WebSocket and navigates to the login screen
-  5. Volume levels and secondary bar visibility survive a full browser refresh
+  1. A message sent on zone chat from one client is visibly received by another client in the same zone (the socket dispatch bug is fixed)
+  2. A player typing WASD letters into the chat input does not move their character
+  3. A message exceeding 280 characters or an empty message is rejected by the server with no delivery to any client
+  4. Sending more than 5 messages in rapid succession results in subsequent messages being silently dropped by the rate limiter
 **Plans**: TBD
 
-### Phase 102: ESC Centralization
-**Goal**: ESC key closes open modals one at a time in reverse-open order, and opens the game menu when no modals remain
-**Depends on**: Phase 101
-**Requirements**: ESC-01, ESC-02, ESC-03
+### Phase 104: Moderation Persistence
+**Goal**: The database has mute and block tables and the REST API exposes CRUD endpoints for them, so moderation state can be loaded on login and enforced server-side before any moderation UI is built
+**Depends on**: Phase 103
+**Requirements**: MOD-04
 **Success Criteria** (what must be TRUE):
-  1. Pressing ESC with multiple modals open closes only the most recently opened modal, leaving others visible
-  2. Pressing ESC repeatedly dismisses modals one by one until none remain
-  3. Pressing ESC when no modals are open opens the game menu
-  4. ESC does not simultaneously fire in-game Phaser actions (target deselect, pathfinding cancel) when closing a modal
+  1. A mute entry created via the REST API is present in the database and returned by the GET moderation endpoint on a subsequent request
+  2. A block entry survives a full browser refresh and is returned correctly when the client loads moderation state after re-authentication
+  3. Deleting a mute or block entry via the REST API removes it from the DB and subsequent GET responses no longer include it
+**Plans**: TBD
+
+### Phase 105: ChatService & Channel Routing
+**Goal**: All five chat channels route correctly from a single server-side ChatService — zone and global via Socket.IO rooms, faction via faction rooms joined at auth (and preserved across zone transitions), local via proximity distance check, and whispers via target lookup with server-enforced block
+**Depends on**: Phase 104
+**Requirements**: CHAN-01, CHAN-02, CHAN-03, CHAN-04, CHAN-05
+**Success Criteria** (what must be TRUE):
+  1. A zone chat message is received only by players in the same zone, not by players in other zones
+  2. A global chat message is received by all authenticated players on the server
+  3. A faction chat message is received only by players of the same faction, including after one of them transitions to a different zone
+  4. A local chat message is received only by players within ~15 tiles of the sender, not by players outside that radius
+  5. A whisper sent to Player B is received only by Player B; if Player B has blocked the sender, the whisper is silently refused and the sender receives a system notice
+**Plans**: TBD
+
+### Phase 106: Chat Panel UI
+**Goal**: Players have a always-visible tabbed chat panel in the bottom-left of the HUD with per-channel message views, a text input that sends on Enter, unread indicators on inactive tabs, and formatted messages showing sender, timestamp, and channel color
+**Depends on**: Phase 105
+**Requirements**: UI-01, UI-02, UI-03, UI-04, UI-05
+**Success Criteria** (what must be TRUE):
+  1. The chat panel is visible in the bottom-left of the game HUD at all times without overlapping the minimap or action bars
+  2. Clicking a channel tab switches the visible message list to that channel and clears its unread badge
+  3. Typing a message and pressing Enter sends it on the active channel and clears the input field
+  4. An unread message indicator (badge or dot) appears on inactive channel tabs when a new message arrives on that channel
+  5. Each message displays the sender's name, a timestamp, and text rendered in the color associated with that channel
+**Plans**: TBD
+
+### Phase 107: Moderation Controls
+**Goal**: Players can mute any sender to hide their messages and block any sender to prevent whispers, with right-click access from the chat panel, unmute/unblock capability, and state persisted across sessions via the REST API
+**Depends on**: Phase 106
+**Requirements**: MOD-01, MOD-02, MOD-03, MOD-05
+**Success Criteria** (what must be TRUE):
+  1. After muting a player, their messages no longer appear in the chat panel on any channel tab for the remainder of the session and after a browser refresh
+  2. After blocking a player, whispers from that player are refused server-side and do not appear in the blocked player's Whisper tab
+  3. Right-clicking a sender name in the chat panel shows a context menu with Mute, Block, and Whisper options
+  4. A previously muted player can be unmuted and their messages become visible again immediately
+  5. A previously blocked player can be unblocked and whispers from them are delivered again
 **Plans**: TBD
 
 ## Progress
 
-**Execution Order:** 99 → 100 → 101 → 102
+**Execution Order:** 103 → 104 → 105 → 106 → 107
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 99. Entity Rendering Fix | 0/1 | Planned | - |
-| 100. Audio Foundation | 2/2 | Complete   | 2026-02-26 |
-| 101. Game Menu & Settings | 2/2 | Complete   | 2026-02-26 |
-| 102. ESC Centralization | 2/2 | Complete    | 2026-02-26 |
+| 103. Chat Foundation | 0/TBD | Not started | - |
+| 104. Moderation Persistence | 0/TBD | Not started | - |
+| 105. ChatService & Channel Routing | 0/TBD | Not started | - |
+| 106. Chat Panel UI | 0/TBD | Not started | - |
+| 107. Moderation Controls | 0/TBD | Not started | - |
 
 ---
 
-*Last updated: 2026-02-26 - Phase 100 planned (2 plans, 2 waves)*
+*Last updated: 2026-02-26 - v1.22 roadmap created (5 phases, 103-107)*
