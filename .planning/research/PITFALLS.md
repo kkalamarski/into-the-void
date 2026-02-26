@@ -1,918 +1,526 @@
-# Domain Pitfalls: Content Expansion - Aquatic & Exotic Biomes
+# Pitfalls Research: v1.21 UI Polish & Audio
 
-**Domain:** Multiplayer 2D Isometric Survival MMO - Large Content Expansion
-**Researched:** 2026-02-23
+**Domain:** React + Phaser 3 Multiplayer Game — Adding game menu, audio system, settings UI, ESC modal management, entity rendering fix
+**Researched:** 2026-02-26
 **Confidence:** HIGH
 
 ---
 
 ## Executive Summary
 
-Adding 5-6 new biomes (aquatic + exotic/alien) with ~70 new content pieces (30 gatherables, 20 creatures, 40 items) to an existing survival MMO with 10 biomes, 42 entities, and 100+ items presents **integration complexity** rather than greenfield challenges. The most severe pitfalls arise from:
+Adding game menu, audio, settings persistence, and entity rendering fixes to an existing React + Phaser 3 game introduces a specific class of pitfalls that emerge from the **dual-runtime boundary**: Phaser owns the canvas and keyboard events; React owns the HUD and modals. Both systems must coexist without stepping on each other's key handling, audio context, or z-index layering.
 
-1. **Aquatic zones in 2D isometric games** — movement, depth sorting, collision detection fundamentally different from terrestrial
-2. **Biome transition artifacts** — domain-warped boundaries meeting water/alien terrain produce visual/gameplay bugs
-3. **Entity spawn performance** — adding 50+ new spawn configurations to existing chunk generation without O(n²) lookups
-4. **Power creep through content expansion** — new biomes making existing content obsolete
-5. **Discovery integration** — rare spawns and progression gates conflicting with established player knowledge
+The most severe pitfalls are:
 
-This document prioritizes **pitfalls specific to adding features to the existing system**, not general survival game design.
+1. **Audio autoplay blocked silently** — music never plays, no error is thrown, player thinks feature is broken
+2. **ESC key handled by multiple independent listeners** — modals close correctly but Phaser also receives the event, firing unwanted in-game actions
+3. **Audio objects created but never destroyed** — HTMLAudio elements accumulate on every level-up or quest completion, leaking memory over a long session
+4. **Modal z-index trapped inside stacking context** — game menu renders behind Phaser canvas because `.game-ui` already establishes a stacking context
+5. **Settings persisted from stale state** — volume sliders save on every slider move, writing over freshly loaded defaults before rehydration completes
+6. **Entity anchor offset mismatch** — fixing entity origin from center to bottom-center shifts the selection indicator and target highlight to wrong position, requiring coordinated fixes across EntityRenderer and TargetHighlight
+
+This document focuses on pitfalls **specific to adding these features to the existing Into the Void codebase**, not general web development mistakes.
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Aquatic Movement Breaks 2D Isometric Collision Model
+### Pitfall 1: Audio Autoplay Silently Blocked — Music Never Starts
 
 **What goes wrong:**
-Aquatic zones require fundamentally different movement mechanics (swimming, diving, buoyancy) that conflict with the existing tile-based collision system. In 2D isometric games, you cannot simply add "water tiles" — underwater movement needs submergence calculation, pressure mechanics, and drowning, but the current collision map is binary (blocking: true/false).
+Background music is added to loop on game load (or zone entry). It never plays. No error appears in the console. The code path executes, `audio.play()` is called, but Chrome/Firefox silently discard the request because no user gesture has occurred before `new Audio()` is called.
+
+The existing `playQuestCompleteSound()` in `apps/web/src/utils/audio.ts` already handles this with `.catch()` that logs to `console.debug` (line 17-19), but music started at Phaser boot or `WorldScene.create()` has no user gesture context at all — Phaser initializes inside a `useEffect` after mount, which is not a user gesture.
 
 **Why it happens:**
-The existing system uses:
-- `collisionMap: boolean[][]` for tile blocking (packages/world-gen/src/generation/chunk.ts)
-- Tile-based pathfinding (PathfindingController cardinal-only A*)
-- Depth sorting based on Y-coordinate and height values
-- No concept of "partial" blocking or "enter but move slower" tiles
+Chrome's autoplay policy blocks audio that is not initiated by a direct user interaction event (click, keydown, touchstart). React `useEffect` callbacks and Phaser `create()` lifecycle methods are not user gesture contexts. The error is caught silently or not at all because `audio.play()` returns a Promise that rejects, and if the rejection is unhandled the browser simply discards it with no user-visible feedback.
 
-Adding water means:
-- Water tiles must allow entry but apply movement penalties
-- Underwater tiles need depth layers (shallow/deep) for pressure/oxygen
-- Transitions between land/water need edge tiles (coastline detection)
-- Depth sorting breaks when entities are "under" water but visually in front
+From the Chromium autoplay policy: "Playback of any media that includes audio is generally blocked if the playback is programmatically initiated in a tab which has not yet had any user interaction."
 
-**Consequences:**
-- Players walk on water instead of swimming (collision system says "not blocking")
-- Pathfinding routes through deep ocean (A* sees water as traversable)
-- Entities render in wrong order (fish appear above surface, players render above underwater terrain)
-- Death by drowning doesn't trigger (no oxygen tracking in movement validation)
-- Performance tanks (checking submergence per frame for every entity in water zones)
+**How to avoid:**
+Use the "unlock on first interaction" pattern. Create the audio object and preload it immediately, but defer `.play()` until the first user gesture. Track whether audio has been unlocked using a module-level flag:
 
-**Prevention:**
 ```typescript
-// Phase: Aquatic Biome Foundation
-// 1. Extend collision map to support water states
-type TileState = 'solid' | 'traversable' | 'shallow_water' | 'deep_water';
-const tileStates: TileState[][] = []; // Replaces boolean[][]
+// apps/web/src/utils/audio.ts
 
-// 2. Add submergence calculation to movement validation
-interface MovementContext {
-  tileState: TileState;
-  submergedDepth: number; // 0.0 (surface) to 1.0 (fully underwater)
-  oxygenRemaining?: number; // Only track when submergedDepth > 0.5
-}
+let audioUnlocked = false;
+let pendingMusicPlay: (() => void) | null = null;
 
-// 3. Separate depth sorting for aquatic zones
-class AquaticDepthSorter {
-  // Entities below water surface have different sort key
-  calculateDepth(entity: Entity, waterLevel: number): number {
-    if (entity.position.y > waterLevel) {
-      return entity.position.y; // Normal sorting
-    }
-    return waterLevel + (waterLevel - entity.position.y) * 0.5; // Push underwater entities back
+// Call this from any user interaction handler (click on Play, any keydown)
+export function unlockAudio(): void {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  if (pendingMusicPlay) {
+    pendingMusicPlay();
+    pendingMusicPlay = null;
   }
 }
 
-// 4. Performance: Only track oxygen for entities in water tiles
-// Don't add oxygen to all entities globally — only when entering water
+export function playMusic(src: string, volume: number): HTMLAudioElement {
+  const audio = new Audio(src);
+  audio.loop = true;
+  audio.volume = volume;
+
+  if (audioUnlocked) {
+    audio.play().catch(err => console.debug('[Audio] Music blocked:', err));
+  } else {
+    // Queue for first user gesture
+    pendingMusicPlay = () => audio.play().catch(err => console.debug('[Audio] Music blocked:', err));
+  }
+  return audio;
+}
 ```
 
-**Detection:**
-- Players report "walking on water" or "swimming through land"
-- Pathfinding routes through ocean to reach islands
-- Fish render in front of shore terrain
-- Frame rate drops when many entities near water
+Wire `unlockAudio()` to the first click or keydown on `document` in `GameContainer.tsx` or the game's first meaningful user event.
 
-**Phase to address:** Phase 1 (Aquatic Biome Foundation) — Must be solved before adding Coastal Shallows biome or water mechanics break existing movement.
+**Warning signs:**
+- Music code executes (console logs confirm) but no sound plays
+- No error in console (autoplay rejection is silent when caught)
+- Works on localhost with devtools open (DevTools user gesture unlocks audio) but not on production
+- Works in Firefox but not Chrome (different autoplay thresholds)
+
+**Phase to address:** Audio System phase — integrate unlock before any music play call. Do not add music play to Phaser scene lifecycle.
 
 ---
 
-### Pitfall 2: Biome Transition Artifacts at Water/Exotic Borders
+### Pitfall 2: ESC Key Fires in Both Phaser and React — Double-Action on Dismiss
 
 **What goes wrong:**
-The existing biome generator uses domain warping for organic boundaries (biome.ts lines 82-92), which works well for terrestrial transitions (forest → plains → desert). But aquatic and exotic biomes create **edge cases** where the noise-based transition produces:
-- Isolated 1-tile water pockets in desert (unplayable "puddles")
-- Sharp water/land boundaries that don't align with shore tiles
-- Alien biome "tendrils" extending into normal zones (breaks lore coherence)
-- Spawn table conflicts (coastal creatures spawning inland, terrestrial spawning underwater)
+ESC closes the NPC modal (React keydown listener on `window`), then the same event bubbles up and Phaser's keyboard input system also receives it, triggering whatever ESC is mapped to in-game (e.g., canceling pathfinding, deselecting target). When the game menu is added, ESC must: close topmost modal → open menu. Both React and Phaser will process the same keydown.
+
+Current state: `NpcInteractionModal` adds a `window.addEventListener('keydown', ...)` handler for Escape (line 224-227). `QuestLogPanel` does the same (lines 30-35). `LoreCodex` does the same (lines 27-31). Each is independent. None call `e.stopPropagation()`. Phaser keyboard plugin is separate and not connected to these handlers.
 
 **Why it happens:**
-Current domain warping (getBiome() in biome.ts):
-```typescript
-const warp = this.getWarpOffset(worldX, worldY);
-const warpedX = worldX + warp.x;
-const warpedY = worldY + warp.y;
-const center = this.getRegionCenter(warpedX, warpedY);
-```
+Phaser 3 keyboard input does not use `addEventListener` directly in the same way — it processes events through its internal `KeyboardPlugin` which captures events on `window`. React components add independent `window` listeners. Both receive the same event. Neither yields to the other. Adding a game menu that listens for ESC creates a third handler.
 
-This creates smooth transitions between similar biomes, but aquatic/exotic require **discrete boundaries**:
-- Water must have minimum contiguous area (no 1-tile lakes)
-- Shore transitions need 2-3 tile buffer zones (beach tiles)
-- Exotic biomes should be isolated "islands" (lore: Anomaly Zones are contained)
+From Phaser documentation: "keyboard captures are global, meaning if you call this method from within a Scene to prevent a key from triggering a page action, it will prevent it for any Scene in your game."
 
-Per-tile biome sampling in spawn generation (spawn.ts lines 177-191) means:
-- A single water tile in desert gets assigned Coastal Shallows spawn table
-- Creatures spawn underwater where they can't reach players
-- Mineral nodes appear submerged (unharvestable without diving)
-
-**Consequences:**
-- Visual artifacts: Single-tile water "pixels" scattered across desert biomes
-- Gameplay bugs: Fish spawning in 1-tile puddles, dying instantly
-- Performance degradation: Edge detection code runs on every tile near transitions
-- Lore violations: Anomaly biomes bleeding into normal zones breaks containment narrative
-
-**Prevention:**
-```typescript
-// Phase: Biome Integration & Polish
-// 1. Post-process biome map to enforce minimum contiguous areas
-function enforceMinimumBiomeSize(
-  biomeMap: BiomeType[][],
-  minTiles: number
-): BiomeType[][] {
-  const aquaticBiomes = ['coastal_shallows', 'deep_abyss'];
-  const exoticBiomes = ['crystalline_wastes', 'anomaly_zone'];
-
-  for (const biome of [...aquaticBiomes, ...exoticBiomes]) {
-    // Flood-fill to find contiguous regions
-    const regions = findContiguousRegions(biomeMap, biome);
-
-    // Convert small regions to adjacent dominant biome
-    for (const region of regions) {
-      if (region.size < minTiles) {
-        replaceRegion(biomeMap, region, getMostCommonNeighbor(region));
-      }
-    }
-  }
-
-  return biomeMap;
-}
-
-// 2. Generate shore transition tiles explicitly
-function generateShoreTransitions(
-  biomeMap: BiomeType[][],
-  tiles: number[][]
-): void {
-  for (let y = 0; y < ZONE_SIZE; y++) {
-    for (let x = 0; x < ZONE_SIZE; x++) {
-      const biome = biomeMap[y][x];
-      const neighbors = getCardinalNeighbors(biomeMap, x, y);
-
-      // If water borders land, insert beach tile
-      if (isAquatic(biome) && neighbors.some(n => !isAquatic(n))) {
-        tiles[y][x] = TileId.BEACH_SAND;
-      }
-    }
-  }
-}
-
-// 3. Spawn table gating: Don't spawn aquatic creatures in isolated water tiles
-function generateSpawnPoints(...) {
-  const position = findValidSpawnPosition(random, collisionMap);
-  const tileBiome = biomeGenerator.getBiome(worldX, worldY);
-
-  // GATE: Check if biome is large enough to support spawns
-  if (isAquatic(tileBiome)) {
-    const region = getContiguousRegion(worldX, worldY, tileBiome);
-    if (region.size < MIN_AQUATIC_SPAWN_AREA) {
-      continue; // Skip spawn, area too small
-    }
-  }
-}
-```
-
-**Detection:**
-- QA reports: "Found fish in desert, stuck in tiny puddle"
-- Visual inspection: Biome minimap shows scattered pixels instead of solid regions
-- Player complaints: "Can't reach mineral node, it's underwater in 1 tile"
-- Performance profiling: Edge detection code in hot path
-
-**Phase to address:** Phase 2 (Biome Integration & Polish) — After aquatic biomes exist but before content population. Fixing after entity spawns are live requires migration.
-
----
-
-### Pitfall 3: Entity Spawn Configuration Lookup Scales O(n²)
-
-**What goes wrong:**
-Adding 50+ new entities (30 gatherables, 20 creatures) to the spawn system without refactoring `BIOME_SPAWN_CONFIGS` causes performance degradation during chunk generation. Current implementation uses **per-biome arrays** with linear search:
+**How to avoid:**
+Implement a centralized ESC key manager at the application level — one listener on `window` that holds an ordered stack of modal closers. Only the top-most modal closer fires per ESC keydown. Phaser's keyboard input for ESC is disabled explicitly when any modal is open:
 
 ```typescript
-// spawn.ts lines 37-146
-const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
-  void_plains: {
-    creatures: [
-      { id: ENTITY_IDS.CREATURE_VOID_CRAWLER, weight: 10, ... },
-      // ... 2 creatures
-    ],
-    minerals: [
-      { id: ENTITY_IDS.MINERAL_VOID_CRYSTAL, weight: 10, ... },
-      // ... 1 mineral
-    ]
-  },
-  // ... 10 biomes
-};
-```
+// apps/web/src/utils/escKeyManager.ts
 
-With 5-6 new biomes and 70 new entities:
-- `BIOME_SPAWN_CONFIGS` grows from ~30 entries to ~100+ entries
-- `weightedPick()` (lines 283-298) does linear search through creature arrays
-- Per-tile biome sampling (lines 177-191) calls this for EVERY spawn point
-- Chunk generation already has 15 creature + 10 mineral + 3 rare + 1 epic spawn = 29 lookups per chunk
-- With new biomes: potentially 50+ spawn attempts per chunk × O(n) lookup = O(n²) total
+type EscHandler = () => boolean; // returns true if it consumed the event
 
-**Why it happens:**
-The spawn system was designed for 10 biomes with 2-3 entities each. Adding content without architectural change hits two limits:
+const handlers: EscHandler[] = [];
 
-1. **Weighted selection is O(n)**: Every spawn point iterates all creatures in biome's spawn table
-2. **No spatial indexing**: Rare spawn lookup (lines 223-247) checks proximity to ALL creature spawns in chunk
+window.addEventListener('keydown', (e: KeyboardEvent) => {
+  if (e.key !== 'Escape') return;
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-Current performance (10 biomes, 42 entities):
-- Chunk generation: ~50ms (mostly noise generation)
-- Spawn generation: ~5ms (29 spawn attempts)
-
-Projected with new content (16 biomes, 112 entities):
-- Chunk generation: ~50ms (unchanged)
-- Spawn generation: ~25ms (100+ spawn attempts, longer arrays)
-- **Problem**: 5x slowdown in spawn generation, noticeable lag when player moves into new chunks
-
-**Consequences:**
-- Chunk generation stutters when players explore new biomes
-- Server tick rate drops during high player movement (multiple chunks loading)
-- Rare spawn proximity checks become bottleneck (O(n×m) where n=spawn attempts, m=existing spawns)
-- Memory pressure from large spawn configuration objects
-
-**Prevention:**
-```typescript
-// Phase: Spawn System Optimization
-// 1. Pre-compute spawn tables with cumulative weights
-interface PrecomputedSpawnTable {
-  entries: Array<{ id: string; cumulativeWeight: number; config: SpawnConfig }>;
-  totalWeight: number;
-}
-
-class SpawnTableCache {
-  private tables = new Map<BiomeType, PrecomputedSpawnTable>();
-
-  constructor() {
-    // One-time computation during server startup
-    for (const [biome, config] of Object.entries(BIOME_SPAWN_CONFIGS)) {
-      this.tables.set(biome, this.precompute(config.creatures));
+  // Fire topmost handler first
+  for (let i = handlers.length - 1; i >= 0; i--) {
+    const consumed = handlers[i]();
+    if (consumed) {
+      e.stopPropagation(); // Prevent Phaser from seeing this event
+      break;
     }
   }
-
-  // O(log n) binary search instead of O(n) linear
-  pick(biome: BiomeType, random: SeededRandom): string {
-    const table = this.tables.get(biome);
-    const roll = random.nextFloat(0, table.totalWeight);
-
-    // Binary search on cumulative weights
-    let left = 0, right = table.entries.length - 1;
-    while (left < right) {
-      const mid = Math.floor((left + right) / 2);
-      if (table.entries[mid].cumulativeWeight < roll) {
-        left = mid + 1;
-      } else {
-        right = mid;
-      }
-    }
-    return table.entries[left].id;
-  }
-}
-
-// 2. Spatial index for rare spawn proximity checks
-class SpatialSpawnIndex {
-  private grid: Map<string, Entity[]> = new Map();
-  private readonly CELL_SIZE = 8; // tiles per grid cell
-
-  add(entity: Entity): void {
-    const cellKey = this.getCellKey(entity.position.x, entity.position.y);
-    const cell = this.grid.get(cellKey) ?? [];
-    cell.push(entity);
-    this.grid.set(cellKey, cell);
-  }
-
-  // O(1) instead of O(n) — only check nearby cells
-  getNearby(x: number, y: number, radius: number): Entity[] {
-    const nearby: Entity[] = [];
-    const cellRadius = Math.ceil(radius / this.CELL_SIZE);
-
-    for (let dy = -cellRadius; dy <= cellRadius; dy++) {
-      for (let dx = -cellRadius; dx <= cellRadius; dx++) {
-        const cellKey = this.getCellKey(x + dx * this.CELL_SIZE, y + dy * this.CELL_SIZE);
-        nearby.push(...(this.grid.get(cellKey) ?? []));
-      }
-    }
-    return nearby;
-  }
-}
-
-// 3. Batch spawn generation instead of per-entity
-function generateSpawnPointsBatch(
-  config: BiomeSpawnConfig,
-  fertilityMultiplier: number,
-  cache: SpawnTableCache
-): SpawnPoint[] {
-  const count = Math.round(config.creatureDensity * fertilityMultiplier);
-  const positions = findValidSpawnPositionsBatch(count); // Batch collision checks
-
-  return positions.map(pos => ({
-    ...pos,
-    spawnId: cache.pick(tileBiome, random), // O(log n) lookup
-    // ...
-  }));
-}
-```
-
-**Detection:**
-- Performance profiling: `generateSpawnPoints()` in hot path
-- Server logs: Chunk generation time > 100ms
-- Player reports: Stuttering when entering new biomes
-- Metrics: Tick rate drops during exploration
-
-**Phase to address:** Phase 3 (Performance Optimization) — Before adding bulk content. Can be deferred if testing shows acceptable performance, but refactoring after 100+ entity types is harder.
-
----
-
-### Pitfall 4: Power Creep Through New Biome Rewards
-
-**What goes wrong:**
-New high-tier biomes (aquatic depths, exotic/alien zones) offer rare resources and high-value loot, making existing Tier I-II biomes obsolete. Players skip starter content and rush to new zones, creating:
-
-- **Ghost towns**: Tier I biomes (void_plains, fungal_forest) become empty
-- **Progression bypass**: New players try to access Tier III content immediately
-- **Economy collapse**: Tier I resources lose value (supply >> demand)
-- **Content waste**: 10 existing biomes with 42 entities become irrelevant
-
-This is the **power creep** pitfall specific to content expansions — new content must be **horizontally differentiated**, not **strictly better**.
-
-**Why it happens:**
-Current loot system (world-bible.md lines 73-80):
-
-```
-| Tier | Classification | Profit Multiplier |
-|------|---------------|-------------------|
-| I    | Frontier      | 1.0x (baseline)   |
-| II   | Hazardous     | 1.5-2.0x          |
-| III  | Hostile       | 2.5-3.5x          |
-| IV   | Extreme       | 4.0-6.0x          |
-```
-
-Adding aquatic/exotic biomes as Tier III-IV means:
-- Aquatic nodes drop 2.5-3.5x resources compared to Tier I
-- Exotic creatures give 4.0-6.0x XP
-- **Problem**: Why farm void_plains (1.0x) when coastal_abyss gives 3.5x?
-
-Research shows power creep is inevitable in expansions, but must be accompanied by **counterplay options** and **horizontal differentiation** (sources: [Plarium Power Creep Guide](https://plarium.com/en/glossary/power-creep/), [MMORPG.com Power Creep Impact](https://www.mmorpg.com/editorials/how-does-power-creep-affect-mmo-games-2000130636)).
-
-**Consequences:**
-- Tier I biomes become "tutorial zones" abandoned after 30 minutes
-- Veteran players dominate new content, blocking new players from progression
-- Economy inflation (Tier III resources flood market)
-- Development waste (10 existing biomes with unique art/design ignored)
-- Player retention drops (rushing to endgame leaves no mid-game content)
-
-**Prevention:**
-```typescript
-// Phase: Content Balancing
-// 1. Unique resource types per biome tier (horizontal progression)
-interface BiomeResourceProfile {
-  tier: number;
-  resourceTypes: string[]; // What you CAN get, not how much
-  exclusiveResources: string[]; // Only obtainable here
-}
-
-const resourceProfiles = {
-  void_plains: {
-    tier: 1,
-    resourceTypes: ['basic_minerals', 'common_biologicals'],
-    exclusiveResources: ['void_crystal'], // Required for Tier II crafting
-  },
-  coastal_abyss: {
-    tier: 3,
-    resourceTypes: ['aquatic_compounds', 'pressure_crystals'],
-    exclusiveResources: ['abyssal_pearl'], // Required for aquatic gear
-  },
-};
-
-// 2. Dependency chains: High-tier items require low-tier materials
-const craftingRecipe_diving_suit = {
-  itemId: 'suit_deep_dive',
-  tier: 3,
-  materials: [
-    { itemId: 'void_crystal', amount: 10 }, // Tier I resource
-    { itemId: 'prismatic_crystal', amount: 5 }, // Tier II resource
-    { itemId: 'abyssal_pearl', amount: 1 }, // Tier III resource
-  ],
-};
-
-// 3. Contextual value: Tier I resources have late-game uses
-const consumable_oxygen_tank = {
-  itemId: 'consumable_oxygen_compressed',
-  tier: 3, // High tier item
-  materials: [
-    { itemId: 'world_void_crystal', amount: 20 }, // Tier I (abundant)
-    { itemId: 'reagent_thermal_compound', amount: 5 }, // Tier II
-  ],
-  description: 'Required for deep aquatic exploration',
-};
-
-// 4. Soft-gate new content with survival requirements
-function canEnterBiome(player: Player, biome: BiomeType): { allowed: boolean; reason?: string } {
-  const biomeReqs = BIOME_REQUIREMENTS[biome];
-
-  if (biome === 'coastal_abyss') {
-    const hasDivingGear = player.equipment.suit?.id === 'suit_deep_dive';
-    if (!hasDivingGear) {
-      return { allowed: false, reason: 'Requires diving suit (craft in Tier I-II zones first)' };
-    }
-  }
-
-  if (biome === 'anomaly_zone') {
-    const hasRadShield = player.stats.radiation_resist >= 50;
-    if (!hasRadShield) {
-      return { allowed: false, reason: 'Radiation will kill you in seconds — need shield modules' };
-    }
-  }
-
-  return { allowed: true };
-}
-
-// 5. Progression metrics: Track biome diversity, not just highest tier
-interface PlayerProgression {
-  biomesDiscovered: Set<BiomeType>;
-  biomeCompletionPercent: Record<BiomeType, number>; // 0-100%
-
-  // Reward exploring ALL biomes, not just highest tier
-  getProgressionBonus(): number {
-    const uniqueBiomes = this.biomesDiscovered.size;
-    return uniqueBiomes >= 10 ? 1.5 : 1.0; // 50% bonus for exploring all Tier I-II
-  }
-}
-```
-
-**Detection:**
-- Telemetry: 80%+ players in new biomes, <10% in Tier I zones
-- Economy data: Tier I resource prices crash
-- Player feedback: "Why play old content?"
-- Retention metrics: Drop after rushing to endgame
-
-**Phase to address:** Phase 4 (Economy & Progression Design) — Before content release. Retroactive balancing requires nerfing new content (player backlash) or buffing old content (power inflation).
-
----
-
-### Pitfall 5: Rare Spawn Discovery Integration Breaks Existing Meta
-
-**What goes wrong:**
-Adding ~70 new entities with rare/epic spawn variants to existing zones disrupts the **discovery meta** that veteran players have learned. Current system uses proximity-based rarity weighting (spawn.ts lines 220-275), where rare minerals spawn near creature clusters. New biomes introduce:
-
-- **New spawn patterns**: Aquatic rares spawn near pressure vents, not creatures
-- **Different densities**: Exotic biomes may have 5x rare spawn rate (lore: Anomaly zones concentrate resources)
-- **Visibility issues**: Underwater rares hidden by water rendering, alien biomes have disorienting visuals
-
-Veteran players have **mental maps** of where rares spawn. New content invalidates this knowledge, causing friction.
-
-Research shows MMO rare spawn systems commonly suffer from **phasing issues** and **visibility problems** during expansions (source: [WoW Dragonflight Rare Spawn Schedule](https://www.mmo-champion.com/content/11200-Dragonflight-Rare-Spawn-Schedule-Spreadsheet-and-Weak-Aura), [TrinityCore Spawn Logic Issues](https://github.com/TrinityCore/TrinityCore/issues/24437)).
-
-**Why it happens:**
-Current rare spawn logic assumes:
-- Danger = creature proximity (calculateRarityWeight lines 220-275)
-- Visibility = entity rendered on screen (no occlusion beyond fog of war)
-- Spawn timing = consistent respawn windows (180-600s)
-
-New biomes break these assumptions:
-- Aquatic: Danger = depth pressure, not creatures nearby
-- Exotic: Visibility occluded by alien terrain/anomalies
-- Anomaly zones: Spawn timing distorted by temporal effects
-
-**Consequences:**
-- Veteran players can't find rares in new biomes (old strategies don't work)
-- Underwater rares missed by players without diving gear
-- Community wiki becomes outdated (spawn locations change)
-- Player frustration: "I spent 2 hours looking, nothing spawned"
-- Botting vulnerability: New patterns easier to automate (less player knowledge gatekeeping)
-
-**Prevention:**
-```typescript
-// Phase: Discovery & Rare Spawn Integration
-// 1. Biome-specific rarity calculation strategies
-interface RarityStrategy {
-  calculateWeight(position: Position, context: SpawnContext): number;
-}
-
-class ProximityRarityStrategy implements RarityStrategy {
-  // Existing: Near creatures = higher rare chance
-  calculateWeight(position: Position, context: SpawnContext): number {
-    const nearbyCreatures = context.spatialIndex.getNearby(position, 10);
-    return Math.min(nearbyCreatures.length / 5, 1.0);
-  }
-}
-
-class DepthRarityStrategy implements RarityStrategy {
-  // New: Deeper water = higher rare chance
-  calculateWeight(position: Position, context: SpawnContext): number {
-    const depth = context.getWaterDepth(position);
-    return Math.min(depth / 50, 1.0); // Max weight at 50 tiles deep
-  }
-}
-
-class AnomalyRarityStrategy implements RarityStrategy {
-  // New: Proximity to anomaly center = higher rare chance
-  calculateWeight(position: Position, context: SpawnContext): number {
-    const anomalyCenter = context.getAnomalyCenter();
-    const distance = getDistance(position, anomalyCenter);
-    return Math.max(1.0 - distance / 100, 0.0);
-  }
-}
-
-const BIOME_RARITY_STRATEGIES: Record<BiomeType, RarityStrategy> = {
-  void_plains: new ProximityRarityStrategy(),
-  coastal_abyss: new DepthRarityStrategy(),
-  anomaly_zone: new AnomalyRarityStrategy(),
-};
-
-// 2. Visual discovery hints for hidden rares
-interface DiscoveryHint {
-  type: 'particle' | 'audio' | 'vibration';
-  intensity: number; // 0.0-1.0, higher when closer
-}
-
-function getDiscoveryHint(player: Player, rareEntity: Entity): DiscoveryHint | null {
-  const distance = getDistance(player.position, rareEntity.position);
-
-  if (distance > 50) return null; // Too far
-
-  const biome = getBiome(player.position);
-
-  if (biome === 'coastal_abyss') {
-    // Underwater rares emit bubbles visible from surface
-    return {
-      type: 'particle',
-      intensity: 1.0 - distance / 50,
-    };
-  }
-
-  if (biome === 'anomaly_zone') {
-    // Rare spawns create audio distortion
-    return {
-      type: 'audio',
-      intensity: 1.0 - distance / 50,
-    };
-  }
-
-  return null; // No hint for terrestrial biomes (existing behavior)
-}
-
-// 3. Discoverable spawn metadata for community tools
-interface RareSpawnMetadata {
-  entityId: string;
-  biome: BiomeType;
-  spawnStrategy: string;
-  averageRespawnSeconds: number;
-  discoveryHints: string[];
-  lastSeenTimestamp?: number; // Updated when player discovers
-}
-
-// Export to API endpoint for community wikis
-app.get('/api/rare-spawns/metadata', (req, res) => {
-  const metadata = EntityRegistry.getAllIds()
-    .filter(id => isRareEntity(id))
-    .map(id => getRareSpawnMetadata(id));
-
-  res.json(metadata);
-});
-
-// 4. Gradual spawn rate scaling after expansion release
-class RareSpawnRateLimiter {
-  private expansionLaunchDate = new Date('2026-03-01');
-  private readonly RAMP_UP_DAYS = 14; // 2 weeks to reach full spawn rate
-
-  getSpawnRateMultiplier(): number {
-    const daysSinceLaunch = getDaysSince(this.expansionLaunchDate);
-
-    if (daysSinceLaunch < 0) return 0.0; // Before launch
-    if (daysSinceLaunch >= this.RAMP_UP_DAYS) return 1.0; // Full rate
-
-    // Linear ramp: 0.5x day 1 → 1.0x day 14
-    return 0.5 + (daysSinceLaunch / this.RAMP_UP_DAYS) * 0.5;
-  }
-}
-
-// Gives community time to document spawn patterns before full density hits
-```
-
-**Detection:**
-- Player feedback: "Where are the rares in [new biome]?"
-- Wiki edits: Rapid updates/reverts as community tests spawn locations
-- Support tickets: "Rare spawn not respawning" (actually spawned, not visible)
-- Telemetry: Low rare discovery rate in new biomes vs old biomes
-
-**Phase to address:** Phase 5 (Discovery & Progression Tuning) — After content deployed to testing, before public release. Requires player feedback to validate spawn patterns.
-
----
-
-## Moderate Pitfalls
-
-### Pitfall 6: Biome-Specific Rendering Performance Varies Wildly
-
-**What goes wrong:**
-Aquatic and exotic biomes have **different rendering complexity** than terrestrial biomes, causing inconsistent frame rates across zones. Coastal biomes need water shader effects, particle systems for bubbles, dynamic wave sprites. Exotic biomes need distortion effects for anomalies, special lighting. This adds per-frame overhead that wasn't budgeted.
-
-**Prevention:**
-- Performance budget per biome (60fps target = 16.67ms frame budget)
-- Aquatic: Allocate 4ms for water shader, 2ms for underwater particles
-- Exotic: Allocate 3ms for distortion effects, 2ms for anomaly lighting
-- Use WebGL batching for repeated effects (water tiles, crystal refractions)
-- LOD system: Disable expensive effects beyond player view radius
-- Quality settings: Let players disable water shaders on low-end hardware
-
-**Phase:** Phase 6 (Visual Effects & Polish) — After core mechanics work, before art finalization.
-
----
-
-### Pitfall 7: Loot Table Bloat From 70 New Items
-
-**What goes wrong:**
-Adding 40 new items to loot tables increases the "loot noise" — players get more item types but fewer of what they need. Current loot tables (e.g., loot_creature_void_crawler) have 2-5 entries. Expansion adds 10+ new items, diluting drop rates.
-
-**Prevention:**
-```typescript
-// Contextual loot: Only drop items relevant to current zone/equipment
-function rollLootTable(tableId: string, context: LootContext): Item[] {
-  const baseTable = LOOT_TABLES[tableId];
-
-  // Filter items by context
-  const contextualItems = baseTable.filter(entry => {
-    if (entry.requiresEquipment && !context.player.hasEquipment(entry.requiresEquipment)) {
-      return false; // Don't drop diving loot if player has no diving gear
-    }
-
-    if (entry.biomeExclusive && entry.biomeExclusive !== context.biome) {
-      return false; // Don't drop alien artifacts in terrestrial zones
-    }
-
-    return true;
-  });
-
-  return rollWeighted(contextualItems, context.random);
-}
-```
-
-**Phase:** Phase 4 (Economy & Progression Design) — During loot table design, before entity implementation.
-
----
-
-### Pitfall 8: Aquatic Creature AI Breaks on Land Transitions
-
-**What goes wrong:**
-Aquatic creatures (fish, sea predators) need behavior constraints: stay in water, pathfind around land obstacles, flee to deeper water when threatened. Current creature AI (creature behavior: 'herbivore' | 'omnivore' | 'predator') doesn't account for terrain restrictions.
-
-**Prevention:**
-```typescript
-// Extend creature behavior with terrain affinity
-interface CreatureBehavior {
-  baseType: 'herbivore' | 'omnivore' | 'predator';
-  terrainAffinity: 'terrestrial' | 'aquatic' | 'amphibious';
-  movementConstraints?: {
-    mustStayInWater?: boolean;
-    maxLandDuration?: number; // Seconds before taking damage
+}, { capture: true }); // Use capture phase to run before Phaser
+
+export function pushEscHandler(handler: EscHandler): () => void {
+  handlers.push(handler);
+  return () => {
+    const index = handlers.indexOf(handler);
+    if (index !== -1) handlers.splice(index, 1);
   };
 }
-
-// Pathfinding constraint
-function findPath(creature: Creature, target: Position): Path | null {
-  const affinity = creature.behavior.terrainAffinity;
-
-  const isValidTile = (tile: TileState) => {
-    if (affinity === 'aquatic') return tile === 'deep_water' || tile === 'shallow_water';
-    if (affinity === 'terrestrial') return tile === 'traversable' || tile === 'solid';
-    return true; // Amphibious can go anywhere
-  };
-
-  return aStar(creature.position, target, isValidTile);
-}
 ```
 
-**Phase:** Phase 7 (Creature AI & Behaviors) — Before populating aquatic biomes with creatures.
+Using `{ capture: true }` means this handler runs before Phaser's `window` listeners. When it calls `e.stopPropagation()`, Phaser never sees the event. Remove per-component `window.addEventListener('keydown')` listeners for Escape from `NpcInteractionModal`, `QuestLogPanel`, and `LoreCodex` — replace with `pushEscHandler`.
+
+**Warning signs:**
+- Pressing ESC closes a modal AND also cancels player's pathfinding target simultaneously
+- ESC opens game menu but also fires Q shortcut (if Phaser processes both)
+- Modal closes but immediately reopens (ESC was processed twice in same frame)
+- In-game player deselects target every time a modal is dismissed
+
+**Phase to address:** ESC Modal Management phase — must be solved before adding game menu, since both NPC modal and game menu will compete for ESC.
 
 ---
 
-### Pitfall 9: Database Migration for New Biome Types
+### Pitfall 3: Audio Objects Leak Memory — HTMLAudio Elements Not Destroyed
 
 **What goes wrong:**
-Existing world chunks stored in database (zones table) have biomes from the original 10 types. Adding new BiomeType enums requires migration to:
-- Update type constraints in database schema
-- Potentially regenerate chunks at biome boundaries (old chunks don't have new biomes)
-- Handle version conflicts (server updated, database not)
+Each call to `playQuestCompleteSound()` creates `new Audio(...)` and calls `.play()`. The Audio element is not referenced after the call — it becomes unreachable for garbage collection only AFTER the sound finishes playing. In practice, browsers keep HTMLAudio elements alive in their internal audio graph until fully decoded and played. If `playQuestCompleteSound` is called 20 times in a session (active players complete many quests), 20 Audio elements accumulate. Similarly, if music is implemented as `new Audio(src)` and called each time the zone changes without destroying the previous instance, prior Audio elements keep playing in the background.
 
-**Prevention:**
+The current pattern creates a new object on every call (audio.ts line 13). This is acceptable for short SFX with infrequent calls, but becomes a leak pattern for: music (never destroyed on zone change), repeated SFX on high-frequency events (every combat damage hit), or SFX started before async user gesture unlock.
+
+**Why it happens:**
+JavaScript does not automatically stop audio when the reference drops. HTMLAudioElement continues playing after its reference is garbage collected IF the browser's audio graph holds it alive. Multiple concurrent audio elements from multiple `new Audio()` calls will stack — you end up with overlapping music tracks or 20 simultaneous quest-complete sounds.
+
+Phaser 3's own WebAudio sound system has documented memory leaks: `AudioBufferSourceNode` is not freed after play in older Phaser versions (GitHub issue #2280). When mixing Phaser's sound system with raw HTMLAudio, two audio subsystems compete.
+
+**How to avoid:**
+Use a singleton audio manager that tracks the current music instance and reuses SFX audio objects:
+
 ```typescript
-// drizzle migration
-import { sql } from 'drizzle-orm';
+// apps/web/src/utils/audioManager.ts
 
-export async function up(db) {
-  // Add new biome types to enum
-  await db.execute(sql`
-    ALTER TYPE biome_type ADD VALUE IF NOT EXISTS 'coastal_shallows';
-    ALTER TYPE biome_type ADD VALUE IF NOT EXISTS 'deep_abyss';
-    ALTER TYPE biome_type ADD VALUE IF NOT EXISTS 'crystalline_wastes_v2';
-    ALTER TYPE biome_type ADD VALUE IF NOT EXISTS 'anomaly_zone';
-  `);
+class AudioManager {
+  private musicTrack: HTMLAudioElement | null = null;
+  private sfxPool: Map<string, HTMLAudioElement> = new Map();
+  private settings = { music: 0.5, ambient: 0.5, effects: 0.3 };
 
-  // Add schema version to chunks
-  await db.execute(sql`
-    ALTER TABLE zones ADD COLUMN IF NOT EXISTS generation_version INTEGER DEFAULT 1;
-  `);
-
-  // Mark existing chunks as v1 (regenerate on-demand when player enters)
-  await db.execute(sql`
-    UPDATE zones SET generation_version = 1 WHERE generation_version IS NULL;
-  `);
-}
-
-// Chunk loader checks version
-function loadOrGenerateChunk(zoneId: string): ChunkData {
-  const cached = db.getChunk(zoneId);
-
-  if (cached && cached.generation_version < CURRENT_GENERATION_VERSION) {
-    // Regenerate chunk with new biome system
-    return regenerateChunk(zoneId);
+  playMusic(src: string): void {
+    // Destroy previous track before starting new one
+    if (this.musicTrack) {
+      this.musicTrack.pause();
+      this.musicTrack.src = ''; // Release media resource
+      this.musicTrack = null;
+    }
+    this.musicTrack = new Audio(src);
+    this.musicTrack.loop = true;
+    this.musicTrack.volume = this.settings.music;
+    this.musicTrack.play().catch(err => console.debug('[Audio] Music:', err));
   }
 
-  return cached ?? generateChunk(zoneId);
+  stopMusic(): void {
+    if (this.musicTrack) {
+      this.musicTrack.pause();
+      this.musicTrack.src = '';
+      this.musicTrack = null;
+    }
+  }
+
+  playSFX(key: string, src: string): void {
+    // Reuse existing element if sound is not playing
+    let audio = this.sfxPool.get(key);
+    if (!audio) {
+      audio = new Audio(src);
+      this.sfxPool.set(key, audio);
+    }
+    audio.currentTime = 0;
+    audio.volume = this.settings.effects;
+    audio.play().catch(err => console.debug('[Audio] SFX:', err));
+  }
+
+  setVolume(type: 'music' | 'ambient' | 'effects', value: number): void {
+    this.settings[type] = value;
+    if (type === 'music' && this.musicTrack) {
+      this.musicTrack.volume = value;
+    }
+  }
+
+  destroy(): void {
+    this.stopMusic();
+    this.sfxPool.forEach(audio => { audio.pause(); audio.src = ''; });
+    this.sfxPool.clear();
+  }
+}
+
+export const audioManager = new AudioManager();
+```
+
+Call `audioManager.destroy()` in the `GameContainer` cleanup effect (the `return () => {}` in the Phaser initialization `useEffect`).
+
+**Warning signs:**
+- Multiple music tracks audible simultaneously after zone change
+- Browser tab memory usage grows steadily during play session
+- Chrome DevTools Memory panel shows accumulating `HTMLMediaElement` instances
+- SFX sounds delayed or stuttering (audio buffer exhaustion)
+
+**Phase to address:** Audio System phase — singleton pattern must be the base before music or SFX is implemented.
+
+---
+
+### Pitfall 4: Game Menu Z-Index Trapped Inside `.game-ui` Stacking Context
+
+**What goes wrong:**
+The game menu is rendered inside `<div className="game-ui">` which has `z-index: 100` and `position: absolute` (GameUI.css lines 3-8). This creates a stacking context. A game menu inside `.game-ui` with `z-index: 9999` only stacks relative to siblings inside `.game-ui`, not to the document root. The Phaser canvas sits at `z-index: 0` at the document root — but elements inside `.game-ui` cannot use z-index to overlay elements outside their stacking context boundary.
+
+The current z-index values across the codebase are inconsistent:
+- `.game-ui`: z-index 100
+- `.death-screen`: z-index 1100 (DeathScreen.css line 11)
+- `.alert-notification`: z-index 1200 (AlertNotification.css line 10)
+- `.quest-complete-modal`: z-index 200 (QuestCompleteModal.css line 7)
+- `.npc-modal-overlay`: z-index 99 (NpcInteractionModal.css line 5)
+
+The NPC modal overlay is z-index 99, which is LESS than the parent `.game-ui` at z-index 100. This works now because they are siblings within the same stacking context, but adding a game menu as a full-screen overlay will expose the incoherence.
+
+**Why it happens:**
+`position: absolute` with any `z-index` creates a stacking context. Children of a stacking context are clipped to that context's z-index range relative to siblings. This is a CSS fundamental — "Even `position: fixed` cannot escape the rules of stacking context." The game menu needs to overlay the Phaser canvas, which lives outside `.game-ui`.
+
+**How to avoid:**
+Render the game menu using a React Portal to `document.body`, bypassing the `.game-ui` stacking context:
+
+```tsx
+// apps/web/src/ui/GameMenu.tsx
+import { createPortal } from 'react-dom';
+
+export const GameMenu: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  return createPortal(
+    <div className="game-menu-overlay" style={{ zIndex: 2000 }}>
+      {/* menu content */}
+    </div>,
+    document.body
+  );
+};
+```
+
+Alternatively, define a clear z-index scale as CSS variables and add the game menu to the document root level:
+
+```css
+/* global.css — z-index scale */
+:root {
+  --z-game-canvas: 0;
+  --z-hud: 100;
+  --z-panel: 200;
+  --z-modal: 500;
+  --z-game-menu: 1000;
+  --z-death-screen: 1100;
+  --z-alert: 1200;
 }
 ```
 
-**Phase:** Phase 8 (Data Migration & Compatibility) — Before deployment to production, after testing validates new biomes.
+**Warning signs:**
+- Game menu appears but is half-transparent (canvas bleeds through)
+- Game menu is visible but click events pass through to Phaser canvas
+- Game menu appears above some panels but below others
+- Setting menu z-index to 9999 makes no difference
+
+**Phase to address:** Game Menu phase — establish z-index scale and portal pattern before building the menu component. Retrofitting z-index after menu is built requires touching every CSS file.
 
 ---
 
-### Pitfall 10: Exotic Biome Visual Clarity vs Lore Ambiguity
+### Pitfall 5: Settings Persistence Race Condition — Volume Resets on Load
 
 **What goes wrong:**
-Exotic/alien biomes (Anomaly Zones, Crystalline Wastes) need **visually distinct** aesthetics to match lore (reality distortions, alien geometry), but too much distortion makes gameplay unclear:
-- Players can't tell where they can walk (collision unclear)
-- Entity spawns hard to see (visual noise)
-- UI elements unreadable (distortion shaders affect HUD)
+Audio settings (music volume, ambient volume, effects volume) are persisted to localStorage using Zustand persist middleware. On game load, the following race occurs:
 
-**Prevention:**
-- Visual distortion only on background layers (terrain, sky)
-- Entities and UI always render clearly (no shader effects on gameplay-critical elements)
-- Accessibility mode: Disable all distortion effects
-- Lore vs gameplay: Accept that some visual elements are "representative" (anomaly effects toned down for playability)
+1. React renders with default values (music: 0.5, effects: 0.3)
+2. Audio manager initializes and starts music at default volume (0.5)
+3. Zustand rehydrates from localStorage with saved values (music: 0.1 — player turned it down)
+4. Settings store updates to music: 0.1
+5. If audio manager subscribes to store, it receives the update and adjusts volume — OK
+6. BUT: If audio manager reads volume at initialization time (step 2) before rehydration (step 3), music plays at 0.5 until the store updates
 
-**Phase:** Phase 6 (Visual Effects & Polish) — Art direction decision, requires playtesting feedback.
+Zustand's persist middleware may persist a fresh empty store back to IndexedDB even as it is pulling in old data, creating a race where: player saves volume 0.0 (muted), reloads, music plays at default 0.5 for 200-500ms, then snaps to 0.0. This is audible and jarring.
+
+**Why it happens:**
+Zustand persist middleware rehydrates asynchronously after the store is created. The `onRehydrateStorage` callback fires when complete, but components that mount and read state before rehydration see defaults. There is no blocking mechanism in the standard Zustand persist flow.
+
+From Zustand persist documentation: the middleware may persist a fresh empty store back to storage even as it is pulling in old data.
+
+**How to avoid:**
+Use Zustand's `_hasHydrated` flag pattern and delay audio initialization until hydration is complete:
+
+```typescript
+// apps/web/src/store/settingsStore.ts
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+interface SettingsState {
+  musicVolume: number;
+  ambientVolume: number;
+  effectsVolume: number;
+  showSecondActionBar: boolean;
+  _hasHydrated: boolean;
+  setHasHydrated: (value: boolean) => void;
+  setMusicVolume: (v: number) => void;
+  setAmbientVolume: (v: number) => void;
+  setEffectsVolume: (v: number) => void;
+  setShowSecondActionBar: (v: boolean) => void;
+}
+
+export const useSettingsStore = create<SettingsState>()(
+  persist(
+    (set) => ({
+      musicVolume: 0.5,
+      ambientVolume: 0.3,
+      effectsVolume: 0.3,
+      showSecondActionBar: true,
+      _hasHydrated: false,
+      setHasHydrated: (value) => set({ _hasHydrated: value }),
+      setMusicVolume: (v) => set({ musicVolume: v }),
+      setAmbientVolume: (v) => set({ ambientVolume: v }),
+      setEffectsVolume: (v) => set({ effectsVolume: v }),
+      setShowSecondActionBar: (v) => set({ showSecondActionBar: v }),
+    }),
+    {
+      name: 'into-the-void-settings',
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
+    }
+  )
+);
+```
+
+In the component that initializes audio: wait for `_hasHydrated === true` before reading settings and starting music. Do not start music in `useEffect` if `_hasHydrated` is false — add it as a dependency.
+
+**Warning signs:**
+- Volume slider shows correct saved value but audio plays at a different volume for 200-500ms on load
+- "Interface settings" toggle (second action bar) resets to default every reload
+- Settings appear to save (localStorage key exists) but don't persist across reloads
+- Volume jumps audibly when game completes initialization
+
+**Phase to address:** Settings UI phase — store setup with `_hasHydrated` flag must happen before audio manager reads initial volume. Treat this as a prerequisite to music initialization.
 
 ---
 
-## Minor Pitfalls
-
-### Pitfall 11: Sound Design for Underwater Lacks Muffling
+### Pitfall 6: Entity Anchor Fix Breaks Target Highlight and Selection Indicator Position
 
 **What goes wrong:**
-Underwater zones need **audio post-processing** (low-pass filter, reverb) to convey submersion. Without this, aquatic zones sound identical to terrestrial, breaking immersion.
+The goal is to fix entity rendering so creatures/NPCs anchor at their base tile position (feet on the tile) rather than at their visual center. The `EntityRenderer.createEntityContainer()` currently places entities using `sprite.setOrigin(0.5, 1.0)` (bottom-center, line 226) which is correct, but the container itself is positioned at `screenPos.y - elevationOffset` and shadow/health bar positions are computed relative to `-this.elevationOffset` (line 208). When the container y-position is adjusted to truly anchor at base tile, the TargetHighlight in `game/rendering/TargetHighlight.ts` positions itself relative to the container's current `y` value.
 
-**Prevention:**
-- Web Audio API filter: Apply low-pass filter (cutoff ~800Hz) when player submerged
-- Gradual transition: Interpolate filter as player dives (0% = normal, 100% = full muffling)
-- Underwater ambience: Bubble sounds, pressure creaks
+If entity container y is shifted to fix the anchor, the target highlight (golden ring under the entity) will shift by the same delta and no longer align with the tile grid. The health bar position (`uiBaseY = -this.elevationOffset - spriteHeight * 0.5`, line 281) will also shift relative to the container origin.
 
-**Phase:** Phase 9 (Audio & Polish) — Low priority, cosmetic.
+**Why it happens:**
+The EntityRenderer and TargetHighlight are coupled through the container's absolute screen position. TargetHighlight reads `container.y` to place itself. Fixing the container anchor requires adjusting all child element offsets simultaneously to maintain visual alignment. A fix to container positioning without updating TargetHighlight offsets results in the selection ring appearing above or below the correct tile.
 
----
+**How to avoid:**
+Treat this as a coordinated fix across three files:
+1. `EntityRenderer.createEntityContainer()` — adjust container y-position
+2. `EntityRenderer.createEntityContainer()` — recalculate `uiBaseY`, shadow position, health bar position relative to the new anchor
+3. `TargetHighlight.ts` — verify the ring offset from container y is still correct
 
-### Pitfall 12: Exotic Biome Names Don't Fit Established Naming Convention
+Before making changes, document the current visual behavior:
+- Container position: at tile screenPos
+- Shadow: at y=0 relative to container (correct — at ground level)
+- Sprite origin: (0.5, 1.0) — bottom-center (correct)
+- TargetHighlight: positioned at container.y + some offset
 
-**What goes wrong:**
-Existing biomes follow pattern: `[descriptor]_[noun]` (void_plains, crystal_caves, toxic_wastes). New exotic biomes risk breaking convention with names like "The Shimmering Veil" or "Anomaly-7" (not code-friendly).
+After the fix, the shadow and TargetHighlight should still sit at the base tile. Only the container's internal offset math changes, not the visual output. Write a visual regression test by taking a screenshot before and after.
 
-**Prevention:**
-- Stick to `snake_case` enum values: `shimmering_veil`, `anomaly_zone`
-- Display names can be fancier: `BIOME_DISPLAY_NAMES['shimmering_veil'] = 'The Shimmering Veil'`
-- Keep enum values descriptive for code readability
+**Warning signs:**
+- Selection ring appears at the entity's head after anchor fix
+- Health bars float above or overlap the entity sprite
+- Shadow ellipse is no longer under the entity's feet
+- Entities appear to "float" above their tile after fix (anchor was moved wrong direction)
 
-**Phase:** Phase 0 (Design) — Naming convention established before implementation.
-
----
-
-### Pitfall 13: Tutorial Doesn't Explain New Biome Hazards
-
-**What goes wrong:**
-Players entering aquatic/exotic biomes for first time don't understand new mechanics (drowning, pressure damage, temporal anomalies). Existing tutorial covers basic survival, not expansion content.
-
-**Prevention:**
-- Biome-entry warnings: Pop-up when first entering new biome type
-  - "Coastal Shallows: Watch oxygen meter when diving. Surface to breathe."
-  - "Anomaly Zone: Reality unstable. Time flows strangely. Equipment may malfunction."
-- NPCs in Tier I zones offer expansion-related quests/guidance
-- Loading screen tips for new mechanics
-
-**Phase:** Phase 10 (Tutorial & Onboarding) — After core mechanics stable, before release.
+**Phase to address:** Entity Rendering Fix phase — treat as the last feature to implement since it touches shared rendering code. Break it out as a separate commit from audio/menu work to keep the diff reviewable.
 
 ---
 
-## Phase-Specific Warnings
+## Technical Debt Patterns
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| Aquatic Movement | Collision system breaks (Pitfall 1) | Extend TileState before implementing water tiles |
-| Biome Generation | Edge artifacts (Pitfall 2) | Post-process biome map, add minimum region size checks |
-| Spawn System | O(n²) lookup scaling (Pitfall 3) | Pre-compute spawn tables, use spatial indexing |
-| Item Design | Power creep (Pitfall 4) | Horizontal progression, crafting dependencies on Tier I materials |
-| Rare Spawns | Discovery meta disruption (Pitfall 5) | Biome-specific rarity strategies, visual discovery hints |
-| Rendering | Aquatic shader performance (Pitfall 6) | Performance budget, LOD system, quality settings |
-| Loot Tables | Item dilution (Pitfall 7) | Contextual loot filtering |
-| Creature AI | Aquatic pathfinding (Pitfall 8) | Terrain affinity constraints |
-| Database | Schema migration (Pitfall 9) | Generation version, on-demand chunk regeneration |
-| Visual Design | Exotic biome clarity (Pitfall 10) | Distortion only on background, accessibility mode |
+Shortcuts that seem reasonable but create long-term problems.
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| `new Audio()` for every SFX call | Simple one-liner | Memory leak after 20+ calls per session | Only for infrequent SFX (quest complete: OK; combat hit: never) |
+| Per-component window ESC listeners | Each modal self-contained | 3+ independent listeners fire on same ESC press | Never — use centralized ESC manager |
+| Hardcoded z-index values | Fast to write | Conflicts when new modals added, no shared scale | Only if z-index scale CSS variables are also defined |
+| Saving settings on every `onChange` of volume slider | Instant feedback | Writes localStorage on every slider tick (100 writes per drag) | Use `onMouseUp`/`onPointerUp` to save on release, not on change |
+| Starting music in Phaser scene `create()` | Music starts early | Autoplay blocked silently; hard to debug | Never — use user gesture unlock flow |
 
 ---
 
-## Confidence Assessment & Sources
+## Integration Gotchas
 
-| Area | Confidence | Notes |
-|------|------------|-------|
-| Aquatic mechanics in 2D isometric | HIGH | Direct analysis of existing collision/movement code + web research on 2D underwater implementation |
-| Biome transition artifacts | HIGH | Codebase shows domain warping system, research confirms edge case problems |
-| Spawn performance scaling | HIGH | Analyzed spawn.ts O(n) lookup, projected scaling with 3x content |
-| Power creep patterns | MEDIUM | Web research on survival game balance + MMO expansion economics |
-| Rare spawn integration | MEDIUM | MMO-specific research + existing spawn system analysis |
-| Rendering performance | MEDIUM | Phaser isometric rendering knowledge + web research on water shaders |
-| Loot table design | HIGH | Direct analysis of existing loot system + item count projection |
-| AI terrain constraints | HIGH | Current creature AI simple, aquatic requires extensions |
-| Database migration | HIGH | Drizzle schema analysis + standard enum migration patterns |
-| Visual/audio polish | LOW | Subjective design decisions, requires playtesting |
+Common mistakes when connecting these features to the existing system.
+
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| Phaser keyboard + React ESC | Both systems listen on `window`, neither yields | Centralized ESC manager with `stopPropagation()` in capture phase |
+| AudioManager + Zustand settings | Audio manager reads volume before Zustand rehydrates | Wait for `_hasHydrated: true` before initializing audio volume |
+| Game menu + existing HUD z-index | Menu inside `.game-ui` stacking context | Use React Portal to `document.body`, define z-index scale |
+| Settings store + game store | Separate stores with separate persist keys | Settings store is independent; game store is not persisted |
+| EntityRenderer anchor fix + TargetHighlight | Fix EntityRenderer.y without updating TargetHighlight offset | Coordinate fix across EntityRenderer, TargetHighlight, and shadow position in one PR |
+| Music + zone transitions | Start new music track without destroying previous | AudioManager.playMusic() must stop previous track before starting new one |
+| Volume slider + AudioManager | Slider `onChange` updates store; AudioManager must subscribe | Subscribe AudioManager to settings store in a single `useEffect` in one component |
+
+---
+
+## Performance Traps
+
+Patterns that work at small scale but fail as usage grows.
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Creating new HTMLAudio per SFX event | Memory grows 1-2MB per hour; eventual lag | Singleton AudioManager with audio object pool | After ~50 SFX events per session |
+| Debouncing settings saves inadequately | localStorage flooded with writes during slider drag | Save on `pointerup`, not `onChange` | Immediately on any slider drag |
+| ESC handlers registered but not cleaned up | Handlers accumulate across modal open/close cycles | Use cleanup function returned by `pushEscHandler` | After 10+ modal open/close cycles |
+| Entity re-render triggering EntityRenderer recreation | All entity sprites recreated on any Zustand state change | Entity spawning only in WorldScene, driven by socket events, not React render cycle | Already mitigated in current architecture — maintain this pattern |
+| Settings store subscriptions not unsubscribed | AudioManager volume never updates after settings change | Use Zustand subscribe with proper cleanup in GameContainer useEffect | First settings change after initial load |
+
+---
+
+## UX Pitfalls
+
+Common user experience mistakes in this domain.
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| ESC opens game menu while NPC modal is open | Player expects ESC to close NPC modal; instead menu opens over it | ESC stack: close NPC → close inventory → open menu |
+| Volume sliders have no mute indicator | Player turns volume to 0 but no visual confirmation it is muted | Add mute icon that activates at 0; clicking icon restores last volume |
+| Settings not applied until "Save" button clicked | Player adjusts volume and closes menu — reverts to old value | Apply settings immediately; use "Reset to defaults" not "Cancel" |
+| Second action bar toggle hides bar without warning | Player may have abilities on bar 2 that are now inaccessible | Show tooltip: "Abilities on hidden bar are still active" |
+| Game menu blocks all keyboard input | Player presses W/A/S/D to navigate menu, character moves in background | Disable Phaser keyboard plugin while menu is open: `this.input.keyboard.enabled = false` |
+| Music starts at full volume regardless of saved settings | Player set music to 10%; next session it blares at 50% | Read volume from settings store after hydration before starting playback |
+
+---
+
+## "Looks Done But Isn't" Checklist
+
+Things that appear complete but are missing critical pieces.
+
+- [ ] **Audio system:** Music plays in development with DevTools open — verify it also plays after a fresh tab load with no prior user gesture
+- [ ] **ESC management:** Modal closes on ESC — verify Phaser does NOT also receive the keydown (check if pathfinding cancels or combat target deselects simultaneously)
+- [ ] **Settings persistence:** Settings save correctly — verify they survive a full page reload, not just a component unmount
+- [ ] **Game menu:** Menu renders above all other UI — verify it renders above the Phaser canvas, death screen, and alert notifications in all combinations
+- [ ] **AudioManager destroy:** Audio stops when game is destroyed — verify `audioManager.destroy()` is called in the `GameContainer` cleanup effect, preventing music from playing after logout
+- [ ] **Volume sliders:** Slider moves change audio — verify AudioManager is actually subscribed to settings changes, not just reading initial value at mount
+- [ ] **Entity anchor fix:** Creatures now anchor at base — verify TargetHighlight ring still appears under entity feet, not at their center or above their head
+- [ ] **Level-up SFX:** Level-up sound triggers — verify it fires from `player:xp` event handler in `gameStore.ts` (line 520) when `leveledUp: true`, not from a React effect watching `player.level`
+- [ ] **Music on zone transition:** Music changes per zone — verify old music is stopped before new music starts (no overlapping tracks)
+- [ ] **Second action bar toggle:** Toggle hides bar visually — verify the hide setting is also respected after page reload (not just current session)
+
+---
+
+## Recovery Strategies
+
+When pitfalls occur despite prevention, how to recover.
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Audio autoplay never worked | LOW | Add `unlockAudio()` call to first button click handler; existing music init code requires no change |
+| ESC fires in both Phaser and React | MEDIUM | Centralize ESC handling — requires touching NpcInteractionModal, QuestLogPanel, LoreCodex, and new game menu; one-time refactor |
+| Audio memory leak discovered | LOW | Introduce AudioManager singleton; replace all `new Audio()` calls; affects 1 utility file + callers |
+| Game menu behind canvas | LOW | Wrap menu in React Portal; CSS z-index scale fix; no logic changes required |
+| Settings don't persist across reload | LOW | Add `_hasHydrated` flag to settings store; delay audio init by adding `_hasHydrated` to effect dependencies |
+| Entity anchor fix broke TargetHighlight | MEDIUM | Revert entity anchor fix; re-apply as coordinated change across EntityRenderer + TargetHighlight + shadow in one PR |
+
+---
+
+## Pitfall-to-Phase Mapping
+
+How roadmap phases should address these pitfalls.
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Audio autoplay blocked | Audio System | Play music on fresh tab with no prior interaction; confirm it plays after first click |
+| ESC fires in both systems | ESC Modal Management | Open NPC modal; press ESC; verify only modal closes, not pathfinding or combat target |
+| Audio memory leak | Audio System | Play 30 quest-complete sounds rapidly; check DevTools Memory for HTMLMediaElement accumulation |
+| Game menu z-index | Game Menu | Open game menu with NPC modal also open; verify correct layering order |
+| Settings race condition | Settings UI | Save music volume at 0; reload page; verify music starts at 0, not 0.5 |
+| Entity anchor fix | Entity Rendering Fix | Screenshot entities before and after; selection indicator ring must still sit at entity feet |
 
 ---
 
 ## Sources
 
-### Survival Game Design & Balance
-- [Current Issues With Survival Games | Game Developer](https://www.gamedeveloper.com/design/current-issues-with-survival-games) — Difficulty curves, balance mistakes
-- [What's Wrong with Survival Games and How Can They Be Fixed | Retro Style Games](https://retrostylegames.com/blog/whats-wrong-with-survival-games-and-how-can-they-be-fixed/) — PVE neglect, inventory management issues
-- [The Survival Game Genre is Broken | Gideon's Gaming](https://gideonsgaming.com/the-survival-game-genre-is-broken/) — Cycle of comfort and struggle
-
-### Underwater Mechanics
-- [The Top 5 Most Realistic Underwater Survival Games | Corrosion Hour](https://www.corrosionhour.com/the-top-5-most-realistic-underwater-survival-games/) — Oxygen, pressure, creature-driven mechanics
-- [Swimming | Catlike Coding Unity Tutorials](https://catlikecoding.com/unity/tutorials/movement/swimming/) — Submergence calculation, buoyancy, collision detection delays
-
-### 2D Collision Detection
-- [2D Collision Detection | MDN Web Docs](https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection) — Hitbox algorithms, broad/narrow phase
-- [Video Game Physics Tutorial - Part II | Toptal](https://www.toptal.com/game/video-game-physics-part-ii-collision-detection-for-solid-objects) — Spatial data structures for optimization
-- [2D Collision Detection and Resolution | Tim Wheeler](https://timallanwheeler.com/blog/2024/08/01/2d-collision-detection-and-resolution/) — Tile-based collision approaches
-
-### Isometric Depth Sorting
-- [Isometric depth sorting | Mazebert Forum](https://mazebert.com/forum/news/isometric-depth-sorting--id775/) — Painter's algorithm, sort keys
-- [Isometric Depth Sorting for Moving Platforms | Envato Tuts+](https://gamedevelopment.tutsplus.com/tutorials/isometric-depth-sorting-for-moving-platforms--cms-30226) — Height considerations, z-buffer alternatives
-- [Two Unity tricks for isometric games | Evozon](https://www.evozon.com/two-unity-tricks-isometric-games/) — Sorting layers for complex scenes
-
-### Procedural Generation & Biomes
-- [The Future of World Generation | Hytale](https://hytale.com/news/2026/1/the-future-of-world-generation) — Biome transitions, terrain shape blending
-- [AutoBiomes: procedural generation of multi-biome landscapes | Springer](https://link.springer.com/article/10.1007/s00371-020-01920-7) — Organic transitions, rule-based asset placement
-- [Semi-Procedural World Generation in Edge Of Eternity | Game Developer](https://www.gamedeveloper.com/programming/semi-procedural-world-generation-and-rendering-in-edge-of-eternity-part-i-) — Noise-blended transitions, edge detection
-
-### Chunk Loading & Performance
-- [Minecraft Server Chunk Loading: Performance Impact | GameTeam](https://gameteam.io/blog/minecraft-server-chunk-loading-performance-impact/) — Pre-generation, entity activation ranges
-- [Paper chan's Little Guide to Minecraft Server Optimization | Paper Chan](https://paper-chan.moe/paper-optimization/) — Chunk loading optimization strategies
-- [Spawn chunk changes | Minecraft 1.20.5 Patch Notes | MelonCube](https://www.meloncube.net/blog/minecraft-1-20-5-patch-notes-features-to-try/) — Spawn chunk size reduction for performance
-
-### Power Creep & Content Expansion
-- [What is Power Creep? | Plarium](https://plarium.com/en/glossary/power-creep/) — Definition, business tensions, prevention strategies
-- [How Does Power Creep Affect MMO Games? | MMORPG.com](https://www.mmorpg.com/editorials/how-does-power-creep-affect-mmo-games-2000130636) — Impact on existing players, balance design
-- [Scaling Power the Right Way | Fateless](https://www.fateless.gg/news/scaling-power-the-right-way/) — Endgame gear with unique strengths, avoiding power creep through choice
-
-### MMO Rare Spawns
-- [Dragonflight Rare Spawn Schedule Spreadsheet | MMO-Champion](https://www.mmo-champion.com/content/11200-Dragonflight-Rare-Spawn-Schedule-Spreadsheet-and-Weak-Aura) — Spawn cadence changes, community tracking
-- [Rare Spawns & weird phasing | MMO-Champion Forums](https://www.mmo-champion.com/threads/1640042-Rare-Spawns-amp-weird-phasing) — Visibility problems, cross-server phasing issues
-- [Spawn logic of rare creatures in dungeons | TrinityCore Issue #24437](https://github.com/TrinityCore/TrinityCore/issues/24437) — Incorrect spawn probability implementation
-
-### Game Backend & Migration
-- [Game Backend Migration: Common Pitfalls | AccelByte](https://accelbyte.io/blog/game-backend-migration-early-signals-migration-paths-blueprint-for-live-games-and-common-pitfalls) — Migration paths for live games, testing requirements
-- [Data Migration Testing: Purpose, Test Strategy And Scenarios | Elinext](https://www.elinext.fr/wp-content/uploads/2022/04/Data-Migration-Testing-Purpose-Test-Strategy-And-Scenarios.pdf) — Extensive testing, compatibility requirements
-
-### Game Development (2026 Context)
-- [Development Log – January 2026: Biome System | tobar.io](https://www.tobar.io/development-log-january-2026-biome-system-and-core-combat-difficulty-systems/) — Procedural biome generation, bug fixes
-- [Hytale Patch Notes - Update 1 | Hytale](https://hytale.com/news/2026/1/hytale-patch-notes-update-1) — Entity placements, atmospheric effects, creature spawns
-- [Best Upcoming Survival Games 2026 | PropelRC](https://www.propelrc.com/best-upcoming-survival-games/) — ICARUS Homestead expansion: cave biomes, alien species, terraforming
+- [Autoplay guide for media and Web Audio APIs — MDN](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay) — Autoplay policy, suspended AudioContext, user gesture requirements
+- [Autoplay policy in Chrome — Chrome for Developers](https://developer.chrome.com/blog/autoplay/) — Chrome-specific thresholds, media engagement index
+- [Navigator: getAutoplayPolicy() method — MDN](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/getAutoplayPolicy) — Runtime detection of autoplay availability
+- [Web Audio Sound objects massive memory leak — Phaser GitHub #2280](https://github.com/phaserjs/phaser/issues/2280) — AudioBufferSourceNode not freed after play
+- [Web audio memory leak — Phaser GitHub #5224](https://github.com/phaserjs/phaser/issues/5224) — Listener count increases over time
+- [phaser3 memory leak issue — Phaser GitHub #5456](https://github.com/phaserjs/phaser/issues/5456) — All resource types affected
+- [Teleportation in React: Positioning, Stacking Context, and Portals — developerway.com](https://www.developerway.com/posts/positioning-and-portals-in-react) — Portal pattern for modal z-index bypass
+- [Understanding Z-Index: Stacking Contexts Demystified — pixelfreestudio](https://blog.pixelfreestudio.com/understanding-z-index-stacking-contexts-demystified/) — Stacking context containment rules
+- [Unstacking CSS Stacking Contexts — Smashing Magazine](https://www.smashingmagazine.com/2026/01/unstacking-css-stacking-contexts/) — January 2026, stacking context debugging
+- [Making Zustand Persist Play Nice with Async Storage — DEV Community](https://dev.to/finalgirl321/making-zustand-persist-play-nice-with-async-storage-react-suspense-part-12-58l1) — `_hasHydrated` flag pattern, onRehydrateStorage
+- [Persist using initial state — Zustand GitHub Discussion #2619](https://github.com/pmndrs/zustand/discussions/2619) — Race condition between persist and component mount
+- [Retaining Keyboard Inputs with Modal Scenes — Phaser Discourse](https://phaser.discourse.group/t/retaining-keyboard-inputs-with-modal-scenes/2148) — `keyboard.enabled = false` pattern for modal scenes
+- [Help with Phaser stealing keypress focus — HTML5 Game Devs](https://www.html5gamedevs.com/topic/11715-help-with-phaser-stealing-keypress-focus/) — Phaser capturing keypress events globally
+- [Keyboard events — Notes of Phaser 3 (rexrainbow)](https://rexrainbow.github.io/phaser3-rex-notes/docs/site/keyboardevents/) — KeyboardPlugin disable/enable patterns
+- [Audio — Phaser Help documentation](https://docs.phaser.io/phaser/concepts/audio) — WebAudio vs HTMLAudio fallback, sound manager lifecycle
+- [Seamless Audio Loops in Phaser — HTML5 Game Devs](https://www.html5gamedevs.com/topic/19711-seamless-audio-loops-in-phaser/) — Loop gapping issues and WebAudio vs HTML Audio tradeoffs
+- Codebase analysis: `apps/web/src/utils/audio.ts`, `apps/web/src/game/scenes/WorldScene.ts`, `apps/web/src/ui/GameUI.tsx`, `apps/web/src/ui/GameUI.css`, `apps/web/src/game/rendering/EntityRenderer.ts`, `apps/web/src/game/rendering/DepthSorter.ts`, `apps/web/src/store/gameStore.ts`
 
 ---
 
-## Gaps to Address
-
-**Areas where research was inconclusive:**
-- **Multiplayer sync for aquatic depth states**: Existing movement validation is tile-based. Underwater depth is continuous (0.0-1.0). How to sync partial submergence without 60 updates/second?
-- **Exotic biome visual effects performance on low-end devices**: No benchmarks for WebGL distortion shaders on mobile/low-end laptops. May need device profiling during testing.
-- **Loot table contextual filtering impact on perceived drop rates**: Players may notice "I'm not getting X anymore" when filtering is too aggressive. Needs A/B testing.
-
-**Topics needing phase-specific research later:**
-- Phase 1 (Aquatic Foundation): Oxygen depletion curves (how fast should it drain?)
-- Phase 5 (Discovery Tuning): Rare spawn visual hint effectiveness (do players notice bubbles?)
-- Phase 6 (Visual Polish): Acceptable distortion levels for Anomaly Zones (playtest feedback)
-- Phase 10 (Tutorial): Which biome hazards need explicit explanation vs discovery?
-
-**Lore consistency checks:**
-- Aquatic biomes must fit "Coastal Shallows" description (world-bible.md lines 126-138) — tidal patterns, amphibious fauna, marine compounds
-- Exotic biomes must align with "Anomaly Zones" (world-bible.md lines 328-340) — reality distortions, temporal stutters, artifact concentration
-- No "deep ocean" biome unless lore expanded (current lore only mentions coastal zones + liquid water)
-
-**Integration with existing systems:**
-- Fog of War (FogManager) — Underwater tiles need different reveal radius? (visibility reduced in water)
-- Combat system — Do aquatic creatures have different attack ranges underwater?
-- Crafting recipes — New items require tech tree validation (don't skip tiers)
+*Pitfalls research for: React + Phaser 3 — UI Polish & Audio System (v1.21)*
+*Researched: 2026-02-26*

@@ -1,316 +1,258 @@
-# Feature Landscape: Aquatic and Exotic Biomes Content Expansion
+# Feature Research
 
-**Domain:** Content expansion for 2D sci-fi survival MMO
-**Researched:** 2026-02-23
-**Confidence:** MEDIUM
-
-## Context
-
-Into the Void is adding aquatic biomes (underwater/ocean zones) and exotic/alien biomes (void rifts, dimensional anomalies) to an existing system with 10 biomes, procedural generation, gathering mini-game, 4 entity types, fog of war, and creature AI. The lore establishes Terminus as a patchwork planet with Anomaly Zones (Tier IV extreme) where "reality is optional."
-
-This research focuses on player expectations and feature patterns from the survival game genre, adapted for 2D top-down perspective and sci-fi corporate survival setting.
+**Domain:** 2D Browser MMO — UI Polish & Audio (v1.21)
+**Researched:** 2026-02-26
+**Confidence:** HIGH
 
 ---
 
-## Table Stakes
+## Context: What Already Exists
 
-Features players expect in aquatic and exotic biomes. Missing these = content feels incomplete or inconsistent with existing systems.
+Before categorizing features, the existing state must be understood because it determines what is "new" vs what is a fix.
 
-| Feature | Why Expected | Complexity | Dependencies | Notes |
-|---------|--------------|------------|--------------|-------|
-| **Biome-specific visibility rules** | Underwater = reduced vision range; Anomaly = distorted vision | Medium | Fog of war system, rendering layer | Existing fog of war must support per-biome visibility modifiers |
-| **Unique resource nodes per biome** | Each biome needs distinct gatherable entities (minerals, plants, artifacts) | Low | Entity registry, gathering system | ~30 new entities across all new biomes with unique IDs, textures, loot tables |
-| **Biome-appropriate creature behaviors** | Aquatic creatures use different movement; Anomaly creatures have unpredictable patterns | Medium | Creature AI, movement validation | May need new AI behaviors beyond herbivore/omnivore/predator/maniac |
-| **Environmental hazards per biome** | Aquatic = drowning/pressure; Anomaly = reality distortion effects | Medium | Status effect system, tick damage | Lore defines hazards: aquatic predators, spatial tears, temporal stutters |
-| **Biome tier consistency** | New biomes fit existing Tier I-IV system (Frontier → Extreme) | Low | Danger level system, spawn rates | Aquatic likely Tier I-II; Exotic/Anomaly must be Tier IV |
-| **Loot quality scaling** | Higher-tier biomes = better resources (1.5x to 6.0x profit multiplier) | Low | Item rarity, drop tables | Follows existing biome tier multipliers from lore |
-| **Biome-specific visual identity** | Distinct color palette, tile sets, ambient effects | Medium | Sprite assets, tile rendering | 2D isometric tiles (256x256); aquatic = blues/greens, anomaly = "impossible colors" |
-| **Integration with gathering mini-game** | All harvestable entities use existing timing challenge system | Low | Gathering service, timing validation | Artifacts should remain instant-collect (per Phase 33 research) |
-| **Creature spawn distribution** | ~20 new creatures distributed across new biomes by habitat | Low | Spawn generation, biome data | Each creature config includes `biomes: string[]` array |
-| **Item integration** | ~40 new items from new resources fit existing equipment/consumable/material systems | Medium | Item registry, inventory system, crafting | Tools, suits, consumables made from aquatic/anomaly materials |
+**Already shipped:**
+- 7 modal/panel types (Inventory, Equipment, Abilities, Quest Log, NPC Interaction, Lore Codex, Personal Storage) — each has its own independent ESC handler registered via `window.addEventListener('keydown', ...)`
+- Quest Complete modal with audio (`new Audio('/assets/audio/quest-complete.mp3')`) — hardcoded 30% volume, no settings
+- Level-up notification (visual only, no sound) — `LevelUpNotification.tsx`
+- Dual action bar (always visible, no toggle)
+- No game menu, no settings UI, no audio manager, no centralized ESC stack
 
-**Critical:** All new content must respect lore constraints. Terminus biomes appear in "seemingly random distribution" with "minimal transitional zones." Aquatic biomes are **NOT** oceans covering continents — they are patches (like Coastal Shallows Tier I). Anomaly Zones already exist in lore as Tier IV biomes where "physics is unreliable."
+**Known ESC problem:** Each panel/modal registers its own ESC listener independently. When multiple panels are open, pressing ESC fires all handlers simultaneously — every open panel closes at once instead of closing one at a time (LIFO). InventoryPanel, EquipmentPanel, and AbilitiesPanel have no ESC handlers at all — they cannot be closed with ESC.
 
----
-
-## Differentiators
-
-Features that set aquatic and exotic biomes apart from baseline content. Not expected, but add depth and replayability.
-
-| Feature | Value Proposition | Complexity | Dependencies | Notes |
-|---------|-------------------|------------|--------------|-------|
-| **Depth-based mechanics in aquatic biomes** | Multiple vertical layers with different creatures/resources per depth | High | Zone generation, spawn logic | 2D top-down view doesn't naturally show depth; needs abstraction (shallow/mid/deep sub-zones?) |
-| **Tidal cycle mechanics** | Resource nodes appear/disappear based on time of day (dual moons) | High | World time system, entity lifecycle | Lore mentions "complex tidal patterns" from dual moons Vigil and Whisper |
-| **Anomaly zone instability** | Geography shifts, entities phase in/out, time dilation effects | Very High | Zone data mutation, client sync | Lore: "Geography shifts. Time stutters." Technical challenge for multiplayer sync |
-| **Anomaly-forged materials** | Unique item tier only available from Tier IV zones | Medium | Item system, crafting recipes | Lore: "Anomaly-forged materials (unique and valuable)" — endgame gear |
-| **Aquatic-specific movement speed modifiers** | Different tile types affect movement differently (kelp forest vs open water) | Low | Movement validation, tile data | Already have `TileType.speedModifier` |
-| **Reality distortion visual effects** | Shader effects for Anomaly zones (color shifts, geometry warps, impossible perspectives) | High | Client rendering, Phaser shaders | Lore: "impossible geometries and colors that shouldn't exist" |
-| **Amphibious creatures** | Creatures that transition between aquatic and land biomes | Medium | Creature AI, biome boundaries | Coastal Shallows lore mentions "creatures that cross water-land boundary" |
-| **Temporal resource mechanics** | Plants/minerals in Anomaly zones that exist in temporal loops or phase states | Very High | Entity state management, respawn timers | Lore: "Temporal Stutters: Localized time distortions" |
-| **Pressure damage in deep water** | Depth-based hazard requiring specific suit upgrades | Medium | Status effects, equipment stats | Logical extension of aquatic realism; requires suit progression system |
-| **Ancient artifact concentration** | Anomaly zones have higher artifact spawn rates (lore-accurate) | Low | Spawn generation | Lore: "Ancient artifacts often overlap with Anomaly zones" |
-| **Biome-specific discovery achievements** | Zone mastery tracking for new biomes (already have system) | Low | Zone mastery system | Extends existing POI discovery and fog of war systems |
-| **Anomaly exposure corruption** | Prolonged time in Anomaly zones applies temporary debuffs or mutations | Medium | Status effects, zone time tracking | Lore: "exposure to Anomaly effects damages aggression regulation" |
-
-**Strategic Note:** Depth and tidal mechanics are HIGH complexity for 2D perspective. Consider simpler abstractions: "Deep Water" zone type vs "Shallow Water" zone type rather than continuous depth. Tidal cycles could be binary (exposed/submerged) triggered by time of day.
-
-**Anomaly Instability:** This is the signature differentiator but also highest technical risk. Start with static Anomaly zones (fixed layout, unique visuals) before attempting dynamic geography shifts. Multiplayer synchronization of shifting terrain is a Phase-level milestone, not a content addition.
+**Audio assets available (not yet wired to music system):**
+- `/public/assets/audio/quest-complete.mp3` (existing SFX)
+- `/public/assets/music/freesound_community-ethereal-ambient-music-55115.mp3`
+- `/public/assets/music/freesound_community-ghosts-play-piano-26550.mp3`
+- `/public/assets/music/freesound_community-kalimba-atmosphere-32457.mp3`
+- `/public/assets/music/freesound_community-wandering-6394.mp3`
 
 ---
 
-## Anti-Features
+## Feature Landscape
 
-Features to explicitly NOT build for this content expansion.
+### Table Stakes (Users Expect These)
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| **Underwater oxygen/breathing mechanic** | 2D top-down doesn't convey breath urgency well; breaks exploration flow | Environmental tick damage in "Deep" aquatic sub-zones (like existing hazards: radiation, toxic, cold) |
-| **Swimming skill progression** | Adds complexity without clear gameplay value in 2D perspective | Use suit equipment (aquatic suit variants) to enable deeper zones |
-| **Submarines/vehicles** | Scope creep; requires new systems (vehicle control, inventory, docking) | Players are in exo-suits (already established). Aquatic suit = underwater capability |
-| **Anomaly zone "solving" puzzles** | Lore states Anomalies are dangerous, not puzzle dungeons | Anomalies are extreme-tier resource zones with high risk/reward, not quest content |
-| **Water physics simulation** | 2D isometric doesn't benefit from fluid dynamics | Use tile-based water zones with visual effects (animated tiles, particle overlays) |
-| **Continuous depth with gradual transitions** | Too complex for 2D; hard to communicate to player | Discrete zones: Shallow (Tier I), Mid-depth (Tier II), Deep (Tier III), Abyss (Tier IV) |
-| **Anomaly zone "corruption" spreading** | Dynamic biome mutation breaks procedural generation determinism | Anomaly zones are fixed spawn locations during world gen (like other biomes) |
-| **Unique controls for aquatic movement** | Breaks input consistency; confusing in MMO with frequent biome transitions | Same WASD movement; just different speed modifiers per tile type |
-| **Procedural Anomaly generation** | "Random" anomalies feel arbitrary; lore states they overlap with Ancient ruins (intentional placement) | Anomaly zones spawn near Ancient ruin structures during world generation |
-| **Multi-level water zones (layers at different elevations)** | 2D perspective makes elevation ambiguous | Single-layer water zones; depth is abstracted through zone type, not Z-axis |
+Features users assume exist. Missing these = product feels incomplete or broken.
 
-**Design Philosophy:** This is content expansion, not systems overhaul. Reuse existing systems (gathering, combat, fog of war, zone mastery) with new data (entities, items, biomes). Avoid adding new input methods, HUD elements, or core gameplay loops.
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| ESC closes one modal at a time (LIFO) | Universal game UI convention — WoW, RuneScape, Albion Online, every desktop MMO. "Close last opened first" is the only acceptable behavior. Albion Online's forum thread explicitly demanded this and it was added. | MEDIUM | Must replace 7 independent ESC listeners with a single centralized modal stack managed in Zustand. Panels register on open, deregister on close. |
+| ESC opens game menu when no modals open | Established convention since Blizzard games. Expected by any MMO player as the "all closed, now what?" state. | LOW | Trigger only after stack empties. Add `showGameMenu` boolean to gameStore or settingsStore. |
+| Game menu with Resume / Settings / Logout | Players expect a structured overlay when pressing ESC with nothing open. "Resume" returns to game, "Settings" opens settings, "Logout" disconnects and redirects. | LOW | Simple React overlay with 3 buttons. No backend required. Logout calls `gameSocket.disconnect()` then routes to `/login`. |
+| Settings panel with audio volume controls | Any game with sound must have volume controls. Separate sliders for Music, Ambient, and Effects are expected — not just a master volume. Streamers and players want fine-grained control. | MEDIUM | 3 range inputs (0–100). Values persist to `localStorage` so they survive page refresh. Applied to audio manager on change in real-time. |
+| Background music looping | Silence during gameplay is jarring once players know audio exists. 4 tracks are already present in `/public/assets/music/`. Playing them in a loop on game load is expected. | LOW | Howler.js Howl with `loop: true`. Pick track randomly on load. Fade in on connect. Respect music volume setting. |
+| Level-up sound effect | LevelUpNotification already plays visually. Quest complete plays a sound — level-up should too. Players notice the asymmetry. | LOW | Reuse `quest-complete.mp3` (specified in PROJECT.md). Trigger from the same location `player:xp` fires with `leveledUp: true` in gameStore. Apply effects volume. |
+| Audio settings persist across sessions | Volume settings lost on page refresh is a universal frustration — documented across Unity, UE4, Godot, and browser game forums. | LOW | Read from `localStorage` on app init. Write on every slider change. Single `audioSettings` JSON key. |
+| Interface settings: toggle second action bar | Power users want to reclaim screen space. Second action bar is always visible with no toggle. Settings is the natural home for this. | LOW | Add `showSecondActionBar` boolean to settingsStore or gameStore. ActionBar reads this flag. Persist to localStorage. |
+| Entity selection indicator at base tile | Selection ring appears at sprite visual height (elevated by `elevationOffset = 24`). Players expect the ring to sit at ground level — the entity's actual position on the tile, not floating in space. | MEDIUM | Separate the visual sprite offset from the ground-level indicator position. Shadow and selection ring should share the same Y anchor at `screenPos.y` (no offset), while the sprite renders at `y - elevationOffset`. |
 
-**Lore Constraint:** Anomaly Zones are **already in the game** as Tier IV biomes. This milestone adds *more* Anomaly Zone variants (void rifts, dimensional rifts) and populates them with entities/items, not creates the concept from scratch.
+### Differentiators (Competitive Advantage)
+
+Features that set the product apart. Not required, but add value.
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Per-category volume (Music / Ambient / Effects) | Most indie browser games ship only a master volume slider. Three categories match AAA MMO expectations (WoW, FFXIV, RuneScape all have this). Gives players meaningful control. | LOW | Three independent volume multipliers in settingsStore. Audio manager applies correct multiplier per sound category. |
+| Real-time volume preview | Sliders that update audio as you drag (no Apply button needed) match modern UX expectations. Players can hear changes immediately. | LOW | Debounced event handler on range input. Update audioManager on each change event. |
+| Centralized ESC modal stack with priority | Most browser games never fix the "all modals close at once" bug. A proper LIFO stack is the professional solution — signals a polished product. | MEDIUM | Priority rules: NPC modal honors `isPending` guard before closing. Game menu is lowest priority (only when stack is empty). |
+
+### Anti-Features (Commonly Requested, Often Problematic)
+
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Full game pause (freeze Phaser) | Players expect pause menus to stop the game. | Into the Void is multiplayer — pausing the client doesn't pause the server. Other players keep moving. Entity positions desync. Players can take damage during menu. | Game menu is an overlay that does not pause the Phaser scene. Consistent with all MMOs. Note this in menu UI if needed. |
+| Master volume only (no categories) | Simpler to implement. | Discards ambient/music/effects distinction. Players who want music at 0% but SFX at 100% (common for streamers, people with audio sensitivities) have no option. | Three independent sliders with sensible defaults (music: 40%, ambient: 50%, effects: 70%). |
+| Howler.js for one-shot SFX | Howler.js is the "correct" tool for game audio. | Adds a dependency for something `new Audio()` already handles. One-shot SFX (quest complete, level-up) don't need loop management or fade APIs. | Use Howler.js only for music looping. Keep `new Audio()` for one-shot SFX with volume applied before play. |
+| react-howler declarative wrapper | Popular npm package for audio in React components. | Audio lifecycle should not be tied to component mount/unmount. Music looping is application-level, not component-level. | Singleton `audioManager` module (imperative), called from event handlers and store actions. |
+| Keybind customization in settings | Natural extension of a settings panel. | High complexity — requires input capture UI, conflict detection, and persistence schema. Disproportionate to v1.21 scope. | Hardcoded keys are fine now. Flag for a future UI polish milestone. |
+| Video/graphics quality settings | Players expect modern settings menus to include graphics options. | Phaser renders to canvas — resolution and quality control is at scene level, not a simple CSS slider. Wrong scope for v1.21. | Defer until performance complaints warrant investigation. |
+| Save settings to server/database | Settings feel complete if they follow across devices. | Over-engineering for v1.21. Adds API endpoint, schema migration, and synchronization logic. | localStorage is sufficient. Server persistence is a future enhancement if multi-device usage becomes common. |
+| Autoplay music without user interaction | Feels immersive to have music start immediately. | Browser autoplay policy blocks audio that starts before user interaction. Will fail silently or console-error on Chrome, Firefox, Safari. | Play music on first user interaction (click, keypress). The existing `playQuestCompleteSound()` already handles this correctly with `.catch()`. |
 
 ---
 
 ## Feature Dependencies
 
-### On Existing Systems
-
 ```
-Aquatic Biomes depend on:
-├── Biome generation (existing)
-├── Entity spawn system (existing)
-├── Gathering mini-game (existing)
-├── Fog of war (needs per-biome visibility modifiers)
-├── Tile rendering (needs aquatic tile sets)
-└── Creature AI (needs aquatic movement patterns)
+[Centralized ESC Modal Stack]
+    └──requires──> [Modal open/close state unified via stack in Zustand]
+                       └──requires──> [Remove 7 independent ESC listeners]
+                           └──enables──> [ESC opens Game Menu when stack empty]
 
-Exotic/Anomaly Biomes depend on:
-├── Anomaly Zone biome type (exists in lore, verify implementation)
-├── Entity spawn system (existing)
-├── Gathering mini-game (existing)
-├── Status effects system (for reality distortion hazards)
-├── Rare item generation (Anomaly-forged materials)
-└── Shader effects (for visual distortion — optional but impactful)
+[Game Menu]
+    └──requires──> [ESC Modal Stack (game menu is lowest priority)]
+    └──contains──> [Settings Panel link]
+    └──contains──> [Logout Button]
 
-New Entities (~30) depend on:
-├── Entity registry (existing)
-├── Entity definitions (existing)
-├── Harvest yield system (existing)
-└── Sprite assets (new)
+[Settings Panel]
+    └──contains──> [Audio Settings (Music / Ambient / Effects sliders)]
+    └──contains──> [Interface Settings (toggle second action bar)]
+    └──requires──> [Audio Manager to exist before sliders have effect]
 
-New Items (~40) depend on:
-├── Item registry (existing)
-├── Crafting recipes (if applicable)
-├── Loot tables (for creature drops)
-└── Equipment stats system (for suits/tools)
+[Audio Manager (singleton)]
+    └──controls──> [Background Music (Howler.js loop)]
+    └──controls──> [Level-up Sound (new Audio + effects volume)]
+    └──controls──> [Quest Complete Sound (update existing to use effectsVolume)]
+    └──persists via──> [localStorage audioSettings key]
+    └──reads from──> [app init / settings slider change]
+
+[Background Music]
+    └──requires──> [Audio Manager]
+    └──volume controlled by──> [Music volume slider in Settings]
+    └──starts on──> [first user interaction after WebSocket connect]
+
+[Level-up Sound]
+    └──triggered by──> [player:xp event with leveledUp: true in gameStore.ts]
+    └──volume controlled by──> [Effects volume from Audio Manager]
+
+[Quest Complete Sound (existing)]
+    └──update to read──> [Effects volume from Audio Manager]
+    └──currently: hardcoded 0.3 in audio.ts]
+
+[Interface Settings: Second Action Bar Toggle]
+    └──adds to──> [settingsStore or gameStore]
+    └──read by──> [ActionBar.tsx]
+    └──persists via──> [localStorage]
+
+[Entity Base Anchor Fix]
+    └──standalone Phaser rendering fix — no dependencies on other v1.21 features]
+    └──modifies──> [EntityRenderer.ts: selection indicator Y relative to ground]
+    └──modifies or creates──> [TargetHighlight positioning]
 ```
 
-### System Gaps to Address
+### Dependency Notes
 
-1. **Biome-specific fog of war**: Current system may not support per-biome visibility ranges
-2. **Environmental hazard variety**: Need status effects for drowning, pressure, reality distortion (or reuse existing: toxic, radiation, void_storm)
-3. **Aquatic creature movement**: AI may need adjustment for "flowing" movement vs land-based pathing
-4. **Anomaly visual effects**: Client rendering for "impossible colors" and spatial distortion
-5. **Depth abstraction**: If implementing shallow/mid/deep zones, need zone sub-typing or metadata
+- **ESC modal stack requires removing 7 independent listeners:** `LoreCodex.tsx` (line 27-31), `NpcInteractionModal.tsx` (line 222-233), `QuestLogPanel.tsx` (line 30-38) all have active ESC listeners. `InventoryPanel`, `EquipmentPanel`, `AbilitiesPanel` have none. All must be unified under one stack-based handler.
 
-**Recommendation:** Audit existing hazard and visibility systems before designing new entity populations. If current systems can't support underwater breathing or reality distortion, either extend them or reframe features to fit existing capabilities (e.g., "aquatic zones have toxic water" reuses toxic hazard).
+- **NpcInteractionModal special case:** Has an `isPending` guard — ESC is blocked during pending trade/quest operations. The centralized stack must honor this: before popping NPC modal, check `isPending` and skip if true.
 
----
+- **Settings panel requires audio manager:** Sliders are meaningless without something to control. Audio manager should be initialized at app startup (not when settings panel renders).
 
-## MVP Recommendation
+- **Level-up sound update needs audio manager:** Currently `playQuestCompleteSound()` uses `AUDIO_VOLUME = 0.3` hardcoded. After this milestone, both quest complete and level-up sounds should read `effectsVolume` from the audio manager.
 
-Prioritize these features for initial aquatic/exotic biome implementation:
-
-### Phase 1: Core Biome Infrastructure (Week 1-2)
-1. **Aquatic biome type definitions** (Shallow Waters Tier I, Deep Waters Tier II-III)
-2. **Exotic biome variant definitions** (Void Rift, Dimensional Anomaly — both Tier IV)
-3. **Biome-specific tile sets** (aquatic and anomaly visual identities)
-4. **Fog of war modifiers** (reduced visibility in water/anomalies)
-
-### Phase 2: Entity Population (Week 3-4)
-5. **15 aquatic entities** (5 creatures, 5 plants, 5 minerals/artifacts)
-6. **15 exotic entities** (5 creatures, 5 anomaly plants, 5 anomaly artifacts)
-7. **Basic loot tables** for all new entities
-8. **Spawn distribution** per biome
-
-### Phase 3: Items and Progression (Week 5-6)
-9. **20 aquatic items** (aquatic suit variants, underwater tools, marine materials)
-10. **20 anomaly items** (anomaly-forged gear, dimensional materials, corrupted artifacts)
-11. **Integration with existing crafting** (if applicable)
-12. **Equipment progression** (Tier I-IV gear from new materials)
-
-### Defer to Later Phases
-- **Tidal mechanics** (high complexity, low MVP value)
-- **Depth-based layering** (requires significant generation changes)
-- **Dynamic Anomaly instability** (multiplayer sync nightmare)
-- **Temporal resource mechanics** (extreme complexity)
-- **Shader effects for Anomalies** (nice-to-have visuals)
-
-**Rationale:** Get playable aquatic and exotic zones with full entity/item populations first. Polish and advanced mechanics come after players can explore, gather, and progress in new biomes. Lore already supports "Anomaly Zones" as extreme-tier content, so implementation is adding variety within that framework, not inventing new systems.
+- **Entity anchor fix is independent:** Standalone change to `EntityRenderer.ts`. No connection to ESC stack, audio, or settings. Can be implemented in any phase.
 
 ---
 
-## Complexity Assessment
+## MVP Definition
 
-| Component | Complexity | Estimated Effort | Risk Level |
-|-----------|------------|------------------|------------|
-| Aquatic biome definitions | Low | 2-3 days | Low |
-| Exotic biome definitions | Low | 2-3 days | Low |
-| Aquatic tile sets (sprites) | Medium | 1 week (art) | Low |
-| Anomaly tile sets (sprites) | High | 1-2 weeks (art) | Medium |
-| 30 new entity definitions | Low | 3-4 days | Low |
-| 30 new entity sprites | Medium | 1-2 weeks (art) | Low |
-| 40 new item definitions | Low | 4-5 days | Low |
-| 40 new item sprites/icons | Medium | 1-2 weeks (art) | Low |
-| Biome-specific fog of war | Medium | 3-5 days | Medium |
-| Aquatic creature AI movement | Medium | 4-6 days | Medium |
-| Environmental hazard integration | Low | 2-3 days | Low |
-| Loot table balancing | Low | 2-3 days | Low |
-| Spawn distribution tuning | Low | 2-3 days | Low |
-| Anomaly visual effects (shaders) | High | 1-2 weeks | High |
-| Depth-based mechanics | Very High | 2-3 weeks | High |
-| Tidal cycle system | Very High | 2-3 weeks | High |
-| Dynamic Anomaly instability | Extreme | 4+ weeks | Extreme |
+### Launch With (v1.21)
 
-**Total MVP Effort (without deferred features):** ~6-8 weeks (1 developer + 1 artist working in parallel)
+- [ ] Centralized ESC modal stack — fixes "all modals close at once" bug, enables one-by-one closing
+- [ ] ESC opens game menu when stack is empty
+- [ ] Game menu with Resume, Settings, and Logout
+- [ ] Settings panel: Music / Ambient / Effects volume sliders (real-time, persisted to localStorage)
+- [ ] Settings panel: toggle second action bar visibility (persisted)
+- [ ] Background music looping from existing tracks, respects music volume setting
+- [ ] Level-up sound effect (reuse quest-complete.mp3) with effects volume applied
+- [ ] Quest complete sound updated to use effects volume (not hardcoded 0.3)
+- [ ] Entity selection indicator anchored at base tile (ground level), not at elevated sprite position
 
-**With deferred features:** 12-16+ weeks (not recommended for content milestone)
+### Add After Validation (v1.x)
 
----
+- [ ] Music cross-fade on zone transition — polish, medium complexity, natural next step once audio manager exists
+- [ ] Additional SFX (combat hit, item pickup, death) — expand audio utility with audio manager established
+- [ ] Keybind customization in settings — once settings panel exists, keybinds are the natural extension
 
-## Player Expectations by Biome Type
+### Future Consideration (v2+)
 
-### Aquatic Biomes (Shallow to Deep Waters)
-
-**From genre research:**
-- Reduced visibility compared to land biomes ([Subnautica patterns](https://www.pcgamer.com/games/survival-crafting/it-was-a-good-year-for-survival-crafting-sickos-and-ill-be-playing-some-of-these-well-into-2026/))
-- Distinct flora/fauna adapted to aquatic life ([UNDER the WATER](https://store.steampowered.com/app/1745380/UNDER_the_WATER__an_ocean_survival_game/))
-- Valuable marine resources (filtration organisms, shell materials, rare compounds)
-- Pressure/depth as progression gate ([Anchor mechanics](https://gamerant.com/anchor-underwater-open-world-survival-game-reveal/))
-- Predators that hunt differently than land creatures
-
-**Applied to Into the Void:**
-- **Shallow Waters (Tier I):** Starter aquatic zones with Coastal Shallows aesthetic (already in lore). Safe exploration, abundant common resources, herbivore creatures.
-- **Mid-Depth Waters (Tier II):** Miasma Marshes underwater equivalent. Toxic zones, reduced visibility, omnivore/predator creatures, valuable pharmaceutical compounds.
-- **Deep Waters (Tier III):** High-pressure zones requiring advanced aquatic suits. Rare minerals, predator/maniac creatures, Ancient artifacts in underwater ruins.
-- **Abyssal Depths (Tier IV):** Deepest zones overlapping with Anomaly effects. Extreme danger, unique materials, corrupted creatures.
-
-**Lore Integration:** Terminus has "extensive coastal zones with tidal flats" (Coastal Shallows biome). Expanding this to include deeper aquatic regions fits existing world structure. Dual moons (Vigil and Whisper) create "complex tidal patterns" — tidal mechanics are lore-accurate but mechanically optional.
-
-### Exotic/Alien Biomes (Anomaly Variants)
-
-**From genre research:**
-- Reality distortion as core hazard ([S.T.A.L.K.E.R. Anomalies](https://kotaku.com/most-survival-games-have-problems-that-s-t-a-l-k-e-r-s-1683484728))
-- Unpredictable danger requiring experience to navigate ([Anomaly Zone](https://store.steampowered.com/app/1157250/Anomaly_Zone/))
-- Highest-value resources justify extreme risk ([No Man's Sky exotic planets](https://www.thegamer.com/no-mans-sky-best-exotic-planets/))
-- Visual and auditory cues of "wrongness" ([Zone Anomaly](https://store.steampowered.com/app/979830/Zone_Anomaly/))
-- Environmental hazards that defy normal physics
-
-**Applied to Into the Void:**
-- **Void Rifts:** Spatial tears where distances change, geometry fails. Creatures phase in/out. Rare "void-touched" materials. Visual: dark purples, blacks, star-field textures.
-- **Dimensional Anomalies:** Echo Fields where past events replay. Temporal distortion hazards. Ancient artifacts in pristine condition. Visual: overlapping translucent layers, afterimages.
-- **Null Pockets:** Technology failure zones where HUD elements flicker, abilities disabled. Extreme danger but unique "null-forged" materials. Visual: grayscale desaturation, static effects.
-
-**Lore Integration:** Anomaly Zones already established as Tier IV biomes. This milestone adds **variety** to Anomaly Zones (different sub-types with distinct mechanics) rather than creating anomalies from scratch. Lore describes "Temporal Stutters, Spatial Tears, Echo Fields, Null Pockets" — these become specific Anomaly Zone variants.
-
-**Critical Design Constraint:** Players **expect** Anomaly Zones to feel fundamentally different from normal biomes. If Anomaly zones play identically to Volcanic Reaches but with different sprites, they fail player expectations. Must implement **at least one** reality distortion mechanic (e.g., periodic vision distortion, random teleportation within zone, or time-dilated resource respawns).
+- [ ] Server-persisted settings — needed only if multi-device usage is reported
+- [ ] Graphics quality settings — only if performance complaints arise
+- [ ] Per-biome music tracks — content pipeline decision once music system proves stable
 
 ---
 
-## Implementation Notes
+## Feature Prioritization Matrix
 
-### Biome-Specific Visibility (High Priority)
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| Centralized ESC modal stack | HIGH (fixes live bug) | MEDIUM | P1 |
+| ESC opens game menu | HIGH | LOW | P1 |
+| Game menu (Resume / Settings / Logout) | HIGH | LOW | P1 |
+| Audio settings (3 category sliders) | HIGH | LOW | P1 |
+| localStorage persistence for audio | HIGH | LOW | P1 |
+| Background music loop | HIGH | LOW | P1 |
+| Level-up sound effect | MEDIUM | LOW | P1 |
+| Quest complete sound uses effectsVolume | MEDIUM | LOW | P1 |
+| Interface settings (2nd action bar toggle) | MEDIUM | LOW | P1 |
+| Entity anchor fix (ground-level selection ring) | HIGH (visual correctness) | MEDIUM | P1 |
+| Music cross-fade on zone transition | MEDIUM | MEDIUM | P2 |
+| Additional combat/pickup SFX | MEDIUM | LOW | P2 |
+| Keybind customization | LOW | HIGH | P3 |
 
-Current fog of war system may be global. Need per-biome visibility modifiers:
+**Priority key:**
+- P1: Must have for v1.21
+- P2: Should have when capacity allows
+- P3: Nice to have, future milestone
+
+---
+
+## Implementation Notes (Inform Roadmap Phase Splitting)
+
+### ESC Modal Stack — Central Architectural Change
+
+The canonical pattern (confirmed by Albion Online forum thread, Vue.js stacked modal article, LIFO convention in all major UI kits):
+
+1. Maintain `modalStack: string[]` in Zustand (or a dedicated `modalStore`)
+2. Each panel calls `pushModal('inventory')` on open, `popModal('inventory')` on close
+3. Single global ESC keydown listener (in `GameUI.tsx` or a dedicated hook) pops the top item
+4. When stack is empty and ESC pressed, open game menu
+5. NpcInteractionModal's `isPending` guard must be honored — pop checks isPending before closing
+
+This is the foundation other features depend on. Should be Phase 1 of the milestone.
+
+### Audio Manager — Singleton Module Pattern
+
+Use a singleton module-level manager (`audioManager.ts`) rather than a React component. This ensures audio lifecycle is not tied to component mount/unmount.
 
 ```typescript
-interface BiomeData {
-  // ... existing fields
-  visibilityRange: number; // tiles visible from player position
-  visibilityDecayRate: number; // how quickly fog darkens with distance
+// apps/web/src/utils/audioManager.ts
+interface AudioSettings {
+  musicVolume: number;    // 0–1, default 0.4
+  ambientVolume: number;  // 0–1, default 0.5
+  effectsVolume: number;  // 0–1, default 0.7
 }
 
-// Example values
-const SHALLOW_WATER_VISIBILITY = 12; // slightly reduced from land (15)
-const DEEP_WATER_VISIBILITY = 8; // murky depths
-const ANOMALY_VISIBILITY = 10; // distorted but not dark
+class AudioManager {
+  loadSettings(): void   // reads from localStorage on init
+  saveSettings(): void   // writes to localStorage on change
+  setMusicVolume(v: number): void
+  setAmbientVolume(v: number): void
+  setEffectsVolume(v: number): void
+  playMusic(src: string): void  // Howler.js Howl, loop:true
+  playEffect(src: string): void // new Audio() + effectsVolume
+  stopMusic(): void
+}
+
+export const audioManager = new AudioManager();
 ```
 
-### Aquatic Creature Movement (Medium Priority)
+Howler.js recommended for music (loop, fade, Web Audio API backend). `new Audio()` stays for one-shot SFX (existing pattern) with volume from audioManager applied before play.
 
-Options:
-1. **Reuse existing pathfinding** with different speed modifiers (simple, works for 2D)
-2. **Add "flowing" movement patterns** — creatures drift in currents (medium complexity)
-3. **Implement schooling behavior** for fish-like creatures (high complexity, high visual impact)
+### Entity Rendering Fix — Anchor Point Separation
 
-**Recommendation:** Start with option 1. Aquatic creatures move like land creatures but with `speedModifier: 1.2` (faster in water). Add schooling in later polish phase if time permits.
+Current issue in `EntityRenderer.ts`:
+- `elevationOffset = 24` (entity sprite hovers above ground)
+- Container position: `screenPos.y - (elevation * ELEVATION_HEIGHT_STEP)`
+- Sprite inside container: `y = -this.elevationOffset`
+- Selection indicator: positioned relative to container, inherits elevation visually
 
-### Anomaly Visual Effects (Medium Priority, High Impact)
-
-Three tiers of visual fidelity:
-1. **Minimum Viable:** Recolor existing tiles with "anomalous" palette (purples, shifting hues). Use existing particle effects.
-2. **Enhanced:** Add shader effects (chromatic aberration, color shifts, geometry distortions). Requires Phaser shader implementation.
-3. **Full Experience:** Dynamic geometry warping, impossible perspectives, time-based visual mutations. Requires custom rendering layer.
-
-**Recommendation:** Launch with tier 1 (palette swap + particles). Add tier 2 shaders in post-launch polish if performance allows. Tier 3 is overkill for 2D top-down.
-
-### Entity Distribution Strategy
-
-30 entities across new biomes:
-- **10 creatures** (5 aquatic, 5 anomaly-corrupted)
-- **10 plants** (5 aquatic flora, 5 anomaly-mutated plants)
-- **10 minerals/artifacts** (3 aquatic minerals, 2 marine artifacts, 3 anomaly minerals, 2 anomaly artifacts)
-
-Each creature needs:
-- Species ID, name, base health, level range, behavior type
-- Biome array (which new biomes it spawns in)
-- Loot table (drops)
-- Sprite asset
-
-Each plant/mineral needs:
-- Resource ID, name, yield, required tier
-- Biome array
-- Harvest yield table (items produced)
-- Sprite asset
-
-**Art Asset Estimate:** 30 entity sprites + 40 item icons + 2-3 tile sets = ~75 visual assets. Significant art production requirement.
+Fix: Selection indicator (ring/circle) should render at `y = 0` relative to the container base (which is screen position of tile center). The sprite renders at `y = -elevationOffset`. Shadow already does this correctly with `setOrigin(0.5, 0.5)` at ground. Selection ring must match the shadow position, not the sprite visual position.
 
 ---
 
 ## Sources
 
-### Aquatic Survival Mechanics
-- [Subnautica 2 underwater base-building and co-op](https://www.pcgamer.com/games/survival-crafting/it-was-a-good-year-for-survival-crafting-sickos-and-ill-be-playing-some-of-these-well-into-2026/)
-- [UNDER the WATER ocean survival features](https://store.steampowered.com/app/1745380/UNDER_the_WATER__an_ocean_survival_game/)
-- [Anchor 150-player underwater survival mechanics](https://gamerant.com/anchor-underwater-open-world-survival-game-reveal/)
-- [World in the Abyss underwater resource gathering](https://streamforgestudio.wordpress.com/2026/01/13/new-survival-games-2026-15-upcoming-open-world-multiplayer-survival-experiences-you-must-play/)
-- [Best open-world underwater exploration games](https://gamerant.com/best-open-world-games-for-underwater-exploration/)
-- [2D underwater game mechanics discussion](https://raygaming.wordpress.com/2013/08/15/underwater-in-2d-spaces/)
-- [Top-down underwater games on itch.io](https://itch.io/games/tag-top-down/tag-underwater)
+- [Albion Online: ESC key should close windows](https://forum.albiononline.com/index.php/Thread/4151-Esc-key-should-close-windows/) — MEDIUM confidence (community validation of convention)
+- [Simply Accessible: ESC key to close modals and menus](http://simplyaccessible.com/article/closing-modals/) — HIGH confidence (accessibility standard)
+- [Bradley Bernard: Close stacked modals via ESC (Vue.js pattern)](https://bradleybernard.com/blog/close-stacked-modals-intelligently-via-esc-hotkey-in-vue-js) — MEDIUM confidence (implementation pattern)
+- [Howler.js official](https://howlerjs.com/) — HIGH confidence (official docs)
+- [Howler.js npm](https://www.npmjs.com/package/howler) — HIGH confidence (official package)
+- [MDN Web Audio API best practices](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices) — HIGH confidence (official spec)
+- [web.dev: Game Menu component pattern](https://web.dev/patterns/components/game-menu) — MEDIUM confidence (design reference)
+- Codebase direct analysis: `apps/web/src/utils/audio.ts`, `apps/web/src/game/rendering/EntityRenderer.ts`, `apps/web/src/store/gameStore.ts`, `apps/web/src/ui/GameUI.tsx`, panel ESC handler audit — HIGH confidence (source of truth)
 
-### Exotic/Anomaly Biome Mechanics
-- [No Man's Sky exotic planet biomes with anomalies](https://www.thegamer.com/no-mans-sky-best-exotic-planets/)
-- [S.T.A.L.K.E.R. Anomaly survival mechanics](https://kotaku.com/most-survival-games-have-problems-that-s-t-a-l-k-e-r-s-1683484728)
-- [Anomaly Zone MMORPG with reality distortion](https://store.steampowered.com/app/1157250/Anomaly_Zone/)
-- [Zone Anomaly radiation and anomaly mechanics](https://store.steampowered.com/app/979830/Zone_Anomaly/)
-- [Best open-world games with alien ecosystems](https://gamerant.com/best-open-world-games-alien-ecosystems/)
-- [ANOMALY TAPES unique entity mechanics](https://store.steampowered.com/app/3145780/ANOMALY_TAPES_Beyond_Reality/)
+---
 
-### Biome Differentiation Patterns
-- [LORT biomes with environment-specific mechanics](https://www.lortgame.org/content/biomes)
-- [9 survival games with unique biomes](https://gamerant.com/survival-games-most-unique-biomes/)
-- [PEAK biome survival guide for all zones](https://www.ofzenandcomputing.com/peak-biome-survival-guide/)
-- [Hytale zones guide with biome features](https://www.hytale-game.wiki/gameplay/zones)
-- [Outward biome-dependent hazard mechanics](https://gamerant.com/survival-games-most-unique-biomes/)
-
-**Confidence Assessment:** MEDIUM because web search provides genre patterns but Into the Void has unique constraints (2D top-down, sci-fi corporate setting, existing lore). Aquatic mechanics are well-documented in genre. Anomaly mechanics are less standardized. Recommendations are based on adapting 3D survival patterns to 2D perspective and existing game systems.
+*Feature research for: Into the Void v1.21 UI Polish & Audio*
+*Researched: 2026-02-26*

@@ -1,520 +1,573 @@
-# Architecture Integration Research
+# Architecture Research
 
-**Domain:** Gathering, Exploration, and Combat Balancing Systems
-**Researched:** 2026-02-23
-**Confidence:** HIGH
+**Domain:** React/Phaser MMO — UI Polish & Audio (v1.21)
+**Researched:** 2026-02-26
+**Confidence:** HIGH (full codebase read, all integration points verified)
 
-## Integration Overview
+## Standard Architecture
 
-New features integrate into existing three-tier architecture (client, game-server, shared logic). Each system follows established patterns: Zustand stores for client state, NestJS services for server logic, Socket.IO events for communication, and shared-types for contracts.
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    WEB CLIENT (apps/web)                         │
-├─────────────────────────────────────────────────────────────────┤
-│  STORES (Zustand)                                                │
-│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐             │
-│  │explorationSto│ │gatheringStore│ │combatStore   │             │
-│  │re (NEW)      │ │(NEW)         │ │(MODIFY)      │             │
-│  └──────┬───────┘ └──────┬───────┘ └──────┬───────┘             │
-│         │                │                │                      │
-│  PHASER SCENES                                                   │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │ WorldScene (MODIFY)                                       │   │
-│  │  ├─ FogOfWarManager (NEW)                                │   │
-│  │  ├─ GatheringMiniGameOverlay (NEW)                       │   │
-│  │  └─ POIRenderer (NEW)                                    │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│         │                │                │                      │
-├─────────┴────────────────┴────────────────┴──────────────────────┤
-│                     WEBSOCKET (Socket.IO)                        │
-├─────────────────────────────────────────────────────────────────┤
-│                 GAME SERVER (apps/game-server)                   │
-├─────────────────────────────────────────────────────────────────┤
-│  SERVICES (NestJS)                                               │
-│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐             │
-│  │ExplorationSvc│ │GatheringSvc  │ │CombatService │             │
-│  │(NEW)         │ │(NEW)         │ │(MODIFY)      │             │
-│  └──────┬───────┘ └──────┬───────┘ └──────┬───────┘             │
-│         │                │                │                      │
-├─────────┴────────────────┴────────────────┴──────────────────────┤
-│               DATABASE (packages/database)                       │
-│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐             │
-│  │exploration   │ │gathering_    │ │combat_       │             │
-│  │(NEW)         │ │stats (NEW)   │ │balancing     │             │
-│  └──────────────┘ └──────────────┘ └──────────────┘             │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## Component Integration Map
-
-### NEW Components
-
-| Component | Location | Purpose | Integrates With |
-|-----------|----------|---------|-----------------|
-| **explorationStore** | `apps/web/src/store/` | Fog of war state, POI discovery, zone mastery | gameStore, localStorage |
-| **gatheringStore** | `apps/web/src/store/` | Mini-game state, resource yields | inventoryStore, entityStore |
-| **FogOfWarManager** | `apps/web/src/game/systems/` | Render fog overlay, persist revealed tiles | WorldScene, explorationStore |
-| **GatheringMiniGameOverlay** | `apps/web/src/game/ui/` | Timing-based skill check UI | WorldScene, gatheringStore |
-| **POIRenderer** | `apps/web/src/game/rendering/` | Render undiscovered POI icons | WorldScene, EntityRenderer |
-| **ExplorationService** | `apps/game-server/src/game/` | Track POI discovery, zone mastery | ZonesService, QuestService |
-| **GatheringService** | `apps/game-server/src/game/` | Validate mini-game, calculate yields | EntityService, InventoryService |
-
-### MODIFIED Components
-
-| Component | Location | Modifications | Reason |
-|-----------|----------|---------------|--------|
-| **CombatService** | `apps/game-server/src/game/` | Add difficulty scaling based on level gap | Combat balancing requirements |
-| **EntityService** | `apps/game-server/src/game/` | Trigger mini-game flow for gathering | Gathering system integration |
-| **gameStore** | `apps/web/src/store/` | Add mini-game UI toggle state | UI orchestration |
-| **WorldScene** | `apps/web/src/game/scenes/` | Integrate FogOfWar, GatheringOverlay, POIRenderer | Rendering coordination |
-| **shared-types** | `packages/shared-types/src/` | Add exploration, gathering, POI types | Type contracts |
-
-## Data Flow Patterns
-
-### Gathering Mini-Game Flow
+### System Overview
 
 ```
-Player clicks resource entity
-    ↓
-[WorldScene] → entity:interact → [EntityService]
-    ↓                                   ↓
-[detects gathering resource]    [checks tool + range]
-    ↓                                   ↓
-[shows mini-game overlay] ← gathering:start ← [GatheringService]
-    ↓
-[player completes timing] → gathering:complete → [GatheringService]
-    ↓                                               ↓
-[validates timing window]                   [rolls loot table]
-    ↓                                               ↓
-[awards bonus/penalty] ← gathering:result ← [updates inventory]
-    ↓
-[hides overlay, updates entityStore]
+┌───────────────────────────────────────────────────────────────────────┐
+│                         React UI Layer                                 │
+│                                                                        │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────────┐  │
+│  │  GameUI    │  │    HUD     │  │  Panels /  │  │  NEW: Game     │  │
+│  │ (DndContext│  │ (bottom    │  │  Modals    │  │  Menu + Settings│ │
+│  │  root,     │  │  action    │  │  (show*    │  │  (ESC layer)   │  │
+│  │  ESC mgr)  │  │  bars,     │  │  booleans  │  │                │  │
+│  │            │  │  shortcuts)│  │  in stores)│  │                │  │
+│  └─────┬──────┘  └─────┬──────┘  └──────┬─────┘  └───────┬────────┘  │
+│        │               │                │                 │           │
+├────────┴───────────────┴────────────────┴─────────────────┴───────────┤
+│                         Zustand Store Layer                            │
+│                                                                        │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────┐  │
+│  │gameStore │ │npcStore  │ │loreStore │ │action    │ │NEW: audio  │  │
+│  │(show*    │ │(interact-│ │(isCodex  │ │BarStore  │ │Store       │  │
+│  │ booleans,│ │ ingNpc)  │ │  Open)   │ │(secondary│ │(volumes,   │  │
+│  │ showGame │ │          │ │          │ │BarVisible│ │ mute,track)│  │
+│  │  Menu)   │ │          │ │          │ │          │ │            │  │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └────────────┘  │
+├───────────────────────────────────────────────────────────────────────┤
+│                         Phaser 3 Canvas Layer                          │
+│                                                                        │
+│  ┌────────────┐  ┌──────────────┐  ┌──────────────┐  ┌────────────┐  │
+│  │ WorldScene │  │EntityRenderer│  │DepthSorter   │  │MinimapCam  │  │
+│  │(movement,  │  │(sprites, UI  │  │(depth order  │  │(separate   │  │
+│  │ input,     │  │ above tiles) │  │ per frame)   │  │ Phaser cam)│  │
+│  │ camera)    │  │[ANCHOR FIX]  │  │              │  │            │  │
+│  └────────────┘  └──────────────┘  └──────────────┘  └────────────┘  │
+└───────────────────────────────────────────────────────────────────────┘
 ```
 
-**Key Integration Points:**
-1. **EntityService.handleToolUse()** - Insert mini-game check before loot roll
-2. **GatheringService** - NEW service validates client timing, calculates yield multiplier
-3. **gatheringStore** - Tracks mini-game state (active, startTime, difficulty)
-4. **Socket Events:** `gathering:start`, `gathering:complete`, `gathering:result`
+### Component Responsibilities
 
-### Fog of War Flow
+| Component | Responsibility | Notes for v1.21 |
+|-----------|----------------|-----------------|
+| `GameUI.tsx` | DndContext root, conditional modal/panel rendering | Add ESC manager, `<AudioManager />`, `{showGameMenu && <GameMenu />}` |
+| `HUD.tsx` | Bottom action bars, shortcuts, status bars | Add conditional second bar render from `showSecondaryBar` |
+| `GameShortcuts.tsx` | Button grid for I/E/K/Q/C | Add Menu button (M key) calling `toggleGameMenu()` |
+| `gameStore.ts` | UI boolean flags (showInventory, etc.) | Add `showGameMenu` boolean + `toggleGameMenu()` |
+| `actionBarStore.ts` | Dual-bar slot assignments, localStorage | Add `showSecondaryBar` boolean + localStorage persist |
+| `audio.ts` util | Single fire SFX only (quest-complete.mp3) | Expand with `playLevelUpSound()`, make volume-aware via audioStore |
+| `EntityRenderer.ts` | Sprite creation, anchor positioning | Fix container.y: subtract `ISO_TILE_HEIGHT / 2` to anchor at tile base |
+| `NpcInteractionModal.tsx` | Has own ESC useEffect (lines 222-232) | Remove own ESC handler — delegate to central GameUI handler |
+| `QuestLogPanel.tsx` | Has own ESC useEffect (lines 30-38) | Remove own ESC handler — delegate to central GameUI handler |
+| `LoreCodex.tsx` | Has own ESC useEffect (lines 27-31) | Remove own ESC handler — delegate to central GameUI handler |
 
-```
-Player moves to new tile
-    ↓
-[MovementController] → player:moved → [PlayerService]
-    ↓                                      ↓
-[updates local position]           [broadcasts to zone]
-    ↓
-[FogOfWarManager.revealTile(x, y)]
-    ↓
-[updates explorationStore.revealedTiles]
-    ↓
-[persists to localStorage per characterId]
-    ↓
-[checks for POI discovery] → exploration:poi_discovered → [ExplorationService]
-    ↓                                                           ↓
-[adds to explorationStore.discoveredPOIs]              [awards lore entry]
-```
-
-**Key Integration Points:**
-1. **MovementController** - Hook into position updates to call FogOfWarManager
-2. **FogOfWarManager** - NEW system maintains revealed tile bitmap, renders overlay
-3. **explorationStore** - Persists fog state per character using localStorage
-4. **localStorage key:** `fog-of-war:${characterId}` (bitset array for efficiency)
-5. **POI Discovery:** Check revealed tiles against zone's POI positions
-
-### Zone Mastery Flow
+## Recommended Project Structure
 
 ```
-Player discovers POI / kills creature / gathers resource
-    ↓
-[ExplorationService.incrementActivity(characterId, zoneId, activityType)]
-    ↓
-[updates exploration table: poi_count, kills, resources]
-    ↓
-[calculates mastery percentage]
-    ↓
-[if threshold reached] → exploration:mastery_tier → [client]
-    ↓
-[explorationStore.updateZoneMastery(zoneId, tier)]
-    ↓
-[shows tier-up notification in UI]
+apps/web/src/
+├── store/
+│   ├── gameStore.ts          # MODIFY: add showGameMenu + toggleGameMenu()
+│   ├── actionBarStore.ts     # MODIFY: add showSecondaryBar + toggleSecondaryBar() + localStorage
+│   └── audioStore.ts         # NEW: musicVolume, ambientVolume, effectsVolume, isMuted, localStorage
+├── ui/
+│   ├── GameUI.tsx            # MODIFY: add ESC manager, <AudioManager />, <GameMenu />
+│   ├── hud/
+│   │   ├── HUD.tsx           # MODIFY: conditional second ActionBar based on showSecondaryBar
+│   │   └── GameShortcuts.tsx # MODIFY: add Menu button
+│   ├── modals/
+│   │   ├── GameMenu.tsx      # NEW: overlay with Settings tab + Logout
+│   │   └── GameMenu.css      # NEW
+│   └── panels/
+│       ├── QuestLogPanel.tsx # MODIFY: remove own ESC handler
+│       └── NpcInteractionModal.tsx # MODIFY: remove own ESC handler
+├── components/
+│   ├── AudioManager.tsx      # NEW: invisible, music lifecycle, visibilitychange
+│   └── LoreCodex.tsx         # MODIFY: remove own ESC handler
+└── utils/
+│   └── audio.ts              # MODIFY: add playLevelUpSound(), volume-aware playEffect()
+└── game/
+    └── rendering/
+        └── EntityRenderer.ts # MODIFY: fix container.y anchor calculation (line 146)
 ```
 
-**Key Integration Points:**
-1. **QuestService.handleEntityKilled** - Call ExplorationService.incrementActivity
-2. **GatheringService** - Call ExplorationService.incrementActivity on gather
-3. **ExplorationService** - NEW service tracks per-zone activity counters
-4. **Database:** `exploration` table with characterId, zoneId, activity counts
-5. **Socket Event:** `exploration:mastery_tier` with tier level (1-5)
+### Structure Rationale
 
-### Combat Balancing Flow
-
-```
-Player attacks creature with level gap > 5
-    ↓
-[CombatService.handlePlayerAttack()]
-    ↓
-[calculates level gap = creature.level - player.level]
-    ↓
-[if gap > 5] → difficultyMultiplier = 1.0 + (gap * 0.15)
-    ↓
-[applies to creature damage: baseDamage * multiplier]
-    ↓
-[existing damage flow continues with scaled values]
-```
-
-**Key Integration Points:**
-1. **CombatService.handlePlayerAttack()** - Add level-gap scaling before damage calculation
-2. **calculateDamage()** in game-logic - Pass difficulty multiplier parameter
-3. **No new stores/services** - Pure modification of existing combat logic
-4. **Creature AI:** Add retreat behavior when health < 20% (AiService modification)
+- **`audioStore.ts` as new Zustand store:** Matches the existing store-per-concern pattern. Volumes need localStorage persistence + reactivity — both handled by Zustand. Avoids threading audio state through gameStore which already has a large surface area.
+- **`GameMenu.tsx` in `modals/`:** Not a panel (not draggable with useDraggablePanel), not a HUD element. Modal category is correct. Follows QuestCompleteModal placement.
+- **`AudioManager.tsx` in `components/`:** Invisible component (returns null), lifecycle-managed by React. Placed next to LevelUpNotification and LoreCodex which are also non-screen components with side effects.
+- **Settings in GameMenu:** At v1.21 scope (volumes + secondary bar toggle), settings live inside GameMenu as a panel tab. A dedicated `settingsStore` is premature — create it only if a future milestone adds keybind remapping or other orthogonal settings.
+- **ESC logic in `GameUI.tsx`:** Single handler reads store snapshots. Individual panel ESC handlers removed to prevent simultaneous multi-panel close on single keypress.
 
 ## Architectural Patterns
 
-### Pattern 1: Client-Side Mini-Game with Server Validation
+### Pattern 1: ESC Modal Priority Stack
 
-**What:** Client renders interactive timing challenge, server validates result independently.
+**What:** Single `window.addEventListener('keydown')` in `GameUI.tsx` that closes modals one-by-one in priority order. When all are closed, opens GameMenu. When GameMenu is open, ESC closes it.
 
-**Why:** Low latency for responsive gameplay while preventing timing manipulation.
+**When to use:** Any time multiple UI layers can be open simultaneously and ESC must close exactly one thing per keypress.
 
-**Implementation:**
-```typescript
-// Client (gatheringStore)
-startMiniGame(difficulty: number) {
-  this.state = 'active';
-  this.startTime = performance.now();
-  this.targetWindow = [1000, 1500]; // ms range
-}
+**Trade-offs:** Centralized logic vs. component isolation. Per-component ESC handlers (current approach) cause all open panels to close simultaneously. Centralized is predictable and correct.
 
-submitTiming(clickTime: number) {
-  const elapsed = clickTime - this.startTime;
-  gameSocket.emit('gathering:complete', { elapsed });
-}
+**Priority order (closes first = highest priority):**
 
-// Server (GatheringService)
-validateTiming(elapsed: number, difficulty: number): number {
-  const [minMs, maxMs] = getTargetWindow(difficulty);
-  if (elapsed >= minMs && elapsed <= maxMs) {
-    const precision = 1 - Math.abs(elapsed - (minMs + maxMs) / 2) / (maxMs - minMs);
-    return 1.0 + precision * 0.5; // 1.0x to 1.5x yield
-  }
-  return 0.5; // penalty for failure
-}
+```
+1. NPC interaction (interactingNpc in npcStore) — setInteractingNpc(null)
+2. Lore Codex (isCodexOpen in loreStore) — toggleCodex()
+3. Quest Log (isQuestLogOpen in gameStore) — toggleQuestLog()
+4. Abilities panel (showAbilities in gameStore) — toggleAbilities()
+5. Equipment panel (showEquipment in gameStore) — toggleEquipment()
+6. Inventory panel (showInventory in gameStore) — toggleInventory()
+7. Chat panel (showChat in gameStore) — toggleChat()
+8. Game Menu open → close it (toggleGameMenu)
+9. Nothing open → open Game Menu (toggleGameMenu)
+
+NOTE: showDeathScreen intentionally excluded — death screen cannot be ESC-dismissed
 ```
 
-**Trade-offs:**
-- Pro: Responsive feedback, prevents cheating
-- Con: Network latency affects difficulty calibration (mitigate: use server timestamp validation)
+**Example implementation in `GameUI.tsx`:**
 
-### Pattern 2: Persistent Client-Side Map with Server Authority
-
-**What:** Client maintains fog of war state locally, server owns POI definitions and discovery validation.
-
-**Why:** Reduces network traffic (no per-tile reveals), enables instant rendering, server validates discoveries.
-
-**Implementation:**
 ```typescript
-// Client (FogOfWarManager)
-class FogOfWarManager {
-  private revealedTiles: Set<string>; // "x,y" keys
+useEffect(() => {
+  const handleEsc = (e: KeyboardEvent) => {
+    if (e.key !== 'Escape') return;
 
-  constructor(characterId: string) {
-    this.revealedTiles = this.loadFromStorage(characterId);
-  }
+    // Read snapshots at call time — no reactive subscriptions needed
+    const npc = useNpcStore.getState();
+    const lore = useLoreStore.getState();
+    const game = useGameStore.getState();
 
-  revealTile(x: number, y: number, zoneId: string) {
-    const key = `${zoneId}:${x},${y}`;
-    if (!this.revealedTiles.has(key)) {
-      this.revealedTiles.add(key);
-      this.saveToStorage();
-      this.checkPOIDiscovery(x, y, zoneId); // emit to server
+    if (npc.interactingNpc) {
+      npc.setInteractingNpc(null);
+    } else if (lore.isCodexOpen) {
+      lore.toggleCodex();
+    } else if (game.isQuestLogOpen) {
+      game.toggleQuestLog();
+    } else if (game.showAbilities) {
+      game.toggleAbilities();
+    } else if (game.showEquipment) {
+      game.toggleEquipment();
+    } else if (game.showInventory) {
+      game.toggleInventory();
+    } else if (game.showChat) {
+      game.toggleChat();
+    } else {
+      // Nothing open OR game menu open — toggle game menu
+      game.toggleGameMenu();
     }
-  }
+  };
 
-  private loadFromStorage(characterId: string): Set<string> {
-    const data = localStorage.getItem(`fog-of-war:${characterId}`);
-    return data ? new Set(JSON.parse(data)) : new Set();
-  }
+  window.addEventListener('keydown', handleEsc);
+  return () => window.removeEventListener('keydown', handleEsc);
+}, []); // Empty deps — reads store snapshots at event time, not at render time
+```
+
+**Migration:** Remove existing ESC blocks from:
+- `QuestLogPanel.tsx` lines 30-38 (remove entire `if (e.key === 'Escape')` block)
+- `NpcInteractionModal.tsx` lines 222-232 (remove entire ESC block, keep other key handlers if any)
+- `LoreCodex.tsx` lines 27-31 (remove `handleEscape` function and listener)
+
+### Pattern 2: Centralized Audio Store
+
+**What:** Zustand store owns volume levels and mute state. An invisible `AudioManager` React component drives HTML5 Audio API. Volume changes in store instantly update audio playback.
+
+**When to use:** Background music looping, multiple audio category volumes, settings UI that needs to preview volume changes in real-time.
+
+**Trade-offs:** React-managed audio means Phaser's `pauseOnBlur: true` (already set in Game.ts) does NOT pause HTML5 Audio. Must manually handle `visibilitychange`. The alternative (Phaser sound system) would integrate `pauseOnBlur` automatically but requires loading music in PreloadScene and bridging volume through the game instance reference.
+
+**AudioStore shape:**
+
+```typescript
+// store/audioStore.ts
+interface AudioState {
+  musicVolume: number;      // 0.0 - 1.0, default 0.4
+  ambientVolume: number;    // 0.0 - 1.0, default 0.3 (reserved for future ambients)
+  effectsVolume: number;    // 0.0 - 1.0, default 0.5
+  isMuted: boolean;         // master mute
+  setMusicVolume: (v: number) => void;
+  setAmbientVolume: (v: number) => void;
+  setEffectsVolume: (v: number) => void;
+  toggleMute: () => void;
+}
+// All values persisted to localStorage on change (same pattern as actionBarStore)
+```
+
+**AudioManager component (invisible, mounted once in GameUI):**
+
+```typescript
+// 4 tracks confirmed present in /assets/music/
+const MUSIC_TRACKS = [
+  '/assets/music/freesound_community-wandering-6394.mp3',
+  '/assets/music/freesound_community-ethereal-ambient-music-55115.mp3',
+  '/assets/music/freesound_community-ghosts-play-piano-26550.mp3',
+  '/assets/music/freesound_community-kalimba-atmosphere-32457.mp3',
+];
+
+export const AudioManager: React.FC = () => {
+  const { musicVolume, isMuted } = useAudioStore();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const track = MUSIC_TRACKS[Math.floor(Math.random() * MUSIC_TRACKS.length)];
+    const audio = new Audio(track);
+    audio.loop = true;
+    audio.volume = isMuted ? 0 : musicVolume;
+    audioRef.current = audio;
+    audio.play().catch(() => {}); // Fail silently — autoplay policy
+
+    // Manual pause on tab hide (Phaser pauseOnBlur doesn't cover HTML Audio)
+    const handleVisibility = () => {
+      if (document.hidden) audio.pause();
+      else audio.play().catch(() => {});
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      audio.pause();
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []); // Mount once — track chosen at game start
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : musicVolume;
+    }
+  }, [musicVolume, isMuted]);
+
+  return null;
+};
+```
+
+**SFX update in `audio.ts`:**
+
+```typescript
+export function playEffect(path: string): void {
+  const { effectsVolume, isMuted } = useAudioStore.getState(); // snapshot
+  if (isMuted) return;
+  const audio = new Audio(path);
+  audio.volume = effectsVolume;
+  audio.play().catch(() => {});
 }
 
-// Server (ExplorationService)
-async validatePOIDiscovery(characterId: string, x: number, y: number, zoneId: string) {
-  const poi = await this.getPOIAtPosition(x, y, zoneId);
-  if (poi && !await this.hasDiscovered(characterId, poi.id)) {
-    await this.recordDiscovery(characterId, poi.id);
-    return poi; // emit back to client with lore data
-  }
-  return null;
+export function playQuestCompleteSound(): void {
+  playEffect('/assets/audio/quest-complete.mp3');
+}
+
+export function playLevelUpSound(): void {
+  playEffect('/assets/audio/quest-complete.mp3'); // Reuse file per spec
 }
 ```
 
-**Trade-offs:**
-- Pro: Instant fog reveal, persists across sessions, low bandwidth
-- Con: Client storage per character (~1MB for 100k revealed tiles), potential desync (mitigate: version flag in localStorage)
+**Wire level-up in `gameStore.ts`** (existing `player:xp` socket handler):
 
-### Pattern 3: Event-Driven Zone Mastery Tracking
+```typescript
+gameSocket.on('player:xp', (data) => {
+  // ... existing state update ...
+  if (data.leveledUp) {
+    playLevelUpSound(); // Add this call
+    // ... existing chat message ...
+  }
+});
+```
 
-**What:** Domain events (entity.killed, item.collected, poi.discovered) trigger mastery updates via existing event system.
+### Pattern 3: Interface Settings Co-located in Owner Store
 
-**Why:** Reuses QuestService event pattern, decouples mastery from individual actions.
+**What:** `showSecondaryBar` boolean lives in `actionBarStore` (not a separate settings store) because the action bar store already owns all action bar configuration. localStorage persistence follows the same pattern already used in that store.
+
+**When to use:** When a UI preference has an obvious natural owner among existing stores. Avoids creating a generic settings store prematurely.
+
+**Trade-offs:** Slightly violates single responsibility if settings accumulate. For v1.21 (one interface toggle), co-location is correct. Extract to `settingsStore.ts` when 3+ unrelated interface preferences exist.
 
 **Implementation:**
+
 ```typescript
-// Server (ExplorationService)
-@OnEvent('entity.killed')
-async handleEntityKilled(payload: EntityKilledPayload) {
-  await this.incrementMasteryCounter(
-    payload.characterId,
-    payload.zoneId,
-    'kills'
-  );
-  this.checkMasteryTier(payload.characterId, payload.zoneId);
+// actionBarStore.ts additions
+function loadSecondaryBarVisibility(): boolean {
+  return localStorage.getItem('action_bar_secondary_visible') !== 'false'; // default true
 }
 
-@OnEvent('item.collected')
-async handleItemCollected(payload: ItemCollectedPayload) {
-  await this.incrementMasteryCounter(
-    payload.characterId,
-    payload.zoneId,
-    'resources'
-  );
-  this.checkMasteryTier(payload.characterId, payload.zoneId);
-}
+// In store interface:
+showSecondaryBar: boolean;
+toggleSecondaryBar: () => void;
 
-private async checkMasteryTier(characterId: string, zoneId: string) {
-  const progress = await this.getMasteryProgress(characterId, zoneId);
-  const tier = this.calculateTier(progress); // 0-5 based on thresholds
-  if (tier > progress.currentTier) {
-    await this.updateTier(characterId, zoneId, tier);
-    this.emitTierUp(characterId, zoneId, tier);
-  }
-}
+// In store initializer:
+showSecondaryBar: loadSecondaryBarVisibility(),
+toggleSecondaryBar: () => set((state) => {
+  const newValue = !state.showSecondaryBar;
+  localStorage.setItem('action_bar_secondary_visible', String(newValue));
+  return { showSecondaryBar: newValue };
+}),
 ```
 
-**Trade-offs:**
-- Pro: Consistent with existing QuestService pattern, easy to add new mastery triggers
-- Con: Additional database writes per action (mitigate: batch updates with 5s debounce)
+```tsx
+// HUD.tsx modification
+const { showSecondaryBar } = useActionBarStore();
 
-## Database Schema Extensions
+<div className="action-bars-container">
+  <ActionBar barIndex={0} />
+  {showSecondaryBar && <ActionBar barIndex={1} />}
+</div>
+```
 
-### New Tables
+### Pattern 4: Entity Anchor Fix — Tile Base Origin
+
+**What:** Fix `EntityRenderer.createEntityContainer()` to position the container at the tile's top-face base edge (where the tile surface is visible), not at the tile's screen-center.
+
+**Root cause:** `IsometricTransform.gridToScreen()` returns the visual center of a tile face, which is `ISO_TILE_HEIGHT / 2 = 64px` above the bottom edge of the top face. With sprite `origin(0.5, 1.0)` (bottom-center), the sprite feet land 64px too high for flat tiles, and higher still on elevated tiles.
+
+**Fix (EntityRenderer.ts line 146):**
 
 ```typescript
-// packages/database/src/schema/exploration.ts
-export const exploration = pgTable('exploration', {
-  id: serial('id').primaryKey(),
-  characterId: integer('character_id').notNull().references(() => characters.id),
-  zoneId: varchar('zone_id', { length: 50 }).notNull(),
-  revealedTiles: integer('revealed_tiles').default(0), // count for statistics
-  discoveredPOIs: jsonb('discovered_pois').$type<string[]>().default([]),
-  masteryTier: integer('mastery_tier').default(0), // 0-5
-  kills: integer('kills').default(0),
-  resourcesGathered: integer('resources_gathered').default(0),
-  lastActivityAt: timestamp('last_activity_at').defaultNow(),
-  createdAt: timestamp('created_at').defaultNow(),
-});
+// BEFORE (buggy)
+const container = this.scene.add.container(screenPos.x, screenPos.y - elevationOffset);
 
-// Composite index for efficient lookups
-export const explorationIndex = uniqueIndex('exploration_character_zone_idx')
-  .on(exploration.characterId, exploration.zoneId);
+// AFTER (correct)
+// ISO_TILE_HEIGHT = 128, so half = 64 — this is the distance from tile center to base
+const tileBase = screenPos.y + (ISO_TILE_HEIGHT / 2);
+const container = this.scene.add.container(screenPos.x, tileBase - elevationOffset);
 ```
+
+**Note on ISO_TILE_HEIGHT direction:** In isometric rendering, larger Y = lower on screen. The tile's bottom-visible-edge (where entities stand) is at `screenPos.y + (ISO_TILE_HEIGHT / 2)` because the tile center is above the base in screen space.
+
+**TargetHighlight:** The selection indicator follows `container.y` automatically (it attaches to the container). Fixing the container position fixes the selection ring alignment without changes to `TargetHighlight.ts`.
+
+**Update moved-entity position** (`EntityRenderer.updateEntityPosition`, line 763-765 in EntityRenderer.ts):
 
 ```typescript
-// packages/database/src/schema/gathering-stats.ts
-export const gatheringStats = pgTable('gathering_stats', {
-  id: serial('id').primaryKey(),
-  characterId: integer('character_id').notNull().references(() => characters.id),
-  resourceType: varchar('resource_type', { length: 50 }).notNull(), // mineral/plant
-  totalGathers: integer('total_gathers').default(0),
-  perfectGathers: integer('perfect_gathers').default(0), // mini-game success
-  averageYield: real('average_yield').default(1.0), // multiplier average
-  lastGatherAt: timestamp('last_gather_at'),
-});
+// Same fix needed when updating position on move
+const tileBase = screenPos.y + (ISO_TILE_HEIGHT / 2);
+container.setPosition(screenPos.x, tileBase - elevationOffset);
 ```
 
-### Modified Tables
+## Data Flow
 
-```typescript
-// packages/database/src/schema/characters.ts (ADD)
-// Add to existing characters table
-combatDifficultyPreference: varchar('combat_difficulty_preference', { length: 20 })
-  .default('normal'); // 'easy', 'normal', 'hard'
+### ESC Key Flow (new centralized)
+
+```
+User presses ESC
+    ↓
+GameUI.tsx single window keydown listener
+    ↓
+Reads store snapshots (getState() — no subscriptions)
+    ↓
+If/else priority chain: first truthy open modal wins
+    ↓
+Calls store close action for that modal
+    ↓
+Zustand notifies subscribers → React re-renders
+    ↓
+GameUI conditional hides that one component
+    ↓
+Next ESC press: re-evaluates remaining open modals
 ```
 
-## New Socket Events
+### Audio Flow (new)
 
-### Client → Server
+```
+GameContainer mounts → GameUI mounts → AudioManager mounts
+    ↓
+AudioManager picks random track from MUSIC_TRACKS[]
+Creates HTML5 Audio element, sets loop=true
+Calls audio.play() — fails silently if autoplay blocked
+    ↓
+[User interacts with page — autoplay policy satisfied]
+Music begins playing at musicVolume from audioStore
+    ↓
+[Server emits player:xp with leveledUp: true]
+gameStore.ts handler calls playLevelUpSound()
+audio.ts reads effectsVolume from audioStore.getState()
+Creates new Audio element for quest-complete.mp3, plays once
+    ↓
+[User opens Game Menu → Settings tab]
+Moves music volume slider → calls audioStore.setMusicVolume(v)
+audioStore updates + saves to localStorage
+AudioManager useEffect fires → audioRef.current.volume = v
+```
 
-| Event | Payload | Purpose |
-|-------|---------|---------|
-| `gathering:complete` | `{ elapsed: number }` | Submit mini-game timing result |
-| `exploration:reveal_tiles` | `{ tiles: Array<{x,y}> }` | Batch reveal multiple tiles (zone transition) |
-| `exploration:poi_discovered` | `{ x: number, y: number, zoneId: string }` | Validate POI discovery |
+### Settings Flow (new)
 
-### Server → Client
+```
+User presses ESC (nothing else open)
+    ↓
+GameUI ESC handler: toggleGameMenu()
+gameStore.showGameMenu = true
+    ↓
+GameMenu renders as overlay
+    ↓
+User clicks Settings tab
+SettingsPanel renders:
+  - Music volume slider → audioStore.musicVolume
+  - Effects volume slider → audioStore.effectsVolume
+  - Mute toggle → audioStore.isMuted
+  - Show secondary bar toggle → actionBarStore.showSecondaryBar
+    ↓
+User toggles secondary bar
+    ↓
+actionBarStore.toggleSecondaryBar() called
+localStorage.setItem('action_bar_secondary_visible', 'false')
+    ↓
+HUD.tsx subscribed to showSecondaryBar — re-renders
+Second ActionBar disappears from HUD bottom area
+    ↓
+User clicks Logout
+gameSocket.disconnect()
+navigate('/login')
+```
 
-| Event | Payload | Purpose |
-|-------|---------|---------|
-| `gathering:start` | `{ difficulty: number, targetWindow: [number, number] }` | Initiate mini-game with parameters |
-| `gathering:result` | `{ success: boolean, multiplier: number, items: ItemDrop[] }` | Award resources with yield multiplier |
-| `exploration:poi_data` | `{ poi: POI, loreEntry: string }` | Send POI details and lore on discovery |
-| `exploration:mastery_tier` | `{ zoneId: string, tier: number, rewards: Reward[] }` | Notify tier-up with rewards |
-| `combat:difficulty_scaled` | `{ multiplier: number }` | Debug event showing applied difficulty |
+### Entity Rendering Fix Flow
+
+```
+Server sends entity data (zone:state or entity:spawn)
+    ↓
+WorldScene.spawnEntity() → EntityRenderer.createEntityContainer()
+    ↓
+isoTransform.gridToScreen(worldX, worldY) → { x, y: tile_center }
+    ↓
+[FIXED] tileBase = screenPos.y + (ISO_TILE_HEIGHT / 2)
+container.y = tileBase - elevationOffset
+    ↓
+Sprite added with origin(0.5, 1.0)
+Sprite feet land exactly at container.y = tile surface
+    ↓
+Entity visually stands on tile, not floating above it
+Selection indicator at container.y matches entity feet
+```
+
+## Integration Points
+
+### New vs. Modified Components
+
+| Component | Status | Change Summary |
+|-----------|--------|---------------|
+| `gameStore.ts` | MODIFY | Add `showGameMenu: boolean`, `toggleGameMenu()` |
+| `actionBarStore.ts` | MODIFY | Add `showSecondaryBar: boolean`, `toggleSecondaryBar()`, localStorage |
+| `audioStore.ts` | NEW | Zustand store: musicVolume, ambientVolume, effectsVolume, isMuted |
+| `AudioManager.tsx` | NEW | Invisible component: HTML5 Audio lifecycle, 4 music tracks, visibilitychange |
+| `GameMenu.tsx` | NEW | Overlay modal: Settings panel (volumes + secondary bar toggle) + Logout button |
+| `GameMenu.css` | NEW | Overlay styling using existing CSS variables |
+| `GameUI.tsx` | MODIFY | Add: central ESC handler, `<AudioManager />` (always mounted), `{showGameMenu && <GameMenu />}` |
+| `HUD.tsx` | MODIFY | Add: `showSecondaryBar` from actionBarStore, conditional `{showSecondaryBar && <ActionBar barIndex={1} />}` |
+| `GameShortcuts.tsx` | MODIFY | Add: Menu button (M key label) calling `toggleGameMenu()` |
+| `audio.ts` | MODIFY | Add: `playLevelUpSound()`, refactor `playEffect()` to read volume from audioStore |
+| `gameStore.ts` player:xp handler | MODIFY | Add: `playLevelUpSound()` call when `data.leveledUp === true` |
+| `QuestLogPanel.tsx` | MODIFY | Remove own ESC handler (lines 30-38) |
+| `NpcInteractionModal.tsx` | MODIFY | Remove own ESC handler (lines 222-232) |
+| `LoreCodex.tsx` | MODIFY | Remove own ESC handler (lines 27-31) |
+| `EntityRenderer.ts` | MODIFY | Fix container.y calculation (line 146) and updateEntityPosition (line 764) |
+| `ActionBar.tsx` | NO CHANGE | Already parameterized by `barIndex` — behavior unchanged |
+
+### Internal Boundaries
+
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| `audioStore` ↔ `AudioManager.tsx` | Zustand subscription | AudioManager is the sole consumer that directly calls `.play()` / `.volume` on Audio elements |
+| `audioStore` ↔ `audio.ts` | `useAudioStore.getState()` snapshot | SFX reads volume at fire time; no subscription needed |
+| `audioStore` ↔ `GameMenu/SettingsPanel` | Zustand subscription | Sliders two-way bind to store state |
+| `actionBarStore` ↔ `HUD.tsx` | Zustand subscription | `showSecondaryBar` consumed in HUD for conditional render |
+| `actionBarStore` ↔ `GameMenu/SettingsPanel` | Zustand subscription | Toggle in settings writes to store |
+| `gameStore` ↔ `GameMenu.tsx` | Zustand subscription | `showGameMenu` controls render in GameUI |
+| `GameUI.tsx` ↔ all stores | `getState()` snapshots in ESC handler | Event handler does not subscribe; reads current state at keypress time |
+| `EntityRenderer.ts` ↔ `IsometricTransform` | Direct call `gridToScreen()` | Fix adds `+ ISO_TILE_HEIGHT / 2` to result — IsometricTransform unchanged |
+
+### Phaser ↔ React Boundary
+
+The audio system lives entirely in React (HTML5 Audio), not in Phaser. This is correct for v1.21 because:
+
+1. The 4 music files are in `/assets/music/` and not preloaded in `PreloadScene.ts`. Adding them to Phaser requires modifying PreloadScene and using `this.sound.add()`.
+2. Volume control from React UI settings would require bridging through `useGameStore.getState().game` (the Phaser game instance) to reach `game.sound.setVolume()`.
+3. `AudioManager.tsx` as a React component is simpler: it reads from `audioStore` directly.
+
+**Limitation to acknowledge:** `document.visibilitychange` must be manually handled in `AudioManager` since Phaser's `pauseOnBlur: true` (configured in `Game.ts`) only pauses Phaser's own sound pipeline.
+
+## Build Order and Dependencies
+
+### Phase 1: Entity Rendering Fix (independent, no deps)
+
+1. Modify `EntityRenderer.ts` — fix `tileBase` calculation at line 146 and line 764
+2. Manual test: entity on elevated tile sits on tile surface, selection ring at feet
+
+### Phase 2: Audio Foundation (no UI deps)
+
+3. Create `audioStore.ts` — volumes, mute, localStorage persistence
+4. Modify `audio.ts` — add `playLevelUpSound()`, refactor `playEffect()` to read from audioStore
+5. Wire level-up sound in `gameStore.ts` `player:xp` handler
+6. Create `AudioManager.tsx` — invisible component with music loop + visibilitychange
+
+### Phase 3: Game Menu + Settings (depends on Phase 2 for audioStore)
+
+7. Add `showGameMenu` + `toggleGameMenu()` to `gameStore.ts`
+8. Create `GameMenu.tsx` + `GameMenu.css`
+   - Settings panel: sliders bound to audioStore, secondary bar toggle bound to actionBarStore
+   - Logout: `gameSocket.disconnect()` + `navigate('/login')`
+9. Add `{showGameMenu && <GameMenu />}` to `GameUI.tsx`
+10. Add `<AudioManager />` to `GameUI.tsx` (always mounted, inside player guard)
+
+### Phase 4: ESC Stack + Secondary Bar + Shortcuts (depends on Phase 3 for GameMenu)
+
+11. Add `showSecondaryBar` + `toggleSecondaryBar()` to `actionBarStore.ts` with localStorage
+12. Modify `HUD.tsx` — conditional second ActionBar
+13. Add central ESC handler to `GameUI.tsx`
+14. Remove own ESC handlers from `QuestLogPanel.tsx`, `NpcInteractionModal.tsx`, `LoreCodex.tsx`
+15. Add Menu button to `GameShortcuts.tsx`
+
+### Dependency Rationale
+
+- Phase 1 (entity fix) ships first because it's entirely self-contained and validates the positioning logic before other UI work.
+- Phase 2 (audio) must precede Phase 3 because the Settings panel in GameMenu reads from `audioStore`.
+- Phase 3 (GameMenu) must precede Phase 4 ESC handler, because ESC's "open when nothing else open" branch targets GameMenu.
+- Secondary bar toggle in Phase 4: the actionBarStore change is simple, but testing it properly requires the Settings UI from Phase 3 to already exist.
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Per-Component ESC Handlers
+
+**What people do:** Each panel adds its own `window.addEventListener('keydown')` checking `e.key === 'Escape'`.
+
+**Why it's wrong:** When three panels are open simultaneously and ESC is pressed, all three handlers fire in the same event loop tick. All three panels close at once instead of one-by-one.
+
+**Do this instead:** Single handler in `GameUI.tsx` with an ordered if/else chain. Closes exactly one modal per keypress.
+
+### Anti-Pattern 2: Phaser Sound for Background Music
+
+**What people do:** Load music in `PreloadScene.ts`, then `this.sound.add('track').play({ loop: true })` in WorldScene.
+
+**Why it's wrong:** Requires modifying PreloadScene + loading time for 4 music files + bridging volume control through the Phaser game instance reference stored in gameStore. Phaser's `pauseOnBlur` is a bonus, but `visibilitychange` is a 2-line equivalent.
+
+**Do this instead:** `AudioManager.tsx` React component with HTML5 Audio. Direct connection to audioStore. Zero Phaser coupling.
+
+### Anti-Pattern 3: Generic settingsStore at v1.21 Scope
+
+**What people do:** Create a monolithic `settingsStore.ts` with fields for every possible preference.
+
+**Why it's wrong:** Over-engineering for a milestone with exactly 2 settings: audio volumes (audioStore) and secondary bar visibility (actionBarStore). Settings that already have a natural owner store belong in that store.
+
+**Do this instead:** Add to the natural owner store. Create `settingsStore.ts` in a future milestone when there are 3+ orthogonal preferences without a natural owner (keybind remapping, language, color theme).
+
+### Anti-Pattern 4: Entity Anchored at Tile Visual Center
+
+**What people do:** Use `gridToScreen(x, y)` as the container position directly, then add sprite with `origin(0.5, 1.0)`.
+
+**Why it's wrong:** `gridToScreen()` returns the visual center of the tile's top face. The tile's base (where entities stand) is at `screenPos.y + (ISO_TILE_HEIGHT / 2)`. For elevated tiles, the error multiplies: an entity at elevation 3 floats `3 * ELEVATION_HEIGHT_STEP + 64` pixels above the expected position.
+
+**Do this instead:** `container.y = screenPos.y + (ISO_TILE_HEIGHT / 2) - elevationOffset`. Sprite origin(0.5, 1.0) then places feet at exactly the tile surface.
 
 ## Scaling Considerations
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 0-1k users | Current architecture sufficient. Fog of war in localStorage, mastery counters in PostgreSQL. |
-| 1k-10k users | Add Redis cache for zone mastery counters (reduce DB writes). Batch fog reveals on zone transition. |
-| 10k+ users | Consider separate exploration microservice, use Redis for real-time counters, PostgreSQL for persistence. |
-
-### Bottleneck Analysis
-
-1. **First bottleneck (5k users):** Fog of war localStorage size (100k tiles = 1MB per character)
-   - **Mitigation:** Use bitset encoding (8 tiles per byte) → 12.5KB per character
-   - **Implementation:** `FogOfWarManager` uses Uint8Array, bit manipulation for get/set
-
-2. **Second bottleneck (10k users):** Zone mastery database writes (every kill/gather)
-   - **Mitigation:** In-memory counter batching with 5-second flush interval
-   - **Implementation:** `ExplorationService` maintains Map<characterId_zoneId, counters>, periodic batch update
-
-## Build Order Recommendations
-
-### Phase 1: Fog of War Foundation
-**Why first:** Zero dependencies, enables other exploration features, pure client-side.
-
-1. Create `explorationStore` with revealed tiles Set
-2. Implement `FogOfWarManager` with localStorage persistence
-3. Hook into `MovementController` position updates
-4. Add fog overlay rendering to `WorldScene`
-
-**Success Criteria:** Player sees fog, moves reveal tiles, fog persists across sessions.
-
-### Phase 2: POI Discovery System
-**Why second:** Depends on fog of war, enables lore collection.
-
-1. Add `exploration` database table and schema
-2. Implement `ExplorationService` with POI validation
-3. Add POI definitions to `world-gen` package
-4. Implement `POIRenderer` in WorldScene
-5. Wire `exploration:poi_discovered` event flow
-
-**Success Criteria:** Player reveals POI, receives lore entry, POI marked as discovered.
-
-### Phase 3: Gathering Mini-Game
-**Why third:** Independent system, can test without exploration features.
-
-1. Create `gatheringStore` with mini-game state
-2. Implement `GatheringMiniGameOverlay` UI component
-3. Implement `GatheringService` with timing validation
-4. Modify `EntityService.handleToolUse()` to trigger mini-game
-5. Wire `gathering:start`, `gathering:complete`, `gathering:result` events
-
-**Success Criteria:** Click resource → mini-game appears → correct timing → bonus loot.
-
-### Phase 4: Zone Mastery Tracking
-**Why fourth:** Depends on exploration events, requires POI system.
-
-1. Add mastery counters to `exploration` table
-2. Implement event handlers in `ExplorationService`
-3. Add mastery tier calculation logic
-4. Implement tier-up rewards in `InventoryService`
-5. Wire `exploration:mastery_tier` event
-
-**Success Criteria:** Activities increment counters, tier-up notification appears, rewards granted.
-
-### Phase 5: Combat Balancing
-**Why last:** Independent of other features, modifies critical system.
-
-1. Add difficulty multiplier to `CombatService.handlePlayerAttack()`
-2. Modify `calculateDamage()` in game-logic package
-3. Add retreat behavior to `AiService` FSM
-4. Add difficulty preference to character table
-5. Test balancing with various level gaps
-
-**Success Criteria:** High-level creatures deal scaled damage, low-health creatures retreat.
-
-## Anti-Patterns to Avoid
-
-### Anti-Pattern 1: Server-Side Fog Tracking
-
-**What people do:** Store revealed tiles in database, sync on every movement.
-
-**Why it's wrong:** Generates massive database writes (every step), increases latency, doesn't scale.
-
-**Do this instead:** Client localStorage with server-side POI discovery validation only. Server never sees per-tile reveals.
-
-### Anti-Pattern 2: Synchronous Mini-Game Validation
-
-**What people do:** Block server response waiting for player to complete mini-game.
-
-**Why it's wrong:** Ties up server thread, vulnerable to timeout, breaks with packet loss.
-
-**Do this instead:** Async flow: server sends `gathering:start`, client plays mini-game, client sends `gathering:complete`, server validates and responds. Each step is non-blocking.
-
-### Anti-Pattern 3: Real-Time Mastery Counter Updates
-
-**What people do:** Update database on every single kill/gather action.
-
-**Why it's wrong:** Generates excessive database writes, causes contention on hot rows, expensive at scale.
-
-**Do this instead:** In-memory counter accumulation with periodic (5s) batch flush. Only write to DB when tier changes or on disconnect.
-
-### Anti-Pattern 4: Global Difficulty Setting
-
-**What people do:** Apply same difficulty multiplier to all creatures in a zone.
-
-**Why it's wrong:** Removes per-encounter challenge tuning, forces homogeneous content.
-
-**Do this instead:** Calculate difficulty per creature based on player vs creature level gap. Allows zone diversity while maintaining accessibility.
-
-## Integration Testing Strategy
-
-### Test Order
-
-1. **Fog of War (isolated):** Test localStorage persistence, tile reveal logic, rendering
-2. **POI Discovery:** Test fog + POI integration, server validation, lore delivery
-3. **Gathering Mini-Game:** Test timing validation, yield calculation, inventory updates
-4. **Zone Mastery:** Test event aggregation, tier calculation, reward delivery
-5. **Combat Balancing:** Test damage scaling, retreat behavior, difficulty preferences
-6. **Full Integration:** Test all systems interacting (gather → mastery → tier-up reward)
-
-### Critical Integration Points
-
-| Integration | Test Scenario | Expected Behavior |
-|-------------|---------------|-------------------|
-| Fog + POI | Reveal tiles around POI | POI appears when center tile revealed |
-| Mini-Game + Inventory | Perfect timing | 1.5x yield multiplier applied to loot |
-| Mastery + Quests | Kill creature | Both quest progress AND mastery increment |
-| Combat + AI | Attack high-level creature | Scaled damage, retreat at 20% health |
-| Fog + Zone Transition | Move to new zone | Load fog for new zone from localStorage |
+| Scale | Concern | Approach |
+|-------|---------|----------|
+| v1.21 (8 modal types) | ESC handler if/else chain | Simple ordered if/else — adequate and readable |
+| +5 future modals | ESC handler maintainability | Extract to priority array: `const MODAL_STACK = [{test: () => bool, close: () => void}]` |
+| Future audio features | Music crossfades, positional audio | Migrate to Phaser sound system or Web Audio API (AudioContext + gain nodes) |
+| Future settings growth | Many unrelated UI preferences | Extract to `settingsStore.ts` at that point; audioStore keeps audio-specific state |
 
 ## Sources
 
-Phaser 3 fog of war patterns:
-- [Fog of War with Hexagons implementation advice](https://phaser.discourse.group/t/fog-of-war-with-hexagons-implementation-advice/4895)
-- [Simple Fog of War Effect for a Phaser 3 Roguelike](https://blog.ourcade.co/posts/2020/phaser3-fog-of-war-field-of-view-roguelike/)
-- [@pixelburp/phaser3-fog-of-war npm package](https://www.npmjs.com/package/@pixelburp/phaser3-fog-of-war)
-
-Phaser 3 timing implementation:
-- [How to Create an Accurate Timer for Phaser Games](https://www.joshmorony.com/how-to-create-an-accurate-timer-for-phaser-games/)
-
-MMO gathering mechanics:
-- [Mini games for gathering resources — MMORPG.com Forums](https://forums.mmorpg.com/discussion/229842/mini-games-for-gathering-resources)
-- [Common anti-patterns in MMORPG design](https://www.gamedeveloper.com/design/common-anti-patterns-in-mmorpg-design)
-
-Exploration systems:
-- [Best MMOs for Exploration — MMOPulse](https://mmopulse.com/recommended/recommended-exploration)
-- [Community Debate - POI Interest — Pantheon Forums](https://seforums.pantheonmmo.com/content/forums/topic/12992/community-debate-do-points-of-interest-poi-interest-you/view/post_id/251844)
-
-Persistent map patterns:
-- [BetterMap - Persistent Mapping & Waypoints](https://hytalemod.me/posts/bettermap-hytale)
-- [GitHub - fog-of-war: Map Exploration Simulator](https://github.com/wblachut/fog-of-war)
+- Codebase: `apps/web/src/ui/GameUI.tsx` (full read)
+- Codebase: `apps/web/src/ui/hud/HUD.tsx`, `HUD.css`, `GameShortcuts.tsx`, `ActionBar.tsx`
+- Codebase: `apps/web/src/store/gameStore.ts`, `actionBarStore.ts`, `loreStore.ts`
+- Codebase: `apps/web/src/utils/audio.ts`
+- Codebase: `apps/web/src/game/rendering/EntityRenderer.ts` (first 350 lines)
+- Codebase: `apps/web/src/game/scenes/WorldScene.ts`, `PreloadScene.ts`, `GameContainer.tsx`
+- Codebase: `apps/web/src/ui/panels/QuestLogPanel.tsx`, `NpcInteractionModal.tsx`
+- Codebase: `apps/web/src/components/LoreCodex.tsx`
+- ESC handler audit: QuestLogPanel line 30, NpcInteractionModal line 222, LoreCodex line 27 — all confirmed
+- Audio assets confirmed: 4 MP3 tracks in `/assets/music/`, 1 SFX in `/assets/audio/`
+- Prior research: `.planning/research/ARCHITECTURE-UI-POLISH.md` (NPC modal unification, v1.16)
 
 ---
-*Architecture integration research for: Gathering, Exploration, and Combat Balancing*
-*Researched: 2026-02-23*
+*Architecture research for: v1.21 UI Polish & Audio — Game menu, audio system, ESC modal stack, entity rendering fix*
+*Researched: 2026-02-26*
