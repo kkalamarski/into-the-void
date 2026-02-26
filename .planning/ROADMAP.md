@@ -41,7 +41,7 @@
 - [x] **Phase 99: Entity Rendering Fix** - Anchor entities at tile base to eliminate floating sprites on elevated terrain (2026-02-26)
 - [x] **Phase 100: Audio Foundation** - Wire up background music loop, level-up sound, and per-category volume via audioStore (completed 2026-02-26)
 - [x] **Phase 101: Game Menu & Settings** - Game menu overlay with audio sliders, secondary bar toggle, and logout (completed 2026-02-26)
-- [ ] **Phase 102: ESC Centralization** - Single ESC handler closes modals LIFO then opens game menu when stack empty
+- [x] **Phase 102: ESC Centralization** - Single ESC handler closes modals LIFO then opens game menu when stack empty (completed 2026-02-26)
 
 ## Phase Details
 
@@ -101,7 +101,7 @@
 | 99. Entity Rendering Fix | 0/1 | Planned | - |
 | 100. Audio Foundation | 2/2 | Complete   | 2026-02-26 |
 | 101. Game Menu & Settings | 2/2 | Complete   | 2026-02-26 |
-| 102. ESC Centralization | 1/2 | In Progress|  |
+| 102. ESC Centralization | 2/2 | Complete   | 2026-02-26 |
 
 ---
 
