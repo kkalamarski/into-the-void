@@ -100,7 +100,7 @@
 |-------|----------------|--------|-----------|
 | 99. Entity Rendering Fix | 0/1 | Planned | - |
 | 100. Audio Foundation | 2/2 | Complete   | 2026-02-26 |
-| 101. Game Menu & Settings | 0/TBD | Not started | - |
+| 101. Game Menu & Settings | 1/2 | In Progress|  |
 | 102. ESC Centralization | 0/TBD | Not started | - |
 
 ---

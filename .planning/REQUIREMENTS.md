@@ -22,11 +22,11 @@ Requirements for UI Polish & Audio milestone. Each maps to roadmap phases.
 
 ### Game Menu & Settings
 
-- [ ] **MENU-01**: Player can open/close game menu overlay
-- [ ] **MENU-02**: Game menu shows audio settings with sliders for music, effects, and ambient
-- [ ] **MENU-03**: Game menu shows interface setting to toggle secondary action bar visibility
-- [ ] **MENU-04**: Player can log out from the game menu
-- [ ] **MENU-05**: Settings persist across browser sessions via localStorage
+- [x] **MENU-01**: Player can open/close game menu overlay
+- [x] **MENU-02**: Game menu shows audio settings with sliders for music, effects, and ambient
+- [x] **MENU-03**: Game menu shows interface setting to toggle secondary action bar visibility
+- [x] **MENU-04**: Player can log out from the game menu
+- [x] **MENU-05**: Settings persist across browser sessions via localStorage
 
 ### Entity Rendering
 
@@ -60,11 +60,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUD-02 | Phase 100 | Complete |
 | AUD-03 | Phase 100 | Complete |
 | AUD-04 | Phase 100 | Complete |
-| MENU-01 | Phase 101 | Pending |
-| MENU-02 | Phase 101 | Pending |
-| MENU-03 | Phase 101 | Pending |
-| MENU-04 | Phase 101 | Pending |
-| MENU-05 | Phase 101 | Pending |
+| MENU-01 | Phase 101 | Complete |
+| MENU-02 | Phase 101 | Complete |
+| MENU-03 | Phase 101 | Complete |
+| MENU-04 | Phase 101 | Complete |
+| MENU-05 | Phase 101 | Complete |
 | REND-01 | Phase 99 | Complete |
 | REND-02 | Phase 99 | Complete |
 
