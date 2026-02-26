@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: In-Game Chat
 status: unknown
-last_updated: "2026-02-26T20:45:32.003Z"
+last_updated: "2026-02-26T21:10:18.723Z"
 progress:
-  total_phases: 105
+  total_phases: 106
   completed_phases: 105
-  total_plans: 273
-  completed_plans: 273
+  total_plans: 275
+  completed_plans: 274
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 105 — ChatService Channel Routing
+**Current focus:** Phase 106 — Chat Panel UI
 
 ## Current Position
 
-Phase: 105 of 107 (ChatService Channel Routing)
-Plan: 2 of 2 complete
-Status: Phase Complete
-Last activity: 2026-02-26 — 105-02 completed (ChatService wired into GameGateway, faction rooms, updatePlayerRooms fix)
+Phase: 106 of 107 (Chat Panel UI)
+Plan: 1 of 2 complete
+Status: In Progress
+Last activity: 2026-02-26 — 106-01 completed (chatStore with per-channel messages, unread tracking, socket rewiring)
 
-Progress: [██████░░░░] 60%
+Progress: [██████░░░░] 62%
 
 ## Performance Metrics
 
@@ -37,11 +37,11 @@ Progress: [██████░░░░] 60%
 - Total execution time: ~13 hours across 21 milestones
 
 **Recent Plans:**
+- 106-01 (2026-02-26, 8min, 2 tasks, 2 files): chatStore with per-channel messages, unread tracking, socket rewiring
 - 105-02 (2026-02-26, 6min, 2 tasks, 2 files): ChatService wired into GameGateway, faction rooms joined on auth, updatePlayerRooms fixed
 - 105-01 (2026-02-26, 8min, 2 tasks, 2 files): ChatService with five-channel routing (zone/global/faction/local/whisper)
 - 104-02 (2026-02-26, 5min, 2 tasks, 5 files): NestJS REST moderation module with CRUD endpoints
 - 104-01 (2026-02-26, 8min, 2 tasks, 5 files): mute/block DB schema tables + query functions
-- 103-02 (2026-02-26, 3min, 1 task, 1 file): server-side message validation + burst rate limiting
 
 **Recent Milestones:**
 - v1.21 UI Polish & Audio: 4 phases (99-102) completed 2026-02-26
@@ -66,6 +66,8 @@ Recent decisions affecting current work:
 - [Phase 105]: Whisper to offline player produces silent failure — RESOLVED 105-01 with system message to sender
 - [105-02]: updatePlayerRooms filters to z_ prefix only — faction rooms are join-once on auth and never evicted during zone transitions
 - [105-02]: Validation and rate limiting stay in gateway; only routing delegated to ChatService
+- [Phase 106-chat-panel-ui]: System messages distributed to all five channel tabs so players always see system events regardless of active channel
+- [Phase 106-chat-panel-ui]: chatStore module-level chat:message listener replaces gameStore chat wiring; chat state removed from gameStore
 
 ### Pending Todos
 
@@ -81,9 +83,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 105-02-PLAN.md (ChatService wired into GameGateway, faction rooms, updatePlayerRooms fix)
+Stopped at: Completed 106-01-PLAN.md (chatStore with per-channel messages, unread tracking, socket rewiring)
 Resume file: None
-Next action: Execute Phase 106 (next phase in roadmap)
+Next action: Execute Phase 106 Plan 02 (Chat Panel UI component)
 
 ---
-*Last updated: 2026-02-26 — 105-02 completed*
+*Last updated: 2026-02-26 — 106-01 completed*

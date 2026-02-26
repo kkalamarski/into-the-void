@@ -24,11 +24,11 @@ Requirements for In-Game Chat milestone. Each maps to roadmap phases.
 
 ### Chat UI
 
-- [ ] **UI-01**: Chat panel is visible in bottom-left of game HUD
-- [ ] **UI-02**: User can switch between channel tabs (Local, Zone, Faction, Global, Whispers)
-- [ ] **UI-03**: User can type and send messages via text input with Enter key
-- [ ] **UI-04**: Unread message indicators shown on inactive channel tabs
-- [ ] **UI-05**: Messages display sender name, timestamp, and channel-colored text
+- [x] **UI-01**: Chat panel is visible in bottom-left of game HUD
+- [x] **UI-02**: User can switch between channel tabs (Local, Zone, Faction, Global, Whispers)
+- [x] **UI-03**: User can type and send messages via text input with Enter key
+- [x] **UI-04**: Unread message indicators shown on inactive channel tabs
+- [x] **UI-05**: Messages display sender name, timestamp, and channel-colored text
 
 ### Moderation
 
@@ -78,11 +78,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHAN-03 | Phase 105 | Complete |
 | CHAN-04 | Phase 105 | Complete |
 | CHAN-05 | Phase 105 | Complete |
-| UI-01 | Phase 106 | Pending |
-| UI-02 | Phase 106 | Pending |
-| UI-03 | Phase 106 | Pending |
-| UI-04 | Phase 106 | Pending |
-| UI-05 | Phase 106 | Pending |
+| UI-01 | Phase 106 | Complete |
+| UI-02 | Phase 106 | Complete |
+| UI-03 | Phase 106 | Complete |
+| UI-04 | Phase 106 | Complete |
+| UI-05 | Phase 106 | Complete |
 | MOD-01 | Phase 107 | Pending |
 | MOD-02 | Phase 107 | Pending |
 | MOD-03 | Phase 107 | Pending |
