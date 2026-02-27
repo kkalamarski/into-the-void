@@ -1,396 +1,171 @@
-# Pitfalls Research: v1.21 UI Polish & Audio
+# Pitfalls Research
 
-**Domain:** React + Phaser 3 Multiplayer Game — Adding game menu, audio system, settings UI, ESC modal management, entity rendering fix
-**Researched:** 2026-02-26
-**Confidence:** HIGH
-
----
-
-## Executive Summary
-
-Adding game menu, audio, settings persistence, and entity rendering fixes to an existing React + Phaser 3 game introduces a specific class of pitfalls that emerge from the **dual-runtime boundary**: Phaser owns the canvas and keyboard events; React owns the HUD and modals. Both systems must coexist without stepping on each other's key handling, audio context, or z-index layering.
-
-The most severe pitfalls are:
-
-1. **Audio autoplay blocked silently** — music never plays, no error is thrown, player thinks feature is broken
-2. **ESC key handled by multiple independent listeners** — modals close correctly but Phaser also receives the event, firing unwanted in-game actions
-3. **Audio objects created but never destroyed** — HTMLAudio elements accumulate on every level-up or quest completion, leaking memory over a long session
-4. **Modal z-index trapped inside stacking context** — game menu renders behind Phaser canvas because `.game-ui` already establishes a stacking context
-5. **Settings persisted from stale state** — volume sliders save on every slider move, writing over freshly loaded defaults before rehydration completes
-6. **Entity anchor offset mismatch** — fixing entity origin from center to bottom-center shifts the selection indicator and target highlight to wrong position, requiring coordinated fixes across EntityRenderer and TargetHighlight
-
-This document focuses on pitfalls **specific to adding these features to the existing Into the Void codebase**, not general web development mistakes.
+**Domain:** MMO content expansion — adding 100+ entity/item definitions and faction equipment to an existing sci-fi survival game
+**Researched:** 2026-02-27
+**Confidence:** HIGH (based on direct codebase analysis and prior expansion history in Phases 87/88)
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Audio Autoplay Silently Blocked — Music Never Starts
+### Pitfall 1: BIOME_SPAWN_CONFIGS and ENTITY_IDS Desync
 
 **What goes wrong:**
-Background music is added to loop on game load (or zone entry). It never plays. No error appears in the console. The code path executes, `audio.play()` is called, but Chrome/Firefox silently discard the request because no user gesture has occurred before `new Audio()` is called.
-
-The existing `playQuestCompleteSound()` in `apps/web/src/utils/audio.ts` already handles this with `.catch()` that logs to `console.debug` (line 17-19), but music started at Phaser boot or `WorldScene.create()` has no user gesture context at all — Phaser initializes inside a `useEffect` after mount, which is not a user gesture.
+A new entity is added to a definitions file (e.g. `exotic-creatures.ts`) and registered in `ALL_ENTITIES`, but its ID constant is missing from `ENTITY_IDS` in `definitions/index.ts`, OR it's in `ENTITY_IDS` but not wired into `BIOME_SPAWN_CONFIGS` in `packages/world-gen/src/generation/spawn.ts`. The entity exists in the registry but never spawns in the world. Players can receive loot table references to it from other mechanics, but the world never generates it. This is a silent failure — no error is thrown.
 
 **Why it happens:**
-Chrome's autoplay policy blocks audio that is not initiated by a direct user interaction event (click, keydown, touchstart). React `useEffect` callbacks and Phaser `create()` lifecycle methods are not user gesture contexts. The error is caught silently or not at all because `audio.play()` returns a Promise that rejects, and if the rejection is unhandled the browser simply discards it with no user-visible feedback.
-
-From the Chromium autoplay policy: "Playback of any media that includes audio is generally blocked if the playback is programmatically initiated in a tab which has not yet had any user interaction."
+The content pipeline has three separate locations that must be updated atomically: (1) the definition file, (2) the `ENTITY_IDS` constants map in `definitions/index.ts`, and (3) the `BIOME_SPAWN_CONFIGS` object in `spawn.ts`. The definition and `ENTITY_IDS` are co-located in the same package (`packages/entities`), but `spawn.ts` is in `packages/world-gen` — a separate package across a package boundary. When adding 20-40 entities in one phase, the world-gen step is consistently missed because there is no compile-time enforcement. Phase 88 added 4 creatures but wiring them to `BIOME_SPAWN_CONFIGS` required a separate step visible in the phase history comment `// Phase 88 starfall_crater and ancient_ruins creatures`.
 
 **How to avoid:**
-Use the "unlock on first interaction" pattern. Create the audio object and preload it immediately, but defer `.play()` until the first user gesture. Track whether audio has been unlocked using a module-level flag:
-
-```typescript
-// apps/web/src/utils/audio.ts
-
-let audioUnlocked = false;
-let pendingMusicPlay: (() => void) | null = null;
-
-// Call this from any user interaction handler (click on Play, any keydown)
-export function unlockAudio(): void {
-  if (audioUnlocked) return;
-  audioUnlocked = true;
-  if (pendingMusicPlay) {
-    pendingMusicPlay();
-    pendingMusicPlay = null;
-  }
-}
-
-export function playMusic(src: string, volume: number): HTMLAudioElement {
-  const audio = new Audio(src);
-  audio.loop = true;
-  audio.volume = volume;
-
-  if (audioUnlocked) {
-    audio.play().catch(err => console.debug('[Audio] Music blocked:', err));
-  } else {
-    // Queue for first user gesture
-    pendingMusicPlay = () => audio.play().catch(err => console.debug('[Audio] Music blocked:', err));
-  }
-  return audio;
-}
-```
-
-Wire `unlockAudio()` to the first click or keydown on `document` in `GameContainer.tsx` or the game's first meaningful user event.
+Write the definition, the `ENTITY_IDS` entry, and the `BIOME_SPAWN_CONFIGS` entry as one atomic unit. Add a CI validation script (or test) that asserts: every entity ID registered in `EntityRegistry` that is spawnable (not an artifact with `respawns: false` set) appears as a spawn entry in at least one biome's `creatures`, `minerals`, or `plants` array in `BIOME_SPAWN_CONFIGS`. Fail the build if any registered spawnable entity is absent.
 
 **Warning signs:**
-- Music code executes (console logs confirm) but no sound plays
-- No error in console (autoplay rejection is silent when caught)
-- Works on localhost with devtools open (DevTools user gesture unlocks audio) but not on production
-- Works in Firefox but not Chrome (different autoplay thresholds)
+- Entity count in `EntityRegistry` grows but observed active world entity counts stay flat
+- Console warnings `Unknown entity ID: "creature_xxx", using fallback` appear after fresh chunk generation
+- `ENTITY_IDS` constant count and total `BIOME_SPAWN_CONFIGS` creature/plant/mineral entries are mismatched when counted
+- `getBiomeCreatures(biome)` returns fewer IDs than expected for a biome
 
-**Phase to address:** Audio System phase — integrate unlock before any music play call. Do not add music play to Phaser scene lifecycle.
+**Phase to address:**
+First entity definition phase. Establish the validation check before writing any new definitions.
 
 ---
 
-### Pitfall 2: ESC Key Fires in Both Phaser and React — Double-Action on Dismiss
+### Pitfall 2: Loot Table Orphaning — Creature Exists but Drops Nothing
 
 **What goes wrong:**
-ESC closes the NPC modal (React keydown listener on `window`), then the same event bubbles up and Phaser's keyboard input system also receives it, triggering whatever ESC is mapped to in-game (e.g., canceling pathfinding, deselecting target). When the game menu is added, ESC must: close topmost modal → open menu. Both React and Phaser will process the same keydown.
-
-Current state: `NpcInteractionModal` adds a `window.addEventListener('keydown', ...)` handler for Escape (line 224-227). `QuestLogPanel` does the same (lines 30-35). `LoreCodex` does the same (lines 27-31). Each is independent. None call `e.stopPropagation()`. Phaser keyboard plugin is separate and not connected to these handlers.
+A creature is defined and spawns correctly. When it is killed, `getCreatureLoot(lootTableId)` returns an empty array because the `lootTableId` (convention: `loot_<entity_id>`) is not registered in `CREATURE_LOOT_TABLES` in `packages/game-logic/src/loot/creature-loot.ts`. The creature drops nothing. No error is thrown anywhere in the call chain. Players experience kills with zero drops — the reward loop breaks silently.
 
 **Why it happens:**
-Phaser 3 keyboard input does not use `addEventListener` directly in the same way — it processes events through its internal `KeyboardPlugin` which captures events on `window`. React components add independent `window` listeners. Both receive the same event. Neither yields to the other. Adding a game menu that listens for ESC creates a third handler.
-
-From Phaser documentation: "keyboard captures are global, meaning if you call this method from within a Scene to prevent a key from triggering a page action, it will prevent it for any Scene in your game."
+The `lootTableId` field on `CreatureDefinition` is a forward reference by convention — the entity definition sets `lootTableId: 'loot_creature_xxx'` and trusts that a matching key exists in `CREATURE_LOOT_TABLES`. There is no compile-time validation that this key exists. The entity registry has no knowledge of the loot system. When adding 40+ creatures across multiple definition files, loot entries are commonly skipped in the rush to finish the entity batch and added "later" — which doesn't happen.
 
 **How to avoid:**
-Implement a centralized ESC key manager at the application level — one listener on `window` that holds an ordered stack of modal closers. Only the top-most modal closer fires per ESC keydown. Phaser's keyboard input for ESC is disabled explicitly when any modal is open:
-
-```typescript
-// apps/web/src/utils/escKeyManager.ts
-
-type EscHandler = () => boolean; // returns true if it consumed the event
-
-const handlers: EscHandler[] = [];
-
-window.addEventListener('keydown', (e: KeyboardEvent) => {
-  if (e.key !== 'Escape') return;
-  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
-  // Fire topmost handler first
-  for (let i = handlers.length - 1; i >= 0; i--) {
-    const consumed = handlers[i]();
-    if (consumed) {
-      e.stopPropagation(); // Prevent Phaser from seeing this event
-      break;
-    }
-  }
-}, { capture: true }); // Use capture phase to run before Phaser
-
-export function pushEscHandler(handler: EscHandler): () => void {
-  handlers.push(handler);
-  return () => {
-    const index = handlers.indexOf(handler);
-    if (index !== -1) handlers.splice(index, 1);
-  };
-}
-```
-
-Using `{ capture: true }` means this handler runs before Phaser's `window` listeners. When it calls `e.stopPropagation()`, Phaser never sees the event. Remove per-component `window.addEventListener('keydown')` listeners for Escape from `NpcInteractionModal`, `QuestLogPanel`, and `LoreCodex` — replace with `pushEscHandler`.
+Add an `entity-loot-validation.test.ts` test alongside the existing `packages/items/src/__tests__/item-validation.test.ts`. Import `ALL_ENTITIES`, filter to creatures only, and assert that every creature's `lootTableId` has an entry in `CREATURE_LOOT_TABLES`. This pattern already exists for item stats — extend it to loot coverage. The test fails at build time before any player encounters missing drops.
 
 **Warning signs:**
-- Pressing ESC closes a modal AND also cancels player's pathfinding target simultaneously
-- ESC opens game menu but also fires Q shortcut (if Phaser processes both)
-- Modal closes but immediately reopens (ESC was processed twice in same frame)
-- In-game player deselects target every time a modal is dismissed
+- No items drop from any new creatures after expansion
+- `getCreatureLoot('loot_creature_new_xxx')` returns `[]` when tested in isolation
+- Combat log shows kills but inventory never gains items
+- Existing creatures still drop normally; only new entities are affected
 
-**Phase to address:** ESC Modal Management phase — must be solved before adding game menu, since both NPC modal and game menu will compete for ESC.
+**Phase to address:**
+First entity definition phase. Write the validation test before or alongside the first creature batch to prevent regression as more creatures are added.
 
 ---
 
-### Pitfall 3: Audio Objects Leak Memory — HTMLAudio Elements Not Destroyed
+### Pitfall 3: Faction Gear Identity Collapse — All Factions Receive Identical Ability Sets
 
 **What goes wrong:**
-Each call to `playQuestCompleteSound()` creates `new Audio(...)` and calls `.play()`. The Audio element is not referenced after the call — it becomes unreachable for garbage collection only AFTER the sound finishes playing. In practice, browsers keep HTMLAudio elements alive in their internal audio graph until fully decoded and played. If `playQuestCompleteSound` is called 20 times in a session (active players complete many quests), 20 Audio elements accumulate. Similarly, if music is implemented as `new Audio(src)` and called each time the zone changes without destroying the previous instance, prior Audio elements keep playing in the background.
-
-The current pattern creates a new object on every call (audio.ts line 13). This is acceptable for short SFX with infrequent calls, but becomes a leak pattern for: music (never destroyed on zone change), repeated SFX on high-frequency events (every combat damage hit), or SFX started before async user gesture unlock.
+Faction-specific suits (Verdant Dynamics biotech, Helix Extraction industrial, Nexus Frontiers surveillance) are distinguished by lore flavor text and color values alone. The `grantedAbilities` array is copy-pasted from the nearest rarity-equivalent generic suit. Players equipping the Verdant Biotech Suit and the Nexus Combat Frame discover they grant identical ability pools. Faction choice feels cosmetic rather than mechanically meaningful. This directly contradicts the lore requirement that factions have distinct identities (from `CLAUDE.md`: "lore is non-negotiable, source of truth").
 
 **Why it happens:**
-JavaScript does not automatically stop audio when the reference drops. HTMLAudioElement continues playing after its reference is garbage collected IF the browser's audio graph holds it alive. Multiple concurrent audio elements from multiple `new Audio()` calls will stack — you end up with overlapping music tracks or 20 simultaneous quest-complete sounds.
-
-Phaser 3's own WebAudio sound system has documented memory leaks: `AudioBufferSourceNode` is not freed after play in older Phaser versions (GitHub issue #2280). When mixing Phaser's sound system with raw HTMLAudio, two audio subsystems compete.
+The `generateSuitStats()` utility handles stat distribution by archetype, making stat differentiation easy. But `grantedAbilities` is manually specified per item — there is no enforcement mechanism. The 21 existing abilities (`nano_repair`, `emergency_shield`, `magnetic_field`, etc.) were designed for generic suits and are not faction-exclusive. Under time pressure, authors copy the nearest rarity-equivalent suit's abilities rather than designing faction-specific pools. The lore specifies faction identity thematically but the code doesn't enforce it mechanically.
 
 **How to avoid:**
-Use a singleton audio manager that tracks the current music instance and reuses SFX audio objects:
+Before writing a single faction item definition, define the faction ability assignment matrix:
+- **Verdant Dynamics** (biotech/ecology): `regeneration_protocol`, `analyze_specimen`, `resource_scan` as staples; biotech suits should not grant `magnetic_field` or `fortify_systems`
+- **Helix Extraction** (industrial/mining): `nano_repair`, `fortify_systems`, gathering-bonus abilities; extraction focus means survival-over-offense
+- **Nexus Frontiers** (surveillance/combat): `overclock`, `magnetic_field`, offensive abilities; tactical-first playstyle
 
-```typescript
-// apps/web/src/utils/audioManager.ts
-
-class AudioManager {
-  private musicTrack: HTMLAudioElement | null = null;
-  private sfxPool: Map<string, HTMLAudioElement> = new Map();
-  private settings = { music: 0.5, ambient: 0.5, effects: 0.3 };
-
-  playMusic(src: string): void {
-    // Destroy previous track before starting new one
-    if (this.musicTrack) {
-      this.musicTrack.pause();
-      this.musicTrack.src = ''; // Release media resource
-      this.musicTrack = null;
-    }
-    this.musicTrack = new Audio(src);
-    this.musicTrack.loop = true;
-    this.musicTrack.volume = this.settings.music;
-    this.musicTrack.play().catch(err => console.debug('[Audio] Music:', err));
-  }
-
-  stopMusic(): void {
-    if (this.musicTrack) {
-      this.musicTrack.pause();
-      this.musicTrack.src = '';
-      this.musicTrack = null;
-    }
-  }
-
-  playSFX(key: string, src: string): void {
-    // Reuse existing element if sound is not playing
-    let audio = this.sfxPool.get(key);
-    if (!audio) {
-      audio = new Audio(src);
-      this.sfxPool.set(key, audio);
-    }
-    audio.currentTime = 0;
-    audio.volume = this.settings.effects;
-    audio.play().catch(err => console.debug('[Audio] SFX:', err));
-  }
-
-  setVolume(type: 'music' | 'ambient' | 'effects', value: number): void {
-    this.settings[type] = value;
-    if (type === 'music' && this.musicTrack) {
-      this.musicTrack.volume = value;
-    }
-  }
-
-  destroy(): void {
-    this.stopMusic();
-    this.sfxPool.forEach(audio => { audio.pause(); audio.src = ''; });
-    this.sfxPool.clear();
-  }
-}
-
-export const audioManager = new AudioManager();
-```
-
-Call `audioManager.destroy()` in the `GameContainer` cleanup effect (the `return () => {}` in the Phaser initialization `useEffect`).
+Each faction suit tier should unlock at least one ability not present on the equivalent non-faction suit at that tier. Review all faction item `grantedAbilities` against the matrix before any definition is written.
 
 **Warning signs:**
-- Multiple music tracks audible simultaneously after zone change
-- Browser tab memory usage grows steadily during play session
-- Chrome DevTools Memory panel shows accumulating `HTMLMediaElement` instances
-- SFX sounds delayed or stuttering (audio buffer exhaustion)
+- Faction suit definitions share identical `grantedAbilities` arrays with each other or with non-faction suits
+- No new ability IDs are created during the faction gear phase — only reshuffling of existing 21
+- Lore team notes that suit descriptions mention faction-specific technology but mechanics don't reflect the distinction
 
-**Phase to address:** Audio System phase — singleton pattern must be the base before music or SFX is implemented.
+**Phase to address:**
+Faction gear planning phase — resolve the ability assignment matrix before writing any item definitions.
 
 ---
 
-### Pitfall 4: Game Menu Z-Index Trapped Inside `.game-ui` Stacking Context
+### Pitfall 4: Stat Budget Inflation Breaks Combat Balance at Exotic/Legendary Tier
 
 **What goes wrong:**
-The game menu is rendered inside `<div className="game-ui">` which has `z-index: 100` and `position: absolute` (GameUI.css lines 3-8). This creates a stacking context. A game menu inside `.game-ui` with `z-index: 9999` only stacks relative to siblings inside `.game-ui`, not to the document root. The Phaser canvas sits at `z-index: 0` at the document root — but elements inside `.game-ui` cannot use z-index to overlay elements outside their stacking context boundary.
-
-The current z-index values across the codebase are inconsistent:
-- `.game-ui`: z-index 100
-- `.death-screen`: z-index 1100 (DeathScreen.css line 11)
-- `.alert-notification`: z-index 1200 (AlertNotification.css line 10)
-- `.quest-complete-modal`: z-index 200 (QuestCompleteModal.css line 7)
-- `.npc-modal-overlay`: z-index 99 (NpcInteractionModal.css line 5)
-
-The NPC modal overlay is z-index 99, which is LESS than the parent `.game-ui` at z-index 100. This works now because they are siblings within the same stacking context, but adding a game menu as a full-screen overlay will expose the incoherence.
+New faction exotic/legendary suits are added at Tier III-IV using `generateSuitStats()` with the correct archetype and rarity. At Tier IV Legendary the formula yields approximately 1694 total stats from the suit alone (`77 * 4.0 * 5.5`). Combined with 6 module slots on legendary suits, each potentially adding hundreds more stats, the total stat budget at endgame exceeds what the combat system's TTK was designed for. Elite-geared players one-shot Tier III content and become unkillable against all existing enemies. Balance requires either a full gear rebalance or emergency nerfs that invalidate player investment.
 
 **Why it happens:**
-`position: absolute` with any `z-index` creates a stacking context. Children of a stacking context are clipped to that context's z-index range relative to siblings. This is a CSS fundamental — "Even `position: fixed` cannot escape the rules of stacking context." The game menu needs to overlay the Phaser canvas, which lives outside `.game-ui`.
+The `generateSuitStats()` function uses a fixed formula with no safety ceiling relative to combat constants. The combat system's TTK was balanced against items that existed at the time of calibration. Adding more exotic/legendary items at the high end of the power curve does not break the formula's internal consistency — the math is correct — but it breaks the external invariant that endgame items don't trivialize Tier III content. The `STAT_RARITY_MULTIPLIERS` and `TIER_MULTIPLIERS` in `utils.ts` compound multiplicatively, so new items at the intersection of high rarity and high tier are disproportionately powerful.
 
 **How to avoid:**
-Render the game menu using a React Portal to `document.body`, bypassing the `.game-ui` stacking context:
-
-```tsx
-// apps/web/src/ui/GameMenu.tsx
-import { createPortal } from 'react-dom';
-
-export const GameMenu: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  return createPortal(
-    <div className="game-menu-overlay" style={{ zIndex: 2000 }}>
-      {/* menu content */}
-    </div>,
-    document.body
-  );
-};
-```
-
-Alternatively, define a clear z-index scale as CSS variables and add the game menu to the document root level:
-
-```css
-/* global.css — z-index scale */
-:root {
-  --z-game-canvas: 0;
-  --z-hud: 100;
-  --z-panel: 200;
-  --z-modal: 500;
-  --z-game-menu: 1000;
-  --z-death-screen: 1100;
-  --z-alert: 1200;
-}
-```
+Before writing exotic/legendary item definitions, document the current best-in-slot endgame stat total using existing items. Define a target TTK range for Tier IV content (e.g. "a fully exotic-geared player should require 3-5 combat exchanges to kill a Tier IV predator"). Run the stat math for planned items and verify the combined suit + module budget stays within that window. Consider a `baseBudget` cap for faction exotic/legendary suits below the generic item equivalent — faction flavor justifies this as "purpose-built" versus "generalist" design.
 
 **Warning signs:**
-- Game menu appears but is half-transparent (canvas bleeds through)
-- Game menu is visible but click events pass through to Phaser canvas
-- Game menu appears above some panels but below others
-- Setting menu z-index to 9999 makes no difference
+- Test character with new best-in-slot gear one-shots enemies that should require multiple exchanges
+- Healing from `regeneration_protocol` at endgame levels exceeds incoming damage from Tier IV creatures
+- Player feedback that new Tier III zones feel "trivial" immediately after the expansion
 
-**Phase to address:** Game Menu phase — establish z-index scale and portal pattern before building the menu component. Retrofitting z-index after menu is built requires touching every CSS file.
+**Phase to address:**
+Before writing exotic/legendary item definitions. A stat budget audit against existing combat constants must precede the definition work.
 
 ---
 
-### Pitfall 5: Settings Persistence Race Condition — Volume Resets on Load
+### Pitfall 5: Biome Identity Dilution — Behavior-Identical Creatures Added to Same Biome
 
 **What goes wrong:**
-Audio settings (music volume, ambient volume, effects volume) are persisted to localStorage using Zustand persist middleware. On game load, the following race occurs:
-
-1. React renders with default values (music: 0.5, effects: 0.3)
-2. Audio manager initializes and starts music at default volume (0.5)
-3. Zustand rehydrates from localStorage with saved values (music: 0.1 — player turned it down)
-4. Settings store updates to music: 0.1
-5. If audio manager subscribes to store, it receives the update and adjusts volume — OK
-6. BUT: If audio manager reads volume at initialization time (step 2) before rehydration (step 3), music plays at 0.5 until the store updates
-
-Zustand's persist middleware may persist a fresh empty store back to IndexedDB even as it is pulling in old data, creating a race where: player saves volume 0.0 (muted), reloads, music plays at default 0.5 for 200-500ms, then snaps to 0.0. This is audible and jarring.
+To reach the "4-6 creatures per biome" target, multiple creatures with the same behavior profile are added to the same biome to fill the quota. Void Plains ends up with 3 herbivores that behave identically (idle wander, never attack). Crystal Caves receives 2 additional predators indistinguishable from the existing Crystal Hunter. Players experience the biome as monotonous — more creatures are present but all interactions feel the same. The content expansion registers as padding rather than new gameplay.
 
 **Why it happens:**
-Zustand persist middleware rehydrates asynchronously after the store is created. The `onRehydrateStorage` callback fires when complete, but components that mount and read state before rehydration see defaults. There is no blocking mechanism in the standard Zustand persist flow.
-
-From Zustand persist documentation: the middleware may persist a fresh empty store back to storage even as it is pulling in old data.
+The `CreatureDefinition.behavior` field is a 4-value enum (`herbivore / omnivore / predator / maniac`). All AI behavior at the game-server level is determined entirely by this field. Adding creatures with the same behavior in the same biome produces mechanically identical encounters. Differentiation comes only from stats (level range, baseHealth) and loot tables — which players don't notice until they examine their inventory. When designing 40+ creatures under time pressure, filling biome creature slots by behavior-matching is the path of least resistance.
 
 **How to avoid:**
-Use Zustand's `_hasHydrated` flag pattern and delay audio initialization until hydration is complete:
+For each biome reaching its creature target, define a behavioral matrix before writing definitions:
+- `biome → creature 1: herbivore, levels 1-5, drops common materials`
+- `biome → creature 2: predator, levels 5-12, drops biome reagent`
+- `biome → creature 3: omnivore, levels 8-15, drops consumables`
+- `biome → creature 4: predator (apex), levels 15-25, high HP, rare loot`
 
-```typescript
-// apps/web/src/store/settingsStore.ts
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-
-interface SettingsState {
-  musicVolume: number;
-  ambientVolume: number;
-  effectsVolume: number;
-  showSecondActionBar: boolean;
-  _hasHydrated: boolean;
-  setHasHydrated: (value: boolean) => void;
-  setMusicVolume: (v: number) => void;
-  setAmbientVolume: (v: number) => void;
-  setEffectsVolume: (v: number) => void;
-  setShowSecondActionBar: (v: boolean) => void;
-}
-
-export const useSettingsStore = create<SettingsState>()(
-  persist(
-    (set) => ({
-      musicVolume: 0.5,
-      ambientVolume: 0.3,
-      effectsVolume: 0.3,
-      showSecondActionBar: true,
-      _hasHydrated: false,
-      setHasHydrated: (value) => set({ _hasHydrated: value }),
-      setMusicVolume: (v) => set({ musicVolume: v }),
-      setAmbientVolume: (v) => set({ ambientVolume: v }),
-      setEffectsVolume: (v) => set({ effectsVolume: v }),
-      setShowSecondActionBar: (v) => set({ showSecondActionBar: v }),
-    }),
-    {
-      name: 'into-the-void-settings',
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
-      },
-    }
-  )
-);
-```
-
-In the component that initializes audio: wait for `_hasHydrated === true` before reading settings and starting music. Do not start music in `useEffect` if `_hasHydrated` is false — add it as a dependency.
+No two creatures in the same biome should share the same `behavior` field unless they occupy clearly separated level ranges. Verify the matrix as a planning artifact before any definitions are written.
 
 **Warning signs:**
-- Volume slider shows correct saved value but audio plays at a different volume for 200-500ms on load
-- "Interface settings" toggle (second action bar) resets to default every reload
-- Settings appear to save (localStorage key exists) but don't persist across reloads
-- Volume jumps audibly when game completes initialization
+- A biome's creature list has 3+ entries with the same `behavior` value
+- New creatures in a biome share the same `baseXp` tier bracket
+- Loot tables across a biome's new creatures reference the same item pool with no unique drops
 
-**Phase to address:** Settings UI phase — store setup with `_hasHydrated` flag must happen before audio manager reads initial volume. Treat this as a prerequisite to music initialization.
+**Phase to address:**
+Entity definition planning phase — create the per-biome behavioral matrix before writing any definitions.
 
 ---
 
-### Pitfall 6: Entity Anchor Fix Breaks Target Highlight and Selection Indicator Position
+### Pitfall 6: ITEM_IDS Constants Stale After Faction Gear Addition
 
 **What goes wrong:**
-The goal is to fix entity rendering so creatures/NPCs anchor at their base tile position (feet on the tile) rather than at their visual center. The `EntityRenderer.createEntityContainer()` currently places entities using `sprite.setOrigin(0.5, 1.0)` (bottom-center, line 226) which is correct, but the container itself is positioned at `screenPos.y - elevationOffset` and shadow/health bar positions are computed relative to `-this.elevationOffset` (line 208). When the container y-position is adjusted to truly anchor at base tile, the TargetHighlight in `game/rendering/TargetHighlight.ts` positions itself relative to the container's current `y` value.
-
-If entity container y is shifted to fix the anchor, the target highlight (golden ring under the entity) will shift by the same delta and no longer align with the tile grid. The health bar position (`uiBaseY = -this.elevationOffset - spriteHeight * 0.5`, line 281) will also shift relative to the container origin.
+Faction items are defined in new files (e.g. `faction-suits.ts`) and added to `ALL_ITEMS`, but the corresponding string constants are not added to `ITEM_IDS` in `packages/items/src/definitions/index.ts`. Code that references items by constant — loot tables, NPC trader inventories, quest rewards — cannot use the new items safely. Developers use hardcoded string literals instead of constants, introducing typo-prone coupling. A future rename of an item ID breaks all hardcoded references silently at runtime rather than at compile time.
 
 **Why it happens:**
-The EntityRenderer and TargetHighlight are coupled through the container's absolute screen position. TargetHighlight reads `container.y` to place itself. Fixing the container anchor requires adjusting all child element offsets simultaneously to maintain visual alignment. A fix to container positioning without updating TargetHighlight offsets results in the selection ring appearing above or below the correct tile.
+`ITEM_IDS` is manually maintained and was extended in Phase 87 for aquatic/exotic items. The pattern requires intentional effort per batch. When adding 30+ items across 3 factions and multiple tier files, the `ITEM_IDS` update is deferred to last (or omitted). The items function correctly via `ItemRegistry.get()` — they just cannot be referenced by compile-time safe constants, making them second-class citizens in the codebase.
 
 **How to avoid:**
-Treat this as a coordinated fix across three files:
-1. `EntityRenderer.createEntityContainer()` — adjust container y-position
-2. `EntityRenderer.createEntityContainer()` — recalculate `uiBaseY`, shadow position, health bar position relative to the new anchor
-3. `TargetHighlight.ts` — verify the ring offset from container y is still correct
-
-Before making changes, document the current visual behavior:
-- Container position: at tile screenPos
-- Shadow: at y=0 relative to container (correct — at ground level)
-- Sprite origin: (0.5, 1.0) — bottom-center (correct)
-- TargetHighlight: positioned at container.y + some offset
-
-After the fix, the shadow and TargetHighlight should still sit at the base tile. Only the container's internal offset math changes, not the visual output. Write a visual regression test by taking a screenshot before and after.
+Add a CI test that asserts every item ID in `ALL_ITEMS` has a corresponding entry in `ITEM_IDS`. The test is O(n) and trivial — import both, compare the key sets, assert no item ID is absent from `ITEM_IDS`. Run this test alongside the existing `item-validation.test.ts` in the items package test suite.
 
 **Warning signs:**
-- Selection ring appears at the entity's head after anchor fix
-- Health bars float above or overlap the entity sprite
-- Shadow ellipse is no longer under the entity's feet
-- Entities appear to "float" above their tile after fix (anchor was moved wrong direction)
+- New item definitions exist in the registry but `ITEM_IDS.FACTION_SUIT_VERDANT_XXX` does not autocomplete in the IDE
+- Loot tables for new faction creatures reference faction items with raw string literals
+- Searching for a new item ID finds the definition file and string literals, but no constant reference
+- `ENTITY_IDS` constant count exceeds `ITEM_IDS` constant count by more than the ratio of prior phases
 
-**Phase to address:** Entity Rendering Fix phase — treat as the last feature to implement since it touches shared rendering code. Break it out as a separate commit from audio/menu work to keep the diff reviewable.
+**Phase to address:**
+Faction item definition phase. Add the validation test before writing any faction item definitions.
+
+---
+
+### Pitfall 7: Harvest Yield References Non-Existent Item IDs
+
+**What goes wrong:**
+New plant and mineral definitions include `harvestYield` and `miningYield` arrays with `itemId` fields referencing items that haven't been created yet, or where the ID string has a typo. `rollLootTable()` executes without error — it creates inventory entries with the given `itemId`, but `ItemRegistry.get(itemId)` returns the magenta fallback item with `id: 'unknown'`. Players receive "Unknown Item" drops from gathering. Since `rollLootTable()` has no validation and the registry returns gracefully, no runtime error surfaces.
+
+**Why it happens:**
+Plant/mineral `harvestYield` entries are written alongside the entity definition, often before the yielded item definition exists. When adding 30+ gatherables in one batch, the item definitions for their yields (new world-items and reagents) are written in parallel or afterward. IDs are typed from memory, introducing typos. The `world-item` and `reagent` IDs from the existing 122-item catalog are long strings (`world_organic_material_common`, `reagent_crystalline_dust`) that are easy to mistype.
+
+**How to avoid:**
+Add a validation test that: imports `ALL_ENTITIES`, filters to plants and minerals, then for each `harvestYield` or `miningYield` entry asserts `ItemRegistry.has(entry.itemId) === true`. Run this test in CI. Additionally, use `ITEM_IDS` constants in yield definitions rather than string literals where the item already exists, for immediate IDE validation.
+
+**Warning signs:**
+- Gathered items show as "Unknown Item" with a magenta color in inventory
+- `ItemRegistry.get('world_new_mineral_drop')` returns `UNKNOWN_ITEM` with console warning
+- Items obtained from gathering don't match the entity's `harvestYield` description
+
+**Phase to address:**
+Plant and mineral definition phases. The test catches typos and missing item definitions immediately.
 
 ---
 
@@ -400,56 +175,57 @@ Shortcuts that seem reasonable but create long-term problems.
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| `new Audio()` for every SFX call | Simple one-liner | Memory leak after 20+ calls per session | Only for infrequent SFX (quest complete: OK; combat hit: never) |
-| Per-component window ESC listeners | Each modal self-contained | 3+ independent listeners fire on same ESC press | Never — use centralized ESC manager |
-| Hardcoded z-index values | Fast to write | Conflicts when new modals added, no shared scale | Only if z-index scale CSS variables are also defined |
-| Saving settings on every `onChange` of volume slider | Instant feedback | Writes localStorage on every slider tick (100 writes per drag) | Use `onMouseUp`/`onPointerUp` to save on release, not on change |
-| Starting music in Phaser scene `create()` | Music starts early | Autoplay blocked silently; hard to debug | Never — use user gesture unlock flow |
+| Copying `grantedAbilities` from nearest rarity-equivalent generic suit | Fast faction item authoring | Faction gear feels identical; undermines faction choice at the most visible layer | Never for faction-specific items |
+| Using `world_organic_material_common` as the only creature drop | Simple loot table authoring | Creature kills become economically undifferentiated; no reason to target specific biomes | Only for Tier I background creatures if biome-exclusive items exist on other biome creatures |
+| Hardcoding item ID strings in `harvestYield` instead of using `ITEM_IDS` constants | Faster to type when constant doesn't exist yet | Silent breakage on ID rename; no IDE navigation; typos undetected | Never in production code — if the item isn't defined yet, create the item first |
+| Using the same `textureKey` for different faction suits | No new sprite work required | All faction suits look identical until art pipeline; faction visual identity is invisible to players | Acceptable for v1.23 if a naming convention is maintained that allows future swaps without definition edits |
+| Adding all new entities for a biome-group into one large file | Fewer files to create | Files exceeding ~400 lines become unwieldy for review; the existing `creatures.ts` is already 364 lines | Split by biome group (terrestrial / aquatic / exotic / faction) — existing pattern is the correct one |
+| Omitting artifact definitions until all creatures/plants/minerals are done | Faster creature-first delivery | Artifacts are the primary exploration discovery reward; biomes feel incomplete without them; catching up later means biome spawn configs need multiple edits | Never — artifacts should be added in the same pass as their biome's other entities |
 
 ---
 
 ## Integration Gotchas
 
-Common mistakes when connecting these features to the existing system.
+Common mistakes when connecting to the existing systems.
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Phaser keyboard + React ESC | Both systems listen on `window`, neither yields | Centralized ESC manager with `stopPropagation()` in capture phase |
-| AudioManager + Zustand settings | Audio manager reads volume before Zustand rehydrates | Wait for `_hasHydrated: true` before initializing audio volume |
-| Game menu + existing HUD z-index | Menu inside `.game-ui` stacking context | Use React Portal to `document.body`, define z-index scale |
-| Settings store + game store | Separate stores with separate persist keys | Settings store is independent; game store is not persisted |
-| EntityRenderer anchor fix + TargetHighlight | Fix EntityRenderer.y without updating TargetHighlight offset | Coordinate fix across EntityRenderer, TargetHighlight, and shadow position in one PR |
-| Music + zone transitions | Start new music track without destroying previous | AudioManager.playMusic() must stop previous track before starting new one |
-| Volume slider + AudioManager | Slider `onChange` updates store; AudioManager must subscribe | Subscribe AudioManager to settings store in a single `useEffect` in one component |
+| `BIOME_SPAWN_CONFIGS` (world-gen package) | Adding entity to definitions without updating the spawn config — entity exists in registry but never generates in the world | For every new spawnable entity, add it to the corresponding biome's config in `spawn.ts` in the same commit as the definition |
+| `CREATURE_LOOT_TABLES` (game-logic package) | Creature's `lootTableId` has no matching key in the Map — `getCreatureLoot()` silently returns `[]` | Write the `CREATURE_LOOT_TABLES` entry in `creature-loot.ts` as part of each creature definition, not as a separate batch afterward |
+| `EntityRegistry.registerAll()` (entities/definitions/index.ts) | New definition file exports `ALL_XXX` array but is not spread into `ALL_ENTITIES` | Always update `ALL_ENTITIES` in `definitions/index.ts` when adding a new definitions file |
+| `ItemRegistry.registerAll()` (items/definitions/index.ts) | New item file exports `ALL_XXX` array but is not spread into `ALL_ITEMS` | Always update `ALL_ITEMS` in `definitions/index.ts` when adding a new item definitions file |
+| Faction suit `grantedAbilities` | Referencing an ability ID that doesn't exist in the abilities registry — equipping the suit silently ignores the unknown ability | Cross-reference all `grantedAbilities` values against the 21 existing ability IDs before writing item definitions |
+| `generateSuitStats()` tier parameter | Passing `tier: 3` for a `requiredLevel: 35` item (which is Tier IV) — the function does not validate tier against required level | Use the level-to-tier mapping: L1-10=T1, L11-20=T2, L21-30=T3, L31-40=T4, L41-50=T5 |
+| Rarity system (items vs. entities) | `ItemRarity` in `packages/items` excludes `uncommon` but `NodeRarity` in shared-types may include it; mixing the types causes TypeScript errors | Use `ItemRarity` for all item definitions; use `NodeRarity` only for entity `rarity` fields on plants/minerals |
 
 ---
 
 ## Performance Traps
 
-Patterns that work at small scale but fail as usage grows.
+Patterns that work at small scale but fail as content grows.
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Creating new HTMLAudio per SFX event | Memory grows 1-2MB per hour; eventual lag | Singleton AudioManager with audio object pool | After ~50 SFX events per session |
-| Debouncing settings saves inadequately | localStorage flooded with writes during slider drag | Save on `pointerup`, not `onChange` | Immediately on any slider drag |
-| ESC handlers registered but not cleaned up | Handlers accumulate across modal open/close cycles | Use cleanup function returned by `pushEscHandler` | After 10+ modal open/close cycles |
-| Entity re-render triggering EntityRenderer recreation | All entity sprites recreated on any Zustand state change | Entity spawning only in WorldScene, driven by socket events, not React render cycle | Already mitigated in current architecture — maintain this pattern |
-| Settings store subscriptions not unsubscribed | AudioManager volume never updates after settings change | Use Zustand subscribe with proper cleanup in GameContainer useEffect | First settings change after initial load |
+| Linear scan in `EntityRegistry.getByBiome()` | Spawn generation latency increases linearly with entity count | Current implementation is a linear filter over all registered entities — acceptable at 92 entities but degrades at scale | Likely around 250-300 registered entities if called every chunk load; monitor chunk gen time |
+| `BIOME_SPAWN_CONFIGS` `weightedPick()` called per-spawn with large creature arrays | Weighted pick is O(n) per call — marginal at 6 entries per biome | Acceptable for expected scale; cache total weights per biome if chunk gen time exceeds 50ms | Not a practical concern at planned scale (15 biomes × 6 creatures = 90 pick candidates maximum) |
+| `CREATURE_LOOT_TABLES` Map growing to 100+ keys | None — Map lookup is O(1) | Not a trap at content-expansion scale | Never a runtime performance concern |
+| TypeScript compilation with 200+ entries in `ITEM_IDS` | Compile time increases slightly (~1s per 100 additional entries) | Split constants into domain-specific files if total exceeds 400 | Build time, not runtime; acceptable trade-off for type safety |
+| Loot table entries with very high `chance` values (>0.8) for multiple items | Inventory fills rapidly; players always have maximum stack of common materials; value deflates | Keep at most one item at >0.7 chance per loot table; the pattern in `creature-loot.ts` demonstrates this correctly | Content design issue, not a code performance issue |
 
 ---
 
 ## UX Pitfalls
 
-Common user experience mistakes in this domain.
+Common user experience mistakes in content expansion.
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| ESC opens game menu while NPC modal is open | Player expects ESC to close NPC modal; instead menu opens over it | ESC stack: close NPC → close inventory → open menu |
-| Volume sliders have no mute indicator | Player turns volume to 0 but no visual confirmation it is muted | Add mute icon that activates at 0; clicking icon restores last volume |
-| Settings not applied until "Save" button clicked | Player adjusts volume and closes menu — reverts to old value | Apply settings immediately; use "Reset to defaults" not "Cancel" |
-| Second action bar toggle hides bar without warning | Player may have abilities on bar 2 that are now inaccessible | Show tooltip: "Abilities on hidden bar are still active" |
-| Game menu blocks all keyboard input | Player presses W/A/S/D to navigate menu, character moves in background | Disable Phaser keyboard plugin while menu is open: `this.input.keyboard.enabled = false` |
-| Music starts at full volume regardless of saved settings | Player set music to 10%; next session it blares at 50% | Read volume from settings store after hydration before starting playback |
+| Faction suits have no visual distinction (same `textureKey` pointing to same sprite) | Players cannot identify faction gear in the world or other players' equipment panels | Use distinct `textureKey` values per faction (even pointing to the same placeholder) — enables art pipeline swap without definition edits |
+| Endgame exotic/legendary items are exclusively gated behind Tier IV zones | Players who cannot survive Tier IV never access endgame content; a progression wall exists | Provide at least one exotic item obtainable via a high-difficulty Tier III mechanism (epic artifact, rare creature) — the hardest path should not be the only endgame path |
+| Every new biome creature drops the same generic materials (`world_organic_material_common`) | Players feel no motivation to target specific biomes or creature types | Each biome should have at least one creature with a biome-exclusive reagent or material drop — drives targeted play |
+| Artifact count per biome is 1 and `respawns: false` — discovered once and gone | Artifacts feel like a one-time novelty; biome loses a discovery hook permanently | Maintain `respawns: false` correctly but ensure at least 2 distinct artifact types per biome — finding the second is still a meaningful event |
+| Faction gear sold at hub traders requires faction reputation (a future feature out of v1.23 scope) | Players see faction gear in trader UI but cannot purchase it — breaks the expansion's promise | For v1.23, sell faction gear via existing trader system with level gates only; reputation gating is explicitly listed as out of scope in `PROJECT.md` |
+| New Tier I-II creatures in existing biomes are harder than current Tier I-II creatures | New players arriving in familiar biomes encounter unexpected difficulty | When adding creatures to biomes that already have Tier I-II content, verify the `levelRange` and `baseHealth` of new additions don't exceed the existing bracket's ceiling |
 
 ---
 
@@ -457,16 +233,16 @@ Common user experience mistakes in this domain.
 
 Things that appear complete but are missing critical pieces.
 
-- [ ] **Audio system:** Music plays in development with DevTools open — verify it also plays after a fresh tab load with no prior user gesture
-- [ ] **ESC management:** Modal closes on ESC — verify Phaser does NOT also receive the keydown (check if pathfinding cancels or combat target deselects simultaneously)
-- [ ] **Settings persistence:** Settings save correctly — verify they survive a full page reload, not just a component unmount
-- [ ] **Game menu:** Menu renders above all other UI — verify it renders above the Phaser canvas, death screen, and alert notifications in all combinations
-- [ ] **AudioManager destroy:** Audio stops when game is destroyed — verify `audioManager.destroy()` is called in the `GameContainer` cleanup effect, preventing music from playing after logout
-- [ ] **Volume sliders:** Slider moves change audio — verify AudioManager is actually subscribed to settings changes, not just reading initial value at mount
-- [ ] **Entity anchor fix:** Creatures now anchor at base — verify TargetHighlight ring still appears under entity feet, not at their center or above their head
-- [ ] **Level-up SFX:** Level-up sound triggers — verify it fires from `player:xp` event handler in `gameStore.ts` (line 520) when `leveledUp: true`, not from a React effect watching `player.level`
-- [ ] **Music on zone transition:** Music changes per zone — verify old music is stopped before new music starts (no overlapping tracks)
-- [ ] **Second action bar toggle:** Toggle hides bar visually — verify the hide setting is also respected after page reload (not just current session)
+- [ ] **New creature definition:** Entity defined and in `ALL_ENTITIES` — verify: ID in `ENTITY_IDS`, entry in `BIOME_SPAWN_CONFIGS`, entry in `CREATURE_LOOT_TABLES`
+- [ ] **New plant definition:** Entity defined and in `ALL_ENTITIES` — verify: ID in `ENTITY_IDS`, entry in biome `plants` array in `BIOME_SPAWN_CONFIGS`, all `harvestYield[].itemId` values resolve in `ItemRegistry`
+- [ ] **New mineral definition:** Entity defined and in `ALL_ENTITIES` — verify: ID in `ENTITY_IDS`, entry in biome `minerals` array in `BIOME_SPAWN_CONFIGS`, all `miningYield[].itemId` values resolve in `ItemRegistry`
+- [ ] **New artifact definition:** Entity defined with `respawns: false` — verify: entry in biome `artifacts` array in `BIOME_SPAWN_CONFIGS`, `lootTableId` has an entry in `CREATURE_LOOT_TABLES` (artifacts use the same loot mechanism on discovery)
+- [ ] **New faction suit:** Item defined and in `ALL_ITEMS` — verify: distinct `textureKey` per faction, all `grantedAbilities` reference existing ability IDs, entry in `ITEM_IDS` constants, `generateSuitStats()` uses correct `tier` for the item's `requiredLevel`
+- [ ] **New faction tool:** Item defined — verify: `toolType` matches faction identity (Helix=mining/demolition, Verdant=bio/research, Nexus=combat/stealth), entry in `ITEM_IDS` constants
+- [ ] **Loot completeness:** After adding all creatures — verify: run loot validation test, zero creatures return empty loot from `getCreatureLoot()`
+- [ ] **ENTITY_IDS / ITEM_IDS sync:** After adding all definitions — verify: CI test confirms every new entity and item ID appears in its corresponding constants map
+- [ ] **Harvest yield validity:** After adding all plants and minerals — verify: validation test confirms all `harvestYield` and `miningYield` item IDs resolve in `ItemRegistry`
+- [ ] **Biome behavior matrix:** After adding all creatures — verify: no biome has 3+ creatures sharing the same `behavior` value unless they occupy separated level ranges
 
 ---
 
@@ -476,12 +252,13 @@ When pitfalls occur despite prevention, how to recover.
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Audio autoplay never worked | LOW | Add `unlockAudio()` call to first button click handler; existing music init code requires no change |
-| ESC fires in both Phaser and React | MEDIUM | Centralize ESC handling — requires touching NpcInteractionModal, QuestLogPanel, LoreCodex, and new game menu; one-time refactor |
-| Audio memory leak discovered | LOW | Introduce AudioManager singleton; replace all `new Audio()` calls; affects 1 utility file + callers |
-| Game menu behind canvas | LOW | Wrap menu in React Portal; CSS z-index scale fix; no logic changes required |
-| Settings don't persist across reload | LOW | Add `_hasHydrated` flag to settings store; delay audio init by adding `_hasHydrated` to effect dependencies |
-| Entity anchor fix broke TargetHighlight | MEDIUM | Revert entity anchor fix; re-apply as coordinated change across EntityRenderer + TargetHighlight + shadow in one PR |
+| BIOME_SPAWN_CONFIGS desync (entities don't spawn) | LOW | Add missing entries to `spawn.ts`; no DB migration needed; effect visible on next chunk generation |
+| Loot table orphaning (creatures drop nothing) | LOW | Add missing entries to `creature-loot.ts`; takes effect immediately on next kill |
+| Faction gear identity collapse (all factions mechanically same) | HIGH | Requires new ability design + definition updates across all faction items + communication to existing players about ability grant changes; cannot be done silently |
+| Stat budget inflation causing combat imbalance | MEDIUM | Reduce `baseBudget` parameter in `generateSuitStats()` calls for affected items; may require re-equip notification to affected players if stats are cached in DB |
+| Stale `ITEM_IDS` (hardcoded strings in loot tables) | MEDIUM | Grep for string literals of new item IDs, replace with constants; refactor is mechanical but touches multiple files including `creature-loot.ts` and potentially NPC definitions |
+| Biome identity dilution (boring creature roster) | MEDIUM | Remove redundant creature entries from `BIOME_SPAWN_CONFIGS`; may need to remove definition from `ALL_ENTITIES` if the slot is being reused for a more distinct design |
+| Harvest yield typos (players receive Unknown Items) | LOW | Fix the typo in `harvestYield` or `miningYield`; effect is immediate; no migration needed unless items are already in player inventories |
 
 ---
 
@@ -491,36 +268,25 @@ How roadmap phases should address these pitfalls.
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Audio autoplay blocked | Audio System | Play music on fresh tab with no prior interaction; confirm it plays after first click |
-| ESC fires in both systems | ESC Modal Management | Open NPC modal; press ESC; verify only modal closes, not pathfinding or combat target |
-| Audio memory leak | Audio System | Play 30 quest-complete sounds rapidly; check DevTools Memory for HTMLMediaElement accumulation |
-| Game menu z-index | Game Menu | Open game menu with NPC modal also open; verify correct layering order |
-| Settings race condition | Settings UI | Save music volume at 0; reload page; verify music starts at 0, not 0.5 |
-| Entity anchor fix | Entity Rendering Fix | Screenshot entities before and after; selection indicator ring must still sit at entity feet |
+| BIOME_SPAWN_CONFIGS / ENTITY_IDS desync | First entity definition phase | CI validation script asserts every registered spawnable entity appears in at least one biome's spawn config |
+| Loot table orphaning | First entity definition phase | `entity-loot-validation.test.ts` runs in CI; all creatures have non-empty loot table entries |
+| Faction gear identity collapse | Faction gear planning phase (before definitions) | Per-faction ability matrix document approved; no two factions share the exact same `grantedAbilities` array |
+| Stat budget inflation | Before exotic/legendary item definitions | TTK audit: document current best-in-slot stat envelope; new items verified to stay within the defined TTK window |
+| Biome identity dilution | Entity definition planning phase | Per-biome behavioral matrix lists unique behavior roles; no duplicate behaviors in same biome unless separated by level range |
+| ITEM_IDS constants stale | Faction item definition phase | CI test: every item in `ALL_ITEMS` has a constant in `ITEM_IDS` |
+| Harvest yield references invalid IDs | Plant and mineral definition phase | Validation test: all `harvestYield` and `miningYield` item IDs resolve in `ItemRegistry.has()` |
 
 ---
 
 ## Sources
 
-- [Autoplay guide for media and Web Audio APIs — MDN](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay) — Autoplay policy, suspended AudioContext, user gesture requirements
-- [Autoplay policy in Chrome — Chrome for Developers](https://developer.chrome.com/blog/autoplay/) — Chrome-specific thresholds, media engagement index
-- [Navigator: getAutoplayPolicy() method — MDN](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/getAutoplayPolicy) — Runtime detection of autoplay availability
-- [Web Audio Sound objects massive memory leak — Phaser GitHub #2280](https://github.com/phaserjs/phaser/issues/2280) — AudioBufferSourceNode not freed after play
-- [Web audio memory leak — Phaser GitHub #5224](https://github.com/phaserjs/phaser/issues/5224) — Listener count increases over time
-- [phaser3 memory leak issue — Phaser GitHub #5456](https://github.com/phaserjs/phaser/issues/5456) — All resource types affected
-- [Teleportation in React: Positioning, Stacking Context, and Portals — developerway.com](https://www.developerway.com/posts/positioning-and-portals-in-react) — Portal pattern for modal z-index bypass
-- [Understanding Z-Index: Stacking Contexts Demystified — pixelfreestudio](https://blog.pixelfreestudio.com/understanding-z-index-stacking-contexts-demystified/) — Stacking context containment rules
-- [Unstacking CSS Stacking Contexts — Smashing Magazine](https://www.smashingmagazine.com/2026/01/unstacking-css-stacking-contexts/) — January 2026, stacking context debugging
-- [Making Zustand Persist Play Nice with Async Storage — DEV Community](https://dev.to/finalgirl321/making-zustand-persist-play-nice-with-async-storage-react-suspense-part-12-58l1) — `_hasHydrated` flag pattern, onRehydrateStorage
-- [Persist using initial state — Zustand GitHub Discussion #2619](https://github.com/pmndrs/zustand/discussions/2619) — Race condition between persist and component mount
-- [Retaining Keyboard Inputs with Modal Scenes — Phaser Discourse](https://phaser.discourse.group/t/retaining-keyboard-inputs-with-modal-scenes/2148) — `keyboard.enabled = false` pattern for modal scenes
-- [Help with Phaser stealing keypress focus — HTML5 Game Devs](https://www.html5gamedevs.com/topic/11715-help-with-phaser-stealing-keypress-focus/) — Phaser capturing keypress events globally
-- [Keyboard events — Notes of Phaser 3 (rexrainbow)](https://rexrainbow.github.io/phaser3-rex-notes/docs/site/keyboardevents/) — KeyboardPlugin disable/enable patterns
-- [Audio — Phaser Help documentation](https://docs.phaser.io/phaser/concepts/audio) — WebAudio vs HTMLAudio fallback, sound manager lifecycle
-- [Seamless Audio Loops in Phaser — HTML5 Game Devs](https://www.html5gamedevs.com/topic/19711-seamless-audio-loops-in-phaser/) — Loop gapping issues and WebAudio vs HTML Audio tradeoffs
-- Codebase analysis: `apps/web/src/utils/audio.ts`, `apps/web/src/game/scenes/WorldScene.ts`, `apps/web/src/ui/GameUI.tsx`, `apps/web/src/ui/GameUI.css`, `apps/web/src/game/rendering/EntityRenderer.ts`, `apps/web/src/game/rendering/DepthSorter.ts`, `apps/web/src/store/gameStore.ts`
+- Direct codebase analysis: `packages/entities/src/definitions/` (all files), `packages/items/src/definitions/` (all files), `packages/game-logic/src/loot/creature-loot.ts`, `packages/world-gen/src/generation/spawn.ts`, `packages/entities/src/registry.ts`, `packages/items/src/registry.ts`, `packages/items/src/utils.ts`
+- Existing validation patterns: `packages/items/src/__tests__/item-validation.test.ts` (CONT-01 through CONT-05)
+- Phase history in `packages/entities/src/definitions/creatures.ts` — comment `// ===== PHASE 88 ADDITIONS =====` shows the three-location update requirement was already a source of friction
+- ESLint rule in `eslint-rules/no-legacy-stat-buff.ts` — confirms stat schema evolution is a real historical pitfall that required tooling to enforce
+- Lore constraints in `CLAUDE.md` — faction identity is non-negotiable; lore is the source of truth
+- Phase 87/88 expansion in `packages/entities/src/definitions/index.ts` — comment `// Total: ~92 entities` and file structure shows the biome-grouped file convention established as prior art
 
 ---
-
-*Pitfalls research for: React + Phaser 3 — UI Polish & Audio System (v1.21)*
-*Researched: 2026-02-26*
+*Pitfalls research for: content expansion & faction gear (v1.23 milestone)*
+*Researched: 2026-02-27*

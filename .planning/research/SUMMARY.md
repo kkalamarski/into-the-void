@@ -1,259 +1,242 @@
 # Project Research Summary
 
-**Project:** Into the Void — v1.22 In-Game Chat System
-**Domain:** Multi-channel MMO chat with proximity, faction, and whisper routing, plus mute/block moderation
-**Researched:** 2026-02-26
+**Project:** Into the Void v1.23 — Content Expansion & Faction Gear
+**Domain:** MMO content expansion — entity definitions, biome population, faction-specific equipment
+**Researched:** 2026-02-27
 **Confidence:** HIGH
 
 ## Executive Summary
 
-The v1.22 chat milestone is an extension of existing infrastructure, not a greenfield feature. The game already has Socket.IO rooms, a `handleChat` gateway handler, partial type definitions for all channels, a basic `ChatPanel.tsx`, and 100-message in-memory history in `gameStore`. The research reveals that roughly 40% of the required chat system already exists in stub or partial form — the strategic question is not "what to build" but "what to complete correctly and in what order." The recommended approach is to treat the existing stubs as the foundation, fix the known silent bug first (`chat:message` missing from the `serverEvents` array means no chat messages are currently dispatched client-side), then extend each layer methodically: shared types, DB schema, server routing, client store, and UI.
+Into the Void v1.23 is a content expansion milestone, not a system milestone. All implementation infrastructure — registries, stat utilities, trader systems, world generation — already exists and has been proven across prior phases. The work is entirely definitional: writing TypeScript object literals that extend an established flat-registry architecture from 92 entities and 122 items to approximately 180+ entities and 150+ items. The critical design decision that gates all faction gear work is establishing faction identity pillars — the stat archetype and ability assignment matrix per faction — before a single item definition is written. Lore-sourced faction identities (Verdant=biotech resilience, Helix=industrial brutalism, Nexus=surveillance agility) map directly to the seven available stat archetypes (`hazmat`, `scout`, `tank`, `assault`, `recon`, `combat`, `balanced`).
 
-The most important architectural decision is using Socket.IO rooms for all broadcast channels (zone, faction, global) rather than iterating players or using `server.emit()`. Room-based routing is already how zone broadcasting works; extending it to faction rooms at auth time is a minimal change with significant performance benefits. Local (proximity) chat is the single exception: it requires per-message server-side distance calculation against zone players, not a room. This O(N) cost is acceptable at current zone population caps but should be rate-limited more aggressively than other channels.
+The recommended approach is a two-track parallel execution: biome entity population (creatures, plants, minerals, artifacts) runs independently of faction gear development. Both tracks are definitional and have zero runtime system dependencies, but each track has its own ordering constraint. Entity track: write creature definitions and loot tables in the same commit, then wire spawn configs. Faction gear track: design identity pillars first, then write Tier I–II suits to establish patterns, then Tier III–IV endgame gear, then modules and tools, then NPC trader inventory. The single most urgent content gap is `toxic_wastes`, which has only one creature against a lore description of a rich chemical ecosystem — it is the most conspicuous hole a player would encounter on day one.
 
-The highest-risk element of this milestone is the Phaser keyboard conflict: when a player focuses the chat input, Phaser's global `KeyboardPlugin` continues to process WASD keystrokes, causing simultaneous character movement. This is the most visible UX defect possible and must be resolved at the moment the text input is added to `ChatPanel.tsx` — it cannot be deferred. Beyond that, mute/block enforcement has a security distinction that matters: mute is a client-side display filter (acceptable), but block must be server-enforced for whispers or a blocked player can trivially bypass it via a second browser tab. These two risks, addressed from the start, make the rest of the implementation straightforward.
+The primary risk is silent failures. The content pipeline has three integration points that must all be updated for an entity to appear in the world: the definition file, the `ENTITY_IDS` constants, and `BIOME_SPAWN_CONFIGS`. Missing any one produces no error — the entity simply never spawns. The same pattern applies to loot tables (missing entry = silent empty drops), harvest yield item IDs (typo = magenta Unknown Item in inventory), and faction gear ability grants (wrong ability ID = silently ignored). The primary mitigation is establishing validation tests in `packages/entities` before writing any definitions — the `packages/items` test suite (`item-validation.test.ts`, CONT-01 through CONT-05) provides the exact pattern to replicate. This test infrastructure must be the first task of the milestone.
 
 ## Key Findings
 
 ### Recommended Stack
 
-No new runtime infrastructure is required. The entire chat system rides on Socket.IO 4.7, NestJS 10 WebSockets, Drizzle ORM, and Zustand — all already installed and in use. The only new package is `@nestjs/throttler@^6.4.0` for per-socket rate limiting on `chat:send`. Two new Drizzle tables (`chat_mute_list`, `chat_block_list`) require a migration but no schema design risk. Redis (already running on port 6379) is not needed for chat at current scale; it remains reserved for future horizontal scaling.
+No new dependencies are required. TypeScript 5.9.3, Vitest 4.0.18, NX 20.8.4, and ESLint 8.57.0 with existing custom rules cover all validation needs for the entire milestone. The only tooling gap is that `packages/entities` has zero tests — no `vitest.config.ts` and no `__tests__/` directory — despite `packages/items` having five proven test suites (CONT-01 through CONT-05). Adding 60–70 new entity definitions without the parallel validation infrastructure is the primary regression risk.
 
 **Core technologies:**
-- `socket.io@^4.7.0`: Chat message transport — Socket.IO rooms handle all broadcast scoping natively; the existing zone room pattern directly extends to faction and global rooms
-- `@nestjs/websockets` + `@nestjs/platform-socket.io@^10.3.0`: Gateway receives `chat:send`, delegates to `ChatService` — matches every other game service pattern
-- `zustand@^4.5.0`: New `chatStore.ts` extracted from `gameStore` — mirrors `combatLogStore` and `questStore` patterns exactly
-- `drizzle-orm@^0.30.0`: Two new tables for mute/block persistence — additive migration, no breaking changes
-- `@nestjs/throttler@^6.4.0` (NEW, single install): Rate limiting on `chat:send` — `WsThrottlerGuard` applied at handler level; prevents spam without Redis dependency
+- TypeScript 5.9.3 — all definition files are pure TS object literals; compile-time type checking catches shape errors with zero JSON/YAML overhead
+- Vitest 4.0.18 — already proven in `packages/items`; identical setup must be added to `packages/entities` before any entity work begins
+- ESLint + custom rules (`eslint-rules/no-legacy-stat-buff.ts`) — existing rule enforces correct `stats` effect type; extensible for additional faction naming enforcement via `@typescript-eslint/utils@8.56.0`
+- NX 20.8.4 — `test` target caches by input hash; entity tests run only when definition files change
+- `generateSuitStats(archetype, rarity, tier)` and `computeIlvl()` from `packages/items/src/utils.ts` — mandatory for all new suit definitions; never hand-code stat numbers (caused Phase 59/60 migration)
 
 **See:** `.planning/research/STACK.md`
 
 ### Expected Features
 
-The milestone requirement is a chat panel with five channels (Local, Zone, Faction, Global, Whisper) plus mute and block. Three channels (Zone, Global, Whisper) already route server-side. Two channels (Local, Faction) need implementation. The tabbed UI and moderation system are net new.
+Research from FEATURES.md confirms a clear priority hierarchy derived from lore authority and direct biome audit.
 
-**Must have (table stakes — v1.22):**
-- Tabbed chat panel (Local / Zone / Faction / Global / Whisper) — the primary UX structure; everything else depends on it
-- Local proximity channel (~15-tile radius) — immersive nearby chat; requires server-side distance check per message; no Socket.IO room needed
-- Faction channel routing with server enforcement — type exists, gateway has no case; join faction Socket.IO room at auth time
-- Global channel tab — already routing server-side; needs tab wired in UI and `chat:global` room used instead of `server.emit()`
-- Zone channel tab — already routing server-side; needs tab wired in UI
-- Whisper with target selection UI — server routing exists; client needs name-based target input
-- Message timestamps rendered — data exists in `ChatMessage`, not displayed in current `ChatPanel.tsx`
-- Player mute (client-side filter, DB-persisted across sessions via REST API)
-- Player block (server-side whisper enforcement, DB-persisted — cannot be client-only)
+**Must have (table stakes — P1):**
+- Every biome reaches 4–6 creatures — most biomes have 1–3; `toxic_wastes` has 1 (critical gap requiring 4–5 new creatures)
+- Every biome has 2–3 plants and 2–3 minerals with common/rare/epic rarity variants
+- Every biome has 1–2 artifacts — most underserved entity category; many biomes have zero
+- Faction identity pillars documented before any gear is written (stat archetype + ability matrix + color palette + naming convention per faction) — design gate for all subsequent phases
+- Verdant, Helix, and Nexus faction suits: full Tier I–IV ladders at minimum common + epic + exotic rarities
+- Endgame (Tier III–IV) exotic/legendary faction suits as the headline deliverable
+- All new entities lore-compatible with `world-bible.md` (CLAUDE.md non-negotiable requirement)
 
-**Should have (post-validation, v1.x):**
-- Unread badge counts per channel tab — low effort, high UX value; add once tabs are stable
-- Faction color-coded sender names — requires `senderFaction` field on `ChatMessage`
-- Click-to-whisper from sender name — QoL after whisper tab is confirmed stable
-- Whisper reply shortcut (R key) — common MMO UX pattern
+**Should have (P2):**
+- Faction modules: 1–2 per faction spanning rarities
+- Faction tools: 1–2 per faction with faction-appropriate stat emphasis
+- Apex predator designation per biome (maniac behavior, distinct naming)
+- Ecological food chain logic in creature descriptions (zero implementation cost, high world-building value)
+
+**Defer (v1.x / P3):**
+- Unaffiliated gear line — trigger: player feedback that Unaffiliated operatives feel identity-less
+- Creature lore fragments as rare drops
 
 **Defer (v2+):**
-- Group/party channel — requires party system which does not yet exist
-- Speech bubbles above sprites — explicitly out of scope for v1.22 per PROJECT.md
-- Profanity filter — only warranted if moderation becomes a validated problem at scale
+- Faction reputation gating of gear (requires a new progression system)
+- Status effects on creatures (explicitly out of scope per PROJECT.md)
+- Surface faction headquarters (explicitly out of scope per PROJECT.md)
+- Crafting from creature materials (new system)
 
-**See:** `.planning/research/FEATURES-CHAT.md`
+**Anti-features to avoid:**
+- Faction gear locked exclusively to faction members without a reputation system (kills economy, breaks player experimentation)
+- Procedurally generated faction gear (breaks careful tier/rarity math in `generateSuitStats`)
+- Faction-unique abilities that don't exist in the current 21-ability pool (requires new ability design + balance testing scope)
+
+**See:** `.planning/research/FEATURES.md`
 
 ### Architecture Approach
 
-The architecture introduces one new server service (`ChatService`) that owns all routing logic, extracted from the existing `GameGateway.handleChat()` inline switch. This follows the pattern already established by `CombatService`, `QuestService`, and `LoreService`. The client gets a dedicated `chatStore.ts` extracted from `gameStore.ts`, following the `combatLogStore`/`questStore` pattern of registering socket listeners as a module side-effect. Mute/block persistence uses the REST API (`apps/api`), not WebSocket, because these are infrequent operations that benefit from HTTP semantics. All five channel types flow through a single `ChatService.routeMessage()` switch, making future channel additions a one-case change with TypeScript exhaustiveness enforcement.
+The content system is a layered definition pipeline: static TypeScript definition files flow into singleton registries (`EntityRegistry`, `ItemRegistry`), which feed into the world generator's spawn system (`BIOME_SPAWN_CONFIGS` in `spawn.ts`) and game-server services. The `biomes` field on `EntityDefinition` is informational for registry queries only — the `BIOME_SPAWN_CONFIGS` object in `packages/world-gen` is the sole authoritative source for what spawns in the world. This is the most critical architectural fact for content authors: failing to update `BIOME_SPAWN_CONFIGS` means the entity never spawns, with no error.
 
-**Major components:**
-1. `ChatService` (NEW, `apps/game-server/src/game/`) — routes messages by channel, enforces block lists on whispers, computes proximity for local, constructs `ChatMessage` objects, enforces rate limiting and message length
-2. `chatStore.ts` (NEW, `apps/web/src/store/`) — holds messages, active channel, mute/block state, whisper target; registers `chat:message` socket listener with client-side mute filtering as module side-effect
-3. `chat_mute_list` + `chat_block_list` tables (NEW, `packages/database/src/schema/`) — Drizzle schemas following `quest-progress.ts` pattern; queried via REST API in `apps/api`
-4. `ChatPanel.tsx` (MODIFIED, major rewrite) — tabbed UI replacing flat panel; whisper target input; right-click moderation context menu; keyboard isolation via Phaser disable/enable on focus/blur
-5. `GameGateway` (MODIFIED, minor) — delegates to `ChatService`; joins `chat:global` and `faction:${player.faction}` rooms at auth; applies rate limiting guard
+**Major components and their roles for v1.23:**
+1. `packages/entities/src/definitions/` — all new creature, plant, mineral, and artifact definitions; follow per-biome-group file convention (`toxic-wastes-creatures.ts`, etc.)
+2. `packages/items/src/definitions/faction-suits-[faction].ts` (NEW FILES) — one file per faction per item type; follows existing `aquatic-suits.ts` / `exotic-suits.ts` pattern; keeps files under 400 lines
+3. `packages/game-logic/src/loot/creature-loot.ts` — `CREATURE_LOOT_TABLES` Map; one entry per new creature is mandatory; plants/minerals use inline yield arrays instead
+4. `packages/world-gen/src/generation/spawn.ts` — `BIOME_SPAWN_CONFIGS`; must be updated for every new spawnable entity
+5. `packages/world-gen/src/generation/rarity.ts` — `getRareBiomeMinerals` / `getEpicBiomeMinerals`; must be updated for rare/epic mineral variants (not auto-populated from spawn configs)
+6. `packages/npcs/src/definitions/[faction].ts` — faction trader inventories; faction gear must be added here to be purchasable (otherwise unobtainable through normal play)
 
-**Build order (dependency-driven):**
-1. Foundation: fix `chat:message` socket dispatch bug + add `'local'` to `ChatChannel` type
-2. Database: mute/block Drizzle schemas + migrations + query functions + REST endpoints
-3. `ChatService`: all five channel routing + rate limiting + block enforcement + message validation
-4. `chatStore`: client state + socket listener + moderation load on auth:success
-5. `ChatPanel` UI: tabs + whisper + mute/block controls + keyboard isolation
+**Dependency-safe build order per entity batch:**
+Entity definitions → item definitions for loot targets → creature loot tables → spawn config → rare mineral registry
+
+**Dependency-safe build order for faction gear:**
+Faction identity pillars (design) → faction suits Tier I–II → faction suits Tier III–IV → modules and tools → NPC trader inventories
 
 **See:** `.planning/research/ARCHITECTURE.md`
 
 ### Critical Pitfalls
 
-1. **Phaser WASD capture breaks chat input** — When any React `<input>` is focused, Phaser's global `KeyboardPlugin` still processes movement keys. Fix: emit `chat:input:focus`/`chat:input:blur` game events; `WorldScene` subscribes and toggles `this.input.keyboard!.enabled`. Must be solved when the input field is first added — cannot be deferred.
+Research from PITFALLS.md identified 7 pitfalls. Top 5 by impact and silent-failure risk:
 
-2. **`server.emit()` for global channel fans out to every socket** — The existing `global` case uses `this.server.emit()`, which serializes and writes to every connected socket including players mid-combat. Fix: join all authenticated players to a `'chat:global'` Socket.IO room at auth time and use `server.to('chat:global').emit()`. This is an architectural choice, not a patch — do it before any channel goes live.
+1. **BIOME_SPAWN_CONFIGS / ENTITY_IDS desync** — entity defined but not wired to spawn config; entity never appears in world with no error. Three separate locations must be updated atomically: definition file, `ENTITY_IDS` constants, and `BIOME_SPAWN_CONFIGS` in `spawn.ts`. Prevent with a CI validation test before writing any entities.
 
-3. **No rate limiting on `chat:send`** — Movement has a 140ms throttle; chat has none. A script can flood the event loop. Fix: add burst-tolerant rate limiting (5 messages burst, then 1/second) to `ChatService` or via `WsThrottlerGuard`. Rate limiting is a security feature, not polish — it must be in the first handler implementation.
+2. **Loot table orphaning** — creature spawns correctly but drops nothing because `lootTableId` has no matching key in `CREATURE_LOOT_TABLES`. Silent failure (no crash, no warning). Prevent with `entity-loot-validation.test.ts` asserting every creature's `lootTableId` resolves in the loot table map.
 
-4. **Faction channel silently drops messages** — `ChatChannel` type includes `'faction'` but the gateway switch has no case for it. Messages are accepted, pass auth validation, and are silently discarded with no error. Fix: implement faction routing using Socket.IO rooms; add TypeScript exhaustiveness check to the switch so future channels cannot be silently omitted.
+3. **Faction gear identity collapse** — all factions receive identical `grantedAbilities` arrays copied from nearest generic suit. Faction choice becomes cosmetic only. Prevent by establishing the per-faction ability assignment matrix before writing any item definitions. Highest recovery cost of any pitfall — requires post-ship definition updates and player communication.
 
-5. **Block enforced client-side only** — A player who knows they are blocked can connect a second browser tab and whisper freely. Fix: block must be server-enforced in `ChatService.routeWhisper()` via a DB lookup before delivering. Mute (broadcast filtering) is acceptable as client-side only; block is not.
+4. **Stat budget inflation at Tier III–IV** — `generateSuitStats()` math is internally consistent but doesn't validate against combat TTK. New exotic/legendary suits can trivialize existing Tier III content. Prevent with a TTK audit against current best-in-slot before writing any endgame item definitions.
 
-**Additional pitfalls to watch:**
-- `updatePlayerRooms()` on zone transition removes all rooms — faction room must be preserved or rejoined after zone change
-- Whisper to offline player produces silent failure in existing code — return a system message to the sender
-- Message length is not validated server-side — cap at 280 characters before processing or broadcasting; existing code reads `data.message` with no check
-- `chat:message` missing from `socket.ts` `serverEvents` array — existing silent bug; first task of any implementation
+5. **Harvest yield references non-existent item IDs** — plant/mineral `harvestYield` entries typed from memory produce typos; `rollLootTable()` returns the magenta Unknown Item fallback silently. Prevent with a validation test asserting all `harvestYield` and `miningYield` item IDs resolve in `ItemRegistry.has()`.
 
-**See:** `.planning/research/PITFALLS-CHAT-SYSTEM.md`
+**See:** `.planning/research/PITFALLS.md`
 
 ## Implications for Roadmap
 
-The build order is driven by two constraints: (1) each layer depends on the one below it, and (2) several pitfalls are "fix before anything else or it propagates everywhere" problems. The suggested phase structure follows the architecture's recommended build order closely.
+Based on combined research, the following 7-phase structure is recommended. Phases 3 and 4 (biome entity population) are independent of phases 5–7 (faction gear) and can be executed in parallel by separate contributors.
 
-### Phase 1: Foundation and Type System
+### Phase 1: Test Infrastructure and Entity Validation Foundation
 
-**Rationale:** Two known bugs and one type gap must be resolved before any channel implementation is testable. The `chat:message` socket dispatch bug means no chat messages reach the client at all. The missing `'local'` in `ChatChannel` means the type system and requirements are misaligned. Resolving these first ensures every subsequent phase can verify end-to-end behavior.
+**Rationale:** `packages/entities` has zero tests. Every subsequent content phase has silent-failure pitfalls that are only catchable with validation tests in place. All four research documents independently flag this as the prerequisite for safe content expansion. Establishing CI validation before any definitions are written means every subsequent phase is regression-safe.
 
-**Delivers:** Working end-to-end pipeline for existing zone and global channels; correct type system covering all five channels
+**Delivers:** `packages/entities/vitest.config.ts` (copied from `packages/items` pattern), `packages/entities/src/__tests__/entity-validation.test.ts` asserting all 16 biomes meet minimum entity counts, `ENTITY_IDS` sync with `ALL_ENTITIES`, and a CI assertion that every spawnable entity appears in `BIOME_SPAWN_CONFIGS`. Also adds loot coverage test and harvest yield ID resolution test.
 
-**Addresses:** Zone and Global channels (already routed server-side, just need to reach the client)
+**Avoids:** All silent-failure pitfalls (Pitfalls 1, 2, 6, 7) — none can ship undetected once tests are in place.
 
-**Avoids:** Building on a broken dispatch path; type misalignment forcing rework later
+**Research flag:** Standard patterns — identical to proven `packages/items` Vitest setup. Skip `/gsd:research-phase`.
 
-**Key tasks:**
-- Add `'local'` to `ChatChannel` union in `packages/shared-types/src/network/events.ts`
-- Add `'chat:message'` to `serverEvents` array in `apps/web/src/network/socket.ts`
-- Verify zone chat works end-to-end before proceeding
+### Phase 2: Faction Identity Pillars (Design Gate)
 
-### Phase 2: Database Schema and REST API
+**Rationale:** Zero code output, but gates all faction gear phases. FEATURES.md documents it as the hard dependency for all gear. PITFALLS.md calls out Pitfall 3 (identity collapse) as the highest recovery cost pitfall. Without the ability assignment matrix locked in writing, definition authors default to copy-paste patterns under time pressure.
 
-**Rationale:** Mute and block data must exist in the database before the server can enforce block on whispers. REST endpoints must exist before the client store can load moderation state on auth. Building this layer second ensures Phase 3 (ChatService) and Phase 4 (chatStore) can reference real persistence without shortcuts.
+**Delivers:** A committed design artifact containing: stat archetype per faction per tier; ability assignment matrix per faction (which of the 21 existing abilities are in-faction vs. prohibited); color palette anchors per faction (from `world-bible.md`); naming convention per faction; and module/tool character descriptions. Verdant = hazmat/scout archetypes, `regeneration_protocol` + `energy_barrier`; Helix = tank/assault archetypes, `fortify_systems` + `power_surge`; Nexus = recon/combat archetypes, `overclock` + `resource_scan`.
 
-**Delivers:** `chat_mute_list` and `chat_block_list` tables; Drizzle migrations; REST endpoints for moderation CRUD in `apps/api`
+**Avoids:** Pitfall 3 (faction gear identity collapse), which has HIGH recovery cost if reached post-ship.
 
-**Addresses:** Mute persistence, block persistence, cross-session moderation state
+**Research flag:** Lore-derived design; `world-bible.md` is HIGH confidence authority. Skip `/gsd:research-phase`.
 
-**Avoids:** Block being implemented as client-side only (security pitfall) by making the DB layer available before the feature is built
+### Phase 3: Biome Entity Population — Creatures
 
-**Key tasks:**
-- Create `chat_mute_list` Drizzle schema + migration (`packages/database/src/schema/chat-mute-list.ts`)
-- Create `chat_block_list` Drizzle schema + migration (`packages/database/src/schema/chat-block-list.ts`)
-- Create query functions: `getMuteList`, `getBlockList`, `addMute`, `removeMute`, `addBlock`, `removeBlock`
-- Add REST endpoints to `apps/api` CharactersController: `GET /characters/:id/chat/moderation`, `POST/DELETE /characters/:id/chat/mute`, `POST/DELETE /characters/:id/chat/block`
-- Export new schemas from `packages/database/src/index.ts`
+**Rationale:** Highest user impact at lowest implementation cost. Biomes with 1–2 creatures fail the "populated world" test immediately. `toxic_wastes` with one creature is the most critical single gap — the world-bible describes a full ecosystem there. Fully independent of faction gear; can begin alongside Phase 2.
 
-### Phase 3: ChatService — Server Routing and Rate Limiting
+**Delivers:** 60–70 new creature definitions across all biomes; each biome at 4–6 creatures; one apex predator (maniac behavior) per biome; loot tables for every new creature; `ENTITY_IDS` and `BIOME_SPAWN_CONFIGS` updated; biome behavioral matrix enforced (herbivore + omnivore + predator minimum per biome, no 3+ creatures sharing same behavior at same level range).
 
-**Rationale:** All five channel routing cases, rate limiting, and block enforcement live here. This is the largest server-side change. It must be built before the client store (which listens for the routed messages) and before the UI (which triggers sends). Implementing all channels in one phase prevents the "looks done but silently broken" problem of partial implementations.
+**Priority ordering within phase:** toxic_wastes (1 → 5 creatures, critical) > void_plains, fungal_forest, miasma_marshes, petrified_expanse, crystal_caves (2 → 4) > remaining biomes.
 
-**Delivers:** `ChatService` with complete five-channel routing; faction Socket.IO room joins at auth; `chat:global` room join at auth; rate limiting; block enforcement on whispers; message length validation; TypeScript exhaustiveness check on channel switch
+**Avoids:** Pitfall 1 (spawn config desync) and Pitfall 2 (loot table orphaning) — caught by Phase 1 tests. Pitfall 5 (biome identity dilution from behavior-identical creatures) — enforced by behavioral matrix planning before definitions are written.
 
-**Addresses:** All five channels; faction routing; local proximity; whisper target validation and offline feedback; rate limiting; block enforcement; faction room persistence across zone transitions
+**Research flag:** Standard patterns established by Phase 87/88. Skip `/gsd:research-phase`.
 
-**Avoids:** Faction channel silent drop; global fan-out performance problem; no rate limiting; whisper silent failure; message length DoS; faction room lost on zone transition
+### Phase 4: Biome Entity Population — Plants, Minerals, Artifacts
 
-**Key tasks:**
-- Create `apps/game-server/src/game/chat.service.ts` with `routeMessage()`, `routeLocal()`, `routeWhisper()`, `isBlocked()`
-- Add `client.join('chat:global')` and `client.join('faction:${player.faction}')` in `handleAuth()`
-- Preserve faction and global rooms in `updatePlayerRooms()` on zone transition
-- Refactor `GameGateway.handleChat()` to delegate to `ChatService`
-- Add rate limiting (manual token bucket or `WsThrottlerGuard`) to `handleChat()`
-- Add message length (280 char max) and channel membership validation
-- Add exhaustiveness check (`default: const _exhaustive: never = data.channel`) to channel switch
-- Register `ChatService` in `GameModule` providers
+**Rationale:** Fully parallel to Phase 3 from a codebase perspective but separated because artifacts have a distinct integration path (`respawns: false`, no separate loot table entry, `handleCollect()` path) and rare/epic mineral variants require updating `rarity.ts` functions that are not auto-populated from spawn configs.
 
-### Phase 4: chatStore — Client State and Socket Integration
+**Delivers:** 2–3 plants per biome with common/rare/epic rarity variants; 2–3 minerals per biome with rarity variants plus updates to `getRareBiomeMinerals` / `getEpicBiomeMinerals` in `rarity.ts`; 1–2 artifacts per biome following the tier-appropriate mystery scale (Tier I: weathered/unclear → Tier IV: operational/disturbing).
 
-**Rationale:** The client store is the bridge between the socket layer and the UI. Extracting chat state from `gameStore` and building `chatStore` with proper mute filtering, moderation loading, and whisper target tracking sets up the UI phase for clean consumption via Zustand selectors.
+**Avoids:** Pitfall 7 (harvest yield typos) — caught by Phase 1 validation test. The technical debt shortcut of omitting artifacts "until later" is explicitly flagged as never acceptable in PITFALLS.md.
 
-**Delivers:** `chatStore.ts` with full state (messages, activeChannel, mutedPlayerIds, blockedPlayerIds, whisperTarget); socket listener with client-side mute filtering; moderation data loaded on auth:success via REST API
+**Research flag:** Standard patterns for plants/minerals. Artifact tier-escalation design is lore-derived (`world-bible.md` HIGH confidence). Skip `/gsd:research-phase`.
 
-**Addresses:** Mute display filtering; moderation persistence across sessions; whisper conversation state; chat/combat log separation
+### Phase 5: Faction Suits — Tier I–II Ladders
 
-**Avoids:** Chat messages polluting the combat log; mute list resetting on page reload; whisper target as global state; `gameStore` growing further
+**Rationale:** Writing lower-tier suits first establishes naming patterns, color language, and ability selection per faction before endgame gear is authored. FEATURES.md explicitly recommends this ordering. Phase 2 identity pillars design is a hard prerequisite.
 
-**Key tasks:**
-- Create `apps/web/src/store/chatStore.ts` following `combatLogStore` pattern
-- Register `chat:message` socket listener with mute filtering as module side-effect
-- Load moderation data via REST on `auth:success` event; call `chatStore.loadModeration()`
-- Import in `GameUI.tsx` as side-effect to trigger registration
-- Remove inline `chat:message` listener from `gameStore.ts`; migrate `chatMessages` + `addChatMessage` to `chatStore`
+**Delivers:** Common and Rare faction suits for Verdant, Helix, and Nexus; three new files (`faction-suits-verdant.ts`, `faction-suits-helix.ts`, `faction-suits-nexus.ts`); `ALL_ITEMS` and `ITEM_IDS` updated; distinct `textureKey` per faction (placeholder if art not ready); entries in faction trader `inventory[]` arrays in `packages/npcs/src/definitions/`.
 
-### Phase 5: ChatPanel UI — Tabs, Whisper, and Moderation Controls
+**Uses:** `generateSuitStats(archetype, rarity, tier)` and `computeIlvl(tier, rarity)` — mandatory, hand-coded stats are prohibited by ESLint rule.
 
-**Rationale:** The UI phase is last because it depends on all prior layers. By this point, the server routes correctly, the store holds correct state, and the keyboard isolation pattern can be wired to a working Phaser scene. This is also where the Phaser WASD conflict must be resolved — it cannot be deferred further.
+**Avoids:** Pitfall 3 (identity collapse — gated by Phase 2 matrix); Pitfall 4 (stat inflation — Tier I–II budgets are well within safe range); Pitfall 6 (stale ITEM_IDS — enforced by Phase 1 test).
 
-**Delivers:** Tabbed `ChatPanel.tsx` with Local/Zone/Faction/Global/Whisper tabs; whisper target name input; right-click moderation menu (Mute/Block/Whisper); keyboard isolation via Phaser disable/enable; per-channel message filtering; timestamp rendering; 200-message per-channel cap
+**Research flag:** Standard pattern — two existing exotic faction suits provide direct precedents in `suits.ts`. Skip `/gsd:research-phase`.
 
-**Addresses:** All table-stakes UI features; whisper UX; mute/block UI controls; message timestamps; channel navigation
+### Phase 6: Faction Suits — Tier III–IV Endgame (Milestone Headline)
 
-**Avoids:** Phaser WASD capture; chat panel memory growth; auto-scroll disrupting history reading; ESC key conflicts with modal stack
+**Rationale:** Endgame exotic and legendary faction suits are the stated headline of v1.23. They require Phase 5 to exist first (naming/pattern coherence) and require a TTK audit before authoring (Pitfall 4). This phase delivers the content players will cite the expansion for.
 
-**Key tasks:**
-- Rewrite `ChatPanel.tsx` with channel tab row (Local / Zone / Faction / Global / Whisper)
-- Add `onFocus`/`onBlur` handlers emitting `chat:input:focus`/`chat:input:blur` game events
-- Subscribe `WorldScene` to disable/enable `this.input.keyboard!.enabled` on those events
-- Implement whisper tab with target name input and conversation display
-- Add right-click context menu on sender names (Mute, Block, Whisper)
-- Render timestamps; use existing CSS channel color-coding (already defined for all channels)
-- Implement auto-scroll only when already at bottom of message list
+**Delivers:** Epic and Exotic faction suits for all three factions; Legendary faction suits (player-acquired only, not sold by traders, consistent with existing pattern); stat budget TTK audit documented before any definitions are written; all `grantedAbilities` cross-referenced against the 21 existing ability IDs.
+
+**Avoids:** Pitfall 4 (stat budget inflation — TTK audit gates this phase); Pitfall 6 (stale ITEM_IDS — enforced by Phase 1 test); the anti-feature of endgame content exclusively locked behind Tier IV zones (at least one exotic item should be obtainable via hard Tier III mechanism).
+
+**Research flag:** Stat budget audit requires examining current best-in-slot stat envelope against `game-logic` combat damage constants. If phase planner cannot determine the safe budget ceiling from existing ARCHITECTURE.md documentation, flag for targeted `/gsd:research-phase` on combat system TTK before scoping task list.
+
+### Phase 7: Faction Modules and Tools
+
+**Rationale:** Modules and tools complete the faction gear set. They follow identical definitional patterns (definitions → `ALL_ITEMS` → `ITEM_IDS` → trader inventory) with lower complexity than suits. Placed after suits so faction mechanical identity is established before modules reinforce it.
+
+**Delivers:** 1–2 modules per faction (biosupport arrays for Verdant, heavy plating for Helix, sensor arrays for Nexus); 1–2 tools per faction (bio-extractors/scanners for Verdant, heavy drills/cutters for Helix, data recorders/stealth tools for Nexus); all added to faction trader inventories.
+
+**Avoids:** The anti-feature of faction modules being purely cosmetically renamed generics — mechanical identity from Phase 2 design gate carries through.
+
+**Research flag:** Standard item definitional pattern. Skip `/gsd:research-phase`.
 
 ### Phase Ordering Rationale
 
-- Foundation first because two existing bugs would corrupt all testing if left unaddressed
-- Database before ChatService because server block enforcement needs the query layer to exist
-- ChatService before chatStore because the store listens for messages the service routes
-- chatStore before UI because the panel reads store state via Zustand selectors
-- All five channels implemented in a single ChatService phase to prevent partial implementations with silent drops, which are harder to debug than no implementation
-- Mute/block built in the DB phase so the server can enforce block from day one — not retrofitted after a client-only implementation ships
+- Test infrastructure must come first because every phase's silent-failure pitfalls are only catchable by those tests; building without them first means discovering failures after content is partially shipped.
+- Faction identity pillars (design) must precede all gear phases — this is a hard dependency. Post-ship identity collapse has HIGH recovery cost and cannot be silently patched.
+- Biome creatures and faction gear are independent tracks and can run in parallel (Phases 3–4 vs. Phases 5–7) — the roadmap should reflect this parallelism to avoid bottleneck on a single contributor.
+- Plants/minerals/artifacts are separated from creatures not due to ordering constraints but because the `rarity.ts` integration point for mineral variants is distinct from the main entity pipeline.
+- Lower-tier faction suits before endgame suits is a design coherence dependency: naming patterns and stat ladders must be established at Tier I–II before exotic/legendary definitions are consistent with them.
+- Modules and tools are last because they have the lowest individual user impact and cleanest scope once suit identity is established.
 
 ### Research Flags
 
-Phases with standard patterns (skip `/gsd:research-phase` during planning):
-- **Phase 1 (Foundation):** Trivial type union addition and array addition; well-understood codebase patterns; no research needed
-- **Phase 2 (Database):** Follows established Drizzle schema pattern exactly; query functions follow `quest.ts` template; REST endpoint pattern matches existing CharactersController
-- **Phase 4 (chatStore):** Follows `combatLogStore` pattern exactly; all decisions already made by existing store architecture
+Phases likely needing deeper research during planning:
+- **Phase 6 (Endgame Faction Suits):** Stat budget audit requires examining combat system TTK constants against `generateSuitStats()` output at Tier IV Legendary (~1,694 total stats from suit alone). If phase planner cannot determine the safe envelope from ARCHITECTURE.md, run `/gsd:research-phase` focused on `game-logic` combat constants before scoping.
 
-Phases that benefit from careful task breakdown during planning (not additional external research):
-- **Phase 3 (ChatService):** Most server-side complexity; `updatePlayerRooms` interaction with faction rooms requires careful implementation; rate limiting approach (manual vs `WsThrottlerGuard`) should be confirmed before starting
-- **Phase 5 (ChatPanel UI):** Phaser keyboard isolation integration requires care; whisper conversation UX has design decisions not fully specified in PROJECT.md; right-click context menu requires layout decisions
+Phases with standard patterns (skip research-phase):
+- **Phase 1 (Test Infrastructure):** Direct copy of `packages/items` Vitest pattern; no unknowns.
+- **Phase 2 (Faction Identity):** Lore-derived design; `world-bible.md` is HIGH confidence authority.
+- **Phase 3 (Biome Creatures):** Phase 87/88 established the exact pattern; PITFALLS.md documents the three-location atomic update rule.
+- **Phase 4 (Plants/Minerals/Artifacts):** Same definitional pattern; `rarity.ts` integration documented in ARCHITECTURE.md.
+- **Phase 5 (Faction Suits Tier I–II):** Two existing exotic faction suits provide direct precedents.
+- **Phase 7 (Modules/Tools):** Standard item definitional pattern; no novel integration points.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Full codebase audit confirmed existing packages; `@nestjs/throttler` v6.4.0 verified compatible with NestJS 10; all other technologies already in use |
-| Features | HIGH | Codebase deeply analyzed; existing stubs confirmed; MMO chat patterns verified against WoW, FFXIV, RuneScape, and multiple industry sources |
-| Architecture | HIGH | Based on direct codebase analysis of gateway (lines 403–437, 1675–1705), shared-types, socket.ts, and all existing service patterns; no inference required |
-| Pitfalls | HIGH | Phaser keyboard issue confirmed via community sources + codebase audit; socket dispatch bug confirmed by inspecting `serverEvents` array directly; all pitfalls are grounded in code-level analysis |
+| Stack | HIGH | All packages directly inspected; versions verified at install time; no new dependencies required; zero ambiguity |
+| Features | HIGH | Primary sources are live codebase + `world-bible.md` (non-negotiable per CLAUDE.md); faction identity pillars derived exclusively from lore authority; biome creature counts verified by direct definition file inspection |
+| Architecture | HIGH | All integration points identified via direct source examination of all relevant packages; data flow traced end-to-end from definition through world-gen to game-server; no inference required |
+| Pitfalls | HIGH | Based on direct codebase analysis and documented prior-phase friction (Phase 87/88 history comments, Phase 59/60 migration that required rollback procedure in CLAUDE.md) |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Local channel range value:** Research uses 15 tiles (Manhattan/Euclidean) as a reasonable default based on MMO conventions (Life is Feudal uses ~25 tiles; 15 is conservative). Should be defined as a named constant `LOCAL_RADIUS = 15` in `ChatService` and easy to adjust. Confirm value is acceptable before Phase 3 implementation.
+- **Stat budget safe envelope for Tier III–IV (Phase 6):** Research documents the `generateSuitStats()` formula output (~1,694 total stats at Tier IV Legendary) but does not specify what the combat system's TTK ceiling is. This must be resolved before Phase 6 is scoped — either by examining `game-logic` combat damage formulas directly or by running a test session with current best-in-slot gear.
 
-- **Whisper target input UX:** Research recommends a name-based input field in the Whisper tab, but `/whisper PlayerName message` command syntax is also common in MMOs. The specific UX (text field vs. slash command vs. click-to-whisper) is not specified in PROJECT.md — confirm before Phase 5 begins.
+- **Biome behavioral matrix per biome (Phase 3 scoping):** The per-biome creature roster (which behaviors, which level ranges, how many of each) is specified as a design gate for Phase 3 but is not yet written. This is an expected output of Phase 3 scoping, not a gap in research — `world-bible.md` provides sufficient ecological grounding for each biome.
 
-- **Mute persistence mechanism:** Research recommends REST API + DB (for cross-session persistence consistent with all other player data). An alternative is Zustand `persist` middleware with `localStorage`. The DB approach is more robust and consistent but adds REST endpoints. Confirm this decision before Phase 2 begins.
-
-- **`updatePlayerRooms` faction room interaction:** Whether the existing `updatePlayerRooms` function on zone transition removes the faction room depends on its exact implementation. This is identified as a pitfall but the specific fix (add to required rooms set vs. rejoin after the call) needs to be confirmed when Phase 3 code is being written.
+- **Texture key strategy for faction gear:** PITFALLS.md flags that using the same `textureKey` for different faction suits causes visual identity collapse in player-facing equipment panels. Whether v1.23 has art budget for faction-distinct sprites is not resolvable from code research alone. The mitigation (use distinct `textureKey` values even if pointing to a placeholder sprite) is the correct approach regardless of art pipeline state.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Into the Void codebase: `packages/shared-types/src/network/events.ts` — `ChatMessage`, `ChatChannel`, `ClientEvents`, `ServerEvents`
-- Into the Void codebase: `apps/game-server/src/game/game.gateway.ts` (lines 403–437, 1675–1705) — existing `handleChat`, `updatePlayerRooms`
-- Into the Void codebase: `apps/web/src/network/socket.ts` — confirmed `chat:message` absent from `serverEvents` array
-- Into the Void codebase: `apps/web/src/ui/panels/ChatPanel.tsx` — current UI state (flat, zone-only, draggable)
-- Into the Void codebase: `apps/web/src/store/gameStore.ts` + `combatLogStore.ts` — store patterns and socket side-effect registration
-- Into the Void codebase: `packages/database/src/schema/characters.ts` — Drizzle schema patterns
-- Into the Void codebase: `apps/game-server/src/game/game.module.ts` — NestJS module structure and DI patterns
-- [Socket.IO Rooms — Official Documentation v4](https://socket.io/docs/v4/rooms/) — room broadcast API, automatic room leave on disconnect confirmed
-- [NestJS Throttler GitHub](https://github.com/nestjs/throttler) — WebSocket support confirmed, v6.4.0 latest for NestJS 10
+- Live codebase direct inspection — `packages/entities`, `packages/items`, `packages/game-logic`, `packages/world-gen`, `packages/npcs`, `eslint-rules/` — all architecture, stack, and pitfall findings
+- `lore/world-bible.md` — faction identity profiles, biome ecological descriptions, Terminus history; authoritative and non-negotiable per CLAUDE.md
+- `.planning/PROJECT.md` — v1.23 milestone goals, confirmed 16 biomes, 122 items, 92 entities baseline
+- Installed package version verification (`vitest@4.0.18`, `typescript@5.9.3`, `nx@20.8.4`, `@typescript-eslint/utils@8.56.0`) — confirmed at time of research
+- Phase 87/88 codebase history (comments in `packages/entities/src/definitions/creatures.ts`) — documented prior-phase friction with three-location atomic update requirement
+- Phase 59/60 migration and rollback procedure (`CLAUDE.md`) — confirmed stat schema evolution as a real historical pitfall requiring ESLint tooling
 
 ### Secondary (MEDIUM confidence)
-- [NestJS WebSocket Rate Limiting — DEV Community](https://dev.to/delightfulengineering/nest-js-websockets-rate-limiting-and-acknowledgements-57oa) — `WsThrottlerGuard` pattern; consistent with official throttler docs
-- [In-game chat: Eight key features — Ably](https://ably.com/blog/in-game-chat-features) — mute/block moderation patterns for games
-- [Mastering Socket.IO Rooms — VideoSDK](https://www.videosdk.live/developer-hub/socketio/socketio-rooms) — room broadcast scoping, adapter behavior
-- [Socket.IO Performance Tuning — Official v4](https://socket.io/docs/v4/performance-tuning/) — `server.emit()` cost vs room broadcast cost
-- [Life is Feudal Chat — Fandom Wiki](https://lifeisfeudal.fandom.com/wiki/Chat) — local chat range reference (~25 tiles)
-- [Phaser Discourse: Keyboard event target](https://phaser.discourse.group/t/change-keyboard-event-target/12144) — keyboard target scoping to canvas vs window
-- [HTML5 Game Devs: Phaser stealing keypress focus](https://www.html5gamedevs.com/topic/11715-help-with-phaser-stealing-keypress-focus/) — WASD captured by Phaser when input fields are focused
+- EVE Online faction ship design (EVE University Wiki) — gold standard for faction mechanical differentiation; four factions with distinct weapon type + tank type combinations; cited as design reference for faction identity pillars
+- The Witcher 3 creature placement philosophy (game design literature) — "environment explains creature presence"; applied to biome ecological identity guidelines
+- Nerdlab Games faction design principles — "Flavor dictates function — thematic identity should constrain mechanical capabilities logically"
 
 ### Tertiary (LOW confidence)
-- [AVATARIC Blog — Multilayered Communications in MMORPG](https://avataric.blog/2016/01/multilayered-communications-in-an-mmorpg/) — site unreachable at research time; referenced for channel pattern awareness only
+- Destiny 2 original faction rally gear analysis (community sources) — cautionary tale for cosmetic-only faction differentiation; informs anti-feature list
 
 ---
-*Research completed: 2026-02-26*
+*Research completed: 2026-02-27*
 *Ready for roadmap: yes*
