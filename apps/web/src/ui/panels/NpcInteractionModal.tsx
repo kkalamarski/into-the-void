@@ -12,6 +12,62 @@ import { ItemIcon } from '../../components/ItemIcon';
 import { RARITY_COLORS } from '../constants';
 import './NpcInteractionModal.css';
 
+// NPC avatar spritesheet: 1280x640, 10 cols x 5 rows, each cell 128x128
+// Row 0: Red/crimson (Helix), Row 1: Dark (Neutral core), Row 2: Gold (Neutral specialists),
+// Row 3: Teal/blue (Nexus), Row 4: Purple (Verdant)
+const NPC_AVATAR_SHEET = '/assets/sprites/items/npc-avatars.png';
+const AVATAR_COLS = 10;
+const AVATAR_ROWS = 5;
+const AVATAR_CELL = 128; // source cell size
+const AVATAR_DISPLAY = 64; // rendered portrait size (matches .npc-portrait)
+
+const NPC_AVATAR_MAP: Record<string, [row: number, col: number]> = {
+  // Helix (row 0 — red)
+  npc_helix_trader:   [0, 0],
+  npc_helix_guard:    [0, 1],
+  npc_helix_rep:      [0, 2],
+  npc_helix_ambient:  [0, 3],
+  npc_helix_service:  [0, 4],
+  // Neutral core (row 1 — dark)
+  npc_neutral_trader:  [1, 0],
+  npc_neutral_guard:   [1, 1],
+  npc_neutral_rep:     [1, 2],
+  npc_neutral_ambient: [1, 3],
+  npc_neutral_service: [1, 4],
+  // Neutral specialists (row 2 — gold)
+  npc_suit_vendor:       [2, 0],
+  npc_tool_vendor:       [2, 1],
+  npc_module_vendor:     [2, 2],
+  npc_expedition_master: [2, 3],
+  // Nexus (row 3 — teal/blue)
+  npc_nexus_trader:   [3, 0],
+  npc_nexus_guard:    [3, 1],
+  npc_nexus_rep:      [3, 2],
+  npc_nexus_ambient:  [3, 3],
+  npc_nexus_service:  [3, 4],
+  // Verdant (row 4 — purple)
+  npc_verdant_trader:   [4, 0],
+  npc_verdant_guard:    [4, 1],
+  npc_verdant_rep:      [4, 2],
+  npc_verdant_ambient:  [4, 3],
+  npc_verdant_service:  [4, 4],
+};
+
+function getAvatarStyle(npcId: string): React.CSSProperties | undefined {
+  const coords = NPC_AVATAR_MAP[npcId];
+  if (!coords) return undefined;
+  const [row, col] = coords;
+  const scale = AVATAR_DISPLAY / AVATAR_CELL;
+  const sheetW = AVATAR_COLS * AVATAR_CELL * scale;
+  const sheetH = AVATAR_ROWS * AVATAR_CELL * scale;
+  return {
+    backgroundImage: `url(${NPC_AVATAR_SHEET})`,
+    backgroundSize: `${sheetW}px ${sheetH}px`,
+    backgroundPosition: `-${col * AVATAR_DISPLAY}px -${row * AVATAR_DISPLAY}px`,
+    backgroundRepeat: 'no-repeat',
+  };
+}
+
 // NPC type display labels
 const NPC_TYPE_LABELS: Record<string, string> = {
   trader: 'Trader',
@@ -438,9 +494,7 @@ export const NpcInteractionModal: React.FC = () => {
       <div className="npc-modal-content">
         {/* Portrait section */}
         <div className="npc-portrait-section">
-          <div className="npc-portrait" style={{ backgroundColor: portraitColor }}>
-            {/* Future: actual portrait sprite. For now, colored placeholder */}
-          </div>
+          <div className="npc-portrait" style={{ backgroundColor: portraitColor, ...getAvatarStyle(interactingNpc.npcId) }} />
           <div className="npc-identity">
             <span className="npc-name">{interactingNpc.displayName}</span>
             <span className="npc-type">{NPC_TYPE_LABELS[interactingNpc.npcType] ?? interactingNpc.npcType}</span>
