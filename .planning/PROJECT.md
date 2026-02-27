@@ -180,28 +180,37 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Audio settings with separate ambient/music/effects volume — v1.21
 - ✓ Interface settings to toggle second action bar visibility — v1.21
 - ✓ Entity rendering anchored at base tile, selection indicator aligned — v1.21
+- ✓ Chat panel UI with tabbed channel navigation — v1.22
+- ✓ Local chat (proximity-based, nearby players) — v1.22
+- ✓ Zone-wide chat channel — v1.22
+- ✓ Faction chat channel (faction members only) — v1.22
+- ✓ Global chat channel (server-wide) — v1.22
+- ✓ Whisper system (private 1-on-1 messages) — v1.22
+- ✓ Player mute (hide messages from specific players) — v1.22
+- ✓ Player block (prevent whispers from specific players) — v1.22
+- ✓ Mute/block lists persist across sessions — v1.22
 
-## Current Milestone: v1.22 In-Game Chat
+## Current Milestone: v1.23 Content Expansion & Faction Gear
 
-**Goal:** Add a full in-game chat system with multiple channels, whispers, and player moderation
+**Goal:** Major content expansion filling all biome gaps and adding faction-specific equipment across all tiers
 
 **Target features:**
-- Chat panel (bottom-left, always visible, tabbed channels)
-- 5 channel types: Local, Zone, Faction, Global, Whispers
-- Player moderation: mute and block
-- Ephemeral messages (no DB persistence)
+- Bring every biome to 4-6 creatures, 3-4 plants, 2-3 minerals, 1-2 artifacts
+- Faction-specific equipment (Verdant biotech, Helix industrial, Nexus surveillance)
+- Endgame Tier III-IV content priority
+- Fill Tier I-II gaps (artifacts, toxic wastes ecosystem)
 
 ### Active
 
-- [ ] Chat panel UI with tabbed channel navigation
-- [ ] Local chat (proximity-based, nearby players)
-- [ ] Zone-wide chat channel
-- [ ] Faction chat channel (faction members only)
-- [ ] Global chat channel (server-wide)
-- [ ] Whisper system (private 1-on-1 messages)
-- [ ] Player mute (hide messages from specific players)
-- [ ] Player block (prevent whispers from specific players)
-- [ ] Mute/block lists persist across sessions
+- [ ] Every biome has 4-6 creatures with tier-appropriate stats
+- [ ] Every biome has 3-4 plants with rarity variants
+- [ ] Every biome has 2-3 minerals with rarity variants
+- [ ] Every biome has 1-2 artifacts
+- [ ] Faction-specific suits across tiers
+- [ ] Faction-specific modules across tiers
+- [ ] Faction-specific tools across tiers
+- [ ] Tier III-IV endgame equipment (exotic/legendary)
+- [ ] All new entities lore-compatible
 
 ### Out of Scope
 
@@ -252,4 +261,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-26 after v1.22 milestone started*
+*Last updated: 2026-02-27 after v1.23 milestone started*
