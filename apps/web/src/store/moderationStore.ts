@@ -140,11 +140,13 @@ export const useModerationStore = create<ModerationState>((set, get) => ({
 }));
 
 // Auto-load moderation state when player is set (game session starts)
-// Uses Zustand subscribe to react to player state changes
-useGameStore.subscribe((state) => {
-  const player = state.player;
-  const { loaded, loadModeration } = useModerationStore.getState();
-  if (player && !loaded) {
-    loadModeration();
-  }
+// Deferred to avoid circular dependency: gameStore → chatStore → moderationStore → gameStore
+queueMicrotask(() => {
+  useGameStore.subscribe((state) => {
+    const player = state.player;
+    const { loaded, loadModeration } = useModerationStore.getState();
+    if (player && !loaded) {
+      loadModeration();
+    }
+  });
 });
