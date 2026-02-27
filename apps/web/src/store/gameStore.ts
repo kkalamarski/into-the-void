@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Player, ConnectionState, ChatMessage, Entity, Creature, ZoneState, Position, PlayerPublic, isHubZone, TimingChallenge } from '@into-the-void/shared-types';
-import { Game } from '../game/Game';
+import type { Game } from '../game/Game';
 import { gameSocket } from '../network/socket';
 import { useEntityStore } from './entityStore';
 import { useAlertStore } from './alertStore';
