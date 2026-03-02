@@ -212,6 +212,11 @@ export const ITEM_IDS = {
   WORLD_TEMPORAL_SHARD: 'world_temporal_shard',
   WORLD_SPORE_SACK: 'world_spore_sack',
   WORLD_METEOR_FRAGMENT: 'world_meteor_fragment',
+  // Phase 110 Tier I biome-specific creature materials
+  WORLD_VOID_CHITIN: 'world_void_chitin',
+  WORLD_FUNGAL_MEMBRANE: 'world_fungal_membrane',
+  WORLD_TIDAL_PEARL: 'world_tidal_pearl',
+  WORLD_RUIN_SHARD: 'world_ruin_shard',
 
   // ---- REAGENTS ----
   REAGENT_CRYSTALLINE_DUST: 'reagent_crystalline_dust',

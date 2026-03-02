@@ -398,6 +398,74 @@ export const WORLD_METEOR_FRAGMENT: ItemDefinition = {
 };
 
 // ============================================================
+// TIER I BIOME-SPECIFIC CREATURE MATERIALS (4) — Phase 110
+// ============================================================
+
+export const WORLD_VOID_CHITIN: ItemDefinition = {
+  id: 'world_void_chitin',
+  displayName: 'Void Chitin',
+  description:
+    'Hardened carapace fragment from void-adapted creatures. Lightweight but surprisingly durable.',
+  category: 'world-item',
+  rarity: 'common',
+  maxStack: 20,
+  weight: 0.2,
+  baseValue: 45,
+  requiredLevel: 1,
+  ilvl: computeIlvl(1, 'common'),
+  textureKey: 'item_world_void_chitin',
+  color: 0x5a5a6a,
+};
+
+export const WORLD_FUNGAL_MEMBRANE: ItemDefinition = {
+  id: 'world_fungal_membrane',
+  displayName: 'Fungal Membrane',
+  description:
+    'Thin biological membrane saturated with fungal compounds. Used in basic filtration systems.',
+  category: 'world-item',
+  rarity: 'common',
+  maxStack: 20,
+  weight: 0.1,
+  baseValue: 40,
+  requiredLevel: 1,
+  ilvl: computeIlvl(1, 'common'),
+  textureKey: 'item_world_fungal_membrane',
+  color: 0x7a44aa,
+};
+
+export const WORLD_TIDAL_PEARL: ItemDefinition = {
+  id: 'world_tidal_pearl',
+  displayName: 'Tidal Pearl',
+  description:
+    'A pearl-like concretion formed in the gullet of tidal predators. Valued for its resonant properties.',
+  category: 'world-item',
+  rarity: 'rare',
+  maxStack: 20,
+  weight: 0.2,
+  baseValue: 180,
+  requiredLevel: 3,
+  ilvl: computeIlvl(1, 'rare'),
+  textureKey: 'item_world_tidal_pearl',
+  color: 0x88ccdd,
+};
+
+export const WORLD_RUIN_SHARD: ItemDefinition = {
+  id: 'world_ruin_shard',
+  displayName: 'Ruin Shard',
+  description:
+    'A fragment of Ancient construction material recovered from creature nests. Still faintly warm to the touch.',
+  category: 'world-item',
+  rarity: 'rare',
+  maxStack: 20,
+  weight: 0.3,
+  baseValue: 220,
+  requiredLevel: 3,
+  ilvl: computeIlvl(1, 'rare'),
+  textureKey: 'item_world_ruin_shard',
+  color: 0xcc9944,
+};
+
+// ============================================================
 // ALL WORLD ITEMS
 // ============================================================
 
@@ -423,4 +491,9 @@ export const ALL_WORLD_ITEMS: readonly ItemDefinition[] = [
   WORLD_TEMPORAL_SHARD,
   WORLD_SPORE_SACK,
   WORLD_METEOR_FRAGMENT,
+  // Phase 110 Tier I biome-specific creature materials
+  WORLD_VOID_CHITIN,
+  WORLD_FUNGAL_MEMBRANE,
+  WORLD_TIDAL_PEARL,
+  WORLD_RUIN_SHARD,
 ];
