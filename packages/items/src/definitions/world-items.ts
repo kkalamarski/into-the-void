@@ -518,6 +518,26 @@ export const WORLD_ACID_GLAND: ItemDefinition = {
 };
 
 // ============================================================
+// VOID RIFT APEX MATERIALS (Phase 110)
+// ============================================================
+
+export const WORLD_RIFT_CORE: ItemDefinition = {
+  id: 'world_rift_core',
+  displayName: 'Rift Core',
+  description:
+    'A pulsing crystalline organ extracted from a void-corrupted apex creature. Radiates dimensional instability. The most valuable organic material known to exist on Terminus — all three corporations will pay any price.',
+  category: 'world-item',
+  rarity: 'legendary',
+  maxStack: 5,
+  weight: 1.0,
+  baseValue: 50000,
+  requiredLevel: 30,
+  ilvl: computeIlvl(4, 'legendary'),
+  textureKey: 'item_world_rift_core',
+  color: 0xff44ff,
+};
+
+// ============================================================
 // ALL WORLD ITEMS
 // ============================================================
 
@@ -552,4 +572,6 @@ export const ALL_WORLD_ITEMS: readonly ItemDefinition[] = [
   WORLD_CORROSIVE_CARAPACE,
   WORLD_SLUDGE_MEMBRANE,
   WORLD_ACID_GLAND,
+  // Phase 110 Tier IV void_rift legendary material
+  WORLD_RIFT_CORE,
 ];

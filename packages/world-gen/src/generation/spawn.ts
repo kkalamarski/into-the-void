@@ -338,10 +338,12 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   void_rift: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_VOID_GRAZER, weight: 4, minLevel: 18, maxLevel: 28 },
-      { id: ENTITY_IDS.CREATURE_ANOMALY_SCAVENGER, weight: 3, minLevel: 20, maxLevel: 30 },
-      { id: ENTITY_IDS.CREATURE_VOID_STALKER, weight: 2, minLevel: 22, maxLevel: 32 },
+      { id: ENTITY_IDS.CREATURE_VOID_GRAZER, weight: 8, minLevel: 18, maxLevel: 28 },
+      { id: ENTITY_IDS.CREATURE_ANOMALY_SCAVENGER, weight: 6, minLevel: 20, maxLevel: 30 },
+      { id: ENTITY_IDS.CREATURE_VOID_STALKER, weight: 4, minLevel: 22, maxLevel: 32 },
+      { id: ENTITY_IDS.CREATURE_CORRUPTED_MAGMA_TITAN, weight: 2, minLevel: 28, maxLevel: 35 },
       { id: ENTITY_IDS.CREATURE_DIMENSIONAL_ABERRATION, weight: 1, minLevel: 24, maxLevel: 35 },
+      { id: ENTITY_IDS.CREATURE_CORRUPTED_FROST_WRAITH, weight: 1, minLevel: 30, maxLevel: 35 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_VOID_CRYSTAL_NODE, weight: 6, rarity: 3 },

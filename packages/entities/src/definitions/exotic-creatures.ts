@@ -220,6 +220,40 @@ export const CREATURE_CRYSTALLINE_MANIAC: CreatureDefinition = {
   respawnSeconds: 900,
 };
 
+// ===== PHASE 110 — Tier IV Void Rift Corrupted Apex Creatures =====
+
+export const CREATURE_CORRUPTED_MAGMA_TITAN: CreatureDefinition = {
+  id: 'creature_corrupted_magma_titan',
+  displayName: 'Corrupted Magma Titan',
+  description: 'What was once a Magma Beast from the volcanic ridges, now consumed by void corruption. Molten rock has been replaced by liquid void energy that flickers between physical states. Veteran explorers recognize the silhouette — and run. The most dangerous predator on Terminus.',
+  entityClass: 'creature',
+  biomes: ['void_rift'],
+  textureKey: 'creature_corrupted_magma_titan',
+  color: 0xcc00ff,
+  lootTableId: 'loot_creature_corrupted_magma_titan',
+  behavior: 'predator',
+  baseHealth: 350,
+  levelRange: [28, 35],
+  baseXp: 160,
+  respawnSeconds: 900,
+};
+
+export const CREATURE_CORRUPTED_FROST_WRAITH: CreatureDefinition = {
+  id: 'creature_corrupted_frost_wraith',
+  displayName: 'Corrupted Frost Wraith',
+  description: 'The frozen precision of a Frost Stalker twisted into mindless dimensional rage. Ice crystals have fused with void energy, creating a being that exists partially outside normal spacetime. It attacks relentlessly, phasing through solid matter. The single most lethal creature ever documented on Terminus.',
+  entityClass: 'creature',
+  biomes: ['void_rift'],
+  textureKey: 'creature_corrupted_frost_wraith',
+  color: 0x8800ee,
+  lootTableId: 'loot_creature_corrupted_frost_wraith',
+  behavior: 'maniac',
+  baseHealth: 380,
+  levelRange: [30, 35],
+  baseXp: 180,
+  respawnSeconds: 900,
+};
+
 export const ALL_EXOTIC_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_ECHO_DRIFTER,
   CREATURE_PHASE_GRAZER,
@@ -236,4 +270,7 @@ export const ALL_EXOTIC_CREATURES: readonly CreatureDefinition[] = [
   // Phase 110 Tier III crystalline_wastes additions
   CREATURE_WASTE_DRIFTER,
   CREATURE_CRYSTALLINE_MANIAC,
+  // Phase 110 Tier IV void_rift corrupted apex creatures
+  CREATURE_CORRUPTED_MAGMA_TITAN,
+  CREATURE_CORRUPTED_FROST_WRAITH,
 ];

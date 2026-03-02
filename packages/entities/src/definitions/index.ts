@@ -201,6 +201,9 @@ export const ENTITY_IDS = {
   // Phase 110 Tier III crystalline_wastes additions
   CREATURE_WASTE_DRIFTER: 'creature_waste_drifter',
   CREATURE_CRYSTALLINE_MANIAC: 'creature_crystalline_maniac',
+  // Phase 110 Tier IV void_rift corrupted apex creatures
+  CREATURE_CORRUPTED_MAGMA_TITAN: 'creature_corrupted_magma_titan',
+  CREATURE_CORRUPTED_FROST_WRAITH: 'creature_corrupted_frost_wraith',
 
   // ---- EXOTIC PLANTS ----
   PLANT_REALITY_MOSS: 'plant_reality_moss',

@@ -221,6 +221,8 @@ export const ITEM_IDS = {
   WORLD_CORROSIVE_CARAPACE: 'world_corrosive_carapace',
   WORLD_SLUDGE_MEMBRANE: 'world_sludge_membrane',
   WORLD_ACID_GLAND: 'world_acid_gland',
+  // Phase 110 Tier IV void_rift legendary material
+  WORLD_RIFT_CORE: 'world_rift_core',
 
   // ---- REAGENTS ----
   REAGENT_CRYSTALLINE_DUST: 'reagent_crystalline_dust',
@@ -239,6 +241,8 @@ export const ITEM_IDS = {
   REAGENT_VOLATILE_EXTRACT: 'reagent_volatile_extract',
   REAGENT_ANOMALY_CATALYST: 'reagent_anomaly_catalyst',
   REAGENT_ANCIENT_STABILIZER: 'reagent_ancient_stabilizer',
+  // Phase 110 Tier IV void_rift legendary reagent
+  REAGENT_CORRUPTED_ESSENCE: 'reagent_corrupted_essence',
 } as const;
 
 // Re-export individual items for direct imports

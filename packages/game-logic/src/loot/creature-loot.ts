@@ -636,6 +636,27 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.25 },
   ]],
 
+  // ===== Phase 110 — Tier IV Void Rift Corrupted Apex Creature Loot =====
+
+  // Tier IV — Void Rift (Predator apex, levels 28-35)
+  ['loot_creature_corrupted_magma_titan', [
+    { itemId: 'world_rift_core', minAmount: 1, maxAmount: 1, chance: 0.45 },
+    { itemId: 'reagent_corrupted_essence', minAmount: 1, maxAmount: 1, chance: 0.3 },
+    { itemId: 'reagent_void_heart', minAmount: 1, maxAmount: 1, chance: 0.6 },
+    { itemId: 'reagent_anomaly_catalyst', minAmount: 1, maxAmount: 1, chance: 0.5 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.4 },
+  ]],
+
+  // Tier IV — Void Rift (Maniac apex, levels 30-35) — Best loot source in the game
+  ['loot_creature_corrupted_frost_wraith', [
+    { itemId: 'reagent_corrupted_essence', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'world_rift_core', minAmount: 1, maxAmount: 1, chance: 0.6 },
+    { itemId: 'reagent_void_heart', minAmount: 1, maxAmount: 1, chance: 0.8 },
+    { itemId: 'reagent_anomaly_catalyst', minAmount: 1, maxAmount: 1, chance: 0.6 },
+    { itemId: 'reagent_ancient_stabilizer', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.5 },
+  ]],
+
   // Tier II — Ancient Ruins (Omnivore, levels 10-20)
   ['loot_creature_relic_beast', [
     { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.8 },

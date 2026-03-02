@@ -294,6 +294,26 @@ export const REAGENT_ANCIENT_STABILIZER: ItemDefinition = {
 };
 
 // ============================================================
+// VOID RIFT APEX REAGENTS (Phase 110)
+// ============================================================
+
+export const REAGENT_CORRUPTED_ESSENCE: ItemDefinition = {
+  id: 'reagent_corrupted_essence',
+  displayName: 'Corrupted Essence',
+  description:
+    'Distilled essence from a creature that has been fully consumed by void corruption. The substance exists in a state of permanent dimensional flux. Required for the most advanced equipment fabrication processes known.',
+  category: 'reagent',
+  rarity: 'legendary',
+  maxStack: 999,
+  weight: 0.01,
+  baseValue: 85000,
+  requiredLevel: 32,
+  ilvl: computeIlvl(4, 'legendary'),
+  textureKey: 'item_reagent_corrupted_essence',
+  color: 0xaa00ff,
+};
+
+// ============================================================
 // ALL REAGENTS
 // ============================================================
 
@@ -314,4 +334,6 @@ export const ALL_REAGENTS: readonly ItemDefinition[] = [
   REAGENT_VOLATILE_EXTRACT,
   REAGENT_ANOMALY_CATALYST,
   REAGENT_ANCIENT_STABILIZER,
+  // Phase 110 Tier IV void_rift legendary reagent
+  REAGENT_CORRUPTED_ESSENCE,
 ];
