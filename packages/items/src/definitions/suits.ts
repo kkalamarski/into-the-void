@@ -1,3 +1,13 @@
+/**
+ * Faction Suit Design Reference
+ * @see packages/items/FACTION-IDENTITY.md for:
+ *   - Stat archetypes per faction (primary/secondary/off-archetype)
+ *   - Ability assignment matrix (which abilities at which tier)
+ *   - Naming conventions ({type}_{faction}_{name}_{rarity})
+ *   - Color palette anchors per faction
+ *   - Tier progression table
+ */
+
 import type { ItemDefinition } from '../types';
 import { computeIlvl, generateSuitStats } from '../utils';
 
@@ -11,6 +21,7 @@ import { computeIlvl, generateSuitStats } from '../utils';
  * hazmat: Environmental survival (resilience/recovery/durability)
  * assault: Glass cannon offense (power/durability/haste)
  * recon: Scout variant with perception focus
+ * scavenger: Survival versatility (vigor/recovery/perception) -- Unaffiliated
  */
 
 // ============================================================

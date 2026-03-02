@@ -1,3 +1,12 @@
+/**
+ * Faction Tool Design Reference
+ * @see packages/items/FACTION-IDENTITY.md for:
+ *   - Tool type assignments per faction (bio, mining, research, etc.)
+ *   - Tool ability grant patterns per faction
+ *   - Naming conventions ({type}_{faction}_{name}_{rarity})
+ *   - Color palette anchors per faction
+ */
+
 import type { ItemDefinition, ItemRarity, ToolType } from '../types';
 import { computeIlvl, STAT_RARITY_MULTIPLIERS, TIER_MULTIPLIERS } from '../utils';
 

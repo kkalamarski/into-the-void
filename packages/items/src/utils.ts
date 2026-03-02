@@ -36,6 +36,7 @@ export const ARCHETYPE_PROFILES = {
   hazmat: { resilience: 30, recovery: 25, durability: 25, vigor: 20 },
   assault: { power: 35, durability: 25, haste: 25, toughness: 15 },
   recon: { perception: 35, haste: 30, vigor: 25, recovery: 10 },
+  scavenger: { vigor: 30, recovery: 25, perception: 25, durability: 12, resilience: 8 },
 } as const;
 
 /**
@@ -65,7 +66,7 @@ export const TIER_MULTIPLIERS: Record<1 | 2 | 3 | 4 | 5, number> = {
 /**
  * Generate suit stats based on archetype, rarity, and tier (Phase 63)
  *
- * @param archetype - Build identity (tank/scout/combat/balanced/hazmat/assault/recon)
+ * @param archetype - Build identity (tank/scout/combat/balanced/hazmat/assault/recon/scavenger)
  * @param rarity - Item rarity affecting total stat budget
  * @param tier - Level tier (1-5) affecting total stat budget
  * @param baseBudget - Base stat budget for tier 1 common (default: 77)

@@ -1,3 +1,11 @@
+/**
+ * Faction Module Design Reference
+ * @see packages/items/FACTION-IDENTITY.md for:
+ *   - Module type assignments per faction (life_support, armor, sensor, etc.)
+ *   - Naming conventions ({type}_{faction}_{name}_{rarity})
+ *   - Color palette anchors per faction
+ */
+
 import type { ItemDefinition, ItemRarity } from '../types';
 import { computeIlvl, STAT_RARITY_MULTIPLIERS, TIER_MULTIPLIERS } from '../utils';
 
