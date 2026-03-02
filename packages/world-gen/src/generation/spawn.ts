@@ -27,7 +27,7 @@ const SPAWN_CAPS = {
 /**
  * Spawn configuration per biome
  */
-interface BiomeSpawnConfig {
+export interface BiomeSpawnConfig {
   creatures: Array<{ id: string; weight: number; minLevel: number; maxLevel: number }>;
   minerals: Array<{ id: string; weight: number; rarity: number }>;
   plants: Array<{ id: string; weight: number; rarity?: NodeRarity }>;
@@ -38,7 +38,7 @@ interface BiomeSpawnConfig {
   artifactDensity: number; // Artifact spawn attempts per chunk (gated by probability)
 }
 
-const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
+export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   void_plains: {
     creatures: [
       { id: ENTITY_IDS.CREATURE_VOID_CRAWLER, weight: 10, minLevel: 1, maxLevel: 5 },
