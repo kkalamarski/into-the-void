@@ -40,8 +40,10 @@ export interface BiomeSpawnConfig {
 export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   void_plains: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_VOID_CRAWLER, weight: 10, minLevel: 1, maxLevel: 5 },
-      { id: ENTITY_IDS.CREATURE_COASTAL_SCUTTLER, weight: 8, minLevel: 1, maxLevel: 4 },
+      { id: ENTITY_IDS.CREATURE_PLAINS_GRAZER, weight: 10, minLevel: 1, maxLevel: 3 },
+      { id: ENTITY_IDS.CREATURE_COASTAL_SCUTTLER, weight: 10, minLevel: 1, maxLevel: 4 },
+      { id: ENTITY_IDS.CREATURE_VOID_CRAWLER, weight: 7, minLevel: 1, maxLevel: 5 },
+      { id: ENTITY_IDS.CREATURE_VOID_PROWLER, weight: 4, minLevel: 3, maxLevel: 6 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_VOID_CRYSTAL, weight: 10, rarity: 1 },
@@ -97,10 +99,12 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   ancient_ruins: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_VOID_HORROR, weight: 3, minLevel: 10, maxLevel: 25 },
-      { id: ENTITY_IDS.CREATURE_RUIN_SEEKER, weight: 4, minLevel: 18, maxLevel: 30 },
-      { id: ENTITY_IDS.CREATURE_GUARDIAN_CONSTRUCT, weight: 4, minLevel: 14, maxLevel: 24 },
-      { id: ENTITY_IDS.CREATURE_RELIC_BEAST, weight: 5, minLevel: 10, maxLevel: 20 },
+      { id: ENTITY_IDS.CREATURE_RELIC_BEAST, weight: 10, minLevel: 10, maxLevel: 20 },
+      { id: ENTITY_IDS.CREATURE_RUIN_SCAVENGER, weight: 8, minLevel: 1, maxLevel: 4 },
+      { id: ENTITY_IDS.CREATURE_RUIN_SEEKER, weight: 7, minLevel: 18, maxLevel: 30 },
+      { id: ENTITY_IDS.CREATURE_GUARDIAN_CONSTRUCT, weight: 5, minLevel: 14, maxLevel: 24 },
+      { id: ENTITY_IDS.CREATURE_RUIN_WARDEN, weight: 3, minLevel: 4, maxLevel: 6 },
+      { id: ENTITY_IDS.CREATURE_VOID_HORROR, weight: 2, minLevel: 10, maxLevel: 25 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_ANOMALY_CRYSTAL, weight: 5, rarity: 3 },
@@ -159,8 +163,10 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   fungal_forest: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_SPORE_CARRIER, weight: 8, minLevel: 4, maxLevel: 12 },
-      { id: ENTITY_IDS.CREATURE_CANOPY_GRAZER, weight: 5, minLevel: 1, maxLevel: 6 },
+      { id: ENTITY_IDS.CREATURE_SPORE_BEETLE, weight: 10, minLevel: 1, maxLevel: 4 },
+      { id: ENTITY_IDS.CREATURE_CANOPY_GRAZER, weight: 10, minLevel: 1, maxLevel: 6 },
+      { id: ENTITY_IDS.CREATURE_SPORE_CARRIER, weight: 6, minLevel: 4, maxLevel: 12 },
+      { id: ENTITY_IDS.CREATURE_MYCELIAL_STALKER, weight: 4, minLevel: 3, maxLevel: 6 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_MYCELIAL_CLUSTER, weight: 10, rarity: 1 },
@@ -240,8 +246,9 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   tidal_pools: {
     creatures: [
       { id: ENTITY_IDS.CREATURE_TIDE_CRAB, weight: 10, minLevel: 1, maxLevel: 6 },
-      { id: ENTITY_IDS.CREATURE_COASTAL_URCHIN, weight: 8, minLevel: 1, maxLevel: 5 },
-      { id: ENTITY_IDS.CREATURE_REEF_SCAVENGER, weight: 6, minLevel: 2, maxLevel: 7 },
+      { id: ENTITY_IDS.CREATURE_COASTAL_URCHIN, weight: 7, minLevel: 1, maxLevel: 5 },
+      { id: ENTITY_IDS.CREATURE_REEF_SCAVENGER, weight: 5, minLevel: 2, maxLevel: 7 },
+      { id: ENTITY_IDS.CREATURE_TIDAL_SNAPPER, weight: 4, minLevel: 3, maxLevel: 6 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_CORAL_DEPOSIT, weight: 10, rarity: 1 },

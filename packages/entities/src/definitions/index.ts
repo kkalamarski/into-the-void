@@ -62,6 +62,13 @@ export const ENTITY_IDS = {
   CREATURE_CRATER_STALKER: 'creature_crater_stalker',
   CREATURE_GUARDIAN_CONSTRUCT: 'creature_guardian_construct',
   CREATURE_RELIC_BEAST: 'creature_relic_beast',
+  // Phase 110 Tier I creatures
+  CREATURE_PLAINS_GRAZER: 'creature_plains_grazer',
+  CREATURE_VOID_PROWLER: 'creature_void_prowler',
+  CREATURE_MYCELIAL_STALKER: 'creature_mycelial_stalker',
+  CREATURE_SPORE_BEETLE: 'creature_spore_beetle',
+  CREATURE_RUIN_SCAVENGER: 'creature_ruin_scavenger',
+  CREATURE_RUIN_WARDEN: 'creature_ruin_warden',
 
   // ---- AQUATIC CREATURES ----
   CREATURE_TIDE_CRAB: 'creature_tide_crab',
@@ -74,6 +81,8 @@ export const ENTITY_IDS = {
   CREATURE_TRENCH_HUNTER: 'creature_trench_hunter',
   CREATURE_ABYSSAL_SCAVENGER: 'creature_abyssal_scavenger',
   CREATURE_ABYSSAL_LEVIATHAN: 'creature_abyssal_leviathan',
+  // Phase 110 Tier I aquatic addition
+  CREATURE_TIDAL_SNAPPER: 'creature_tidal_snapper',
 
   // ---- PLANTS ----
   PLANT_LUMINOUS_VINE: 'plant_luminous_vine',

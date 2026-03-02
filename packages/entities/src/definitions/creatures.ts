@@ -338,6 +338,104 @@ export const CREATURE_RELIC_BEAST: CreatureDefinition = {
   respawnSeconds: 360,
 };
 
+// ===== PHASE 110 — Tier I Biome Creature Population =====
+
+export const CREATURE_PLAINS_GRAZER: CreatureDefinition = {
+  id: 'creature_plains_grazer',
+  displayName: 'Plains Grazer',
+  description: 'Slow-moving herd animal that feeds on void-adapted grasses. Docile and easily startled.',
+  entityClass: 'creature',
+  biomes: ['void_plains'],
+  textureKey: 'creature_plains_grazer',
+  color: 0x8a8a6a,
+  lootTableId: 'loot_creature_plains_grazer',
+  behavior: 'herbivore',
+  baseHealth: 70,
+  levelRange: [1, 3],
+  baseXp: 10,
+  respawnSeconds: 180,
+};
+
+export const CREATURE_VOID_PROWLER: CreatureDefinition = {
+  id: 'creature_void_prowler',
+  displayName: 'Void Prowler',
+  description: 'Lean, quick predator that hunts in the open plains. Ambushes from behind rocky outcrops.',
+  entityClass: 'creature',
+  biomes: ['void_plains'],
+  textureKey: 'creature_void_prowler',
+  color: 0x3a3a5a,
+  lootTableId: 'loot_creature_void_prowler',
+  behavior: 'predator',
+  baseHealth: 95,
+  levelRange: [3, 6],
+  baseXp: 18,
+  respawnSeconds: 240,
+};
+
+export const CREATURE_MYCELIAL_STALKER: CreatureDefinition = {
+  id: 'creature_mycelial_stalker',
+  displayName: 'Mycelial Stalker',
+  description: 'Silent hunter that moves through fungal undergrowth. Uses chemical lures to attract prey.',
+  entityClass: 'creature',
+  biomes: ['fungal_forest'],
+  textureKey: 'creature_mycelial_stalker',
+  color: 0x554488,
+  lootTableId: 'loot_creature_mycelial_stalker',
+  behavior: 'predator',
+  baseHealth: 90,
+  levelRange: [3, 6],
+  baseXp: 18,
+  respawnSeconds: 240,
+};
+
+export const CREATURE_SPORE_BEETLE: CreatureDefinition = {
+  id: 'creature_spore_beetle',
+  displayName: 'Spore Beetle',
+  description: 'Armored beetle that feeds on fungal fruiting bodies. Releases defensive spore clouds when threatened.',
+  entityClass: 'creature',
+  biomes: ['fungal_forest'],
+  textureKey: 'creature_spore_beetle',
+  color: 0x668844,
+  lootTableId: 'loot_creature_spore_beetle',
+  behavior: 'herbivore',
+  baseHealth: 80,
+  levelRange: [1, 4],
+  baseXp: 12,
+  respawnSeconds: 200,
+};
+
+export const CREATURE_RUIN_SCAVENGER: CreatureDefinition = {
+  id: 'creature_ruin_scavenger',
+  displayName: 'Ruin Scavenger',
+  description: 'Small, quick creature that picks through Ancient refuse. Skittish but will bite if cornered.',
+  entityClass: 'creature',
+  biomes: ['ancient_ruins'],
+  textureKey: 'creature_ruin_scavenger',
+  color: 0xaa8855,
+  lootTableId: 'loot_creature_ruin_scavenger',
+  behavior: 'omnivore',
+  baseHealth: 75,
+  levelRange: [1, 4],
+  baseXp: 12,
+  respawnSeconds: 180,
+};
+
+export const CREATURE_RUIN_WARDEN: CreatureDefinition = {
+  id: 'creature_ruin_warden',
+  displayName: 'Ruin Warden',
+  description: 'Large territorial predator that nests in Ancient structures. Fiercely defends its claimed ruins.',
+  entityClass: 'creature',
+  biomes: ['ancient_ruins'],
+  textureKey: 'creature_ruin_warden',
+  color: 0x886644,
+  lootTableId: 'loot_creature_ruin_warden',
+  behavior: 'predator',
+  baseHealth: 100,
+  levelRange: [4, 6],
+  baseXp: 20,
+  respawnSeconds: 240,
+};
+
 export const ALL_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_VOID_CRAWLER,
   CREATURE_CANOPY_GRAZER,
@@ -361,4 +459,11 @@ export const ALL_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_CRATER_STALKER,
   CREATURE_GUARDIAN_CONSTRUCT,
   CREATURE_RELIC_BEAST,
+  // Phase 110 Tier I creatures
+  CREATURE_PLAINS_GRAZER,
+  CREATURE_VOID_PROWLER,
+  CREATURE_MYCELIAL_STALKER,
+  CREATURE_SPORE_BEETLE,
+  CREATURE_RUIN_SCAVENGER,
+  CREATURE_RUIN_WARDEN,
 ];

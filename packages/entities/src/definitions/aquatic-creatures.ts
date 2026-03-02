@@ -160,6 +160,24 @@ export const CREATURE_ABYSSAL_LEVIATHAN: CreatureDefinition = {
   respawnSeconds: 900,
 };
 
+// ===== PHASE 110 — Tier I Tidal Pools Addition =====
+
+export const CREATURE_TIDAL_SNAPPER: CreatureDefinition = {
+  id: 'creature_tidal_snapper',
+  displayName: 'Tidal Snapper',
+  description: 'Aggressive crustacean lurking in deeper tidal pools. Lightning-fast strike from concealed position.',
+  entityClass: 'creature',
+  biomes: ['tidal_pools'],
+  textureKey: 'creature_tidal_snapper',
+  color: 0x446688,
+  lootTableId: 'loot_creature_tidal_snapper',
+  behavior: 'predator',
+  baseHealth: 95,
+  levelRange: [3, 6],
+  baseXp: 17,
+  respawnSeconds: 240,
+};
+
 export const ALL_AQUATIC_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_TIDE_CRAB,
   CREATURE_COASTAL_URCHIN,
@@ -171,4 +189,6 @@ export const ALL_AQUATIC_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_TRENCH_HUNTER,
   CREATURE_ABYSSAL_SCAVENGER,
   CREATURE_ABYSSAL_LEVIATHAN,
+  // Phase 110 Tier I tidal_pools addition
+  CREATURE_TIDAL_SNAPPER,
 ];

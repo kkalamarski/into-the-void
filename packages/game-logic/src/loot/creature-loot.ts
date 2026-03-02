@@ -386,6 +386,56 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.2 },
   ]],
 
+  // ===== Phase 110 — Tier I Biome Creature Population =====
+
+  // Tier I — Void Plains (Herbivore, levels 1-3)
+  ['loot_creature_plains_grazer', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 3, chance: 0.8 },
+    { itemId: 'world_void_chitin', minAmount: 1, maxAmount: 1, chance: 0.4 },
+  ]],
+
+  // Tier I — Void Plains (Predator, levels 3-6)
+  ['loot_creature_void_prowler', [
+    { itemId: 'world_void_chitin', minAmount: 1, maxAmount: 2, chance: 0.7 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'reagent_void_essence', minAmount: 1, maxAmount: 1, chance: 0.05 },
+  ]],
+
+  // Tier I — Fungal Forest (Predator, levels 3-6)
+  ['loot_creature_mycelial_stalker', [
+    { itemId: 'world_fungal_membrane', minAmount: 1, maxAmount: 2, chance: 0.65 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.12 },
+    { itemId: 'reagent_fungal_extract', minAmount: 1, maxAmount: 1, chance: 0.08 },
+  ]],
+
+  // Tier I — Fungal Forest (Herbivore, levels 1-4)
+  ['loot_creature_spore_beetle', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.8 },
+    { itemId: 'world_fungal_membrane', minAmount: 1, maxAmount: 1, chance: 0.45 },
+    { itemId: 'world_spore_sack', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier I — Tidal Pools (Predator, levels 3-6)
+  ['loot_creature_tidal_snapper', [
+    { itemId: 'world_coastal_shell', minAmount: 1, maxAmount: 2, chance: 0.6 },
+    { itemId: 'world_tidal_pearl', minAmount: 1, maxAmount: 1, chance: 0.2 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier I — Ancient Ruins (Omnivore, levels 1-4)
+  ['loot_creature_ruin_scavenger', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.75 },
+    { itemId: 'world_ruin_shard', minAmount: 1, maxAmount: 1, chance: 0.25 },
+    { itemId: 'world_ancient_fragment', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier I — Ancient Ruins (Predator, levels 4-6)
+  ['loot_creature_ruin_warden', [
+    { itemId: 'world_ruin_shard', minAmount: 1, maxAmount: 2, chance: 0.55 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.2 },
+    { itemId: 'reagent_ancient_circuitry', minAmount: 1, maxAmount: 1, chance: 0.05 },
+  ]],
+
   // Tier II — Ancient Ruins (Omnivore, levels 10-20)
   ['loot_creature_relic_beast', [
     { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.8 },
