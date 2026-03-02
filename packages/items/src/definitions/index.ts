@@ -217,6 +217,10 @@ export const ITEM_IDS = {
   WORLD_FUNGAL_MEMBRANE: 'world_fungal_membrane',
   WORLD_TIDAL_PEARL: 'world_tidal_pearl',
   WORLD_RUIN_SHARD: 'world_ruin_shard',
+  // Phase 110 Tier II toxic_wastes materials
+  WORLD_CORROSIVE_CARAPACE: 'world_corrosive_carapace',
+  WORLD_SLUDGE_MEMBRANE: 'world_sludge_membrane',
+  WORLD_ACID_GLAND: 'world_acid_gland',
 
   // ---- REAGENTS ----
   REAGENT_CRYSTALLINE_DUST: 'reagent_crystalline_dust',

@@ -81,7 +81,11 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   toxic_wastes: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_TOXIC_LURKER, weight: 7, minLevel: 8, maxLevel: 20 },
+      { id: ENTITY_IDS.CREATURE_SLUDGE_GRAZER, weight: 10, minLevel: 7, maxLevel: 14 },
+      { id: ENTITY_IDS.CREATURE_FUME_DRIFTER, weight: 7, minLevel: 8, maxLevel: 15 },
+      { id: ENTITY_IDS.CREATURE_TOXIC_LURKER, weight: 5, minLevel: 8, maxLevel: 20 },
+      { id: ENTITY_IDS.CREATURE_CORROSION_MAW, weight: 4, minLevel: 10, maxLevel: 18 },
+      { id: ENTITY_IDS.CREATURE_ACID_MANIAC, weight: 1, minLevel: 12, maxLevel: 20 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_CORROSIVE_DEPOSIT, weight: 10, rarity: 1 },
@@ -207,8 +211,10 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   miasma_marshes: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_MARSH_LURKER, weight: 7, minLevel: 5, maxLevel: 15 },
-      { id: ENTITY_IDS.CREATURE_MIASMA_DRIFTER, weight: 6, minLevel: 3, maxLevel: 10 },
+      { id: ENTITY_IDS.CREATURE_BOG_CRAWLER, weight: 10, minLevel: 7, maxLevel: 15 },
+      { id: ENTITY_IDS.CREATURE_MIASMA_DRIFTER, weight: 7, minLevel: 3, maxLevel: 10 },
+      { id: ENTITY_IDS.CREATURE_MARSH_SNAPPER, weight: 6, minLevel: 8, maxLevel: 16 },
+      { id: ENTITY_IDS.CREATURE_MARSH_LURKER, weight: 4, minLevel: 5, maxLevel: 15 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_CHEMICAL_SUMP, weight: 8, rarity: 2 },
@@ -226,8 +232,10 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   petrified_expanse: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_DART_RUNNER, weight: 8, minLevel: 6, maxLevel: 16 },
-      { id: ENTITY_IDS.CREATURE_PETRIFIED_LURKER, weight: 5, minLevel: 8, maxLevel: 18 },
+      { id: ENTITY_IDS.CREATURE_STONE_GRAZER, weight: 10, minLevel: 7, maxLevel: 14 },
+      { id: ENTITY_IDS.CREATURE_FOSSIL_SCAVENGER, weight: 7, minLevel: 8, maxLevel: 16 },
+      { id: ENTITY_IDS.CREATURE_DART_RUNNER, weight: 6, minLevel: 6, maxLevel: 16 },
+      { id: ENTITY_IDS.CREATURE_PETRIFIED_LURKER, weight: 4, minLevel: 8, maxLevel: 18 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_MINERALIZED_LOG, weight: 6, rarity: 2 },
@@ -267,9 +275,10 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   kelp_forests: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_KELP_GRAZER, weight: 8, minLevel: 6, maxLevel: 14 },
-      { id: ENTITY_IDS.CREATURE_TANGLE_STALKER, weight: 5, minLevel: 8, maxLevel: 16 },
+      { id: ENTITY_IDS.CREATURE_KELP_GRAZER, weight: 10, minLevel: 6, maxLevel: 14 },
       { id: ENTITY_IDS.CREATURE_CURRENT_RIDER, weight: 7, minLevel: 7, maxLevel: 15 },
+      { id: ENTITY_IDS.CREATURE_TANGLE_STALKER, weight: 4, minLevel: 8, maxLevel: 16 },
+      { id: ENTITY_IDS.CREATURE_KELP_AMBUSHER, weight: 4, minLevel: 10, maxLevel: 18 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_SEA_CRYSTAL, weight: 8, rarity: 1 },
@@ -363,9 +372,10 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   bioluminescent_depths: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_ECHO_DRIFTER, weight: 8, minLevel: 6, maxLevel: 14 },
+      { id: ENTITY_IDS.CREATURE_ECHO_DRIFTER, weight: 10, minLevel: 6, maxLevel: 14 },
       { id: ENTITY_IDS.CREATURE_PHASE_GRAZER, weight: 7, minLevel: 7, maxLevel: 15 },
-      { id: ENTITY_IDS.CREATURE_REALITY_SCAVENGER, weight: 5, minLevel: 8, maxLevel: 16 },
+      { id: ENTITY_IDS.CREATURE_REALITY_SCAVENGER, weight: 4, minLevel: 8, maxLevel: 16 },
+      { id: ENTITY_IDS.CREATURE_ABYSSAL_ANGLER, weight: 4, minLevel: 10, maxLevel: 20 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_ANOMALY_SHARD, weight: 6, rarity: 2 },

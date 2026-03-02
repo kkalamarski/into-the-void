@@ -168,6 +168,24 @@ export const CREATURE_DIMENSIONAL_ABERRATION: CreatureDefinition = {
   respawnSeconds: 900,
 };
 
+// ===== PHASE 110 — Tier II Bioluminescent Depths Addition =====
+
+export const CREATURE_ABYSSAL_ANGLER: CreatureDefinition = {
+  id: 'creature_abyssal_angler',
+  displayName: 'Abyssal Angler',
+  description: 'Deep-dwelling predator that uses bioluminescent lures. Draws prey close with hypnotic light patterns before striking.',
+  entityClass: 'creature',
+  biomes: ['bioluminescent_depths'],
+  textureKey: 'creature_abyssal_angler',
+  color: 0x2244aa,
+  lootTableId: 'loot_creature_abyssal_angler',
+  behavior: 'predator',
+  baseHealth: 155,
+  levelRange: [10, 20],
+  baseXp: 48,
+  respawnSeconds: 400,
+};
+
 export const ALL_EXOTIC_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_ECHO_DRIFTER,
   CREATURE_PHASE_GRAZER,
@@ -179,4 +197,6 @@ export const ALL_EXOTIC_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_ANOMALY_SCAVENGER,
   CREATURE_VOID_STALKER,
   CREATURE_DIMENSIONAL_ABERRATION,
+  // Phase 110 Tier II bioluminescent_depths addition
+  CREATURE_ABYSSAL_ANGLER,
 ];

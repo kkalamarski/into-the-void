@@ -429,11 +429,86 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_ancient_fragment', minAmount: 1, maxAmount: 1, chance: 0.1 },
   ]],
 
+  // ===== Phase 110 — Tier II Land Creature Loot =====
+
+  // Tier II — Toxic Wastes (Herbivore, levels 7-14)
+  ['loot_creature_sludge_grazer', [
+    { itemId: 'world_sludge_membrane', minAmount: 1, maxAmount: 2, chance: 0.75 },
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 3, chance: 0.6 },
+    { itemId: 'world_toxic_residue', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ]],
+
+  // Tier II — Toxic Wastes (Predator, levels 10-18)
+  ['loot_creature_corrosion_maw', [
+    { itemId: 'world_corrosive_carapace', minAmount: 1, maxAmount: 2, chance: 0.6 },
+    { itemId: 'world_acid_gland', minAmount: 1, maxAmount: 1, chance: 0.35 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ]],
+
+  // Tier II — Toxic Wastes (Omnivore, levels 8-15)
+  ['loot_creature_fume_drifter', [
+    { itemId: 'world_toxic_residue', minAmount: 1, maxAmount: 2, chance: 0.65 },
+    { itemId: 'world_sludge_membrane', minAmount: 1, maxAmount: 1, chance: 0.4 },
+    { itemId: 'reagent_volatile_extract', minAmount: 1, maxAmount: 1, chance: 0.08 },
+  ]],
+
+  // Tier II — Toxic Wastes (Maniac, levels 12-20)
+  ['loot_creature_acid_maniac', [
+    { itemId: 'world_acid_gland', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'world_corrosive_carapace', minAmount: 1, maxAmount: 1, chance: 0.8 },
+    { itemId: 'reagent_volatile_extract', minAmount: 1, maxAmount: 1, chance: 0.3 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ]],
+
+  // Tier II — Miasma Marshes (Herbivore, levels 7-15)
+  ['loot_creature_bog_crawler', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 3, chance: 0.8 },
+    { itemId: 'world_toxic_residue', minAmount: 1, maxAmount: 1, chance: 0.3 },
+    { itemId: 'world_sludge_membrane', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ]],
+
+  // Tier II — Miasma Marshes (Omnivore, levels 8-16)
+  ['loot_creature_marsh_snapper', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.7 },
+    { itemId: 'world_toxic_residue', minAmount: 1, maxAmount: 1, chance: 0.4 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier II — Petrified Expanse (Herbivore, levels 7-14)
+  ['loot_creature_stone_grazer', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.7 },
+    { itemId: 'world_alien_flora_petrified', minAmount: 1, maxAmount: 1, chance: 0.35 },
+    { itemId: 'reagent_petrification_enzyme', minAmount: 1, maxAmount: 1, chance: 0.08 },
+  ]],
+
+  // Tier II — Petrified Expanse (Omnivore, levels 8-16)
+  ['loot_creature_fossil_scavenger', [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.65 },
+    { itemId: 'world_alien_flora_petrified', minAmount: 1, maxAmount: 1, chance: 0.25 },
+    { itemId: 'reagent_petrification_enzyme', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
   // Tier I — Ancient Ruins (Predator, levels 4-6)
   ['loot_creature_ruin_warden', [
     { itemId: 'world_ruin_shard', minAmount: 1, maxAmount: 2, chance: 0.55 },
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.2 },
     { itemId: 'reagent_ancient_circuitry', minAmount: 1, maxAmount: 1, chance: 0.05 },
+  ]],
+
+  // ===== Phase 110 — Tier II Aquatic & Exotic Creature Loot =====
+
+  // Tier II — Kelp Forests (Predator, levels 10-18)
+  ['loot_creature_kelp_ambusher', [
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.5 },
+    { itemId: 'world_coastal_shell', minAmount: 1, maxAmount: 1, chance: 0.4 },
+    { itemId: 'reagent_biogenic_catalyst', minAmount: 1, maxAmount: 1, chance: 0.08 },
+  ]],
+
+  // Tier II — Bioluminescent Depths (Predator, levels 10-20)
+  ['loot_creature_abyssal_angler', [
+    { itemId: 'world_luminous_extract', minAmount: 1, maxAmount: 2, chance: 0.55 },
+    { itemId: 'reagent_bioluminescent_compound', minAmount: 1, maxAmount: 1, chance: 0.15 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.25 },
   ]],
 
   // Tier II — Ancient Ruins (Omnivore, levels 10-20)

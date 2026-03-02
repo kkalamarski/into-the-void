@@ -436,6 +436,136 @@ export const CREATURE_RUIN_WARDEN: CreatureDefinition = {
   respawnSeconds: 240,
 };
 
+// ===== PHASE 110 — Tier II Biome Creature Population =====
+
+export const CREATURE_SLUDGE_GRAZER: CreatureDefinition = {
+  id: 'creature_sludge_grazer',
+  displayName: 'Sludge Grazer',
+  description: 'Squat, armored creature that filters nutrients from toxic pools. Its shell is heavily corroded but functionally impervious to acid.',
+  entityClass: 'creature',
+  biomes: ['toxic_wastes'],
+  textureKey: 'creature_sludge_grazer',
+  color: 0x667744,
+  lootTableId: 'loot_creature_sludge_grazer',
+  behavior: 'herbivore',
+  baseHealth: 120,
+  levelRange: [7, 14],
+  baseXp: 28,
+  respawnSeconds: 300,
+};
+
+export const CREATURE_CORROSION_MAW: CreatureDefinition = {
+  id: 'creature_corrosion_maw',
+  displayName: 'Corrosion Maw',
+  description: 'Ambush predator with acid-etched jaws. Lurks in chemical pools, striking when prey approaches to drink.',
+  entityClass: 'creature',
+  biomes: ['toxic_wastes'],
+  textureKey: 'creature_corrosion_maw',
+  color: 0x7dbb00,
+  lootTableId: 'loot_creature_corrosion_maw',
+  behavior: 'predator',
+  baseHealth: 150,
+  levelRange: [10, 18],
+  baseXp: 45,
+  respawnSeconds: 360,
+};
+
+export const CREATURE_FUME_DRIFTER: CreatureDefinition = {
+  id: 'creature_fume_drifter',
+  displayName: 'Fume Drifter',
+  description: 'Floating scavenger that feeds on chemical vapors and decomposing matter. Releases toxic clouds when disturbed.',
+  entityClass: 'creature',
+  biomes: ['toxic_wastes'],
+  textureKey: 'creature_fume_drifter',
+  color: 0x889944,
+  lootTableId: 'loot_creature_fume_drifter',
+  behavior: 'omnivore',
+  baseHealth: 110,
+  levelRange: [8, 15],
+  baseXp: 32,
+  respawnSeconds: 300,
+};
+
+export const CREATURE_ACID_MANIAC: CreatureDefinition = {
+  id: 'creature_acid_maniac',
+  displayName: 'Acid Maniac',
+  description: 'Creature driven to chemical-fueled frenzy. Corroded beyond recognition, it attacks anything it detects without self-preservation.',
+  entityClass: 'creature',
+  biomes: ['toxic_wastes'],
+  textureKey: 'creature_acid_maniac',
+  color: 0xccdd00,
+  lootTableId: 'loot_creature_acid_maniac',
+  behavior: 'maniac',
+  baseHealth: 200,
+  levelRange: [12, 20],
+  baseXp: 65,
+  respawnSeconds: 600,
+};
+
+export const CREATURE_BOG_CRAWLER: CreatureDefinition = {
+  id: 'creature_bog_crawler',
+  displayName: 'Bog Crawler',
+  description: 'Slow-moving amphibian that grazes on marsh vegetation. Tough hide provides natural toxin resistance.',
+  entityClass: 'creature',
+  biomes: ['miasma_marshes'],
+  textureKey: 'creature_bog_crawler',
+  color: 0x556633,
+  lootTableId: 'loot_creature_bog_crawler',
+  behavior: 'herbivore',
+  baseHealth: 130,
+  levelRange: [7, 15],
+  baseXp: 30,
+  respawnSeconds: 300,
+};
+
+export const CREATURE_MARSH_SNAPPER: CreatureDefinition = {
+  id: 'creature_marsh_snapper',
+  displayName: 'Marsh Snapper',
+  description: 'Opportunistic feeder lurking in shallow water. Snatches anything small enough to swallow.',
+  entityClass: 'creature',
+  biomes: ['miasma_marshes'],
+  textureKey: 'creature_marsh_snapper',
+  color: 0x445544,
+  lootTableId: 'loot_creature_marsh_snapper',
+  behavior: 'omnivore',
+  baseHealth: 115,
+  levelRange: [8, 16],
+  baseXp: 34,
+  respawnSeconds: 300,
+};
+
+export const CREATURE_STONE_GRAZER: CreatureDefinition = {
+  id: 'creature_stone_grazer',
+  displayName: 'Stone Grazer',
+  description: 'Heavily calcified creature that feeds on mineral-rich lichen. Moves slowly but has near-impenetrable petrified armor.',
+  entityClass: 'creature',
+  biomes: ['petrified_expanse'],
+  textureKey: 'creature_stone_grazer',
+  color: 0x998877,
+  lootTableId: 'loot_creature_stone_grazer',
+  behavior: 'herbivore',
+  baseHealth: 140,
+  levelRange: [7, 14],
+  baseXp: 28,
+  respawnSeconds: 300,
+};
+
+export const CREATURE_FOSSIL_SCAVENGER: CreatureDefinition = {
+  id: 'creature_fossil_scavenger',
+  displayName: 'Fossil Scavenger',
+  description: 'Quick, adaptable creature picking through petrified remains. Strips minerals from fossilized matter.',
+  entityClass: 'creature',
+  biomes: ['petrified_expanse'],
+  textureKey: 'creature_fossil_scavenger',
+  color: 0x887766,
+  lootTableId: 'loot_creature_fossil_scavenger',
+  behavior: 'omnivore',
+  baseHealth: 105,
+  levelRange: [8, 16],
+  baseXp: 32,
+  respawnSeconds: 280,
+};
+
 export const ALL_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_VOID_CRAWLER,
   CREATURE_CANOPY_GRAZER,
@@ -466,4 +596,13 @@ export const ALL_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_SPORE_BEETLE,
   CREATURE_RUIN_SCAVENGER,
   CREATURE_RUIN_WARDEN,
+  // Phase 110 Tier II creatures
+  CREATURE_SLUDGE_GRAZER,
+  CREATURE_CORROSION_MAW,
+  CREATURE_FUME_DRIFTER,
+  CREATURE_ACID_MANIAC,
+  CREATURE_BOG_CRAWLER,
+  CREATURE_MARSH_SNAPPER,
+  CREATURE_STONE_GRAZER,
+  CREATURE_FOSSIL_SCAVENGER,
 ];

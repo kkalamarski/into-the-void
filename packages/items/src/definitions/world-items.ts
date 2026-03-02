@@ -466,6 +466,58 @@ export const WORLD_RUIN_SHARD: ItemDefinition = {
 };
 
 // ============================================================
+// TIER II TOXIC WASTES MATERIALS (3) — Phase 110
+// ============================================================
+
+export const WORLD_CORROSIVE_CARAPACE: ItemDefinition = {
+  id: 'world_corrosive_carapace',
+  displayName: 'Corrosive Carapace',
+  description:
+    'Acid-resistant shell fragment from toxic_wastes creatures. Industrial applications as a corrosion barrier.',
+  category: 'world-item',
+  rarity: 'rare',
+  maxStack: 20,
+  weight: 0.3,
+  baseValue: 280,
+  requiredLevel: 8,
+  ilvl: computeIlvl(2, 'rare'),
+  textureKey: 'item_world_corrosive_carapace',
+  color: 0x99aa00,
+};
+
+export const WORLD_SLUDGE_MEMBRANE: ItemDefinition = {
+  id: 'world_sludge_membrane',
+  displayName: 'Sludge Membrane',
+  description:
+    'Translucent membrane harvested from sludge-dwelling creatures. Naturally filters chemical contaminants.',
+  category: 'world-item',
+  rarity: 'common',
+  maxStack: 20,
+  weight: 0.1,
+  baseValue: 65,
+  requiredLevel: 7,
+  ilvl: computeIlvl(2, 'common'),
+  textureKey: 'item_world_sludge_membrane',
+  color: 0x667744,
+};
+
+export const WORLD_ACID_GLAND: ItemDefinition = {
+  id: 'world_acid_gland',
+  displayName: 'Acid Gland',
+  description:
+    'Intact acid-producing organ from a toxic_wastes predator. Extremely corrosive if ruptured. Handle with filtration gear active.',
+  category: 'world-item',
+  rarity: 'rare',
+  maxStack: 10,
+  weight: 0.4,
+  baseValue: 380,
+  requiredLevel: 10,
+  ilvl: computeIlvl(2, 'rare'),
+  textureKey: 'item_world_acid_gland',
+  color: 0xbbcc00,
+};
+
+// ============================================================
 // ALL WORLD ITEMS
 // ============================================================
 
@@ -496,4 +548,8 @@ export const ALL_WORLD_ITEMS: readonly ItemDefinition[] = [
   WORLD_FUNGAL_MEMBRANE,
   WORLD_TIDAL_PEARL,
   WORLD_RUIN_SHARD,
+  // Phase 110 Tier II toxic_wastes materials
+  WORLD_CORROSIVE_CARAPACE,
+  WORLD_SLUDGE_MEMBRANE,
+  WORLD_ACID_GLAND,
 ];

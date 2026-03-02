@@ -178,6 +178,24 @@ export const CREATURE_TIDAL_SNAPPER: CreatureDefinition = {
   respawnSeconds: 240,
 };
 
+// ===== PHASE 110 — Tier II Kelp Forests Addition =====
+
+export const CREATURE_KELP_AMBUSHER: CreatureDefinition = {
+  id: 'creature_kelp_ambusher',
+  displayName: 'Kelp Ambusher',
+  description: 'Camouflaged predator that mimics kelp fronds. Strikes with blinding speed when prey drifts within range.',
+  entityClass: 'creature',
+  biomes: ['kelp_forests'],
+  textureKey: 'creature_kelp_ambusher',
+  color: 0x336644,
+  lootTableId: 'loot_creature_kelp_ambusher',
+  behavior: 'predator',
+  baseHealth: 145,
+  levelRange: [10, 18],
+  baseXp: 42,
+  respawnSeconds: 360,
+};
+
 export const ALL_AQUATIC_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_TIDE_CRAB,
   CREATURE_COASTAL_URCHIN,
@@ -191,4 +209,6 @@ export const ALL_AQUATIC_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_ABYSSAL_LEVIATHAN,
   // Phase 110 Tier I tidal_pools addition
   CREATURE_TIDAL_SNAPPER,
+  // Phase 110 Tier II kelp_forests addition
+  CREATURE_KELP_AMBUSHER,
 ];

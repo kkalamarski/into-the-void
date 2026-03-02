@@ -69,6 +69,15 @@ export const ENTITY_IDS = {
   CREATURE_SPORE_BEETLE: 'creature_spore_beetle',
   CREATURE_RUIN_SCAVENGER: 'creature_ruin_scavenger',
   CREATURE_RUIN_WARDEN: 'creature_ruin_warden',
+  // Phase 110 Tier II land creatures
+  CREATURE_SLUDGE_GRAZER: 'creature_sludge_grazer',
+  CREATURE_CORROSION_MAW: 'creature_corrosion_maw',
+  CREATURE_FUME_DRIFTER: 'creature_fume_drifter',
+  CREATURE_ACID_MANIAC: 'creature_acid_maniac',
+  CREATURE_BOG_CRAWLER: 'creature_bog_crawler',
+  CREATURE_MARSH_SNAPPER: 'creature_marsh_snapper',
+  CREATURE_STONE_GRAZER: 'creature_stone_grazer',
+  CREATURE_FOSSIL_SCAVENGER: 'creature_fossil_scavenger',
 
   // ---- AQUATIC CREATURES ----
   CREATURE_TIDE_CRAB: 'creature_tide_crab',
@@ -83,6 +92,8 @@ export const ENTITY_IDS = {
   CREATURE_ABYSSAL_LEVIATHAN: 'creature_abyssal_leviathan',
   // Phase 110 Tier I aquatic addition
   CREATURE_TIDAL_SNAPPER: 'creature_tidal_snapper',
+  // Phase 110 Tier II aquatic addition
+  CREATURE_KELP_AMBUSHER: 'creature_kelp_ambusher',
 
   // ---- PLANTS ----
   PLANT_LUMINOUS_VINE: 'plant_luminous_vine',
@@ -168,6 +179,8 @@ export const ENTITY_IDS = {
   CREATURE_ANOMALY_SCAVENGER: 'creature_anomaly_scavenger',
   CREATURE_VOID_STALKER: 'creature_void_stalker',
   CREATURE_DIMENSIONAL_ABERRATION: 'creature_dimensional_aberration',
+  // Phase 110 Tier II exotic addition
+  CREATURE_ABYSSAL_ANGLER: 'creature_abyssal_angler',
 
   // ---- EXOTIC PLANTS ----
   PLANT_REALITY_MOSS: 'plant_reality_moss',
