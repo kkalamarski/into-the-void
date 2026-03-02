@@ -186,6 +186,40 @@ export const CREATURE_ABYSSAL_ANGLER: CreatureDefinition = {
   respawnSeconds: 400,
 };
 
+// ===== PHASE 110 — Tier III Crystalline Wastes Additions =====
+
+export const CREATURE_WASTE_DRIFTER: CreatureDefinition = {
+  id: 'creature_waste_drifter',
+  displayName: 'Waste Drifter',
+  description: 'Semi-corporeal entity that phases between crystal formations, feeding on energy residue left by dimensional phenomena.',
+  entityClass: 'creature',
+  biomes: ['crystalline_wastes'],
+  textureKey: 'creature_waste_drifter',
+  color: 0xbbaacc,
+  lootTableId: 'loot_creature_waste_drifter',
+  behavior: 'omnivore',
+  baseHealth: 180,
+  levelRange: [16, 26],
+  baseXp: 60,
+  respawnSeconds: 450,
+};
+
+export const CREATURE_CRYSTALLINE_MANIAC: CreatureDefinition = {
+  id: 'creature_crystalline_maniac',
+  displayName: 'Crystalline Maniac',
+  description: 'Crystal-warped entity in perpetual dimensional flux. Attacks from shifting spatial positions, its crystalline body refracting reality around it.',
+  entityClass: 'creature',
+  biomes: ['crystalline_wastes'],
+  textureKey: 'creature_crystalline_maniac',
+  color: 0xdd88ff,
+  lootTableId: 'loot_creature_crystalline_maniac',
+  behavior: 'maniac',
+  baseHealth: 310,
+  levelRange: [24, 32],
+  baseXp: 125,
+  respawnSeconds: 900,
+};
+
 export const ALL_EXOTIC_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_ECHO_DRIFTER,
   CREATURE_PHASE_GRAZER,
@@ -199,4 +233,7 @@ export const ALL_EXOTIC_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_DIMENSIONAL_ABERRATION,
   // Phase 110 Tier II bioluminescent_depths addition
   CREATURE_ABYSSAL_ANGLER,
+  // Phase 110 Tier III crystalline_wastes additions
+  CREATURE_WASTE_DRIFTER,
+  CREATURE_CRYSTALLINE_MANIAC,
 ];

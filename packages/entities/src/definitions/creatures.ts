@@ -566,6 +566,220 @@ export const CREATURE_FOSSIL_SCAVENGER: CreatureDefinition = {
   respawnSeconds: 280,
 };
 
+// ===== PHASE 110 — Tier III Biome Creature Population =====
+
+// crystal_caves — 4 new creatures
+export const CREATURE_CRYSTAL_GRAZER: CreatureDefinition = {
+  id: 'creature_crystal_grazer',
+  displayName: 'Crystal Grazer',
+  description: 'Docile creature that subsists on mineral deposits, its body encrusted with crystalline growths. Shatters ambient crystals when startled.',
+  entityClass: 'creature',
+  biomes: ['crystal_caves', 'crystalline_wastes'],
+  textureKey: 'creature_crystal_grazer',
+  color: 0x88aacc,
+  lootTableId: 'loot_creature_crystal_grazer',
+  behavior: 'herbivore',
+  baseHealth: 170,
+  levelRange: [14, 22],
+  baseXp: 50,
+  respawnSeconds: 400,
+};
+
+export const CREATURE_PRISM_WEAVER: CreatureDefinition = {
+  id: 'creature_prism_weaver',
+  displayName: 'Prism Weaver',
+  description: 'Uses reflective crystalline structures on its body to disorient prey and scavenge in the aftermath. Partly camouflaged among cave formations.',
+  entityClass: 'creature',
+  biomes: ['crystal_caves'],
+  textureKey: 'creature_prism_weaver',
+  color: 0xaa88dd,
+  lootTableId: 'loot_creature_prism_weaver',
+  behavior: 'omnivore',
+  baseHealth: 165,
+  levelRange: [16, 24],
+  baseXp: 55,
+  respawnSeconds: 420,
+};
+
+export const CREATURE_SHARD_REAPER: CreatureDefinition = {
+  id: 'creature_shard_reaper',
+  displayName: 'Shard Reaper',
+  description: 'Apex cave predator with blade-like crystalline limbs. Uses echolocation to navigate pitch-dark caverns and strike with precision.',
+  entityClass: 'creature',
+  biomes: ['crystal_caves'],
+  textureKey: 'creature_shard_reaper',
+  color: 0x6688aa,
+  lootTableId: 'loot_creature_shard_reaper',
+  behavior: 'predator',
+  baseHealth: 200,
+  levelRange: [18, 26],
+  baseXp: 70,
+  respawnSeconds: 540,
+};
+
+export const CREATURE_CRYSTAL_BERSERKER: CreatureDefinition = {
+  id: 'creature_crystal_berserker',
+  displayName: 'Crystal Berserker',
+  description: 'Crystal-fused creature in permanent agony from growths piercing its body. Its rampages shatter cave formations, creating deadly shard-storms.',
+  entityClass: 'creature',
+  biomes: ['crystal_caves'],
+  textureKey: 'creature_crystal_berserker',
+  color: 0xcc44ff,
+  lootTableId: 'loot_creature_crystal_berserker',
+  behavior: 'maniac',
+  baseHealth: 300,
+  levelRange: [22, 30],
+  baseXp: 120,
+  respawnSeconds: 900,
+};
+
+// volcanic_ridge — 4 new creatures
+export const CREATURE_LAVA_GRAZER: CreatureDefinition = {
+  id: 'creature_lava_grazer',
+  displayName: 'Lava Grazer',
+  description: 'Thick-skinned creature feeding on heat-resistant lichen near lava flows. Virtually fireproof but slow-moving.',
+  entityClass: 'creature',
+  biomes: ['volcanic_ridge'],
+  textureKey: 'creature_lava_grazer',
+  color: 0xcc6633,
+  lootTableId: 'loot_creature_lava_grazer',
+  behavior: 'herbivore',
+  baseHealth: 180,
+  levelRange: [14, 22],
+  baseXp: 48,
+  respawnSeconds: 400,
+};
+
+export const CREATURE_CINDER_STALKER: CreatureDefinition = {
+  id: 'creature_cinder_stalker',
+  displayName: 'Cinder Stalker',
+  description: 'Fast, heat-adapted predator that uses thermal currents to mask its approach. Strikes from behind lava plumes.',
+  entityClass: 'creature',
+  biomes: ['volcanic_ridge'],
+  textureKey: 'creature_cinder_stalker',
+  color: 0xee4422,
+  lootTableId: 'loot_creature_cinder_stalker',
+  behavior: 'predator',
+  baseHealth: 195,
+  levelRange: [18, 26],
+  baseXp: 68,
+  respawnSeconds: 540,
+};
+
+export const CREATURE_EMBER_SCAVENGER: CreatureDefinition = {
+  id: 'creature_ember_scavenger',
+  displayName: 'Ember Scavenger',
+  description: 'Opportunistic feeder that follows lava flows, consuming organisms caught in eruptions. Resistant to extreme temperatures.',
+  entityClass: 'creature',
+  biomes: ['volcanic_ridge'],
+  textureKey: 'creature_ember_scavenger',
+  color: 0xdd8844,
+  lootTableId: 'loot_creature_ember_scavenger',
+  behavior: 'omnivore',
+  baseHealth: 170,
+  levelRange: [15, 23],
+  baseXp: 55,
+  respawnSeconds: 420,
+};
+
+export const CREATURE_MAGMA_FURY: CreatureDefinition = {
+  id: 'creature_magma_fury',
+  displayName: 'Magma Fury',
+  description: 'Volcanic creature in constant thermal agony. Molten rock seeps from cracks in its silicon-armored hide. Attacks everything relentlessly.',
+  entityClass: 'creature',
+  biomes: ['volcanic_ridge'],
+  textureKey: 'creature_magma_fury',
+  color: 0xff3300,
+  lootTableId: 'loot_creature_magma_fury',
+  behavior: 'maniac',
+  baseHealth: 310,
+  levelRange: [22, 32],
+  baseXp: 125,
+  respawnSeconds: 900,
+};
+
+// frozen_expanse — 2 new creatures
+export const CREATURE_FROST_GRAZER: CreatureDefinition = {
+  id: 'creature_frost_grazer',
+  displayName: 'Frost Grazer',
+  description: 'Heavily insulated herd animal that scrapes ice-algae from frozen surfaces. Conserves energy through extremely slow metabolism.',
+  entityClass: 'creature',
+  biomes: ['frozen_expanse'],
+  textureKey: 'creature_frost_grazer',
+  color: 0xaaddee,
+  lootTableId: 'loot_creature_frost_grazer',
+  behavior: 'herbivore',
+  baseHealth: 175,
+  levelRange: [14, 22],
+  baseXp: 48,
+  respawnSeconds: 400,
+};
+
+export const CREATURE_BLIZZARD_MANIAC: CreatureDefinition = {
+  id: 'creature_blizzard_maniac',
+  displayName: 'Blizzard Maniac',
+  description: 'Frost-crazed creature that has abandoned energy conservation. Charges through blizzards attacking anything warm-blooded it detects.',
+  entityClass: 'creature',
+  biomes: ['frozen_expanse'],
+  textureKey: 'creature_blizzard_maniac',
+  color: 0x4488cc,
+  lootTableId: 'loot_creature_blizzard_maniac',
+  behavior: 'maniac',
+  baseHealth: 290,
+  levelRange: [20, 28],
+  baseXp: 110,
+  respawnSeconds: 900,
+};
+
+// starfall_crater — 3 new creatures
+export const CREATURE_CRATER_SCAVENGER: CreatureDefinition = {
+  id: 'creature_crater_scavenger',
+  displayName: 'Crater Scavenger',
+  description: 'Void-mutated scavenger feeding on anomaly-warped matter. Extra limbs give it unsettling speed across broken terrain.',
+  entityClass: 'creature',
+  biomes: ['starfall_crater'],
+  textureKey: 'creature_crater_scavenger',
+  color: 0x556677,
+  lootTableId: 'loot_creature_crater_scavenger',
+  behavior: 'omnivore',
+  baseHealth: 175,
+  levelRange: [15, 24],
+  baseXp: 58,
+  respawnSeconds: 420,
+};
+
+export const CREATURE_ANOMALY_PREDATOR: CreatureDefinition = {
+  id: 'creature_anomaly_predator',
+  displayName: 'Anomaly Predator',
+  description: 'Apex predator warped by crater anomalies. Hunts in spatial distortion fields, appearing to flicker between positions.',
+  entityClass: 'creature',
+  biomes: ['starfall_crater'],
+  textureKey: 'creature_anomaly_predator',
+  color: 0x445566,
+  lootTableId: 'loot_creature_anomaly_predator',
+  behavior: 'predator',
+  baseHealth: 210,
+  levelRange: [18, 28],
+  baseXp: 72,
+  respawnSeconds: 540,
+};
+
+export const CREATURE_STARFALL_MANIAC: CreatureDefinition = {
+  id: 'creature_starfall_maniac',
+  displayName: 'Starfall Maniac',
+  description: 'Crater creature driven insane by prolonged anomaly exposure. Reality warps in its wake as it charges without regard for self-preservation.',
+  entityClass: 'creature',
+  biomes: ['starfall_crater'],
+  textureKey: 'creature_starfall_maniac',
+  color: 0x7744aa,
+  lootTableId: 'loot_creature_starfall_maniac',
+  behavior: 'maniac',
+  baseHealth: 300,
+  levelRange: [22, 32],
+  baseXp: 120,
+  respawnSeconds: 900,
+};
+
 export const ALL_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_VOID_CRAWLER,
   CREATURE_CANOPY_GRAZER,
@@ -605,4 +819,18 @@ export const ALL_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_MARSH_SNAPPER,
   CREATURE_STONE_GRAZER,
   CREATURE_FOSSIL_SCAVENGER,
+  // Phase 110 Tier III creatures
+  CREATURE_CRYSTAL_GRAZER,
+  CREATURE_PRISM_WEAVER,
+  CREATURE_SHARD_REAPER,
+  CREATURE_CRYSTAL_BERSERKER,
+  CREATURE_LAVA_GRAZER,
+  CREATURE_CINDER_STALKER,
+  CREATURE_EMBER_SCAVENGER,
+  CREATURE_MAGMA_FURY,
+  CREATURE_FROST_GRAZER,
+  CREATURE_BLIZZARD_MANIAC,
+  CREATURE_CRATER_SCAVENGER,
+  CREATURE_ANOMALY_PREDATOR,
+  CREATURE_STARFALL_MANIAC,
 ];

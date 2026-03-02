@@ -78,6 +78,20 @@ export const ENTITY_IDS = {
   CREATURE_MARSH_SNAPPER: 'creature_marsh_snapper',
   CREATURE_STONE_GRAZER: 'creature_stone_grazer',
   CREATURE_FOSSIL_SCAVENGER: 'creature_fossil_scavenger',
+  // Phase 110 Tier III land creatures
+  CREATURE_CRYSTAL_GRAZER: 'creature_crystal_grazer',
+  CREATURE_PRISM_WEAVER: 'creature_prism_weaver',
+  CREATURE_SHARD_REAPER: 'creature_shard_reaper',
+  CREATURE_CRYSTAL_BERSERKER: 'creature_crystal_berserker',
+  CREATURE_LAVA_GRAZER: 'creature_lava_grazer',
+  CREATURE_CINDER_STALKER: 'creature_cinder_stalker',
+  CREATURE_EMBER_SCAVENGER: 'creature_ember_scavenger',
+  CREATURE_MAGMA_FURY: 'creature_magma_fury',
+  CREATURE_FROST_GRAZER: 'creature_frost_grazer',
+  CREATURE_BLIZZARD_MANIAC: 'creature_blizzard_maniac',
+  CREATURE_CRATER_SCAVENGER: 'creature_crater_scavenger',
+  CREATURE_ANOMALY_PREDATOR: 'creature_anomaly_predator',
+  CREATURE_STARFALL_MANIAC: 'creature_starfall_maniac',
 
   // ---- AQUATIC CREATURES ----
   CREATURE_TIDE_CRAB: 'creature_tide_crab',
@@ -94,6 +108,9 @@ export const ENTITY_IDS = {
   CREATURE_TIDAL_SNAPPER: 'creature_tidal_snapper',
   // Phase 110 Tier II aquatic addition
   CREATURE_KELP_AMBUSHER: 'creature_kelp_ambusher',
+  // Phase 110 Tier III deep_trenches additions
+  CREATURE_TRENCH_DRIFTER: 'creature_trench_drifter',
+  CREATURE_DEPTH_CRUSHER: 'creature_depth_crusher',
 
   // ---- PLANTS ----
   PLANT_LUMINOUS_VINE: 'plant_luminous_vine',
@@ -181,6 +198,9 @@ export const ENTITY_IDS = {
   CREATURE_DIMENSIONAL_ABERRATION: 'creature_dimensional_aberration',
   // Phase 110 Tier II exotic addition
   CREATURE_ABYSSAL_ANGLER: 'creature_abyssal_angler',
+  // Phase 110 Tier III crystalline_wastes additions
+  CREATURE_WASTE_DRIFTER: 'creature_waste_drifter',
+  CREATURE_CRYSTALLINE_MANIAC: 'creature_crystalline_maniac',
 
   // ---- EXOTIC PLANTS ----
   PLANT_REALITY_MOSS: 'plant_reality_moss',

@@ -511,6 +511,131 @@ export const CREATURE_LOOT_TABLES = new Map<string, readonly HarvestYield[]>([
     { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.25 },
   ]],
 
+  // ===== Phase 110 — Tier III Biome Creature Loot =====
+
+  // Tier III — Crystal Caves (Herbivore, levels 14-22)
+  ['loot_creature_crystal_grazer', [
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 3, chance: 0.7 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.3 },
+    { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 1, chance: 0.12 },
+  ]],
+
+  // Tier III — Crystal Caves (Omnivore, levels 16-24)
+  ['loot_creature_prism_weaver', [
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 2, chance: 0.55 },
+    { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 1, chance: 0.18 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ]],
+
+  // Tier III — Crystal Caves (Predator, levels 18-26)
+  ['loot_creature_shard_reaper', [
+    { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 2, chance: 0.4 },
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 2, chance: 0.5 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier III — Crystal Caves (Maniac, levels 22-30)
+  ['loot_creature_crystal_berserker', [
+    { itemId: 'reagent_crystalline_dust', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'world_crystal_fragment', minAmount: 2, maxAmount: 3, chance: 1.0 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.4 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ]],
+
+  // Tier III — Volcanic Ridge (Herbivore, levels 14-22)
+  ['loot_creature_lava_grazer', [
+    { itemId: 'world_volcanic_glass', minAmount: 1, maxAmount: 2, chance: 0.6 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.3 },
+    { itemId: 'world_geothermal_compound', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ]],
+
+  // Tier III — Volcanic Ridge (Predator, levels 18-26)
+  ['loot_creature_cinder_stalker', [
+    { itemId: 'world_volcanic_glass', minAmount: 1, maxAmount: 2, chance: 0.5 },
+    { itemId: 'world_geothermal_compound', minAmount: 1, maxAmount: 1, chance: 0.3 },
+    { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ]],
+
+  // Tier III — Volcanic Ridge (Omnivore, levels 15-23)
+  ['loot_creature_ember_scavenger', [
+    { itemId: 'world_volcanic_glass', minAmount: 1, maxAmount: 2, chance: 0.45 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.25 },
+    { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier III — Volcanic Ridge (Maniac, levels 22-32)
+  ['loot_creature_magma_fury', [
+    { itemId: 'world_geothermal_compound', minAmount: 2, maxAmount: 3, chance: 1.0 },
+    { itemId: 'world_volcanic_glass', minAmount: 2, maxAmount: 3, chance: 1.0 },
+    { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 2, chance: 0.4 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.25 },
+  ]],
+
+  // Tier III — Frozen Expanse (Herbivore, levels 14-22)
+  ['loot_creature_frost_grazer', [
+    { itemId: 'world_frozen_shard', minAmount: 1, maxAmount: 2, chance: 0.6 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.3 },
+    { itemId: 'reagent_frost_essence', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier III — Frozen Expanse (Maniac, levels 20-28)
+  ['loot_creature_blizzard_maniac', [
+    { itemId: 'world_frozen_shard', minAmount: 2, maxAmount: 3, chance: 1.0 },
+    { itemId: 'reagent_frost_essence', minAmount: 1, maxAmount: 2, chance: 0.4 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ]],
+
+  // Tier III — Deep Trenches (Omnivore, levels 16-24)
+  ['loot_creature_trench_drifter', [
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.5 },
+    { itemId: 'world_luminous_extract', minAmount: 1, maxAmount: 1, chance: 0.3 },
+    { itemId: 'reagent_bioluminescent_compound', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier III — Deep Trenches (Predator, levels 18-28)
+  ['loot_creature_depth_crusher', [
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 2, chance: 0.4 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.12 },
+    { itemId: 'reagent_bioluminescent_compound', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ]],
+
+  // Tier III — Starfall Crater (Omnivore, levels 15-24)
+  ['loot_creature_crater_scavenger', [
+    { itemId: 'world_crater_dust', minAmount: 1, maxAmount: 3, chance: 0.6 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.3 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier III — Starfall Crater (Predator, levels 18-28)
+  ['loot_creature_anomaly_predator', [
+    { itemId: 'world_crater_dust', minAmount: 1, maxAmount: 2, chance: 0.5 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.18 },
+    { itemId: 'world_meteor_fragment', minAmount: 1, maxAmount: 1, chance: 0.08 },
+  ]],
+
+  // Tier III — Starfall Crater (Maniac, levels 22-32)
+  ['loot_creature_starfall_maniac', [
+    { itemId: 'world_meteor_fragment', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 2, chance: 0.4 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.3 },
+    { itemId: 'reagent_anomaly_catalyst', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ]],
+
+  // Tier III — Crystalline Wastes (Omnivore, levels 16-26)
+  ['loot_creature_waste_drifter', [
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 2, chance: 0.5 },
+    { itemId: 'world_temporal_shard', minAmount: 1, maxAmount: 1, chance: 0.2 },
+    { itemId: 'reagent_anomaly_catalyst', minAmount: 1, maxAmount: 1, chance: 0.08 },
+  ]],
+
+  // Tier III — Crystalline Wastes (Maniac, levels 24-32)
+  ['loot_creature_crystalline_maniac', [
+    { itemId: 'world_temporal_shard', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'world_crystal_fragment', minAmount: 2, maxAmount: 3, chance: 1.0 },
+    { itemId: 'reagent_anomaly_catalyst', minAmount: 1, maxAmount: 1, chance: 0.35 },
+    { itemId: 'world_organic_material_epic', minAmount: 1, maxAmount: 1, chance: 0.25 },
+  ]],
+
   // Tier II — Ancient Ruins (Omnivore, levels 10-20)
   ['loot_creature_relic_beast', [
     { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 2, chance: 0.8 },

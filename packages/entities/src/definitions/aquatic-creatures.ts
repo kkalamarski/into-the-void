@@ -196,6 +196,40 @@ export const CREATURE_KELP_AMBUSHER: CreatureDefinition = {
   respawnSeconds: 360,
 };
 
+// ===== PHASE 110 — Tier III Deep Trenches Additions =====
+
+export const CREATURE_TRENCH_DRIFTER: CreatureDefinition = {
+  id: 'creature_trench_drifter',
+  displayName: 'Trench Drifter',
+  description: 'Deep-water scavenger that drifts along trench walls, consuming detritus and small organisms attracted by its faint bioluminescence.',
+  entityClass: 'creature',
+  biomes: ['deep_trenches'],
+  textureKey: 'creature_trench_drifter',
+  color: 0x223355,
+  lootTableId: 'loot_creature_trench_drifter',
+  behavior: 'omnivore',
+  baseHealth: 175,
+  levelRange: [16, 24],
+  baseXp: 55,
+  respawnSeconds: 420,
+};
+
+export const CREATURE_DEPTH_CRUSHER: CreatureDefinition = {
+  id: 'creature_depth_crusher',
+  displayName: 'Depth Crusher',
+  description: 'Massive deep-sea predator adapted to extreme pressure. Jaw strength capable of crushing pressure-hardened shells.',
+  entityClass: 'creature',
+  biomes: ['deep_trenches'],
+  textureKey: 'creature_depth_crusher',
+  color: 0x112244,
+  lootTableId: 'loot_creature_depth_crusher',
+  behavior: 'predator',
+  baseHealth: 210,
+  levelRange: [18, 28],
+  baseXp: 75,
+  respawnSeconds: 540,
+};
+
 export const ALL_AQUATIC_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_TIDE_CRAB,
   CREATURE_COASTAL_URCHIN,
@@ -211,4 +245,7 @@ export const ALL_AQUATIC_CREATURES: readonly CreatureDefinition[] = [
   CREATURE_TIDAL_SNAPPER,
   // Phase 110 Tier II kelp_forests addition
   CREATURE_KELP_AMBUSHER,
+  // Phase 110 Tier III deep_trenches additions
+  CREATURE_TRENCH_DRIFTER,
+  CREATURE_DEPTH_CRUSHER,
 ];

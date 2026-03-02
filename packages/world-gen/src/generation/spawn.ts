@@ -61,8 +61,12 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   crystal_caves: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_CRYSTAL_HUNTER, weight: 8, minLevel: 5, maxLevel: 15 },
-      { id: ENTITY_IDS.CREATURE_CRYSTAL_CRAWLER, weight: 6, minLevel: 5, maxLevel: 12 },
+      { id: ENTITY_IDS.CREATURE_CRYSTAL_GRAZER, weight: 10, minLevel: 14, maxLevel: 22 },
+      { id: ENTITY_IDS.CREATURE_CRYSTAL_CRAWLER, weight: 7, minLevel: 5, maxLevel: 12 },
+      { id: ENTITY_IDS.CREATURE_PRISM_WEAVER, weight: 6, minLevel: 16, maxLevel: 24 },
+      { id: ENTITY_IDS.CREATURE_CRYSTAL_HUNTER, weight: 5, minLevel: 5, maxLevel: 15 },
+      { id: ENTITY_IDS.CREATURE_SHARD_REAPER, weight: 4, minLevel: 18, maxLevel: 26 },
+      { id: ENTITY_IDS.CREATURE_CRYSTAL_BERSERKER, weight: 1, minLevel: 22, maxLevel: 30 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_PRISMATIC_CRYSTAL, weight: 8, rarity: 2 },
@@ -128,8 +132,10 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   frozen_expanse: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_FROST_STALKER, weight: 5, minLevel: 10, maxLevel: 22 },
-      { id: ENTITY_IDS.CREATURE_ICE_BURROWER, weight: 4, minLevel: 12, maxLevel: 24 },
+      { id: ENTITY_IDS.CREATURE_FROST_GRAZER, weight: 10, minLevel: 14, maxLevel: 22 },
+      { id: ENTITY_IDS.CREATURE_ICE_BURROWER, weight: 7, minLevel: 12, maxLevel: 24 },
+      { id: ENTITY_IDS.CREATURE_FROST_STALKER, weight: 4, minLevel: 10, maxLevel: 22 },
+      { id: ENTITY_IDS.CREATURE_BLIZZARD_MANIAC, weight: 1, minLevel: 20, maxLevel: 28 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_PERMAFROST_SHARD, weight: 6, rarity: 2 },
@@ -148,8 +154,12 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   volcanic_ridge: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_MAGMA_BEAST, weight: 4, minLevel: 12, maxLevel: 28 },
-      { id: ENTITY_IDS.CREATURE_ASH_SKIMMER, weight: 6, minLevel: 10, maxLevel: 20 },
+      { id: ENTITY_IDS.CREATURE_LAVA_GRAZER, weight: 10, minLevel: 14, maxLevel: 22 },
+      { id: ENTITY_IDS.CREATURE_ASH_SKIMMER, weight: 7, minLevel: 10, maxLevel: 20 },
+      { id: ENTITY_IDS.CREATURE_EMBER_SCAVENGER, weight: 6, minLevel: 15, maxLevel: 23 },
+      { id: ENTITY_IDS.CREATURE_MAGMA_BEAST, weight: 5, minLevel: 12, maxLevel: 28 },
+      { id: ENTITY_IDS.CREATURE_CINDER_STALKER, weight: 4, minLevel: 18, maxLevel: 26 },
+      { id: ENTITY_IDS.CREATURE_MAGMA_FURY, weight: 1, minLevel: 22, maxLevel: 32 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_VOLCANIC_ORE, weight: 8, rarity: 2 },
@@ -191,9 +201,12 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   starfall_crater: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_VOID_HORROR, weight: 2, minLevel: 20, maxLevel: 35 },
-      { id: ENTITY_IDS.CREATURE_STARFALL_GRAZER, weight: 6, minLevel: 12, maxLevel: 22 },
+      { id: ENTITY_IDS.CREATURE_STARFALL_GRAZER, weight: 10, minLevel: 12, maxLevel: 22 },
+      { id: ENTITY_IDS.CREATURE_CRATER_SCAVENGER, weight: 6, minLevel: 15, maxLevel: 24 },
       { id: ENTITY_IDS.CREATURE_CRATER_STALKER, weight: 4, minLevel: 15, maxLevel: 25 },
+      { id: ENTITY_IDS.CREATURE_ANOMALY_PREDATOR, weight: 3, minLevel: 18, maxLevel: 28 },
+      { id: ENTITY_IDS.CREATURE_VOID_HORROR, weight: 2, minLevel: 20, maxLevel: 35 },
+      { id: ENTITY_IDS.CREATURE_STARFALL_MANIAC, weight: 1, minLevel: 22, maxLevel: 32 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_COSMIC_FRAGMENT, weight: 4, rarity: 4 },
@@ -298,9 +311,11 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   deep_trenches: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_PRESSURE_FEEDER, weight: 6, minLevel: 12, maxLevel: 20 },
+      { id: ENTITY_IDS.CREATURE_PRESSURE_FEEDER, weight: 10, minLevel: 12, maxLevel: 20 },
+      { id: ENTITY_IDS.CREATURE_ABYSSAL_SCAVENGER, weight: 7, minLevel: 13, maxLevel: 22 },
+      { id: ENTITY_IDS.CREATURE_TRENCH_DRIFTER, weight: 6, minLevel: 16, maxLevel: 24 },
       { id: ENTITY_IDS.CREATURE_TRENCH_HUNTER, weight: 4, minLevel: 14, maxLevel: 24 },
-      { id: ENTITY_IDS.CREATURE_ABYSSAL_SCAVENGER, weight: 5, minLevel: 13, maxLevel: 22 },
+      { id: ENTITY_IDS.CREATURE_DEPTH_CRUSHER, weight: 3, minLevel: 18, maxLevel: 28 },
       { id: ENTITY_IDS.CREATURE_ABYSSAL_LEVIATHAN, weight: 1, minLevel: 20, maxLevel: 32 },
     ],
     minerals: [
@@ -350,9 +365,12 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
   },
   crystalline_wastes: {
     creatures: [
-      { id: ENTITY_IDS.CREATURE_NULL_FEEDER, weight: 6, minLevel: 12, maxLevel: 20 },
-      { id: ENTITY_IDS.CREATURE_DIMENSIONAL_HUNTER, weight: 5, minLevel: 13, maxLevel: 22 },
-      { id: ENTITY_IDS.CREATURE_RIFT_HUNTER, weight: 4, minLevel: 14, maxLevel: 24 },
+      { id: ENTITY_IDS.CREATURE_NULL_FEEDER, weight: 10, minLevel: 12, maxLevel: 20 },
+      { id: ENTITY_IDS.CREATURE_CRYSTAL_GRAZER, weight: 8, minLevel: 14, maxLevel: 22 },
+      { id: ENTITY_IDS.CREATURE_WASTE_DRIFTER, weight: 6, minLevel: 16, maxLevel: 26 },
+      { id: ENTITY_IDS.CREATURE_DIMENSIONAL_HUNTER, weight: 4, minLevel: 13, maxLevel: 22 },
+      { id: ENTITY_IDS.CREATURE_RIFT_HUNTER, weight: 3, minLevel: 14, maxLevel: 24 },
+      { id: ENTITY_IDS.CREATURE_CRYSTALLINE_MANIAC, weight: 1, minLevel: 24, maxLevel: 32 },
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_NULL_STONE, weight: 10, rarity: 1 },
