@@ -24,7 +24,8 @@
 - ✅ **v1.19 Deployment & CI/CD** - Phases 89-93 (shipped 2026-02-24)
 - ✅ **v1.20 World Scale & Action Bar** - Phases 94-98 (shipped 2026-02-26)
 - ✅ **v1.21 UI Polish & Audio** - Phases 99-102 (shipped 2026-02-26)
-- 🚧 **v1.22 In-Game Chat** - Phases 103-107 (in progress)
+- ✅ **v1.22 In-Game Chat** - Phases 103-107 (shipped 2026-02-26)
+- 🚧 **v1.23 Content Expansion & Faction Gear** - Phases 108-114 (in progress)
 
 ## Phases
 
@@ -35,15 +36,28 @@
 
 </details>
 
-### 🚧 v1.22 In-Game Chat (In Progress)
+<details>
+<summary>✅ v1.22 In-Game Chat (Phases 103-107) - SHIPPED 2026-02-26</summary>
 
-**Milestone Goal:** Add a full in-game chat system with five channel types (Local, Zone, Faction, Global, Whisper), ephemeral message delivery, and DB-persisted player mute/block moderation.
+- [x] **Phase 103: Chat Foundation** - Fix socket dispatch, keyboard isolation, server validation (completed 2026-02-26)
+- [x] **Phase 104: Moderation Persistence** - Mute/block DB tables and REST endpoints (completed 2026-02-26)
+- [x] **Phase 105: ChatService & Channel Routing** - Server-side routing for all five channels (completed 2026-02-26)
+- [x] **Phase 106: Chat Panel UI** - Tabbed panel, unread indicators, per-channel message views (completed 2026-02-26)
+- [x] **Phase 107: Moderation Controls** - Right-click mute/block/whisper context menu (completed 2026-02-26)
 
-- [x] **Phase 103: Chat Foundation** - Fix the socket dispatch bug, add keyboard isolation, and harden server validation so the full pipeline is testable end-to-end (completed 2026-02-26)
-- [x] **Phase 104: Moderation Persistence** - Add mute/block DB tables, query functions, and REST endpoints so cross-session moderation state exists before the server needs to enforce it (completed 2026-02-26)
-- [x] **Phase 105: ChatService & Channel Routing** - Implement the server-side ChatService with all five channel routing cases, rate limiting, block enforcement, and faction room management (completed 2026-02-26)
-- [x] **Phase 106: Chat Panel UI** - Rewrite ChatPanel with tabbed channels, whisper target input, timestamp rendering, and unread indicators wired to the new chatStore (completed 2026-02-26)
-- [x] **Phase 107: Moderation Controls** - Add mute/unmute and block/unblock actions with right-click context menu on sender names, completing the full moderation loop (completed 2026-02-26)
+</details>
+
+### 🚧 v1.23 Content Expansion & Faction Gear (In Progress)
+
+**Milestone Goal:** Major content expansion filling all biome entity gaps and adding faction-specific equipment across all tiers — every biome reaches minimum population targets, and Verdant, Helix, Nexus, and Unaffiliated each have a distinct gear line.
+
+- [ ] **Phase 108: Entity Validation Infrastructure** - Test suite gating all subsequent content authoring, preventing silent spawn and loot failures
+- [ ] **Phase 109: Faction Identity Design Gate** - Locked design artifact defining stat archetypes, ability matrices, naming conventions, and color anchors per faction before any item definition is written
+- [ ] **Phase 110: Biome Creature Population** - All 16 biomes reach 4-6 creatures with behavioral variety, loot tables, and spawn configs fully wired
+- [ ] **Phase 111: Biome Plants, Minerals, and Artifacts** - All 16 biomes reach 3-4 plants, 2-3 minerals with rarity variants, and 1-2 artifacts; crystalline_wastes hotspot resolved
+- [ ] **Phase 112: Faction Suits** - Verdant, Helix, Nexus, and Unaffiliated suit lines across all tiers (Common through Legendary) using generateSuitStats() throughout
+- [ ] **Phase 113: Faction Modules and Tools** - Bio/sensor/armor module lines and faction-specialized tool lines completing the gear set for all four factions
+- [ ] **Phase 114: Integration and Lore Verification** - All new entities and items verified in definition indexes with ENTITY_IDS/ITEM_IDS constants and cross-checked against lore
 
 ## Phase Details
 
@@ -57,8 +71,8 @@
   3. A message exceeding 280 characters or an empty message is rejected by the server with no delivery to any client
   4. Sending more than 5 messages in rapid succession results in subsequent messages being silently dropped by the rate limiter
 **Plans**: 2 plans
-  - [ ] 103-01-PLAN.md -- Client-side chat delivery fix and keyboard isolation (INFRA-01, INFRA-02)
-  - [ ] 103-02-PLAN.md -- Server-side message validation and rate limiting (INFRA-03, INFRA-04)
+  - [x] 103-01-PLAN.md -- Client-side chat delivery fix and keyboard isolation (INFRA-01, INFRA-02)
+  - [x] 103-02-PLAN.md -- Server-side message validation and rate limiting (INFRA-03, INFRA-04)
 
 ### Phase 104: Moderation Persistence
 **Goal**: The database has mute and block tables and the REST API exposes CRUD endpoints for them, so moderation state can be loaded on login and enforced server-side before any moderation UI is built
@@ -69,8 +83,8 @@
   2. A block entry survives a full browser refresh and is returned correctly when the client loads moderation state after re-authentication
   3. Deleting a mute or block entry via the REST API removes it from the DB and subsequent GET responses no longer include it
 **Plans**: 2 plans
-  - [ ] 104-01-PLAN.md -- DB schema tables (player_mutes, player_blocks) + query functions (MOD-04)
-  - [ ] 104-02-PLAN.md -- NestJS REST moderation module with CRUD endpoints (MOD-04)
+  - [x] 104-01-PLAN.md -- DB schema tables (player_mutes, player_blocks) + query functions (MOD-04)
+  - [x] 104-02-PLAN.md -- NestJS REST moderation module with CRUD endpoints (MOD-04)
 
 ### Phase 105: ChatService & Channel Routing
 **Goal**: All five chat channels route correctly from a single server-side ChatService — zone and global via Socket.IO rooms, faction via faction rooms joined at auth (and preserved across zone transitions), local via proximity distance check, and whispers via target lookup with server-enforced block
@@ -82,7 +96,7 @@
   3. A faction chat message is received only by players of the same faction, including after one of them transitions to a different zone
   4. A local chat message is received only by players within ~15 tiles of the sender, not by players outside that radius
   5. A whisper sent to Player B is received only by Player B; if Player B has blocked the sender, the whisper is silently refused and the sender receives a system notice
-**Plans**: TBD
+**Plans**: 2 plans
 
 ### Phase 106: Chat Panel UI
 **Goal**: Players have a always-visible tabbed chat panel in the bottom-left of the HUD with per-channel message views, a text input that sends on Enter, unread indicators on inactive tabs, and formatted messages showing sender, timestamp, and channel color
@@ -94,7 +108,7 @@
   3. Typing a message and pressing Enter sends it on the active channel and clears the input field
   4. An unread message indicator (badge or dot) appears on inactive channel tabs when a new message arrives on that channel
   5. Each message displays the sender's name, a timestamp, and text rendered in the color associated with that channel
-**Plans**: TBD
+**Plans**: 2 plans
 
 ### Phase 107: Moderation Controls
 **Goal**: Players can mute any sender to hide their messages and block any sender to prevent whispers, with right-click access from the chat panel, unmute/unblock capability, and state persisted across sessions via the REST API
@@ -107,21 +121,111 @@
   4. A previously muted player can be unmuted and their messages become visible again immediately
   5. A previously blocked player can be unblocked and whispers from them are delivered again
 **Plans**: 2 plans
-  - [ ] 107-01-PLAN.md -- moderationStore with mute/block sets, REST API integration, and chatStore mute filter (MOD-01, MOD-02, MOD-03)
-  - [ ] 107-02-PLAN.md -- Right-click context menu on ChatPanel sender names with Mute/Block/Whisper actions (MOD-05)
+  - [x] 107-01-PLAN.md -- moderationStore with mute/block sets, REST API integration, and chatStore mute filter (MOD-01, MOD-02, MOD-03)
+  - [x] 107-02-PLAN.md -- Right-click context menu on ChatPanel sender names with Mute/Block/Whisper actions (MOD-05)
+
+### Phase 108: Entity Validation Infrastructure
+**Goal**: The packages/entities package has a Vitest test suite that catches all four categories of silent content failure before any new entity definition reaches main — orphaned loot tables, spawn config desync, ID constant drift, and invalid harvest yield item references
+**Depends on**: Phase 107
+**Requirements**: CINF-01
+**Success Criteria** (what must be TRUE):
+  1. Running `nx run entities:test` passes green on the current codebase with zero false positives — the baseline is established
+  2. Adding a CreatureDefinition without a matching CREATURE_LOOT_TABLES entry causes the test suite to fail with a specific error naming the offending entity
+  3. Adding a spawnable entity without a BIOME_SPAWN_CONFIGS entry causes a test failure identifying the missing spawn config
+  4. Adding an ENTITY_IDS constant that does not match a registered entity (or vice versa) causes a test failure identifying the drift
+  5. Adding a plant or mineral with a harvestYield itemId that does not exist in ItemRegistry causes a test failure naming the bad reference
+**Plans**: TBD
+
+### Phase 109: Faction Identity Design Gate
+**Goal**: A committed design artifact documents the per-faction stat archetype, ability assignment matrix, naming conventions, color palette anchors, and module/tool character descriptions — locked before any faction item definition is authored
+**Depends on**: Phase 108
+**Requirements**: SUIT-01
+**Success Criteria** (what must be TRUE):
+  1. A written design document exists specifying which of the 21 existing abilities are in-faction for each of Verdant, Helix, Nexus, and Unaffiliated (no ability gaps or overlaps that would cause faction identity collapse)
+  2. Each faction has a documented stat archetype (primary/secondary stat emphasis per tier) that is distinct from the other three factions
+  3. Naming conventions for faction item IDs and display names are documented and follow a consistent pattern per faction (e.g., verdant_ prefix, Verdant brand name format)
+  4. The design artifact is referenced in the item definition files so future contributors have a single source of truth
+**Plans**: TBD
+
+### Phase 110: Biome Creature Population
+**Goal**: Every biome reaches 4-6 creatures with behavioral variety (at least herbivore, omnivore, and predator archetypes represented), toxic_wastes brought from 1 to 5 creatures as the most critical gap, and every new creature atomically wired across definition, ENTITY_IDS, BIOME_SPAWN_CONFIGS, and CREATURE_LOOT_TABLES
+**Depends on**: Phase 108
+**Requirements**: CREA-01, CREA-02, CREA-03, CREA-04, CREA-05, CREA-06
+**Success Criteria** (what must be TRUE):
+  1. Entering toxic_wastes zone in-game reveals 4-5 distinct creature types visible across the biome, up from 1
+  2. Every biome (all 16) shows at least 3 behaviorally distinct creature archetypes when explored — the world feels ecologically varied, not procedurally uniform
+  3. Killing a newly added creature always produces a loot drop (the loot table is wired) — no creature kills silently drop nothing
+  4. Running `nx run entities:test` passes after all new creature definitions are committed — no orphaned IDs or missing spawn configs
+  5. void_rift has 6 creatures representing clear max-tier threat — a player entering void_rift encounters meaningfully harder enemies than Tier III zones
+**Plans**: TBD
+
+### Phase 111: Biome Plants, Minerals, and Artifacts
+**Goal**: Every biome reaches 3-4 plants with rarity variants, 2-3 minerals including rare/epic variants registered in rarity.ts, and 1-2 artifacts — the crystalline_wastes artifact hotspot (documented in lore as such, currently zero artifacts) is resolved with 2 artifacts
+**Depends on**: Phase 108
+**Requirements**: PLNT-01, PLNT-02, PLNT-03, PLNT-04, MINR-01, MINR-02, MINR-03, MINR-04, MINR-05, ARTF-01, ARTF-02, ARTF-03, ARTF-04, ARTF-05
+**Success Criteria** (what must be TRUE):
+  1. Gathering in any biome produces at least 3 different plant resource types — players have meaningful gathering variety without needing to switch zones
+  2. Rare and epic mineral nodes appear in Tier II+ biomes when gathering — the rarity.ts functions return the new variants and the nodes visibly appear in world
+  3. crystalline_wastes has 2 discoverable artifact entities — a player exploring that biome can find and interact with artifacts where previously there were none
+  4. All Tier I biomes (void_plains, fungal_forest, tidal_pools, ancient_ruins) have at least 1 artifact each — the zero-artifact gap across all four Tier I biomes is closed
+  5. Running `nx run entities:test` passes after all new plant/mineral/artifact definitions are committed — no invalid harvest yield item references
+**Plans**: TBD
+
+### Phase 112: Faction Suits
+**Goal**: Verdant Dynamics, Helix Extraction, Nexus Frontiers, and Unaffiliated each have a complete suit line from Common through Legendary using generateSuitStats() for all stat generation — no hand-coded stats — with distinct faction identity expressed through grantedAbilities, textureKey, and display name conventions established in Phase 109
+**Depends on**: Phase 109
+**Requirements**: SUIT-02, SUIT-03, SUIT-04, SUIT-05, SUIT-06
+**Success Criteria** (what must be TRUE):
+  1. Equipping a Verdant Legendary suit grants abilities from the Verdant ability matrix (regeneration_protocol, energy_barrier, nano_repair) — the suit feels mechanically Verdant, not generic
+  2. Equipping a Helix Legendary suit grants abilities distinct from Verdant's set (fortify_systems, power_surge, magnetic_field) — two factions' endgame suits are observably mechanically different
+  3. A new player can equip a Common-tier faction suit appropriate to their faction at character creation level — the gear ladder starts at Tier I for all four factions
+  4. Running `nx run items:test` (existing item validation suite) passes after all new suit definitions are committed — generateSuitStats() is used universally with no hand-coded stat numbers
+  5. Each faction suit displays a distinct visual identifier in the equipment panel — textureKey values do not collide across factions even where placeholder color tiles are used
+**Plans**: TBD
+
+### Phase 113: Faction Modules and Tools
+**Goal**: Each of the four factions has 1-2 modules and 1-2 tools completing the faction gear identity — a player committing to a faction can equip faction-appropriate gear in all three equipment categories (suit, module, tool) with stat emphasis that reinforces the faction's mechanical identity from Phase 109
+**Depends on**: Phase 112
+**Requirements**: MODU-01, MODU-02, MODU-03, MODU-04, TOOL-01, TOOL-02, TOOL-03, TOOL-04
+**Success Criteria** (what must be TRUE):
+  1. A player wearing a full Verdant suit can also equip a Verdant module and Verdant tool — all three gear slots have faction options available
+  2. Helix modules provide armor/power-core stat emphasis that is mechanically distinct from Nexus sensor/speed modules — switching factions' modules changes the character's playstyle
+  3. Verdant tools have bio/research tool type, Helix tools have mining/demolition, Nexus tools have research/stealth — toolType values match the faction's documented identity
+  4. Unaffiliated modules and tools are available for players who chose no faction and represent the jury-rigged aesthetic from Phase 109's design
+  5. All new modules and tools pass the existing item validation suite without introducing any hand-coded stat patterns
+**Plans**: TBD
+
+### Phase 114: Integration and Lore Verification
+**Goal**: Every entity and item definition added in Phases 110-113 is exported from its package's definition index, has a corresponding constant in ENTITY_IDS or ITEM_IDS, and has been cross-checked against lore/world-bible.md — the milestone is verifiably complete with no registry orphans or lore conflicts
+**Depends on**: Phase 113
+**Requirements**: INTG-01, INTG-02, INTG-03
+**Success Criteria** (what must be TRUE):
+  1. Every new creature, plant, mineral, and artifact can be retrieved by ID via EntityRegistry.get() — no definition exists outside the registry index
+  2. Every new suit, module, and tool can be retrieved by ID via ItemRegistry.get() — no faction item is a dead reference in ITEM_IDS
+  3. Running both `nx run entities:test` and `nx run items:test` passes clean — the validation infrastructure from Phase 108 confirms zero orphans across all new content
+  4. A manual lore review against lore/world-bible.md finds no entity name, faction ability, or item description that contradicts established faction identity or biome ecology
+**Plans**: TBD
 
 ## Progress
 
-**Execution Order:** 103 → 104 → 105 → 106 → 107
+**Execution Order:** 108 → 109 → 110 → 111 → 112 → 113 → 114
+(Phases 110 and 111 are logically independent and can run in parallel once Phase 108 is complete)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 103. Chat Foundation | 2/2 | Complete    | 2026-02-26 |
-| 104. Moderation Persistence | 0/TBD | Complete    | 2026-02-26 |
-| 105. ChatService & Channel Routing | 2/2 | Complete    | 2026-02-26 |
-| 106. Chat Panel UI | 2/2 | Complete    | 2026-02-26 |
-| 107. Moderation Controls | 2/2 | Complete    | 2026-02-26 |
+| 103. Chat Foundation | 2/2 | Complete | 2026-02-26 |
+| 104. Moderation Persistence | 2/2 | Complete | 2026-02-26 |
+| 105. ChatService & Channel Routing | 2/2 | Complete | 2026-02-26 |
+| 106. Chat Panel UI | 2/2 | Complete | 2026-02-26 |
+| 107. Moderation Controls | 2/2 | Complete | 2026-02-26 |
+| 108. Entity Validation Infrastructure | 0/TBD | Not started | - |
+| 109. Faction Identity Design Gate | 0/TBD | Not started | - |
+| 110. Biome Creature Population | 0/TBD | Not started | - |
+| 111. Biome Plants, Minerals, and Artifacts | 0/TBD | Not started | - |
+| 112. Faction Suits | 0/TBD | Not started | - |
+| 113. Faction Modules and Tools | 0/TBD | Not started | - |
+| 114. Integration and Lore Verification | 0/TBD | Not started | - |
 
 ---
 
-*Last updated: 2026-02-26 - v1.22 roadmap created (5 phases, 103-107)*
+*Last updated: 2026-03-02 - v1.23 roadmap created (7 phases, 108-114)*
