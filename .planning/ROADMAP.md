@@ -53,7 +53,7 @@
 
 - [x] **Phase 108: Entity Validation Infrastructure** - Test suite gating all subsequent content authoring, preventing silent spawn and loot failures
 - [x] **Phase 109: Faction Identity Design Gate** - Locked design artifact defining stat archetypes, ability matrices, naming conventions, and color anchors per faction before any item definition is written (completed 2026-03-02)
-- [ ] **Phase 110: Biome Creature Population** - All 16 biomes reach 4-6 creatures with behavioral variety, loot tables, and spawn configs fully wired
+- [x] **Phase 110: Biome Creature Population** - All 16 biomes reach 4-6 creatures with behavioral variety, loot tables, and spawn configs fully wired (completed 2026-03-02)
 - [ ] **Phase 111: Biome Plants, Minerals, and Artifacts** - All 16 biomes reach 3-4 plants, 2-3 minerals with rarity variants, and 1-2 artifacts; crystalline_wastes hotspot resolved
 - [ ] **Phase 112: Faction Suits** - Verdant, Helix, Nexus, and Unaffiliated suit lines across all tiers (Common through Legendary) using generateSuitStats() throughout
 - [ ] **Phase 113: Faction Modules and Tools** - Bio/sensor/armor module lines and faction-specialized tool lines completing the gear set for all four factions
@@ -161,7 +161,11 @@
   3. Killing a newly added creature always produces a loot drop (the loot table is wired) — no creature kills silently drop nothing
   4. Running `nx run entities:test` passes after all new creature definitions are committed — no orphaned IDs or missing spawn configs
   5. void_rift has 6 creatures representing clear max-tier threat — a player entering void_rift encounters meaningfully harder enemies than Tier III zones
-**Plans**: TBD
+**Plans**: 4 plans
+  - [x] 110-01-PLAN.md -- Tier I biomes: void_plains, fungal_forest, tidal_pools, ancient_ruins (CREA-01, CREA-05, CREA-06)
+  - [x] 110-02-PLAN.md -- Tier II biomes: toxic_wastes critical gap, miasma_marshes, petrified_expanse, kelp_forests, bioluminescent_depths (CREA-02, CREA-05, CREA-06)
+  - [x] 110-03-PLAN.md -- Tier III biomes: crystal_caves, volcanic_ridge, frozen_expanse, deep_trenches, starfall_crater, crystalline_wastes with maniac mini-bosses (CREA-03, CREA-05, CREA-06)
+  - [x] 110-04-PLAN.md -- Tier IV void_rift: corrupted apex creatures with legendary loot (CREA-04, CREA-05, CREA-06)
 
 ### Phase 111: Biome Plants, Minerals, and Artifacts
 **Goal**: Every biome reaches 3-4 plants with rarity variants, 2-3 minerals including rare/epic variants registered in rarity.ts, and 1-2 artifacts — the crystalline_wastes artifact hotspot (documented in lore as such, currently zero artifacts) is resolved with 2 artifacts
@@ -224,7 +228,7 @@
 | 107. Moderation Controls | 2/2 | Complete | 2026-02-26 |
 | 108. Entity Validation Infrastructure | 2/2 | Complete | 2026-03-02 |
 | 109. Faction Identity Design Gate | 2/2 | Complete | 2026-03-02 |
-| 110. Biome Creature Population | 1/4 | In Progress|  |
+| 110. Biome Creature Population | 4/4 | Complete | 2026-03-02 |
 | 111. Biome Plants, Minerals, and Artifacts | 0/TBD | Not started | - |
 | 112. Faction Suits | 0/TBD | Not started | - |
 | 113. Faction Modules and Tools | 0/TBD | Not started | - |
@@ -232,4 +236,4 @@
 
 ---
 
-*Last updated: 2026-03-02 - Phase 109 complete (faction identity design document locked)*
+*Last updated: 2026-03-02 - Phase 110 complete (all 16 biomes at 4-6 creatures with maniac mini-bosses and void_rift apex loot)*

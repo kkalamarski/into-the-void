@@ -6,7 +6,7 @@ status: roadmap_created
 last_updated: "2026-03-02"
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 4
   completed_plans: 4
 ---
@@ -18,21 +18,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 110 — Biome Creature Population
+**Current focus:** Phase 111 — Biome Plants, Minerals, and Artifacts
 
 ## Current Position
 
-Phase: 110 of 114 (Biome Creature Population)
+Phase: 111 of 114 (Biome Plants, Minerals, and Artifacts)
 Plan: — (not started)
 Status: Ready to plan
-Last activity: 2026-03-02 — Phase 109 complete (faction identity design document locked)
+Last activity: 2026-03-02 — Phase 110 complete (all 16 biomes at 4-6 creatures)
 
-Progress: [██░░░░░░░░] 29%
+Progress: [████░░░░░░] 43%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 279 (v1.0-v1.22 complete, 109 complete)
+- Total plans completed: 283 (v1.0-v1.22 complete, 110 complete)
 - Average duration: ~3 min per plan
 - Total execution time: ~14 hours across 22 milestones
 
@@ -50,6 +50,7 @@ Recent decisions affecting current work:
 - [v1.23 roadmap]: Phases 110 and 111 are independent tracks after Phase 108; can run in parallel
 - [v1.23 roadmap]: SUIT-02/03/04/05/06 all assigned to Phase 112 (no requirement splits across phases)
 - [v1.23 research]: Four-file atomicity rule for creatures: definition + ENTITY_IDS + BIOME_SPAWN_CONFIGS + CREATURE_LOOT_TABLES
+- [Phase 110]: 36 new creatures added across all 16 biomes; toxic_wastes gap closed (1->5); every Tier III+ biome has a maniac mini-boss; void_rift has corrupted apex creatures (best loot in game)
 
 ### Pending Todos
 
@@ -62,9 +63,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Phase 109 complete — faction identity design document locked, scavenger archetype added
+Stopped at: Phase 110 complete — all 16 biomes at 4-6 creatures
 Resume file: None
-Next action: Plan Phase 110 (`/gsd:plan-phase 110`)
+Next action: Plan Phase 111 (`/gsd:plan-phase 111`)
 
 ---
-*Last updated: 2026-03-02 — Phase 109 complete*
+*Last updated: 2026-03-02 — Phase 110 complete*
