@@ -227,6 +227,7 @@ export const ITEM_IDS = {
   REAGENT_BIOLUMINESCENT_COMPOUND: 'reagent_bioluminescent_compound',
   REAGENT_FROST_ESSENCE: 'reagent_frost_essence',
   REAGENT_PETRIFICATION_ENZYME: 'reagent_petrification_enzyme',
+  REAGENT_VOLATILE_EXTRACT: 'reagent_volatile_extract',
   REAGENT_ANOMALY_CATALYST: 'reagent_anomaly_catalyst',
   REAGENT_ANCIENT_STABILIZER: 'reagent_ancient_stabilizer',
 } as const;

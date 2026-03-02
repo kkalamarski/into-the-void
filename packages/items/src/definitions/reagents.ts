@@ -239,6 +239,24 @@ export const REAGENT_PETRIFICATION_ENZYME: ItemDefinition = {
   color: 0xccbb99,
 };
 
+// RARE REAGENT
+
+export const REAGENT_VOLATILE_EXTRACT: ItemDefinition = {
+  id: 'reagent_volatile_extract',
+  displayName: 'Volatile Extract',
+  description:
+    'A highly reactive compound distilled from concentrated marsh gas vents. Extremely unstable outside controlled conditions. Helix Extraction uses it in explosive ordnance development. The ICC has considered restricting access.',
+  category: 'reagent',
+  rarity: 'rare',
+  maxStack: 999,
+  weight: 0.15,
+  baseValue: 200,
+  requiredLevel: 10,
+  ilvl: computeIlvl(2, 'rare'),
+  textureKey: 'item_reagent_volatile_extract',
+  color: 0x88cc44,
+};
+
 // EXOTIC REAGENT
 
 export const REAGENT_ANOMALY_CATALYST: ItemDefinition = {
@@ -293,6 +311,7 @@ export const ALL_REAGENTS: readonly ItemDefinition[] = [
   REAGENT_BIOLUMINESCENT_COMPOUND,
   REAGENT_FROST_ESSENCE,
   REAGENT_PETRIFICATION_ENZYME,
+  REAGENT_VOLATILE_EXTRACT,
   REAGENT_ANOMALY_CATALYST,
   REAGENT_ANCIENT_STABILIZER,
 ];
