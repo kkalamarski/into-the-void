@@ -47,13 +47,17 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_VOID_CRYSTAL, weight: 10, rarity: 1 },
+      { id: ENTITY_IDS.MINERAL_VOID_SLATE, weight: 6, rarity: 1 },
     ],
     plants: [
       { id: ENTITY_IDS.PLANT_VOID_TREE, weight: 20 },  // High spawn rate - dominant feature
       { id: ENTITY_IDS.PLANT_DROUGHT_CACTUS, weight: 8 },
       { id: ENTITY_IDS.PLANT_VOID_FERN, weight: 8 },
+      { id: ENTITY_IDS.PLANT_VOID_FERN_RARE, weight: 2, rarity: 'rare' },
     ],
-    artifacts: [], // No artifacts in void_plains
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_BADLANDS_BEACON, weight: 3, rarity: 'rare' },
+    ],
     creatureDensity: 4,
     mineralDensity: 3,
     plantDensity: 12,  // Dense forest
@@ -116,10 +120,12 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_ANOMALY_CRYSTAL, weight: 5, rarity: 3 },
+      { id: ENTITY_IDS.MINERAL_RUIN_AGGREGATE, weight: 6, rarity: 1 },
     ],
     plants: [
       { id: ENTITY_IDS.PLANT_PHASE_BLOOM, weight: 10 },
       { id: ENTITY_IDS.PLANT_PHASE_BLOOM_RARE, weight: 2, rarity: 'rare' },
+      { id: ENTITY_IDS.PLANT_RELIC_LICHEN, weight: 8 },
     ],
     artifacts: [
       { id: ENTITY_IDS.ARTIFACT_ANCIENT_DATA_CORE, weight: 3, rarity: 'exotic' },
@@ -184,6 +190,7 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_MYCELIAL_CLUSTER, weight: 10, rarity: 1 },
+      { id: ENTITY_IDS.MINERAL_FUNGITE_ORE, weight: 6, rarity: 1 },
     ],
     plants: [
       { id: ENTITY_IDS.PLANT_LUMINOUS_VINE, weight: 10 },
@@ -193,7 +200,9 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
       { id: ENTITY_IDS.PLANT_RARE_FUNGI, weight: 2, rarity: 'rare' },
       { id: ENTITY_IDS.PLANT_EPIC_SPORES, weight: 1, rarity: 'epic' },
     ],
-    artifacts: [], // No artifacts in fungal_forest
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_LUMINOUS_SEED, weight: 3, rarity: 'rare' },
+    ],
     creatureDensity: 6,
     mineralDensity: 7,
     plantDensity: 4, // Lush biome
@@ -279,8 +288,12 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     plants: [
       { id: ENTITY_IDS.PLANT_TIDAL_KELP, weight: 10 },
       { id: ENTITY_IDS.PLANT_BIOLUMINESCENT_ALGAE, weight: 10 },
+      { id: ENTITY_IDS.PLANT_SALT_FROND, weight: 8 },
+      { id: ENTITY_IDS.PLANT_TIDAL_KELP_RARE, weight: 2, rarity: 'rare' },
     ],
-    artifacts: [], // No artifacts in tidal_pools
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_TIDAL_COMPASS, weight: 3, rarity: 'rare' },
+    ],
     creatureDensity: 6,  // 1.5x terrestrial Tier I baseline (void_plains: 4 -> 6)
     mineralDensity: 5,   // Abundant shallow resources
     plantDensity: 5,     // Aquatic biome

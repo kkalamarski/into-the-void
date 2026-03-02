@@ -258,6 +258,41 @@ export const PLANT_PHASE_BLOOM_RARE: PlantDefinition = {
   rarity: 'rare',
 };
 
+// ===== PHASE 111 TIER I ADDITIONS =====
+
+export const PLANT_VOID_FERN_RARE: PlantDefinition = {
+  id: 'plant_void_fern_rare',
+  displayName: 'Void Fern (Rare)',
+  description: 'An unusually vibrant specimen of void fern, its fronds shimmering with concentrated void energy. These rare growths are prized by field researchers.',
+  entityClass: 'plant',
+  biomes: ['void_plains'],
+  textureKey: 'plant_void_fern',
+  color: 0x55cc88,
+  lootTableId: 'loot_plant_void_fern_rare',
+  harvestYield: [
+    { itemId: 'world_void_flora_sample', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_void_essence', minAmount: 1, maxAmount: 1, chance: 0.25 },
+  ],
+  respawnSeconds: 600,
+  rarity: 'rare',
+};
+
+export const PLANT_RELIC_LICHEN: PlantDefinition = {
+  id: 'plant_relic_lichen',
+  displayName: 'Relic Lichen',
+  description: 'Slow-growing lichen found on Ancient construction surfaces. Its metabolic processes seem to be influenced by trace energy from the ruins themselves.',
+  entityClass: 'plant',
+  biomes: ['ancient_ruins'],
+  textureKey: 'plant_relic_lichen',
+  color: 0xaaaa55,
+  lootTableId: 'loot_plant_relic_lichen',
+  harvestYield: [
+    { itemId: 'world_ancient_fragment', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'reagent_ancient_circuitry', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ],
+  respawnSeconds: 360,
+};
+
 // ===== PHASE 88 ADDITIONS =====
 
 export const PLANT_RARE_FUNGI: PlantDefinition = {
@@ -316,4 +351,7 @@ export const ALL_PLANTS: readonly PlantDefinition[] = [
   // Phase 88 fungal_forest rare/epic
   PLANT_RARE_FUNGI,
   PLANT_EPIC_SPORES,
+  // Phase 111 Tier I additions
+  PLANT_VOID_FERN_RARE,
+  PLANT_RELIC_LICHEN,
 ];

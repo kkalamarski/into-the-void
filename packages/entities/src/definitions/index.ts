@@ -134,12 +134,19 @@ export const ENTITY_IDS = {
   PLANT_RARE_FUNGI: 'plant_rare_fungi',
   PLANT_EPIC_SPORES: 'plant_epic_spores',
 
+  // Phase 111 Tier I plant additions
+  PLANT_VOID_FERN_RARE: 'plant_void_fern_rare',
+  PLANT_RELIC_LICHEN: 'plant_relic_lichen',
+
   // ---- AQUATIC PLANTS ----
   PLANT_TIDAL_KELP: 'plant_tidal_kelp',
   PLANT_BIOLUMINESCENT_ALGAE: 'plant_bioluminescent_algae',
   PLANT_PRESSURE_FERN: 'plant_pressure_fern',
   PLANT_VOID_KELP: 'plant_void_kelp',
   PLANT_THERMAL_VENT_COLONY: 'plant_thermal_vent_colony',
+  // Phase 111 Tier I aquatic plant additions
+  PLANT_SALT_FROND: 'plant_salt_frond',
+  PLANT_TIDAL_KELP_RARE: 'plant_tidal_kelp_rare',
 
   // ---- MINERALS ----
   MINERAL_VOID_CRYSTAL: 'mineral_void_crystal',
@@ -162,6 +169,12 @@ export const ENTITY_IDS = {
   // Phase 88 miasma_marshes rare/epic
   MINERAL_TOXIC_CRYSTAL: 'mineral_toxic_crystal',
   MINERAL_MARSH_GAS_NODE: 'mineral_marsh_gas_node',
+  // Phase 111 Tier I mineral additions
+  MINERAL_VOID_SLATE: 'mineral_void_slate',
+  MINERAL_FUNGITE_ORE: 'mineral_fungite_ore',
+  MINERAL_MYCELIAL_CLUSTER_RARE: 'mineral_mycelial_cluster_rare',
+  MINERAL_RUIN_AGGREGATE: 'mineral_ruin_aggregate',
+  MINERAL_ANOMALY_CRYSTAL_RARE: 'mineral_anomaly_crystal_rare',
 
   // ---- AQUATIC MINERALS ----
   MINERAL_CORAL_DEPOSIT: 'mineral_coral_deposit',
@@ -169,6 +182,8 @@ export const ENTITY_IDS = {
   MINERAL_ABYSSAL_ORE: 'mineral_abyssal_ore',
   MINERAL_TIDAL_STONE: 'mineral_tidal_stone',
   MINERAL_PEARL_NODE: 'mineral_pearl_node',
+  // Phase 111 Tier I aquatic mineral additions
+  MINERAL_SEA_CRYSTAL_RARE: 'mineral_sea_crystal_rare',
 
   // ---- ARTIFACTS ----
   ARTIFACT_ANCIENT_DATA_CORE: 'artifact_ancient_data_core',
@@ -179,6 +194,10 @@ export const ENTITY_IDS = {
   // Phase 88 biome gap artifacts
   ARTIFACT_CONTAMINATED_RELIC: 'artifact_contaminated_relic',
   ARTIFACT_FROZEN_ARCHIVE: 'artifact_frozen_archive',
+  // Phase 111 Tier I artifact additions
+  ARTIFACT_BADLANDS_BEACON: 'artifact_badlands_beacon',
+  ARTIFACT_LUMINOUS_SEED: 'artifact_luminous_seed',
+  ARTIFACT_TIDAL_COMPASS: 'artifact_tidal_compass',
 
   // ---- AQUATIC ARTIFACTS ----
   ARTIFACT_SUNKEN_TECH: 'artifact_sunken_tech',

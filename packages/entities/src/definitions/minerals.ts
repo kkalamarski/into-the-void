@@ -167,6 +167,95 @@ export const MINERAL_COSMIC_FRAGMENT: MineralDefinition = {
   respawnSeconds: 720,
 };
 
+// ===== PHASE 111 TIER I ADDITIONS =====
+
+export const MINERAL_VOID_SLATE: MineralDefinition = {
+  id: 'mineral_void_slate',
+  displayName: 'Void Slate',
+  description: 'Flat, layered stone saturated with void energy. Breaks into thin sheets useful for improvised shielding.',
+  entityClass: 'mineral',
+  biomes: ['void_plains'],
+  textureKey: 'mineral_void_slate',
+  color: 0x556677,
+  lootTableId: 'loot_mineral_void_slate',
+  miningYield: [
+    { itemId: 'world_void_crystal', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 1, chance: 0.3 },
+  ],
+  requiredTier: 1,
+  respawnSeconds: 360,
+};
+
+export const MINERAL_FUNGITE_ORE: MineralDefinition = {
+  id: 'mineral_fungite_ore',
+  displayName: 'Fungite Ore',
+  description: 'Mineral deposit heavily infiltrated by fungal mycelium. The organic-mineral composite has unusual tensile properties.',
+  entityClass: 'mineral',
+  biomes: ['fungal_forest'],
+  textureKey: 'mineral_fungite_ore',
+  color: 0x886644,
+  lootTableId: 'loot_mineral_fungite_ore',
+  miningYield: [
+    { itemId: 'world_mycelial_fiber', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'reagent_fungal_extract', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ],
+  requiredTier: 1,
+  respawnSeconds: 360,
+};
+
+export const MINERAL_MYCELIAL_CLUSTER_RARE: MineralDefinition = {
+  id: 'mineral_mycelial_cluster_rare',
+  displayName: 'Mycelial Cluster (Rare)',
+  description: 'An exceptionally dense mycelial cluster shot through with luminescent fungal threads. The mineral substrate pulses faintly with bioluminescence.',
+  entityClass: 'mineral',
+  biomes: ['fungal_forest'],
+  textureKey: 'mineral_mycelial_cluster',
+  color: 0xaa88cc,
+  lootTableId: 'loot_mineral_mycelial_cluster_rare',
+  miningYield: [
+    { itemId: 'world_mycelial_fiber', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_fungal_extract', minAmount: 1, maxAmount: 1, chance: 0.3 },
+  ],
+  requiredTier: 2,
+  respawnSeconds: 720,
+  rarity: 'rare',
+};
+
+export const MINERAL_RUIN_AGGREGATE: MineralDefinition = {
+  id: 'mineral_ruin_aggregate',
+  displayName: 'Ruin Aggregate',
+  description: 'Composite mineral formed where Ancient construction materials have partially fused with natural rock over millennia. Flecks of dormant circuitry are visible throughout.',
+  entityClass: 'mineral',
+  biomes: ['ancient_ruins'],
+  textureKey: 'mineral_ruin_aggregate',
+  color: 0x998866,
+  lootTableId: 'loot_mineral_ruin_aggregate',
+  miningYield: [
+    { itemId: 'world_ancient_fragment', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'reagent_ancient_circuitry', minAmount: 1, maxAmount: 1, chance: 0.1 },
+  ],
+  requiredTier: 1,
+  respawnSeconds: 360,
+};
+
+export const MINERAL_ANOMALY_CRYSTAL_RARE: MineralDefinition = {
+  id: 'mineral_anomaly_crystal_rare',
+  displayName: 'Anomaly Crystal (Rare)',
+  description: 'A flickering crystal that seems to exist in a slightly different temporal frame. Its facets catch light that isn\'t there.',
+  entityClass: 'mineral',
+  biomes: ['ancient_ruins'],
+  textureKey: 'mineral_anomaly_crystal',
+  color: 0xddaa66,
+  lootTableId: 'loot_mineral_anomaly_crystal_rare',
+  miningYield: [
+    { itemId: 'world_ancient_fragment', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_ancient_stabilizer', minAmount: 1, maxAmount: 1, chance: 0.25 },
+  ],
+  requiredTier: 2,
+  respawnSeconds: 720,
+  rarity: 'rare',
+};
+
 // ===== RARE VARIANTS =====
 // Higher yield (1.5x), slower respawn (2x), higher tool requirements
 
@@ -327,4 +416,10 @@ export const ALL_MINERALS: readonly MineralDefinition[] = [
   // Phase 88 miasma_marshes rare/epic
   MINERAL_TOXIC_CRYSTAL,
   MINERAL_MARSH_GAS_NODE,
+  // Phase 111 Tier I additions
+  MINERAL_VOID_SLATE,
+  MINERAL_FUNGITE_ORE,
+  MINERAL_MYCELIAL_CLUSTER_RARE,
+  MINERAL_RUIN_AGGREGATE,
+  MINERAL_ANOMALY_CRYSTAL_RARE,
 ];

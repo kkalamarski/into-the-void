@@ -84,10 +84,32 @@ export const MINERAL_PEARL_NODE: MineralDefinition = {
   respawnSeconds: 600,
 };
 
+// ===== PHASE 111 TIER I ADDITIONS =====
+
+export const MINERAL_SEA_CRYSTAL_RARE: MineralDefinition = {
+  id: 'mineral_sea_crystal_rare',
+  displayName: 'Sea Crystal (Rare)',
+  description: 'An unusually large sea crystal formation with brilliant internal refraction. Deep-water pressure has compressed its lattice into remarkable clarity.',
+  entityClass: 'mineral',
+  biomes: ['tidal_pools'],
+  textureKey: 'mineral_sea_crystal',
+  color: 0x66ccee,
+  lootTableId: 'loot_mineral_sea_crystal_rare',
+  miningYield: [
+    { itemId: 'world_crystal_fragment', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 1, chance: 0.3 },
+  ],
+  requiredTier: 2,
+  respawnSeconds: 720,
+  rarity: 'rare',
+};
+
 export const ALL_AQUATIC_MINERALS: readonly MineralDefinition[] = [
   MINERAL_CORAL_DEPOSIT,
   MINERAL_SEA_CRYSTAL,
   MINERAL_ABYSSAL_ORE,
   MINERAL_TIDAL_STONE,
   MINERAL_PEARL_NODE,
+  // Phase 111 Tier I additions
+  MINERAL_SEA_CRYSTAL_RARE,
 ];

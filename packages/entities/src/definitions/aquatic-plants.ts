@@ -78,10 +78,48 @@ export const PLANT_THERMAL_VENT_COLONY: PlantDefinition = {
   respawnSeconds: 420,
 };
 
+// ===== PHASE 111 TIER I ADDITIONS =====
+
+export const PLANT_SALT_FROND: PlantDefinition = {
+  id: 'plant_salt_frond',
+  displayName: 'Salt Frond',
+  description: 'Hardy seaweed anchored to shallow rocks, its fronds coated in mineral-rich salt crystals. A staple gathering target in tidal zones.',
+  entityClass: 'plant',
+  biomes: ['tidal_pools'],
+  textureKey: 'plant_salt_frond',
+  color: 0x66aa88,
+  lootTableId: 'loot_plant_salt_frond',
+  harvestYield: [
+    { itemId: 'world_coastal_shell', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 1, chance: 0.5 },
+  ],
+  respawnSeconds: 300,
+};
+
+export const PLANT_TIDAL_KELP_RARE: PlantDefinition = {
+  id: 'plant_tidal_kelp_rare',
+  displayName: 'Tidal Kelp (Rare)',
+  description: 'An unusually large kelp specimen with iridescent fronds. Tidal researchers pay well for samples of this uncommon growth.',
+  entityClass: 'plant',
+  biomes: ['tidal_pools'],
+  textureKey: 'plant_tidal_kelp',
+  color: 0x44ddaa,
+  lootTableId: 'loot_plant_tidal_kelp_rare',
+  harvestYield: [
+    { itemId: 'world_organic_material_common', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_biogenic_catalyst', minAmount: 1, maxAmount: 1, chance: 0.3 },
+  ],
+  respawnSeconds: 600,
+  rarity: 'rare',
+};
+
 export const ALL_AQUATIC_PLANTS: readonly PlantDefinition[] = [
   PLANT_TIDAL_KELP,
   PLANT_BIOLUMINESCENT_ALGAE,
   PLANT_PRESSURE_FERN,
   PLANT_VOID_KELP,
   PLANT_THERMAL_VENT_COLONY,
+  // Phase 111 Tier I additions
+  PLANT_SALT_FROND,
+  PLANT_TIDAL_KELP_RARE,
 ];

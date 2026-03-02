@@ -86,8 +86,9 @@ export function getRareBiomeMinerals(biome: string): string[] {
     crystal_caves: ['mineral_prismatic_crystal_rare'],
     volcanic_ridge: ['mineral_volcanic_ore_rare'],
     starfall_crater: ['mineral_cosmic_fragment_rare'],
-    ancient_ruins: ['mineral_anomaly_crystal_epic'],
-    // Other biomes use base minerals (no rare variants yet)
+    ancient_ruins: ['mineral_anomaly_crystal_epic', 'mineral_anomaly_crystal_rare'],
+    fungal_forest: ['mineral_mycelial_cluster_rare'],
+    tidal_pools: ['mineral_sea_crystal_rare'],
   };
 
   return biomeRareMinerals[biome] ?? [];
