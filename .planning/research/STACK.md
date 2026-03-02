@@ -1,7 +1,7 @@
 # Stack Research
 
 **Domain:** Content expansion and faction gear — 100+ new entity/item definitions, faction-specific equipment
-**Researched:** 2026-02-27
+**Researched:** 2026-03-02
 **Confidence:** HIGH (codebase directly inspected, installed versions verified)
 
 ---
@@ -56,6 +56,7 @@ No new installs. All are already in `devDependencies`.
 | NX target caching | Skip re-running entity tests when source unchanged | Automatically active once `packages/entities/vitest.config.ts` is added |
 | `ENTITY_IDS` / `ITEM_IDS` const objects | Type-safe cross-references prevent typo bugs in `lootTableId` and `grantedAbilities` | Extend in index files for every new definition |
 | `generateSuitStats(archetype, rarity, tier)` | Automatic tier/rarity stat math — prevents Phase 59-style rewrites | Already exists; faction suits must call this, not hand-code numbers |
+| TypeScript `satisfies` operator | Author-time shape validation without widening literal types | Use `satisfies CreatureDefinition` so errors appear at definition site, not downstream |
 
 ---
 
@@ -107,18 +108,45 @@ No new packages required. All work is new files within the existing monorepo str
 
 **Adding faction-specific suits (Verdant biotech, Helix industrial, Nexus surveillance):**
 - Create `packages/items/src/definitions/faction-verdant.ts`, `faction-helix.ts`, `faction-nexus.ts`
-- Call `generateSuitStats(archetype, rarity, tier)` — archetype per faction identity:
-  - Verdant Dynamics: `hazmat` (environmental survival) and `scout` (perception/haste)
-  - Helix Extraction: `tank` (durability/toughness) and `assault` (power/offense)
-  - Nexus Frontiers: `recon` (perception focus) and `balanced`
+- Call `generateSuitStats(archetype, rarity, tier)` — archetype per faction identity backed by lore:
+  - Verdant Dynamics: `hazmat` (environmental survival) and `scout` (perception/haste for canopy exploration)
+  - Helix Extraction: `tank` (durability/toughness for industrial work) and `assault` (power/offense for extraction zones)
+  - Nexus Frontiers: `recon` (perception focus for surveillance) and `balanced` (adaptability, trade flexibility)
 - Add `grantedAbilities: ['ability_id']` using existing ability IDs — no new ability types needed
 - Spread into `ALL_ITEMS` in `packages/items/src/definitions/index.ts`
 - Add IDs to `ITEM_IDS` constant
+
+Example faction archetype mapping to use across all new faction item files:
+
+```typescript
+// Reference-only constant — document at top of each faction definition file
+// Maps faction identity to generateSuitStats archetype
+const FACTION_SUIT_ARCHETYPES = {
+  verdant: { light: 'scout', standard: 'hazmat', heavy: 'recon' },
+  helix:   { light: 'assault', standard: 'tank', heavy: 'combat' },
+  nexus:   { light: 'recon', standard: 'balanced', heavy: 'scout' },
+} as const;
+```
 
 **Adding biome entity gaps (4-6 creatures, 3-4 plants, 2-3 minerals, 1-2 artifacts per biome):**
 - Most sparse biomes by inspection: `toxic_wastes` (~4 total), `petrified_expanse` (~4 total), `starfall_crater` (~5 total)
 - Add to existing files or create new biome files following the `aquatic-creatures.ts`/`exotic-creatures.ts` pattern
 - Extend `ENTITY_IDS` in `packages/entities/src/definitions/index.ts` for every new ID
+- Run this audit before writing content — it shows exact gaps:
+
+```typescript
+// One-time audit (run via ts-node or in a test, not shipped)
+import { ALL_ENTITIES } from '@into-the-void/entities';
+
+const counts = new Map<string, Record<string, number>>();
+for (const e of ALL_ENTITIES) {
+  for (const biome of e.biomes) {
+    if (!counts.has(biome)) counts.set(biome, { creature: 0, plant: 0, mineral: 0, artifact: 0 });
+    counts.get(biome)![e.entityClass]++;
+  }
+}
+console.table(Object.fromEntries(counts));
+```
 
 **Adding entity coverage validation (currently missing):**
 - Add `packages/entities/vitest.config.ts` (copy from `packages/items/vitest.config.ts`)
@@ -127,6 +155,21 @@ No new packages required. All work is new files within the existing monorepo str
   - All entity IDs in `ENTITY_IDS` are registered in `ALL_ENTITIES`
   - No duplicate IDs in `ALL_ENTITIES`
   - All `lootTableId` values follow `'loot_' + entity.id` convention
+
+**Using `satisfies` for author-time safety on new definitions:**
+
+```typescript
+// Instead of: TypeScript widens to CreatureDefinition
+export const CREATURE_MIASMA_BLOATER: CreatureDefinition = { ... };
+
+// Prefer: TypeScript validates shape AND preserves literal types for ENTITY_IDS
+export const CREATURE_MIASMA_BLOATER = {
+  id: 'creature_miasma_bloater',
+  // all fields
+} satisfies CreatureDefinition;
+```
+
+`satisfies` is available in TypeScript >=4.9, confirmed safe at the installed version (5.9.3). The error appears at the definition site rather than at the registry call site.
 
 ---
 
@@ -137,6 +180,7 @@ No new packages required. All work is new files within the existing monorepo str
 | vitest@4.0.18 | typescript@5.9.3 | Already working in `packages/items`; identical config applies to `packages/entities` |
 | @typescript-eslint/utils@8.56.0 | eslint@8.57.0 | Already used in `eslint-rules/`; confirmed working |
 | nx@20.8.4 | vitest@4.0.18 | NX `test` target auto-detects `vitest.config.ts`; caching active immediately |
+| TypeScript `satisfies` operator | typescript@5.9.3 | Available since TS 4.9; fully safe to use |
 
 ---
 
@@ -154,16 +198,20 @@ No new packages required. All work is new files within the existing monorepo str
 
 6. **ID string is the only cross-package contract.** `lootTableId: 'loot_creature_x'` links entities to loot tables. `grantedAbilities: ['ability_id']` links items to abilities. These are untyped strings. A Vitest coverage test that asserts `ENTITY_IDS` keys match `ALL_ENTITIES` entries is the primary regression guard.
 
+7. **Faction gear requires NPC trader inventory updates.** New faction suits/tools must be stocked at faction-specific traders in `packages/npcs/src/definitions/`. This is content authoring (not code), but it's a required integration step — items not stocked anywhere are unreachable without loot table drops.
+
 ---
 
 ## Sources
 
-- Codebase direct inspection: `packages/items/src/types.ts`, `packages/items/src/utils.ts`, `packages/items/src/__tests__/item-validation.test.ts`, `packages/entities/src/types.ts`, `packages/entities/src/registry.ts`, `packages/entities/src/definitions/index.ts`, `packages/items/src/definitions/index.ts`, `eslint-rules/no-legacy-stat-buff.ts`, `eslint.config.mjs` — HIGH confidence
-- Installed version verification: `node -e "require('vitest/package.json').version"` → 4.0.18; `require('typescript/package.json').version` → 5.9.3; `require('nx/package.json').version` → 20.8.4 — HIGH confidence
+- Codebase direct inspection: `packages/items/src/types.ts`, `packages/items/src/utils.ts`, `packages/items/src/__tests__/item-validation.test.ts`, `packages/entities/src/types.ts`, `packages/entities/src/registry.ts`, `packages/entities/src/definitions/index.ts`, `packages/items/src/definitions/index.ts` — HIGH confidence
+- Installed version verification from `package.json`: TypeScript 5.4.0 minimum (actual runtime 5.9.3), Vitest 4.0.18, NX 20.x, ESLint 8.57.0 — HIGH confidence
 - `lore/world-bible.md` — faction aesthetic and identity profiles (Verdant=biotech/sustainable, Helix=industrial/aggressive, Nexus=surveillance/adaptable) — HIGH confidence (authoritative, non-negotiable per CLAUDE.md)
 - `.planning/PROJECT.md` — v1.23 milestone goals, confirmed 16 biomes, confirmed existing 122 items + 92 entities — HIGH confidence
+- `packages/shared-types/src/game/biome.ts` — all 16 `BiomeType` values, `BIOME_TIERS` mapping, tier level requirements — HIGH confidence
+- `packages/items/src/definitions/suits.ts` — existing faction suit entries (NEXUS_COMBAT_FRAME_EXOTIC, HELIX_RESEARCH_FRAME_EXOTIC) confirm faction id-in-name convention is already established — HIGH confidence
 
 ---
 
 *Stack research for: content expansion and faction gear (v1.23)*
-*Researched: 2026-02-27*
+*Researched: 2026-03-02*
