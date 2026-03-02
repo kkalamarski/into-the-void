@@ -5,7 +5,7 @@ import '../index';
 
 import { describe, it, expect } from 'vitest';
 import { ALL_ENTITIES } from '../definitions';
-// Import directly from the loot module to avoid pulling in all game-logic transitive deps
+// Deep import to avoid pulling in game-logic transitive deps (@into-the-void/tiles)
 import { CREATURE_LOOT_TABLES } from '@into-the-void/game-logic/src/loot/creature-loot';
 import { ItemRegistry } from '@into-the-void/items';
 import type { CreatureDefinition } from '../types';
@@ -71,7 +71,7 @@ describe('Creature Loot Table Validation', () => {
 
     it.each(lootTableKeys.map((k) => [k] as const))(
       'loot table "%s" is referenced by a creature',
-      (key) => {
+      (key: string) => {
         expect(
           creatureLootIds.has(key),
           `CREATURE_LOOT_TABLES has entry "${key}" but no creature references it as its lootTableId. Remove it or add the creature definition`

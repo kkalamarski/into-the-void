@@ -6,7 +6,6 @@ import {
   calculateRarityWeight,
   getRareBiomeMinerals,
   getEpicBiomeMinerals,
-  RARE_SPAWN_CONFIG
 } from './rarity';
 
 const FERTILITY_MULTIPLIERS: Record<FertilityType, number> = {

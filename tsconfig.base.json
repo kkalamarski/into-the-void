@@ -24,8 +24,10 @@
     "paths": {
       "@into-the-void/shared-types": ["packages/shared-types/src/index.ts"],
       "@into-the-void/game-logic": ["packages/game-logic/src/index.ts"],
+      "@into-the-void/game-logic/*": ["packages/game-logic/*"],
       "@into-the-void/database": ["packages/database/src/index.ts"],
       "@into-the-void/world-gen": ["packages/world-gen/src/index.ts"],
+      "@into-the-void/world-gen/*": ["packages/world-gen/*"],
       "@into-the-void/tiles": ["packages/tiles/src/index.ts"],
       "@into-the-void/items": ["packages/items/src/index.ts"],
       "@into-the-void/entities": ["packages/entities/src/index.ts"],

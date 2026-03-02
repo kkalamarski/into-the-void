@@ -23,7 +23,7 @@ describe('Entity ID Constant Validation', () => {
   });
 
   describe('Every registered entity has a matching ENTITY_IDS constant', () => {
-    const allEntityIdValues = new Set(Object.values(ENTITY_IDS));
+    const allEntityIdValues = new Set<string>(Object.values(ENTITY_IDS));
 
     it.each(ALL_ENTITIES.map((e) => [e.id, e.displayName] as const))(
       'entity "%s" (%s) has a matching ENTITY_IDS constant',
