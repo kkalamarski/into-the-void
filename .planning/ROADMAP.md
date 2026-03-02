@@ -177,7 +177,11 @@
   3. crystalline_wastes has 2 discoverable artifact entities — a player exploring that biome can find and interact with artifacts where previously there were none
   4. All Tier I biomes (void_plains, fungal_forest, tidal_pools, ancient_ruins) have at least 1 artifact each — the zero-artifact gap across all four Tier I biomes is closed
   5. Running `nx run entities:test` passes after all new plant/mineral/artifact definitions are committed — no invalid harvest yield item references
-**Plans**: TBD
+**Plans**: 4 plans
+  - [ ] 111-01-PLAN.md -- Tier I biomes: plants, minerals, artifacts for void_plains, fungal_forest, tidal_pools, ancient_ruins (PLNT-01, MINR-01, MINR-05, ARTF-01)
+  - [ ] 111-02-PLAN.md -- Tier II biomes: plants, minerals, artifacts for toxic_wastes, miasma_marshes, petrified_expanse, bioluminescent_depths, kelp_forests (PLNT-02, MINR-02, MINR-05, ARTF-02)
+  - [ ] 111-03-PLAN.md -- Tier III biomes (excl. crystalline_wastes): plants, minerals for crystal_caves, volcanic_ridge, frozen_expanse, deep_trenches, starfall_crater (PLNT-03, MINR-03, MINR-05, ARTF-03)
+  - [ ] 111-04-PLAN.md -- crystalline_wastes Singing Fields spotlight + void_rift exotic completion (PLNT-03, PLNT-04, MINR-03, MINR-04, MINR-05, ARTF-03, ARTF-04, ARTF-05)
 
 ### Phase 112: Faction Suits
 **Goal**: Verdant Dynamics, Helix Extraction, Nexus Frontiers, and Unaffiliated each have a complete suit line from Common through Legendary using generateSuitStats() for all stat generation — no hand-coded stats — with distinct faction identity expressed through grantedAbilities, textureKey, and display name conventions established in Phase 109
@@ -229,7 +233,7 @@
 | 108. Entity Validation Infrastructure | 2/2 | Complete | 2026-03-02 |
 | 109. Faction Identity Design Gate | 2/2 | Complete | 2026-03-02 |
 | 110. Biome Creature Population | 4/4 | Complete | 2026-03-02 |
-| 111. Biome Plants, Minerals, and Artifacts | 0/TBD | Not started | - |
+| 111. Biome Plants, Minerals, and Artifacts | 0/4 | Not started | - |
 | 112. Faction Suits | 0/TBD | Not started | - |
 | 113. Faction Modules and Tools | 0/TBD | Not started | - |
 | 114. Integration and Lore Verification | 0/TBD | Not started | - |
