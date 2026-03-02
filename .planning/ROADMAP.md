@@ -51,7 +51,7 @@
 
 **Milestone Goal:** Major content expansion filling all biome entity gaps and adding faction-specific equipment across all tiers — every biome reaches minimum population targets, and Verdant, Helix, Nexus, and Unaffiliated each have a distinct gear line.
 
-- [ ] **Phase 108: Entity Validation Infrastructure** - Test suite gating all subsequent content authoring, preventing silent spawn and loot failures
+- [x] **Phase 108: Entity Validation Infrastructure** - Test suite gating all subsequent content authoring, preventing silent spawn and loot failures
 - [ ] **Phase 109: Faction Identity Design Gate** - Locked design artifact defining stat archetypes, ability matrices, naming conventions, and color anchors per faction before any item definition is written
 - [ ] **Phase 110: Biome Creature Population** - All 16 biomes reach 4-6 creatures with behavioral variety, loot tables, and spawn configs fully wired
 - [ ] **Phase 111: Biome Plants, Minerals, and Artifacts** - All 16 biomes reach 3-4 plants, 2-3 minerals with rarity variants, and 1-2 artifacts; crystalline_wastes hotspot resolved
@@ -134,7 +134,9 @@
   3. Adding a spawnable entity without a BIOME_SPAWN_CONFIGS entry causes a test failure identifying the missing spawn config
   4. Adding an ENTITY_IDS constant that does not match a registered entity (or vice versa) causes a test failure identifying the drift
   5. Adding a plant or mineral with a harvestYield itemId that does not exist in ItemRegistry causes a test failure naming the bad reference
-**Plans**: TBD
+**Plans**:
+  - [x] 108-01-PLAN.md -- Vitest config, export BIOME_SPAWN_CONFIGS, loot-tables.test.ts, spawn-configs.test.ts (CINF-01)
+  - [x] 108-02-PLAN.md -- id-constants.test.ts, harvest-yields.test.ts (CINF-01)
 
 ### Phase 109: Faction Identity Design Gate
 **Goal**: A committed design artifact documents the per-faction stat archetype, ability assignment matrix, naming conventions, color palette anchors, and module/tool character descriptions — locked before any faction item definition is authored
@@ -218,7 +220,7 @@
 | 105. ChatService & Channel Routing | 2/2 | Complete | 2026-02-26 |
 | 106. Chat Panel UI | 2/2 | Complete | 2026-02-26 |
 | 107. Moderation Controls | 2/2 | Complete | 2026-02-26 |
-| 108. Entity Validation Infrastructure | 0/TBD | Not started | - |
+| 108. Entity Validation Infrastructure | 2/2 | Complete | 2026-03-02 |
 | 109. Faction Identity Design Gate | 0/TBD | Not started | - |
 | 110. Biome Creature Population | 0/TBD | Not started | - |
 | 111. Biome Plants, Minerals, and Artifacts | 0/TBD | Not started | - |

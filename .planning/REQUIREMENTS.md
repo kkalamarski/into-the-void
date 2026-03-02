@@ -144,7 +144,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TOOL-02 | Phase 113 | Pending |
 | TOOL-03 | Phase 113 | Pending |
 | TOOL-04 | Phase 113 | Pending |
-| CINF-01 | Phase 108 | Pending |
+| CINF-01 | Phase 108 | Complete |
 | INTG-01 | Phase 114 | Pending |
 | INTG-02 | Phase 114 | Pending |
 | INTG-03 | Phase 114 | Pending |
