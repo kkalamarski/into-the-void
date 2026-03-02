@@ -87,10 +87,50 @@ export const MINERAL_PHASE_MINERAL: MineralDefinition = {
   respawnSeconds: 420,
 };
 
+// ===== PHASE 111 TIER II ADDITIONS =====
+
+export const MINERAL_DEPTH_QUARTZ: MineralDefinition = {
+  id: 'mineral_depth_quartz',
+  displayName: 'Depth Quartz',
+  description: 'Pressure-formed quartz with trapped bioluminescent organisms suspended in its lattice. The crystals glow with a ghostly internal light.',
+  entityClass: 'mineral',
+  biomes: ['bioluminescent_depths'],
+  textureKey: 'mineral_depth_quartz',
+  color: 0x3388aa,
+  lootTableId: 'loot_mineral_depth_quartz',
+  miningYield: [
+    { itemId: 'world_luminous_extract', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'reagent_bioluminescent_compound', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ],
+  requiredTier: 2,
+  respawnSeconds: 420,
+};
+
+export const MINERAL_DEPTH_QUARTZ_RARE: MineralDefinition = {
+  id: 'mineral_depth_quartz_rare',
+  displayName: 'Depth Quartz (Rare)',
+  description: 'An enormous depth quartz cluster radiating light that seems to swim and shift. The trapped organisms may still be alive.',
+  entityClass: 'mineral',
+  biomes: ['bioluminescent_depths'],
+  textureKey: 'mineral_depth_quartz',
+  color: 0x44bbdd,
+  lootTableId: 'loot_mineral_depth_quartz_rare',
+  miningYield: [
+    { itemId: 'world_luminous_extract', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_bioluminescent_compound', minAmount: 1, maxAmount: 1, chance: 0.4 },
+  ],
+  requiredTier: 3,
+  respawnSeconds: 840,
+  rarity: 'rare',
+};
+
 export const ALL_EXOTIC_MINERALS: readonly MineralDefinition[] = [
   MINERAL_VOID_CRYSTAL_NODE,
   MINERAL_ANOMALY_SHARD,
   MINERAL_DIMENSIONAL_ORE,
   MINERAL_NULL_STONE,
   MINERAL_PHASE_MINERAL,
+  // Phase 111 Tier II additions
+  MINERAL_DEPTH_QUARTZ,
+  MINERAL_DEPTH_QUARTZ_RARE,
 ];

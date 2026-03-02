@@ -19,6 +19,10 @@ const RARITY_SYSTEM_MINERALS: Record<string, string[]> = {
   ancient_ruins: ['mineral_anomaly_crystal_epic', 'mineral_anomaly_crystal_rare'],
   fungal_forest: ['mineral_mycelial_cluster_rare'],
   tidal_pools: ['mineral_sea_crystal_rare'],
+  toxic_wastes: ['mineral_corrosive_deposit_rare'],
+  petrified_expanse: ['mineral_mineralized_log_rare'],
+  bioluminescent_depths: ['mineral_depth_quartz_rare'],
+  kelp_forests: ['mineral_pearl_node_rare'],
 };
 
 // Collect all entity IDs referenced across all biome spawn configs,

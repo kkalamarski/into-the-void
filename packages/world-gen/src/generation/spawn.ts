@@ -97,9 +97,13 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_CORROSIVE_DEPOSIT, weight: 10, rarity: 1 },
+      { id: ENTITY_IDS.MINERAL_ACID_STONE, weight: 6, rarity: 2 },
     ],
     plants: [
       { id: ENTITY_IDS.PLANT_ACID_FERN, weight: 10 },
+      { id: ENTITY_IDS.PLANT_ACID_BLOOM, weight: 8 },
+      { id: ENTITY_IDS.PLANT_CHEMICAL_BLOOM, weight: 6 },
+      { id: ENTITY_IDS.PLANT_ACID_BLOOM_RARE, weight: 2, rarity: 'rare' },
     ],
     artifacts: [
       { id: ENTITY_IDS.ARTIFACT_CONTAMINATED_RELIC, weight: 6, rarity: 'epic' },
@@ -245,8 +249,13 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     ],
     plants: [
       { id: ENTITY_IDS.PLANT_GAS_POD, weight: 10 },
+      { id: ENTITY_IDS.PLANT_MARSH_TENDRIL, weight: 8 },
+      { id: ENTITY_IDS.PLANT_CHEMICAL_BLOOM, weight: 4 },
+      { id: ENTITY_IDS.PLANT_GAS_POD_RARE, weight: 2, rarity: 'rare' },
     ],
-    artifacts: [], // No artifacts in miasma_marshes
+    artifacts: [
+      { id: ENTITY_IDS.ARTIFACT_MARSH_FILTRATION_UNIT, weight: 3, rarity: 'rare' },
+    ],
     creatureDensity: 5,
     mineralDensity: 4,
     plantDensity: 3,
@@ -261,9 +270,13 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_MINERALIZED_LOG, weight: 6, rarity: 2 },
+      { id: ENTITY_IDS.MINERAL_STONE_HEART, weight: 6, rarity: 2 },
     ],
     plants: [
       { id: ENTITY_IDS.PLANT_MOBILE_VINE, weight: 10 },
+      { id: ENTITY_IDS.PLANT_STONE_MOSS, weight: 8 },
+      { id: ENTITY_IDS.PLANT_CALCITE_FERN, weight: 7 },
+      { id: ENTITY_IDS.PLANT_MOBILE_VINE_RARE, weight: 2, rarity: 'rare' },
     ],
     artifacts: [
       { id: ENTITY_IDS.ARTIFACT_PRESERVED_SPECIMEN, weight: 10, rarity: 'rare' },
@@ -313,6 +326,8 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     plants: [
       { id: ENTITY_IDS.PLANT_BIOLUMINESCENT_ALGAE, weight: 10 },
       { id: ENTITY_IDS.PLANT_PRESSURE_FERN, weight: 10 },
+      { id: ENTITY_IDS.PLANT_KELP_CANOPY, weight: 8 },
+      { id: ENTITY_IDS.PLANT_PRESSURE_FERN_RARE, weight: 2, rarity: 'rare' },
     ],
     artifacts: [
       { id: ENTITY_IDS.ARTIFACT_SUNKEN_TECH, weight: 6, rarity: 'epic' },
@@ -413,11 +428,13 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     minerals: [
       { id: ENTITY_IDS.MINERAL_ANOMALY_SHARD, weight: 6, rarity: 2 },
       { id: ENTITY_IDS.MINERAL_PHASE_MINERAL, weight: 8, rarity: 1 },
+      { id: ENTITY_IDS.MINERAL_DEPTH_QUARTZ, weight: 6, rarity: 2 },
     ],
     plants: [
       { id: ENTITY_IDS.PLANT_REALITY_MOSS, weight: 10 },
       { id: ENTITY_IDS.PLANT_ECHO_BLOOM, weight: 6 },
       { id: ENTITY_IDS.PLANT_TEMPORAL_FUNGUS, weight: 8 },
+      { id: ENTITY_IDS.PLANT_REALITY_MOSS_RARE, weight: 2, rarity: 'rare' },
     ],
     artifacts: [
       { id: ENTITY_IDS.ARTIFACT_ECHO_RECORD, weight: 10, rarity: 'rare' },

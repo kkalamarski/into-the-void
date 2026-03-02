@@ -84,6 +84,26 @@ export const MINERAL_PEARL_NODE: MineralDefinition = {
   respawnSeconds: 600,
 };
 
+// ===== PHASE 111 TIER II ADDITIONS =====
+
+export const MINERAL_PEARL_NODE_RARE: MineralDefinition = {
+  id: 'mineral_pearl_node_rare',
+  displayName: 'Pearl Node (Rare)',
+  description: 'A pearl node of unusual size and iridescence. The organism that created it must have been exceptionally old — possibly centuries.',
+  entityClass: 'mineral',
+  biomes: ['kelp_forests'],
+  textureKey: 'mineral_pearl_node',
+  color: 0xeeddcc,
+  lootTableId: 'loot_mineral_pearl_node_rare',
+  miningYield: [
+    { itemId: 'world_crystal_fragment', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 1, chance: 0.35 },
+  ],
+  requiredTier: 3,
+  respawnSeconds: 840,
+  rarity: 'rare',
+};
+
 // ===== PHASE 111 TIER I ADDITIONS =====
 
 export const MINERAL_SEA_CRYSTAL_RARE: MineralDefinition = {
@@ -112,4 +132,6 @@ export const ALL_AQUATIC_MINERALS: readonly MineralDefinition[] = [
   MINERAL_PEARL_NODE,
   // Phase 111 Tier I additions
   MINERAL_SEA_CRYSTAL_RARE,
+  // Phase 111 Tier II additions
+  MINERAL_PEARL_NODE_RARE,
 ];

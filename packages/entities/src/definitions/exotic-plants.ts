@@ -80,10 +80,31 @@ export const PLANT_NULL_GRASS: PlantDefinition = {
   respawnSeconds: 480,
 };
 
+// ===== PHASE 111 TIER II ADDITIONS =====
+
+export const PLANT_REALITY_MOSS_RARE: PlantDefinition = {
+  id: 'plant_reality_moss_rare',
+  displayName: 'Reality Moss (Rare)',
+  description: 'A patch of reality moss pulsing in visible spectra not usually perceived. Looking at it directly causes a mild sense of temporal displacement.',
+  entityClass: 'plant',
+  biomes: ['bioluminescent_depths'],
+  textureKey: 'plant_reality_moss',
+  color: 0x33ffcc,
+  lootTableId: 'loot_plant_reality_moss_rare',
+  harvestYield: [
+    { itemId: 'world_luminous_extract', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_bioluminescent_compound', minAmount: 1, maxAmount: 1, chance: 0.35 },
+  ],
+  respawnSeconds: 700,
+  rarity: 'rare',
+};
+
 export const ALL_EXOTIC_PLANTS: readonly PlantDefinition[] = [
   PLANT_REALITY_MOSS,
   PLANT_ECHO_BLOOM,
   PLANT_TEMPORAL_FUNGUS,
   PLANT_VOID_VINE,
   PLANT_NULL_GRASS,
+  // Phase 111 Tier II additions
+  PLANT_REALITY_MOSS_RARE,
 ];

@@ -293,6 +293,139 @@ export const PLANT_RELIC_LICHEN: PlantDefinition = {
   respawnSeconds: 360,
 };
 
+// ===== PHASE 111 TIER II ADDITIONS =====
+
+export const PLANT_ACID_BLOOM: PlantDefinition = {
+  id: 'plant_acid_bloom',
+  displayName: 'Acid Bloom',
+  description: 'Bright yellow flower with petals that secrete contact acids. Toxic_wastes chemists prize these for pharmaceutical compounds.',
+  entityClass: 'plant',
+  biomes: ['toxic_wastes'],
+  textureKey: 'plant_acid_bloom',
+  color: 0xddee00,
+  lootTableId: 'loot_plant_acid_bloom',
+  harvestYield: [
+    { itemId: 'world_toxic_residue', minAmount: 1, maxAmount: 3, chance: 1.0 },
+    { itemId: 'reagent_volatile_extract', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ],
+  respawnSeconds: 300,
+};
+
+export const PLANT_CHEMICAL_BLOOM: PlantDefinition = {
+  id: 'plant_chemical_bloom',
+  displayName: 'Chemical Bloom',
+  description: 'Resilient bush that thrives in chemically saturated soil. Its root system filters toxins, concentrating them in vivid red berries.',
+  entityClass: 'plant',
+  biomes: ['toxic_wastes', 'miasma_marshes'],
+  textureKey: 'plant_chemical_bloom',
+  color: 0xcc4444,
+  lootTableId: 'loot_plant_chemical_bloom',
+  harvestYield: [
+    { itemId: 'world_toxic_residue', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 1, chance: 0.5 },
+  ],
+  respawnSeconds: 300,
+};
+
+export const PLANT_ACID_BLOOM_RARE: PlantDefinition = {
+  id: 'plant_acid_bloom_rare',
+  displayName: 'Acid Bloom (Rare)',
+  description: 'A fluorescent acid bloom radiating intense heat. The concentrated acids have etched the surrounding ground.',
+  entityClass: 'plant',
+  biomes: ['toxic_wastes'],
+  textureKey: 'plant_acid_bloom',
+  color: 0xffff33,
+  lootTableId: 'loot_plant_acid_bloom_rare',
+  harvestYield: [
+    { itemId: 'world_toxic_residue', minAmount: 2, maxAmount: 5, chance: 1.0 },
+    { itemId: 'reagent_volatile_extract', minAmount: 1, maxAmount: 1, chance: 0.4 },
+  ],
+  respawnSeconds: 600,
+  rarity: 'rare',
+};
+
+export const PLANT_MARSH_TENDRIL: PlantDefinition = {
+  id: 'plant_marsh_tendril',
+  displayName: 'Marsh Tendril',
+  description: 'Long, sinuous vine growing from submerged roots. Curls toward motion, suggesting a rudimentary sensory system.',
+  entityClass: 'plant',
+  biomes: ['miasma_marshes'],
+  textureKey: 'plant_marsh_tendril',
+  color: 0x446622,
+  lootTableId: 'loot_plant_marsh_tendril',
+  harvestYield: [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 3, chance: 1.0 },
+    { itemId: 'reagent_biogenic_catalyst', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ],
+  respawnSeconds: 300,
+};
+
+export const PLANT_GAS_POD_RARE: PlantDefinition = {
+  id: 'plant_gas_pod_rare',
+  displayName: 'Gas Pod (Rare)',
+  description: 'An oversized gas pod straining against its own membrane. The concentrated marsh gas inside glows a sickly green.',
+  entityClass: 'plant',
+  biomes: ['miasma_marshes'],
+  textureKey: 'plant_gas_pod',
+  color: 0x88cc44,
+  lootTableId: 'loot_plant_gas_pod_rare',
+  harvestYield: [
+    { itemId: 'world_toxic_residue', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_volatile_extract', minAmount: 1, maxAmount: 1, chance: 0.3 },
+  ],
+  respawnSeconds: 600,
+  rarity: 'rare',
+};
+
+export const PLANT_STONE_MOSS: PlantDefinition = {
+  id: 'plant_stone_moss',
+  displayName: 'Stone Moss',
+  description: 'Moss colony growing on petrified surfaces, constantly shedding calcified layers to avoid hardening. The inner tissue stays defiantly green.',
+  entityClass: 'plant',
+  biomes: ['petrified_expanse'],
+  textureKey: 'plant_stone_moss',
+  color: 0x669955,
+  lootTableId: 'loot_plant_stone_moss',
+  harvestYield: [
+    { itemId: 'world_alien_flora_petrified', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'reagent_petrification_enzyme', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ],
+  respawnSeconds: 300,
+};
+
+export const PLANT_CALCITE_FERN: PlantDefinition = {
+  id: 'plant_calcite_fern',
+  displayName: 'Calcite Fern',
+  description: 'Fern with fronds partially mineralized into translucent calcite. The living portions grow faster than the petrification front — barely.',
+  entityClass: 'plant',
+  biomes: ['petrified_expanse'],
+  textureKey: 'plant_calcite_fern',
+  color: 0xaabb88,
+  lootTableId: 'loot_plant_calcite_fern',
+  harvestYield: [
+    { itemId: 'world_alien_flora_petrified', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 1, chance: 0.4 },
+  ],
+  respawnSeconds: 320,
+};
+
+export const PLANT_MOBILE_VINE_RARE: PlantDefinition = {
+  id: 'plant_mobile_vine_rare',
+  displayName: 'Mobile Vine (Rare)',
+  description: 'A mobile vine exhibiting unusual speed and coordination. Its root tendrils pull it across the stone with purpose, leaving glowing chemical trails.',
+  entityClass: 'plant',
+  biomes: ['petrified_expanse'],
+  textureKey: 'plant_mobile_vine',
+  color: 0x88dd66,
+  lootTableId: 'loot_plant_mobile_vine_rare',
+  harvestYield: [
+    { itemId: 'world_alien_flora_petrified', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_petrification_enzyme', minAmount: 1, maxAmount: 1, chance: 0.3 },
+  ],
+  respawnSeconds: 640,
+  rarity: 'rare',
+};
+
 // ===== PHASE 88 ADDITIONS =====
 
 export const PLANT_RARE_FUNGI: PlantDefinition = {
@@ -354,4 +487,13 @@ export const ALL_PLANTS: readonly PlantDefinition[] = [
   // Phase 111 Tier I additions
   PLANT_VOID_FERN_RARE,
   PLANT_RELIC_LICHEN,
+  // Phase 111 Tier II additions
+  PLANT_ACID_BLOOM,
+  PLANT_CHEMICAL_BLOOM,
+  PLANT_ACID_BLOOM_RARE,
+  PLANT_MARSH_TENDRIL,
+  PLANT_GAS_POD_RARE,
+  PLANT_STONE_MOSS,
+  PLANT_CALCITE_FERN,
+  PLANT_MOBILE_VINE_RARE,
 ];

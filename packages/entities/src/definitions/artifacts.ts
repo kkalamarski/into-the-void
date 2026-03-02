@@ -106,6 +106,21 @@ export const ARTIFACT_TIDAL_COMPASS: ArtifactDefinition = {
   rarity: 'rare',
 };
 
+// ===== PHASE 111 TIER II ADDITIONS =====
+
+export const ARTIFACT_MARSH_FILTRATION_UNIT: ArtifactDefinition = {
+  id: 'artifact_marsh_filtration_unit',
+  displayName: 'Marsh Filtration Unit',
+  description: 'A corroded Ancient-era atmospheric processor half-sunk in marsh sediment. Despite millennia of submersion, one of its chemical filters still activates when approached, briefly clearing the miasma in a small radius.',
+  entityClass: 'artifact',
+  biomes: ['miasma_marshes'],
+  textureKey: 'artifact_marsh_filtration_unit',
+  color: 0x668844,
+  lootTableId: 'loot_artifact_marsh_filtration_unit',
+  respawns: false,
+  rarity: 'rare',
+};
+
 // ===== PHASE 88 ADDITIONS =====
 
 export const ARTIFACT_CONTAMINATED_RELIC: ArtifactDefinition = {
@@ -147,4 +162,6 @@ export const ALL_ARTIFACTS: readonly ArtifactDefinition[] = [
   ARTIFACT_BADLANDS_BEACON,
   ARTIFACT_LUMINOUS_SEED,
   ARTIFACT_TIDAL_COMPASS,
+  // Phase 111 Tier II additions
+  ARTIFACT_MARSH_FILTRATION_UNIT,
 ];

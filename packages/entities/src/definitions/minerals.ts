@@ -256,6 +256,78 @@ export const MINERAL_ANOMALY_CRYSTAL_RARE: MineralDefinition = {
   rarity: 'rare',
 };
 
+// ===== PHASE 111 TIER II ADDITIONS =====
+
+export const MINERAL_ACID_STONE: MineralDefinition = {
+  id: 'mineral_acid_stone',
+  displayName: 'Acid Stone',
+  description: 'Rock formation with visible acid seepage channels. The mineral has been partially dissolved into a honeycombed structure valued for filtration systems.',
+  entityClass: 'mineral',
+  biomes: ['toxic_wastes'],
+  textureKey: 'mineral_acid_stone',
+  color: 0xaacc33,
+  lootTableId: 'loot_mineral_acid_stone',
+  miningYield: [
+    { itemId: 'world_toxic_residue', minAmount: 1, maxAmount: 3, chance: 1.0 },
+    { itemId: 'reagent_volatile_extract', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ],
+  requiredTier: 2,
+  respawnSeconds: 420,
+};
+
+export const MINERAL_CORROSIVE_DEPOSIT_RARE: MineralDefinition = {
+  id: 'mineral_corrosive_deposit_rare',
+  displayName: 'Corrosive Deposit (Rare)',
+  description: 'A corrosive deposit with an unusually concentrated acid core. The surrounding ground is visibly etched in concentric rings.',
+  entityClass: 'mineral',
+  biomes: ['toxic_wastes'],
+  textureKey: 'mineral_corrosive_deposit',
+  color: 0xccff44,
+  lootTableId: 'loot_mineral_corrosive_deposit_rare',
+  miningYield: [
+    { itemId: 'world_toxic_residue', minAmount: 2, maxAmount: 5, chance: 1.0 },
+    { itemId: 'reagent_volatile_extract', minAmount: 1, maxAmount: 1, chance: 0.4 },
+  ],
+  requiredTier: 3,
+  respawnSeconds: 840,
+  rarity: 'rare',
+};
+
+export const MINERAL_STONE_HEART: MineralDefinition = {
+  id: 'mineral_stone_heart',
+  displayName: 'Stone Heart',
+  description: 'Dense mineral core found at the center of petrified organisms. The compression of organic-to-mineral conversion creates a uniquely structured material.',
+  entityClass: 'mineral',
+  biomes: ['petrified_expanse'],
+  textureKey: 'mineral_stone_heart',
+  color: 0x887766,
+  lootTableId: 'loot_mineral_stone_heart',
+  miningYield: [
+    { itemId: 'world_alien_flora_petrified', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'reagent_petrification_enzyme', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ],
+  requiredTier: 2,
+  respawnSeconds: 420,
+};
+
+export const MINERAL_MINERALIZED_LOG_RARE: MineralDefinition = {
+  id: 'mineral_mineralized_log_rare',
+  displayName: 'Mineralized Log (Rare)',
+  description: 'A petrified log exhibiting unusual mineral replacement — the original cellular structure is preserved in stunning detail, now composed of semi-precious stone.',
+  entityClass: 'mineral',
+  biomes: ['petrified_expanse'],
+  textureKey: 'mineral_mineralized_log',
+  color: 0xbbaa88,
+  lootTableId: 'loot_mineral_mineralized_log_rare',
+  miningYield: [
+    { itemId: 'world_alien_flora_petrified', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_petrification_enzyme', minAmount: 1, maxAmount: 1, chance: 0.35 },
+  ],
+  requiredTier: 3,
+  respawnSeconds: 840,
+  rarity: 'rare',
+};
+
 // ===== RARE VARIANTS =====
 // Higher yield (1.5x), slower respawn (2x), higher tool requirements
 
@@ -422,4 +494,9 @@ export const ALL_MINERALS: readonly MineralDefinition[] = [
   MINERAL_MYCELIAL_CLUSTER_RARE,
   MINERAL_RUIN_AGGREGATE,
   MINERAL_ANOMALY_CRYSTAL_RARE,
+  // Phase 111 Tier II additions
+  MINERAL_ACID_STONE,
+  MINERAL_CORROSIVE_DEPOSIT_RARE,
+  MINERAL_STONE_HEART,
+  MINERAL_MINERALIZED_LOG_RARE,
 ];

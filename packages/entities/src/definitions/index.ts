@@ -137,6 +137,15 @@ export const ENTITY_IDS = {
   // Phase 111 Tier I plant additions
   PLANT_VOID_FERN_RARE: 'plant_void_fern_rare',
   PLANT_RELIC_LICHEN: 'plant_relic_lichen',
+  // Phase 111 Tier II plant additions
+  PLANT_ACID_BLOOM: 'plant_acid_bloom',
+  PLANT_CHEMICAL_BLOOM: 'plant_chemical_bloom',
+  PLANT_ACID_BLOOM_RARE: 'plant_acid_bloom_rare',
+  PLANT_MARSH_TENDRIL: 'plant_marsh_tendril',
+  PLANT_GAS_POD_RARE: 'plant_gas_pod_rare',
+  PLANT_STONE_MOSS: 'plant_stone_moss',
+  PLANT_CALCITE_FERN: 'plant_calcite_fern',
+  PLANT_MOBILE_VINE_RARE: 'plant_mobile_vine_rare',
 
   // ---- AQUATIC PLANTS ----
   PLANT_TIDAL_KELP: 'plant_tidal_kelp',
@@ -147,6 +156,9 @@ export const ENTITY_IDS = {
   // Phase 111 Tier I aquatic plant additions
   PLANT_SALT_FROND: 'plant_salt_frond',
   PLANT_TIDAL_KELP_RARE: 'plant_tidal_kelp_rare',
+  // Phase 111 Tier II aquatic plant additions
+  PLANT_KELP_CANOPY: 'plant_kelp_canopy',
+  PLANT_PRESSURE_FERN_RARE: 'plant_pressure_fern_rare',
 
   // ---- MINERALS ----
   MINERAL_VOID_CRYSTAL: 'mineral_void_crystal',
@@ -171,6 +183,11 @@ export const ENTITY_IDS = {
   MINERAL_MARSH_GAS_NODE: 'mineral_marsh_gas_node',
   // Phase 111 Tier I mineral additions
   MINERAL_VOID_SLATE: 'mineral_void_slate',
+  // Phase 111 Tier II mineral additions
+  MINERAL_ACID_STONE: 'mineral_acid_stone',
+  MINERAL_CORROSIVE_DEPOSIT_RARE: 'mineral_corrosive_deposit_rare',
+  MINERAL_STONE_HEART: 'mineral_stone_heart',
+  MINERAL_MINERALIZED_LOG_RARE: 'mineral_mineralized_log_rare',
   MINERAL_FUNGITE_ORE: 'mineral_fungite_ore',
   MINERAL_MYCELIAL_CLUSTER_RARE: 'mineral_mycelial_cluster_rare',
   MINERAL_RUIN_AGGREGATE: 'mineral_ruin_aggregate',
@@ -184,6 +201,8 @@ export const ENTITY_IDS = {
   MINERAL_PEARL_NODE: 'mineral_pearl_node',
   // Phase 111 Tier I aquatic mineral additions
   MINERAL_SEA_CRYSTAL_RARE: 'mineral_sea_crystal_rare',
+  // Phase 111 Tier II aquatic mineral additions
+  MINERAL_PEARL_NODE_RARE: 'mineral_pearl_node_rare',
 
   // ---- ARTIFACTS ----
   ARTIFACT_ANCIENT_DATA_CORE: 'artifact_ancient_data_core',
@@ -196,6 +215,8 @@ export const ENTITY_IDS = {
   ARTIFACT_FROZEN_ARCHIVE: 'artifact_frozen_archive',
   // Phase 111 Tier I artifact additions
   ARTIFACT_BADLANDS_BEACON: 'artifact_badlands_beacon',
+  // Phase 111 Tier II artifact additions
+  ARTIFACT_MARSH_FILTRATION_UNIT: 'artifact_marsh_filtration_unit',
   ARTIFACT_LUMINOUS_SEED: 'artifact_luminous_seed',
   ARTIFACT_TIDAL_COMPASS: 'artifact_tidal_compass',
 
@@ -226,6 +247,7 @@ export const ENTITY_IDS = {
 
   // ---- EXOTIC PLANTS ----
   PLANT_REALITY_MOSS: 'plant_reality_moss',
+  PLANT_REALITY_MOSS_RARE: 'plant_reality_moss_rare',
   PLANT_ECHO_BLOOM: 'plant_echo_bloom',
   PLANT_TEMPORAL_FUNGUS: 'plant_temporal_fungus',
   PLANT_VOID_VINE: 'plant_void_vine',
@@ -233,6 +255,9 @@ export const ENTITY_IDS = {
 
   // ---- EXOTIC MINERALS ----
   MINERAL_VOID_CRYSTAL_NODE: 'mineral_void_crystal_node',
+  // Phase 111 Tier II exotic mineral additions
+  MINERAL_DEPTH_QUARTZ: 'mineral_depth_quartz',
+  MINERAL_DEPTH_QUARTZ_RARE: 'mineral_depth_quartz_rare',
   MINERAL_ANOMALY_SHARD: 'mineral_anomaly_shard',
   MINERAL_DIMENSIONAL_ORE: 'mineral_dimensional_ore',
   MINERAL_NULL_STONE: 'mineral_null_stone',

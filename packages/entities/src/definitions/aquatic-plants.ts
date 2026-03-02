@@ -78,6 +78,41 @@ export const PLANT_THERMAL_VENT_COLONY: PlantDefinition = {
   respawnSeconds: 420,
 };
 
+// ===== PHASE 111 TIER II ADDITIONS =====
+
+export const PLANT_KELP_CANOPY: PlantDefinition = {
+  id: 'plant_kelp_canopy',
+  displayName: 'Kelp Canopy',
+  description: 'Massive kelp fronds forming dense canopy layers. The uppermost fronds filter light into an eerie green twilight below.',
+  entityClass: 'plant',
+  biomes: ['kelp_forests'],
+  textureKey: 'plant_kelp_canopy',
+  color: 0x447744,
+  lootTableId: 'loot_plant_kelp_canopy',
+  harvestYield: [
+    { itemId: 'world_organic_material_common', minAmount: 1, maxAmount: 3, chance: 1.0 },
+    { itemId: 'reagent_biogenic_catalyst', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ],
+  respawnSeconds: 300,
+};
+
+export const PLANT_PRESSURE_FERN_RARE: PlantDefinition = {
+  id: 'plant_pressure_fern_rare',
+  displayName: 'Pressure Fern (Rare)',
+  description: 'A pressure fern of extraordinary size, adapted to crush-depth conditions. Its fronds store compressed gases that hiss when harvested.',
+  entityClass: 'plant',
+  biomes: ['kelp_forests'],
+  textureKey: 'plant_pressure_fern',
+  color: 0x55aa77,
+  lootTableId: 'loot_plant_pressure_fern_rare',
+  harvestYield: [
+    { itemId: 'world_organic_material_common', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_biogenic_catalyst', minAmount: 1, maxAmount: 1, chance: 0.3 },
+  ],
+  respawnSeconds: 600,
+  rarity: 'rare',
+};
+
 // ===== PHASE 111 TIER I ADDITIONS =====
 
 export const PLANT_SALT_FROND: PlantDefinition = {
@@ -122,4 +157,7 @@ export const ALL_AQUATIC_PLANTS: readonly PlantDefinition[] = [
   // Phase 111 Tier I additions
   PLANT_SALT_FROND,
   PLANT_TIDAL_KELP_RARE,
+  // Phase 111 Tier II additions
+  PLANT_KELP_CANOPY,
+  PLANT_PRESSURE_FERN_RARE,
 ];
