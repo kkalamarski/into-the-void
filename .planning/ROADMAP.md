@@ -224,7 +224,7 @@
 | 107. Moderation Controls | 2/2 | Complete | 2026-02-26 |
 | 108. Entity Validation Infrastructure | 2/2 | Complete | 2026-03-02 |
 | 109. Faction Identity Design Gate | 2/2 | Complete | 2026-03-02 |
-| 110. Biome Creature Population | 0/TBD | Not started | - |
+| 110. Biome Creature Population | 1/4 | In Progress|  |
 | 111. Biome Plants, Minerals, and Artifacts | 0/TBD | Not started | - |
 | 112. Faction Suits | 0/TBD | Not started | - |
 | 113. Faction Modules and Tools | 0/TBD | Not started | - |

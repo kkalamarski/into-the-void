@@ -9,12 +9,12 @@ Requirements for Content Expansion & Faction Gear milestone. Each maps to roadma
 
 ### Creatures
 
-- [ ] **CREA-01**: Tier I biomes (void_plains, fungal_forest, tidal_pools, ancient_ruins) each have 4-6 creatures with varied behavior types
+- [x] **CREA-01**: Tier I biomes (void_plains, fungal_forest, tidal_pools, ancient_ruins) each have 4-6 creatures with varied behavior types
 - [ ] **CREA-02**: Tier II biomes (toxic_wastes, miasma_marshes, petrified_expanse, bioluminescent_depths, kelp_forests) each have 4-6 creatures with tier-appropriate stats
 - [ ] **CREA-03**: Tier III biomes (crystal_caves, volcanic_ridge, frozen_expanse, deep_trenches, starfall_crater, crystalline_wastes) each have 4-6 creatures with endgame-viable stats
 - [ ] **CREA-04**: Tier IV void_rift has 6 creatures representing max-tier challenge
-- [ ] **CREA-05**: Every new creature has a loot table entry in CREATURE_LOOT_TABLES
-- [ ] **CREA-06**: Every new creature is registered in BIOME_SPAWN_CONFIGS with appropriate spawn weights
+- [x] **CREA-05**: Every new creature has a loot table entry in CREATURE_LOOT_TABLES
+- [x] **CREA-06**: Every new creature is registered in BIOME_SPAWN_CONFIGS with appropriate spawn weights
 
 ### Plants
 
@@ -110,12 +110,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CREA-01 | Phase 110 | Pending |
+| CREA-01 | Phase 110 | Complete |
 | CREA-02 | Phase 110 | Pending |
 | CREA-03 | Phase 110 | Pending |
 | CREA-04 | Phase 110 | Pending |
-| CREA-05 | Phase 110 | Pending |
-| CREA-06 | Phase 110 | Pending |
+| CREA-05 | Phase 110 | Complete |
+| CREA-06 | Phase 110 | Complete |
 | PLNT-01 | Phase 111 | Pending |
 | PLNT-02 | Phase 111 | Pending |
 | PLNT-03 | Phase 111 | Pending |
