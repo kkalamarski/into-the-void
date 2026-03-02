@@ -52,7 +52,7 @@
 **Milestone Goal:** Major content expansion filling all biome entity gaps and adding faction-specific equipment across all tiers — every biome reaches minimum population targets, and Verdant, Helix, Nexus, and Unaffiliated each have a distinct gear line.
 
 - [x] **Phase 108: Entity Validation Infrastructure** - Test suite gating all subsequent content authoring, preventing silent spawn and loot failures
-- [ ] **Phase 109: Faction Identity Design Gate** - Locked design artifact defining stat archetypes, ability matrices, naming conventions, and color anchors per faction before any item definition is written
+- [x] **Phase 109: Faction Identity Design Gate** - Locked design artifact defining stat archetypes, ability matrices, naming conventions, and color anchors per faction before any item definition is written (completed 2026-03-02)
 - [ ] **Phase 110: Biome Creature Population** - All 16 biomes reach 4-6 creatures with behavioral variety, loot tables, and spawn configs fully wired
 - [ ] **Phase 111: Biome Plants, Minerals, and Artifacts** - All 16 biomes reach 3-4 plants, 2-3 minerals with rarity variants, and 1-2 artifacts; crystalline_wastes hotspot resolved
 - [ ] **Phase 112: Faction Suits** - Verdant, Helix, Nexus, and Unaffiliated suit lines across all tiers (Common through Legendary) using generateSuitStats() throughout
@@ -147,7 +147,9 @@
   2. Each faction has a documented stat archetype (primary/secondary stat emphasis per tier) that is distinct from the other three factions
   3. Naming conventions for faction item IDs and display names are documented and follow a consistent pattern per faction (e.g., verdant_ prefix, Verdant brand name format)
   4. The design artifact is referenced in the item definition files so future contributors have a single source of truth
-**Plans**: TBD
+**Plans**: 2 plans
+  - [x] 109-01-PLAN.md -- FACTION-IDENTITY.md design document (SUIT-01)
+  - [x] 109-02-PLAN.md -- Scavenger archetype + design reference comments (SUIT-01)
 
 ### Phase 110: Biome Creature Population
 **Goal**: Every biome reaches 4-6 creatures with behavioral variety (at least herbivore, omnivore, and predator archetypes represented), toxic_wastes brought from 1 to 5 creatures as the most critical gap, and every new creature atomically wired across definition, ENTITY_IDS, BIOME_SPAWN_CONFIGS, and CREATURE_LOOT_TABLES
@@ -221,7 +223,7 @@
 | 106. Chat Panel UI | 2/2 | Complete | 2026-02-26 |
 | 107. Moderation Controls | 2/2 | Complete | 2026-02-26 |
 | 108. Entity Validation Infrastructure | 2/2 | Complete | 2026-03-02 |
-| 109. Faction Identity Design Gate | 0/TBD | Not started | - |
+| 109. Faction Identity Design Gate | 2/2 | Complete | 2026-03-02 |
 | 110. Biome Creature Population | 0/TBD | Not started | - |
 | 111. Biome Plants, Minerals, and Artifacts | 0/TBD | Not started | - |
 | 112. Faction Suits | 0/TBD | Not started | - |
@@ -230,4 +232,4 @@
 
 ---
 
-*Last updated: 2026-03-02 - v1.23 roadmap created (7 phases, 108-114)*
+*Last updated: 2026-03-02 - Phase 109 complete (faction identity design document locked)*
