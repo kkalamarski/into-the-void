@@ -190,42 +190,46 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Player block (prevent whispers from specific players) — v1.22
 - ✓ Mute/block lists persist across sessions — v1.22
 
-## Current Milestone: v1.23 Content Expansion & Faction Gear
+## Current Milestone: v1.24 Balance & Automation
 
-**Goal:** Major content expansion filling all biome gaps and adding faction-specific equipment across all tiers
+**Goal:** Introduce situational combat depth (damage types, biome hazards, creature AI upgrades), rebalance abilities so defensive/utility skills have purpose, and build the automation progression arc from manual gathering to planetary extractors.
 
 **Target features:**
-- Bring every biome to 4-6 creatures, 3-4 plants, 2-3 minerals, 1-2 artifacts
-- Faction-specific equipment (Verdant biotech, Helix industrial, Nexus surveillance)
-- Endgame Tier III-IV content priority
-- Fill Tier I-II gaps (artifacts, toxic wastes ecosystem)
+- 4 damage types (Thermal/Cryo/Bio/Kinetic) with creature resistances
+- Biome environmental hazards requiring specific gear counters
+- Creature behavior upgrades (Stampede, Pack Call, Ambush, Frenzy)
+- Ability rebalance removing Plasma Burst dominance and giving defensive abilities real value
+- Automation tech tree: Extractors → Survey Beacons → Planetary Extractors → Resource Processing
+- Credit sinks tied to automation deployments
 
 ### Active
 
-- [ ] Every biome has 4-6 creatures with tier-appropriate stats
-- [ ] Every biome has 3-4 plants with rarity variants
-- [ ] Every biome has 2-3 minerals with rarity variants
-- [ ] Every biome has 1-2 artifacts
-- [ ] Faction-specific suits across tiers
-- [ ] Faction-specific modules across tiers
-- [ ] Faction-specific tools across tiers
-- [ ] Tier III-IV endgame equipment (exotic/legendary)
-- [ ] All new entities lore-compatible
+- [ ] 4 damage types with per-creature resistance/vulnerability multipliers
+- [ ] Biome hazard system with environmental stat drains and gear counters
+- [ ] Creature behavior upgrades (4 new mechanics per behavior type)
+- [ ] Offensive ability rebalance with situational niches
+- [ ] Defensive ability rebalance with real damage reduction/shields
+- [ ] Stat caps with diminishing returns above 200
+- [ ] Deployable extractors (T2 automation)
+- [ ] Survey beacons with passive resource caching (T3 automation)
+- [ ] Planetary extractors with maintenance loops (T4 automation)
+- [ ] Resource processing/refinery system (T5 automation)
+- [ ] Credit sinks for automation deployment and maintenance
 
 ### Out of Scope
 
 - OAuth/social login — email/password sufficient
 - Sprite-based rendering — color tiles only until art pipeline ready
 - PvP combat — PvE first, PvP in future milestone
-- Status effects / debuffs — future expansion
 - Chat speech bubbles above characters — panel-only for now
-- Sound/music — polish phase
 - Mobile controls — web-first
 - Surface faction HQs (Canopy, Ironhold, Meridian) — orbital first, surface later
 - Shared city at 0,0 — designed in future milestone
 - Faction reputation system — future milestone
 - Branching dialogue — simple linear sufficient for now
 - Third action bar — two bars sufficient, reassess if needed
+- Crafting recipes — automation is gathering-focused, crafting is a separate milestone
+- New abilities — rebalance existing 21, don't add new ones yet
 
 ## Constraints
 
@@ -261,4 +265,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-02-27 after v1.23 milestone started*
+*Last updated: 2026-03-03 after v1.24 milestone started*

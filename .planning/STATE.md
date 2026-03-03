@@ -1,40 +1,38 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: Content Expansion & Faction Gear
-status: unknown
-last_updated: "2026-03-03T11:08:52.515Z"
+milestone: v1.24
+milestone_name: Balance & Automation
+status: defining_requirements
+last_updated: "2026-03-03T12:00:00.000Z"
 progress:
-  total_phases: 114
-  completed_phases: 114
-  total_plans: 297
-  completed_plans: 297
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-27)
+See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 112 complete — Faction Suits
+**Current focus:** Defining requirements for v1.24 Balance & Automation
 
 ## Current Position
 
-Phase: 112 of 114 (Faction Suits) — COMPLETE
-Plan: 2/2 — all plans complete
-Status: Phase complete
-Last activity: 2026-03-03 — Phase 112 complete (28 faction suits registered, 17/17 tests pass)
-
-Progress: [██████░░░░] 57%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-03 — Milestone v1.24 started
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 289 (v1.0-v1.22 complete, 110 complete, 111 complete, 112 complete)
+- Total plans completed: 297 (v1.0-v1.23 complete)
 - Average duration: ~3 min per plan
-- Total execution time: ~14.5 hours across 22 milestones
+- Total execution time: ~14.5 hours across 23 milestones
 
 ## Accumulated Context
 
@@ -42,17 +40,18 @@ Progress: [██████░░░░] 57%
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
-Recent decisions affecting current work:
+Carried from v1.23:
 - [Phase 109]: FACTION-IDENTITY.md locked at packages/items/FACTION-IDENTITY.md -- single source of truth for all faction gear
 - [Phase 109]: Scavenger archetype added to ARCHETYPE_PROFILES (vigor 30, recovery 25, perception 25, durability 12, resilience 8)
-- [Phase 109]: Off-archetypes: Verdant=combat, Helix=recon, Nexus=assault, Unaffiliated=hazmat (same at Epic and Legendary)
-- [Phase 109]: Faction word banks established (15 words each) for naming consistency
-- [v1.23 roadmap]: Phases 110 and 111 are independent tracks after Phase 108; can run in parallel
-- [v1.23 roadmap]: SUIT-02/03/04/05/06 all assigned to Phase 112 (no requirement splits across phases)
-- [v1.23 research]: Four-file atomicity rule for creatures: definition + ENTITY_IDS + BIOME_SPAWN_CONFIGS + CREATURE_LOOT_TABLES
-- [Phase 110]: 36 new creatures added across all 16 biomes; toxic_wastes gap closed (1->5); every Tier III+ biome has a maniac mini-boss; void_rift has corrupted apex creatures (best loot in game)
-- [Phase 111]: 71 new entities (plants, minerals, artifacts) across all 16 biomes; crystalline_wastes Singing Fields spotlight with 2 dedicated artifacts; void_rift exotic completion; rarity.ts finalized for all biomes
-- [Phase 112]: 28 faction suits (7 per faction: 5 main ladder + 2 off-archetype) integrated into item registry; total items 122->150; all 17 validation tests pass
+- [v1.23]: Four-file atomicity rule for creatures: definition + ENTITY_IDS + BIOME_SPAWN_CONFIGS + CREATURE_LOOT_TABLES
+
+New for v1.24:
+- [Balance audit]: Plasma Burst + Basic Strike is dominant rotation for all PvE content — must be broken by situational niches
+- [Balance audit]: Defensive abilities are mathematically never worth casting — need real damage reduction mechanics
+- [Balance audit]: Energy Barrier buffs Resilience which has no mechanical effect — Resilience and Recovery stats need activation
+- [Balance audit]: Stat budget at T4 Legendary (1,694) makes equipment dwarf base stats by 3.7x — stat caps needed
+- [Balance audit]: No credit sinks exist — automation deployments will serve as primary sink
+- [Balance audit]: Herbivore farming is zero-risk XP/loot — creature behaviors need tactical variety
 
 ### Pending Todos
 
@@ -60,14 +59,16 @@ None.
 
 ### Blockers/Concerns
 
-- [Phase 112/113]: Stat budget audit needed before Tier III-IV endgame suits — generateSuitStats() at Tier IV Legendary yields ~1,694 total stats; TTK ceiling not yet verified against game-logic combat constants
+- Damage type system touches every creature definition (100+ entities) — needs careful migration strategy
+- Biome hazards require new server tick system for environmental damage
+- Automation (extractors/beacons) is a new item deployment paradigm — no precedent in codebase
 
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Phase 112 complete — 28 faction suits registered in item registry
+Stopped at: Defining requirements for v1.24
 Resume file: None
-Next action: Phase 113 (Faction Tools)
+Next action: Scope requirements, then create roadmap
 
 ---
-*Last updated: 2026-03-03 — Phase 112 complete*
+*Last updated: 2026-03-03 — Milestone v1.24 started*
