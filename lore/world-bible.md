@@ -972,4 +972,778 @@ Standard Suit Repair Kits cannot bypass Emergency Lockdown Mode. They are design
 
 ---
 
+## Part VIII: Bestiary & Field Guide
+
+> *"The Corporate Field Manual lists 217 species on Terminus. Field operatives know the actual count is higher. And hungrier."*
+> -- Unsigned margin note, Terminus Biological Survey, 4th Edition
+
+### Biome Code Reference
+
+| Code ID | Lore Name | Tier |
+|---------|-----------|------|
+| `void_plains` | Scarred Badlands | I |
+| `fungal_forest` | Luminous Canopy | I |
+| `tidal_pools` | Coastal Shallows | I |
+| `ancient_ruins` | Ancient Ruins | I-IV |
+| `toxic_wastes` | Toxic Wastes | II |
+| `miasma_marshes` | Miasma Marshes | II |
+| `petrified_expanse` | Petrified Expanse | II |
+| `crystal_caves` | Fungal Depths | III |
+| `volcanic_ridge` | Volcanic Reaches | III |
+| `crystalline_wastes` | Crystalline Wastes | III |
+| `frozen_expanse` | Frozen Reaches | III |
+| `starfall_crater` | Anomaly Zones (Crater) | IV |
+| `void_rift` | Anomaly Zones (Rift) | IV |
+| `bioluminescent_depths` | Bioluminescent Depths | IV |
+| `kelp_forests` | Kelp Forests | II |
+| `deep_trenches` | Deep Trenches | III |
+
+---
+
+### Tier I -- Frontier Biomes
+
+#### Scarred Badlands (`void_plains`)
+
+##### Creatures
+
+**Void Crawler** -- Omnivore
+> *"Skitters. Always skitters. Never walks."*
+Small, multi-legged scavenger of the scarred plains. Void Crawlers are opportunistic feeders that avoid anything larger than themselves -- until hunger overrides caution. Their chitin yields a dull, void-saturated material useful for basic insulation. Individually trivial. In numbers, a different calculation entirely.
+
+**Plains Grazer** -- Herbivore
+> *"The closest thing to livestock this planet offers. Tastes terrible."*
+Slow-moving herd animal that feeds on void-adapted grasses. Docile and easily startled, Plains Grazers are among the first creatures new arrivals learn to recognize. Their predictability makes them a reliable food source. Helix operatives consider them a waste of ammunition.
+
+**Void Prowler** -- Predator
+> *"Lean. Quick. Patient. Everything the Badlands teaches you to be."*
+Ambush predator that uses rocky outcrops for concealment before striking with explosive acceleration. Void Prowlers hunt solo, targeting isolated prey. Experienced operatives watch for disturbed dust trails -- the only warning before a charge.
+
+**Coastal Scuttler** -- Herbivore
+> *"They eat rocks. Or the things growing on rocks. Hard to tell the difference."*
+Small crustacean-like creature that feeds on exposed mineral deposits along the Badlands' edges. Docile unless stepped on, at which point they demonstrate that those mandibles are not purely decorative.
+
+##### Flora
+
+**Drought Cactus**
+Water-storing succulent with tap roots reaching deep underground aquifers. The most reliable water source in the Badlands, if you can get through the spines. Verdant operatives have cultivated varieties that yield faster, though the wild specimens remain hardier.
+
+**Void Tree**
+Towering crimson tree adapted to the open plains. Its deep roots access water sources other plants cannot reach. Provides rare shade in the Badlands -- contested shade, usually.
+
+**Void Fern**
+Hardy fern producing small, nutrient-rich spores. Found across the Badlands and into the Luminous Canopy's edges. A staple foraging target for new arrivals. The rare variant shimmers with concentrated void energy.
+
+##### Minerals
+
+**Void Crystal**
+Dark crystalline formation found in exposed strata throughout the Badlands. Easy to spot, easy to extract. The entry-level mining target for every prospector on Terminus. Rare specimens pulse with visible dark energy -- considerably more valuable.
+
+**Void Slate**
+Flat, layered stone saturated with void energy. Breaks into thin sheets useful for construction and basic crafting. Not glamorous. Reliably profitable.
+
+##### Artifacts
+
+**Badlands Beacon**
+> *"Still transmitting. To what?"*
+A corroded metal spire half-buried in void dust, still emitting a faint directional pulse despite millennia of exposure. The signal points toward the northern continent. Nobody has followed it far enough to find out why.
+
+---
+
+#### Luminous Canopy (`fungal_forest`)
+
+##### Creatures
+
+**Canopy Grazer** -- Herbivore
+> *"Docile. Large. Do not corner."*
+Massive herbivore feeding on fungal-tree canopy material. The Luminous Canopy's most prominent animal, visible from considerable distance by the bioluminescent residue on its hide. Verdant Dynamics claims a breeding program exists. The Grazers appear unaware of this arrangement.
+
+**Spore Carrier** -- Omnivore
+> *"The forest's immune system."*
+Fungal creature that spreads defensive spores when disturbed. An opportunistic feeder serving as the Canopy's primary decomposer and -- inadvertently -- its most effective deterrent against casual trespass. The spores cause respiratory distress in unfiltered humans.
+
+**Mycelial Stalker** -- Predator
+> *"You don't hear it. You smell it -- when it's too late."*
+Silent hunter moving through fungal undergrowth using chemical lures derived from the forest's own pheromone network. The Canopy's apex ambush predator. Verdant operatives have learned to read the subtle dimming of bioluminescence that signals a Stalker's chemical manipulation.
+
+**Spore Beetle** -- Herbivore
+> *"Armored. Slow. Releases a cloud when threatened that you do not want to breathe."*
+Feeds on fungal fruiting bodies, processing them into the defensive spore clouds that give it its name. The beetles are individually harmless. Their chemical defense, however, can incapacitate an unprotected operative for hours.
+
+##### Flora
+
+**Luminous Vine**
+Glowing vine network pulsing with soft bioluminescence -- the Canopy's signature feature. The light serves as both a nutrient transport mechanism and a warning system; damaged vines darken, signaling distress to the connected network. Rare specimens glow with intensity visible from orbit.
+
+**Tendril Tree**
+Towering fungal tree with grasping bioluminescent tendrils. Its purple bark pulses with slow rhythms that Verdant researchers insist is not communication. The trees form the structural backbone of the Canopy biome.
+
+**Rare Bioluminescent Fungi** *(Rare)*
+Exceptionally bright fungal clusters with concentrated biogenic compounds. Highly sought by pharmaceutical researchers and Verdant's bio-engineers.
+
+**Ancient Spore Cluster** *(Epic)*
+Primordial fungal formation predating colonial settlement. The spores contain unknown genetic sequences that suggest the Canopy's ecosystem is considerably older -- and more deliberate -- than initial surveys indicated.
+
+##### Minerals
+
+**Mycelial Cluster**
+Dense fungal fiber formation with pharmaceutical and industrial applications. The organic-mineral composite properties make it uniquely valuable for bio-engineering. Rare specimens are shot through with luminescent fungal threads that suggest deeper mycorrhizal connections.
+
+**Fungite Ore**
+Mineral deposit heavily infiltrated by fungal mycelium. The resulting hybrid material has structural properties that neither component possesses alone. Verdant Dynamics holds seven patents on applications. They hold twelve more they haven't disclosed.
+
+##### Artifacts
+
+**Luminous Seed** *(Rare)*
+> *"A perfectly spherical seed encased in crystallized sap, glowing with a steady bioluminescence that hasn't faded in the estimated centuries since formation."*
+The seed is alive. It has been alive for longer than any organism on Terminus should be. What it's waiting to grow into is a question Verdant's xenobiologists prefer not to answer publicly.
+
+---
+
+#### Coastal Shallows (`tidal_pools`)
+
+##### Creatures
+
+**Tide Crab** -- Herbivore
+Small crustacean scuttling along tidal flats. The most abundant creature in the Coastal Shallows and the baseline against which all other Terminus fauna are measured. Docile, crunchy, technically edible.
+
+**Coastal Urchin** -- Herbivore
+Spiny filter feeder anchored to rocks. Harvests detritus from water and occasionally from incautious fingers.
+
+**Reef Scavenger** -- Omnivore
+Opportunistic omnivore that picks through tidal debris. Will attack if hungry, which in the competitive Shallows means most of the time.
+
+**Tidal Snapper** -- Predator
+> *"Lightning-fast. From the deeper pools. Check before you wade."*
+Aggressive crustacean lurking in deeper tidal pools. Its strike is faster than most operatives' reaction time. Nexus field guides recommend probing pools with a stick before stepping in. The Snapper population considers this a delivery service.
+
+##### Flora
+
+**Tidal Kelp**
+Common kelp growing in shallow waters. Useful for basic crafting and nutrition in emergencies. Rare specimens have iridescent fronds that tidal researchers pay well for.
+
+**Bioluminescent Algae**
+Glowing algae colony clinging to rocks. Harvested for light-emitting compounds used in equipment and trade goods.
+
+**Salt Frond**
+Hardy seaweed anchored to shallow rocks, its fronds coated in mineral-rich salt crystals useful for preservation and basic chemistry.
+
+##### Minerals
+
+**Coral Deposit**
+Calcium carbonate structure built by tiny organisms. Useful construction material available in abundance throughout the Shallows.
+
+**Tidal Stone**
+Smooth stone polished by constant wave action. Contains trace minerals and serves as a reliable, if unglamorous, extraction target.
+
+**Sea Crystal**
+Translucent crystalline formation grown in tidal caves. Refracts light beautifully and commands premium prices. Rare specimens show brilliant internal refraction.
+
+##### Artifacts
+
+**Tidal Compass** *(Rare)*
+> *"Tracks the gravitational influence of both moons. We don't know how. The Ancients didn't have our moons' orbital data. Or did they?"*
+A barnacle-encrusted device that still functions despite apparent millennia of submersion.
+
+---
+
+#### Ancient Ruins (`ancient_ruins`)
+
+##### Creatures
+
+**Ruin Seeker** -- Predator
+> *"Drawn to Ancient technology for reasons xenobiologists cannot explain. The creatures don't use it. They guard it."*
+Highly territorial predator that nests near Ancient artifacts. Whether this represents learned behavior, instinct, or something more intentional is a matter of ongoing -- and carefully suppressed -- research.
+
+**Ruin Scavenger** -- Omnivore
+Small, quick creature that picks through Ancient refuse. Skittish but will bite if cornered. Their nesting material often contains small artifacts, making Ruin Scavenger dens a low-risk prospecting target.
+
+**Ruin Warden** -- Predator
+> *"Large. Territorial. Nests in Ancient structures. Do not enter without a plan for leaving."*
+The dominant predator of ruin sites. Fiercely defends territory that happens to coincide with the highest-value archaeological zones. Whether the Wardens are protecting their nests or protecting the ruins is an uncomfortable question.
+
+**Guardian Construct** -- Predator
+> *"Not alive. Still defending. Still killing."*
+Ancient automaton following defense protocols written millennia ago. Attacks trespassers in ruin sites with mechanical precision. They cannot be reasoned with, intimidated, or redirected. They can, however, be disassembled -- if you survive long enough.
+
+**Relic Beast** -- Omnivore
+Mutated creature warped by prolonged ruin exposure. Territorial and far more intelligent than baseline fauna. Some operatives swear the Relic Beasts are getting smarter.
+
+##### Flora
+
+**Phase Bloom**
+Anomaly-touched flower existing partially out of phase with normal spacetime. Reality shimmers around rare specimens. Scientific value is considerable; handling without protective equipment is inadvisable.
+
+**Relic Lichen**
+Slow-growing lichen found on Ancient construction surfaces. Its metabolic processes incorporate compounds from Prior Inhabitant materials, making it a passive assay tool for ruins archaeology.
+
+##### Minerals
+
+**Anomaly Crystal**
+Reality-warped mineral formation requiring extreme caution during extraction. The crystal's internal structure changes depending on the observer's temporal frame. Rare specimens flicker in and out of temporal alignment. Epic-grade formations pulse with quantum instability that equipment sensors cannot reliably measure.
+
+**Ruin Aggregate**
+Composite mineral where Ancient construction materials have partially fused with native geology. The resulting material has properties neither component originally possessed.
+
+##### Artifacts
+
+**Ancient Data Core** *(Exotic)*
+> *"Intact. Encrypted. We've been trying to crack one for fourteen years. The encryption adapts."*
+Storage device from the Prior Inhabitants. Contains data that all four factions want and none have successfully accessed.
+
+**Void-Touched Relic** *(Legendary)*
+> *"Radiates energy that makes your teeth itch. Don't hold it too long."*
+Object warped by sustained anomaly exposure. The energy signature matches nothing in human physics databases.
+
+---
+
+### Tier II -- Hazardous Biomes
+
+#### Toxic Wastes (`toxic_wastes`)
+
+##### Creatures
+
+**Toxic Lurker** -- Predator
+> *"Invisible in the chemical haze. Your suit's sensors are your eyes here."*
+Camouflaged predator that secretes corrosive compounds mirroring the environment's chemistry. The Toxic Wastes' most effective ambush hunter.
+
+**Sludge Grazer** -- Herbivore
+Squat, armored creature that filters nutrients from toxic pools. Its shell is heavily corroded but continuously regrows -- a metabolic feat that has attracted considerable pharmaceutical research interest.
+
+**Corrosion Maw** -- Predator
+Ambush predator with acid-etched jaws that lurks in chemical pools. Strikes when prey approaches to drink or forage. Its bite introduces compounds that accelerate the Wastes' natural corrosion.
+
+**Fume Drifter** -- Omnivore
+Floating scavenger that feeds on chemical vapors and decomposing matter. Releases toxic clouds when threatened -- redundant, given the environment, but effective against filtered operatives whose suits weren't designed for concentrated exposure.
+
+**Acid Maniac** -- Maniac (Mini-boss)
+> *"Corroded beyond recognition. Doesn't eat what it kills. Doesn't stop killing."*
+A creature driven to chemical-fueled frenzy by the Wastes' compounds. Its body is heavily corroded, its behavior purely destructive. Helix researchers theorize the Wastes' chemistry triggers a neurological cascade that overrides self-preservation entirely. High threat. High-value chemical reagents on harvest.
+
+##### Flora
+
+**Acid Fern**
+Chemically aggressive plant secreting acidic compounds. Thrives in the Wastes by out-corroding its environment.
+
+**Acid Bloom**
+Bright yellow flower with petals that secrete contact acids. Rare specimens radiate intense heat from concentrated acid reactions.
+
+**Chemical Bloom**
+Resilient bush with a root system that filters and concentrates toxic compounds. Found in both the Toxic Wastes and Miasma Marshes.
+
+##### Minerals
+
+**Corrosive Deposit**
+Toxic mineral compound requiring protective equipment for extraction. Rare deposits have unusually concentrated acid cores.
+
+**Acid Stone**
+Rock formation with visible acid seepage channels. The mineral has been partially dissolved into useful secondary compounds.
+
+##### Artifacts
+
+**Contaminated Ancient Relic** *(Rare)*
+Prior Inhabitant technology saturated with toxic compounds. Purpose unknown, value considerable, handling extremely inadvisable without full chemical protection.
+
+---
+
+#### Miasma Marshes (`miasma_marshes`)
+
+##### Creatures
+
+**Marsh Lurker** -- Predator
+> *"Uses the environment as a weapon. The gas is its hunting ground."*
+Toxin-resistant predator that has adapted to weaponize the Marshes' chemical atmosphere. Operatives with compromised filtration are detected and targeted.
+
+**Bog Crawler** -- Herbivore
+Slow-moving amphibian grazing on marsh vegetation. Tough hide provides natural acid resistance. Predictable, reliable, and occasionally the only edible thing in the swamp.
+
+**Marsh Snapper** -- Omnivore
+Opportunistic feeder lurking in shallow water. Snatches anything small enough to swallow and anything large enough to provoke.
+
+**Miasma Drifter** -- Herbivore
+> *"Floats through the gas. Filters nutrients from it. Lives in what kills everything else."*
+A buoyant organism that drifts through the toxic atmosphere, filtering nutrients directly from the miasma. Its existence suggests the Marshes' chemistry supports an ecosystem more complex than surveys initially indicated.
+
+##### Flora
+
+**Gas Pod**
+Bulbous marsh plant releasing chemical vapors. Rare specimens strain against their own membranes with concentrated marsh gases.
+
+**Marsh Tendril**
+Sinuous vine growing from submerged roots. Curls toward motion, suggesting a rudimentary sensory system.
+
+##### Minerals
+
+**Chemical Sump**
+Concentrated chemical deposit in the marsh waters. Valuable for industrial chemistry.
+
+**Toxic Crystal Formation** *(Rare)*
+Crystallized marsh toxins with unusual chemical properties. Handle with extreme caution.
+
+**Concentrated Gas Vent** *(Epic)*
+Pressurized pocket of marsh gases. Rich in volatile compounds, extremely hazardous, and extremely profitable.
+
+##### Artifacts
+
+**Marsh Filtration Unit** *(Rare)*
+> *"Ancient atmospheric processor. Half-sunk in sediment. Still filtering after millennia. Better than our equipment."*
+A Prior Inhabitant device that raises uncomfortable questions about how long the Marshes have existed -- and whether they're natural.
+
+---
+
+#### Petrified Expanse (`petrified_expanse`)
+
+##### Creatures
+
+**Dart Runner** -- Predator
+> *"Must keep moving. Must keep moving. Must keep moving."*
+Swift predator that hunts in bursts between calcification-safe zones. The Petrified Expanse teaches everything the same lesson: stop moving and die. The Dart Runner has internalized this more thoroughly than most.
+
+**Stone Grazer** -- Herbivore
+Heavily calcified creature that feeds on mineral-rich lichen. Moves slowly but has armor that makes it functionally invulnerable to most predators. Time is its only real enemy.
+
+**Fossil Scavenger** -- Omnivore
+Quick, adaptable creature picking through petrified remains. Strips minerals from fossils with specialized mandibles. Fast enough to avoid calcification. Barely.
+
+**Petrified Lurker** -- Predator
+> *"Motionless among the stone trees. You can't tell the difference until it moves."*
+Camouflaged ambush predator that remains stationary among petrified formations, waiting for prey to pass within strike range. Its own body shows advanced calcification -- suggesting it spends far longer motionless than should be possible.
+
+##### Flora
+
+**Mobile Vine**
+Fast-growing vine that matures before calcification sets in. The Petrified Expanse's most successful plant strategy: be faster than stone. Rare specimens exhibit unusual speed and coordination.
+
+**Stone Moss**
+Moss colony growing on petrified surfaces, constantly shedding calcified layers to maintain living tissue underneath.
+
+**Calcite Fern**
+Fern with fronds partially mineralized into translucent calcite. The living portions race to grow faster than the stone claims them.
+
+##### Minerals
+
+**Mineralized Log**
+Petrified tree trunk preserving ancient organic structures in mineral. The compression of millennia has created materials with unique properties. Rare specimens exhibit unusual mineral replacement patterns.
+
+**Stone Heart**
+Dense mineral core found at the center of petrified organisms. The compression of organic-to-mineral transition creates compounds found nowhere else.
+
+##### Artifacts
+
+**Preserved Specimen** *(Rare)*
+> *"Perfectly petrified. Every cell intact. The scientific value is incalculable. The ethical questions about disturbing it are uncomfortable."*
+Ancient creature caught mid-motion by the petrification process. Found in both the Petrified Expanse and Frozen Reaches, where cold performs the same preservation as stone.
+
+---
+
+### Tier III -- Hostile Biomes
+
+#### Fungal Depths (`crystal_caves`)
+
+##### Creatures
+
+**Crystal Hunter** -- Predator
+> *"Uses light refraction to disorient prey. By the time you see clearly, it's too late."*
+Predator with crystalline integument that manipulates the caves' ambient light into disorienting patterns. The most effective visual predator on Terminus.
+
+**Crystal Crawler** -- Herbivore
+Slow-moving grazer consuming crystalline lattice-moss. Its shell is composed of the same minerals it eats, making it nearly invisible against cave walls.
+
+**Prism Weaver** -- Omnivore
+Uses reflective crystalline structures on its body to scavenge and hunt in the dark cave system. Creates dazzling light displays that serve as both lure and warning.
+
+**Shard Reaper** -- Predator
+> *"Blade-like crystalline limbs. Echolocation. The caves' apex predator."*
+Apex cave predator with razor-sharp crystalline appendages. Navigates by echolocation in the deep caves where bioluminescence fails.
+
+**Crystal Berserker** -- Maniac (Mini-boss)
+> *"Crystal growths pierce its body from the inside. It's in constant agony. It wants you to share."*
+Crystal-fused creature in permanent pain from mineral formations growing through its tissue. The resulting rage is directed at everything within reach. Yields rare crystalline compounds found nowhere else -- the crystal's integration with living tissue creates unique material properties.
+
+##### Flora
+
+**Lattice Moss**
+Silicon-based moss spreading across crystal formations. Rare specimens exhibit intricate crystalline patterns throughout.
+
+**Crystal Lichen**
+Pale lichen growing in concentric rings around prismatic formations. Under certain light conditions, appears to pulse.
+
+**Prism Bloom**
+Flower with translucent crystalline petals that split ambient light into spectral displays. Beautiful and commercially valuable.
+
+##### Minerals
+
+**Prismatic Crystal**
+High-purity silicon crystal refracting light into rainbow patterns. Rare specimens are flawless museum-quality pieces. Epic formations project light in directions that defy optical law.
+
+**Cave Geode**
+Hollow crystalline formation with spectacular internal structure. Breaking one open is always a gamble -- some contain rare formations, others are empty disappointment.
+
+##### Artifacts
+
+**Crystalline Resonator** *(Epic)*
+> *"Ancient technology fused with crystal growth. Still functional. We don't know what function."*
+A Prior Inhabitant device that has been partially absorbed by the cave's mineral growth. Despite -- or because of -- this integration, it still operates.
+
+---
+
+#### Volcanic Reaches (`volcanic_ridge`)
+
+##### Creatures
+
+**Magma Beast** -- Predator
+> *"Armored. Slow. Devastating. Do not assume you can outrun it in narrow terrain."*
+Armored silicon predator thriving in extreme heat. What it lacks in speed it compensates for with durability that renders most weapons ineffective. The Volcanic Reaches' signature threat.
+
+**Ash Skimmer** -- Omnivore
+Heat-adapted flyer gliding on thermal updrafts. Feeds on insects and wind-carried organic matter. Relatively harmless individually; flocks can overwhelm filtration systems with ash displacement.
+
+**Lava Grazer** -- Herbivore
+Thick-skinned creature feeding on heat-resistant lichen near lava flows. Virtually impervious to environmental damage and profoundly uninterested in operatives.
+
+**Cinder Stalker** -- Predator
+Fast, heat-adapted predator using thermal currents to mask its heat signature from sensors. Strikes from the shimmer of superheated air.
+
+**Ember Scavenger** -- Omnivore
+Opportunistic feeder following lava flows, consuming organisms caught in eruptions. Efficient, patient, and always present after geological events.
+
+**Magma Fury** -- Maniac (Mini-boss)
+> *"Molten rock seeps from cracks in its hide. It doesn't slow down. It doesn't cool down."*
+Volcanic creature in constant thermal agony. Molten material leaks from fissures in its body as it charges through the landscape. High-value thermal compounds justify the considerable risk of engagement. Helix operatives consider Fury hunts a rite of passage.
+
+##### Flora
+
+**Thermal Vent Moss**
+Heat-resistant fungal mat surrounding geothermal vents. Rare patches generate visible heat haze and contain concentrated thermal compounds.
+
+**Magma Bloom**
+Heat-tolerant flower rooted in volcanic vents. Its petals glow orange from internal thermal processes. Epic specimens are rooted directly in active vents, producing compounds impossible to synthesize.
+
+**Ash Vine**
+Charcoal-dark vine threading through cooled lava formations. Grows toward active thermal sources with observable intent.
+
+##### Minerals
+
+**Volcanic Ore**
+Rich metal deposit exposed by volcanic activity. Rare deposits glow with residual magma heat. Epic formations are still actively heated, requiring specialized extraction equipment.
+
+**Obsidian Vein**
+Dense vein of volcanic glass running through basalt walls. The edge is sharper than most industrial cutting tools.
+
+##### Artifacts
+
+**Thermal Core** *(Epic)*
+> *"Ancient geothermal power source. Still generating heat. After millennia. Our best reactors last decades."*
+The Ancients understood thermal energy at a level that makes current human technology look primitive. The Core's power output has not measurably declined since discovery.
+
+---
+
+#### Crystalline Wastes (`crystalline_wastes`)
+
+##### Creatures
+
+**Crystal Grazer** -- Herbivore
+Docile creature subsisting on mineral deposits. Its body is encrusted with the same crystals it consumes, making it part of the landscape in a disturbingly literal sense.
+
+**Null Feeder** -- Herbivore
+Crystalline herbivore whose body refracts light, creating visual distortions. Harmless in intention but disorienting in proximity.
+
+**Dimensional Hunter** -- Omnivore
+> *"Exists slightly offset from normal space. Hunts by phasing through what you thought was cover."*
+Omnivore that exploits the Wastes' dimensional instability to phase through solid matter during hunting. Conventional barriers are not barriers.
+
+**Rift Hunter** -- Predator
+Stalks crystalline corridors using reflections to confuse and ambush prey. In an environment of mirrors, it has mastered misdirection.
+
+**Waste Drifter** -- Omnivore
+Semi-corporeal entity phasing between crystal formations, feeding on energy residue. Whether it is an animal, a phenomenon, or something else is debated.
+
+**Crystalline Maniac** -- Maniac (Mini-boss)
+> *"Dimensional flux made solid and angry. Attacks from spatial coordinates that shouldn't exist."*
+Crystal-warped entity in perpetual dimensional instability. Its attacks originate from shifting spatial positions that make conventional defense strategies unreliable. The Wastes' most dangerous endemic predator.
+
+##### Flora
+
+**Singing Reed**
+Tall, thin crystalline plant vibrating at frequencies just below human hearing. The subsonic resonance causes unease in operatives. Rare colonies produce harmonics that cause visual disturbances.
+
+**Lattice Flower**
+A flower whose petals are composed of interlocking crystal planes. When observed from different angles, it appears to show different flowers entirely.
+
+**Null Grass**
+Crystalline pseudo-grass growing in mineral-rich anomaly zones. Sharp but valuable. Found in both the Crystalline Wastes and Void Rift.
+
+##### Minerals
+
+**Null Stone**
+Dense crystalline stone that absorbs energy rather than conducting it. Rare formations actively dampen sound in a sphere around them.
+
+**Phase Mineral**
+Mineral deposit existing in multiple temporal states. Extraction is complicated by the fact that the mineral is only partially present at any given moment.
+
+**Resonance Core** *(Epic)*
+Dense crystalline core generating audible tones when approached. The tones shift in response to observer movement, suggesting a feedback mechanism.
+
+##### Artifacts
+
+**Echo Record** *(Rare)*
+Temporal recording preserved in crystalline matrix. Replays moments from the past with unsettling fidelity.
+
+**Singing Spire** *(Epic)*
+> *"Three meters tall. Humming with a complex chord that shifts based on the positions of both moons."*
+A slender crystal tower whose harmonic output correlates with celestial mechanics. The Ancients understood Terminus's orbital relationships. The implications are significant.
+
+**Crystal Memory Lattice** *(Epic)*
+Flat crystalline formation etched with microscopic patterns encoding information. Not Prior Inhabitant data storage -- something older.
+
+**Dimensional Fragment** *(Exotic)*
+A piece of reality torn loose by dimensional instability. Valuable to researchers. Disturbing to everyone else.
+
+---
+
+#### Frozen Reaches (`frozen_expanse`)
+
+##### Creatures
+
+**Frost Stalker** -- Predator
+> *"Marathon hunter. Outlasts everything. The cold is its weapon; patience is its strategy."*
+The Frozen Reaches' signature predator. Does not chase prey -- follows it until exhaustion and cold do the work. Operatives report being tracked for hours before contact.
+
+**Ice Burrower** -- Predator
+Armored predator that tunnels through permafrost to ambush prey from below. The surface tremors are the only warning. Experienced operatives learn to read the vibrations.
+
+**Frost Grazer** -- Herbivore
+Heavily insulated herd animal scraping ice-algae from frozen surfaces. Conserves energy with an efficiency that researchers find remarkable.
+
+**Blizzard Maniac** -- Maniac (Mini-boss)
+> *"Abandoned energy conservation. Charges through blizzards. The cold should have killed it. The cold made it stronger."*
+Frost-crazed creature that has rejected the Frozen Reaches' fundamental survival rule. Where every other species conserves energy, the Blizzard Maniac expends it recklessly. The resulting aggression is matched only by its thermal resistance. Yields rare cryo-compounds.
+
+##### Flora
+
+**Ice Algae**
+Hardy extremophile photosynthesizing through ice sheets. Rare colonies pulse with bioluminescence visible through translucent ice.
+
+**Frost Lichen**
+Slow-growing lichen extracting energy from thermal differentials. Patience measured in decades.
+
+**Cryo Bloom**
+Flower preserved in a shell of perpetual ice. The bloom itself is alive and warm at its center. Epic specimens are surrounded by fractal ice patterns extending meters in every direction.
+
+##### Minerals
+
+**Permafrost Shard**
+Frozen mineral formation with cold-stable compounds. Rare specimens don't melt -- even under direct heat application.
+
+**Glacial Core**
+Dense mineral formation exposed by glacial retreat. Ancient ice still clings to surfaces. Epic formations are shot through with veins of unknown composition.
+
+##### Artifacts
+
+**Frozen Data Archive** *(Epic)*
+> *"Perfectly preserved information storage device. Ice-locked for countless years. The data is intact. The language is not."*
+Preserved under ice for millennia. The archive's contents remain encrypted in a Prior Inhabitant format that has resisted all decryption attempts.
+
+---
+
+### Tier IV -- Extreme Biomes
+
+#### Anomaly Zones -- Starfall Crater (`starfall_crater`)
+
+##### Creatures
+
+**Starfall Grazer** -- Herbivore
+Alien herbivore feeding on anomaly-mutated vegetation. Docile but unpredictable near dimensional disturbances.
+
+**Crater Stalker** -- Predator
+> *"Uses dimensional instability to ambush from directions that shouldn't exist."*
+Apex predator adapted to the Crater's warped physics. Exploits spatial distortions for ambush attacks that arrive from angles conventional geometry does not permit.
+
+**Crater Scavenger** -- Omnivore
+Void-mutated scavenger with extra limbs granting unsettling agility. Feeds on anomaly-warped matter that no other species can metabolize.
+
+**Anomaly Predator** -- Predator
+Apex predator warped by crater anomalies. Hunts in spatial distortion fields, appearing and disappearing at will.
+
+**Starfall Maniac** -- Maniac (Mini-boss)
+> *"Reality warps in its wake. Insane from prolonged anomaly exposure. Still deadly. More deadly."*
+Crater creature driven past all behavioral limits by sustained dimensional interference. The reality distortions that accompany it are almost as dangerous as the creature itself.
+
+##### Flora
+
+**Star Lichen**
+Cosmic-origin organism clinging to crater walls. Rare colonies glow with anomalous radiation.
+
+**Void Moss**
+Dark moss growing in anomaly-warped areas. Its surface occasionally ripples as temporal micro-distortions pass through. Epic colonies visibly distort the air above them.
+
+**Crater Fern**
+Fern with fronds at a slight temporal offset -- they move a fraction of a second after you'd expect. A small wrongness that accumulates into deep unease.
+
+##### Minerals
+
+**Cosmic Fragment**
+Starsteel ore from the crater impact. Rare specimens show cosmic patterns in the metal grain. Epic fragments warp the air around them and cause instrument malfunction.
+
+**Impact Glass**
+Fused mineral created by the starfall's energy. Contains microstructures that suggest the impact was not entirely natural.
+
+---
+
+#### Anomaly Zones -- Void Rift (`void_rift`)
+
+##### Creatures
+
+**Void Grazer** -- Predator
+Hunts through void-warped space. Its movements seem to skip frames, as though parts of its trajectory exist in spaces humans cannot perceive.
+
+**Anomaly Scavenger** -- Omnivore
+Feeds on dimensional tears and void residue. Erratic and unpredictable -- its behavior follows logic that doesn't map to any known behavioral model.
+
+**Void Stalker** -- Predator
+> *"Partially phased out of reality. Visible only as a shimmer until it strikes."*
+The Void Rift's apex predator. Exists in a state of partial dimensional displacement, making it nearly invisible and extremely lethal.
+
+**Dimensional Aberration** -- Maniac (Mini-boss)
+> *"Massive. Mad. Attacks everything. Reality breaks around it."*
+Entity driven beyond sanity by prolonged dimensional exposure. Attacks from shifting spatial coordinates with a power that suggests it is drawing energy from the Rift itself.
+
+**Corrupted Magma Titan** -- Predator (Apex)
+> *"What was once a Magma Beast. Now consumed by void corruption. Somehow worse."*
+A Volcanic Reaches creature that wandered into the Rift and was transformed. Retains its original durability while gaining dimensional displacement capabilities. The combination is among the most dangerous fauna on Terminus.
+
+**Corrupted Frost Wraith** -- Maniac (Apex)
+> *"The frozen precision of a Frost Stalker twisted into mindless dimensional rage."*
+A Frozen Reaches predator corrupted by the Rift's influence. Its patience has been replaced by frenzy, its cold-adapted metabolism twisted to draw on dimensional energy. It does not conserve anything anymore.
+
+##### Flora
+
+**Void Vine**
+Parasitic vine feeding on dimensional tears. Partially phases through solid matter. Exotic specimens extend into dimensional spaces invisible to normal perception.
+
+**Echo Bloom**
+Flowering plant existing in multiple temporal states simultaneously. Petals shimmer between past and present configurations.
+
+**Null Grass**
+Crystalline pseudo-grass found in the Rift's mineral-rich anomaly zones.
+
+**Rift Tendril**
+Vine-like growth extending through localized tears in spatial geometry. Sections of the plant exist in spaces that aren't contiguous with normal reality.
+
+##### Minerals
+
+**Dimensional Ore**
+Metallic ore exposed by dimensional rifts. Contains trace amounts of exotic matter.
+
+**Void Crystal Node** *(Epic)*
+Rare crystalline formation found only in Void Rifts. Internal structure defies conventional crystallography.
+
+**Void Crystal Node (Exotic)** *(Exotic)*
+A node of impossible geometry -- its facets reflect a view of the landscape from a position the crystal does not physically occupy.
+
+##### Artifacts
+
+**Anomaly Core** *(Legendary)*
+> *"Stable anomaly formation crystallized into portable form. It pulses. We don't know with what."*
+The Rift's most valuable and most dangerous artifact. A stable dimensional anomaly that has somehow crystallized into a form that can be carried. Its energy signature matches nothing in human physics.
+
+**Void Relic** *(Legendary)*
+> *"Predates colonial settlement. Predates the Ancients. Predates Terminus itself."*
+An artifact recovered from the deepest Rift zones that carbon dating places older than the planet. The corporations have classified this information.
+
+---
+
+#### Bioluminescent Depths (`bioluminescent_depths`)
+
+##### Creatures
+
+**Echo Drifter** -- Herbivore
+Feeds on bioluminescent fungi. Its movements create faint afterimages -- a visual echo that gives it its name.
+
+**Phase Grazer** -- Herbivore
+Large herbivore partially out of sync with normal time. Docile but disorienting to observe, as it appears to move at inconsistent speeds.
+
+**Reality Scavenger** -- Omnivore
+Feeds on dimensional residue. Aggressive when cornered, which is often, given its erratic perception of spatial boundaries.
+
+**Abyssal Angler** -- Predator
+> *"Uses bioluminescent lures. Draws prey close with hypnotic patterns. Don't look at the light."*
+Deep-dwelling predator whose bioluminescent display is sophisticated enough to induce trance states in observers. The scientific explanation involves specific light frequencies. The experiential explanation is simpler: the light is beautiful, and then you're dead.
+
+##### Flora
+
+**Reality Moss**
+Bioluminescent moss with properties that defy conventional biology. Rare patches pulse in visible spectra not usually perceived by human eyes.
+
+**Echo Bloom**
+Exists in multiple temporal states simultaneously. Found in both the Bioluminescent Depths and Void Rift.
+
+**Temporal Fungus**
+Fungal growth found in dimensionally unstable areas. Spores exhibit non-linear aging -- some are ancient, some haven't existed yet.
+
+##### Minerals
+
+**Depth Quartz**
+Pressure-formed quartz with trapped bioluminescent organisms suspended in its lattice. Rare clusters radiate light that seems to shift and swim.
+
+**Phase Mineral**
+Found in the Depths and Crystalline Wastes. Exists in multiple temporal states simultaneously.
+
+**Anomaly Shard** *(Rare)*
+Crystallized dimensional distortion. Valuable to researchers studying the Anomaly phenomenon.
+
+---
+
+#### Aquatic Biomes
+
+##### Kelp Forests (`kelp_forests`)
+
+**Kelp Grazer** -- Herbivore
+Large herbivore feeding on kelp fronds. Peaceful but territorial near feeding grounds.
+
+**Tangle Stalker** -- Predator
+Uses the dense kelp forest for ambush cover. Patient hunter that can remain motionless for hours.
+
+**Current Rider** -- Omnivore
+Fast-moving omnivore darting through kelp corridors. Hunts in bursts of explosive speed.
+
+**Kelp Ambusher** -- Predator
+> *"Mimics kelp fronds. Strikes with blinding speed. The forest itself is hunting you."*
+Camouflaged predator that has evolved to be visually indistinguishable from kelp. Only detectable by sonar or by the sudden absence of fish in its vicinity.
+
+*Flora:* Kelp Canopy (massive kelp forming dense layers), Pressure Fern (deep-water adapted; rare specimens of extraordinary size).
+
+*Minerals:* Pearl Node (rare mollusk concentrations; rare specimens of unusual iridescence), Sea Crystal.
+
+*Artifacts:* Sunken Tech *(Epic)* -- Water-damaged Prior Inhabitant technology. Still partially functional.
+
+##### Deep Trenches (`deep_trenches`)
+
+**Pressure Feeder** -- Herbivore
+Deep-dwelling filter organism adapted to crushing depths. Slow-moving but extraordinarily durable.
+
+**Trench Hunter** -- Predator
+> *"Bioluminescent lures in the dark. The deepest predator. The most patient."*
+Apex predator using bioluminescent hunting strategies in absolute darkness.
+
+**Abyssal Scavenger** -- Omnivore
+Feeds on detritus falling from upper waters. Aggressive when food is scarce, which at trench depths is most of the time.
+
+**Trench Drifter** -- Omnivore
+Deep-water scavenger drifting along trench walls. Consumes anything organic that sinks to its depth.
+
+**Depth Crusher** -- Predator
+Massive deep-sea predator with jaw strength capable of crushing pressure-rated equipment. The engineering specs for deep-sea suits were revised upward after the first encounter.
+
+**Abyssal Leviathan** -- Maniac (Mini-boss)
+> *"Massive. Deep. Pressure-induced madness, or something that was always mad. The trench doesn't care which."*
+The largest known predator in Terminus's oceans. Driven to constant aggression by pressure-induced neurological damage -- or, as some researchers suggest, by something else entirely.
+
+*Flora:* Pressure Fern, Void Kelp (rare deep-sea variant; rare specimens trail into absolute darkness), Thermal Vent Colony (extremophile bacterial colony; epic specimens have consumed entire hydrothermal chimneys).
+
+*Minerals:* Abyssal Ore (dense metallic ore from trench walls; rare specimens luminescence blue; epic deposits pulse with visible energy), Trench Crystal (pressure-formed crystal of extraordinary density).
+
+*Artifacts:* Ancient Shell *(Rare)* -- Fossilized shell of enormous size predating all known Terminus fauna. Drowned Relic *(Legendary)* -- Prior Inhabitant artifact from flooded ruins. Purpose unknown. Value: incalculable.
+
+---
+
 *This document is a living reference. Sections will be expanded as development continues.*
