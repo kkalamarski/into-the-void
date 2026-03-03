@@ -1,3 +1,4 @@
+import { NEUTRAL_RESISTANCES } from '@into-the-void/shared-types';
 import type { CreatureDefinition } from '../types';
 
 // Tier II - Bioluminescent Depths (3 creatures)
@@ -16,6 +17,7 @@ export const CREATURE_ECHO_DRIFTER: CreatureDefinition = {
   levelRange: [6, 14],
   baseXp: 28,
   respawnSeconds: 280,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_PHASE_GRAZER: CreatureDefinition = {
@@ -32,6 +34,7 @@ export const CREATURE_PHASE_GRAZER: CreatureDefinition = {
   levelRange: [7, 15],
   baseXp: 30,
   respawnSeconds: 300,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_REALITY_SCAVENGER: CreatureDefinition = {
@@ -48,6 +51,7 @@ export const CREATURE_REALITY_SCAVENGER: CreatureDefinition = {
   levelRange: [8, 16],
   baseXp: 32,
   respawnSeconds: 320,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // Tier III - Crystalline Wastes (3 creatures)
@@ -66,6 +70,7 @@ export const CREATURE_NULL_FEEDER: CreatureDefinition = {
   levelRange: [12, 20],
   baseXp: 50,
   respawnSeconds: 400,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_DIMENSIONAL_HUNTER: CreatureDefinition = {
@@ -82,6 +87,7 @@ export const CREATURE_DIMENSIONAL_HUNTER: CreatureDefinition = {
   levelRange: [13, 22],
   baseXp: 55,
   respawnSeconds: 420,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_RIFT_HUNTER: CreatureDefinition = {
@@ -98,6 +104,7 @@ export const CREATURE_RIFT_HUNTER: CreatureDefinition = {
   levelRange: [14, 24],
   baseXp: 65,
   respawnSeconds: 460,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // Tier IV - Void Rift (3 creatures)
@@ -116,6 +123,7 @@ export const CREATURE_VOID_GRAZER: CreatureDefinition = {
   levelRange: [18, 28],
   baseXp: 85,
   respawnSeconds: 540,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_ANOMALY_SCAVENGER: CreatureDefinition = {
@@ -132,6 +140,7 @@ export const CREATURE_ANOMALY_SCAVENGER: CreatureDefinition = {
   levelRange: [20, 30],
   baseXp: 95,
   respawnSeconds: 600,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_VOID_STALKER: CreatureDefinition = {
@@ -148,6 +157,7 @@ export const CREATURE_VOID_STALKER: CreatureDefinition = {
   levelRange: [22, 32],
   baseXp: 110,
   respawnSeconds: 660,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // Tier IV - Maniac (1 creature)
@@ -166,6 +176,7 @@ export const CREATURE_DIMENSIONAL_ABERRATION: CreatureDefinition = {
   levelRange: [24, 35],
   baseXp: 150,
   respawnSeconds: 900,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // ===== PHASE 110 — Tier II Bioluminescent Depths Addition =====
@@ -184,6 +195,7 @@ export const CREATURE_ABYSSAL_ANGLER: CreatureDefinition = {
   levelRange: [10, 20],
   baseXp: 48,
   respawnSeconds: 400,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // ===== PHASE 110 — Tier III Crystalline Wastes Additions =====
@@ -202,6 +214,7 @@ export const CREATURE_WASTE_DRIFTER: CreatureDefinition = {
   levelRange: [16, 26],
   baseXp: 60,
   respawnSeconds: 450,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_CRYSTALLINE_MANIAC: CreatureDefinition = {
@@ -218,6 +231,7 @@ export const CREATURE_CRYSTALLINE_MANIAC: CreatureDefinition = {
   levelRange: [24, 32],
   baseXp: 125,
   respawnSeconds: 900,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // ===== PHASE 110 — Tier IV Void Rift Corrupted Apex Creatures =====
@@ -236,6 +250,7 @@ export const CREATURE_CORRUPTED_MAGMA_TITAN: CreatureDefinition = {
   levelRange: [28, 35],
   baseXp: 160,
   respawnSeconds: 900,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_CORRUPTED_FROST_WRAITH: CreatureDefinition = {
@@ -252,6 +267,7 @@ export const CREATURE_CORRUPTED_FROST_WRAITH: CreatureDefinition = {
   levelRange: [30, 35],
   baseXp: 180,
   respawnSeconds: 900,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const ALL_EXOTIC_CREATURES: readonly CreatureDefinition[] = [

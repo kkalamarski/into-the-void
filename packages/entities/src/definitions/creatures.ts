@@ -1,3 +1,4 @@
+import { NEUTRAL_RESISTANCES } from '@into-the-void/shared-types';
 import type { CreatureDefinition } from '../types';
 
 export const CREATURE_VOID_CRAWLER: CreatureDefinition = {
@@ -14,6 +15,7 @@ export const CREATURE_VOID_CRAWLER: CreatureDefinition = {
   levelRange: [1, 5],
   baseXp: 15,
   respawnSeconds: 180,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_CANOPY_GRAZER: CreatureDefinition = {
@@ -30,6 +32,7 @@ export const CREATURE_CANOPY_GRAZER: CreatureDefinition = {
   levelRange: [1, 6],
   baseXp: 20,
   respawnSeconds: 240,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_SPORE_CARRIER: CreatureDefinition = {
@@ -46,6 +49,7 @@ export const CREATURE_SPORE_CARRIER: CreatureDefinition = {
   levelRange: [4, 12],
   baseXp: 25,
   respawnSeconds: 300,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_CRYSTAL_HUNTER: CreatureDefinition = {
@@ -62,6 +66,7 @@ export const CREATURE_CRYSTAL_HUNTER: CreatureDefinition = {
   levelRange: [8, 18],
   baseXp: 45,
   respawnSeconds: 420,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_MARSH_LURKER: CreatureDefinition = {
@@ -78,6 +83,7 @@ export const CREATURE_MARSH_LURKER: CreatureDefinition = {
   levelRange: [5, 15],
   baseXp: 40,
   respawnSeconds: 360,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_DART_RUNNER: CreatureDefinition = {
@@ -94,6 +100,7 @@ export const CREATURE_DART_RUNNER: CreatureDefinition = {
   levelRange: [6, 16],
   baseXp: 38,
   respawnSeconds: 360,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_FROST_STALKER: CreatureDefinition = {
@@ -110,6 +117,7 @@ export const CREATURE_FROST_STALKER: CreatureDefinition = {
   levelRange: [10, 22],
   baseXp: 55,
   respawnSeconds: 480,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_MAGMA_BEAST: CreatureDefinition = {
@@ -126,6 +134,7 @@ export const CREATURE_MAGMA_BEAST: CreatureDefinition = {
   levelRange: [12, 28],
   baseXp: 70,
   respawnSeconds: 600,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_TOXIC_LURKER: CreatureDefinition = {
@@ -142,6 +151,7 @@ export const CREATURE_TOXIC_LURKER: CreatureDefinition = {
   levelRange: [8, 20],
   baseXp: 50,
   respawnSeconds: 420,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_VOID_HORROR: CreatureDefinition = {
@@ -158,6 +168,7 @@ export const CREATURE_VOID_HORROR: CreatureDefinition = {
   levelRange: [20, 35],
   baseXp: 120,
   respawnSeconds: 900,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_COASTAL_SCUTTLER: CreatureDefinition = {
@@ -174,6 +185,7 @@ export const CREATURE_COASTAL_SCUTTLER: CreatureDefinition = {
   levelRange: [1, 4],
   baseXp: 12,
   respawnSeconds: 180,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_ASH_SKIMMER: CreatureDefinition = {
@@ -190,6 +202,7 @@ export const CREATURE_ASH_SKIMMER: CreatureDefinition = {
   levelRange: [10, 20],
   baseXp: 45,
   respawnSeconds: 360,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_MIASMA_DRIFTER: CreatureDefinition = {
@@ -206,6 +219,7 @@ export const CREATURE_MIASMA_DRIFTER: CreatureDefinition = {
   levelRange: [3, 10],
   baseXp: 22,
   respawnSeconds: 240,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_ICE_BURROWER: CreatureDefinition = {
@@ -222,6 +236,7 @@ export const CREATURE_ICE_BURROWER: CreatureDefinition = {
   levelRange: [12, 24],
   baseXp: 60,
   respawnSeconds: 480,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_CRYSTAL_CRAWLER: CreatureDefinition = {
@@ -238,6 +253,7 @@ export const CREATURE_CRYSTAL_CRAWLER: CreatureDefinition = {
   levelRange: [5, 12],
   baseXp: 25,
   respawnSeconds: 300,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_RUIN_SEEKER: CreatureDefinition = {
@@ -254,6 +270,7 @@ export const CREATURE_RUIN_SEEKER: CreatureDefinition = {
   levelRange: [18, 30],
   baseXp: 90,
   respawnSeconds: 600,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_PETRIFIED_LURKER: CreatureDefinition = {
@@ -270,6 +287,7 @@ export const CREATURE_PETRIFIED_LURKER: CreatureDefinition = {
   levelRange: [8, 18],
   baseXp: 42,
   respawnSeconds: 360,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // ===== PHASE 88 ADDITIONS =====
@@ -288,6 +306,7 @@ export const CREATURE_STARFALL_GRAZER: CreatureDefinition = {
   levelRange: [12, 22],
   baseXp: 35,
   respawnSeconds: 300,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_CRATER_STALKER: CreatureDefinition = {
@@ -304,6 +323,7 @@ export const CREATURE_CRATER_STALKER: CreatureDefinition = {
   levelRange: [15, 25],
   baseXp: 70,
   respawnSeconds: 420,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_GUARDIAN_CONSTRUCT: CreatureDefinition = {
@@ -320,6 +340,7 @@ export const CREATURE_GUARDIAN_CONSTRUCT: CreatureDefinition = {
   levelRange: [14, 24],
   baseXp: 65,
   respawnSeconds: 420,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_RELIC_BEAST: CreatureDefinition = {
@@ -336,6 +357,7 @@ export const CREATURE_RELIC_BEAST: CreatureDefinition = {
   levelRange: [10, 20],
   baseXp: 50,
   respawnSeconds: 360,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // ===== PHASE 110 — Tier I Biome Creature Population =====
@@ -354,6 +376,7 @@ export const CREATURE_PLAINS_GRAZER: CreatureDefinition = {
   levelRange: [1, 3],
   baseXp: 10,
   respawnSeconds: 180,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_VOID_PROWLER: CreatureDefinition = {
@@ -370,6 +393,7 @@ export const CREATURE_VOID_PROWLER: CreatureDefinition = {
   levelRange: [3, 6],
   baseXp: 18,
   respawnSeconds: 240,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_MYCELIAL_STALKER: CreatureDefinition = {
@@ -386,6 +410,7 @@ export const CREATURE_MYCELIAL_STALKER: CreatureDefinition = {
   levelRange: [3, 6],
   baseXp: 18,
   respawnSeconds: 240,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_SPORE_BEETLE: CreatureDefinition = {
@@ -402,6 +427,7 @@ export const CREATURE_SPORE_BEETLE: CreatureDefinition = {
   levelRange: [1, 4],
   baseXp: 12,
   respawnSeconds: 200,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_RUIN_SCAVENGER: CreatureDefinition = {
@@ -418,6 +444,7 @@ export const CREATURE_RUIN_SCAVENGER: CreatureDefinition = {
   levelRange: [1, 4],
   baseXp: 12,
   respawnSeconds: 180,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_RUIN_WARDEN: CreatureDefinition = {
@@ -434,6 +461,7 @@ export const CREATURE_RUIN_WARDEN: CreatureDefinition = {
   levelRange: [4, 6],
   baseXp: 20,
   respawnSeconds: 240,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // ===== PHASE 110 — Tier II Biome Creature Population =====
@@ -452,6 +480,7 @@ export const CREATURE_SLUDGE_GRAZER: CreatureDefinition = {
   levelRange: [7, 14],
   baseXp: 28,
   respawnSeconds: 300,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_CORROSION_MAW: CreatureDefinition = {
@@ -468,6 +497,7 @@ export const CREATURE_CORROSION_MAW: CreatureDefinition = {
   levelRange: [10, 18],
   baseXp: 45,
   respawnSeconds: 360,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_FUME_DRIFTER: CreatureDefinition = {
@@ -484,6 +514,7 @@ export const CREATURE_FUME_DRIFTER: CreatureDefinition = {
   levelRange: [8, 15],
   baseXp: 32,
   respawnSeconds: 300,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_ACID_MANIAC: CreatureDefinition = {
@@ -500,6 +531,7 @@ export const CREATURE_ACID_MANIAC: CreatureDefinition = {
   levelRange: [12, 20],
   baseXp: 65,
   respawnSeconds: 600,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_BOG_CRAWLER: CreatureDefinition = {
@@ -516,6 +548,7 @@ export const CREATURE_BOG_CRAWLER: CreatureDefinition = {
   levelRange: [7, 15],
   baseXp: 30,
   respawnSeconds: 300,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_MARSH_SNAPPER: CreatureDefinition = {
@@ -532,6 +565,7 @@ export const CREATURE_MARSH_SNAPPER: CreatureDefinition = {
   levelRange: [8, 16],
   baseXp: 34,
   respawnSeconds: 300,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_STONE_GRAZER: CreatureDefinition = {
@@ -548,6 +582,7 @@ export const CREATURE_STONE_GRAZER: CreatureDefinition = {
   levelRange: [7, 14],
   baseXp: 28,
   respawnSeconds: 300,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_FOSSIL_SCAVENGER: CreatureDefinition = {
@@ -564,6 +599,7 @@ export const CREATURE_FOSSIL_SCAVENGER: CreatureDefinition = {
   levelRange: [8, 16],
   baseXp: 32,
   respawnSeconds: 280,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // ===== PHASE 110 — Tier III Biome Creature Population =====
@@ -583,6 +619,7 @@ export const CREATURE_CRYSTAL_GRAZER: CreatureDefinition = {
   levelRange: [14, 22],
   baseXp: 50,
   respawnSeconds: 400,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_PRISM_WEAVER: CreatureDefinition = {
@@ -599,6 +636,7 @@ export const CREATURE_PRISM_WEAVER: CreatureDefinition = {
   levelRange: [16, 24],
   baseXp: 55,
   respawnSeconds: 420,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_SHARD_REAPER: CreatureDefinition = {
@@ -615,6 +653,7 @@ export const CREATURE_SHARD_REAPER: CreatureDefinition = {
   levelRange: [18, 26],
   baseXp: 70,
   respawnSeconds: 540,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_CRYSTAL_BERSERKER: CreatureDefinition = {
@@ -631,6 +670,7 @@ export const CREATURE_CRYSTAL_BERSERKER: CreatureDefinition = {
   levelRange: [22, 30],
   baseXp: 120,
   respawnSeconds: 900,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // volcanic_ridge — 4 new creatures
@@ -648,6 +688,7 @@ export const CREATURE_LAVA_GRAZER: CreatureDefinition = {
   levelRange: [14, 22],
   baseXp: 48,
   respawnSeconds: 400,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_CINDER_STALKER: CreatureDefinition = {
@@ -664,6 +705,7 @@ export const CREATURE_CINDER_STALKER: CreatureDefinition = {
   levelRange: [18, 26],
   baseXp: 68,
   respawnSeconds: 540,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_EMBER_SCAVENGER: CreatureDefinition = {
@@ -680,6 +722,7 @@ export const CREATURE_EMBER_SCAVENGER: CreatureDefinition = {
   levelRange: [15, 23],
   baseXp: 55,
   respawnSeconds: 420,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_MAGMA_FURY: CreatureDefinition = {
@@ -696,6 +739,7 @@ export const CREATURE_MAGMA_FURY: CreatureDefinition = {
   levelRange: [22, 32],
   baseXp: 125,
   respawnSeconds: 900,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // frozen_expanse — 2 new creatures
@@ -713,6 +757,7 @@ export const CREATURE_FROST_GRAZER: CreatureDefinition = {
   levelRange: [14, 22],
   baseXp: 48,
   respawnSeconds: 400,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_BLIZZARD_MANIAC: CreatureDefinition = {
@@ -729,6 +774,7 @@ export const CREATURE_BLIZZARD_MANIAC: CreatureDefinition = {
   levelRange: [20, 28],
   baseXp: 110,
   respawnSeconds: 900,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // starfall_crater — 3 new creatures
@@ -746,6 +792,7 @@ export const CREATURE_CRATER_SCAVENGER: CreatureDefinition = {
   levelRange: [15, 24],
   baseXp: 58,
   respawnSeconds: 420,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_ANOMALY_PREDATOR: CreatureDefinition = {
@@ -762,6 +809,7 @@ export const CREATURE_ANOMALY_PREDATOR: CreatureDefinition = {
   levelRange: [18, 28],
   baseXp: 72,
   respawnSeconds: 540,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_STARFALL_MANIAC: CreatureDefinition = {
@@ -778,6 +826,7 @@ export const CREATURE_STARFALL_MANIAC: CreatureDefinition = {
   levelRange: [22, 32],
   baseXp: 120,
   respawnSeconds: 900,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const ALL_CREATURES: readonly CreatureDefinition[] = [

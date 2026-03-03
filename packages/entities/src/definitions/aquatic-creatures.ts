@@ -1,3 +1,4 @@
+import { NEUTRAL_RESISTANCES } from '@into-the-void/shared-types';
 import type { CreatureDefinition } from '../types';
 
 export const CREATURE_TIDE_CRAB: CreatureDefinition = {
@@ -14,6 +15,7 @@ export const CREATURE_TIDE_CRAB: CreatureDefinition = {
   levelRange: [1, 6],
   baseXp: 12,
   respawnSeconds: 180,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_COASTAL_URCHIN: CreatureDefinition = {
@@ -30,6 +32,7 @@ export const CREATURE_COASTAL_URCHIN: CreatureDefinition = {
   levelRange: [1, 5],
   baseXp: 10,
   respawnSeconds: 180,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_REEF_SCAVENGER: CreatureDefinition = {
@@ -46,6 +49,7 @@ export const CREATURE_REEF_SCAVENGER: CreatureDefinition = {
   levelRange: [2, 7],
   baseXp: 15,
   respawnSeconds: 240,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_KELP_GRAZER: CreatureDefinition = {
@@ -62,6 +66,7 @@ export const CREATURE_KELP_GRAZER: CreatureDefinition = {
   levelRange: [6, 14],
   baseXp: 28,
   respawnSeconds: 280,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_TANGLE_STALKER: CreatureDefinition = {
@@ -78,6 +83,7 @@ export const CREATURE_TANGLE_STALKER: CreatureDefinition = {
   levelRange: [8, 16],
   baseXp: 40,
   respawnSeconds: 360,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_CURRENT_RIDER: CreatureDefinition = {
@@ -94,6 +100,7 @@ export const CREATURE_CURRENT_RIDER: CreatureDefinition = {
   levelRange: [7, 15],
   baseXp: 32,
   respawnSeconds: 300,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_PRESSURE_FEEDER: CreatureDefinition = {
@@ -110,6 +117,7 @@ export const CREATURE_PRESSURE_FEEDER: CreatureDefinition = {
   levelRange: [12, 20],
   baseXp: 50,
   respawnSeconds: 400,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_TRENCH_HUNTER: CreatureDefinition = {
@@ -126,6 +134,7 @@ export const CREATURE_TRENCH_HUNTER: CreatureDefinition = {
   levelRange: [14, 24],
   baseXp: 65,
   respawnSeconds: 480,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_ABYSSAL_SCAVENGER: CreatureDefinition = {
@@ -142,6 +151,7 @@ export const CREATURE_ABYSSAL_SCAVENGER: CreatureDefinition = {
   levelRange: [13, 22],
   baseXp: 55,
   respawnSeconds: 420,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_ABYSSAL_LEVIATHAN: CreatureDefinition = {
@@ -158,6 +168,7 @@ export const CREATURE_ABYSSAL_LEVIATHAN: CreatureDefinition = {
   levelRange: [20, 32],
   baseXp: 125,
   respawnSeconds: 900,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // ===== PHASE 110 — Tier I Tidal Pools Addition =====
@@ -176,6 +187,7 @@ export const CREATURE_TIDAL_SNAPPER: CreatureDefinition = {
   levelRange: [3, 6],
   baseXp: 17,
   respawnSeconds: 240,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // ===== PHASE 110 — Tier II Kelp Forests Addition =====
@@ -194,6 +206,7 @@ export const CREATURE_KELP_AMBUSHER: CreatureDefinition = {
   levelRange: [10, 18],
   baseXp: 42,
   respawnSeconds: 360,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 // ===== PHASE 110 — Tier III Deep Trenches Additions =====
@@ -212,6 +225,7 @@ export const CREATURE_TRENCH_DRIFTER: CreatureDefinition = {
   levelRange: [16, 24],
   baseXp: 55,
   respawnSeconds: 420,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const CREATURE_DEPTH_CRUSHER: CreatureDefinition = {
@@ -228,6 +242,7 @@ export const CREATURE_DEPTH_CRUSHER: CreatureDefinition = {
   levelRange: [18, 28],
   baseXp: 75,
   respawnSeconds: 540,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 export const ALL_AQUATIC_CREATURES: readonly CreatureDefinition[] = [
