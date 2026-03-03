@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Balance & Automation
 status: unknown
-last_updated: "2026-03-03T15:58:35.061Z"
+last_updated: "2026-03-03T16:17:11.910Z"
 progress:
   total_phases: 117
-  completed_phases: 116
+  completed_phases: 117
   total_plans: 305
-  completed_plans: 304
+  completed_plans: 305
 ---
 
 # Project State
@@ -49,6 +49,7 @@ Progress: [░░░░░░░░░░] 0% (v1.24)
 | 121. Automation Tech Tree | TBD | Not started |
 | Phase 117-damage-types-and-creature-resistances P01 | 10 | 2 tasks | 4 files |
 | Phase 117-02 P02 | 12 | 2 tasks | 5 files |
+| Phase 117-03 P03 | 587 | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,7 @@ New for v1.24:
 - [Phase 117-01]: damageBonusMultiplier only activates when > 1.0 to prevent accidental damage penalties from undefined defaults
 - [Phase 117-02]: All 77 creatures use BIOME_RESISTANCE_PROFILES[primary_biome] — no per-creature resistance overrides
 - [Phase 117-02]: Multi-biome creatures use first biome in biomes array for resistance lookup
+- [Phase 117-03]: Damage amplifier modules include power: 56 stats effect to satisfy CONT-03 item-validation test; basic_strike assigned Kinetic type for white floating numbers
 
 ### Pending Todos
 

@@ -27,8 +27,8 @@ Requirements for Balance & Automation milestone. Each maps to roadmap phases.
 - [x] **DMGT-01**: calculateDamage() accepts damageType and defenderResistances, applies resistance multiplier (0.5x-1.5x)
 - [x] **DMGT-02**: All 83+ creatures have explicit resistance values populated per biome theme (ice creatures resist Cryo, volcanic resist Thermal, etc.)
 - [x] **DMGT-03**: Resistance capped at 70% reduction maximum (0.3x floor) — no creature is immune
-- [ ] **DMGT-04**: Damage type label shown in combat log entries
-- [ ] **DMGT-05**: Color-coded floating damage numbers per type (Thermal=orange, Cryo=cyan, Bio=green, Kinetic=white)
+- [x] **DMGT-04**: Damage type label shown in combat log entries
+- [x] **DMGT-05**: Color-coded floating damage numbers per type (Thermal=orange, Cryo=cyan, Bio=green, Kinetic=white)
 - [x] **DMGT-06**: Gear items that boost specific damage type output (damage_type_bonus effect on items)
 - [x] **DMGT-07**: Creature resistance distribution matches biome lore (Frozen Expanse creatures resist Cryo, vulnerable to Thermal)
 
@@ -131,8 +131,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DMGT-01 | Phase 117 | Complete |
 | DMGT-02 | Phase 117 | Complete |
 | DMGT-03 | Phase 117 | Complete |
-| DMGT-04 | Phase 117 | Pending |
-| DMGT-05 | Phase 117 | Pending |
+| DMGT-04 | Phase 117 | Complete |
+| DMGT-05 | Phase 117 | Complete |
 | DMGT-06 | Phase 117 | Complete |
 | DMGT-07 | Phase 117 | Complete |
 | ABIL-01 | Phase 118 | Pending |

@@ -67,7 +67,7 @@
 
 - [x] **Phase 115: Shared Type Foundation** - DamageType union, DamageResistances, shield/damage_reduction AbilityEffect variants, DeployableEntity interface, AiTickResult behavior signals (completed 2026-03-03)
 - [x] **Phase 116: Stat Caps** - Soft cap at 200 with diminishing returns, hard cap at 400, stats panel indicator (completed 2026-03-03)
-- [ ] **Phase 117: Damage Types and Creature Resistances** - DamageType threaded through calculateDamage(), resistances on all 83+ creatures, color-coded floating numbers
+- [x] **Phase 117: Damage Types and Creature Resistances** - DamageType threaded through calculateDamage(), resistances on all 83+ creatures, color-coded floating numbers (completed 2026-03-03)
 - [ ] **Phase 118: Ability Rebalance** - Plasma Burst nerfed, defensive abilities overhauled with real shield/DR mechanics, all 13 rebalanced abilities live
 - [ ] **Phase 119: Creature AI Upgrades** - Stampede, Pack Call, Ambush, Frenzy behaviors with zone-level pre-processing
 - [ ] **Phase 120: Biome Hazard System** - HazardService with per-player state cache, HP drain, stat debuffs, gear counters, HUD indicator
@@ -342,7 +342,7 @@
 | 114. Integration and Lore Verification | 3/3 | Complete | 2026-03-03 |
 | 115. Shared Type Foundation | 2/2 | Complete    | 2026-03-03 |
 | 116. Stat Caps | 0/TBD | Complete    | 2026-03-03 |
-| 117. Damage Types and Creature Resistances | 2/3 | In Progress|  |
+| 117. Damage Types and Creature Resistances | 3/3 | Complete   | 2026-03-03 |
 | 118. Ability Rebalance | 0/TBD | Not started | - |
 | 119. Creature AI Upgrades | 0/TBD | Not started | - |
 | 120. Biome Hazard System | 0/TBD | Not started | - |
