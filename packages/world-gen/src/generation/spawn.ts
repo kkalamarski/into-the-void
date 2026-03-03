@@ -403,6 +403,8 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
       { id: ENTITY_IDS.PLANT_VOID_VINE, weight: 6 },
       { id: ENTITY_IDS.PLANT_ECHO_BLOOM, weight: 4 },
       { id: ENTITY_IDS.PLANT_NULL_GRASS, weight: 5 },
+      { id: ENTITY_IDS.PLANT_RIFT_TENDRIL, weight: 7 },
+      { id: ENTITY_IDS.PLANT_VOID_VINE_EXOTIC, weight: 1, rarity: 'exotic' },
     ],
     artifacts: [
       { id: ENTITY_IDS.ARTIFACT_ANOMALY_CORE, weight: 1, rarity: 'legendary' },
@@ -429,14 +431,20 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     ],
     plants: [
       { id: ENTITY_IDS.PLANT_NULL_GRASS, weight: 8 },
+      { id: ENTITY_IDS.PLANT_SINGING_REED, weight: 8 },
+      { id: ENTITY_IDS.PLANT_LATTICE_FLOWER, weight: 7 },
+      { id: ENTITY_IDS.PLANT_SINGING_REED_RARE, weight: 2, rarity: 'rare' },
+      { id: ENTITY_IDS.PLANT_LATTICE_FLOWER_EPIC, weight: 1, rarity: 'epic' },
     ],
     artifacts: [
       { id: ENTITY_IDS.ARTIFACT_DIMENSIONAL_FRAGMENT, weight: 6, rarity: 'exotic' },
       { id: ENTITY_IDS.ARTIFACT_ECHO_RECORD, weight: 8, rarity: 'rare' },
+      { id: ENTITY_IDS.ARTIFACT_SINGING_SPIRE, weight: 2, rarity: 'epic' },
+      { id: ENTITY_IDS.ARTIFACT_CRYSTAL_MEMORY_LATTICE, weight: 2, rarity: 'epic' },
     ],
     creatureDensity: 3,   // Tier III hostile (sparse but dangerous)
     mineralDensity: 10,   // VERY HIGH mineral density (crystal theme)
-    plantDensity: 1,      // Minimal plants (harsh crystalline environment)
+    plantDensity: 3,      // Resource-rich destination biome (Singing Fields)
     artifactDensity: 1,
   },
   bioluminescent_depths: {

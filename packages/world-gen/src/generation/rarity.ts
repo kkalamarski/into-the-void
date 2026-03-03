@@ -95,6 +95,8 @@ export function getRareBiomeMinerals(biome: string): string[] {
     kelp_forests: ['mineral_pearl_node_rare'],
     frozen_expanse: ['mineral_permafrost_shard_rare'],
     deep_trenches: ['mineral_abyssal_ore_rare'],
+    crystalline_wastes: ['mineral_null_stone_rare'],
+    void_rift: ['mineral_void_crystal_node_exotic'],
   };
 
   return biomeRareMinerals[biome] ?? [];
@@ -111,6 +113,8 @@ export function getEpicBiomeMinerals(biome: string): string[] {
     frozen_expanse: ['mineral_glacial_core_epic'],
     deep_trenches: ['mineral_abyssal_ore_epic'],
     starfall_crater: ['mineral_cosmic_fragment_epic'],
+    crystalline_wastes: ['mineral_resonance_core'],
+    void_rift: ['mineral_void_crystal_node_exotic'],
   };
 
   return biomeEpicMinerals[biome] ?? [];

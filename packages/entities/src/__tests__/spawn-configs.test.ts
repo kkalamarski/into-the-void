@@ -25,6 +25,8 @@ const RARITY_SYSTEM_MINERALS: Record<string, string[]> = {
   kelp_forests: ['mineral_pearl_node_rare'],
   frozen_expanse: ['mineral_permafrost_shard_rare', 'mineral_glacial_core_epic'],
   deep_trenches: ['mineral_abyssal_ore_rare', 'mineral_abyssal_ore_epic'],
+  crystalline_wastes: ['mineral_null_stone_rare', 'mineral_resonance_core'],
+  void_rift: ['mineral_void_crystal_node_exotic'],
 };
 
 // Collect all entity IDs referenced across all biome spawn configs,

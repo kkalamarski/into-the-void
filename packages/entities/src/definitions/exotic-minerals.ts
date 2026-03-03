@@ -124,6 +124,68 @@ export const MINERAL_DEPTH_QUARTZ_RARE: MineralDefinition = {
   rarity: 'rare',
 };
 
+// ===== PHASE 111 TIER III CRYSTALLINE_WASTES ADDITIONS =====
+
+export const MINERAL_NULL_STONE_RARE: MineralDefinition = {
+  id: 'mineral_null_stone_rare',
+  displayName: 'Null Stone (Rare)',
+  description:
+    'A null stone formation that actively dampens sound in a sphere around it. The silence is absolute and deeply unsettling — your own heartbeat becomes inaudible within arm\'s reach.',
+  entityClass: 'mineral',
+  biomes: ['crystalline_wastes'],
+  textureKey: 'mineral_null_stone',
+  color: 0x99aabb,
+  lootTableId: 'loot_mineral_null_stone_rare',
+  miningYield: [
+    { itemId: 'world_crystal_fragment', minAmount: 2, maxAmount: 5, chance: 1.0 },
+    { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 1, chance: 0.4 },
+  ],
+  requiredTier: 4,
+  respawnSeconds: 1080,
+  rarity: 'rare',
+};
+
+export const MINERAL_RESONANCE_CORE: MineralDefinition = {
+  id: 'mineral_resonance_core',
+  displayName: 'Resonance Core',
+  description:
+    'Dense crystalline core that generates audible tones when approached. The tones shift to match the observer\'s breathing rate — a phenomenon that has no geological explanation. Miners report persistent tinnitus for days after extraction.',
+  entityClass: 'mineral',
+  biomes: ['crystalline_wastes'],
+  textureKey: 'mineral_resonance_core',
+  color: 0xbb88dd,
+  lootTableId: 'loot_mineral_resonance_core',
+  miningYield: [
+    { itemId: 'world_crystal_fragment', minAmount: 3, maxAmount: 6, chance: 1.0 },
+    { itemId: 'reagent_anomaly_catalyst', minAmount: 1, maxAmount: 1, chance: 0.45 },
+  ],
+  requiredTier: 4,
+  respawnSeconds: 1620,
+  rarity: 'epic',
+};
+
+// ===== PHASE 111 VOID_RIFT EXOTIC ADDITION =====
+
+export const MINERAL_VOID_CRYSTAL_NODE_EXOTIC: MineralDefinition = {
+  id: 'mineral_void_crystal_node_exotic',
+  displayName: 'Void Crystal Node (Exotic)',
+  description:
+    'A void crystal node of impossible geometry — its facets reflect a view of the landscape from a position several hundred meters distant and approximately thirty seconds in the future. The mining yield is the most valuable in known space, but prolonged extraction causes spatial orientation to deteriorate irreversibly.',
+  entityClass: 'mineral',
+  biomes: ['void_rift'],
+  textureKey: 'mineral_void_crystal_node',
+  color: 0xcc55ff,
+  lootTableId: 'loot_mineral_void_crystal_node_exotic',
+  miningYield: [
+    { itemId: 'world_void_crystal', minAmount: 3, maxAmount: 6, chance: 1.0 },
+    { itemId: 'reagent_corrupted_essence', minAmount: 1, maxAmount: 2, chance: 0.5 },
+    { itemId: 'world_rift_core', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ],
+  requiredTier: 4,
+  respawnSeconds: 2400,
+  rarity: 'exotic',
+};
+
 export const ALL_EXOTIC_MINERALS: readonly MineralDefinition[] = [
   MINERAL_VOID_CRYSTAL_NODE,
   MINERAL_ANOMALY_SHARD,
@@ -133,4 +195,9 @@ export const ALL_EXOTIC_MINERALS: readonly MineralDefinition[] = [
   // Phase 111 Tier II additions
   MINERAL_DEPTH_QUARTZ,
   MINERAL_DEPTH_QUARTZ_RARE,
+  // Phase 111 Tier III crystalline_wastes additions
+  MINERAL_NULL_STONE_RARE,
+  MINERAL_RESONANCE_CORE,
+  // Phase 111 void_rift exotic addition
+  MINERAL_VOID_CRYSTAL_NODE_EXOTIC,
 ];

@@ -284,6 +284,14 @@ export const ENTITY_IDS = {
   PLANT_TEMPORAL_FUNGUS: 'plant_temporal_fungus',
   PLANT_VOID_VINE: 'plant_void_vine',
   PLANT_NULL_GRASS: 'plant_null_grass',
+  // Phase 111 crystalline_wastes plant additions
+  PLANT_SINGING_REED: 'plant_singing_reed',
+  PLANT_LATTICE_FLOWER: 'plant_lattice_flower',
+  PLANT_SINGING_REED_RARE: 'plant_singing_reed_rare',
+  PLANT_LATTICE_FLOWER_EPIC: 'plant_lattice_flower_epic',
+  // Phase 111 void_rift plant additions
+  PLANT_RIFT_TENDRIL: 'plant_rift_tendril',
+  PLANT_VOID_VINE_EXOTIC: 'plant_void_vine_exotic',
 
   // ---- EXOTIC MINERALS ----
   MINERAL_VOID_CRYSTAL_NODE: 'mineral_void_crystal_node',
@@ -294,12 +302,20 @@ export const ENTITY_IDS = {
   MINERAL_DIMENSIONAL_ORE: 'mineral_dimensional_ore',
   MINERAL_NULL_STONE: 'mineral_null_stone',
   MINERAL_PHASE_MINERAL: 'mineral_phase_mineral',
+  // Phase 111 crystalline_wastes mineral additions
+  MINERAL_NULL_STONE_RARE: 'mineral_null_stone_rare',
+  MINERAL_RESONANCE_CORE: 'mineral_resonance_core',
+  // Phase 111 void_rift exotic mineral addition
+  MINERAL_VOID_CRYSTAL_NODE_EXOTIC: 'mineral_void_crystal_node_exotic',
 
   // ---- EXOTIC ARTIFACTS ----
   ARTIFACT_ANOMALY_CORE: 'artifact_anomaly_core',
   ARTIFACT_DIMENSIONAL_FRAGMENT: 'artifact_dimensional_fragment',
   ARTIFACT_ECHO_RECORD: 'artifact_echo_record',
   ARTIFACT_VOID_RELIC: 'artifact_void_relic',
+  // Phase 111 crystalline_wastes Singing Fields artifacts
+  ARTIFACT_SINGING_SPIRE: 'artifact_singing_spire',
+  ARTIFACT_CRYSTAL_MEMORY_LATTICE: 'artifact_crystal_memory_lattice',
 } as const;
 
 // Re-export individual entity arrays for direct imports
