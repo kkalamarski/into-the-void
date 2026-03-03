@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.23
+milestone: v1.0
 milestone_name: Content Expansion & Faction Gear
-status: roadmap_created
-last_updated: "2026-03-03"
+status: unknown
+last_updated: "2026-03-03T09:25:02.275Z"
 progress:
-  total_phases: 7
-  completed_phases: 4
-  total_plans: 4
-  completed_plans: 4
+  total_phases: 112
+  completed_phases: 112
+  total_plans: 291
+  completed_plans: 291
 ---
 
 # Project State
