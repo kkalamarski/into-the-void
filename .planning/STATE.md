@@ -18,21 +18,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 112 in progress — Faction Suits
+**Current focus:** Phase 112 complete — Faction Suits
 
 ## Current Position
 
-Phase: 112 of 114 (Faction Suits) — IN PROGRESS
-Plan: 1/2 — plan 112-01 complete
-Status: Executing Wave 2
-Last activity: 2026-03-03 — Plan 112-01 complete (28 faction suit definitions)
+Phase: 112 of 114 (Faction Suits) — COMPLETE
+Plan: 2/2 — all plans complete
+Status: Phase complete
+Last activity: 2026-03-03 — Phase 112 complete (28 faction suits registered, 17/17 tests pass)
 
 Progress: [██████░░░░] 57%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 287 (v1.0-v1.22 complete, 110 complete, 111 complete)
+- Total plans completed: 289 (v1.0-v1.22 complete, 110 complete, 111 complete, 112 complete)
 - Average duration: ~3 min per plan
 - Total execution time: ~14.5 hours across 22 milestones
 
@@ -52,6 +52,7 @@ Recent decisions affecting current work:
 - [v1.23 research]: Four-file atomicity rule for creatures: definition + ENTITY_IDS + BIOME_SPAWN_CONFIGS + CREATURE_LOOT_TABLES
 - [Phase 110]: 36 new creatures added across all 16 biomes; toxic_wastes gap closed (1->5); every Tier III+ biome has a maniac mini-boss; void_rift has corrupted apex creatures (best loot in game)
 - [Phase 111]: 71 new entities (plants, minerals, artifacts) across all 16 biomes; crystalline_wastes Singing Fields spotlight with 2 dedicated artifacts; void_rift exotic completion; rarity.ts finalized for all biomes
+- [Phase 112]: 28 faction suits (7 per faction: 5 main ladder + 2 off-archetype) integrated into item registry; total items 122->150; all 17 validation tests pass
 
 ### Pending Todos
 
@@ -64,9 +65,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Phase 112, plan 112-01 complete — 28 faction suit definitions created
+Stopped at: Phase 112 complete — 28 faction suits registered in item registry
 Resume file: None
-Next action: Execute plan 112-02 (index integration and test verification)
+Next action: Phase 113 (Faction Tools)
 
 ---
-*Last updated: 2026-03-03 — Phase 112 plan 01 complete*
+*Last updated: 2026-03-03 — Phase 112 complete*
