@@ -2,7 +2,23 @@ import {
   CombatResult,
   CombatEffect,
   CharacterStats,
+  DamageType,
+  DamageResistances,
 } from '@into-the-void/shared-types';
+
+/**
+ * Maximum resistance multiplier floor: 70% reduction cap.
+ * No matter how high resistance is, damage is at minimum 30% of base.
+ * This prevents immunity and one-shot prevention scenarios.
+ */
+export const RESISTANCE_FLOOR = 0.3;
+
+/**
+ * Maximum vulnerability multiplier ceiling: 50% extra damage cap.
+ * No matter how low resistance is (vulnerability), damage is at maximum 150% of base.
+ * This prevents extreme vulnerability from being a one-shot guarantee.
+ */
+export const RESISTANCE_CEILING = 1.5;
 
 /**
  * Base attack interval in milliseconds.
@@ -99,6 +115,43 @@ export function applyLevelGapMultiplier(baseDamage: number, levelDiff: number): 
 }
 
 /**
+ * Apply damage type resistance multiplier to a damage value.
+ *
+ * Resistance values represent percentage reduction:
+ * - 60 = 60% resistance = 0.4x multiplier
+ * - 0 = neutral = 1.0x multiplier
+ * - -40 = 40% vulnerability = 1.4x multiplier
+ *
+ * Clamped between RESISTANCE_FLOOR (0.3x) and RESISTANCE_CEILING (1.5x)
+ * to prevent immunity and extreme one-shot scenarios.
+ *
+ * @param damage - Raw damage value to apply resistance to
+ * @param damageType - Type of damage being dealt
+ * @param resistances - Defender's resistance profile
+ * @returns Damage after resistance multiplier applied
+ *
+ * @example
+ * // 60% Cryo resistance: 100 -> 40
+ * applyResistanceMultiplier(100, 'Cryo', { thermal: 0, cryo: 60, bio: 0, kinetic: 0 }) // 40
+ *
+ * // -40% Thermal vulnerability: 100 -> 140
+ * applyResistanceMultiplier(100, 'Thermal', { thermal: -40, cryo: 0, bio: 0, kinetic: 0 }) // 140
+ *
+ * // 90% Bio resistance (capped at 70% = 0.3x floor): 100 -> 30
+ * applyResistanceMultiplier(100, 'Bio', { thermal: 0, cryo: 0, bio: 90, kinetic: 0 }) // 30
+ */
+export function applyResistanceMultiplier(
+  damage: number,
+  damageType: DamageType,
+  resistances: DamageResistances,
+): number {
+  const resistPercent = resistances[damageType.toLowerCase() as keyof DamageResistances];
+  const rawMultiplier = 1 - (resistPercent / 100);
+  const clampedMultiplier = Math.max(RESISTANCE_FLOOR, Math.min(RESISTANCE_CEILING, rawMultiplier));
+  return damage * clampedMultiplier;
+}
+
+/**
  * Base damage calculation parameters
  */
 export interface DamageParams {
@@ -111,6 +164,12 @@ export interface DamageParams {
   armorReduction?: number;
   critChance?: number;
   critMultiplier?: number;
+  /** Damage type for resistance calculation (Phase 117) */
+  damageType?: DamageType;
+  /** Defender resistance profile (Phase 117). Used only when damageType is provided. */
+  defenderResistances?: DamageResistances;
+  /** Bonus damage multiplier from damage_type_bonus gear effects (Phase 117). Values > 1.0 amplify damage. */
+  damageBonusMultiplier?: number;
 }
 
 /**
@@ -130,6 +189,9 @@ export function calculateDamage(params: DamageParams): {
     armorReduction = 0,
     critChance = 0.05,
     critMultiplier = 2.0,
+    damageType,
+    defenderResistances,
+    damageBonusMultiplier,
   } = params;
 
   // Base damage from weapon + power
@@ -156,6 +218,16 @@ export function calculateDamage(params: DamageParams): {
   // Apply armor reduction
   const effectiveArmor = armorReduction * (1 + (defenderStats.toughness ?? 10) * 0.02);
   damage = Math.max(1, damage - effectiveArmor);
+
+  // Apply damage type resistance (Phase 117) — only when both damageType and defenderResistances provided
+  if (damageType && defenderResistances) {
+    damage = applyResistanceMultiplier(damage, damageType, defenderResistances);
+  }
+
+  // Apply damage type bonus multiplier from gear (Phase 117) — only when bonus > 1.0
+  if (damageBonusMultiplier && damageBonusMultiplier > 1.0) {
+    damage *= damageBonusMultiplier;
+  }
 
   // Add some randomness (±10%)
   damage *= 0.9 + Math.random() * 0.2;

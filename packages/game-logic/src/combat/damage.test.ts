@@ -1,4 +1,4 @@
-import { calculateAttackInterval, calculateDamage, applyLevelGapMultiplier } from './damage';
+import { calculateAttackInterval, calculateDamage, applyLevelGapMultiplier, applyResistanceMultiplier, RESISTANCE_FLOOR, RESISTANCE_CEILING } from './damage';
 
 describe('calculateAttackInterval', () => {
   it('returns 1000ms at base haste (50)', () => {
@@ -240,6 +240,133 @@ describe('TTK (Time-To-Kill) Balance Verification', () => {
     const result = simulateHitsToKill(15, 160, 8);
     expect(result.avg).toBeGreaterThanOrEqual(2); // Still needs multiple hits
     expect(result.avg).toBeLessThan(5); // But faster than same-level
+  });
+});
+
+describe('applyResistanceMultiplier', () => {
+  const NEUTRAL = { thermal: 0, cryo: 0, bio: 0, kinetic: 0 };
+
+  it('neutral resistance (0) returns damage unchanged', () => {
+    expect(applyResistanceMultiplier(100, 'Thermal', NEUTRAL)).toBe(100);
+  });
+
+  it('60% Cryo resistance reduces Cryo damage to 40', () => {
+    const result = applyResistanceMultiplier(100, 'Cryo', { ...NEUTRAL, cryo: 60 });
+    expect(result).toBeCloseTo(40, 5);
+  });
+
+  it('-40% Thermal vulnerability increases Thermal damage to 140', () => {
+    const result = applyResistanceMultiplier(100, 'Thermal', { ...NEUTRAL, thermal: -40 });
+    expect(result).toBeCloseTo(140, 5);
+  });
+
+  it('resistance capped at 70% reduction (0.3x floor): 90% Bio resistance -> 30 damage', () => {
+    const result = applyResistanceMultiplier(100, 'Bio', { ...NEUTRAL, bio: 90 });
+    // Without floor: 1 - 0.90 = 0.1x → 10 damage. With floor: 0.3x → 30 damage.
+    expect(result).toBeCloseTo(30, 5);
+  });
+
+  it('vulnerability capped at 1.5x ceiling: -80% Kinetic vulnerability -> 150 damage (not 180)', () => {
+    const result = applyResistanceMultiplier(100, 'Kinetic', { ...NEUTRAL, kinetic: -80 });
+    // Without ceiling: 1 - (-0.80) = 1.80x → 180 damage. With ceiling: 1.5x → 150 damage.
+    expect(result).toBeCloseTo(150, 5);
+  });
+
+  it('exports RESISTANCE_FLOOR = 0.3 and RESISTANCE_CEILING = 1.5', () => {
+    expect(RESISTANCE_FLOOR).toBe(0.3);
+    expect(RESISTANCE_CEILING).toBe(1.5);
+  });
+
+  it('Frozen Expanse profile: Thermal vuln (-40) yields 140, Cryo resist (60) yields 40 — 3.5x spread', () => {
+    const frozenExpanseResistances = { thermal: -40, cryo: 60, bio: 0, kinetic: 0 };
+    const thermalDamage = applyResistanceMultiplier(100, 'Thermal', frozenExpanseResistances);
+    const cryoDamage = applyResistanceMultiplier(100, 'Cryo', frozenExpanseResistances);
+    expect(thermalDamage).toBeCloseTo(140, 5);
+    expect(cryoDamage).toBeCloseTo(40, 5);
+    // 3.5x spread between vulnerable (140) and resistant (40)
+    expect(thermalDamage / cryoDamage).toBeCloseTo(3.5, 1);
+  });
+});
+
+describe('calculateDamage with resistance', () => {
+  const baseParams = {
+    baseDamage: 50,
+    attackerLevel: 10,
+    defenderLevel: 10,
+    attackerStats: { power: 50 },
+    defenderStats: { toughness: 10 },
+    armorReduction: 0,
+    critChance: 0, // Remove crit variance for predictable averages
+    critMultiplier: 2.0,
+  };
+
+  it('passing damageType Cryo with 60% cryo resistance reduces damage vs no resistance', () => {
+    const NO_RESISTANCE = { thermal: 0, cryo: 0, bio: 0, kinetic: 0 };
+    const HIGH_RESISTANCE = { thermal: 0, cryo: 60, bio: 0, kinetic: 0 };
+
+    let sumWithoutResistance = 0;
+    let sumWithResistance = 0;
+
+    for (let i = 0; i < 20; i++) {
+      sumWithoutResistance += calculateDamage({
+        ...baseParams,
+        damageType: 'Cryo',
+        defenderResistances: NO_RESISTANCE,
+      }).damage;
+
+      sumWithResistance += calculateDamage({
+        ...baseParams,
+        damageType: 'Cryo',
+        defenderResistances: HIGH_RESISTANCE,
+      }).damage;
+    }
+
+    const avgWithout = sumWithoutResistance / 20;
+    const avgWith = sumWithResistance / 20;
+
+    // 60% resistance should yield roughly 40% of unresisted damage
+    expect(avgWith).toBeLessThan(avgWithout * 0.7);
+  });
+
+  it('omitting damageType applies no resistance (backward compatibility)', () => {
+    // No damageType — should behave identically to pre-Phase-117
+    let sumWithoutResistanceField = 0;
+    let sumWithResistanceButNoDamageType = 0;
+
+    for (let i = 0; i < 20; i++) {
+      // Control: no resistance fields at all
+      sumWithoutResistanceField += calculateDamage({ ...baseParams }).damage;
+
+      // With resistance defined but no damageType — resistance should not be applied
+      sumWithResistanceButNoDamageType += calculateDamage({
+        ...baseParams,
+        defenderResistances: { thermal: 0, cryo: 80, bio: 0, kinetic: 0 },
+        // No damageType provided
+      }).damage;
+    }
+
+    const avgControl = sumWithoutResistanceField / 20;
+    const avgNoType = sumWithResistanceButNoDamageType / 20;
+
+    // Without damageType, resistances should not apply — outputs should be similar
+    expect(Math.abs(avgControl - avgNoType) / avgControl).toBeLessThan(0.2);
+  });
+
+  it('damageBonusMultiplier of 1.2 increases damage by ~20%', () => {
+    let sumWithout = 0;
+    let sumWith = 0;
+
+    for (let i = 0; i < 20; i++) {
+      sumWithout += calculateDamage({ ...baseParams }).damage;
+      sumWith += calculateDamage({ ...baseParams, damageBonusMultiplier: 1.2 }).damage;
+    }
+
+    const avgWithout = sumWithout / 20;
+    const avgWith = sumWith / 20;
+
+    // ~20% bonus — allow 10% tolerance given ±10% random variance
+    expect(avgWith).toBeGreaterThan(avgWithout * 1.05);
+    expect(avgWith).toBeLessThan(avgWithout * 1.40);
   });
 });
 
