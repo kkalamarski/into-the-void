@@ -13,8 +13,9 @@ import {
   FloatingPortal,
 } from '@floating-ui/react';
 import type { ItemDefinition } from '@into-the-void/items';
-import { extractItemStats, computeEquipmentDelta, AbilityRegistry } from '@into-the-void/game-logic';
+import { extractItemStats, computeEquipmentDelta, AbilityRegistry, applyDiminishingReturns } from '@into-the-void/game-logic';
 import { RARITY_COLORS } from '../ui/constants';
+import { useStatsStore } from '../store/statsStore';
 import './ItemTooltip.css';
 
 const ABILITY_CATEGORY_COLORS: Record<string, string> = {
@@ -52,6 +53,7 @@ export const ItemTooltip: React.FC<ItemTooltipProps> = ({
   const { getReferenceProps, getFloatingProps } = useInteractions([hover, focus, dismiss, role]);
 
   const rarityColor = RARITY_COLORS[item.rarity];
+  const currentStats = useStatsStore(state => state.stats);
 
   // Extract this item's stat bonuses to display
   const itemStatBonuses = extractItemStats(item);
@@ -98,14 +100,29 @@ export const ItemTooltip: React.FC<ItemTooltipProps> = ({
             {statDeltas.length > 0 && (
               <div className="tooltip-comparison">
                 <div className="tooltip-comparison-header">vs Equipped</div>
-                {statDeltas.map(({ stat, delta }) => (
-                  <div
-                    key={stat}
-                    className={`tooltip-delta ${delta > 0 ? 'tooltip-delta--positive' : 'tooltip-delta--negative'}`}
-                  >
-                    {delta > 0 ? '+' : ''}{delta} {stat}
-                  </div>
-                ))}
+                {statDeltas.map(({ stat, delta }) => {
+                  const currentRaw = currentStats?.raw?.[stat] ?? 0;
+                  const isInDR = currentRaw > 200;
+
+                  let effectiveDelta = delta;
+                  let showDR = false;
+                  if (isInDR && delta !== 0) {
+                    const currentEffective = applyDiminishingReturns(currentRaw);
+                    const newEffective = applyDiminishingReturns(currentRaw + delta);
+                    effectiveDelta = newEffective - currentEffective;
+                    showDR = effectiveDelta !== delta;
+                  }
+
+                  return (
+                    <div
+                      key={stat}
+                      className={`tooltip-delta ${effectiveDelta > 0 ? 'tooltip-delta--positive' : effectiveDelta < 0 ? 'tooltip-delta--negative' : 'tooltip-delta--neutral'}`}
+                    >
+                      {effectiveDelta > 0 ? '+' : ''}{effectiveDelta} {stat}
+                      {showDR && <span className="tooltip-dr-tag"> (DR)</span>}
+                    </div>
+                  );
+                })}
               </div>
             )}
             {item.grantedAbilities && item.grantedAbilities.length > 0 && (

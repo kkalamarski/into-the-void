@@ -4,6 +4,7 @@ import type { CharStatsPayload, CharacterStats } from '@into-the-void/shared-typ
 import { gameSocket } from '../network/socket';
 import { STAT_DISPLAY_ORDER } from '../ui/constants';
 import { useGameStore } from './gameStore';
+import { useAlertStore } from './alertStore';
 import { audioManager } from '../utils/audio';
 
 interface StatsState {
@@ -21,6 +22,22 @@ export const useStatsStore = create<StatsState>()(
 
     setStats: (payload: CharStatsPayload) =>
       set((state) => {
+        // Detect stats newly hitting hard cap (400 effective) for toast notification
+        if (state.stats !== null && payload.raw) {
+          for (const { key, label } of STAT_DISPLAY_ORDER) {
+            const prevEffective = state.stats.total[key];
+            const newEffective = payload.total[key];
+            if (newEffective >= 400 && prevEffective < 400) {
+              setTimeout(() => {
+                useAlertStore.getState().addAlert(
+                  `${label} has reached maximum effectiveness`,
+                  'warning'
+                );
+              }, 0);
+            }
+          }
+        }
+
         // Detect level-up by checking if level actually increased
         if (state.stats !== null && payload.level > state.stats.level) {
           const deltas: Partial<CharacterStats> = {};

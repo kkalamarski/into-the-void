@@ -10,6 +10,8 @@
   --color-danger: #ff4444;
   --color-success: #44ff44;
   --color-warning: #ffaa44;
+  --color-stat-dr: #e8c849;
+  --color-stat-capped: #e85d3a;
 
   /* Animation timing */
   --duration-instant: 0ms;

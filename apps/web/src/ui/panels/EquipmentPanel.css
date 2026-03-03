@@ -283,6 +283,7 @@
   gap: 6px;
   padding: 3px 0;
   font-size: 12px;
+  position: relative;
 }
 
 .char-stat-icon {
@@ -308,6 +309,57 @@
   font-size: 10px;
   color: var(--color-text-secondary);
   min-width: 50px;
+}
+
+/* DR indicator: stat value turns yellow when raw > 200 */
+.char-stat-row.char-stat--dr .char-stat-total {
+  color: var(--color-stat-dr);
+}
+
+/* Hard cap indicator: stat value turns red-orange when effective = 400 */
+.char-stat-row.char-stat--capped .char-stat-total {
+  color: var(--color-stat-capped);
+}
+
+/* CAPPED label next to stat value (only at hard cap) */
+.char-stat-cap-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--color-stat-capped);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 4px;
+}
+
+/* DR tooltip (hoverable on stat row) */
+.char-stat-dr-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: var(--shadow-2);
+}
+
+/* Subtle 200-threshold marker — tiny amber tick before stat value */
+.char-stat--has-threshold .char-stat-total::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 10px;
+  background: var(--color-stat-dr);
+  opacity: 0.3;
+  margin-right: 4px;
+  border-radius: 1px;
+  vertical-align: middle;
 }
 
 .stats-loading {

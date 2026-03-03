@@ -108,3 +108,13 @@
   font-weight: 500;
   padding: 2px 0;
 }
+
+.tooltip-dr-tag {
+  color: var(--color-stat-dr);
+  font-size: 10px;
+  font-style: italic;
+}
+
+.tooltip-delta--neutral {
+  color: var(--color-text-secondary);
+}

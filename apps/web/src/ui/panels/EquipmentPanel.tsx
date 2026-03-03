@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { useInventoryStore } from '../../store/inventoryStore';
@@ -122,18 +122,39 @@ interface CharStatRowProps {
   base: number;
   equipment: number;
   total: number;
+  raw: number;
 }
 
-function CharStatRow({ statKey, label, base, equipment, total }: CharStatRowProps) {
+function CharStatRow({ statKey, label, base, equipment, total, raw }: CharStatRowProps) {
+  const [showDRTooltip, setShowDRTooltip] = useState(false);
   const Icon = STAT_ICONS[statKey] ?? GiHearts;
+  const isDR = raw > 200;
+  const isCapped = total >= 400;
+
+  const rowClasses = [
+    'char-stat-row',
+    'char-stat--has-threshold',
+    isCapped ? 'char-stat--capped' : isDR ? 'char-stat--dr' : '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <div className="char-stat-row">
+    <div
+      className={rowClasses}
+      onMouseEnter={() => isDR && setShowDRTooltip(true)}
+      onMouseLeave={() => setShowDRTooltip(false)}
+    >
       <Icon className="char-stat-icon" />
       <span className="char-stat-label">{label}</span>
       <span className="char-stat-total">{total}</span>
+      {isCapped && <span className="char-stat-cap-label">CAPPED</span>}
       <span className="char-stat-breakdown">
         {equipment !== 0 ? `(${base}+${equipment})` : ''}
       </span>
+      {showDRTooltip && isDR && (
+        <div className="char-stat-dr-tooltip">
+          Raw: {raw} | Effective: {total}
+        </div>
+      )}
     </div>
   );
 }
@@ -270,6 +291,7 @@ export const EquipmentPanel: React.FC = () => {
                 base={stats.base[key]}
                 equipment={stats.equipment[key]}
                 total={stats.total[key]}
+                raw={stats.raw?.[key] ?? stats.total[key]}
               />
             ))
           ) : (
