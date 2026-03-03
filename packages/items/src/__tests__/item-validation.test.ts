@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { ALL_SUITS } from '../definitions/suits';
 import { ALL_TOOLS } from '../definitions/tools';
 import { ALL_MODULES } from '../definitions/modules';
+import { ALL_FACTION_MODULES } from '../definitions/faction-modules';
+import { ALL_FACTION_TOOLS } from '../definitions/faction-tools';
 import type { ItemDefinition, ItemEffect } from '../types';
 
 // Helper functions
@@ -248,6 +250,88 @@ describe('Content Validation (CONT-01 to CONT-05)', () => {
         const recovery = getStatFromEffects(mod, 'recovery');
         expect(resilience + recovery).toBeGreaterThan(0);
       }
+    });
+  });
+
+  describe('CONT-06: Faction modules and tools have valid stats', () => {
+    it('all faction modules have stats effects', () => {
+      const modulesWithoutStats = ALL_FACTION_MODULES.filter(mod => !hasStatsEffect(mod));
+
+      expect(modulesWithoutStats).toHaveLength(0);
+
+      if (modulesWithoutStats.length > 0) {
+        console.error('Faction modules missing stats:', modulesWithoutStats.map(m => m.id));
+      }
+    });
+
+    it('all faction tools have stats effects', () => {
+      const toolsWithoutStats = ALL_FACTION_TOOLS.filter(tool => !hasStatsEffect(tool));
+
+      expect(toolsWithoutStats).toHaveLength(0);
+
+      if (toolsWithoutStats.length > 0) {
+        console.error('Faction tools missing stats:', toolsWithoutStats.map(t => t.id));
+      }
+    });
+
+    it('faction modules have no grantedAbilities', () => {
+      const modulesWithAbilities = ALL_FACTION_MODULES.filter(
+        mod => mod.grantedAbilities && mod.grantedAbilities.length > 0
+      );
+
+      expect(modulesWithAbilities).toHaveLength(0);
+
+      if (modulesWithAbilities.length > 0) {
+        console.error('Faction modules with abilities (should have none):', modulesWithAbilities.map(m => m.id));
+      }
+    });
+
+    it('faction tools have grantedAbilities', () => {
+      const toolsWithoutAbilities = ALL_FACTION_TOOLS.filter(
+        tool => !tool.grantedAbilities || tool.grantedAbilities.length === 0
+      );
+
+      expect(toolsWithoutAbilities).toHaveLength(0);
+
+      if (toolsWithoutAbilities.length > 0) {
+        console.error('Faction tools missing abilities:', toolsWithoutAbilities.map(t => t.id));
+      }
+    });
+
+    it('all faction tools have a toolType', () => {
+      const toolsWithoutType = ALL_FACTION_TOOLS.filter(tool => !tool.toolType);
+
+      expect(toolsWithoutType).toHaveLength(0);
+
+      if (toolsWithoutType.length > 0) {
+        console.error('Faction tools missing toolType:', toolsWithoutType.map(t => t.id));
+      }
+    });
+
+    it('faction tool ability count increases with rarity', () => {
+      const rarityOrder = ['common', 'rare', 'epic', 'exotic', 'legendary'] as const;
+
+      for (let i = 1; i < rarityOrder.length; i++) {
+        const lowerRarity = rarityOrder[i - 1];
+        const higherRarity = rarityOrder[i];
+
+        const lowerTools = ALL_FACTION_TOOLS.filter(t => t.rarity === lowerRarity);
+        const higherTools = ALL_FACTION_TOOLS.filter(t => t.rarity === higherRarity);
+
+        // Aggregate check: average ability count should increase
+        const avgLower = lowerTools.reduce((sum, t) => sum + (t.grantedAbilities?.length ?? 0), 0) / (lowerTools.length || 1);
+        const avgHigher = higherTools.reduce((sum, t) => sum + (t.grantedAbilities?.length ?? 0), 0) / (higherTools.length || 1);
+
+        expect(avgHigher).toBeGreaterThanOrEqual(avgLower);
+      }
+    });
+
+    it('there are exactly 40 faction modules', () => {
+      expect(ALL_FACTION_MODULES).toHaveLength(40);
+    });
+
+    it('there are exactly 40 faction tools', () => {
+      expect(ALL_FACTION_TOOLS).toHaveLength(40);
     });
   });
 });

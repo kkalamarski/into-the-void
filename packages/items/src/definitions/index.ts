@@ -14,10 +14,12 @@ import { ALL_EXOTIC_TOOLS } from './exotic-tools';
 import { ALL_AQUATIC_CONSUMABLES } from './aquatic-consumables';
 import { ALL_EXOTIC_CONSUMABLES } from './exotic-consumables';
 import { ALL_FACTION_SUITS } from './faction-suits';
+import { ALL_FACTION_MODULES } from './faction-modules';
+import { ALL_FACTION_TOOLS } from './faction-tools';
 
 /**
  * All item definitions — register these with ItemRegistry.
- * Total: 150 items (16 suits + 30 modules + 21 tools + 40 consumables + 15 world-items + 15 reagents + 28 faction suits)
+ * Total: 230 items (16 suits + 30 modules + 21 tools + 40 consumables + 15 world-items + 15 reagents + 28 faction suits + 40 faction modules + 40 faction tools)
  */
 export const ALL_ITEMS: readonly ItemDefinition[] = [
   ...ALL_SUITS,
@@ -36,6 +38,9 @@ export const ALL_ITEMS: readonly ItemDefinition[] = [
   ...ALL_EXOTIC_CONSUMABLES,
   // Phase 112 faction suits
   ...ALL_FACTION_SUITS,
+  // Phase 113 faction modules and tools
+  ...ALL_FACTION_MODULES,
+  ...ALL_FACTION_TOOLS,
 ];
 
 /**
@@ -230,6 +235,102 @@ export const ITEM_IDS = {
   SUIT_UNAFFILIATED_SCROUNGER_EPIC: 'suit_unaffiliated_scrounger_epic',
   SUIT_UNAFFILIATED_MONGREL_LEGENDARY: 'suit_unaffiliated_mongrel_legendary',
 
+  // ---- FACTION MODULES: VERDANT (Phase 113) ----
+  MODULE_VERDANT_CHLORO_FILTER_COMMON: 'module_verdant_chloro_filter_common',
+  MODULE_VERDANT_SYMBIONT_FILTER_RARE: 'module_verdant_symbiont_filter_rare',
+  MODULE_VERDANT_PHYTO_FILTER_EPIC: 'module_verdant_phyto_filter_epic',
+  MODULE_VERDANT_CANOPY_RESPIRATOR_EXOTIC: 'module_verdant_canopy_respirator_exotic',
+  MODULE_VERDANT_BLOOM_NETWORK_LEGENDARY: 'module_verdant_bloom_network_legendary',
+  MODULE_VERDANT_BIOSENSOR_COMMON: 'module_verdant_biosensor_common',
+  MODULE_VERDANT_SPORE_ANALYZER_RARE: 'module_verdant_spore_analyzer_rare',
+  MODULE_VERDANT_ENZYME_DETECTOR_EPIC: 'module_verdant_enzyme_detector_epic',
+  MODULE_VERDANT_TENDRIL_SCANNER_EXOTIC: 'module_verdant_tendril_scanner_exotic',
+  MODULE_VERDANT_CANOPY_INTERPRETER_LEGENDARY: 'module_verdant_canopy_interpreter_legendary',
+
+  // ---- FACTION MODULES: HELIX (Phase 113) ----
+  MODULE_HELIX_SLAG_PLATING_COMMON: 'module_helix_slag_plating_common',
+  MODULE_HELIX_FOUNDRY_PLATE_RARE: 'module_helix_foundry_plate_rare',
+  MODULE_HELIX_TEMPERED_PLATE_EPIC: 'module_helix_tempered_plate_epic',
+  MODULE_HELIX_ANVIL_PLATING_EXOTIC: 'module_helix_anvil_plating_exotic',
+  MODULE_HELIX_CRUCIBLE_BULWARK_LEGENDARY: 'module_helix_crucible_bulwark_legendary',
+  MODULE_HELIX_BORE_CELL_COMMON: 'module_helix_bore_cell_common',
+  MODULE_HELIX_FURNACE_CELL_RARE: 'module_helix_furnace_cell_rare',
+  MODULE_HELIX_SMELT_CORE_EPIC: 'module_helix_smelt_core_epic',
+  MODULE_HELIX_INGOT_BATTERY_EXOTIC: 'module_helix_ingot_battery_exotic',
+  MODULE_HELIX_CRUCIBLE_REACTOR_LEGENDARY: 'module_helix_crucible_reactor_legendary',
+
+  // ---- FACTION MODULES: NEXUS (Phase 113) ----
+  MODULE_NEXUS_CIPHER_ARRAY_COMMON: 'module_nexus_cipher_array_common',
+  MODULE_NEXUS_SIGNAL_DETECTOR_RARE: 'module_nexus_signal_detector_rare',
+  MODULE_NEXUS_LATTICE_SENSOR_EPIC: 'module_nexus_lattice_sensor_epic',
+  MODULE_NEXUS_MERIDIAN_SCANNER_EXOTIC: 'module_nexus_meridian_scanner_exotic',
+  MODULE_NEXUS_ECHO_PRIME_RELAY_LEGENDARY: 'module_nexus_echo_prime_relay_legendary',
+  MODULE_NEXUS_VECTOR_BOOST_COMMON: 'module_nexus_vector_boost_common',
+  MODULE_NEXUS_RELAY_ACCELERATOR_RARE: 'module_nexus_relay_accelerator_rare',
+  MODULE_NEXUS_GRID_OPTIMIZER_EPIC: 'module_nexus_grid_optimizer_epic',
+  MODULE_NEXUS_PHANTOM_DRIVE_EXOTIC: 'module_nexus_phantom_drive_exotic',
+  MODULE_NEXUS_PULSE_ENGINE_LEGENDARY: 'module_nexus_pulse_engine_legendary',
+
+  // ---- FACTION MODULES: UNAFFILIATED (Phase 113) ----
+  MODULE_UNAFFILIATED_COBBLED_CELL_COMMON: 'module_unaffiliated_cobbled_cell_common',
+  MODULE_UNAFFILIATED_SALVAGE_CORE_RARE: 'module_unaffiliated_salvage_core_rare',
+  MODULE_UNAFFILIATED_DRIFTER_CELL_EPIC: 'module_unaffiliated_drifter_cell_epic',
+  MODULE_UNAFFILIATED_RECLAIMED_BATTERY_EXOTIC: 'module_unaffiliated_reclaimed_battery_exotic',
+  MODULE_UNAFFILIATED_WASTELAND_REACTOR_LEGENDARY: 'module_unaffiliated_wasteland_reactor_legendary',
+  MODULE_UNAFFILIATED_MAKESHIFT_FILTER_COMMON: 'module_unaffiliated_makeshift_filter_common',
+  MODULE_UNAFFILIATED_JURY_RIG_SUPPORT_RARE: 'module_unaffiliated_jury_rig_support_rare',
+  MODULE_UNAFFILIATED_SCROUNGER_RESPIRATOR_EPIC: 'module_unaffiliated_scrounger_respirator_epic',
+  MODULE_UNAFFILIATED_IMPROVISED_FILTER_EXOTIC: 'module_unaffiliated_improvised_filter_exotic',
+  MODULE_UNAFFILIATED_TINKERED_LIFE_SYSTEM_LEGENDARY: 'module_unaffiliated_tinkered_life_system_legendary',
+
+  // ---- FACTION TOOLS: VERDANT (Phase 113) ----
+  TOOL_VERDANT_ENZYME_PROBE_COMMON: 'tool_verdant_enzyme_probe_common',
+  TOOL_VERDANT_TENDRIL_EXTRACTOR_RARE: 'tool_verdant_tendril_extractor_rare',
+  TOOL_VERDANT_PHYTO_SAMPLER_EPIC: 'tool_verdant_phyto_sampler_epic',
+  TOOL_VERDANT_SYMBIONT_INTERFACE_EXOTIC: 'tool_verdant_symbiont_interface_exotic',
+  TOOL_VERDANT_CANOPY_INTERPRETER_LEGENDARY: 'tool_verdant_canopy_interpreter_legendary',
+  TOOL_VERDANT_SPORE_ANALYZER_COMMON: 'tool_verdant_spore_analyzer_common',
+  TOOL_VERDANT_BLOOM_SCANNER_RARE: 'tool_verdant_bloom_scanner_rare',
+  TOOL_VERDANT_SYNTHESIS_PROBE_EPIC: 'tool_verdant_synthesis_probe_epic',
+  TOOL_VERDANT_CULTIVAR_PROBE_EXOTIC: 'tool_verdant_cultivar_probe_exotic',
+  TOOL_VERDANT_ROOTBOUND_SPECTROMETER_LEGENDARY: 'tool_verdant_rootbound_spectrometer_legendary',
+
+  // ---- FACTION TOOLS: HELIX (Phase 113) ----
+  TOOL_HELIX_BORE_DRILL_COMMON: 'tool_helix_bore_drill_common',
+  TOOL_HELIX_QUARRY_CUTTER_RARE: 'tool_helix_quarry_cutter_rare',
+  TOOL_HELIX_SLAG_BREAKER_EPIC: 'tool_helix_slag_breaker_epic',
+  TOOL_HELIX_ANVIL_AUGER_EXOTIC: 'tool_helix_anvil_auger_exotic',
+  TOOL_HELIX_CRUCIBLE_EXCAVATOR_LEGENDARY: 'tool_helix_crucible_excavator_legendary',
+  TOOL_HELIX_RIVET_GUN_COMMON: 'tool_helix_rivet_gun_common',
+  TOOL_HELIX_FOUNDRY_HAMMER_RARE: 'tool_helix_foundry_hammer_rare',
+  TOOL_HELIX_COMPRESSION_RAM_EPIC: 'tool_helix_compression_ram_epic',
+  TOOL_HELIX_TEMPERED_DISRUPTOR_EXOTIC: 'tool_helix_tempered_disruptor_exotic',
+  TOOL_HELIX_FURNACE_LANCE_LEGENDARY: 'tool_helix_furnace_lance_legendary',
+
+  // ---- FACTION TOOLS: NEXUS (Phase 113) ----
+  TOOL_NEXUS_SIGNAL_PROBE_COMMON: 'tool_nexus_signal_probe_common',
+  TOOL_NEXUS_CIPHER_SCANNER_RARE: 'tool_nexus_cipher_scanner_rare',
+  TOOL_NEXUS_LATTICE_ANALYZER_EPIC: 'tool_nexus_lattice_analyzer_epic',
+  TOOL_NEXUS_MERIDIAN_SPECTROMETER_EXOTIC: 'tool_nexus_meridian_spectrometer_exotic',
+  TOOL_NEXUS_ECHO_PRIME_INSTRUMENT_LEGENDARY: 'tool_nexus_echo_prime_instrument_legendary',
+  TOOL_NEXUS_PHANTOM_BLADE_COMMON: 'tool_nexus_phantom_blade_common',
+  TOOL_NEXUS_VECTOR_INFILTRATOR_RARE: 'tool_nexus_vector_infiltrator_rare',
+  TOOL_NEXUS_RELAY_DISRUPTOR_EPIC: 'tool_nexus_relay_disruptor_epic',
+  TOOL_NEXUS_TRACE_HARVESTER_EXOTIC: 'tool_nexus_trace_harvester_exotic',
+  TOOL_NEXUS_GRID_GHOST_LEGENDARY: 'tool_nexus_grid_ghost_legendary',
+
+  // ---- FACTION TOOLS: UNAFFILIATED (Phase 113) ----
+  TOOL_UNAFFILIATED_SCRAP_SCANNER_COMMON: 'tool_unaffiliated_scrap_scanner_common',
+  TOOL_UNAFFILIATED_COBBLED_DETECTOR_RARE: 'tool_unaffiliated_cobbled_detector_rare',
+  TOOL_UNAFFILIATED_SALVAGE_PROBE_EPIC: 'tool_unaffiliated_salvage_probe_epic',
+  TOOL_UNAFFILIATED_DRIFTER_ANALYZER_EXOTIC: 'tool_unaffiliated_drifter_analyzer_exotic',
+  TOOL_UNAFFILIATED_WASTELAND_ORACLE_LEGENDARY: 'tool_unaffiliated_wasteland_oracle_legendary',
+  TOOL_UNAFFILIATED_IMPROVISED_PICK_COMMON: 'tool_unaffiliated_improvised_pick_common',
+  TOOL_UNAFFILIATED_JURY_RIG_CUTTER_RARE: 'tool_unaffiliated_jury_rig_cutter_rare',
+  TOOL_UNAFFILIATED_SCROUNGER_DRILL_EPIC: 'tool_unaffiliated_scrounger_drill_epic',
+  TOOL_UNAFFILIATED_RECLAIMED_BREAKER_EXOTIC: 'tool_unaffiliated_reclaimed_breaker_exotic',
+  TOOL_UNAFFILIATED_MONGREL_TOOTH_LEGENDARY: 'tool_unaffiliated_mongrel_tooth_legendary',
+
   // ---- WORLD ITEMS ----
   WORLD_VOID_CRYSTAL: 'world_void_crystal',
   WORLD_FUNGAL_SPORE_CLUSTER: 'world_fungal_spore_cluster',
@@ -298,3 +399,5 @@ export * from './exotic-tools';
 export * from './aquatic-consumables';
 export * from './exotic-consumables';
 export * from './faction-suits';
+export * from './faction-modules';
+export * from './faction-tools';
