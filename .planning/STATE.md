@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.23
 milestone_name: Content Expansion & Faction Gear
 status: roadmap_created
-last_updated: "2026-03-02"
+last_updated: "2026-03-03"
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 4
   completed_plans: 4
 ---
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 111 — Biome Plants, Minerals, and Artifacts
+**Current focus:** Phase 111 complete — ready for Phase 112
 
 ## Current Position
 
-Phase: 111 of 114 (Biome Plants, Minerals, and Artifacts)
-Plan: — (not started)
-Status: Ready to plan
-Last activity: 2026-03-02 — Phase 110 complete (all 16 biomes at 4-6 creatures)
+Phase: 111 of 114 (Biome Plants, Minerals, and Artifacts) — COMPLETE
+Plan: 4/4 — all plans complete
+Status: Phase complete
+Last activity: 2026-03-03 — Phase 111 complete (71 new entities across all 16 biomes)
 
-Progress: [████░░░░░░] 43%
+Progress: [██████░░░░] 57%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 283 (v1.0-v1.22 complete, 110 complete)
+- Total plans completed: 287 (v1.0-v1.22 complete, 110 complete, 111 complete)
 - Average duration: ~3 min per plan
-- Total execution time: ~14 hours across 22 milestones
+- Total execution time: ~14.5 hours across 22 milestones
 
 ## Accumulated Context
 
@@ -51,6 +51,7 @@ Recent decisions affecting current work:
 - [v1.23 roadmap]: SUIT-02/03/04/05/06 all assigned to Phase 112 (no requirement splits across phases)
 - [v1.23 research]: Four-file atomicity rule for creatures: definition + ENTITY_IDS + BIOME_SPAWN_CONFIGS + CREATURE_LOOT_TABLES
 - [Phase 110]: 36 new creatures added across all 16 biomes; toxic_wastes gap closed (1->5); every Tier III+ biome has a maniac mini-boss; void_rift has corrupted apex creatures (best loot in game)
+- [Phase 111]: 71 new entities (plants, minerals, artifacts) across all 16 biomes; crystalline_wastes Singing Fields spotlight with 2 dedicated artifacts; void_rift exotic completion; rarity.ts finalized for all biomes
 
 ### Pending Todos
 
@@ -62,10 +63,10 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-02
-Stopped at: Phase 110 complete — all 16 biomes at 4-6 creatures
+Last session: 2026-03-03
+Stopped at: Phase 111 complete — all 16 biomes fully populated with plants, minerals, and artifacts
 Resume file: None
-Next action: Plan Phase 111 (`/gsd:plan-phase 111`)
+Next action: Plan Phase 112 (`/gsd:plan-phase 112`)
 
 ---
-*Last updated: 2026-03-02 — Phase 110 complete*
+*Last updated: 2026-03-03 — Phase 111 complete*

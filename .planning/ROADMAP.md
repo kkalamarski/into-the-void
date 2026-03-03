@@ -54,7 +54,7 @@
 - [x] **Phase 108: Entity Validation Infrastructure** - Test suite gating all subsequent content authoring, preventing silent spawn and loot failures
 - [x] **Phase 109: Faction Identity Design Gate** - Locked design artifact defining stat archetypes, ability matrices, naming conventions, and color anchors per faction before any item definition is written (completed 2026-03-02)
 - [x] **Phase 110: Biome Creature Population** - All 16 biomes reach 4-6 creatures with behavioral variety, loot tables, and spawn configs fully wired (completed 2026-03-02)
-- [ ] **Phase 111: Biome Plants, Minerals, and Artifacts** - All 16 biomes reach 3-4 plants, 2-3 minerals with rarity variants, and 1-2 artifacts; crystalline_wastes hotspot resolved
+- [x] **Phase 111: Biome Plants, Minerals, and Artifacts** - All 16 biomes reach 3-4 plants, 2-3 minerals with rarity variants, and 1-2 artifacts; crystalline_wastes hotspot resolved (completed 2026-03-03)
 - [ ] **Phase 112: Faction Suits** - Verdant, Helix, Nexus, and Unaffiliated suit lines across all tiers (Common through Legendary) using generateSuitStats() throughout
 - [ ] **Phase 113: Faction Modules and Tools** - Bio/sensor/armor module lines and faction-specialized tool lines completing the gear set for all four factions
 - [ ] **Phase 114: Integration and Lore Verification** - All new entities and items verified in definition indexes with ENTITY_IDS/ITEM_IDS constants and cross-checked against lore
@@ -178,10 +178,10 @@
   4. All Tier I biomes (void_plains, fungal_forest, tidal_pools, ancient_ruins) have at least 1 artifact each — the zero-artifact gap across all four Tier I biomes is closed
   5. Running `nx run entities:test` passes after all new plant/mineral/artifact definitions are committed — no invalid harvest yield item references
 **Plans**: 4 plans
-  - [ ] 111-01-PLAN.md -- Tier I biomes: plants, minerals, artifacts for void_plains, fungal_forest, tidal_pools, ancient_ruins (PLNT-01, MINR-01, MINR-05, ARTF-01)
-  - [ ] 111-02-PLAN.md -- Tier II biomes: plants, minerals, artifacts for toxic_wastes, miasma_marshes, petrified_expanse, bioluminescent_depths, kelp_forests (PLNT-02, MINR-02, MINR-05, ARTF-02)
-  - [ ] 111-03-PLAN.md -- Tier III biomes (excl. crystalline_wastes): plants, minerals for crystal_caves, volcanic_ridge, frozen_expanse, deep_trenches, starfall_crater (PLNT-03, MINR-03, MINR-05, ARTF-03)
-  - [ ] 111-04-PLAN.md -- crystalline_wastes Singing Fields spotlight + void_rift exotic completion (PLNT-03, PLNT-04, MINR-03, MINR-04, MINR-05, ARTF-03, ARTF-04, ARTF-05)
+  - [x] 111-01-PLAN.md -- Tier I biomes: plants, minerals, artifacts for void_plains, fungal_forest, tidal_pools, ancient_ruins (PLNT-01, MINR-01, MINR-05, ARTF-01)
+  - [x] 111-02-PLAN.md -- Tier II biomes: plants, minerals, artifacts for toxic_wastes, miasma_marshes, petrified_expanse, bioluminescent_depths, kelp_forests (PLNT-02, MINR-02, MINR-05, ARTF-02)
+  - [x] 111-03-PLAN.md -- Tier III biomes (excl. crystalline_wastes): plants, minerals for crystal_caves, volcanic_ridge, frozen_expanse, deep_trenches, starfall_crater (PLNT-03, MINR-03, MINR-05, ARTF-03)
+  - [x] 111-04-PLAN.md -- crystalline_wastes Singing Fields spotlight + void_rift exotic completion (PLNT-03, PLNT-04, MINR-03, MINR-04, MINR-05, ARTF-03, ARTF-04, ARTF-05)
 
 ### Phase 112: Faction Suits
 **Goal**: Verdant Dynamics, Helix Extraction, Nexus Frontiers, and Unaffiliated each have a complete suit line from Common through Legendary using generateSuitStats() for all stat generation — no hand-coded stats — with distinct faction identity expressed through grantedAbilities, textureKey, and display name conventions established in Phase 109
@@ -233,11 +233,11 @@
 | 108. Entity Validation Infrastructure | 2/2 | Complete | 2026-03-02 |
 | 109. Faction Identity Design Gate | 2/2 | Complete | 2026-03-02 |
 | 110. Biome Creature Population | 4/4 | Complete | 2026-03-02 |
-| 111. Biome Plants, Minerals, and Artifacts | 0/4 | Not started | - |
+| 111. Biome Plants, Minerals, and Artifacts | 4/4 | Complete | 2026-03-03 |
 | 112. Faction Suits | 0/TBD | Not started | - |
 | 113. Faction Modules and Tools | 0/TBD | Not started | - |
 | 114. Integration and Lore Verification | 0/TBD | Not started | - |
 
 ---
 
-*Last updated: 2026-03-02 - Phase 110 complete (all 16 biomes at 4-6 creatures with maniac mini-bosses and void_rift apex loot)*
+*Last updated: 2026-03-03 - Phase 111 complete (all 16 biomes at 3-4 plants, 2-3 minerals with rarity variants, 1-2 artifacts; crystalline_wastes Singing Fields spotlight; void_rift exotic completion)*
