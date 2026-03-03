@@ -13,10 +13,11 @@ import { ALL_EXOTIC_SUITS } from './exotic-suits';
 import { ALL_EXOTIC_TOOLS } from './exotic-tools';
 import { ALL_AQUATIC_CONSUMABLES } from './aquatic-consumables';
 import { ALL_EXOTIC_CONSUMABLES } from './exotic-consumables';
+import { ALL_FACTION_SUITS } from './faction-suits';
 
 /**
  * All item definitions — register these with ItemRegistry.
- * Total: 122 items (16 suits + 30 modules + 21 tools + 40 consumables + 15 world-items + 15 reagents)
+ * Total: 150 items (16 suits + 30 modules + 21 tools + 40 consumables + 15 world-items + 15 reagents + 28 faction suits)
  */
 export const ALL_ITEMS: readonly ItemDefinition[] = [
   ...ALL_SUITS,
@@ -33,6 +34,8 @@ export const ALL_ITEMS: readonly ItemDefinition[] = [
   ...ALL_EXOTIC_SUITS,
   ...ALL_EXOTIC_TOOLS,
   ...ALL_EXOTIC_CONSUMABLES,
+  // Phase 112 faction suits
+  ...ALL_FACTION_SUITS,
 ];
 
 /**
@@ -191,6 +194,42 @@ export const ITEM_IDS = {
   DIMENSIONAL_MEND_EXOTIC: 'dimensional_mend_exotic',
   NULL_PATCH_KIT_EPIC: 'null_patch_kit_epic',
 
+  // ---- FACTION SUITS: VERDANT (Phase 112) ----
+  SUIT_VERDANT_BIOWEAVE_COMMON: 'suit_verdant_bioweave_common',
+  SUIT_VERDANT_CHLORO_RARE: 'suit_verdant_chloro_rare',
+  SUIT_VERDANT_SYMBIONT_EPIC: 'suit_verdant_symbiont_epic',
+  SUIT_VERDANT_MYCELIAL_EXOTIC: 'suit_verdant_mycelial_exotic',
+  SUIT_VERDANT_CANOPY_SOVEREIGN_LEGENDARY: 'suit_verdant_canopy_sovereign_legendary',
+  SUIT_VERDANT_CANOPY_WARDEN_EPIC: 'suit_verdant_canopy_warden_epic',
+  SUIT_VERDANT_ROOTBOUND_SENTINEL_LEGENDARY: 'suit_verdant_rootbound_sentinel_legendary',
+
+  // ---- FACTION SUITS: HELIX (Phase 112) ----
+  SUIT_HELIX_IRONCLAD_COMMON: 'suit_helix_ironclad_common',
+  SUIT_HELIX_FOUNDRY_RARE: 'suit_helix_foundry_rare',
+  SUIT_HELIX_TEMPERED_EPIC: 'suit_helix_tempered_epic',
+  SUIT_HELIX_ANVIL_EXOTIC: 'suit_helix_anvil_exotic',
+  SUIT_HELIX_CRUCIBLE_LEGENDARY: 'suit_helix_crucible_legendary',
+  SUIT_HELIX_BORE_SURVEYOR_EPIC: 'suit_helix_bore_surveyor_epic',
+  SUIT_HELIX_QUARRY_PHANTOM_LEGENDARY: 'suit_helix_quarry_phantom_legendary',
+
+  // ---- FACTION SUITS: NEXUS (Phase 112) ----
+  SUIT_NEXUS_SPECTRE_COMMON: 'suit_nexus_spectre_common',
+  SUIT_NEXUS_CIPHER_RARE: 'suit_nexus_cipher_rare',
+  SUIT_NEXUS_LATTICE_EPIC: 'suit_nexus_lattice_epic',
+  SUIT_NEXUS_MERIDIAN_EXOTIC: 'suit_nexus_meridian_exotic',
+  SUIT_NEXUS_ECHO_PRIME_LEGENDARY: 'suit_nexus_echo_prime_legendary',
+  SUIT_NEXUS_VECTOR_ENFORCER_EPIC: 'suit_nexus_vector_enforcer_epic',
+  SUIT_NEXUS_PHANTOM_PROTOCOL_LEGENDARY: 'suit_nexus_phantom_protocol_legendary',
+
+  // ---- FACTION SUITS: UNAFFILIATED (Phase 112) ----
+  SUIT_UNAFFILIATED_PATCHWORK_COMMON: 'suit_unaffiliated_patchwork_common',
+  SUIT_UNAFFILIATED_SALVAGE_RARE: 'suit_unaffiliated_salvage_rare',
+  SUIT_UNAFFILIATED_DRIFTER_EPIC: 'suit_unaffiliated_drifter_epic',
+  SUIT_UNAFFILIATED_RECLAIMED_EXOTIC: 'suit_unaffiliated_reclaimed_exotic',
+  SUIT_UNAFFILIATED_WASTELAND_SOVEREIGN_LEGENDARY: 'suit_unaffiliated_wasteland_sovereign_legendary',
+  SUIT_UNAFFILIATED_SCROUNGER_EPIC: 'suit_unaffiliated_scrounger_epic',
+  SUIT_UNAFFILIATED_MONGREL_LEGENDARY: 'suit_unaffiliated_mongrel_legendary',
+
   // ---- WORLD ITEMS ----
   WORLD_VOID_CRYSTAL: 'world_void_crystal',
   WORLD_FUNGAL_SPORE_CLUSTER: 'world_fungal_spore_cluster',
@@ -258,3 +297,4 @@ export * from './exotic-suits';
 export * from './exotic-tools';
 export * from './aquatic-consumables';
 export * from './exotic-consumables';
+export * from './faction-suits';
