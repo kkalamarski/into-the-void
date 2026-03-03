@@ -42,11 +42,11 @@ Requirements for Content Expansion & Faction Gear milestone. Each maps to roadma
 ### Faction Suits
 
 - [ ] **SUIT-01**: Faction identity pillars defined from lore (Verdant=resilience/biotech, Helix=power/industrial, Nexus=perception/surveillance)
-- [ ] **SUIT-02**: Verdant Dynamics suit line across tiers (Common through Legendary) using hazmat/scout archetypes
-- [ ] **SUIT-03**: Helix Extraction suit line across tiers (Common through Legendary) using tank/assault archetypes
-- [ ] **SUIT-04**: Nexus Frontiers suit line across tiers (Common through Legendary) using recon/balanced archetypes
-- [ ] **SUIT-05**: All faction suits use generateSuitStats() utility (no hand-coded stats)
-- [ ] **SUIT-06**: Unaffiliated salvaged suit line across tiers with improvised/scavenged aesthetic
+- [x] **SUIT-02**: Verdant Dynamics suit line across tiers (Common through Legendary) using hazmat/scout archetypes
+- [x] **SUIT-03**: Helix Extraction suit line across tiers (Common through Legendary) using tank/assault archetypes
+- [x] **SUIT-04**: Nexus Frontiers suit line across tiers (Common through Legendary) using recon/balanced archetypes
+- [x] **SUIT-05**: All faction suits use generateSuitStats() utility (no hand-coded stats)
+- [x] **SUIT-06**: Unaffiliated salvaged suit line across tiers with improvised/scavenged aesthetic
 
 ### Faction Modules
 
@@ -131,11 +131,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ARTF-04 | Phase 111 | Pending |
 | ARTF-05 | Phase 111 | Pending |
 | SUIT-01 | Phase 109 | Pending |
-| SUIT-02 | Phase 112 | Pending |
-| SUIT-03 | Phase 112 | Pending |
-| SUIT-04 | Phase 112 | Pending |
-| SUIT-05 | Phase 112 | Pending |
-| SUIT-06 | Phase 112 | Pending |
+| SUIT-02 | Phase 112 | Complete |
+| SUIT-03 | Phase 112 | Complete |
+| SUIT-04 | Phase 112 | Complete |
+| SUIT-05 | Phase 112 | Complete |
+| SUIT-06 | Phase 112 | Complete |
 | MODU-01 | Phase 113 | Pending |
 | MODU-02 | Phase 113 | Pending |
 | MODU-03 | Phase 113 | Pending |
