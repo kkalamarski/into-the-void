@@ -2037,6 +2037,7 @@ export class WorldScene extends Phaser.Scene {
     damage: number,
     isLocalPlayer: boolean,
     fallbackPosition?: { x: number; y: number },
+    damageType?: import('@into-the-void/shared-types').DamageType,
   ): void {
     let targetX: number;
     let targetY: number;
@@ -2076,7 +2077,7 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    EntityRenderer.createFloatingDamage(this, targetX, targetY, damage, isLocalPlayer);
+    EntityRenderer.createFloatingDamage(this, targetX, targetY, damage, isLocalPlayer, damageType);
   }
 
   /**

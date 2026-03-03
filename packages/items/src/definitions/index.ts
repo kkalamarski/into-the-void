@@ -19,7 +19,8 @@ import { ALL_FACTION_TOOLS } from './faction-tools';
 
 /**
  * All item definitions — register these with ItemRegistry.
- * Total: 230 items (16 suits + 30 modules + 21 tools + 40 consumables + 15 world-items + 15 reagents + 28 faction suits + 40 faction modules + 40 faction tools)
+ * Total: 234 items (16 suits + 34 modules + 21 tools + 40 consumables + 15 world-items + 15 reagents + 28 faction suits + 40 faction modules + 40 faction tools)
+ * Phase 117 adds 4 damage type amplifier modules.
  */
 export const ALL_ITEMS: readonly ItemDefinition[] = [
   ...ALL_SUITS,
@@ -129,6 +130,12 @@ export const ITEM_IDS = {
   MODULE_MOBILITY_EPIC: 'module_mobility_epic',
   MODULE_MOBILITY_EXOTIC: 'module_mobility_exotic',
   MODULE_MOBILITY_LEGENDARY: 'module_mobility_legendary',
+
+  // ---- MODULES: DAMAGE TYPE AMPLIFIERS (Phase 117) ----
+  MODULE_THERMAL_AMP_RARE: 'module_thermal_amp_rare',
+  MODULE_CRYO_AMP_RARE: 'module_cryo_amp_rare',
+  MODULE_BIO_AMP_RARE: 'module_bio_amp_rare',
+  MODULE_KINETIC_AMP_RARE: 'module_kinetic_amp_rare',
 
   // ---- TOOLS: UNIVERSAL ----
   TOOL_UNIVERSAL_COMMON: 'tool_universal_common',

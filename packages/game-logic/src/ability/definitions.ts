@@ -12,7 +12,7 @@ export const ABILITY_BASIC_STRIKE: AbilityDefinition = {
   cooldownMs: 1500,
   range: 1,
   requiresTarget: true,
-  effects: [{ type: 'damage', baseDamage: 15, scaling: 1.0 }],
+  effects: [{ type: 'damage', baseDamage: 15, scaling: 1.0, damageType: 'Kinetic' }],
   iconKey: 'ability_strike',
   iconColor: 0xcc4444,
 };

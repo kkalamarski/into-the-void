@@ -40,7 +40,7 @@ export const CombatLog: React.FC = () => {
                   Hit <span className="combat-log-target">{entry.targetName}</span>
                   {' '}for{' '}
                   <span className={`combat-log-damage ${entry.critical ? 'combat-log-critical' : ''}`}>
-                    {entry.damage}
+                    {entry.damageType ? `[${entry.damageType}] ` : ''}{entry.damage}
                   </span>
                   {' '}damage
                   {entry.killed && <span className="combat-log-killed"> (killed)</span>}
@@ -50,7 +50,7 @@ export const CombatLog: React.FC = () => {
                   <span className="combat-log-target">{entry.targetName}</span>
                   {' '}hit you for{' '}
                   <span className={`combat-log-damage ${entry.critical ? 'combat-log-critical' : ''}`}>
-                    {entry.damage}
+                    {entry.damageType ? `[${entry.damageType}] ` : ''}{entry.damage}
                   </span>
                   {' '}damage
                 </span>

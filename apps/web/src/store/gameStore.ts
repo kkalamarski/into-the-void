@@ -456,6 +456,7 @@ gameSocket.on('combat:damage', (data: {
   critical: boolean;
   killed: boolean;
   defenderPosition?: { x: number; y: number };
+  damageType?: import('@into-the-void/shared-types').DamageType;
 }) => {
   const game = useGameStore.getState().game;
   const worldScene = game?.getWorldScene();
@@ -469,8 +470,8 @@ gameSocket.on('combat:damage', (data: {
   // Determine if this is damage to the local player
   const isLocalPlayer = currentPlayer?.id === data.defenderId;
 
-  // Show floating damage number (pass position as fallback for despawned entities)
-  worldScene.showDamageNumber(data.defenderId, data.damage, isLocalPlayer, data.defenderPosition);
+  // Show floating damage number (pass position and damageType as fallback/color hint)
+  worldScene.showDamageNumber(data.defenderId, data.damage, isLocalPlayer, data.defenderPosition, data.damageType);
 
   // Update local player health if they took damage
   if (isLocalPlayer && currentPlayer) {

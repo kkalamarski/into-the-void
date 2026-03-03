@@ -986,6 +986,90 @@ export const MODULE_POWER_CORE_RARE_MK5: ItemDefinition = {
 };
 
 // ============================================================
+// DAMAGE TYPE AMPLIFIER MODULES (Phase 117 — DMGT-06)
+// ============================================================
+
+export const MODULE_THERMAL_AMP: ItemDefinition = {
+  id: 'module_thermal_amp_rare',
+  displayName: 'Thermal Amplifier',
+  description: 'Amplifies thermal energy output, increasing Thermal damage dealt by 20%.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 2,
+  baseValue: 800,
+  requiredLevel: 15,
+  ilvl: 20,
+  textureKey: 'module_thermal_amp',
+  color: 0xff8800,
+  equipSlot: 'module',
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', power: 56 } },
+    { trigger: 'on_equip', effect: { type: 'damage_type_bonus', damageType: 'Thermal', bonusPercent: 20 } },
+  ],
+};
+
+export const MODULE_CRYO_AMP: ItemDefinition = {
+  id: 'module_cryo_amp_rare',
+  displayName: 'Cryo Amplifier',
+  description: 'Channels cryogenic energy, increasing Cryo damage dealt by 20%.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 2,
+  baseValue: 800,
+  requiredLevel: 15,
+  ilvl: 20,
+  textureKey: 'module_cryo_amp',
+  color: 0x00ccff,
+  equipSlot: 'module',
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', power: 56 } },
+    { trigger: 'on_equip', effect: { type: 'damage_type_bonus', damageType: 'Cryo', bonusPercent: 20 } },
+  ],
+};
+
+export const MODULE_BIO_AMP: ItemDefinition = {
+  id: 'module_bio_amp_rare',
+  displayName: 'Bio Amplifier',
+  description: 'Enhances biological payload delivery, increasing Bio damage dealt by 20%.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 2,
+  baseValue: 800,
+  requiredLevel: 15,
+  ilvl: 20,
+  textureKey: 'module_bio_amp',
+  color: 0x44ff44,
+  equipSlot: 'module',
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', power: 56 } },
+    { trigger: 'on_equip', effect: { type: 'damage_type_bonus', damageType: 'Bio', bonusPercent: 20 } },
+  ],
+};
+
+export const MODULE_KINETIC_AMP: ItemDefinition = {
+  id: 'module_kinetic_amp_rare',
+  displayName: 'Kinetic Amplifier',
+  description: 'Reinforces projectile acceleration, increasing Kinetic damage dealt by 20%.',
+  category: 'module',
+  rarity: 'rare',
+  maxStack: 1,
+  weight: 2,
+  baseValue: 800,
+  requiredLevel: 15,
+  ilvl: 20,
+  textureKey: 'module_kinetic_amp',
+  color: 0xffffff,
+  equipSlot: 'module',
+  effects: [
+    { trigger: 'on_equip', effect: { type: 'stats', power: 56 } },
+    { trigger: 'on_equip', effect: { type: 'damage_type_bonus', damageType: 'Kinetic', bonusPercent: 20 } },
+  ],
+};
+
+// ============================================================
 // ALL MODULES
 // ============================================================
 
@@ -1042,4 +1126,9 @@ export const ALL_MODULES: readonly ItemDefinition[] = [
   MODULE_MOBILITY_EPIC,
   MODULE_MOBILITY_EXOTIC,
   MODULE_MOBILITY_LEGENDARY,
+  // Damage type amplifier modules (Phase 117)
+  MODULE_THERMAL_AMP,
+  MODULE_CRYO_AMP,
+  MODULE_BIO_AMP,
+  MODULE_KINETIC_AMP,
 ];

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { gameSocket } from '../network/socket';
 import { useGameStore } from './gameStore';
 import { useEntityStore } from './entityStore';
+import type { DamageType } from '@into-the-void/shared-types';
 
 export interface CombatLogEntry {
   id: string;
@@ -11,6 +12,7 @@ export interface CombatLogEntry {
   targetName: string;     // Creature name for dealt, attacker name for received
   critical: boolean;
   killed: boolean;
+  damageType?: DamageType;
 }
 
 interface CombatLogState {
@@ -61,6 +63,7 @@ gameSocket.on('combat:damage', (data: {
   defenderMaxHealth: number;
   critical: boolean;
   killed: boolean;
+  damageType?: DamageType;
 }) => {
   const currentPlayer = useGameStore.getState().player;
   if (!currentPlayer) return;
@@ -79,6 +82,7 @@ gameSocket.on('combat:damage', (data: {
       targetName,
       critical: data.critical,
       killed: data.killed,
+      damageType: data.damageType,
     });
   } else if (data.defenderId === currentPlayer.id) {
     // Player received damage from creature - prefer name from payload, fallback to entity lookup
@@ -91,6 +95,7 @@ gameSocket.on('combat:damage', (data: {
       targetName: attackerName,
       critical: data.critical,
       killed: data.killed,
+      damageType: data.damageType,
     });
   }
   // If neither attacker nor defender is current player, ignore (other player's combat)
