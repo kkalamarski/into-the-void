@@ -342,7 +342,7 @@
 | 114. Integration and Lore Verification | 3/3 | Complete | 2026-03-03 |
 | 115. Shared Type Foundation | 2/2 | Complete    | 2026-03-03 |
 | 116. Stat Caps | 0/TBD | Complete    | 2026-03-03 |
-| 117. Damage Types and Creature Resistances | 0/3 | Not started | - |
+| 117. Damage Types and Creature Resistances | 1/3 | In Progress|  |
 | 118. Ability Rebalance | 0/TBD | Not started | - |
 | 119. Creature AI Upgrades | 0/TBD | Not started | - |
 | 120. Biome Hazard System | 0/TBD | Not started | - |

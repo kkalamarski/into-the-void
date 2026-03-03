@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Balance & Automation
 status: unknown
-last_updated: "2026-03-03T15:18:28.117Z"
+last_updated: "2026-03-03T15:56:22.476Z"
 progress:
-  total_phases: 116
+  total_phases: 117
   completed_phases: 116
-  total_plans: 302
-  completed_plans: 302
+  total_plans: 305
+  completed_plans: 303
 ---
 
 # Project State
@@ -47,6 +47,7 @@ Progress: [░░░░░░░░░░] 0% (v1.24)
 | 119. Creature AI Upgrades | TBD | Not started |
 | 120. Biome Hazard System | TBD | Not started |
 | 121. Automation Tech Tree | TBD | Not started |
+| Phase 117-damage-types-and-creature-resistances P01 | 10 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,9 @@ New for v1.24:
 - [v1.24 Roadmap]: Resistance hard cap at 70% (0.3x floor) — no creature immunity; no player resistance stats (WoW lesson)
 - [v1.24 Research]: AutomationService income/sink balance sheet is a mandatory design artifact (maintenance cost >= 60% of output per tier) before any automation code
 - [v1.24 Research]: HazardService must use synchronous Map<playerId, HazardState> read in tick — async per-player lookups would blow 200ms tick budget
+- [Phase 117-01]: Resistance applied AFTER armor reduction so armor and resistances are independent layers
+- [Phase 117-01]: applyResistanceMultiplier exported as standalone pure function for direct use by downstream consumers
+- [Phase 117-01]: damageBonusMultiplier only activates when > 1.0 to prevent accidental damage penalties from undefined defaults
 
 ### Pending Todos
 
