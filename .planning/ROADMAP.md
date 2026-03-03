@@ -216,7 +216,10 @@
   2. Every new suit, module, and tool can be retrieved by ID via ItemRegistry.get() — no faction item is a dead reference in ITEM_IDS
   3. Running both `nx run entities:test` and `nx run items:test` passes clean — the validation infrastructure from Phase 108 confirms zero orphans across all new content
   4. A manual lore review against lore/world-bible.md finds no entity name, faction ability, or item description that contradicts established faction identity or biome ecology
-**Plans**: TBD
+**Plans**: 3 plans
+  - [ ] 114-01-PLAN.md -- Item ID constants test + full validation suite run (INTG-01, INTG-02)
+  - [ ] 114-02-PLAN.md -- Entity lore audit and world-bible bestiary expansion (INTG-03)
+  - [ ] 114-03-PLAN.md -- Faction gear lore audit and world-bible equipment catalog (INTG-03)
 
 ## Progress
 
@@ -236,7 +239,7 @@
 | 111. Biome Plants, Minerals, and Artifacts | 4/4 | Complete | 2026-03-03 |
 | 112. Faction Suits | 2/2 | Complete    | 2026-03-03 |
 | 113. Faction Modules and Tools | 0/TBD | Complete    | 2026-03-03 |
-| 114. Integration and Lore Verification | 0/TBD | Not started | - |
+| 114. Integration and Lore Verification | 0/3 | Not started | - |
 
 ---
 
