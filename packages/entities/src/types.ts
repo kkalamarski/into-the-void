@@ -4,7 +4,7 @@
  * Convention: lootTableId uses format 'loot_<entity_id>' for Phase 35 compatibility.
  */
 
-import type { BiomeType, CreatureBehavior, NodeRarity } from '@into-the-void/shared-types';
+import type { BiomeType, CreatureBehavior, DamageResistances, NodeRarity } from '@into-the-void/shared-types';
 
 /** Entity class discriminator */
 export type EntityClass = 'creature' | 'plant' | 'mineral' | 'artifact';
@@ -29,6 +29,8 @@ export interface CreatureDefinition extends BaseEntityDefinition {
   readonly levelRange: readonly [number, number];
   readonly baseXp: number;
   readonly respawnSeconds: number;
+  /** Damage resistances per type. Required; use NEUTRAL_RESISTANCES for unlabeled creatures. */
+  readonly resistances: DamageResistances;
 }
 
 /** Harvest yield entry for plants and minerals */
