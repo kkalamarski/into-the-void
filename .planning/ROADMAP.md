@@ -56,7 +56,7 @@
 - [x] **Phase 110: Biome Creature Population** - All 16 biomes reach 4-6 creatures with behavioral variety, loot tables, and spawn configs fully wired (completed 2026-03-02)
 - [x] **Phase 111: Biome Plants, Minerals, and Artifacts** - All 16 biomes reach 3-4 plants, 2-3 minerals with rarity variants, and 1-2 artifacts; crystalline_wastes hotspot resolved (completed 2026-03-03)
 - [x] **Phase 112: Faction Suits** - Verdant, Helix, Nexus, and Unaffiliated suit lines across all tiers (Common through Legendary) using generateSuitStats() throughout (completed 2026-03-03)
-- [ ] **Phase 113: Faction Modules and Tools** - Bio/sensor/armor module lines and faction-specialized tool lines completing the gear set for all four factions
+- [x] **Phase 113: Faction Modules and Tools** - Bio/sensor/armor module lines and faction-specialized tool lines completing the gear set for all four factions (completed 2026-03-03)
 - [ ] **Phase 114: Integration and Lore Verification** - All new entities and items verified in definition indexes with ENTITY_IDS/ITEM_IDS constants and cross-checked against lore
 
 ## Phase Details
@@ -235,7 +235,7 @@
 | 110. Biome Creature Population | 4/4 | Complete | 2026-03-02 |
 | 111. Biome Plants, Minerals, and Artifacts | 4/4 | Complete | 2026-03-03 |
 | 112. Faction Suits | 2/2 | Complete    | 2026-03-03 |
-| 113. Faction Modules and Tools | 0/TBD | Not started | - |
+| 113. Faction Modules and Tools | 0/TBD | Complete    | 2026-03-03 |
 | 114. Integration and Lore Verification | 0/TBD | Not started | - |
 
 ---
