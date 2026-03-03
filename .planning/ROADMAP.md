@@ -337,7 +337,7 @@
 | 112. Faction Suits | 2/2 | Complete | 2026-03-03 |
 | 113. Faction Modules and Tools | 0/TBD | Complete | 2026-03-03 |
 | 114. Integration and Lore Verification | 3/3 | Complete | 2026-03-03 |
-| 115. Shared Type Foundation | 0/TBD | Not started | - |
+| 115. Shared Type Foundation | 1/2 | In Progress|  |
 | 116. Stat Caps | 0/TBD | Not started | - |
 | 117. Damage Types and Creature Resistances | 0/TBD | Not started | - |
 | 118. Ability Rebalance | 0/TBD | Not started | - |
