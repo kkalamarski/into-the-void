@@ -65,7 +65,7 @@
 
 **Milestone Goal:** Introduce situational combat depth (damage types, biome hazards, creature AI upgrades), rebalance abilities so defensive/utility skills have purpose, and build the automation progression arc from manual gathering to planetary extractors.
 
-- [ ] **Phase 115: Shared Type Foundation** - DamageType union, DamageResistances, shield/damage_reduction AbilityEffect variants, DeployableEntity interface, AiTickResult behavior signals
+- [x] **Phase 115: Shared Type Foundation** - DamageType union, DamageResistances, shield/damage_reduction AbilityEffect variants, DeployableEntity interface, AiTickResult behavior signals (completed 2026-03-03)
 - [ ] **Phase 116: Stat Caps** - Soft cap at 200 with diminishing returns, hard cap at 400, stats panel indicator
 - [ ] **Phase 117: Damage Types and Creature Resistances** - DamageType threaded through calculateDamage(), resistances on all 83+ creatures, color-coded floating numbers
 - [ ] **Phase 118: Ability Rebalance** - Plasma Burst nerfed, defensive abilities overhauled with real shield/DR mechanics, all 13 rebalanced abilities live
@@ -337,7 +337,7 @@
 | 112. Faction Suits | 2/2 | Complete | 2026-03-03 |
 | 113. Faction Modules and Tools | 0/TBD | Complete | 2026-03-03 |
 | 114. Integration and Lore Verification | 3/3 | Complete | 2026-03-03 |
-| 115. Shared Type Foundation | 1/2 | In Progress|  |
+| 115. Shared Type Foundation | 2/2 | Complete   | 2026-03-03 |
 | 116. Stat Caps | 0/TBD | Not started | - |
 | 117. Damage Types and Creature Resistances | 0/TBD | Not started | - |
 | 118. Ability Rebalance | 0/TBD | Not started | - |
