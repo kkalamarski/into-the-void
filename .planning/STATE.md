@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 111 complete — ready for Phase 112
+**Current focus:** Phase 112 in progress — Faction Suits
 
 ## Current Position
 
-Phase: 111 of 114 (Biome Plants, Minerals, and Artifacts) — COMPLETE
-Plan: 4/4 — all plans complete
-Status: Phase complete
-Last activity: 2026-03-03 — Phase 111 complete (71 new entities across all 16 biomes)
+Phase: 112 of 114 (Faction Suits) — IN PROGRESS
+Plan: 1/2 — plan 112-01 complete
+Status: Executing Wave 2
+Last activity: 2026-03-03 — Plan 112-01 complete (28 faction suit definitions)
 
 Progress: [██████░░░░] 57%
 
@@ -64,9 +64,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Phase 111 complete — all 16 biomes fully populated with plants, minerals, and artifacts
+Stopped at: Phase 112, plan 112-01 complete — 28 faction suit definitions created
 Resume file: None
-Next action: Plan Phase 112 (`/gsd:plan-phase 112`)
+Next action: Execute plan 112-02 (index integration and test verification)
 
 ---
-*Last updated: 2026-03-03 — Phase 111 complete*
+*Last updated: 2026-03-03 — Phase 112 plan 01 complete*

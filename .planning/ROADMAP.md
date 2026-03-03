@@ -234,7 +234,7 @@
 | 109. Faction Identity Design Gate | 2/2 | Complete | 2026-03-02 |
 | 110. Biome Creature Population | 4/4 | Complete | 2026-03-02 |
 | 111. Biome Plants, Minerals, and Artifacts | 4/4 | Complete | 2026-03-03 |
-| 112. Faction Suits | 0/TBD | Not started | - |
+| 112. Faction Suits | 1/2 | In Progress|  |
 | 113. Faction Modules and Tools | 0/TBD | Not started | - |
 | 114. Integration and Lore Verification | 0/TBD | Not started | - |
 
