@@ -146,6 +146,21 @@ export const ENTITY_IDS = {
   PLANT_STONE_MOSS: 'plant_stone_moss',
   PLANT_CALCITE_FERN: 'plant_calcite_fern',
   PLANT_MOBILE_VINE_RARE: 'plant_mobile_vine_rare',
+  // Phase 111 Tier III plant additions
+  PLANT_CRYSTAL_LICHEN: 'plant_crystal_lichen',
+  PLANT_PRISM_BLOOM: 'plant_prism_bloom',
+  PLANT_MAGMA_BLOOM: 'plant_magma_bloom',
+  PLANT_ASH_VINE: 'plant_ash_vine',
+  PLANT_THERMAL_VENT_MOSS_RARE: 'plant_thermal_vent_moss_rare',
+  PLANT_MAGMA_BLOOM_EPIC: 'plant_magma_bloom_epic',
+  PLANT_FROST_LICHEN: 'plant_frost_lichen',
+  PLANT_CRYO_BLOOM: 'plant_cryo_bloom',
+  PLANT_ICE_ALGAE_RARE: 'plant_ice_algae_rare',
+  PLANT_CRYO_BLOOM_EPIC: 'plant_cryo_bloom_epic',
+  PLANT_VOID_MOSS: 'plant_void_moss',
+  PLANT_CRATER_FERN: 'plant_crater_fern',
+  PLANT_STAR_LICHEN_RARE: 'plant_star_lichen_rare',
+  PLANT_VOID_MOSS_EPIC: 'plant_void_moss_epic',
 
   // ---- AQUATIC PLANTS ----
   PLANT_TIDAL_KELP: 'plant_tidal_kelp',
@@ -159,6 +174,9 @@ export const ENTITY_IDS = {
   // Phase 111 Tier II aquatic plant additions
   PLANT_KELP_CANOPY: 'plant_kelp_canopy',
   PLANT_PRESSURE_FERN_RARE: 'plant_pressure_fern_rare',
+  // Phase 111 Tier III aquatic plant additions
+  PLANT_VOID_KELP_RARE: 'plant_void_kelp_rare',
+  PLANT_THERMAL_VENT_COLONY_EPIC: 'plant_thermal_vent_colony_epic',
 
   // ---- MINERALS ----
   MINERAL_VOID_CRYSTAL: 'mineral_void_crystal',
@@ -192,6 +210,16 @@ export const ENTITY_IDS = {
   MINERAL_MYCELIAL_CLUSTER_RARE: 'mineral_mycelial_cluster_rare',
   MINERAL_RUIN_AGGREGATE: 'mineral_ruin_aggregate',
   MINERAL_ANOMALY_CRYSTAL_RARE: 'mineral_anomaly_crystal_rare',
+  // Phase 111 Tier III mineral additions
+  MINERAL_CAVE_GEODE: 'mineral_cave_geode',
+  MINERAL_PRISMATIC_CRYSTAL_EPIC: 'mineral_prismatic_crystal_epic',
+  MINERAL_OBSIDIAN_VEIN: 'mineral_obsidian_vein',
+  MINERAL_VOLCANIC_ORE_EPIC: 'mineral_volcanic_ore_epic',
+  MINERAL_GLACIAL_CORE: 'mineral_glacial_core',
+  MINERAL_PERMAFROST_SHARD_RARE: 'mineral_permafrost_shard_rare',
+  MINERAL_GLACIAL_CORE_EPIC: 'mineral_glacial_core_epic',
+  MINERAL_IMPACT_GLASS: 'mineral_impact_glass',
+  MINERAL_COSMIC_FRAGMENT_EPIC: 'mineral_cosmic_fragment_epic',
 
   // ---- AQUATIC MINERALS ----
   MINERAL_CORAL_DEPOSIT: 'mineral_coral_deposit',
@@ -203,6 +231,10 @@ export const ENTITY_IDS = {
   MINERAL_SEA_CRYSTAL_RARE: 'mineral_sea_crystal_rare',
   // Phase 111 Tier II aquatic mineral additions
   MINERAL_PEARL_NODE_RARE: 'mineral_pearl_node_rare',
+  // Phase 111 Tier III aquatic mineral additions
+  MINERAL_TRENCH_CRYSTAL: 'mineral_trench_crystal',
+  MINERAL_ABYSSAL_ORE_RARE: 'mineral_abyssal_ore_rare',
+  MINERAL_ABYSSAL_ORE_EPIC: 'mineral_abyssal_ore_epic',
 
   // ---- ARTIFACTS ----
   ARTIFACT_ANCIENT_DATA_CORE: 'artifact_ancient_data_core',

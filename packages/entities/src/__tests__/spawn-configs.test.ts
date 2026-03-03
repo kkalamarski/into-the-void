@@ -13,9 +13,9 @@ import type { BiomeType } from '@into-the-void/shared-types';
 // dependency (rarity.ts imports from @into-the-void/entities).
 const RARITY_SYSTEM_MINERALS: Record<string, string[]> = {
   void_plains: ['mineral_void_crystal_rare'],
-  crystal_caves: ['mineral_prismatic_crystal_rare'],
-  volcanic_ridge: ['mineral_volcanic_ore_rare'],
-  starfall_crater: ['mineral_cosmic_fragment_rare'],
+  crystal_caves: ['mineral_prismatic_crystal_rare', 'mineral_prismatic_crystal_epic'],
+  volcanic_ridge: ['mineral_volcanic_ore_rare', 'mineral_volcanic_ore_epic'],
+  starfall_crater: ['mineral_cosmic_fragment_rare', 'mineral_cosmic_fragment_epic'],
   ancient_ruins: ['mineral_anomaly_crystal_epic', 'mineral_anomaly_crystal_rare'],
   fungal_forest: ['mineral_mycelial_cluster_rare'],
   tidal_pools: ['mineral_sea_crystal_rare'],
@@ -23,6 +23,8 @@ const RARITY_SYSTEM_MINERALS: Record<string, string[]> = {
   petrified_expanse: ['mineral_mineralized_log_rare'],
   bioluminescent_depths: ['mineral_depth_quartz_rare'],
   kelp_forests: ['mineral_pearl_node_rare'],
+  frozen_expanse: ['mineral_permafrost_shard_rare', 'mineral_glacial_core_epic'],
+  deep_trenches: ['mineral_abyssal_ore_rare', 'mineral_abyssal_ore_epic'],
 };
 
 // Collect all entity IDs referenced across all biome spawn configs,

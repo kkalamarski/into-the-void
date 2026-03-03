@@ -148,6 +148,44 @@ export const PLANT_TIDAL_KELP_RARE: PlantDefinition = {
   rarity: 'rare',
 };
 
+// ===== PHASE 111 TIER III ADDITIONS =====
+
+export const PLANT_VOID_KELP_RARE: PlantDefinition = {
+  id: 'plant_void_kelp_rare',
+  displayName: 'Void Kelp (Rare)',
+  description:
+    'An enormous void kelp specimen whose fronds trail into absolute darkness below. Something about its rhythmic swaying suggests it is responding to currents that don\'t exist at this depth.',
+  entityClass: 'plant',
+  biomes: ['deep_trenches'],
+  textureKey: 'plant_void_kelp',
+  color: 0x226644,
+  lootTableId: 'loot_plant_void_kelp_rare',
+  harvestYield: [
+    { itemId: 'world_organic_material_rare', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_bioluminescent_compound', minAmount: 1, maxAmount: 1, chance: 0.35 },
+  ],
+  respawnSeconds: 900,
+  rarity: 'rare',
+};
+
+export const PLANT_THERMAL_VENT_COLONY_EPIC: PlantDefinition = {
+  id: 'plant_thermal_vent_colony_epic',
+  displayName: 'Thermal Vent Colony (Epic)',
+  description:
+    'A massive thermal vent colony that has consumed an entire hydrothermal chimney. The bioluminescent display is blinding — and the heat signature draws deep-sea predators from kilometers away.',
+  entityClass: 'plant',
+  biomes: ['deep_trenches'],
+  textureKey: 'plant_thermal_vent_colony',
+  color: 0xffaa44,
+  lootTableId: 'loot_plant_thermal_vent_colony_epic',
+  harvestYield: [
+    { itemId: 'world_luminous_extract', minAmount: 2, maxAmount: 5, chance: 1.0 },
+    { itemId: 'reagent_bioluminescent_compound', minAmount: 1, maxAmount: 2, chance: 0.5 },
+  ],
+  respawnSeconds: 1500,
+  rarity: 'epic',
+};
+
 export const ALL_AQUATIC_PLANTS: readonly PlantDefinition[] = [
   PLANT_TIDAL_KELP,
   PLANT_BIOLUMINESCENT_ALGAE,
@@ -160,4 +198,7 @@ export const ALL_AQUATIC_PLANTS: readonly PlantDefinition[] = [
   // Phase 111 Tier II additions
   PLANT_KELP_CANOPY,
   PLANT_PRESSURE_FERN_RARE,
+  // Phase 111 Tier III additions
+  PLANT_VOID_KELP_RARE,
+  PLANT_THERMAL_VENT_COLONY_EPIC,
 ];

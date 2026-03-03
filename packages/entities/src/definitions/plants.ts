@@ -426,6 +426,260 @@ export const PLANT_MOBILE_VINE_RARE: PlantDefinition = {
   rarity: 'rare',
 };
 
+// ===== PHASE 111 TIER III ADDITIONS =====
+
+// -- crystal_caves --
+
+export const PLANT_CRYSTAL_LICHEN: PlantDefinition = {
+  id: 'plant_crystal_lichen',
+  displayName: 'Crystal Lichen',
+  description:
+    'Pale lichen growing in concentric rings around prismatic formations. Under certain light conditions, the growth patterns appear to mirror the crystal\'s internal lattice — as though the organism is attempting to decode it.',
+  entityClass: 'plant',
+  biomes: ['crystal_caves'],
+  textureKey: 'plant_crystal_lichen',
+  color: 0xccddee,
+  lootTableId: 'loot_plant_crystal_lichen',
+  harvestYield: [
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ],
+  respawnSeconds: 450,
+};
+
+export const PLANT_PRISM_BLOOM: PlantDefinition = {
+  id: 'plant_prism_bloom',
+  displayName: 'Prism Bloom',
+  description:
+    'Flower with translucent crystalline petals that split ambient light into spectral bands. The bloom tracks light sources with a precision that makes botanists uncomfortable.',
+  entityClass: 'plant',
+  biomes: ['crystal_caves'],
+  textureKey: 'plant_prism_bloom',
+  color: 0xbbaadd,
+  lootTableId: 'loot_plant_prism_bloom',
+  harvestYield: [
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.3 },
+  ],
+  respawnSeconds: 480,
+};
+
+// -- volcanic_ridge --
+
+export const PLANT_MAGMA_BLOOM: PlantDefinition = {
+  id: 'plant_magma_bloom',
+  displayName: 'Magma Bloom',
+  description:
+    'Heat-tolerant flower rooted in volcanic vents. Its petals glow orange from internal thermal chemistry and the air above it shimmers with convection currents.',
+  entityClass: 'plant',
+  biomes: ['volcanic_ridge'],
+  textureKey: 'plant_magma_bloom',
+  color: 0xee6622,
+  lootTableId: 'loot_plant_magma_bloom',
+  harvestYield: [
+    { itemId: 'world_volcanic_glass', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ],
+  respawnSeconds: 450,
+};
+
+export const PLANT_ASH_VINE: PlantDefinition = {
+  id: 'plant_ash_vine',
+  displayName: 'Ash Vine',
+  description:
+    'Charcoal-dark vine threading through cooled lava formations. It grows toward active vents with unnerving directness, as though feeding on the geological violence.',
+  entityClass: 'plant',
+  biomes: ['volcanic_ridge'],
+  textureKey: 'plant_ash_vine',
+  color: 0x554433,
+  lootTableId: 'loot_plant_ash_vine',
+  harvestYield: [
+    { itemId: 'world_geothermal_compound', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.3 },
+  ],
+  respawnSeconds: 480,
+};
+
+export const PLANT_THERMAL_VENT_MOSS_RARE: PlantDefinition = {
+  id: 'plant_thermal_vent_moss_rare',
+  displayName: 'Thermal Vent Moss (Rare)',
+  description:
+    'An exceptionally vibrant patch of thermal vent moss generating visible heat haze. The surrounding rock is warm to the touch several meters away.',
+  entityClass: 'plant',
+  biomes: ['volcanic_ridge'],
+  textureKey: 'plant_thermal_vent_moss',
+  color: 0xff8844,
+  lootTableId: 'loot_plant_thermal_vent_moss_rare',
+  harvestYield: [
+    { itemId: 'world_geothermal_compound', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 1, chance: 0.35 },
+  ],
+  respawnSeconds: 900,
+  rarity: 'rare',
+};
+
+export const PLANT_MAGMA_BLOOM_EPIC: PlantDefinition = {
+  id: 'plant_magma_bloom_epic',
+  displayName: 'Magma Bloom (Epic)',
+  description:
+    'A magma bloom of impossible size, its root system visibly connected to an active volcanic vent. The air temperature spikes sharply within arm\'s reach.',
+  entityClass: 'plant',
+  biomes: ['volcanic_ridge'],
+  textureKey: 'plant_magma_bloom',
+  color: 0xff4400,
+  lootTableId: 'loot_plant_magma_bloom_epic',
+  harvestYield: [
+    { itemId: 'world_volcanic_glass', minAmount: 2, maxAmount: 5, chance: 1.0 },
+    { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 2, chance: 0.5 },
+  ],
+  respawnSeconds: 1350,
+  rarity: 'epic',
+};
+
+// -- frozen_expanse --
+
+export const PLANT_FROST_LICHEN: PlantDefinition = {
+  id: 'plant_frost_lichen',
+  displayName: 'Frost Lichen',
+  description:
+    'Slow-growing lichen that survives by extracting energy from the thermal differential between ice and air. It takes decades to reach harvest size — making each patch a testament to patient survival.',
+  entityClass: 'plant',
+  biomes: ['frozen_expanse'],
+  textureKey: 'plant_frost_lichen',
+  color: 0xaaddee,
+  lootTableId: 'loot_plant_frost_lichen',
+  harvestYield: [
+    { itemId: 'world_frozen_shard', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'reagent_frost_essence', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ],
+  respawnSeconds: 450,
+};
+
+export const PLANT_CRYO_BLOOM: PlantDefinition = {
+  id: 'plant_cryo_bloom',
+  displayName: 'Cryo Bloom',
+  description:
+    'Flower preserved in a shell of perpetual ice. The bloom itself is alive and warm — touching the ice shell causes it to briefly melt and refreeze in a different pattern.',
+  entityClass: 'plant',
+  biomes: ['frozen_expanse'],
+  textureKey: 'plant_cryo_bloom',
+  color: 0x88bbdd,
+  lootTableId: 'loot_plant_cryo_bloom',
+  harvestYield: [
+    { itemId: 'world_frozen_shard', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.3 },
+  ],
+  respawnSeconds: 480,
+};
+
+export const PLANT_ICE_ALGAE_RARE: PlantDefinition = {
+  id: 'plant_ice_algae_rare',
+  displayName: 'Ice Algae (Rare)',
+  description:
+    'A dense colony of ice algae pulsing with bioluminescence visible through translucent ice. The light pattern is regular — almost rhythmic — and some researchers report feeling drowsy near large colonies.',
+  entityClass: 'plant',
+  biomes: ['frozen_expanse'],
+  textureKey: 'plant_ice_algae',
+  color: 0x55ccee,
+  lootTableId: 'loot_plant_ice_algae_rare',
+  harvestYield: [
+    { itemId: 'world_frozen_shard', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_frost_essence', minAmount: 1, maxAmount: 1, chance: 0.35 },
+  ],
+  respawnSeconds: 900,
+  rarity: 'rare',
+};
+
+export const PLANT_CRYO_BLOOM_EPIC: PlantDefinition = {
+  id: 'plant_cryo_bloom_epic',
+  displayName: 'Cryo Bloom (Epic)',
+  description:
+    'A cryo bloom of extraordinary size surrounded by fractal ice patterns that extend meters in every direction. The temperature drop near it is sharp enough to cause frost burns on exposed skin.',
+  entityClass: 'plant',
+  biomes: ['frozen_expanse'],
+  textureKey: 'plant_cryo_bloom',
+  color: 0x44aaff,
+  lootTableId: 'loot_plant_cryo_bloom_epic',
+  harvestYield: [
+    { itemId: 'world_frozen_shard', minAmount: 2, maxAmount: 5, chance: 1.0 },
+    { itemId: 'reagent_frost_essence', minAmount: 1, maxAmount: 2, chance: 0.5 },
+  ],
+  respawnSeconds: 1440,
+  rarity: 'epic',
+};
+
+// -- starfall_crater --
+
+export const PLANT_VOID_MOSS: PlantDefinition = {
+  id: 'plant_void_moss',
+  displayName: 'Void Moss',
+  description:
+    'Dark moss growing in anomaly-warped areas. Its surface occasionally ripples as though disturbed by something passing through from elsewhere.',
+  entityClass: 'plant',
+  biomes: ['starfall_crater'],
+  textureKey: 'plant_void_moss',
+  color: 0x445566,
+  lootTableId: 'loot_plant_void_moss',
+  harvestYield: [
+    { itemId: 'world_crater_dust', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.15 },
+  ],
+  respawnSeconds: 450,
+};
+
+export const PLANT_CRATER_FERN: PlantDefinition = {
+  id: 'plant_crater_fern',
+  displayName: 'Crater Fern',
+  description:
+    'Fern with fronds that seem to exist at a slight temporal offset — they move a fraction of a second before the wind that should move them.',
+  entityClass: 'plant',
+  biomes: ['starfall_crater'],
+  textureKey: 'plant_crater_fern',
+  color: 0x556644,
+  lootTableId: 'loot_plant_crater_fern',
+  harvestYield: [
+    { itemId: 'world_crater_dust', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'world_organic_material_rare', minAmount: 1, maxAmount: 1, chance: 0.3 },
+  ],
+  respawnSeconds: 480,
+};
+
+export const PLANT_STAR_LICHEN_RARE: PlantDefinition = {
+  id: 'plant_star_lichen_rare',
+  displayName: 'Star Lichen (Rare)',
+  description:
+    'A star lichen colony that glows with anomalous radiation. The light has no detectable wavelength — instruments register it, but it doesn\'t match any known spectrum.',
+  entityClass: 'plant',
+  biomes: ['starfall_crater'],
+  textureKey: 'plant_star_lichen',
+  color: 0x8877cc,
+  lootTableId: 'loot_plant_star_lichen_rare',
+  harvestYield: [
+    { itemId: 'world_crater_dust', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.35 },
+  ],
+  respawnSeconds: 900,
+  rarity: 'rare',
+};
+
+export const PLANT_VOID_MOSS_EPIC: PlantDefinition = {
+  id: 'plant_void_moss_epic',
+  displayName: 'Void Moss (Epic)',
+  description:
+    'An enormous void moss colony that visibly distorts the air above it. The ground beneath has been subtly displaced — footprints nearby fill in from the wrong direction.',
+  entityClass: 'plant',
+  biomes: ['starfall_crater'],
+  textureKey: 'plant_void_moss',
+  color: 0x334477,
+  lootTableId: 'loot_plant_void_moss_epic',
+  harvestYield: [
+    { itemId: 'world_meteor_fragment', minAmount: 1, maxAmount: 2, chance: 1.0 },
+    { itemId: 'reagent_anomaly_catalyst', minAmount: 1, maxAmount: 1, chance: 0.4 },
+  ],
+  respawnSeconds: 1350,
+  rarity: 'epic',
+};
+
 // ===== PHASE 88 ADDITIONS =====
 
 export const PLANT_RARE_FUNGI: PlantDefinition = {
@@ -496,4 +750,19 @@ export const ALL_PLANTS: readonly PlantDefinition[] = [
   PLANT_STONE_MOSS,
   PLANT_CALCITE_FERN,
   PLANT_MOBILE_VINE_RARE,
+  // Phase 111 Tier III additions
+  PLANT_CRYSTAL_LICHEN,
+  PLANT_PRISM_BLOOM,
+  PLANT_MAGMA_BLOOM,
+  PLANT_ASH_VINE,
+  PLANT_THERMAL_VENT_MOSS_RARE,
+  PLANT_MAGMA_BLOOM_EPIC,
+  PLANT_FROST_LICHEN,
+  PLANT_CRYO_BLOOM,
+  PLANT_ICE_ALGAE_RARE,
+  PLANT_CRYO_BLOOM_EPIC,
+  PLANT_VOID_MOSS,
+  PLANT_CRATER_FERN,
+  PLANT_STAR_LICHEN_RARE,
+  PLANT_VOID_MOSS_EPIC,
 ];

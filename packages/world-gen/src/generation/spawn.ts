@@ -74,9 +74,12 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_PRISMATIC_CRYSTAL, weight: 8, rarity: 2 },
+      { id: ENTITY_IDS.MINERAL_CAVE_GEODE, weight: 6, rarity: 2 },
     ],
     plants: [
       { id: ENTITY_IDS.PLANT_LATTICE_MOSS, weight: 10 },
+      { id: ENTITY_IDS.PLANT_CRYSTAL_LICHEN, weight: 8 },
+      { id: ENTITY_IDS.PLANT_PRISM_BLOOM, weight: 7 },
       { id: ENTITY_IDS.PLANT_LATTICE_MOSS_RARE, weight: 2, rarity: 'rare' },
     ],
     artifacts: [
@@ -149,9 +152,14 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_PERMAFROST_SHARD, weight: 6, rarity: 2 },
+      { id: ENTITY_IDS.MINERAL_GLACIAL_CORE, weight: 6, rarity: 2 },
     ],
     plants: [
       { id: ENTITY_IDS.PLANT_ICE_ALGAE, weight: 10 },
+      { id: ENTITY_IDS.PLANT_FROST_LICHEN, weight: 8 },
+      { id: ENTITY_IDS.PLANT_CRYO_BLOOM, weight: 7 },
+      { id: ENTITY_IDS.PLANT_ICE_ALGAE_RARE, weight: 2, rarity: 'rare' },
+      { id: ENTITY_IDS.PLANT_CRYO_BLOOM_EPIC, weight: 1, rarity: 'epic' },
     ],
     artifacts: [
       { id: ENTITY_IDS.ARTIFACT_PRESERVED_SPECIMEN, weight: 10, rarity: 'rare' },
@@ -173,9 +181,14 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_VOLCANIC_ORE, weight: 8, rarity: 2 },
+      { id: ENTITY_IDS.MINERAL_OBSIDIAN_VEIN, weight: 6, rarity: 2 },
     ],
     plants: [
       { id: ENTITY_IDS.PLANT_THERMAL_VENT_MOSS, weight: 10 },
+      { id: ENTITY_IDS.PLANT_MAGMA_BLOOM, weight: 8 },
+      { id: ENTITY_IDS.PLANT_ASH_VINE, weight: 7 },
+      { id: ENTITY_IDS.PLANT_THERMAL_VENT_MOSS_RARE, weight: 2, rarity: 'rare' },
+      { id: ENTITY_IDS.PLANT_MAGMA_BLOOM_EPIC, weight: 1, rarity: 'epic' },
     ],
     artifacts: [
       { id: ENTITY_IDS.ARTIFACT_THERMAL_CORE, weight: 6, rarity: 'epic' },
@@ -223,9 +236,14 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_COSMIC_FRAGMENT, weight: 4, rarity: 4 },
+      { id: ENTITY_IDS.MINERAL_IMPACT_GLASS, weight: 6, rarity: 3 },
     ],
     plants: [
       { id: ENTITY_IDS.PLANT_STAR_LICHEN, weight: 10 },
+      { id: ENTITY_IDS.PLANT_VOID_MOSS, weight: 8 },
+      { id: ENTITY_IDS.PLANT_CRATER_FERN, weight: 7 },
+      { id: ENTITY_IDS.PLANT_STAR_LICHEN_RARE, weight: 2, rarity: 'rare' },
+      { id: ENTITY_IDS.PLANT_VOID_MOSS_EPIC, weight: 1, rarity: 'epic' },
     ],
     artifacts: [
       { id: ENTITY_IDS.ARTIFACT_VOID_TOUCHED_RELIC, weight: 1, rarity: 'legendary' },
@@ -348,11 +366,14 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     ],
     minerals: [
       { id: ENTITY_IDS.MINERAL_ABYSSAL_ORE, weight: 8, rarity: 3 },
+      { id: ENTITY_IDS.MINERAL_TRENCH_CRYSTAL, weight: 6, rarity: 3 },
     ],
     plants: [
       { id: ENTITY_IDS.PLANT_PRESSURE_FERN, weight: 10 },
       { id: ENTITY_IDS.PLANT_VOID_KELP, weight: 10 },
       { id: ENTITY_IDS.PLANT_THERMAL_VENT_COLONY, weight: 10 },
+      { id: ENTITY_IDS.PLANT_VOID_KELP_RARE, weight: 2, rarity: 'rare' },
+      { id: ENTITY_IDS.PLANT_THERMAL_VENT_COLONY_EPIC, weight: 1, rarity: 'epic' },
     ],
     artifacts: [
       { id: ENTITY_IDS.ARTIFACT_SUNKEN_TECH, weight: 6, rarity: 'epic' },

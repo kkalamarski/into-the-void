@@ -124,6 +124,64 @@ export const MINERAL_SEA_CRYSTAL_RARE: MineralDefinition = {
   rarity: 'rare',
 };
 
+// ===== PHASE 111 TIER III ADDITIONS =====
+
+export const MINERAL_TRENCH_CRYSTAL: MineralDefinition = {
+  id: 'mineral_trench_crystal',
+  displayName: 'Trench Crystal',
+  description:
+    'Pressure-formed crystal growing in deep trench walls. The crushing depth has forced its lattice into a configuration not achievable on the surface — and not entirely stable.',
+  entityClass: 'mineral',
+  biomes: ['deep_trenches'],
+  textureKey: 'mineral_trench_crystal',
+  color: 0x334466,
+  lootTableId: 'loot_mineral_trench_crystal',
+  miningYield: [
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 3, chance: 1.0 },
+    { itemId: 'reagent_bioluminescent_compound', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ],
+  requiredTier: 3,
+  respawnSeconds: 540,
+};
+
+export const MINERAL_ABYSSAL_ORE_RARE: MineralDefinition = {
+  id: 'mineral_abyssal_ore_rare',
+  displayName: 'Abyssal Ore (Rare)',
+  description:
+    'An abyssal ore vein with an unnatural blue luminescence. Deep-sea miners report hearing a low hum near large deposits that persists even through pressure suits.',
+  entityClass: 'mineral',
+  biomes: ['deep_trenches'],
+  textureKey: 'mineral_abyssal_ore',
+  color: 0x4466aa,
+  lootTableId: 'loot_mineral_abyssal_ore_rare',
+  miningYield: [
+    { itemId: 'world_crystal_fragment', minAmount: 2, maxAmount: 5, chance: 1.0 },
+    { itemId: 'reagent_bioluminescent_compound', minAmount: 1, maxAmount: 1, chance: 0.4 },
+  ],
+  requiredTier: 4,
+  respawnSeconds: 1080,
+  rarity: 'rare',
+};
+
+export const MINERAL_ABYSSAL_ORE_EPIC: MineralDefinition = {
+  id: 'mineral_abyssal_ore_epic',
+  displayName: 'Abyssal Ore (Epic)',
+  description:
+    'A massive abyssal ore deposit that pulses with visible energy. The rock face around it has been restructured into geometric patterns — this was not formed by geology alone.',
+  entityClass: 'mineral',
+  biomes: ['deep_trenches'],
+  textureKey: 'mineral_abyssal_ore',
+  color: 0x5588cc,
+  lootTableId: 'loot_mineral_abyssal_ore_epic',
+  miningYield: [
+    { itemId: 'world_crystal_fragment', minAmount: 3, maxAmount: 6, chance: 1.0 },
+    { itemId: 'reagent_bioluminescent_compound', minAmount: 1, maxAmount: 2, chance: 0.5 },
+  ],
+  requiredTier: 4,
+  respawnSeconds: 1620,
+  rarity: 'epic',
+};
+
 export const ALL_AQUATIC_MINERALS: readonly MineralDefinition[] = [
   MINERAL_CORAL_DEPOSIT,
   MINERAL_SEA_CRYSTAL,
@@ -134,4 +192,8 @@ export const ALL_AQUATIC_MINERALS: readonly MineralDefinition[] = [
   MINERAL_SEA_CRYSTAL_RARE,
   // Phase 111 Tier II additions
   MINERAL_PEARL_NODE_RARE,
+  // Phase 111 Tier III additions
+  MINERAL_TRENCH_CRYSTAL,
+  MINERAL_ABYSSAL_ORE_RARE,
+  MINERAL_ABYSSAL_ORE_EPIC,
 ];

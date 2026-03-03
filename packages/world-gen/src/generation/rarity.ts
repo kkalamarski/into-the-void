@@ -93,6 +93,8 @@ export function getRareBiomeMinerals(biome: string): string[] {
     petrified_expanse: ['mineral_mineralized_log_rare'],
     bioluminescent_depths: ['mineral_depth_quartz_rare'],
     kelp_forests: ['mineral_pearl_node_rare'],
+    frozen_expanse: ['mineral_permafrost_shard_rare'],
+    deep_trenches: ['mineral_abyssal_ore_rare'],
   };
 
   return biomeRareMinerals[biome] ?? [];
@@ -104,7 +106,11 @@ export function getRareBiomeMinerals(biome: string): string[] {
 export function getEpicBiomeMinerals(biome: string): string[] {
   const biomeEpicMinerals: Record<string, string[]> = {
     ancient_ruins: ['mineral_anomaly_crystal_epic'],
-    starfall_crater: ['mineral_cosmic_fragment_rare'], // Use rare as fallback for epic tier
+    crystal_caves: ['mineral_prismatic_crystal_epic'],
+    volcanic_ridge: ['mineral_volcanic_ore_epic'],
+    frozen_expanse: ['mineral_glacial_core_epic'],
+    deep_trenches: ['mineral_abyssal_ore_epic'],
+    starfall_crater: ['mineral_cosmic_fragment_epic'],
   };
 
   return biomeEpicMinerals[biome] ?? [];

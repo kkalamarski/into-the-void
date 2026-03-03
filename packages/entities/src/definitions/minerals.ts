@@ -328,6 +328,183 @@ export const MINERAL_MINERALIZED_LOG_RARE: MineralDefinition = {
   rarity: 'rare',
 };
 
+// ===== PHASE 111 TIER III ADDITIONS =====
+
+// -- crystal_caves --
+
+export const MINERAL_CAVE_GEODE: MineralDefinition = {
+  id: 'mineral_cave_geode',
+  displayName: 'Cave Geode',
+  description:
+    'Hollow crystalline formation with spectacular internal structure. Breaking one open reveals a micro-universe of interlocking crystal faces that catch light in ways that shouldn\'t be possible in a natural formation.',
+  entityClass: 'mineral',
+  biomes: ['crystal_caves'],
+  textureKey: 'mineral_cave_geode',
+  color: 0x9988bb,
+  lootTableId: 'loot_mineral_cave_geode',
+  miningYield: [
+    { itemId: 'world_crystal_fragment', minAmount: 1, maxAmount: 3, chance: 1.0 },
+    { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 1, chance: 0.25 },
+  ],
+  requiredTier: 3,
+  respawnSeconds: 540,
+};
+
+export const MINERAL_PRISMATIC_CRYSTAL_EPIC: MineralDefinition = {
+  id: 'mineral_prismatic_crystal_epic',
+  displayName: 'Prismatic Crystal (Epic)',
+  description:
+    'A towering prismatic crystal formation projecting light in directions that defy the cave\'s geometry. Mining parties report feeling observed while extracting these.',
+  entityClass: 'mineral',
+  biomes: ['crystal_caves'],
+  textureKey: 'mineral_prismatic_crystal',
+  color: 0xcc88ff,
+  lootTableId: 'loot_mineral_prismatic_crystal_epic',
+  miningYield: [
+    { itemId: 'world_crystal_fragment', minAmount: 3, maxAmount: 6, chance: 1.0 },
+    { itemId: 'reagent_crystalline_dust', minAmount: 1, maxAmount: 2, chance: 0.5 },
+  ],
+  requiredTier: 4,
+  respawnSeconds: 1620,
+  rarity: 'epic',
+};
+
+// -- volcanic_ridge --
+
+export const MINERAL_OBSIDIAN_VEIN: MineralDefinition = {
+  id: 'mineral_obsidian_vein',
+  displayName: 'Obsidian Vein',
+  description:
+    'Dense vein of volcanic glass running through basalt walls. The obsidian\'s edge is sharp enough to cut at a molecular level — handling requires extreme caution.',
+  entityClass: 'mineral',
+  biomes: ['volcanic_ridge'],
+  textureKey: 'mineral_obsidian_vein',
+  color: 0x222233,
+  lootTableId: 'loot_mineral_obsidian_vein',
+  miningYield: [
+    { itemId: 'world_volcanic_glass', minAmount: 1, maxAmount: 3, chance: 1.0 },
+    { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ],
+  requiredTier: 3,
+  respawnSeconds: 540,
+};
+
+export const MINERAL_VOLCANIC_ORE_EPIC: MineralDefinition = {
+  id: 'mineral_volcanic_ore_epic',
+  displayName: 'Volcanic Ore (Epic)',
+  description:
+    'A volcanic ore deposit still glowing with residual magma heat. The surrounding rock is too hot to touch, and the ore itself periodically emits small gas jets.',
+  entityClass: 'mineral',
+  biomes: ['volcanic_ridge'],
+  textureKey: 'mineral_volcanic_ore',
+  color: 0xff6622,
+  lootTableId: 'loot_mineral_volcanic_ore_epic',
+  miningYield: [
+    { itemId: 'world_volcanic_glass', minAmount: 3, maxAmount: 6, chance: 1.0 },
+    { itemId: 'reagent_thermal_compound', minAmount: 1, maxAmount: 2, chance: 0.5 },
+  ],
+  requiredTier: 4,
+  respawnSeconds: 1620,
+  rarity: 'epic',
+};
+
+// -- frozen_expanse --
+
+export const MINERAL_GLACIAL_CORE: MineralDefinition = {
+  id: 'mineral_glacial_core',
+  displayName: 'Glacial Core',
+  description:
+    'Dense mineral formation exposed by glacial retreat. Ancient ice still clings to its surface, and the internal structure contains trapped gas bubbles from an atmosphere thousands of years old.',
+  entityClass: 'mineral',
+  biomes: ['frozen_expanse'],
+  textureKey: 'mineral_glacial_core',
+  color: 0x88aabb,
+  lootTableId: 'loot_mineral_glacial_core',
+  miningYield: [
+    { itemId: 'world_frozen_shard', minAmount: 1, maxAmount: 3, chance: 1.0 },
+    { itemId: 'reagent_frost_essence', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ],
+  requiredTier: 3,
+  respawnSeconds: 540,
+};
+
+export const MINERAL_PERMAFROST_SHARD_RARE: MineralDefinition = {
+  id: 'mineral_permafrost_shard_rare',
+  displayName: 'Permafrost Shard (Rare)',
+  description:
+    'A permafrost shard exhibiting unusual thermal properties — it doesn\'t melt. Even under direct heating, the crystal maintains its frozen state, suggesting some mechanism beyond simple temperature.',
+  entityClass: 'mineral',
+  biomes: ['frozen_expanse'],
+  textureKey: 'mineral_permafrost_shard',
+  color: 0x66ccee,
+  lootTableId: 'loot_mineral_permafrost_shard_rare',
+  miningYield: [
+    { itemId: 'world_frozen_shard', minAmount: 2, maxAmount: 5, chance: 1.0 },
+    { itemId: 'reagent_frost_essence', minAmount: 1, maxAmount: 1, chance: 0.4 },
+  ],
+  requiredTier: 4,
+  respawnSeconds: 1080,
+  rarity: 'rare',
+};
+
+export const MINERAL_GLACIAL_CORE_EPIC: MineralDefinition = {
+  id: 'mineral_glacial_core_epic',
+  displayName: 'Glacial Core (Epic)',
+  description:
+    'A glacial core formation of staggering size, shot through with veins of unknown metal. The ice coating it contains organisms that appear to be alive — frozen mid-movement for millennia.',
+  entityClass: 'mineral',
+  biomes: ['frozen_expanse'],
+  textureKey: 'mineral_glacial_core',
+  color: 0x44bbff,
+  lootTableId: 'loot_mineral_glacial_core_epic',
+  miningYield: [
+    { itemId: 'world_frozen_shard', minAmount: 3, maxAmount: 6, chance: 1.0 },
+    { itemId: 'reagent_frost_essence', minAmount: 1, maxAmount: 2, chance: 0.5 },
+  ],
+  requiredTier: 4,
+  respawnSeconds: 1620,
+  rarity: 'epic',
+};
+
+// -- starfall_crater --
+
+export const MINERAL_IMPACT_GLASS: MineralDefinition = {
+  id: 'mineral_impact_glass',
+  displayName: 'Impact Glass',
+  description:
+    'Fused mineral created by the energy of the starfall impact. The glass contains microscopic structures that don\'t match any known crystallography — possibly extraplanetary in origin.',
+  entityClass: 'mineral',
+  biomes: ['starfall_crater'],
+  textureKey: 'mineral_impact_glass',
+  color: 0x778866,
+  lootTableId: 'loot_mineral_impact_glass',
+  miningYield: [
+    { itemId: 'world_crater_dust', minAmount: 1, maxAmount: 3, chance: 1.0 },
+    { itemId: 'reagent_quantum_residue', minAmount: 1, maxAmount: 1, chance: 0.2 },
+  ],
+  requiredTier: 3,
+  respawnSeconds: 540,
+};
+
+export const MINERAL_COSMIC_FRAGMENT_EPIC: MineralDefinition = {
+  id: 'mineral_cosmic_fragment_epic',
+  displayName: 'Cosmic Fragment (Epic)',
+  description:
+    'A cosmic fragment that warps the air around it in a visible shimmer. Instruments placed nearby drift in their readings, as though the fragment exists at a slightly different calibration of reality.',
+  entityClass: 'mineral',
+  biomes: ['starfall_crater'],
+  textureKey: 'mineral_cosmic_fragment',
+  color: 0xaa88dd,
+  lootTableId: 'loot_mineral_cosmic_fragment_epic',
+  miningYield: [
+    { itemId: 'world_meteor_fragment', minAmount: 2, maxAmount: 4, chance: 1.0 },
+    { itemId: 'reagent_anomaly_catalyst', minAmount: 1, maxAmount: 1, chance: 0.45 },
+  ],
+  requiredTier: 4,
+  respawnSeconds: 1620,
+  rarity: 'epic',
+};
+
 // ===== RARE VARIANTS =====
 // Higher yield (1.5x), slower respawn (2x), higher tool requirements
 
@@ -499,4 +676,14 @@ export const ALL_MINERALS: readonly MineralDefinition[] = [
   MINERAL_CORROSIVE_DEPOSIT_RARE,
   MINERAL_STONE_HEART,
   MINERAL_MINERALIZED_LOG_RARE,
+  // Phase 111 Tier III additions
+  MINERAL_CAVE_GEODE,
+  MINERAL_PRISMATIC_CRYSTAL_EPIC,
+  MINERAL_OBSIDIAN_VEIN,
+  MINERAL_VOLCANIC_ORE_EPIC,
+  MINERAL_GLACIAL_CORE,
+  MINERAL_PERMAFROST_SHARD_RARE,
+  MINERAL_GLACIAL_CORE_EPIC,
+  MINERAL_IMPACT_GLASS,
+  MINERAL_COSMIC_FRAGMENT_EPIC,
 ];
