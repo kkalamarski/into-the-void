@@ -119,13 +119,67 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmapper) | | |
+| FNDN-01 | Phase 115 | Pending |
+| FNDN-02 | Phase 115 | Pending |
+| FNDN-03 | Phase 115 | Pending |
+| FNDN-04 | Phase 115 | Pending |
+| FNDN-05 | Phase 115 | Pending |
+| CAPS-01 | Phase 116 | Pending |
+| CAPS-02 | Phase 116 | Pending |
+| CAPS-03 | Phase 116 | Pending |
+| CAPS-04 | Phase 116 | Pending |
+| DMGT-01 | Phase 117 | Pending |
+| DMGT-02 | Phase 117 | Pending |
+| DMGT-03 | Phase 117 | Pending |
+| DMGT-04 | Phase 117 | Pending |
+| DMGT-05 | Phase 117 | Pending |
+| DMGT-06 | Phase 117 | Pending |
+| DMGT-07 | Phase 117 | Pending |
+| ABIL-01 | Phase 118 | Pending |
+| ABIL-02 | Phase 118 | Pending |
+| ABIL-03 | Phase 118 | Pending |
+| ABIL-04 | Phase 118 | Pending |
+| ABIL-05 | Phase 118 | Pending |
+| ABIL-06 | Phase 118 | Pending |
+| ABIL-07 | Phase 118 | Pending |
+| ABIL-08 | Phase 118 | Pending |
+| ABIL-09 | Phase 118 | Pending |
+| ABIL-10 | Phase 118 | Pending |
+| ABIL-11 | Phase 118 | Pending |
+| ABIL-12 | Phase 118 | Pending |
+| ABIL-13 | Phase 118 | Pending |
+| CRAI-01 | Phase 119 | Pending |
+| CRAI-02 | Phase 119 | Pending |
+| CRAI-03 | Phase 119 | Pending |
+| CRAI-04 | Phase 119 | Pending |
+| CRAI-05 | Phase 119 | Pending |
+| CRAI-06 | Phase 119 | Pending |
+| CRAI-07 | Phase 119 | Pending |
+| HAZD-01 | Phase 120 | Pending |
+| HAZD-02 | Phase 120 | Pending |
+| HAZD-03 | Phase 120 | Pending |
+| HAZD-04 | Phase 120 | Pending |
+| HAZD-05 | Phase 120 | Pending |
+| HAZD-06 | Phase 120 | Pending |
+| HAZD-07 | Phase 120 | Pending |
+| HAZD-08 | Phase 120 | Pending |
+| HAZD-09 | Phase 120 | Pending |
+| HAZD-10 | Phase 120 | Pending |
+| AUTO-01 | Phase 121 | Pending |
+| AUTO-02 | Phase 121 | Pending |
+| AUTO-03 | Phase 121 | Pending |
+| AUTO-04 | Phase 121 | Pending |
+| AUTO-05 | Phase 121 | Pending |
+| AUTO-06 | Phase 121 | Pending |
+| AUTO-07 | Phase 121 | Pending |
+| AUTO-08 | Phase 121 | Pending |
+| AUTO-09 | Phase 121 | Pending |
 
 **Coverage:**
 - v1.24 requirements: 53 total
-- Mapped to phases: 0
-- Unmapped: 53
+- Mapped to phases: 53
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-03*
-*Last updated: 2026-03-03 after initial definition*
+*Last updated: 2026-03-03 — traceability populated after roadmap creation (Phases 115-121)*

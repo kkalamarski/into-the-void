@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.24
 milestone_name: Balance & Automation
-status: defining_requirements
+status: ready_to_plan
 last_updated: "2026-03-03T12:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 7
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -18,14 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Defining requirements for v1.24 Balance & Automation
+**Current focus:** Phase 115 - Shared Type Foundation (v1.24 Balance & Automation)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-03 — Milestone v1.24 started
+Phase: 115 of 121 (Shared Type Foundation)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-03-03 — v1.24 roadmap created (Phases 115-121); v1.23 shipped at Phase 114
+
+Progress: [░░░░░░░░░░] 0% (v1.24)
 
 ## Performance Metrics
 
@@ -34,24 +36,32 @@ Last activity: 2026-03-03 — Milestone v1.24 started
 - Average duration: ~3 min per plan
 - Total execution time: ~14.5 hours across 23 milestones
 
+**By Phase:**
+
+| Phase | Plans | Status |
+|-------|-------|--------|
+| 115. Shared Type Foundation | TBD | Not started |
+| 116. Stat Caps | TBD | Not started |
+| 117. Damage Types and Creature Resistances | TBD | Not started |
+| 118. Ability Rebalance | TBD | Not started |
+| 119. Creature AI Upgrades | TBD | Not started |
+| 120. Biome Hazard System | TBD | Not started |
+| 121. Automation Tech Tree | TBD | Not started |
+
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-
 Carried from v1.23:
-- [Phase 109]: FACTION-IDENTITY.md locked at packages/items/FACTION-IDENTITY.md -- single source of truth for all faction gear
+- [Phase 109]: FACTION-IDENTITY.md locked at packages/items/FACTION-IDENTITY.md — single source of truth for all faction gear
 - [Phase 109]: Scavenger archetype added to ARCHETYPE_PROFILES (vigor 30, recovery 25, perception 25, durability 12, resilience 8)
 - [v1.23]: Four-file atomicity rule for creatures: definition + ENTITY_IDS + BIOME_SPAWN_CONFIGS + CREATURE_LOOT_TABLES
 
 New for v1.24:
-- [Balance audit]: Plasma Burst + Basic Strike is dominant rotation for all PvE content — must be broken by situational niches
-- [Balance audit]: Defensive abilities are mathematically never worth casting — need real damage reduction mechanics
-- [Balance audit]: Energy Barrier buffs Resilience which has no mechanical effect — Resilience and Recovery stats need activation
-- [Balance audit]: Stat budget at T4 Legendary (1,694) makes equipment dwarf base stats by 3.7x — stat caps needed
-- [Balance audit]: No credit sinks exist — automation deployments will serve as primary sink
-- [Balance audit]: Herbivore farming is zero-risk XP/loot — creature behaviors need tactical variety
+- [v1.24 Roadmap]: Phase 121 (Automation) is independent of combat phases — can run in parallel with Phases 119-120 after Phase 115 types land
+- [v1.24 Roadmap]: Resistance hard cap at 70% (0.3x floor) — no creature immunity; no player resistance stats (WoW lesson)
+- [v1.24 Research]: AutomationService income/sink balance sheet is a mandatory design artifact (maintenance cost >= 60% of output per tier) before any automation code
+- [v1.24 Research]: HazardService must use synchronous Map<playerId, HazardState> read in tick — async per-player lookups would blow 200ms tick budget
 
 ### Pending Todos
 
@@ -59,16 +69,16 @@ None.
 
 ### Blockers/Concerns
 
-- Damage type system touches every creature definition (100+ entities) — needs careful migration strategy
-- Biome hazards require new server tick system for environmental damage
-- Automation (extractors/beacons) is a new item deployment paradigm — no precedent in codebase
+- [Phase 116]: Stat soft cap value (200) must be validated against BIS gear simulation before implementation — cap must not invalidate existing legendary items
+- [Phase 120]: Hazard protection gear for cold, heat, and pressure biomes needs lore validation against world-bible.md faction gear sections during planning
+- [Phase 121]: Automation income/sink balance sheet requires credit economy simulation before implementation begins
 
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Defining requirements for v1.24
+Stopped at: v1.24 roadmap written — Phases 115-121 defined, all files updated
 Resume file: None
-Next action: Scope requirements, then create roadmap
+Next action: /gsd:plan-phase 115
 
 ---
-*Last updated: 2026-03-03 — Milestone v1.24 started*
+*Last updated: 2026-03-03 — v1.24 roadmap created*

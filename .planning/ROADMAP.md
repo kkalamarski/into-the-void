@@ -25,7 +25,8 @@
 - ✅ **v1.20 World Scale & Action Bar** - Phases 94-98 (shipped 2026-02-26)
 - ✅ **v1.21 UI Polish & Audio** - Phases 99-102 (shipped 2026-02-26)
 - ✅ **v1.22 In-Game Chat** - Phases 103-107 (shipped 2026-02-26)
-- 🚧 **v1.23 Content Expansion & Faction Gear** - Phases 108-114 (in progress)
+- ✅ **v1.23 Content Expansion & Faction Gear** - Phases 108-114 (shipped 2026-03-03)
+- 🚧 **v1.24 Balance & Automation** - Phases 115-121 (in progress)
 
 ## Phases
 
@@ -47,17 +48,30 @@
 
 </details>
 
-### 🚧 v1.23 Content Expansion & Faction Gear (In Progress)
+<details>
+<summary>✅ v1.23 Content Expansion & Faction Gear (Phases 108-114) - SHIPPED 2026-03-03</summary>
 
-**Milestone Goal:** Major content expansion filling all biome entity gaps and adding faction-specific equipment across all tiers — every biome reaches minimum population targets, and Verdant, Helix, Nexus, and Unaffiliated each have a distinct gear line.
+- [x] **Phase 108: Entity Validation Infrastructure** - Test suite gating all subsequent content authoring (completed 2026-03-02)
+- [x] **Phase 109: Faction Identity Design Gate** - Design artifact locking stat archetypes, ability matrices, naming conventions (completed 2026-03-02)
+- [x] **Phase 110: Biome Creature Population** - All 16 biomes reach 4-6 creatures with behavioral variety (completed 2026-03-02)
+- [x] **Phase 111: Biome Plants, Minerals, and Artifacts** - All 16 biomes reach 3-4 plants, 2-3 minerals, 1-2 artifacts (completed 2026-03-03)
+- [x] **Phase 112: Faction Suits** - Verdant, Helix, Nexus, Unaffiliated suit lines across all tiers (completed 2026-03-03)
+- [x] **Phase 113: Faction Modules and Tools** - Bio/sensor/armor module lines and faction-specialized tool lines (completed 2026-03-03)
+- [x] **Phase 114: Integration and Lore Verification** - All new content verified in registries and cross-checked against lore (completed 2026-03-03)
 
-- [x] **Phase 108: Entity Validation Infrastructure** - Test suite gating all subsequent content authoring, preventing silent spawn and loot failures
-- [x] **Phase 109: Faction Identity Design Gate** - Locked design artifact defining stat archetypes, ability matrices, naming conventions, and color anchors per faction before any item definition is written (completed 2026-03-02)
-- [x] **Phase 110: Biome Creature Population** - All 16 biomes reach 4-6 creatures with behavioral variety, loot tables, and spawn configs fully wired (completed 2026-03-02)
-- [x] **Phase 111: Biome Plants, Minerals, and Artifacts** - All 16 biomes reach 3-4 plants, 2-3 minerals with rarity variants, and 1-2 artifacts; crystalline_wastes hotspot resolved (completed 2026-03-03)
-- [x] **Phase 112: Faction Suits** - Verdant, Helix, Nexus, and Unaffiliated suit lines across all tiers (Common through Legendary) using generateSuitStats() throughout (completed 2026-03-03)
-- [x] **Phase 113: Faction Modules and Tools** - Bio/sensor/armor module lines and faction-specialized tool lines completing the gear set for all four factions (completed 2026-03-03)
-- [x] **Phase 114: Integration and Lore Verification** - All new entities and items verified in definition indexes with ENTITY_IDS/ITEM_IDS constants and cross-checked against lore (completed 2026-03-03)
+</details>
+
+### 🚧 v1.24 Balance & Automation (In Progress)
+
+**Milestone Goal:** Introduce situational combat depth (damage types, biome hazards, creature AI upgrades), rebalance abilities so defensive/utility skills have purpose, and build the automation progression arc from manual gathering to planetary extractors.
+
+- [ ] **Phase 115: Shared Type Foundation** - DamageType union, DamageResistances, shield/damage_reduction AbilityEffect variants, DeployableEntity interface, AiTickResult behavior signals
+- [ ] **Phase 116: Stat Caps** - Soft cap at 200 with diminishing returns, hard cap at 400, stats panel indicator
+- [ ] **Phase 117: Damage Types and Creature Resistances** - DamageType threaded through calculateDamage(), resistances on all 83+ creatures, color-coded floating numbers
+- [ ] **Phase 118: Ability Rebalance** - Plasma Burst nerfed, defensive abilities overhauled with real shield/DR mechanics, all 13 rebalanced abilities live
+- [ ] **Phase 119: Creature AI Upgrades** - Stampede, Pack Call, Ambush, Frenzy behaviors with zone-level pre-processing
+- [ ] **Phase 120: Biome Hazard System** - HazardService with per-player state cache, HP drain, stat debuffs, gear counters, HUD indicator
+- [ ] **Phase 121: Automation Tech Tree** - T2 extractors through T5 refinery, AutomationService, deployables DB table, automation panel HUD
 
 ## Phase Details
 
@@ -217,14 +231,97 @@
   3. Running both `nx run entities:test` and `nx run items:test` passes clean — the validation infrastructure from Phase 108 confirms zero orphans across all new content
   4. A manual lore review against lore/world-bible.md finds no entity name, faction ability, or item description that contradicts established faction identity or biome ecology
 **Plans**: 3 plans
-  - [ ] 114-01-PLAN.md -- Item ID constants test + full validation suite run (INTG-01, INTG-02)
-  - [ ] 114-02-PLAN.md -- Entity lore audit and world-bible bestiary expansion (INTG-03)
-  - [ ] 114-03-PLAN.md -- Faction gear lore audit and world-bible equipment catalog (INTG-03)
+  - [x] 114-01-PLAN.md -- Item ID constants test + full validation suite run (INTG-01, INTG-02)
+  - [x] 114-02-PLAN.md -- Entity lore audit and world-bible bestiary expansion (INTG-03)
+  - [x] 114-03-PLAN.md -- Faction gear lore audit and world-bible equipment catalog (INTG-03)
+
+### Phase 115: Shared Type Foundation
+**Goal**: All type contracts required by v1.24 systems are in place across shared-types and game-logic — DamageType union, DamageResistances on CreatureDefinition, shield/damage_reduction AbilityEffect variants, DeployableEntity interface, and AiTickResult behavior signal fields — with no behavioral changes yet but TypeScript compile confirming all new interfaces are wired as required fields
+**Depends on**: Phase 114
+**Requirements**: FNDN-01, FNDN-02, FNDN-03, FNDN-04, FNDN-05
+**Success Criteria** (what must be TRUE):
+  1. `DamageType` union (Thermal/Cryo/Bio/Kinetic) is exported from shared-types and importable in game-logic without TypeScript errors
+  2. A CreatureDefinition without a `resistances` field causes a TypeScript compile error — the field is required, not optional
+  3. `shield` and `damage_reduction` variants exist in the AbilityEffect discriminated union and can be authored in ability definitions without type errors
+  4. A DeployableEntity interface is exported from shared-types and a `DeployableEntity` value can be constructed in a test file without type errors
+  5. AiTickResult has stampede, packCall, ambush, and frenzied signal fields and a complete AiTickResult value can be constructed referencing all four fields
+**Plans**: TBD
+
+### Phase 116: Stat Caps
+**Goal**: Stat diminishing returns are enforced in computeCharStats() — every stat above 200 counts as 0.5 points toward the effective value, no stat can exceed 400 effective points, and players can see when a stat has crossed the soft cap threshold in the stats panel
+**Depends on**: Phase 115
+**Requirements**: CAPS-01, CAPS-02, CAPS-03, CAPS-04
+**Success Criteria** (what must be TRUE):
+  1. A character with 250 raw Power (from gear + buffs) has an effective Power of 225 — the diminishing returns curve is applied and verifiable in the stats panel
+  2. No stat can be driven above 400 effective value regardless of gear or buffs — equipping additional stat-boosting items past the hard cap produces no change in the stats panel
+  3. The stats panel shows a visual indicator (color change or label) on any stat that has exceeded 200 — a player can tell at a glance which stats are in diminishing returns territory
+  4. applyDiminishingReturns() is a pure function in packages/game-logic and a unit test verifies the DR curve at values 100, 200, 250, 300, 400, and 500 raw input
+**Plans**: TBD
+
+### Phase 117: Damage Types and Creature Resistances
+**Goal**: The damage pipeline applies resistance multipliers — every auto-attack and ability-triggered hit uses the target creature's resistance profile for its damage type, all 83+ creatures have explicit resistance values matching their biome theme, and players can see damage type information in the combat log and floating numbers
+**Depends on**: Phase 115
+**Requirements**: DMGT-01, DMGT-02, DMGT-03, DMGT-04, DMGT-05, DMGT-06, DMGT-07
+**Success Criteria** (what must be TRUE):
+  1. Attacking a Frozen Expanse creature with a Thermal-typed hit deals visibly more damage than an identical Kinetic-typed hit — the resistance multiplier is applied in calculateDamage() and observable in floating numbers
+  2. No creature takes less than 30% of base damage from any damage type — the 70% resistance cap prevents hard counters and the floor is enforceable in unit tests
+  3. Combat log entries show the damage type label (e.g., "[Thermal] 34") alongside the numeric value
+  4. Floating damage numbers are colored by type — Thermal=orange, Cryo=cyan, Bio=green, Kinetic=white — distinguishable without reading the combat log
+  5. At least one gear item per damage type exists that boosts that type's output via a damage_type_bonus effect — players have an itemization path to specialize
+**Plans**: TBD
+
+### Phase 118: Ability Rebalance
+**Goal**: Plasma Burst no longer dominates the offensive meta, defensive abilities have real HP shield absorb and flat damage reduction effects that players can observe in combat, and each rebalanced offensive ability has a situational niche tied to creature type, behavior state, or damage type
+**Depends on**: Phase 116, Phase 117
+**Requirements**: ABIL-01, ABIL-02, ABIL-03, ABIL-04, ABIL-05, ABIL-06, ABIL-07, ABIL-08, ABIL-09, ABIL-10, ABIL-11, ABIL-12, ABIL-13
+**Success Criteria** (what must be TRUE):
+  1. Plasma Burst deals 28 base damage with a +50% bonus only against targets above 80% HP — the tooltip reflects this, and a player testing on a low-HP target sees the reduced effective damage
+  2. Emergency Shield absorbs up to 80 incoming damage within 8 seconds then expires — a player can take hits during the window and observe the shield bar depleting rather than their HP dropping
+  3. Fortify Systems grants 15% flat damage reduction for 10 seconds — a player with Fortify active takes visibly fewer HP per hit than without it, and the math is verifiable in the combat log
+  4. Thermal Lance hitting a Frozen Expanse creature deals more damage than hitting a Volcanic Ridge creature — the damage type bonus from Phase 117 is observable when using a type-specialized ability
+  5. Energy Barrier grants immunity to biome hazard effects for 20 seconds — a player in a hazardous biome who activates Energy Barrier does not receive HP drain or stat debuffs during the duration
+**Plans**: TBD
+
+### Phase 119: Creature AI Upgrades
+**Goal**: Each creature behavior archetype has one new meaningful behavior — herbivores trigger Stampede when 3+ flee simultaneously, omnivores have a 30% chance to Pack Call nearby allies when provoked, predators deal 2x damage on first Ambush strike, and maniacs enter Frenzy below 30% HP doubling attack speed
+**Depends on**: Phase 118
+**Requirements**: CRAI-01, CRAI-02, CRAI-03, CRAI-04, CRAI-05, CRAI-06, CRAI-07
+**Success Criteria** (what must be TRUE):
+  1. Provoking 3+ herbivores simultaneously causes a Stampede — nearby players in the path receive kinetic damage and see the herd movement, not individual flee animations
+  2. Attacking an omnivore in a zone with other nearby omnivores triggers Pack Call in approximately 1 in 3 encounters — additional creatures join the fight without being newly spawned
+  3. A predator that aggros from stealth deals 2x damage on its first attack — a player with Perception above 150 sees the predator before aggro and avoids the doubled first hit
+  4. A maniac below 30% HP visibly changes color (Frenzy overlay) and attacks noticeably faster — the behavior change is observable without reading tooltips
+  5. A creature that dies while in Frenzy state does not leave orphaned state data — running for 10 minutes in a zone with maniacs does not cause server memory growth from Frenzy Map leaks
+**Plans**: TBD
+
+### Phase 120: Biome Hazard System
+**Goal**: Hazardous biomes drain HP and apply stat debuffs to players without the correct protective gear, hazard protection gear is available in faction trader inventories before any hazard tick is enabled, and players have a HUD indicator showing what hazard is active and how protected they are
+**Depends on**: Phase 117
+**Requirements**: HAZD-01, HAZD-02, HAZD-03, HAZD-04, HAZD-05, HAZD-06, HAZD-07, HAZD-08, HAZD-09, HAZD-10
+**Success Criteria** (what must be TRUE):
+  1. Entering a Tier III hazardous biome without protection gear causes the player's HP to visibly drop at a rate consistent with 8% base HP per tick — a player with no protection survives approximately 30-45 seconds
+  2. Equipping the biome-appropriate protective gear stops the HP drain entirely — a player with correct gear can remain in the hazard zone indefinitely without losing HP
+  3. The HUD shows an active hazard warning icon and a progress bar indicating current protection level — players know what hazard is active without consulting external documentation
+  4. Entering a faction hub zone while in a hazardous state immediately removes all hazard debuffs — hub zones are completely exempt from hazard processing
+  5. A player entering a hazardous biome for the first time has a 3-second grace period before the first HP drain tick — they are not instantly punished upon zone entry
+**Plans**: TBD
+
+### Phase 121: Automation Tech Tree
+**Goal**: Players can deploy T2 extractors through T4 planetary extractors and T5 refineries, all automation structures have recurring maintenance costs that prevent runaway credit inflation, and the client has an automation panel for deploying, collecting, and refueling structures
+**Depends on**: Phase 115
+**Requirements**: AUTO-01, AUTO-02, AUTO-03, AUTO-04, AUTO-05, AUTO-06, AUTO-07, AUTO-08, AUTO-09
+**Success Criteria** (what must be TRUE):
+  1. A player places a T2 extractor on a resource node and returns 5 minutes later to find accumulated resources available for collection — passive gathering worked without the player being present
+  2. An extractor with no fuel/maintenance credits remaining stops accumulating resources — the maintenance cost sink is enforced and a depleted extractor produces nothing
+  3. The automation panel in the HUD shows all deployed structures with their status (active, depleted, degraded) and a Collect button that transfers accumulated items to inventory
+  4. A T5 refinery accepts 10 common resources and produces 1 rare resource after 30 minutes — the transmutation recipe completes and the output is collectable
+  5. The income/sink balance sheet documenting maintenance cost >= 60% of hourly output value per tier exists as a committed design artifact before any automation server code is written
+**Plans**: TBD
 
 ## Progress
 
-**Execution Order:** 108 → 109 → 110 → 111 → 112 → 113 → 114
-(Phases 110 and 111 are logically independent and can run in parallel once Phase 108 is complete)
+**Execution Order:** 115 → 116 → 117 → 118 → 119 → 120 → 121
+(Phases 119 and 120 can run in parallel after Phase 118 is complete. Phase 121 can run in parallel with Phases 119-120 after Phase 115 is complete.)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -237,10 +334,17 @@
 | 109. Faction Identity Design Gate | 2/2 | Complete | 2026-03-02 |
 | 110. Biome Creature Population | 4/4 | Complete | 2026-03-02 |
 | 111. Biome Plants, Minerals, and Artifacts | 4/4 | Complete | 2026-03-03 |
-| 112. Faction Suits | 2/2 | Complete    | 2026-03-03 |
-| 113. Faction Modules and Tools | 0/TBD | Complete    | 2026-03-03 |
-| 114. Integration and Lore Verification | 3/3 | Complete    | 2026-03-03 |
+| 112. Faction Suits | 2/2 | Complete | 2026-03-03 |
+| 113. Faction Modules and Tools | 0/TBD | Complete | 2026-03-03 |
+| 114. Integration and Lore Verification | 3/3 | Complete | 2026-03-03 |
+| 115. Shared Type Foundation | 0/TBD | Not started | - |
+| 116. Stat Caps | 0/TBD | Not started | - |
+| 117. Damage Types and Creature Resistances | 0/TBD | Not started | - |
+| 118. Ability Rebalance | 0/TBD | Not started | - |
+| 119. Creature AI Upgrades | 0/TBD | Not started | - |
+| 120. Biome Hazard System | 0/TBD | Not started | - |
+| 121. Automation Tech Tree | 0/TBD | Not started | - |
 
 ---
 
-*Last updated: 2026-03-03 - Phase 111 complete (all 16 biomes at 3-4 plants, 2-3 minerals with rarity variants, 1-2 artifacts; crystalline_wastes Singing Fields spotlight; void_rift exotic completion)*
+*Last updated: 2026-03-03 - v1.24 roadmap created (Phases 115-121)*
