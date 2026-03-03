@@ -1,3 +1,5 @@
+import type { DamageType } from '@into-the-void/shared-types';
+
 /**
  * Item categories - lore-mandated 6 categories
  * NOTE: Different from shared-types ItemCategory which has 7 categories
@@ -43,7 +45,8 @@ export type ItemEffect =
   | { readonly type: 'sensor'; readonly detectionRange: number }
   | { readonly type: 'power_core'; readonly energyCapacity: number; readonly rechargeRate: number }
   | { readonly type: 'mobility'; readonly jumpHeight: number }
-  | { readonly type: 'stats'; readonly durability?: number; readonly toughness?: number; readonly power?: number; readonly haste?: number; readonly vigor?: number; readonly recovery?: number; readonly perception?: number; readonly resilience?: number; readonly yieldBonus?: number; readonly gatherSpeed?: number };
+  | { readonly type: 'stats'; readonly durability?: number; readonly toughness?: number; readonly power?: number; readonly haste?: number; readonly vigor?: number; readonly recovery?: number; readonly perception?: number; readonly resilience?: number; readonly yieldBonus?: number; readonly gatherSpeed?: number }
+  | { readonly type: 'damage_type_bonus'; readonly damageType: DamageType; readonly bonusPercent: number };
 
 /**
  * Tool specialization types

@@ -1,3 +1,5 @@
+import type { DamageType } from './combat';
+
 /**
  * Ability categories - determines targeting and effect behavior
  */
@@ -7,7 +9,7 @@ export type AbilityCategory = 'offensive' | 'defensive' | 'utility';
  * Ability effect types - discriminated union for type-safe handling
  */
 export type AbilityEffect =
-  | { readonly type: 'damage'; readonly baseDamage: number; readonly scaling: number }
+  | { readonly type: 'damage'; readonly baseDamage: number; readonly scaling: number; readonly damageType?: DamageType }
   | { readonly type: 'heal'; readonly baseHeal: number; readonly scaling: number }
   | { readonly type: 'buff'; readonly stat: string; readonly amount: number; readonly duration: number }
   | { readonly type: 'debuff'; readonly stat: string; readonly amount: number; readonly duration: number }
