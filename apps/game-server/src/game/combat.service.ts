@@ -7,6 +7,7 @@ import { InventoryService } from './inventory.service';
 import { EntityService } from './entity.service';
 import { AbilityService } from './ability.service';
 import { Creature, ItemEntity, isHubZone } from '@into-the-void/shared-types';
+import type { DamageType } from '@into-the-void/shared-types';
 import {
   calculateDamage,
   calculateAttackInterval,
@@ -36,6 +37,7 @@ interface CombatDamageResult {
   defenderMaxHealth: number;
   critical: boolean;
   killed: boolean;
+  damageType?: DamageType;
   groundItems?: ItemEntity[];
   defenderPosition?: { x: number; y: number };
 }
@@ -218,6 +220,8 @@ export class CombatService {
     const playerStats = computeCharStats(player.level, playerEquipment, 'player', activeBuffs);
 
     // Calculate damage: Creature Power vs Player Toughness
+    // Creature auto-attacks default to Kinetic damage type
+    // Players have no resistance stats (per REQUIREMENTS.md Out-of-Scope), so defenderResistances is omitted
     const damageResult = calculateDamage({
       baseDamage: 10,
       attackerLevel: creature.level,
@@ -226,6 +230,7 @@ export class CombatService {
       defenderStats: playerStats,
       weaponDamage: creature.level * 2, // Creature "weapon" scales with level
       armorReduction: playerStats.toughness, // Player toughness as armor
+      damageType: 'Kinetic' as const,
     });
 
     // Apply damage to player
@@ -279,6 +284,7 @@ export class CombatService {
       defenderMaxHealth: player.maxHealth,
       critical: damageResult.critical,
       killed,
+      damageType: 'Kinetic' as const,
       defenderPosition: { x: player.position.x, y: player.position.y },
     };
   }

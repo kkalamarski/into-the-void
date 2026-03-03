@@ -9,6 +9,7 @@ import { EntityService } from './entity.service';
 import { CombatService } from './combat.service';
 import { DatabaseService } from '../database/database.service';
 import { Creature, ItemEntity, isHubZone } from '@into-the-void/shared-types';
+import type { DamageType } from '@into-the-void/shared-types';
 import { AbilityRegistry, canInteract, calculateDamage, computeCharStats, rollLootTable, getCreatureLoot } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
 import { EntityRegistry } from '@into-the-void/entities';
@@ -552,6 +553,13 @@ export class AbilityService {
         if (!entity || entity.type !== 'creature') continue;
         const target = entity as Creature;
 
+        // Look up creature definition for resistances
+        const creatureDef = EntityRegistry.get(target.speciesId) as CreatureDefinition | undefined;
+        const defenderResistances = creatureDef?.resistances;
+
+        // Read ability damage type
+        const abilityDamageType = (effect as { type: 'damage'; baseDamage: number; scaling: number; damageType?: DamageType }).damageType;
+
         // Calculate damage
         const inv = this.inventoryService.getInventory(player.id);
         const playerEquipment = inv?.equipment as EquipmentJson ?? { modules: [] };
@@ -561,6 +569,24 @@ export class AbilityService {
         const emptyEquipment: EquipmentJson = { modules: [] };
         const creatureStats = computeCharStats(target.level, emptyEquipment, 'creature');
 
+        // Read damage_type_bonus from equipped gear for this damage type
+        let damageBonusMultiplier = 1.0;
+        if (abilityDamageType) {
+          const equippedSlots = [
+            inv?.equipment?.exosuit,
+            inv?.equipment?.tool,
+            ...(inv?.equipment?.modules ?? []),
+          ].filter(Boolean);
+          for (const equipped of equippedSlots) {
+            const itemDef = ItemRegistry.get(equipped!.itemId);
+            for (const effectDef of itemDef?.effects ?? []) {
+              if (effectDef.effect.type === 'damage_type_bonus' && effectDef.effect.damageType === abilityDamageType) {
+                damageBonusMultiplier += effectDef.effect.bonusPercent / 100;
+              }
+            }
+          }
+        }
+
         const damageResult = calculateDamage({
           baseDamage: effect.baseDamage,
           attackerLevel: player.level,
@@ -569,6 +595,9 @@ export class AbilityService {
           defenderStats: creatureStats,
           weaponDamage: effect.baseDamage * effect.scaling,
           armorReduction: creatureStats.toughness * 0.1,
+          damageType: abilityDamageType,
+          defenderResistances,
+          damageBonusMultiplier: damageBonusMultiplier > 1.0 ? damageBonusMultiplier : undefined,
         });
 
         damage = damageResult.damage;
@@ -636,6 +665,7 @@ export class AbilityService {
           defenderMaxHealth: target.maxHealth,
           critical: damageResult.critical,
           killed,
+          damageType: abilityDamageType,
           groundItems: groundItems.length > 0 ? groundItems : undefined,
           defenderPosition: { x: target.position.x, y: target.position.y },
         });

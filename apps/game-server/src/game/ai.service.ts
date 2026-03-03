@@ -372,6 +372,7 @@ export class AiService implements OnModuleInit {
           defenderMaxHealth: result.defenderMaxHealth,
           critical: result.critical,
           killed: result.killed,
+          damageType: result.damageType,
           defenderPosition: result.defenderPosition,
         });
       }
@@ -385,6 +386,7 @@ export class AiService implements OnModuleInit {
         defenderMaxHealth: result.defenderMaxHealth,
         critical: result.critical,
         killed: result.killed,
+        damageType: result.damageType,
         defenderPosition: result.defenderPosition,
       });
     }

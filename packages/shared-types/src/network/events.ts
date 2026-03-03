@@ -1,5 +1,6 @@
 import type { TimingChallenge, TimingResult, GatheringAccuracy, ResourceCategory } from '../game/proficiency';
 import type { ZoneMasteryProgress, MasteryTier, MasteryReward } from '../game/zone-mastery';
+import type { DamageType } from '../game/combat';
 
 /**
  * Expedition destination with tier and lock status
@@ -172,6 +173,7 @@ export interface ServerEvents {
     defenderMaxHealth: number;
     critical: boolean;
     killed: boolean;
+    damageType?: DamageType;
   };
   'combat:result': import('../game/combat').CombatResult;
   'combat:end': { combatId: string; winner: string };
