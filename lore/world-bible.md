@@ -1746,4 +1746,250 @@ The largest known predator in Terminus's oceans. Driven to constant aggression b
 
 ---
 
+## Part IX: Faction Equipment Catalog
+
+> *"Every piece of gear tells you who made it. Verdant's grows. Helix's burns. Nexus's watches. And the Unaffiliated? Theirs just barely holds together -- which is exactly how they want it."*
+> -- Unnamed supply officer, Terminus Logistics Hub
+
+---
+
+### Verdant Dynamics Gear Line
+
+#### Suits
+
+**Bioweave Exo-Suit** (Common) -- *Standard Issue*
+Woven from synthetic cellulose fibers derived from Luminous Canopy specimens. Issued to all Verdant ground personnel. The suit's organic composition provides passive environmental adaptation -- it breathes, in a sense, adjusting porosity to match atmospheric conditions. Unremarkable by faction standards. Considerably more comfortable than anything Helix produces.
+
+**Chloro-Filtration Suit** (Rare) -- *Hazmat Specialist*
+Integrates chlorophyll-membrane filtration layers for sustained operations in toxic environments. Deployed primarily in the Miasma Marshes and Toxic Wastes, where standard filters fail within hours. The suit's living membranes regenerate themselves, extending deployment windows from days to weeks. Verdant's first serious demonstration that biology outperforms engineering.
+
+**Symbiont Exo-Frame** (Epic) -- *Bio-Integration Platform*
+Advanced bio-integrated frame incorporating symbiotic micro-organisms within the suit's structure. The organisms actively process environmental toxins, repair micro-damage, and provide real-time biochemical feedback. The relationship between suit and wearer becomes genuinely symbiotic at this tier. Verdant's xenobiologists call it "mutualism." The wearers call it "having a partner that eats poison."
+
+**Mycelial Integration Suit** (Exotic) -- *Classified Prototype*
+Classified prototype utilizing a mycelial neural network threaded throughout the suit matrix. The mycelium processes environmental data faster than conventional electronics and can interface with Terminus's native fungal networks. Fewer than a hundred exist. The suits reportedly communicate with each other. Verdant's official position is that this is "an instrumentation artifact."
+
+**The Canopy Sovereign** (Legendary) -- *Pinnacle of Bio-Engineering*
+Fewer than forty Canopy Sovereign units exist. Each is grown, not manufactured -- cultivated over months from modified Luminous Canopy genetic stock tailored to its wearer's biology. The suit is, for all practical purposes, alive. It heals, it adapts, it learns. Verdant's masterwork and the reason other factions continue to fund their biological research: envy.
+
+**Canopy Warden Frame** (Epic) -- *Off-Archetype: Combat*
+> *"Verdant's security division. Because sometimes the research specimens fight back."*
+Bio-reactive combat frame designed for perimeter enforcement in hostile biomes. The Canopy Warden exists because Verdant's biological assets attract raiders, and the local fauna does not respect research permits. Combat-oriented in a faction that prefers sustainability -- a concession to the reality that preservation sometimes requires force.
+
+**The Rootbound Sentinel** (Legendary) -- *Off-Archetype: Combat*
+> *"The most heavily armed platform in Verdant's arsenal. They claim it's defensive. The railgun disagrees."*
+Root-fiber actuators woven through reinforced bio-composite plating. The Rootbound Sentinel is what happens when Verdant's considerable engineering talent is directed toward destructive capability. The result is a combat platform that grows its own ammunition and repairs its own armor. Other factions find it unsettling. That is the point.
+
+#### Modules
+
+| Module | Rarity | Role |
+|--------|--------|------|
+| Chloro-Filter Unit | Common | Standard atmospheric filtering derived from Terminus flora |
+| Symbiont Filter Array | Rare | Living filtration membrane from engineered extremophile cultures |
+| Phyto-Filter System | Epic | Bio-catalytic purification using Fungal Depths mycelial networks |
+| Canopy Respirator | Exotic | Closed-loop life support integrating six distinct organisms |
+| Bloom Network Filter | Legendary | Self-sustaining atmospheric ecosystem in module form |
+| Biosensor Array | Common | Standard biological detection and life-sign identification |
+| Spore Analyzer Module | Rare | Mycelial signature calibration for Miasma Marshes operations |
+| Enzyme Detector | Epic | Chemical-signature tracking using engineered receptor proteins |
+| Tendril Scanner | Exotic | Living sensor network grown from modified neural-root tissue |
+| Canopy Interpreter | Legendary | Biosensor interfacing with the Canopy's planet-spanning root network |
+
+#### Tools
+
+| Tool | Rarity | Specialization |
+|------|--------|----------------|
+| Verdant Field Bioprobe | Common | Bio-interface tool for specimen interaction and environmental sampling |
+| Tendril Extractor | Rare | Living-tendril bio-interface for direct organism interaction |
+| Phyto-Sampler | Epic | Enzyme-injector bio-extraction instrument |
+| Symbiont Interface | Exotic | Neural bridge between user and Terminus organisms |
+| Canopy Interpreter | Legendary | Living instrument reading the Canopy's planetary root network |
+| Spore Analyzer | Common | Standard atmospheric and biological survey instrument |
+| Bloom Scanner | Rare | Multi-spectrum analysis for biome-specific signatures |
+| Synthesis Probe | Epic | Spectrographic analysis with predictive modeling |
+| Cultivar Probe | Exotic | Complete organism lifecycle modeling from single samples |
+| Rootbound Spectrometer | Legendary | Research instrument interfacing with Canopy root network |
+
+---
+
+### Helix Extraction Gear Line
+
+#### Suits
+
+**Ironclad Exo-Suit** (Common) -- *Standard Issue*
+Forge-pressed durasteel plating rated for 12-hour extraction shifts in standard mining conditions. Every Helix operative starts in an Ironclad. Most retire in one too. The suit is simple, heavy, and nearly indestructible at its price point. Comfort was not a design priority. "You can rest when the shift's over."
+
+**Foundry Plating Suit** (Rare) -- *Deep Operations*
+Forged at 1,400 degrees in the Foundry Works. Rated for 6-ton compressive loads. The Foundry Plating Suit represents Helix's first serious investment in its operatives: dual-alloy layered plating that distributes impact force across the entire structure. Operators describe wearing it as "being inside a building."
+
+**Tempered Bulwark Frame** (Epic) -- *Reinforced Platform*
+Triple-tempered through proprietary metallurgical processes. The Bulwark Frame is designed for environments where standard heavy armor is insufficient -- Volcanic Reaches lava zones, deep-shaft extraction under active seismic conditions, and hostile fauna contact at Tier III and above. Each plate has been stress-tested to failure and rebuilt.
+
+**Anvil Assault Rig** (Exotic) -- *Premier Assault Platform*
+Forged from alloys recovered at extraction depths exceeding corporate safety margins. The Anvil is Helix's answer to the question "what if the mining equipment was also the combat equipment?" A devastating assault platform that doubles as an industrial extraction frame. The overlap is not coincidental.
+
+**The Crucible** (Legendary) -- *Pinnacle of Industrial Engineering*
+The single most destructive platform Helix Extraction has ever produced. Forged in a reactor breach that killed three metallurgists and produced an alloy that has never been replicated. Fewer than twenty Crucibles exist. Each weighs more than a light vehicle and hits harder. Helix's ultimate statement: in the contest between man and planet, they will not be outmatched.
+
+**Bore Surveyor Frame** (Epic) -- *Off-Archetype: Recon*
+> *"Helix scouts. Because someone has to go first into the dark."*
+Reconnaissance frame optimized for subsurface exploration and resource mapping in unmapped cavern systems. The Bore Surveyor exists because Helix learned that sending heavy extraction equipment into uncharted territory is expensive. Sending scouts first is cheaper. The scouts' opinion on this calculation is not recorded.
+
+**The Quarry Phantom** (Legendary) -- *Off-Archetype: Recon*
+> *"Designed for operators who map routes into places the planet doesn't want them to go."*
+The pinnacle of Helix Deep Survey engineering. The Quarry Phantom trades Helix's signature mass for perception and speed -- an unusual combination in a faction that normally solves problems by being heavier than them. Designed for solo deep-cave reconnaissance, it represents Helix's acknowledgment that some problems require finesse. They find this admission distasteful.
+
+#### Modules
+
+| Module | Rarity | Role |
+|--------|--------|------|
+| Slag Plating | Common | Crude but effective armor cast from refined mining slag |
+| Foundry Plate | Rare | Forge-hardened composite armor from deep-shaft foundries |
+| Tempered Plate | Epic | Multi-layered reactive armor with ceramic matrices |
+| Anvil Plating | Exotic | Experimental adaptive armor from Advanced Materials Division |
+| Crucible Bulwark | Legendary | Apex defensive engineering forged in deep-mantle crucible |
+| Bore Cell | Common | Compact geothermal energy cell for sustained extraction |
+| Furnace Cell | Rare | High-output thermal energy converting ambient heat to power |
+| Smelt Core | Epic | Dual-phase geothermal and kinetic recapture system |
+| Ingot Battery | Exotic | Solid-state storage using deep-mantle thermal compounds |
+| Crucible Reactor | Legendary | Miniaturized fusion reactor from the deep-mantle crucible |
+
+#### Tools
+
+| Tool | Rarity | Specialization |
+|------|--------|----------------|
+| Helix Bore Drill | Common | Standard extraction tool for ground-level mining |
+| Quarry Cutter | Rare | Thermal-assisted extraction with variable-torque settings |
+| Slag Breaker | Epic | Industrial plasma extraction processing rock and mineral formations |
+| Anvil Auger | Exotic | Focused seismic pulse extraction for mineral deposits |
+| Crucible Excavator | Legendary | Ultimate extraction instrument from the deep-mantle crucible |
+| Helix Rivet Gun | Common | Standard demolition instrument for clearing extraction corridors |
+| Foundry Hammer | Rare | Heavy pneumatic impact tool for structural demolition |
+| Compression Ram | Epic | Industrial seismic demolition focusing kinetic energy |
+| Tempered Disruptor | Exotic | Harmonic resonance demolition weapon |
+| Furnace Lance | Legendary | Directed plasma lance -- the most destructive Helix tool |
+
+---
+
+### Nexus Frontiers Gear Line
+
+#### Suits
+
+**Spectre Exo-Suit** (Common) -- *Standard Issue*
+Lightweight composite suit issued upon clearance verification. The Spectre prioritizes awareness and response time over protection -- a design philosophy that tells you everything about Nexus Frontiers. Every sensor array is calibrated before armor thickness is considered. "If you need the armor, you weren't paying attention."
+
+**Cipher Recon Suit** (Rare) -- *Intelligence Operations*
+Integrated signal-intelligence arrays with cipher-grade encryption. The Cipher Recon Suit turns its wearer into a mobile intelligence platform, passively collecting signals data while providing enhanced environmental awareness. Nexus operatives wearing Ciphers in populated areas have been asked to leave. The suit was already recording.
+
+**Lattice Sensor Frame** (Epic) -- *Advanced Sensor Platform*
+Utilizes a crystalline lattice network for distributed environmental analysis across multiple detection spectra simultaneously. The Lattice Frame doesn't just detect threats -- it models them, predicting behavioral patterns from environmental data. Nexus considers this "standard situational awareness." Other factions consider it "deeply unsettling."
+
+**Meridian Intelligence Suit** (Exotic) -- *Classified Intelligence Platform*
+Integrates predictive threat-analysis algorithms operating at speeds that approach precognition. The Meridian processes environmental data faster than human perception allows, presenting its wearer with threat assessments before conscious recognition occurs. The suit effectively thinks faster than its operator. Nexus sees no issue with this arrangement.
+
+**The Echo Prime** (Legendary) -- *Pinnacle of Intelligence Engineering*
+Processes environmental data at speeds that exceed theoretical limits for conventional computing. The Echo Prime's sensor systems appear to receive data from points in the future -- a capability Nexus officially attributes to "advanced predictive modeling" and unofficially attributes to Prior Inhabitant technology integration. Fewer than thirty exist. Their operators report the suit "knows things." Nexus does not elaborate.
+
+**Vector Enforcer Frame** (Epic) -- *Off-Archetype: Assault*
+> *"When diplomacy, espionage, and economic pressure all fail. Nexus calls it 'kinetic negotiation.'"*
+Rapid-response assault frame for contested sector operations. The Vector Enforcer exists because intelligence operations occasionally require the application of force. Nexus finds this regrettable. Their targets find it considerably worse. Heavy tactical armor in a faction that normally prizes stealth -- an admission that some problems require visibility.
+
+**The Phantom Protocol** (Legendary) -- *Off-Archetype: Assault*
+> *"Merges assault capability with intelligence gathering. The last thing you don't see."*
+The most lethal platform in Nexus Frontiers' classified arsenal. Combines assault capacity with full intelligence-gathering capability -- it kills you while recording everything about how you died for future tactical analysis. The fact that Nexus built this tells you what their intelligence suggests is coming.
+
+#### Modules
+
+| Module | Rarity | Role |
+|--------|--------|------|
+| Cipher Array | Common | Entry-level signals intelligence and decoding |
+| Signal Detector | Rare | Multi-band signal processing for intelligence gathering |
+| Lattice Sensor | Epic | Distributed sensor mesh across multiple frequency domains |
+| Meridian Scanner | Exotic | Quantum-entangled sensor processing faster than light-speed delay |
+| Echo Prime Relay | Legendary | Detection system receiving data from the future |
+| Vector Boost Unit | Common | Basic movement enhancement via servo optimization |
+| Relay Accelerator | Rare | Predictive motion-assist with stride pattern optimization |
+| Grid Optimizer | Epic | Neural-linked locomotion integrated with motor cortex |
+| Phantom Drive | Exotic | Micro-spatial compression locomotion system |
+| Pulse Engine | Legendary | Prior Inhabitant movement device adapted by Nexus engineers |
+
+#### Tools
+
+| Tool | Rarity | Specialization |
+|------|--------|----------------|
+| Nexus Signal Probe | Common | Field data collection and signal analysis |
+| Cipher Scanner | Rare | Encrypted-signal analysis and real-time decoding |
+| Lattice Analyzer | Epic | Distributed quantum-linked data processing |
+| Meridian Spectrometer | Exotic | Quantum-entangled research analysis platform |
+| Echo Prime Instrument | Legendary | Prior Inhabitant analytical technology -- adapted |
+| Phantom Blade | Common | Compact covert operations instrument |
+| Vector Infiltrator | Rare | Multi-function stealth tool with active signal masking |
+| Relay Disruptor | Epic | Active detection jamming within operational range |
+| Trace Harvester | Exotic | Covert energy and intelligence extraction |
+| Grid Ghost | Legendary | Renders wearer functionally invisible to all detection |
+
+---
+
+### The Unaffiliated -- Salvaged Gear
+
+> *"We don't have R&D budgets. We have patience, pliers, and a very good understanding of how other people's equipment works."*
+> -- "Patch" Maren, independent engineer, Scarred Badlands
+
+#### Suits
+
+**Patchwork Exo-Suit** (Common) -- *Standard Issue*
+Assembled from salvaged components across multiple manufacturers. Nothing matches. Everything works. The Patchwork Exo-Suit is the independent operator's first piece of gear and, for many, their most reliable. Corporate suits have design coherence. The Patchwork has character.
+
+**Salvage Runner Suit** (Rare) -- *Scavenger Specialist*
+Field-modified salvage suit optimized for extended scavenging operations in unstable zones. Incorporates the best individual components the operator has found, jury-rigged into compatibility through ingenuity and electrical tape. Each Salvage Runner is unique because each one is assembled from a different pile of stolen parts.
+
+**Drifter Field Frame** (Epic) -- *Independent Operator*
+Built from the best parts of three different faction designs. The Drifter Frame represents what happens when an independent operator collects high-quality salvage for long enough to be selective. Faction engineers find it offensive. The frame's performance makes their objections academic.
+
+**Reclaimed Operations Suit** (Exotic) -- *Masterwork Salvage*
+Integrates salvaged faction technology in combinations no single faction would approve. The Reclaimed Operations Suit is a testament to independent engineering -- each component was designed for a different purpose, a different faction's specifications, a different doctrine. Together, they achieve something none of them intended.
+
+**The Wasteland Sovereign** (Legendary) -- *Independent Masterwork*
+Not manufactured -- assembled, over years, from the finest salvaged components an operator can find. No two Wasteland Sovereigns are identical. Each represents its wearer's entire career in salvage, accumulated triumph by triumph. The suit is a biography written in stolen technology.
+
+**Scrounger Reclamation Frame** (Epic) -- *Off-Archetype: Hazmat*
+> *"The best salvage is in the worst places. These suits let you get to it."*
+Wasteland Reclamation Crew hazmat frame designed for prolonged operations in contaminated zones the corporations have abandoned as unprofitable. The salvage in those zones is excellent precisely because no one else will go there. The Scrounger frame makes the math work.
+
+**The Mongrel** (Legendary) -- *Off-Archetype: Hazmat*
+> *"Built from components that should be incompatible. Works anyway. Works better than it should."*
+The hardest-wearing hazmat platform outside faction arsenals. Built from components that span every faction's engineering doctrine, held together by an independent engineer's stubborn refusal to accept that certain technologies can't be combined. They can. The Mongrel is the proof.
+
+#### Modules
+
+| Module | Rarity | Role |
+|--------|--------|------|
+| Cobbled Cell | Common | Scavenged Helix energy components in mismatched casing |
+| Salvage Core | Rare | Rebuilt module from three different Helix energy systems |
+| Drifter Cell | Epic | Outperforms its component origins through creative recombination |
+| Reclaimed Battery | Exotic | Masterwork integrating Helix, Nexus, and Verdant components |
+| Wasteland Reactor | Legendary | "Patch" Maren's legendary power module -- 15 years of salvage |
+| Makeshift Filter | Common | Salvaged Verdant components with improvised sealing |
+| Jury-Rig Support Unit | Rare | Verdant bio-filter elements with improvised housing |
+| Scrounger Respirator | Epic | Hybrid atmospheric system: salvaged bio-membrane + Helix backup |
+| Improvised Filter System | Exotic | Defies categorization: Verdant, Helix, and something unidentified |
+| Tinkered Life System | Legendary | "Old Sal's Breather" -- twelve years of patient engineering |
+
+#### Tools
+
+| Tool | Rarity | Specialization |
+|------|--------|----------------|
+| Scrap Scanner | Common | Cobbled-together scanner from salvaged corporate components |
+| Cobbled Detector | Rare | Cross-referencing material signatures from multiple faction databases |
+| Salvage Probe | Epic | Scanning platform assembled from recovered components |
+| Drifter Analyzer | Exotic | Rivals purpose-built corporate instruments |
+| Wasteland Oracle | Legendary | "Patch" Maren's scanner -- 15 years of salvaged components |
+| Improvised Pick | Common | Scavenged Helix drill components and improvised handles |
+| Jury-Rig Cutter | Rare | Salvaged plasma emitter with hand-built stabilization |
+| Scrounger Drill | Epic | Hybrid extraction-combat tool from all three corporations |
+| Reclaimed Breaker | Exotic | Devastating salvage-extraction tool from Helix demolition wreckage |
+| Mongrel Tooth | Legendary | "Patch" Maren's personal extraction tool -- a decade of salvage |
+
+---
+
 *This document is a living reference. Sections will be expanded as development continues.*
