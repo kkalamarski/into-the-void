@@ -9,11 +9,11 @@ Requirements for Balance & Automation milestone. Each maps to roadmap phases.
 
 ### Foundation
 
-- [ ] **FNDN-01**: DamageType union (Thermal/Cryo/Bio/Kinetic) exported from shared-types and consumed by game-logic damage pipeline
-- [ ] **FNDN-02**: DamageResistances interface on CreatureDefinition as a required field with neutral defaults
-- [ ] **FNDN-03**: Shield and damage_reduction variants added to AbilityEffect discriminated union
-- [ ] **FNDN-04**: DeployableEntity interface in shared-types for automation structures
-- [ ] **FNDN-05**: AiTickResult extended with stampede, packCall, ambush, frenzied signal fields
+- [x] **FNDN-01**: DamageType union (Thermal/Cryo/Bio/Kinetic) exported from shared-types and consumed by game-logic damage pipeline
+- [x] **FNDN-02**: DamageResistances interface on CreatureDefinition as a required field with neutral defaults
+- [x] **FNDN-03**: Shield and damage_reduction variants added to AbilityEffect discriminated union
+- [x] **FNDN-04**: DeployableEntity interface in shared-types for automation structures
+- [x] **FNDN-05**: AiTickResult extended with stampede, packCall, ambush, frenzied signal fields
 
 ### Stat Caps
 
@@ -119,11 +119,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FNDN-01 | Phase 115 | Pending |
-| FNDN-02 | Phase 115 | Pending |
-| FNDN-03 | Phase 115 | Pending |
-| FNDN-04 | Phase 115 | Pending |
-| FNDN-05 | Phase 115 | Pending |
+| FNDN-01 | Phase 115 | Complete |
+| FNDN-02 | Phase 115 | Complete |
+| FNDN-03 | Phase 115 | Complete |
+| FNDN-04 | Phase 115 | Complete |
+| FNDN-05 | Phase 115 | Complete |
 | CAPS-01 | Phase 116 | Pending |
 | CAPS-02 | Phase 116 | Pending |
 | CAPS-03 | Phase 116 | Pending |
