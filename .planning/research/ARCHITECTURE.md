@@ -1,8 +1,8 @@
-# Architecture Research: Content Expansion & Faction Gear (v1.23)
+# Architecture Research: Balance & Automation (v1.24)
 
-**Domain:** MMO content scaling — entity definitions, item definitions, biome spawn integration
-**Researched:** 2026-03-02
-**Confidence:** HIGH — derived from direct codebase inspection, all patterns verified in source
+**Domain:** MMO combat depth, environmental hazard systems, creature AI upgrades, automation progression
+**Researched:** 2026-03-03
+**Confidence:** HIGH — derived from direct codebase inspection of all referenced source files
 
 ---
 
@@ -11,445 +11,581 @@
 ### System Overview
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                     DEFINITION LAYER (static data)               │
-├─────────────────────┬──────────────────┬─────────────────────────┤
-│  packages/entities  │  packages/items  │  packages/world-gen     │
-│  ┌───────────────┐  │  ┌────────────┐  │  ┌─────────────────┐    │
-│  │ definitions/  │  │  │definitions/│  │  │ generation/     │    │
-│  │  creatures.ts │  │  │  suits.ts  │  │  │  spawn.ts       │    │
-│  │  plants.ts    │  │  │  modules.ts│  │  │  (BIOME_SPAWN_  │    │
-│  │  minerals.ts  │  │  │  tools.ts  │  │  │   CONFIGS)      │    │
-│  │  artifacts.ts │  │  │  ...       │  │  └─────────────────┘    │
-│  │  index.ts     │  │  │  index.ts  │  │  ┌─────────────────┐    │
-│  └───────────────┘  │  └────────────┘  │  │ generation/     │    │
-│  ┌───────────────┐  │  ┌────────────┐  │  │  rarity.ts      │    │
-│  │ registry.ts   │  │  │ registry.ts│  │  │  (rare/epic     │    │
-│  │ (singleton)   │  │  │ (singleton)│  │  │   mineral maps) │    │
-│  └───────────────┘  │  └────────────┘  │  └─────────────────┘    │
-├─────────────────────┴──────────────────┴─────────────────────────┤
-│                     RUNTIME LAYER                                 │
-│  packages/game-logic/src/loot/creature-loot.ts                   │
-│  (CREATURE_LOOT_TABLES — keyed by 'loot_<entity_id>' convention) │
-├──────────────────────────────────────────────────────────────────┤
-│                     SERVER CONSUMERS                              │
-│  apps/game-server — ZonesService, CombatService, EntityService   │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                     SHARED TYPES (packages/shared-types)                  │
+│  DamageType enum  |  BiomeHazardDef  |  ResistanceMap  |  AutoDeployable │
+├──────────────────┬──────────────────┬───────────────────┬────────────────┤
+│  GAME-LOGIC      │  ENTITIES        │  ITEMS            │  WORLD-GEN     │
+│  combat/         │  definitions/    │  definitions/     │  spawn/        │
+│  damage.ts ←mod  │  creatures.ts ←mod│  suits.ts ←mod  │  biome-gen.ts  │
+│  stat-caps.ts NEW│  (add resistance)│  (hazmat archetype│  (hazard zone  │
+│  biome-hazard.ts │                  │   already exists) │   integration) │
+│  NEW             │                  │                   │                │
+│  ai/             │                  │                   │                │
+│  creature-ai.ts  │                  │                   │                │
+│  ←mod (4 new     │                  │                   │                │
+│   behaviors)     │                  │                   │                │
+├──────────────────┴──────────────────┴───────────────────┴────────────────┤
+│                     GAME SERVER (apps/game-server)                        │
+│  game/                                                                    │
+│  combat.service.ts ←mod   ai.service.ts ←mod                             │
+│  ability.service.ts ←mod  hazard.service.ts NEW                          │
+│  automation.service.ts NEW                                                │
+│  game.gateway.ts ←mod (new socket events)                                │
+│  game.module.ts ←mod (register new services)                             │
+├──────────────────────────────────────────────────────────────────────────┤
+│                     DATABASE (packages/database)                          │
+│  schema/                                                                  │
+│  deployables.ts NEW   automation-jobs.ts NEW                             │
+│  queries/                                                                 │
+│  deployables.ts NEW   automation-jobs.ts NEW                             │
+├──────────────────────────────────────────────────────────────────────────┤
+│                     WEB CLIENT (apps/web)                                 │
+│  game/rendering/ — HazardOverlay.ts NEW                                  │
+│  screens/HUD — DamageTypeIndicator, HazardWarning, AutomationPanel       │
+│  store/gameStore.ts ←mod (hazard state, deployable state)                │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
-| Component | Responsibility | Location |
-|-----------|---------------|----------|
-| `EntityDefinition` | Discriminated union (CreatureDefinition, PlantDefinition, MineralDefinition, ArtifactDefinition) with all static properties | `packages/entities/src/types.ts` |
-| `EntityRegistry` | Singleton Map-backed registry. `get(id)` returns fallback not null. `getByBiome()`, `getByClass()` queries | `packages/entities/src/registry.ts` |
-| `EntityRegistry.registerAll()` | Called at module load via `packages/entities/src/index.ts` side effect | auto-registers on import |
-| `ENTITY_IDS` | `as const` string constants object — prevents typos across all consumers | `packages/entities/src/definitions/index.ts` |
-| `ALL_ENTITIES` | Flat array assembled from all definition sub-arrays, fed to registry | `packages/entities/src/definitions/index.ts` |
-| `ItemDefinition` | Single interface with optional fields for specialization (`equipSlot`, `moduleSlots`, `toolType`, `grantedAbilities`, etc.) | `packages/items/src/types.ts` |
-| `ItemRegistry` | Identical singleton pattern to EntityRegistry | `packages/items/src/registry.ts` |
-| `generateSuitStats()` | Archetype-based stat generator using `ARCHETYPE_PROFILES` + rarity/tier multipliers. Required for all new suits. | `packages/items/src/utils.ts` |
-| `computeIlvl()` | Deterministic ilvl from tier (1-5) and rarity. Required for all new items. | `packages/items/src/utils.ts` |
-| `BIOME_SPAWN_CONFIGS` | `Record<BiomeType, BiomeSpawnConfig>` — weighted spawn lists + density per biome | `packages/world-gen/src/generation/spawn.ts` |
-| `CREATURE_LOOT_TABLES` | `Map<string, HarvestYield[]>` — loot rolls keyed by `loot_<entity_id>` | `packages/game-logic/src/loot/creature-loot.ts` |
-| `getRareBiomeMinerals()` / `getEpicBiomeMinerals()` | Maps biome -> rare/epic mineral IDs for proximity-based spawning | `packages/world-gen/src/generation/rarity.ts` |
+| Component | Responsibility | Current State |
+|-----------|----------------|---------------|
+| `packages/game-logic/src/combat/damage.ts` | Core damage calculation pipeline | Existing — calculateDamage(), no type-awareness |
+| `packages/game-logic/src/combat/stat-caps.ts` | Diminishing returns above 200 | NEW file needed |
+| `packages/game-logic/src/combat/biome-hazard.ts` | Pure hazard tick math, gear counter resolution | NEW file needed |
+| `packages/game-logic/src/ai/creature-ai.ts` | Pure FSM: tickCreatureAI() | Existing — 4 behaviors need new mechanics |
+| `packages/entities/src/definitions/creatures.ts` | Creature static data | Existing — add `resistances` field to CreatureDefinition |
+| `packages/shared-types/src/game/combat.ts` | CombatResult, EffectType | Existing — add DamageType union |
+| `packages/shared-types/src/game/biome.ts` | BiomeHazard interface | Existing — extend with gear counter metadata |
+| `packages/shared-types/src/game/ability.ts` | AbilityDefinition, AbilityEffect | Existing — add shield effect type |
+| `apps/game-server/src/game/combat.service.ts` | Combat loop, damage emission | Existing — add damage type propagation |
+| `apps/game-server/src/game/ai.service.ts` | Zone tick loop, creature FSM driver | Existing — add stampede/pack-call coordination |
+| `apps/game-server/src/game/hazard.service.ts` | Biome hazard tick per player in zone | NEW service |
+| `apps/game-server/src/game/ability.service.ts` | Ability execution, buffs | Existing — add shield pool tracking |
+| `apps/game-server/src/game/automation.service.ts` | Deployable lifecycle, processing queues | NEW service |
+| `packages/database/src/schema/deployables.ts` | Deployable structures DB schema | NEW schema |
+| `packages/database/src/schema/automation-jobs.ts` | Processing queue DB schema | NEW schema |
 
 ---
 
-## Current File Organization (as-built pattern)
-
-The codebase uses **biome-group splitting** for entity definitions. Each file covers one biome group (or the base terrestrial set):
+## Recommended Project Structure
 
 ```
-packages/entities/src/definitions/
-├── index.ts                  # ALL_ENTITIES assembly + ENTITY_IDS constants
-├── creatures.ts              # Terrestrial biomes (void_plains, fungal_forest, etc.)
-├── plants.ts                 # Terrestrial plants
-├── minerals.ts               # Terrestrial minerals
-├── artifacts.ts              # Terrestrial artifacts
-├── aquatic-creatures.ts      # tidal_pools, kelp_forests, deep_trenches
-├── aquatic-plants.ts
-├── aquatic-minerals.ts
-├── aquatic-artifacts.ts
-├── exotic-creatures.ts       # crystalline_wastes, bioluminescent_depths, void_rift
-├── exotic-plants.ts
-├── exotic-minerals.ts
-└── exotic-artifacts.ts
+packages/game-logic/src/
+├── combat/
+│   ├── damage.ts              # MODIFY: add DamageType param, resistance lookup
+│   ├── damage.test.ts         # MODIFY: add resistance test cases
+│   ├── stat-caps.ts           # NEW: applyDiminishingReturns(stat, rawValue)
+│   ├── stat-caps.test.ts      # NEW: verify DR curve above 200
+│   ├── biome-hazard.ts        # NEW: computeHazardDrain(), resolveGearCounter()
+│   └── biome-hazard.test.ts   # NEW
+├── ai/
+│   └── creature-ai.ts         # MODIFY: add stampede, pack-call, ambush, frenzy
+└── index.ts                   # MODIFY: export new symbols
 
-packages/items/src/definitions/
-├── index.ts                  # ALL_ITEMS assembly + ITEM_IDS constants
-├── suits.ts                  # General suits (generic, faction-agnostic)
-├── modules.ts                # General modules (armor, speed, life-support, sensor, etc.)
-├── tools.ts                  # General tools (mining, combat, research)
-├── consumables.ts            # Health, energy, repair, stims, antitoxins
-├── world-items.ts            # Loot drops (organic material, crystals, etc.)
-├── reagents.ts               # Crafting materials
-├── aquatic-suits.ts          # Phase 87: aquatic biome suits
-├── aquatic-tools.ts          # Phase 87: aquatic tools
-├── aquatic-consumables.ts    # Phase 87: aquatic consumables
-├── exotic-suits.ts           # Phase 87: exotic/void biome suits
-├── exotic-tools.ts           # Phase 87: exotic tools
-└── exotic-consumables.ts     # Phase 87: exotic consumables
+packages/shared-types/src/
+├── game/
+│   ├── combat.ts              # MODIFY: add DamageType, DamageResistances
+│   ├── biome.ts               # MODIFY: extend BiomeHazard with gearCounterStat
+│   └── ability.ts             # MODIFY: add shield AbilityEffect type
+└── core/
+    └── entity.ts              # MODIFY: add DeployableEntity interface
+
+packages/entities/src/
+└── types.ts                   # MODIFY: add resistances to CreatureDefinition
+
+packages/database/src/
+└── schema/
+    ├── deployables.ts         # NEW: structure_type, owner, position, state, config
+    └── automation-jobs.ts     # NEW: job queue for processing ticks
+
+apps/game-server/src/game/
+├── combat.service.ts          # MODIFY: pass DamageType through calculateDamage call
+├── ai.service.ts              # MODIFY: add pack coordination state
+├── ability.service.ts         # MODIFY: add shield pool, DR-aware buff application
+├── hazard.service.ts          # NEW: tick-based biome hazard processor
+├── automation.service.ts      # NEW: deployable lifecycle + processing queue
+└── game.module.ts             # MODIFY: register HazardService, AutomationService
+
+apps/web/src/game/
+└── rendering/
+    └── HazardOverlay.ts       # NEW: visual hazard indicator on HUD
 ```
 
----
+### Structure Rationale
 
-## Recommended Organization for v1.23 Content
-
-### Entity Definitions: Extend Existing Files
-
-New entities for this milestone fill gaps in **already-existing biomes** (not new biome groups). Do not create new entity definition files. Add definitions to the correct existing file:
-
-| New entities | Target file |
-|---|---|
-| Tier I-III terrestrial creatures (void_plains, fungal_forest, toxic_wastes, ancient_ruins, etc.) | `packages/entities/src/definitions/creatures.ts` |
-| Tier I-III terrestrial plants | `packages/entities/src/definitions/plants.ts` |
-| Tier I-III terrestrial minerals + rare/epic variants | `packages/entities/src/definitions/minerals.ts` |
-| Tier I-III terrestrial artifacts | `packages/entities/src/definitions/artifacts.ts` |
-| Aquatic biome gap-fills (tidal_pools, kelp_forests, deep_trenches) | Respective `aquatic-*.ts` files |
-| Exotic biome gap-fills (crystalline_wastes, bioluminescent_depths, void_rift) | Respective `exotic-*.ts` files |
-
-Rationale: The biome-group split already works. Adding to existing files keeps related entities co-located and avoids over-fragmenting. A file with 20-30 definitions is fine — these are pure data, no logic.
-
-### Item Definitions: New Files by Faction
-
-Faction gear is a new category that crosses all item types (suits + modules + tools per faction). The existing pattern splits by **item type**. Faction gear should split by **faction** instead, because:
-
-1. Each faction line is authored together (identity coherence — Verdant biotech applies to suits, modules, and tools simultaneously)
-2. Faction-specific naming conventions and lore descriptions are easier to maintain in one file
-3. The precedent exists in `packages/npcs/src/definitions/verdant.ts`, `helix.ts`, `nexus.ts`
-
-Recommended new files:
-
-```
-packages/items/src/definitions/
-├── faction-verdant.ts        # Verdant Dynamics suits + modules + tools across all tiers
-├── faction-helix.ts          # Helix Extraction suits + modules + tools across all tiers
-└── faction-nexus.ts          # Nexus Frontiers suits + modules + tools across all tiers
-```
-
-Each file exports three named arrays:
-
-```typescript
-// faction-verdant.ts
-export const ALL_VERDANT_SUITS: ItemDefinition[] = [...];
-export const ALL_VERDANT_MODULES: ItemDefinition[] = [...];
-export const ALL_VERDANT_TOOLS: ItemDefinition[] = [...];
-```
-
-Integration in `packages/items/src/definitions/index.ts`:
-
-```typescript
-import { ALL_VERDANT_SUITS, ALL_VERDANT_MODULES, ALL_VERDANT_TOOLS } from './faction-verdant';
-import { ALL_HELIX_SUITS, ALL_HELIX_MODULES, ALL_HELIX_TOOLS } from './faction-helix';
-import { ALL_NEXUS_SUITS, ALL_NEXUS_MODULES, ALL_NEXUS_TOOLS } from './faction-nexus';
-
-export const ALL_ITEMS: readonly ItemDefinition[] = [
-  // existing arrays...
-  ...ALL_VERDANT_SUITS,
-  ...ALL_VERDANT_MODULES,
-  ...ALL_VERDANT_TOOLS,
-  ...ALL_HELIX_SUITS,
-  ...ALL_HELIX_MODULES,
-  ...ALL_HELIX_TOOLS,
-  ...ALL_NEXUS_SUITS,
-  ...ALL_NEXUS_MODULES,
-  ...ALL_NEXUS_TOOLS,
-];
-```
+- `packages/game-logic/src/combat/stat-caps.ts`: Placed beside damage.ts because it modifies the stat values that feed into calculateDamage. Pure function — no service dependencies.
+- `packages/game-logic/src/combat/biome-hazard.ts`: Pure tick math belongs in game-logic, not in the server service. Server calls the pure function per tick per player.
+- `packages/database/src/schema/deployables.ts`: Automation deployables require persistence (survive server restarts). The existing `structures` schema exists but lacks automation-specific fields (fuelLevel, processingQueue, maintenanceDue). New schema extends the pattern cleanly rather than retrofitting the generic structures table.
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: Definition + Registry + Side-Effect Registration
+### Pattern 1: DamageType as Multiplicative Layer on Existing Pipeline
 
-**What:** All domain objects (entities, items, NPCs, quests, tiles) follow an identical three-part pattern: (1) plain object definitions in files, (2) a singleton registry with `get()`, `has()`, `registerAll()`, (3) `index.ts` calls `registerAll()` as a module load side effect.
+**What:** Slot a resistance lookup between the existing `calculateDamage()` result and final damage application. The pipeline becomes: base calculation → damage type resistance multiplier → final.
 
-**When to use:** Always. This is the established contract. Every new entity and item must flow through this pattern.
+**When to use:** Avoids rewriting `calculateDamage()`. The type is passed in as a parameter; if absent, multiplier is 1.0 (backward compatible).
 
-**How it works for new content:**
-
-```typescript
-// 1. Define in appropriate definition file
-export const CREATURE_TOXIC_STALKER: CreatureDefinition = {
-  id: 'creature_toxic_stalker',
-  entityClass: 'creature',
-  biomes: ['toxic_wastes'],
-  // ...
-};
-
-// 2. Export from definition array in same file
-export const ALL_CREATURES = [
-  // existing...
-  CREATURE_TOXIC_STALKER,
-];
-
-// 3. Add ID constant to ENTITY_IDS in index.ts
-export const ENTITY_IDS = {
-  // existing...
-  CREATURE_TOXIC_STALKER: 'creature_toxic_stalker',
-} as const;
-
-// 4. Registry registration happens automatically via index.ts side effect:
-// EntityRegistry.registerAll(ALL_ENTITIES) — already in packages/entities/src/index.ts
-```
-
-**Trade-offs:** No runtime cost. All definitions loaded at startup. No lazy loading for content data — this is correct for a game server that needs instant entity lookups. The fallback (`UNKNOWN_ENTITY` / `UNKNOWN_ITEM`) prevents crashes on missing IDs.
-
-### Pattern 2: Biome Spawn Config — Three Integration Points Per Creature
-
-Every new creature requires updates in **four separate files**. This is not optional, and omitting any one causes silent gameplay failures:
-
-```
-New creature 'creature_toxic_stalker':
-  1. Definition in packages/entities/src/definitions/creatures.ts
-  2. ENTITY_IDS constant in packages/entities/src/definitions/index.ts
-  3. Entry in BIOME_SPAWN_CONFIGS['toxic_wastes'] in packages/world-gen/src/generation/spawn.ts
-  4. Loot table entry in packages/game-logic/src/loot/creature-loot.ts
-     (key: 'loot_creature_toxic_stalker')
-
-New plant 'plant_toxic_bloom':
-  1. Definition in packages/entities/src/definitions/plants.ts
-  2. ENTITY_IDS constant
-  3. Entry in BIOME_SPAWN_CONFIGS['toxic_wastes'].plants
-  (no loot table needed — plants use harvestYield field on the definition itself)
-
-New rare/epic mineral variant:
-  1. Definition in minerals.ts with rarity field set
-  2. ENTITY_IDS constant
-  3. Do NOT add to BIOME_SPAWN_CONFIGS minerals — rare spawn system is separate
-  4. Add to getRareBiomeMinerals() or getEpicBiomeMinerals() in rarity.ts instead
-
-New artifact:
-  1. Definition in artifacts.ts
-  2. ENTITY_IDS constant
-  3. Entry in BIOME_SPAWN_CONFIGS[biome].artifacts[]
-  (no loot table needed — artifacts are discoveries, not kills)
-```
-
-**Trade-offs:** The multi-file requirement is a known coordination cost. For 100+ new entities, organize work by entity class (all creatures first, then plants, etc.) to reduce context-switching across files.
-
-### Pattern 3: generateSuitStats() — All Faction Suits Must Use This
-
-**What:** `generateSuitStats(archetype, rarity, tier)` produces stat distributions from `ARCHETYPE_PROFILES`. This ensures mathematical consistency across all suits. No faction suit should have hand-coded stat values.
-
-**Faction archetype mapping (from REQUIREMENTS.md SUIT-01):**
-- Verdant Dynamics: `hazmat` (primary) / `scout` (secondary) — resilience, recovery, vigor focus
-- Helix Extraction: `tank` (primary) / `assault` (secondary) — durability, toughness, power focus
-- Nexus Frontiers: `recon` (primary) / `balanced` (secondary) — perception, haste, balanced focus
-
-**Example for a Tier IV Exotic Verdant suit:**
+**How it integrates:**
 
 ```typescript
-export const SUIT_VERDANT_APEX_EXOTIC: ItemDefinition = {
-  id: 'suit_verdant_apex_exotic',
-  displayName: 'Verdant Apex Bioweave',
-  category: 'suit',
-  rarity: 'exotic',
-  requiredLevel: 35,
-  ilvl: computeIlvl(4, 'exotic'),
-  equipSlot: 'exosuit',
-  moduleSlots: 5,
-  effects: [
-    { trigger: 'on_equip', effect: { type: 'stats', ...generateSuitStats('hazmat', 'exotic', 4) } },
-  ],
-  grantedAbilities: ['nano_repair', 'bio_pulse'],
-  // ...
-};
+// packages/game-logic/src/combat/damage.ts — MODIFIED DamageParams
+export interface DamageParams {
+  baseDamage: number;
+  attackerLevel: number;
+  defenderLevel: number;
+  attackerStats?: Partial<CharacterStats>;
+  defenderStats?: Partial<CharacterStats>;
+  weaponDamage?: number;
+  armorReduction?: number;
+  critChance?: number;
+  critMultiplier?: number;
+  damageType?: DamageType;               // NEW optional field
+  defenderResistances?: DamageResistances; // NEW optional field
+}
+
+// packages/shared-types/src/game/combat.ts — NEW additions
+export type DamageType = 'thermal' | 'cryo' | 'bio' | 'kinetic';
+
+export interface DamageResistances {
+  thermal: number;   // multiplier: 0.5 = 50% resist, 1.5 = 50% vulnerable
+  cryo: number;
+  bio: number;
+  kinetic: number;
+}
+
+// In calculateDamage() — after crit, before armor:
+if (params.damageType && params.defenderResistances) {
+  damage *= params.defenderResistances[params.damageType];
+}
 ```
 
-**Tier to level range mapping:**
+**Creature definitions — MODIFIED CreatureDefinition in packages/entities/src/types.ts:**
 
-| Tier | Level Range | Expected rarity at this tier |
-|------|-------------|------------------------------|
-| 1 | 1-10 | common, rare |
-| 2 | 11-20 | rare, epic |
-| 3 | 21-30 | epic |
-| 4 | 31-40 | exotic |
-| 5 | 41-50 | legendary |
+```typescript
+export interface CreatureDefinition extends BaseEntityDefinition {
+  readonly entityClass: 'creature';
+  readonly behavior: CreatureBehavior;
+  readonly baseHealth: number;
+  readonly levelRange: readonly [number, number];
+  readonly baseXp: number;
+  readonly respawnSeconds: number;
+  readonly resistances?: Partial<DamageResistances>; // NEW optional
+}
+```
 
-### Pattern 4: Loot Table ID Convention
+**CombatService propagation — apps/game-server/src/game/combat.service.ts:**
 
-**What:** Entity `lootTableId` field always uses format `loot_<entity_id>`. `CREATURE_LOOT_TABLES` in `creature-loot.ts` keys on this string. The loot table must exist for every creature — missing entries cause silent drop failures (no crash, just no loot).
+The `creatureAttackTick()` method passes empty resistances when calling `calculateDamage`. For player attacks in `ability.service.ts`, the creature's definition is fetched from EntityRegistry and its resistances are resolved:
 
-**Plants and minerals:** Do NOT use `CREATURE_LOOT_TABLES`. They use the `harvestYield` field directly on the definition object. Only creatures need separate loot table entries.
+```typescript
+const def = EntityRegistry.get(creature.speciesId) as CreatureDefinition | undefined;
+const resistances: DamageResistances = {
+  thermal: def?.resistances?.thermal ?? 1.0,
+  cryo:    def?.resistances?.cryo    ?? 1.0,
+  bio:     def?.resistances?.bio     ?? 1.0,
+  kinetic: def?.resistances?.kinetic ?? 1.0,
+};
+const damageResult = calculateDamage({ ..., damageType: 'thermal', defenderResistances: resistances });
+```
 
-**Artifacts:** `lootTableId` field is present (shared by `BaseEntityDefinition`) but artifacts are discovered, not killed. Set `lootTableId: 'loot_empty'` for artifacts.
+**Ability definitions — add damageType to offensive AbilityEffects:**
+
+```typescript
+// packages/shared-types/src/game/ability.ts
+export type AbilityEffect =
+  | { readonly type: 'damage'; readonly baseDamage: number; readonly scaling: number; readonly damageType?: DamageType }
+  // ... rest unchanged
+```
+
+Thermal Lance → `damageType: 'thermal'`. Cryo Blast → `damageType: 'cryo'`. Basic Strike/Concussive → `damageType: 'kinetic'`. Void Drain/Electrocute → `damageType: 'bio'`.
+
+---
+
+### Pattern 2: Biome Hazard as a New Server-Side Tick Service
+
+**What:** A new `HazardService` injectable runs alongside `AiService`. On every zone tick (1s), it checks each player's current biome tile, looks up active hazards, resolves gear counters, and applies stat drains via PlayerService.
+
+**When to use:** Hazard logic is independent of combat and AI — it deserves its own service rather than being crammed into AiService.
+
+**Architecture:**
+
+```
+AiService.runZoneTick()
+  ├── tickCreatureAI loop (existing)
+  ├── processCreatureCombatTick (existing)
+  ├── processPlayerRegeneration (existing)
+  └── hazardService.processZoneHazards(zoneId)  ← NEW call
+```
+
+HazardService is injected into AiService (or called from game.gateway on zone tick event). The pure math lives in `packages/game-logic/src/combat/biome-hazard.ts`:
+
+```typescript
+// packages/game-logic/src/combat/biome-hazard.ts — NEW
+export interface HazardDefinition {
+  type: 'radiation' | 'toxic' | 'cold' | 'heat' | 'void_storm' | 'pressure';
+  damagePerTick: number;
+  statDrain?: { stat: keyof CharacterStats; amount: number }; // energy/health drain
+  gearCounterStat: keyof CharacterStats; // e.g. 'resilience' for toxic, 'toughness' for cold
+  gearCounterThreshold: number; // stat value that fully negates the hazard
+}
+
+export function computeHazardDrain(
+  hazard: HazardDefinition,
+  playerStats: CharacterStats,
+): number {
+  // Linear mitigation: 0 drain at threshold, full drain at 0 stat
+  const counterStat = playerStats[hazard.gearCounterStat] ?? 0;
+  const mitigationRatio = Math.min(1, counterStat / hazard.gearCounterThreshold);
+  return Math.round(hazard.damagePerTick * (1 - mitigationRatio));
+}
+```
+
+**Gear Counter Mapping (gear counter stat → hazard):**
+
+| Biome | Hazard Type | Gear Counter Stat | Threshold |
+|-------|-------------|-------------------|-----------|
+| toxic_wastes, miasma_marshes | toxic | resilience | 150 |
+| frozen_expanse, crystalline_wastes | cold | toughness | 120 |
+| volcanic_ridge | heat | durability | 130 |
+| void_rift | void_storm | resilience | 200 |
+| deep_trenches | pressure | durability | 180 |
+| starfall_crater | radiation | resilience | 160 |
+
+The `hazmat` archetype suit already exists in `packages/items/src/utils.ts` with `ARCHETYPE_PROFILES.hazmat = { resilience: 30, recovery: 25, durability: 25, vigor: 20 }`. Hazmat suits therefore counter toxic/void/radiation hazards without new archetype invention.
+
+**BiomeHazard type extension in shared-types/src/game/biome.ts:**
+
+```typescript
+export interface BiomeHazard {
+  type: 'radiation' | 'toxic' | 'cold' | 'heat' | 'void_storm' | 'pressure';
+  damage: number;
+  frequency: number;
+  gearCounterStat: keyof CharacterStats; // NEW
+  gearCounterThreshold: number;          // NEW
+}
+```
+
+---
+
+### Pattern 3: Creature AI Behaviors as New FSM Branches
+
+**What:** The existing `tickCreatureAI()` pure FSM in `creature-ai.ts` switches on `creature.behavior`. New behaviors are implemented as new switch case handlers. The function signature does NOT change — callers in `ai.service.ts` already call `tickCreatureAI(creature, players, collisions)`.
+
+**New AiTickResult fields needed:**
+
+```typescript
+export interface AiTickResult {
+  newPosition: Position | null;
+  aggroTarget?: string;
+  shouldAttack?: boolean;
+  shouldReturn?: boolean;
+  stampede?: boolean;        // NEW: trigger all nearby same-species creatures to charge
+  packCall?: string[];       // NEW: array of creature IDs to notify to join combat
+  ambushReveal?: boolean;    // NEW: creature becomes visible/active from stealth
+  frenzied?: boolean;        // NEW: double attack speed flag for this tick
+}
+```
+
+**Behavior implementations:**
+
+- **Stampede**: When a predator creature drops below 30% health with a combatTarget, it signals AiService to trigger all same-species creatures within 6 tiles to also aggro the same player. Implemented as: if `health < maxHealth * 0.3` and `!creature.stampedeFired`, return `stampede: true`.
+- **Pack Call**: When a predator first aggroes (aggroTarget returned), also scan for same-species creatures within 8 tiles and return their IDs in `packCall`. AiService then calls `startCreatureCombat` on each.
+- **Ambush**: New behavior type `'ambush'`. Creature sits stationary (wander disabled) until player enters 2-tile radius, then aggroes with a +50% damage bonus for first hit. Server marks creature with `ambushReady: boolean` flag.
+- **Frenzy**: When any creature drops below 20% health, apply `frenzied: true` to result. AiService interprets this as halving the attack interval for one tick.
+
+**AiService coordination for Stampede/Pack Call:**
+
+AiService maintains a `creatureGroups: Map<string, string[]>` (speciesId → all creatureIds in zone). When stampede/packCall signals arrive, AiService fans out `startCreatureCombat` calls. This state is per-zone-tick, not persisted.
+
+**New creature behavior requires:**
+- `CreatureBehavior` type in `packages/shared-types/src/core/entity.ts` extended: add `'ambush'` as a valid behavior string.
+- `Creature` interface extended: add `stampedeFired?: boolean` and `ambushReady?: boolean` flags.
+- `CreatureDefinition.behavior` already uses `CreatureBehavior` type — no further change needed for creature definitions beyond assigning behavior to specific creatures.
+
+---
+
+### Pattern 4: Ability Rebalance — Shield Pool as New Effect Type
+
+**What:** Defensive abilities currently only provide toughness stat buffs. The rebalance gives them concrete damage absorption (shield pool) and flat damage reduction (DR). A new `AbilityEffect` discriminant is needed.
+
+**New effect types:**
+
+```typescript
+// packages/shared-types/src/game/ability.ts
+export type AbilityEffect =
+  | { readonly type: 'damage'; ... }
+  | { readonly type: 'heal'; ... }
+  | { readonly type: 'buff'; ... }
+  | { readonly type: 'debuff'; ... }
+  | { readonly type: 'dot'; ... }
+  | { readonly type: 'hot'; ... }
+  | { readonly type: 'gather'; ... }
+  | { readonly type: 'shield'; readonly shieldAmount: number; readonly duration: number }  // NEW
+  | { readonly type: 'damage_reduction'; readonly drPercent: number; readonly duration: number }; // NEW
+```
+
+**AbilityService tracking — apps/game-server/src/game/ability.service.ts:**
+
+```typescript
+// New in-memory state:
+private shieldPools: Map<string, { remaining: number; expiresAt: number }> = new Map();
+private damageReductions: Map<string, { drPercent: number; expiresAt: number }> = new Map();
+```
+
+When `combat.service.ts` applies damage to a player, it checks `abilityService.consumeShield(playerId, damage)` first, then applies DR, then applies remaining damage. This requires a method addition to AbilityService and a call in `creatureAttackTick()`.
+
+**Rebalance changes to definitions (in ability/definitions.ts):**
+
+- `ABILITY_EMERGENCY_SHIELD`: Change from `buff toughness +12` to `shield 200 HP for 8s`. Gives concrete value.
+- `ABILITY_MAGNETIC_FIELD`: Change from `buff toughness +8` to `damage_reduction 20% for 12s`.
+- `ABILITY_FORTIFY_SYSTEMS`: Change from `buff durability +10` to `shield 120 HP for 15s`.
+- `ABILITY_PLASMA_BURST`: Nerf baseDamage from 35 to 25, add `damageType: 'thermal'`. Retains identity but loses raw dominance.
+- `ABILITY_ENERGY_BARRIER`: Retain resilience buff but double amount (14 for 12s), giving it meaningful status resistance.
+- `ABILITY_THERMAL_LANCE`: Keep, add `damageType: 'thermal'`, reduce cooldown from 7000ms to 5000ms — gives it a niche role.
+- `ABILITY_CRYO_BLAST`: Add `damageType: 'cryo'`, add slow-like debuff effect (perception -10 for 4s — impedes creature scanning).
+
+---
+
+### Pattern 5: Stat Caps with Diminishing Returns
+
+**What:** A new pure function `applyDiminishingReturns(rawValue: number, capAt: number = 200): number` is added to `packages/game-logic/src/combat/stat-caps.ts`. It is called inside `computeCharStats()` as a final post-processing step.
+
+**Formula:**
+
+```typescript
+// packages/game-logic/src/combat/stat-caps.ts — NEW
+export const STAT_CAP = 200;
+export const DR_EXPONENT = 0.6; // soft cap curve
+
+export function applyDiminishingReturns(rawValue: number): number {
+  if (rawValue <= STAT_CAP) return rawValue;
+  const excess = rawValue - STAT_CAP;
+  // Compressed excess: excess^0.6, meaning each extra point above 200 adds less
+  const compressed = Math.pow(excess, DR_EXPONENT);
+  return Math.round(STAT_CAP + compressed);
+}
+```
+
+**Integration point — packages/game-logic/src/stats/char-stats.ts:**
+
+`computeCharStats()` is called at the end. After all stat aggregation (base + equipment + buffs), apply `applyDiminishingReturns` to each stat key before returning. This is the single modification point — one loop addition to the end of the function:
+
+```typescript
+// After buff application, before return:
+for (const key of Object.keys(stats) as (keyof CharacterStats)[]) {
+  stats[key] = applyDiminishingReturns(stats[key]);
+}
+return stats;
+```
+
+This automatically affects all callers: `CombatService`, `AbilityService`, `AiService` regen — no individual callers need changes.
+
+---
+
+### Pattern 6: Automation Deployables — Database-Backed Persistent Structures
+
+**What:** Automation deployables (extractors, beacons, planetary extractors, refineries) are player-owned structures that persist in the database, accumulate resources over time, and require periodic maintenance. They are a new vertical feature with their own service, DB schema, and event loop.
+
+**Database schema — packages/database/src/schema/deployables.ts (NEW):**
+
+```typescript
+export const deployables = pgTable('deployables', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ownerId: uuid('owner_id').notNull().references(() => characters.id, { onDelete: 'cascade' }),
+  deployableType: varchar('deployable_type', { length: 50 }).notNull(),
+  // 'extractor' | 'survey_beacon' | 'planetary_extractor' | 'refinery'
+  position: jsonb('position').$type<PositionJson>().notNull(),
+  zoneId: varchar('zone_id', { length: 100 }).notNull(),
+  targetResourceId: varchar('target_resource_id', { length: 100 }), // what it gathers
+  fuelRemaining: integer('fuel_remaining').notNull().default(100),   // 0 = offline
+  maintenanceDue: timestamp('maintenance_due', { withTimezone: true }),
+  accumulatedItems: jsonb('accumulated_items').$type<AccumulatedItemJson[]>().notNull().default([]),
+  processingQueueId: uuid('processing_queue_id'),
+  config: jsonb('config').$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  lastTickAt: timestamp('last_tick_at', { withTimezone: true }),
+});
+```
+
+**AutomationService — apps/game-server/src/game/automation.service.ts (NEW):**
+
+Runs a global tick (60s interval) independent of zone AI ticks. For each active deployable:
+1. Check `fuelRemaining > 0` and `maintenanceDue` not overdue.
+2. Roll resource yield based on `targetResourceId` and deployable tier.
+3. Append to `accumulatedItems` JSON column.
+4. Decrement `fuelRemaining` by 1.
+5. If `fuelRemaining === 0`, emit `deployable:offline` to owner socket.
+
+Processing queues (refinery input → output) run on the same 60s tick, converting raw `accumulatedItems` into refined items.
+
+**Survey Beacon (passive caching):**
+
+Survey beacons scan their zone for active resource nodes and cache spawn coordinates + rarity into the `config` JSON column. The AiService zone tick can optionally emit this cached data to the beacon owner on zone join — avoids active scanning.
+
+**Deployable entity in game world — SharedTypes:**
+
+```typescript
+// packages/shared-types/src/core/entity.ts — ADD
+export interface DeployableEntity extends Entity {
+  type: 'deployable';
+  deployableType: string;
+  ownerId: string;
+  fuelRemaining: number;
+  online: boolean;
+}
+```
+
+Rendered client-side using fallback color tiles (no sprite yet, consistent with existing pattern).
 
 ---
 
 ## Data Flow
 
-### New Entity Flowing Through the System
+### Damage Type Flow (Player Ability → Creature)
 
 ```
-Author adds CreatureDefinition to creatures.ts
-        |
-        v
-ALL_CREATURES array includes it
-        |
-        v
-ALL_ENTITIES includes it (via definitions/index.ts)
-        |
-        v
-EntityRegistry.registerAll() on module load (via entities/src/index.ts)
-        |
-        v
-Author adds ENTITY_IDS constant in definitions/index.ts
-        |
-        v
-Author adds entry to BIOME_SPAWN_CONFIGS[biome] in world-gen/spawn.ts
-        |
-        v
-World gen picks up entity during chunk spawn generation
-        |
-        v
-Author adds loot table entry in game-logic/creature-loot.ts
-        |
-        v
-CombatService uses loot entry on creature kill
+Player uses ability (ability:use socket event)
+    ↓
+AbilityService.handleAbilityUse()
+    ↓ fetch ability definition from AbilityRegistry
+    ↓ extract damageType from AbilityEffect (e.g. 'thermal')
+    ↓ fetch creature from ZonesService
+    ↓ fetch creature definition from EntityRegistry → resistances
+    ↓
+calculateDamage({ ..., damageType, defenderResistances })
+    ↓ resistance multiplier applied inside calculateDamage
+    ↓
+ZonesService.updateEntity() — decrement creature health
+    ↓
+combat:damage socket event → client floating number
 ```
 
-### New Faction Item Flowing Through the System
+### Biome Hazard Flow (Server Tick → Player)
 
 ```
-Author adds ItemDefinition to faction-verdant.ts
-        |
-        v
-ALL_VERDANT_SUITS (or modules/tools) array includes it
-        |
-        v
-ALL_ITEMS includes it via definitions/index.ts
-        |
-        v
-ItemRegistry.registerAll() on module load (via items/src/index.ts)
-        |
-        v
-Author adds ITEM_IDS constant in definitions/index.ts
-        |
-        v
-Item becomes available for:
-  - Trader inventory (packages/npcs/src/definitions/verdant.ts)
-  - Loot table references (creature-loot.ts)
-  - Quest rewards (packages/quests/src/definitions/)
-  - Starter kit (if applicable)
+AiService.runZoneTick() every 1000ms
+    ↓
+HazardService.processZoneHazards(zoneId)
+    ↓ get players in zone from PlayerService
+    ↓ for each player:
+        ↓ get current tile biome from ZonesService
+        ↓ lookup BiomeHazard definition for biome
+        ↓ get player stats from computeCharStats()
+        ↓ computeHazardDrain(hazard, playerStats) → drain amount
+        ↓ if drain > 0: PlayerService.updateHealth(playerId, newHealth)
+        ↓ emit 'player:hazard' socket event to player
+```
+
+### Automation Processing Flow (60s Global Tick)
+
+```
+AutomationService.globalTick() every 60000ms
+    ↓ query all deployables with fuelRemaining > 0
+    ↓ for each deployable:
+        ↓ compute resource yield (type, tier, elapsed time)
+        ↓ db.update deployable.accumulatedItems, fuelRemaining, lastTickAt
+        ↓ if refinery: convert queue inputs → outputs
+        ↓ if offline: notify owner socket
+    ↓
+Player manually collects via 'deployable:collect' socket event
+    ↓
+AutomationService.collectDeployable(playerId, deployableId)
+    ↓ validate ownership + proximity
+    ↓ transfer accumulatedItems → player inventory via InventoryService
+    ↓ emit 'inventory:update' to player
+```
+
+### Shield Absorption Flow (Creature Attack → Player with Shield)
+
+```
+CombatService.creatureAttackTick()
+    ↓ calculateDamage() → raw damage
+    ↓ AbilityService.consumeShield(playerId, rawDamage) → { absorbed, remaining }
+    ↓ AbilityService.getDamageReduction(playerId) → drPercent
+    ↓ finalDamage = (rawDamage - absorbed) * (1 - drPercent)
+    ↓ PlayerService.updateHealth(playerId, newHealth)
+    ↓ emit 'combat:damage' with shieldAbsorbed field
 ```
 
 ---
 
-## Integration Points
+## Component Boundaries and Integration Points
 
 ### New vs Modified Files
 
-| File | Action | What changes |
-|------|--------|-------------|
-| `packages/entities/src/definitions/creatures.ts` | MODIFY | Add ~60 new `CreatureDefinition` objects |
-| `packages/entities/src/definitions/plants.ts` | MODIFY | Add ~30 new `PlantDefinition` objects |
-| `packages/entities/src/definitions/minerals.ts` | MODIFY | Add ~20 new `MineralDefinition` objects including rare/epic variants |
-| `packages/entities/src/definitions/artifacts.ts` | MODIFY | Add ~15 new `ArtifactDefinition` objects |
-| `packages/entities/src/definitions/aquatic-*.ts` (4 files) | MODIFY | Fill per-biome gaps in existing files |
-| `packages/entities/src/definitions/exotic-*.ts` (4 files) | MODIFY | Fill per-biome gaps in existing files |
-| `packages/entities/src/definitions/index.ts` | MODIFY | Add ENTITY_IDS constants + include new arrays in ALL_ENTITIES |
-| `packages/items/src/definitions/faction-verdant.ts` | CREATE | All Verdant suits, modules, tools |
-| `packages/items/src/definitions/faction-helix.ts` | CREATE | All Helix suits, modules, tools |
-| `packages/items/src/definitions/faction-nexus.ts` | CREATE | All Nexus suits, modules, tools |
-| `packages/items/src/definitions/index.ts` | MODIFY | Import faction files, add to ALL_ITEMS, add ITEM_IDS constants |
-| `packages/world-gen/src/generation/spawn.ts` | MODIFY | Add new entities to BIOME_SPAWN_CONFIGS per biome |
-| `packages/world-gen/src/generation/rarity.ts` | MODIFY | Add new rare/epic mineral IDs to biome maps |
-| `packages/game-logic/src/loot/creature-loot.ts` | MODIFY | Add loot table entry for every new creature |
-| `packages/npcs/src/definitions/verdant.ts` | MODIFY | Add Verdant faction gear to trader inventory |
-| `packages/npcs/src/definitions/helix.ts` | MODIFY | Add Helix faction gear to trader inventory |
-| `packages/npcs/src/definitions/nexus.ts` | MODIFY | Add Nexus faction gear to trader inventory |
+| File | Action | Reason |
+|------|--------|--------|
+| `packages/shared-types/src/game/combat.ts` | MODIFY | Add `DamageType`, `DamageResistances` |
+| `packages/shared-types/src/game/biome.ts` | MODIFY | Add `gearCounterStat`, `gearCounterThreshold` to `BiomeHazard` |
+| `packages/shared-types/src/game/ability.ts` | MODIFY | Add `shield` and `damage_reduction` effect types; add `damageType` to damage effect |
+| `packages/shared-types/src/core/entity.ts` | MODIFY | Add `ambushReady`, `stampedeFired` to `Creature`; add `DeployableEntity` |
+| `packages/entities/src/types.ts` | MODIFY | Add optional `resistances` to `CreatureDefinition`; add `'ambush'` to `CreatureBehavior` |
+| `packages/game-logic/src/combat/damage.ts` | MODIFY | Accept `damageType` + `defenderResistances` in `DamageParams`; apply multiplier |
+| `packages/game-logic/src/combat/stat-caps.ts` | NEW | `applyDiminishingReturns()` pure function |
+| `packages/game-logic/src/combat/biome-hazard.ts` | NEW | `computeHazardDrain()`, `HazardDefinition`, biome-to-hazard mapping |
+| `packages/game-logic/src/ai/creature-ai.ts` | MODIFY | Add stampede/pack-call/ambush/frenzy to FSM; new `AiTickResult` fields |
+| `packages/game-logic/src/stats/char-stats.ts` | MODIFY | Apply `applyDiminishingReturns` to each stat after aggregation |
+| `packages/game-logic/src/index.ts` | MODIFY | Export new symbols from stat-caps and biome-hazard |
+| `packages/game-logic/src/ability/definitions.ts` | MODIFY | Rebalance 6 ability definitions, add damageType to offensives |
+| `packages/database/src/schema/deployables.ts` | NEW | Deployable structures table |
+| `packages/database/src/schema/automation-jobs.ts` | NEW | Processing queue table |
+| `packages/database/src/queries/deployables.ts` | NEW | CRUD queries for deployables |
+| `packages/database/src/schema/index.ts` | MODIFY | Export new schemas |
+| `apps/game-server/src/game/combat.service.ts` | MODIFY | Call `consumeShield`/`getDamageReduction` before health update; pass damageType |
+| `apps/game-server/src/game/ability.service.ts` | MODIFY | Add `shieldPools`, `damageReductions` maps; execute shield/DR effects |
+| `apps/game-server/src/game/ai.service.ts` | MODIFY | Inject HazardService; call processZoneHazards per tick; handle stampede/packCall |
+| `apps/game-server/src/game/hazard.service.ts` | NEW | Biome hazard processor (injectable) |
+| `apps/game-server/src/game/automation.service.ts` | NEW | Deployable lifecycle + processing queues |
+| `apps/game-server/src/game/game.module.ts` | MODIFY | Register HazardService, AutomationService |
+| `apps/game-server/src/game/game.gateway.ts` | MODIFY | Handle `deployable:place`, `deployable:collect`, `deployable:refuel` events |
+| `apps/web/src/store/gameStore.ts` | MODIFY | Add hazard state, deployable collection state |
 
-**No new packages, no new registries, no schema changes.** All new content fits the existing static definition pattern.
+### Internal Boundaries — What Must NOT Cross
 
-### Internal Boundaries
-
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| `packages/entities` -> `packages/world-gen` | `ENTITY_IDS` string constants | world-gen imports from entities; entity defs have no world-gen dependency |
-| `packages/items` -> anywhere | `ITEM_IDS` string constants | Items referenced by string ID everywhere (loot tables, trader inventory, quest rewards) |
-| `packages/game-logic/loot` -> `packages/entities` | Imports `HarvestYield` type | Loot tables share the HarvestYield interface with entity harvest yields |
-| `packages/items/utils` -> definition files | `generateSuitStats()` and `computeIlvl()` imported per file | All suit definition files must import these two utilities |
-
----
-
-## Recommended Build Order
-
-Given dependency graph and review surface area:
-
-**Phase 1 — Entity content (creatures, plants, minerals, artifacts)**
-
-Order within phase:
-1. Terrestrial creature gap-fills — modify `creatures.ts`, add `ENTITY_IDS`, update `BIOME_SPAWN_CONFIGS`, add loot tables (highest complexity: four-file pattern)
-2. Aquatic creature gap-fills (same four-file pattern)
-3. Exotic creature gap-fills (same)
-4. All biome plants — Tier I first, then Tier II-IV (two-file pattern: definition + spawn config)
-5. All biome minerals + rare/epic variants (two-file pattern: definition + rarity.ts)
-6. All biome artifacts (two-file pattern: definition + spawn config)
-
-Rationale: Creatures have the highest per-entity coordination cost (four integration points). Completing all creatures before moving to plants keeps BIOME_SPAWN_CONFIGS changes batched by purpose.
-
-**Phase 2 — Faction item content (suits, modules, tools)**
-
-Order within phase:
-1. Create `faction-verdant.ts` — full Verdant line (Common through Legendary suits, modules, tools)
-2. Create `faction-helix.ts` — full Helix line
-3. Create `faction-nexus.ts` — full Nexus line
-4. Update `definitions/index.ts` — wire all three into ALL_ITEMS and ITEM_IDS
-
-Rationale: Faction files are independent of each other and can be authored separately. The `definitions/index.ts` update is the final integration step after all three files are complete.
-
-**Phase 3 — Trader inventory updates**
-
-- Add faction gear to NPC trader inventories in `packages/npcs/src/definitions/verdant.ts`, `helix.ts`, `nexus.ts`
-- Faction gear should only be sold by the matching faction's traders
-- Endgame gear (Exotic, Legendary) priced significantly higher than Tier I equivalents
+| Boundary | Rule |
+|----------|------|
+| `game-logic` ↔ server services | game-logic functions must remain pure — no NestJS imports, no DB calls |
+| `AiService` ↔ `HazardService` | AiService calls HazardService but HazardService must not call AiService (circular) |
+| `AutomationService` ↔ combat | AutomationService has no dependency on CombatService — automation is resource/crafting only |
+| Creature AI FSM ↔ per-zone coordination | `tickCreatureAI()` is pure and single-creature; AiService handles multi-creature coordination (stampede fan-out) |
 
 ---
 
-## Anti-Patterns
+## Suggested Build Order (Dependency-Aware)
 
-### Anti-Pattern 1: Hardcoded Stats in Faction Suit Definitions
+### Tier 1: Foundation (no inter-feature deps — build first)
 
-**What people do:** Write `durability: 450, toughness: 380` directly in the ItemDefinition.
+1. **Shared types additions** — `DamageType`, `DamageResistances`, shield effect types, `DeployableEntity`. Required by every subsequent step.
+2. **Stat caps** — `stat-caps.ts` pure function + integration into `char-stats.ts`. Affects all combat math. Must be stable before resistance/hazard tuning.
+3. **Entity type extension** — add `resistances` to `CreatureDefinition`, add `ambushReady`/`stampedeFired` to `Creature`. Required by damage types and AI upgrades.
 
-**Why it's wrong:** Breaks mathematical consistency with all other suits. If stat budgets are rebalanced, hand-coded values require manual updates across every definition. `generateSuitStats()` exists precisely to avoid this — and REQUIREMENTS.md SUIT-05 explicitly requires it.
+### Tier 2: Core Combat Mechanics (depend on Tier 1)
 
-**Do this instead:** Always call `generateSuitStats(archetype, rarity, tier)` and spread the result into the stats effect.
+4. **Damage type pipeline** — modify `calculateDamage()` to consume `damageType` + `defenderResistances`. Pure logic change, testable in isolation.
+5. **Ability rebalance** — update 6 ability definitions, add `shield` and `damage_reduction` effect types to `ability.ts`, implement handling in `AbilityService`. Add `damageType` to offensive ability effects.
+6. **Combat service wiring** — propagate damage type from ability through `CombatService.creatureAttackTick()`; add shield consumption before health update.
 
-### Anti-Pattern 2: Creating New Entity Type Files by Individual Biome
+### Tier 3: AI and Environmental Systems (depend on Tier 1 + 2)
 
-**What people do:** Create `toxic-wastes-creatures.ts`, `frozen-expanse-creatures.ts` for each biome's new additions.
+7. **Creature AI upgrades** — extend `tickCreatureAI()` FSM with stampede/pack-call/ambush/frenzy. Extend `AiService` with coordination state (creatureGroups map, stampede fan-out).
+8. **Biome hazard system** — `biome-hazard.ts` pure logic, `HazardService`, extend `BiomeHazard` interface, wire into `AiService.runZoneTick()`, add `player:hazard` socket event. Update `biome.ts` with gear counter fields.
 
-**Why it's wrong:** The existing split is by biome **group** (terrestrial/aquatic/exotic), not individual biome. Splitting by biome would create 17+ tiny files for content that belongs together. The current files are designed to hold 30-50+ definitions.
+### Tier 4: Automation (independent vertical — can be built in parallel with Tier 3)
 
-**Do this instead:** Add new definitions directly into the matching existing file (`creatures.ts` for all terrestrial, `aquatic-creatures.ts` for all aquatic). Use section comments within the file to group by biome — this pattern already exists in the codebase.
+9. **Database schema** — `deployables.ts` + `automation-jobs.ts` schemas, run migration.
+10. **AutomationService** — deployable placement, collection, fuel, maintenance, processing queue tick.
+11. **Gateway events** — `deployable:place`, `deployable:collect`, `deployable:refuel` in `game.gateway.ts`.
+12. **Client automation UI** — deployable panel, status display, collection trigger.
 
-### Anti-Pattern 3: Missing ENTITY_IDS Constant
+### Tier 5: Client Polish (depend on Tiers 2-4)
 
-**What people do:** Hardcode entity ID strings directly in `BIOME_SPAWN_CONFIGS` or loot table keys.
-
-**Why it's wrong:** The entire codebase uses `ENTITY_IDS.CREATURE_X` everywhere. Hardcoded strings bypass searchability and are invisible to TypeScript when renaming.
-
-**Do this instead:** Always add the `ENTITY_IDS.NEW_NAME: 'new_id'` constant to the index.ts first, then reference it everywhere. It's a two-line addition per entity.
-
-### Anti-Pattern 4: Faction Item IDs Without Faction Prefix
-
-**What people do:** Name a faction suit `'suit_bioweave_epic'` without faction context in the ID.
-
-**Why it's wrong:** When 30+ faction items exist across three factions, non-prefixed IDs become ambiguous in logs, loot table entries, and trader inventory references.
-
-**Do this instead:** Use the established NPC naming convention: `suit_verdant_<name>_<rarity>`, `module_helix_<name>_<rarity>`, `tool_nexus_<name>_<rarity>`. Example: `suit_verdant_bioweave_exotic`.
-
-### Anti-Pattern 5: Adding Rare/Epic Minerals to the Normal BIOME_SPAWN_CONFIGS Mineral List
-
-**What people do:** Add a rare mineral variant to `BIOME_SPAWN_CONFIGS[biome].minerals` with a low weight value to make it spawn rarely.
-
-**Why it's wrong:** The proximity-based rare spawn system in `rarity.ts` operates as a completely separate pass from normal mineral spawning. Rare minerals placed in the normal list don't benefit from proximity-to-danger bonuses, don't respect the per-chunk caps (`rareMinerals: 3`, `epicMinerals: 1`), and have confusing spawn semantics.
-
-**Do this instead:** Add rare mineral IDs to `getRareBiomeMinerals()` and epic mineral IDs to `getEpicBiomeMinerals()` in `packages/world-gen/src/generation/rarity.ts`. Leave them out of the normal `BIOME_SPAWN_CONFIGS` mineral list entirely.
+13. **Damage type combat log** — show type label in floating numbers and combat log panel.
+14. **Hazard HUD indicator** — `HazardOverlay.ts` renders active hazard warning with counter stat progress bar.
+15. **Shield visual feedback** — distinct color for shield-absorbed damage numbers.
 
 ---
 
@@ -457,27 +593,65 @@ Rationale: Faction files are independent of each other and can be authored separ
 
 | Scale | Architecture Adjustments |
 |-------|--------------------------|
-| ~92 entities (current v1.22) | Current static Map approach is optimal |
-| ~200 entities (this milestone) | No architecture change needed. Maps handle thousands with no measurable overhead. File size is the only concern — biome-group splitting manages it. |
-| ~500+ entities (future) | Consider code-generation tooling for definition boilerplate. The pattern stays the same. |
+| 0-1k users (current) | All in-memory state (shields, cooldowns, AI sessions) is fine; automation 60s global tick is cheap |
+| 1k-10k users | Automation global tick becomes costly at many deployables — shard by zone; consider Redis for deployable state |
+| 10k+ users | HazardService per-player tick in zone becomes expensive — batch compute, emit delta only |
 
-**First bottleneck:** Not the registry (in-memory Map, O(1) lookups). The bottleneck will be `BIOME_SPAWN_CONFIGS` in `spawn.ts` — a single large Record that must be touched for every new entity. It will reach ~600+ lines by end of this milestone. Still manageable but worth monitoring. If it grows beyond 800 lines in a future milestone, consider splitting by biome group into separate files.
+---
 
-**Second bottleneck:** `CREATURE_LOOT_TABLES` in `creature-loot.ts` is a single Map in a single file. Adding 60 new creatures will make it approximately 500+ lines. This is still manageable, but future milestones should consider splitting by tier (tier1-loot.ts, tier2-loot.ts, etc.).
+## Anti-Patterns
+
+### Anti-Pattern 1: Putting Resistance Logic in AbilityService
+
+**What people do:** Fetch creature resistances inside AbilityService where abilities execute, apply the multiplier there, and return modified damage to `calculateDamage`.
+
+**Why it's wrong:** Splits the single-responsibility of damage calculation across two files. Auto-attacks from `CombatService.creatureAttackTick()` would bypass the resistance logic entirely since they don't go through AbilityService.
+
+**Do this instead:** Add `damageType` and `defenderResistances` as optional parameters to `DamageParams` in `calculateDamage()`. Both ability-triggered attacks (AbilityService) and auto-attacks (CombatService) resolve resistances the same way by passing the creature's resistance map.
+
+### Anti-Pattern 2: AiService Directly Mutating Creature State for New Behaviors
+
+**What people do:** Add stampede/frenzy logic as mutations inside `AiService.runZoneTick()` directly on creature objects, bypassing `ZonesService.updateEntity()`.
+
+**Why it's wrong:** Breaks the existing pattern where all entity state changes go through `ZonesService.updateEntity()` for consistency and persistence. In-memory mutation means creature state diverges from DB on server restart.
+
+**Do this instead:** Return new fields from `tickCreatureAI()` via `AiTickResult`, let AiService call `zonesService.updateEntity()` with the new flags (`stampedeFired: true`, `ambushReady: false`), same as existing `combatTarget` handling.
+
+### Anti-Pattern 3: Applying Diminishing Returns in Individual Stat Callers
+
+**What people do:** Call `applyDiminishingReturns()` at each call site — in CombatService, in AbilityService, in AiService — wherever a stat value is consumed.
+
+**Why it's wrong:** Every new caller has to remember to apply DR. Stats that flow through without this check (e.g., the haste-to-attack-interval formula) would compute incorrectly.
+
+**Do this instead:** Apply DR once, at the end of `computeCharStats()`, before returning. All consumers get already-capped stats. The pure function becomes the authoritative source of truth.
+
+### Anti-Pattern 4: Hazard Logic Inline in AiService.runZoneTick()
+
+**What people do:** Put biome hazard computation inside the existing `runZoneTick()` method body in AiService, co-located with creature AI tick.
+
+**Why it's wrong:** AiService is already the God Service of the zone tick. Adding hazard logic makes it harder to test, extends the warning-threshold tick duration (currently >200ms triggers a warning), and violates the single-responsibility principle.
+
+**Do this instead:** Inject `HazardService` into `AiService` and call `this.hazardService.processZoneHazards(zoneId)` as a single line in `runZoneTick()`. HazardService owns all hazard state and logic independently.
 
 ---
 
 ## Sources
 
-- Direct inspection of `packages/entities/src/` — types.ts, registry.ts, definitions/index.ts, definitions/creatures.ts — HIGH confidence
-- Direct inspection of `packages/items/src/` — types.ts, registry.ts, utils.ts, definitions/index.ts, definitions/suits.ts, aquatic-suits.ts — HIGH confidence
-- Direct inspection of `packages/world-gen/src/generation/spawn.ts` and `rarity.ts` — HIGH confidence
-- Direct inspection of `packages/game-logic/src/loot/creature-loot.ts` — HIGH confidence
-- Direct inspection of `packages/npcs/src/definitions/` for faction split precedent — HIGH confidence
-- `.planning/REQUIREMENTS.md` v1.23 section for scope and archetype mappings — authoritative
-- `lore/world-bible.md` for faction identity and biome tier classification — HIGH confidence
+- Direct codebase inspection of all referenced files (HIGH confidence)
+- `packages/game-logic/src/combat/damage.ts` — existing DamageParams interface
+- `packages/game-logic/src/ai/creature-ai.ts` — existing FSM pattern, AiTickResult
+- `packages/game-logic/src/stats/char-stats.ts` — existing computeCharStats() aggregation
+- `apps/game-server/src/game/ai.service.ts` — existing zone tick loop, 1000ms interval
+- `apps/game-server/src/game/combat.service.ts` — existing creatureAttackTick(), session model
+- `apps/game-server/src/game/ability.service.ts` — existing shield/buff tracking patterns
+- `packages/shared-types/src/game/ability.ts` — existing AbilityEffect discriminated union
+- `packages/shared-types/src/game/biome.ts` — existing BiomeHazard interface
+- `packages/entities/src/types.ts` — existing CreatureDefinition interface
+- `packages/items/src/utils.ts` — existing ARCHETYPE_PROFILES including 'hazmat'
+- `packages/database/src/schema/structures.ts` — existing structure schema pattern for deployables
+- `.planning/PROJECT.md` — v1.24 feature scope and constraints
 
 ---
 
-*Architecture research for: v1.23 Content Expansion & Faction Gear*
-*Researched: 2026-03-02*
+*Architecture research for: v1.24 Balance & Automation — damage types, biome hazards, AI upgrades, ability rebalance, stat caps, automation tech tree*
+*Researched: 2026-03-03*

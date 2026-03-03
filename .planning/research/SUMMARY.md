@@ -1,272 +1,230 @@
 # Project Research Summary
 
-**Project:** Into the Void — v1.23 Content Expansion & Faction Gear
-**Domain:** MMO content scaling — entity definitions, biome population, faction-specific equipment
-**Researched:** 2026-03-02
+**Project:** Into the Void v1.24 — Balance & Automation
+**Domain:** Sci-fi survival MMO systems expansion (combat depth, environmental hazards, creature AI, ability rebalance, stat caps, automation tech tree)
+**Researched:** 2026-03-03
 **Confidence:** HIGH
 
 ## Executive Summary
 
-v1.23 is a pure content milestone, not a system milestone. All required infrastructure already exists: TypeScript definition files, singleton registries, `generateSuitStats()` and `computeIlvl()` utilities, biome spawn configs, loot tables, and NPC trader systems. The work is authoring 100+ new definitions that fill documented gaps — thin biome creature rosters, missing artifact categories, and zero faction-exclusive gear across three named factions. Nothing new needs to be built. The risk is not capability; it is execution discipline across a high-volume authoring task.
+Into the Void v1.24 is a systems expansion milestone on top of an already-functional monorepo. The stack is entirely settled — zero new runtime dependencies are required. All 6 feature systems (damage types, biome hazards, creature AI upgrades, ability rebalance, stat caps, automation tech tree) integrate via extension points that already exist in the codebase. The primary work is threading data through established pipelines, adding two new NestJS services (HazardService, AutomationService), extending several pure-function packages in `game-logic`, and writing new DB schemas for automation deployables. This is not a build-from-scratch milestone — it is a precision extension of a working system.
 
-The recommended approach is a sequential three-phase structure: (1) all entity content (creatures, plants, minerals, artifacts across all 16 biomes), (2) all faction gear (suits, modules, tools for Verdant, Helix, and Nexus), (3) NPC trader inventory wiring. Entity content should precede faction gear because biome completeness is table stakes — players encounter the world before they encounter faction vendors. Within faction gear, a design gate must be established first: the per-faction ability assignment matrix and stat archetype identity must be agreed upon before any item definition is written, or faction gear collapses to cosmetically-different generics. The most urgent single gap is `toxic_wastes` with one creature where the world-bible documents a complete four-tier food chain ready to be authored.
+The recommended build order has a hard dependency chain at the top: shared-type additions must precede everything; stat caps must precede ability rebalance tuning; damage types must precede creature resistance population and ability niche assignments. Automation is the one independent vertical — it has zero code dependency on combat systems and can be built in parallel with the AI and hazard work. The 83 existing creature definitions need a one-time resistance migration, and that migration strategy must be decided at the start of the damage types phase. Required-field-with-bulk-defaults is safer than optional-field-with-deferred-cleanup. Automation economy balance (maintenance cost vs. output rate) must be documented as a design artifact before any automation code is written — resource inflation is the highest-severity design failure mode of this milestone.
 
-The two highest risks are both silent failures with no runtime errors: loot table orphaning (creature kills drop nothing because `CREATURE_LOOT_TABLES` entry was not written alongside the definition) and spawn config desync (entity exists in registry but was never added to `BIOME_SPAWN_CONFIGS` so it never appears in the world). Both risks are preventable with validation tests that do not yet exist in `packages/entities` — the package currently has zero tests. Establishing entity validation infrastructure before any new definitions are authored is the single highest-priority setup task for this milestone.
+The three sharpest risks are: (1) damage type data added to the type system but never threaded into `calculateDamage()`, leaving the feature invisible at runtime; (2) biome hazard tick processing doing async per-player inventory and biome lookups inside the zone tick, blowing the 200ms tick budget; (3) automation structures with deployment costs only and no recurring maintenance, producing runaway credit inflation. All three have concrete prevention strategies: a required-field test that fails to compile without damage type wiring, a player hazard state cache that is read synchronously in the tick, and a mandatory income/sink balance sheet before automation implementation begins.
 
 ## Key Findings
 
 ### Recommended Stack
 
-No new dependencies are required. TypeScript 5.9.3, Vitest 4.0.18, NX 20.8.4, and ESLint 8.57.0 with existing custom rules cover all validation needs for the entire milestone. The only tooling gap is that `packages/entities` has zero tests — no `vitest.config.ts` and no `__tests__/` directory — despite `packages/items` having five proven test suites (CONT-01 through CONT-05). Adding 60-70 new entity definitions without parallel validation infrastructure is the primary regression risk.
+The monorepo stack is entirely fixed. Zero new npm installs are required. All dependencies are already present: Phaser 3.90.0 (client rendering), NestJS 10.3.x (game-server services), Drizzle ORM 0.30.10 (PostgreSQL persistence), TypeScript 5.4+ (type safety across packages), Vitest 4.0.18 (unit testing). The existing `@nestjs/event-emitter` (3.0.1) and `setInterval`/`setTimeout` tick patterns cover all new async requirements. No `@nestjs/schedule`, no BullMQ, no new Redis queues.
+
+The six gaps that need new code but no new libraries: `DamageParams` lacks a `damageType` field; `CreatureDefinition` lacks a `resistances` field; `BiomeHazard` lacks `statDrain` and `gearCounterStat` fields; `AiTickResult` lacks behavior upgrade signals (stampede, packCall, ambush, frenzied); no `HazardService` exists; no `AutomationService` exists.
 
 **Core technologies:**
-- TypeScript 5.9.3 — all definition files are pure TS object literals; compile-time shape checking via `satisfies CreatureDefinition` catches errors at the definition site, not downstream
-- Vitest 4.0.18 — already proven in `packages/items`; identical setup must be added to `packages/entities` before any entity work begins
-- ESLint 8.57.0 + custom rules (`no-legacy-stat-buff`) — existing rule rejects the old `stat_buff` pattern; extensible for faction naming enforcement via `@typescript-eslint/utils@8.56.0`
-- NX 20.8.4 — `test` target caches by input hash; entity tests run only when definition files change, keeping CI fast
-- `generateSuitStats(archetype, rarity, tier)` and `computeIlvl()` — mandatory for all new suits; hand-coded stat numbers caused the Phase 59/60 migration that required a documented rollback procedure in CLAUDE.md
+- TypeScript 5.4+: discriminated unions for `DamageType` and `AbilityEffect` extensions — compile errors surface at definition sites, not at runtime; `satisfies` operator validates creature resistance shape at author time
+- NestJS 10.3.x: `HazardService` and `AutomationService` as new injectable services — the pattern is proven across 19 existing services in game-server; register both in `game.module.ts`
+- Drizzle ORM 0.30.10: new `deployables` table for automation persistence — existing `structures` table `properties` jsonb handles lighter extractor config; no ORM upgrade needed
+- Phaser 3.90.0: `HazardOverlay` HUD element and damage type color-coded floating numbers — all via existing `this.add.text()` and `this.tweens.add()` APIs already used in `EntityRenderer.ts`
+- Vitest 4.0.18: extend existing `damage.test.ts`; add `stat-caps.test.ts` and `biome-hazard.test.ts` for new pure functions in `game-logic`
 
 **See:** `.planning/research/STACK.md`
 
 ### Expected Features
 
-Research from FEATURES.md confirms a clear priority hierarchy derived from lore authority and direct biome audit.
-
 **Must have (table stakes — P1):**
-- Every biome reaches 4-6 creatures — most biomes have 1-3; `toxic_wastes` has 1 creature (critical: world-bible documents a full food chain there)
-- Every biome has 3-4 plants and 2-3 minerals with common/rare/epic rarity variants — gathering variety, crafting material ecosystem
-- Every biome has 1-2 artifacts — most underserved category; 9+ biomes have zero; `crystalline_wastes` explicitly called an "artifact hotspot" by world-bible but has zero artifacts
-- Faction identity pillars documented before any gear is written (stat archetype + ability matrix + color palette + naming convention per faction) — design gate for all subsequent gear phases
-- Verdant, Helix, and Nexus faction suits: full Tier I-IV ladders; Verdant is the most underrepresented with one suit entry today
-- Endgame (Tier III-IV) exotic and legendary faction suits as the headline deliverable
-- All new entities lore-compatible with `lore/world-bible.md` — CLAUDE.md non-negotiable requirement
+- 4 named damage types (Thermal/Cryo/Bio/Kinetic) with per-creature resistance multipliers (0.5-1.5x soft bands) — players expect thematically named abilities to differ mechanically beyond raw numbers
+- Plasma Burst dominance removed — current 35 baseDamage + 1.2 scaling makes all other offensive abilities irrelevant; no meaningful ability diversity exists today
+- Defensive abilities with real HP shield absorb and flat damage reduction — current toughness-buff approach produces invisible ~2% effective DR at endgame stats; players never slot defensive abilities
+- Stat soft cap at 200 with diminishing returns, hard cap at 400 — prevents infinite-scaling cheese builds; must apply to equipment+buff contributions only, not base level stats
+- Biome HP drain and stat debuffs in Tier II+ zones — `BiomeHazard` type is defined in `biome.ts` but the tick is not implemented; hazard gear must exist in trader inventories before any biome's hazard tick is enabled
+- Pack Call (omnivore), Frenzy (maniac), Ambush (predator), Stampede (herbivore) — one meaningful behavior upgrade per archetype
+- Deployable extractors (T2) with passive accumulation, storage cap, and maintenance cost credit sink
+- Credit sinks tied to automation deployment and recurring maintenance — economy currently has no meaningful drain mechanism
 
-**Should have (P2):**
-- Faction modules: 1-2 per faction spanning rarities (biosupport arrays for Verdant, heavy plating for Helix, sensor arrays for Nexus)
-- Faction tools: 1-2 per faction with faction-appropriate stat emphasis and tool type
-- Apex predator designation per biome (maniac behavior) — creates milestone moments, makes biomes memorable
-- Ecological food chain logic in creature descriptions — zero implementation cost, high world-building value
+**Should have (competitive — P2):**
+- Color-coded floating damage numbers per type (Thermal = orange, Cryo = cyan, Bio = green, Kinetic = white)
+- Frenzy visual state change on creature color overlay — teaches the mechanic through observation rather than tooltips
+- Survey beacons (T3) and planetary extractors (T4) extending the automation progression arc
+- Resource refinery (T5) for raw-to-refined material conversion
+- Tiered hazard severity (Tier II: stat debuff only; Tier III: HP drain + debuff; Tier IV: stacking drain)
+- Hazard-specific consumables as emergency counter items
 
-**Defer (v1.x / P3):**
-- Unaffiliated gear line — trigger: player feedback that Unaffiliated operatives feel identity-less
-- Creature lore fragments as rare apex predator drops
+**Defer (v1.25+):**
+- Dynamic hazard events (void storms, acid rain timed pulses) — after hazard tick infrastructure is proven stable
+- Automation-creature interaction (Stampede damages deployed structures) — after both systems are independently stable
+- Per-biome extractor efficiency modifiers — after automation usage patterns are measured
 
 **Defer (v2+):**
-- Faction reputation gating of gear (requires a new progression system — explicit out-of-scope per PROJECT.md)
-- Status effects on creatures (explicitly out of scope per PROJECT.md)
-- Surface faction HQs (explicitly out of scope per PROJECT.md)
-- Crafting from creature materials, creature ability systems, biome ecosystem AI
+- Adaptive creature learning AI — no production MMO implements ML-based per-creature learning; implementation cost too high
+- Ability synergy combos (chain effects from type interactions) — after base balance is proven; requires new server-side state
+- Crafting recipes using refined automation output — next systems milestone; explicitly out of scope in PROJECT.md
+- Player resistance stats per damage type — WoW abandoned this; creates mandatory gear sets per encounter type
+- Damage type immunity (0x multiplier) — creates hard player lock-out; cap resistance at 70% maximum instead
 
 **Anti-features to avoid:**
-- Faction gear locked exclusively to faction members without a reputation system — kills player economy, requires an out-of-scope system
-- Cosmetic-only faction differentiation (Destiny 2 faction rally is the cautionary tale) — identical stats with different colors; players see through it immediately
-- Faction-unique abilities not in the existing 21-ability pool — requires new ability design scope beyond this milestone
+- Plasma Burst nerf that distributes dominance to a different single ability — each ability needs a type-based situational niche
+- Defensive ability rebalance implemented as larger numbers on existing `buff` effects (not new effect types) — invisible to players
+- Front-loaded automation costs with no recurring maintenance — produces resource inflation after initial payoff period
+- Ambush behavior using ray-casting for line-of-sight computation inside the FSM tick — breaks tick budget at 3+ Ambush creatures per zone
+- Pack Call that spawns new creatures — only signal existing nearby creatures; never spawn
 
 **See:** `.planning/research/FEATURES.md`
 
 ### Architecture Approach
 
-All content flows through a proven three-layer pattern: static TypeScript definition files -> singleton registries (`EntityRegistry`, `ItemRegistry`) -> runtime consumers (world-gen spawn system, game-server services). The `biomes` field on `EntityDefinition` is informational for registry queries only — `BIOME_SPAWN_CONFIGS` in `packages/world-gen/src/generation/spawn.ts` is the sole authoritative source for what spawns in the world. This is the most critical architectural fact: failing to update `BIOME_SPAWN_CONFIGS` means an entity never spawns, with no error thrown anywhere.
+The architecture is an extension of the existing 3-tier monorepo pattern: pure functions in `packages/game-logic` (damage, stat caps, hazard math, AI FSM), server coordination in `apps/game-server/src/game/` (HazardService, AutomationService, modified CombatService/AiService/AbilityService), persistence in `packages/database` (new deployables schema). The four key structural decisions are: (1) resistance multiplier applied inside `calculateDamage()` as a single multiplicative step — both auto-attacks and ability-triggered attacks use the same path; (2) hazard processing cached on biome entry and gear change events, read synchronously from a Map in the tick — not recomputed async per-player per-tick; (3) group AI behaviors (Stampede, Pack Call) computed in a zone-level pre-processing pass before the per-creature FSM loop — `tickCreatureAI()` remains a pure single-creature function; (4) automation state accumulated in-memory and flushed to the `deployables` DB table on collection or on a 5-minute interval — not written to DB on every 60s accumulation tick.
 
-**Major components for v1.23:**
-1. `packages/entities/src/definitions/` (MODIFY existing files) — add new entities to existing biome-group files (`creatures.ts`, `aquatic-creatures.ts`, `exotic-creatures.ts`, etc.); do not create per-biome files
-2. `packages/items/src/definitions/faction-verdant.ts`, `faction-helix.ts`, `faction-nexus.ts` (CREATE new files) — one file per faction containing suits, modules, and tools; organized by faction not item type, following the NPC definition precedent
-3. `packages/world-gen/src/generation/spawn.ts` — `BIOME_SPAWN_CONFIGS`; single file that wires entities to world generation; updated for every new spawnable entity; will reach ~600+ lines by end of milestone
-4. `packages/game-logic/src/loot/creature-loot.ts` — `CREATURE_LOOT_TABLES`; one entry per new creature is mandatory; plants/minerals/artifacts do not use this file
-5. `packages/world-gen/src/generation/rarity.ts` — `getRareBiomeMinerals()` / `getEpicBiomeMinerals()`; rare/epic mineral variants go here, not in the normal spawn config
-6. `packages/npcs/src/definitions/verdant.ts`, `helix.ts`, `nexus.ts` — faction trader inventories; faction gear must be stocked here or it is unreachable without loot table drops
+**Major components:**
+1. `packages/game-logic/src/combat/` — extended with `stat-caps.ts` (NEW) and `biome-hazard.ts` (NEW); `damage.ts` and `creature-ai.ts` modified to accept new parameters
+2. `apps/game-server/src/game/hazard.service.ts` (NEW) — biome hazard tick processor injected into AiService; reads cached `Map<playerId, HazardState>` synchronously
+3. `apps/game-server/src/game/automation.service.ts` (NEW) — deployable lifecycle, 60s global tick, resource accumulation, maintenance cost deduction, processing queue management
+4. `packages/database/src/schema/deployables.ts` (NEW) — automation structure persistence (ownerId, deployableType, fuelRemaining, accumulatedItems, processingQueue config)
+5. `apps/web/src/game/rendering/HazardOverlay.ts` (NEW) — HUD hazard warning with counter stat progress indicator
 
-**Four-file atomicity rule for creatures:** definition file + `ENTITY_IDS` constant + `BIOME_SPAWN_CONFIGS` entry + `CREATURE_LOOT_TABLES` entry — all four must be updated in the same unit of work or the entity is partially broken.
+**Internal boundaries that must not be crossed:**
+- `game-logic` functions must remain pure — no NestJS imports, no DB calls
+- `HazardService` calls AiService's zone data but AiService must not call HazardService (circular dependency)
+- `AutomationService` has no dependency on CombatService — automation is resource management only
+- `tickCreatureAI()` is single-creature and pure; AiService handles multi-creature coordination
 
 **See:** `.planning/research/ARCHITECTURE.md`
 
 ### Critical Pitfalls
 
-Top 5 by impact and silent-failure risk (from PITFALLS.md):
+Top 5 by impact and prevention urgency (from PITFALLS.md):
 
-1. **BIOME_SPAWN_CONFIGS / ENTITY_IDS desync** — entity defined but not wired to spawn config; entity never appears in world with no runtime error; three separate locations must be updated atomically; prevent with a CI validation test before writing any entities
+1. **Damage type field added to types but never read in `calculateDamage()`** — make `damageType` required (not optional) on `DamageParams`; TypeScript will fail to compile at all call sites; write the resistance unit test first, before any creature definition changes
+2. **83 existing creatures get no `resistances` field — partial migration breaks biome balance** — make `resistances` required with a neutral default profile (`{ thermal: 1.0, cryo: 1.0, bio: 1.0, kinetic: 1.0 }`) bulk-applied per biome as the base thematic assignment; never leave the field optional
+3. **Biome hazard tick does async zone/inventory lookups per-player per-tick — blows 200ms budget** — cache player hazard vulnerability state on biome entry and gear change events; read synchronously from a `Map<playerId, HazardState>` in the tick; benchmark tick duration before and after adding any hazard processing
+4. **Automation extractors have only deploy costs and no recurring maintenance — runaway credit inflation** — document income/sink balance sheet (maintenance cost per hour >= 60% of output value at each tier) before writing any automation code; this is the highest-severity economic failure mode
+5. **Defensive ability rebalance uses larger numbers on existing `buff` effects — players still ignore defensives** — add `shield` (HP absorb pool) and `damage_reduction` (flat DR%) as new variants to the `AbilityEffect` discriminated union; toughness buffs at endgame produce ~2% effective DR and are completely invisible to players
 
-2. **Loot table orphaning** — creature spawns and is killable but drops nothing because `lootTableId` has no matching key in `CREATURE_LOOT_TABLES`; silent failure; prevent with `entity-loot-validation.test.ts` asserting every creature's lootTableId resolves in the loot table map
-
-3. **Faction gear identity collapse** — all factions receive identical `grantedAbilities` arrays copied from nearest generic suit; faction choice becomes cosmetic; prevent by establishing per-faction ability assignment matrix before writing any item definitions; highest recovery cost of any pitfall
-
-4. **Stat budget inflation at Tier III-IV** — `generateSuitStats()` compounds multiplicatively; Tier IV Legendary yields ~1,694 total stats from suit alone; combined with module loadouts, players trivialize existing Tier III content; prevent with a TTK audit before writing any endgame definitions
-
-5. **Harvest yield references non-existent item IDs** — plant/mineral `harvestYield` entries with typos resolve to the magenta `UNKNOWN_ITEM` fallback silently; prevent with a validation test asserting all yield `itemId` values resolve via `ItemRegistry.has()`
-
-Additional pitfalls documented: biome identity dilution from behavior-identical creatures (pitfall 5), stale `ITEM_IDS` constants after faction gear addition (pitfall 6), lore incompatibility in entity descriptions (pitfall 8).
+Additional pitfalls documented: stat cap set below natural legendary gear output (invalidates existing legendaries); Pack Call / Stampede implemented inside `tickCreatureAI()` causing O(n²) per-tick (requires zone-level pre-processing architecture); Frenzy Map not cleared on creature death (state leak); Ambush using ray-casting inside FSM tick (breaks tick budget).
 
 **See:** `.planning/research/PITFALLS.md`
 
 ## Implications for Roadmap
 
-Based on combined research, the following 8-phase structure is recommended. Phases 2-4 (biome entity population) are logically independent of Phases 5-7 (faction gear) and can run in parallel by separate contributors once Phase 1 infrastructure is in place.
+Based on combined research, the following 7-phase structure is recommended. Phase 7 (Automation) is fully independent and can be built in parallel with Phases 5-6 by a separate contributor after Phase 1 is complete.
 
-### Phase 1: Validation Infrastructure and Content Authoring Guide
+### Phase 1: Shared Type Foundation
 
-**Rationale:** `packages/entities` has zero tests. Every subsequent content phase has silent-failure pitfalls that are only catchable with validation tests in place. All four research documents independently flag this as the prerequisite for safe content expansion. The lore authoring guide must also exist before the first entity description is written. Both are zero-code-cost setup that gates quality of all subsequent work.
+**Rationale:** Every subsequent system depends on type contracts being in place. `DamageType` union, `DamageResistances` interface, `shield`/`damage_reduction` AbilityEffect variants, `DeployableEntity` interface, and `AiTickResult` behavior signal fields are all consumed by Phases 2-7. Making fields required (not optional) is the primary prevention mechanism for the most common pitfall in this milestone.
+**Delivers:** Compilable type contracts for all v1.24 features across `shared-types`, `entities`, and `game-logic` index exports; no behavioral changes yet; TypeScript compile confirms all new interfaces are wired
+**Addresses:** DamageType union + DamageResistances (FEATURES.md), DeployableEntity interface (FEATURES.md), AiTickResult extensions (ARCHITECTURE.md Pattern 3)
+**Avoids:** Pitfall 1 (damage type ignored) — required field is the prevention; Pitfall 2 (partial creature migration) — forces all consumers to handle new fields
 
-**Delivers:** `packages/entities/vitest.config.ts` (copied from `packages/items` pattern); `entity-validation.test.ts` asserting all 16 biomes meet minimum entity counts, `ENTITY_IDS` sync with `ALL_ENTITIES`, every spawnable entity in `BIOME_SPAWN_CONFIGS`, every creature's lootTableId resolves, all harvest yield itemIds resolve; condensed content authoring guide from `lore/world-bible.md` (per-faction language registers, per-biome atmosphere); per-biome behavioral matrix planning artifact
+### Phase 2: Stat Caps
 
-**Avoids:** Pitfalls 1, 2, 6, 7 — none can ship undetected once tests exist
+**Rationale:** Stat caps must precede ability rebalance tuning. Current buff amounts (+8 to +12 toughness) were designed without a cap in mind. Setting the cap before tuning ability values ensures all new buff numbers are calibrated to the post-cap stat landscape. Also requires a pre-implementation audit of current gear stat distributions — set cap value at or above the 85th percentile of natural endgame stat totals, not below the median.
+**Delivers:** `applyDiminishingReturns()` pure function in `packages/game-logic/src/combat/stat-caps.ts`; soft cap 200, hard cap 400 applied at end of `computeCharStats()`; stats panel soft cap indicator; gear distribution simulation documented
+**Uses:** Single modification to `computeCharStats()` loop; `stat-caps.test.ts` verifying DR curve above 200 (STACK.md)
+**Avoids:** Pitfall 7 (cap invalidates existing legendaries) — gear distribution simulation gates the cap value selection
 
-**Research flag:** Standard patterns — direct copy of `packages/items` Vitest setup; no research needed
+### Phase 3: Damage Types and Creature Resistances
 
----
+**Rationale:** Damage types must precede ability rebalance — assigning damage types to abilities is only testable after creature resistance data exists. The 83-creature resistance migration must happen atomically in this phase using the required-field strategy. The critical integration point is modifying `calculateDamage()` to accept `damageType` and `defenderResistances` and apply the multiplier.
+**Delivers:** `DamageType` threaded through `calculateDamage()`; resistance data on all 83+ creatures (bulk per-biome assignment + thematic tuning); damage type label and color in combat log and floating numbers; `damage-types.test.ts` verifying half-damage on 0.5x resistance
+**Implements:** Pattern 1 from ARCHITECTURE.md — DamageType as multiplicative layer on existing pipeline
+**Avoids:** Pitfall 1 (type ignored) and Pitfall 2 (partial creature migration); confirms damage type system is visibly functional before ability rebalance assigns types to abilities
 
-### Phase 2: Faction Identity Pillars (Design Gate)
+### Phase 4: Ability Rebalance
 
-**Rationale:** Zero code output, but gates all faction gear phases. PITFALLS.md identifies faction gear identity collapse as the highest recovery cost pitfall. Without the ability assignment matrix locked in writing, definition authors default to copy-paste patterns under delivery pressure. This must be established before any item definition is written.
+**Rationale:** Depends on Phase 2 (stat caps stable for buff amount calibration) and Phase 3 (damage types on creatures make ability type niche assignments testable). The shield effect type is a new `AbilityEffect` discriminant — not larger numbers on existing buff effects. Plasma Burst nerf and defensive ability overhaul are the two highest player-visibility changes of the entire milestone.
+**Delivers:** `shield` and `damage_reduction` effect variants in `AbilityEffect` union; 6 ability definition changes (Plasma Burst nerf, Emergency Shield → HP absorb, Magnetic Field → flat DR, Thermal Lance → Thermal type + cooldown reduction, Cryo Blast → Cryo type + perception debuff, Fortify Systems → HP absorb); `AbilityService.shieldPools` Map; `consumeShield()` call in `CombatService.creatureAttackTick()`; shield bar in HUD
+**Uses:** Pattern 4 from ARCHITECTURE.md — shield pool as new effect type; `shieldPools` and `damageReductions` Maps in AbilityService
+**Avoids:** Pitfall 6 (defensive abilities still invisible after rebalance); integration gotcha (toughness buff at endgame is ~2% DR — confirmed invisible)
 
-**Delivers:** A committed design artifact: stat archetype per faction per tier; ability assignment matrix per faction (which of the 21 existing abilities are in-faction vs. prohibited); color palette anchors (lore-derived); naming conventions per faction; module/tool character descriptions. Verdant = hazmat/scout archetypes, `regeneration_protocol` + `energy_barrier` + `nano_repair`; Helix = tank/assault archetypes, `fortify_systems` + `power_surge` + `magnetic_field`; Nexus = recon archetypes, `overclock` + `resource_scan` + `analyze_specimen`
+### Phase 5: Creature AI Upgrades
 
-**Avoids:** Pitfall 3 (faction gear identity collapse) which has HIGH recovery cost if reached post-ship
+**Rationale:** Group behaviors (Stampede, Pack Call) require zone-level pre-processing architecture to be designed before any behavior code is written — the per-creature FSM must remain pure and single-creature. Frenzy requires extending the centralized `handleCreatureDeath()` before any per-behavior state Maps are created. Ambush must be implemented as a directional-bias FSM state, not as ray-casting inside the tick.
+**Delivers:** 4 new `AiTickResult` fields; `detectGroupBehaviorTriggers()` zone-level pre-pass in AiService; Stampede (herbivore flee cascade), Pack Call (omnivore ally signaling, hard cap 2-3 allies), Ambush (predator directional-approach state), Frenzy (maniac speed/damage boost below 30% HP) behaviors; Frenzy creature color overlay in EntityRenderer; centralized `handleCreatureDeath()` extended for new state Maps
+**Implements:** Pattern 3 from ARCHITECTURE.md — FSM branches with zone-level coordination separated from per-creature tick
+**Avoids:** Pitfall 5 (O(n²) group behavior detection), Pitfall 9 (Ambush ray-casting in FSM tick), Pitfall 10 (Frenzy Map leak on creature death)
 
-**Research flag:** Lore-derived design; `world-bible.md` is HIGH confidence authority; no research needed
+### Phase 6: Biome Hazard System
 
----
+**Rationale:** Depends on Phase 3 (DamageType enum used for hazard classification) and benefits from Phase 5 (creature behaviors provide in-zone threats that make hazard zones narratively coherent). Requires caching architecture for player hazard state designed before tick code is written. Requires hazard protection gear available in faction traders before any biome's hazard tick is enabled — this is a hard design gate.
+**Delivers:** `HazardService` injectable with player hazard state cache; `computeHazardDrain()` pure function in `biome-hazard.ts`; `BiomeHazard` interface extended with `gearCounterStat` and `gearCounterThreshold`; `player:hazard` socket event; HazardOverlay HUD component with counter stat progress bar; hazard protection items in faction trader inventories; `isHubZone()` guard applied to all hazard tick paths; first-tick 3-second grace period
+**Implements:** Pattern 2 from ARCHITECTURE.md — HazardService as independent injectable called from AiService.runZoneTick()
+**Avoids:** Pitfall 3 (tick budget overrun — synchronous Map read instead of async lookups), Pitfall 4 (instant-kill tick damage — max 8% base HP drain per tick, validated against minimum-level entrant), integration gotcha (hub zone hazard guard)
 
-### Phase 3: Biome Creature Population
+### Phase 7: Automation Tech Tree
 
-**Rationale:** Highest user impact at lowest implementation cost. Biomes with 1-2 creatures fail the "populated world" test within minutes. `toxic_wastes` with one creature is the most critical single gap. Fully independent of faction gear. Creatures have the highest per-entity coordination cost (four-file atomicity), so they come before plants/artifacts to batch the complex work together.
-
-**Delivers:** ~30-35 new `CreatureDefinition` objects across all biomes reaching the 4-6 creature target; per-biome behavioral variety (herbivore + omnivore + predator minimum, one maniac apex threat); loot tables for every new creature; `ENTITY_IDS` and `BIOME_SPAWN_CONFIGS` updated; `toxic_wastes` brought from 1 to 4-5 creatures (most urgent gap)
-
-**Priority within phase:** `toxic_wastes` first (1 creature → 5 needed); then `void_plains`, `fungal_forest`, `miasma_marshes`, `petrified_expanse`, `crystal_caves` (2 creatures each → 4 needed); then remaining biomes with 3 creatures
-
-**Avoids:** Pitfalls 1, 2 caught by Phase 1 tests; Pitfall 5 (biome identity dilution) prevented by behavioral matrix from Phase 1
-
-**Research flag:** Standard patterns established by Phase 87/88 expansion; no research needed
-
----
-
-### Phase 4: Biome Plant, Mineral, and Artifact Population
-
-**Rationale:** Independent of creatures (can run in parallel) but separated from Phase 3 because rare/epic mineral variants require updating `rarity.ts` functions rather than the normal spawn config — a distinct integration path that benefits from isolated focus. Artifacts are separated to emphasize they must not be deferred: the "Looks Done But Isn't" checklist in PITFALLS.md flags deferred artifacts as a common technical debt shortcut.
-
-**Delivers:** ~20-25 new `PlantDefinition` objects (3-4 per biome with rarity variants); ~15-20 new `MineralDefinition` objects including rare/epic variants registered in `getRareBiomeMinerals()` / `getEpicBiomeMinerals()`; ~12-15 new `ArtifactDefinition` objects targeting the 9+ biomes with zero artifacts; `crystalline_wastes` artifact hotspot gap resolved (2 new artifacts); artifact tier escalation applied (Tier I: weathered/unclear → Tier IV: operational/disturbing)
-
-**Avoids:** Pitfall 7 (harvest yield typos) caught by Phase 1 tests; rare mineral added to wrong spawn system (architecture pattern documented in ARCHITECTURE.md)
-
-**Research flag:** Standard patterns; `rarity.ts` integration documented in ARCHITECTURE.md; no research needed
-
----
-
-### Phase 5: Faction Suits — Tier I-II
-
-**Rationale:** Lower-tier suits establish naming patterns, color language, and ability selection before endgame gear is authored. Writing common and rare suits first is cheaper to iterate on if calibration is needed. Phase 2 identity pillars are a hard prerequisite.
-
-**Delivers:** Common and Rare faction suits for Verdant, Helix, and Nexus (3 factions × 2 rarities = ~6 suit definitions); three new files (`faction-verdant.ts`, `faction-helix.ts`, `faction-nexus.ts`) with named export arrays; `ALL_ITEMS` and `ITEM_IDS` updated; distinct `textureKey` per faction (placeholder color tile acceptable if art not ready); entries wired to faction trader inventories
-
-**Uses:** `generateSuitStats(archetype, rarity, tier)` and `computeIlvl(tier, rarity)` — mandatory; no hand-coded stats
-
-**Avoids:** Pitfall 3 (identity collapse — gated by Phase 2 matrix); Pitfall 6 (stale ITEM_IDS — caught by Phase 1 test); Anti-pattern 4 from ARCHITECTURE.md (faction item IDs without faction prefix)
-
-**Research flag:** Standard pattern; two existing exotic faction suits in `suits.ts` provide direct precedents; no research needed
-
----
-
-### Phase 6: Faction Suits — Tier III-IV Endgame (Milestone Headline)
-
-**Rationale:** Exotic and legendary faction suits are the stated headline of v1.23 per PROJECT.md. They require Phase 5 for naming/progression coherence and require a TTK stat budget audit before authoring (Pitfall 4 is the most technically complex silent failure). This phase delivers the content players will cite the expansion for.
-
-**Delivers:** Epic, Exotic, and Legendary faction suits for all three factions; stat budget TTK audit documented before any definitions are written; all `grantedAbilities` cross-referenced against the 21 existing ability IDs; Legendary suits priced as rare acquisitions (not sold at traders, consistent with existing legendary pattern)
-
-**Avoids:** Pitfall 4 (stat budget inflation — TTK audit gates this phase); the endgame accessibility anti-pattern (at least one exotic item reachable via hard Tier III mechanism, not exclusively Tier IV)
-
-**Research flag:** Stat budget audit requires examining `game-logic` combat damage constants against `generateSuitStats()` output at Tier IV Legendary (~1,694 total stats from suit alone). If phase planner cannot determine the safe envelope from ARCHITECTURE.md data, flag for targeted research on combat system TTK before scoping the task list.
-
----
-
-### Phase 7: Faction Modules and Tools
-
-**Rationale:** Completes the faction gear set. A player wearing a Verdant suit with generic modules and tools gets half the faction identity. Modules and tools follow identical definitional patterns with lower complexity than suits (fewer fields, no `grantedAbilities` for modules). Placed after suits so faction mechanical identity is established before modules reinforce it.
-
-**Delivers:** 1-2 modules per faction (~9 module definitions); 1-2 tools per faction (~6-9 tool definitions); `toolType` values matching faction identity (Helix: `mining`/`demolition`, Verdant: `bio`/`research`, Nexus: `research`/`stealth`); all added to faction trader inventories with appropriate level gates
-
-**Avoids:** Faction modules being purely cosmetically renamed generics — mechanical identity from Phase 2 carries through
-
-**Research flag:** Standard item definitional pattern; no research needed
-
----
-
-### Phase 8: NPC Trader Inventory Integration Pass
-
-**Rationale:** Faction gear added to the registry but not stocked anywhere is unreachable without loot table drops. This integration step is required for the expansion's primary feature to be accessible to players. It comes last because it depends on all ITEM_IDS constants being finalized across Phases 5-7. This is a focused review pass rather than a separate authoring effort — individual phases add their items to traders as they go, but a final verification pass ensures nothing was missed.
-
-**Delivers:** All faction suits, modules, and tools verified in `packages/npcs/src/definitions/verdant.ts`, `helix.ts`, `nexus.ts`; trader inventories tiered by item level; endgame exotic items priced significantly above Tier I equivalents; no reputation gating (explicitly out of scope per PROJECT.md — level gates only)
-
-**Avoids:** Anti-feature of faction gear inaccessible to players without a rep system; confirms items are stocked before marking milestone complete
-
-**Research flag:** No research needed — existing trader definition pattern is the reference
-
----
+**Rationale:** Fully independent of all combat systems — zero code dependency on Phases 1-6. Can be built in parallel with Phases 5-6. The income/sink balance sheet must be the first deliverable of this phase before any implementation begins. Sequencing it as a dedicated vertical avoids context-switching between combat balance tuning and economy design.
+**Delivers:** `deployables` and `automation-jobs` DB schemas + Drizzle migration; `AutomationService` with 60s global tick, fuel/maintenance deduction, in-memory accumulation with 5-minute DB flush; T2 extractor → T3 survey beacon → T4 planetary extractor → T5 refinery progression; `deployable:place/collect/refuel` socket events in `game.gateway.ts`; automation panel in client HUD; income/sink balance sheet documented (maintenance cost >= 60% of output value per tier)
+**Uses:** Drizzle `pgTable` schema patterns from `packages/database`; `setInterval` service pattern from existing AiService/ZonesService (STACK.md)
+**Avoids:** Pitfall 8 (credit inflation — balance sheet gates implementation), Pitfall — DB write on every accumulation tick (in-memory flush pattern)
 
 ### Phase Ordering Rationale
 
-- Validation infrastructure precedes all content authoring because silent failures are indistinguishable from absent content without CI tests; building without tests first means discovering failures during gameplay
-- Faction identity pillars must precede all gear phases — post-ship identity collapse has HIGH recovery cost and cannot be silently patched
-- Biome entities and faction gear are independent tracks and can run in parallel (Phases 3-4 vs. Phases 5-7) — the roadmap should reflect this parallelism to avoid single-contributor bottleneck
-- Plants/minerals/artifacts are separated from creatures because the `rarity.ts` mineral integration point is distinct from the main entity pipeline
-- Lower-tier faction suits before endgame suits is a design coherence dependency: naming patterns must be established at Tier I-II before exotic/legendary definitions are consistent with them
-- Modules and tools are after suits because suits establish the faction identity that modules reinforce
+- Phase 1 before all others because TypeScript contract correctness is a compile-time gating mechanism, not a feature — required fields prevent the most common silent failure mode in this milestone
+- Phase 2 before Phase 4 because all ability buff amounts must be calibrated against the post-cap stat landscape; setting the cap after writing buff values means re-tuning everything
+- Phase 3 before Phase 4 because ability type niche assignments (Thermal Lance = Thermal) are only testable against real creature resistance data; assigning types without resistance data means no way to verify the system has effect
+- Phase 4 before Phase 5 because Frenzy and Stampede behaviors create the in-combat threats that give defensive abilities meaningful deployment context; without AI threats, players cannot experience why Emergency Shield matters
+- Phase 5 before Phase 6 because dangerous creature behaviors in Tier III+ zones make biome hazard severity narratively coherent — both systems together create zone identity, individually they are partial
+- Phase 7 parallel-capable with Phases 5-6 because automation has no shared code with creature AI or hazard systems; routing it as a separate track avoids single-contributor bottleneck
 
 ### Research Flags
 
 Phases likely needing deeper research during planning:
-- **Phase 6 (Endgame Faction Suits):** Stat budget audit requires examining `game-logic` combat damage constants against `generateSuitStats()` output at Tier IV Legendary. If phase planner cannot determine the safe TTK envelope from ARCHITECTURE.md, run focused research on combat system damage constants before scoping.
+- **Phase 7 (Automation):** Income/sink balance sheet requires simulation against current credit economy data (credit generation rates per tier, current player credit ceilings). Refinery recipe table design (input → output raw-to-refined mappings) is not documented in research and must be validated against `lore/world-bible.md` faction material names.
+- **Phase 6 (Biome Hazards):** Specific named protective gear items for cold, heat, and pressure hazard counters are not enumerated in research. The `hazmat` archetype covers toxic/void/radiation but the remaining 3 hazard types need gear item names confirmed against `lore/world-bible.md` faction gear sections before trader inventories can be populated.
 
 Phases with standard patterns (skip research-phase):
-- **Phase 1:** Direct copy of `packages/items` Vitest pattern; no unknowns
-- **Phase 2:** Lore-derived design; `world-bible.md` is HIGH confidence authority
-- **Phase 3:** Phase 87/88 established the exact four-file atomicity pattern
-- **Phase 4:** Same definitional pattern; `rarity.ts` integration documented in ARCHITECTURE.md
-- **Phase 5:** Two existing exotic faction suits in `suits.ts` are direct precedents
-- **Phase 7:** Standard item definitional pattern; no novel integration points
-- **Phase 8:** Existing NPC trader definition pattern is the reference
+- **Phase 1 (Shared Types):** TypeScript discriminated union extension is a zero-risk pattern established throughout this codebase
+- **Phase 2 (Stat Caps):** Single pure function addition to `computeCharStats()` — one file change, pattern fully specified in ARCHITECTURE.md
+- **Phase 3 (Damage Types):** Multiplicative resistance layer in `calculateDamage()` has exact code specified in STACK.md and ARCHITECTURE.md; no unknowns
+- **Phase 4 (Ability Rebalance):** AbilityEffect union extension follows established shared-types pattern; AbilityService Map tracking follows existing `activeBuffs` pattern
+- **Phase 5 (AI Upgrades):** Zone-level pre-processing architecture is documented in detail in PITFALLS.md; FSM extension patterns are clear
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All packages directly inspected; versions verified from installed packages; no new dependencies; zero ambiguity |
-| Features | HIGH | Primary sources are live codebase + `lore/world-bible.md` (non-negotiable per CLAUDE.md); biome creature counts verified by direct definition file inspection; faction identity derived exclusively from lore authority |
-| Architecture | HIGH | All integration points identified via direct source examination of all 12 entity and 12 item definition files, registry source, spawn.ts, creature-loot.ts, rarity.ts; data flow traced end-to-end |
-| Pitfalls | HIGH | Based on direct codebase analysis, Phase 87/88 history comments documenting the three-location friction, and Phase 59/60 migration requiring a documented rollback procedure in CLAUDE.md |
+| Stack | HIGH | Codebase directly inspected; all installed versions verified from pnpm-lock.yaml; zero new dependencies required; integration points identified via source file examination |
+| Features | MEDIUM-HIGH | Table stakes features validated against WoW, NMS, Elden Ring, D&D 5e; anti-features have documented industry precedent with citations; automation income balancing is directional (needs credit economy simulation before Phase 7 implementation) |
+| Architecture | HIGH | All referenced source files directly inspected; data flow diagrams derived from existing service wiring; specific code snippets provided for each integration point; no speculative architecture |
+| Pitfalls | HIGH | Each pitfall is derived from a confirmed existing gap in the codebase (no `damageType` in `calculateDamage()`, no `shield` in `AbilityEffect`, no group behavior coordination in AiService); not speculative — direct source inspection confirmed each gap |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Stat budget safe envelope for Tier III-IV (Phase 6):** Research documents the formula output (~1,694 total stats at Tier IV Legendary from suit alone) but does not specify the combat system's TTK ceiling. This must be resolved before Phase 6 is scoped — either by examining `game-logic` combat damage formulas directly or by running a test session with current best-in-slot gear and measuring time-to-kill on Tier IV creatures.
-
-- **Biome behavioral matrix (Phase 3 scoping):** The per-biome creature roster (which behaviors, which level ranges) is a required planning artifact for Phase 3 but is not yet written. `lore/world-bible.md` provides sufficient ecological grounding for each biome to derive it. This is an expected output of Phase 3 planning, not a research gap.
-
-- **Texture key strategy for faction gear:** PITFALLS.md flags that identical `textureKey` values across faction suits cause visual identity collapse in equipment panels. Whether v1.23 has art budget for distinct faction sprites is not determinable from code research. The mitigation (use distinct `textureKey` values per faction even pointing to a placeholder color tile) is correct regardless of art pipeline state and should be established as a naming convention constraint.
-
-- **`packages/entities` test infrastructure bootstrap:** The entity validation tests described in PITFALLS.md must be written from scratch. The pattern from `packages/items/src/__tests__/item-validation.test.ts` (CONT-01 through CONT-05) is the reference — copy and adapt for entity-specific assertions (biome coverage, ID sync, loot table coverage, harvest yield validity).
+- **Stat cap value validation:** The 200 soft cap / 400 hard cap values are reasonable defaults but must be validated against a simulation of current best-in-slot gear at each tier before Phase 2 ships. Run `computeCharStats()` for a simulated BIS loadout at level 20 Tier II, level 30 Tier III, and level 40 Tier IV. Set the soft cap at or above the 85th percentile of natural endgame totals. This is a 1-2 hour task but cannot be skipped without risking retroactive legendary gear invalidation.
+- **Automation income/sink balance sheet:** Output rates and maintenance costs for T2-T5 automation tiers are directional estimates only. The per-hour income vs. maintenance balance at each tier requires simulation against real credit economy data (current credit generation rates from trading and gathering). This must be the first deliverable in Phase 7 before any implementation begins.
+- **Hazard counter gear for cold, heat, and pressure biomes:** The `hazmat` archetype in `packages/items/src/utils.ts` maps to toxic/void/radiation. Named protective gear items for `frozen_expanse`/`crystalline_wastes` (cold), `volcanic_ridge` (heat), and `deep_trenches` (pressure) are not documented in research. Validate against `lore/world-bible.md` faction gear sections during Phase 6 planning.
+- **Creature resistance tuning granularity:** Bulk biome-assignment (all Frozen Expanse creatures get high Cryo resistance, all Volcanic Ridge creatures get high Thermal resistance) is the recommended base migration strategy. Individual per-creature tuning for 83 creatures is a design effort not time-estimated in the research. Allocate explicit capacity in Phase 3 for the full resistance data pass — this is authoring work, not engineering work.
+- **Refinery recipe table:** The T5 refinery requires a raw → refined material mapping. Research establishes the mechanic but not the specific recipes. These must align with `lore/world-bible.md` faction material identities and the automation economy balance sheet established in Phase 7 planning.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- `packages/entities/src/` (types.ts, registry.ts, definitions/\*.ts x12 files) — entity system patterns, current creature inventory, behavioral enum values
-- `packages/items/src/` (types.ts, registry.ts, utils.ts, definitions/\*.ts x12 files, `__tests__/item-validation.test.ts`) — item system, `generateSuitStats()` math, existing validation pattern
-- `packages/world-gen/src/generation/spawn.ts` and `rarity.ts` — biome spawn config structure, rare/epic mineral spawn pattern
-- `packages/game-logic/src/loot/creature-loot.ts` — loot table structure and `CREATURE_LOOT_TABLES` Map
-- `packages/npcs/src/definitions/` (verdant.ts, helix.ts, nexus.ts) — faction NPC split precedent for faction item file organization
-- `lore/world-bible.md` — faction identity (non-negotiable per CLAUDE.md), biome fauna descriptions, artifact distribution, Terminus history
-- `.planning/REQUIREMENTS.md` — v1.23 milestone targets (4-6 creatures, 3-4 plants, 2-3 minerals, 1-2 artifacts per biome)
-- `packages/shared-types/src/game/biome.ts` — all 16 BiomeType values, BIOME_TIERS level requirements
-- `eslint-rules/no-legacy-stat-buff.ts` — confirms stat schema evolution is a real historical pitfall requiring automated tooling
+
+- Direct codebase inspection: `packages/game-logic/src/combat/damage.ts`, `packages/game-logic/src/ai/creature-ai.ts`, `packages/game-logic/src/stats/char-stats.ts`, `packages/shared-types/src/game/combat.ts`, `packages/shared-types/src/game/biome.ts`, `packages/shared-types/src/game/ability.ts`, `packages/items/src/types.ts`, `packages/items/src/utils.ts`, `packages/entities/src/types.ts`, `packages/database/src/schema/structures.ts`, `apps/game-server/src/game/combat.service.ts`, `apps/game-server/src/game/ai.service.ts`, `apps/game-server/src/game/ability.service.ts`, `apps/game-server/src/zones/zones.service.ts`
+- pnpm-lock.yaml: installed version verification for phaser@3.90.0, drizzle-orm@0.30.10, @nestjs/event-emitter@3.0.1, lru-cache@11.2.6
+- `.planning/PROJECT.md`: v1.24 milestone scope and explicitly out-of-scope items
+- `lore/world-bible.md`: biome hazard types and faction identity (non-negotiable per CLAUDE.md)
+- [Elden Ring Stat Caps — Game Rant](https://gamerant.com/elden-ring-stat-attribute-soft-hard-caps-diminishing-returns/) — verified against shipped soft cap inflection points
+- [Dark Souls Environmental Hazards — Dark Souls Wiki](https://darksouls.fandom.com/wiki/Environmental_Hazards) — official mechanics; poison swamp design documented
+- [Passive Resource Systems in Idle Games — Adrian Crook](https://adriancrook.com/passive-resource-systems-in-idle-games/) — industry practitioner on automation income/sink balance
 
 ### Secondary (MEDIUM confidence)
-- EVE Online faction ship design (EVE University Wiki) — gold standard for faction mechanical differentiation; four factions with distinct weapon type + tank type combinations; informs faction identity pillar design
-- The Witcher 3 creature placement philosophy (game design literature) — "environment explains creature presence"; applied to biome ecological identity guidelines per biome
-- MMO power creep industry patterns (Massively Overpowered, MMORPG.com) — confirms stat budget inflation is a recurring expansion failure mode; informs Pitfall 4 framing
+
+- [WoW Resistance System — Wowpedia](https://wowpedia.fandom.com/wiki/Resistance) — community wiki; historical accuracy on mechanic removal rationale
+- [D&D 5e Vulnerability Analysis — Blog of Holding](https://www.blogofholding.com/?p=8544) — quantitative analysis of why 2x vulnerability is too punishing
+- [D&D 2024 Monster Manual resistance removal — D&D Beyond](https://www.dndbeyond.com/forums/dungeons-dragons-discussion/rules-game-mechanics/215361-opinions-about-removal-of-resistances-and) — community analysis of WotC design decision
+- [NMS Mineral Extractor — No Man's Sky Wiki](https://nomanssky.fandom.com/wiki/Mineral_Extractor) — community wiki for shipped automation feature
+- [Designing Game Economies — Medium](https://medium.com/@msahinn21/designing-game-economies-inflation-resource-management-and-balance-fa1e6c894670) — practitioner overview of inflation and credit sink design
+- [Boids Algorithm — Wikipedia](https://en.wikipedia.org/wiki/Boids) — academic source for pack/herd AI framework
+- [AI for Game Developers: Flocking — O'Reilly](https://www.oreilly.com/library/view/ai-for-game/0596005555/ch04.html) — group behavior architecture patterns
 
 ### Tertiary (LOW confidence)
-- Destiny 2 original faction rally gear (community sources) — cautionary tale for cosmetic-only faction differentiation; informs anti-feature list; MEDIUM confidence for the design principle, LOW for the specific implementation details
+
+- [ESO Damage Shields Forum Thread](https://forums.elderscrollsonline.com/en/discussion/165765/the-problem-with-damage-shields) — community analysis of shield ability underuse; confirms player-invisible toughness buffs but does not quantify
+- [6 Core Systems That Make or Break Idle Games](https://subtlezungle.substack.com/p/6-core-systems-that-make-or-break) — design analysis; directional guidance on automation resource sinks; single practitioner source
 
 ---
-*Research completed: 2026-03-02*
+*Research completed: 2026-03-03*
 *Ready for roadmap: yes*
