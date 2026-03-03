@@ -1,108 +1,117 @@
 # Requirements: Into the Void
 
-**Defined:** 2026-02-27
+**Defined:** 2026-03-03
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.23 Requirements
+## v1.24 Requirements
 
-Requirements for Content Expansion & Faction Gear milestone. Each maps to roadmap phases.
+Requirements for Balance & Automation milestone. Each maps to roadmap phases.
 
-### Creatures
+### Foundation
 
-- [x] **CREA-01**: Tier I biomes (void_plains, fungal_forest, tidal_pools, ancient_ruins) each have 4-6 creatures with varied behavior types
-- [ ] **CREA-02**: Tier II biomes (toxic_wastes, miasma_marshes, petrified_expanse, bioluminescent_depths, kelp_forests) each have 4-6 creatures with tier-appropriate stats
-- [ ] **CREA-03**: Tier III biomes (crystal_caves, volcanic_ridge, frozen_expanse, deep_trenches, starfall_crater, crystalline_wastes) each have 4-6 creatures with endgame-viable stats
-- [ ] **CREA-04**: Tier IV void_rift has 6 creatures representing max-tier challenge
-- [x] **CREA-05**: Every new creature has a loot table entry in CREATURE_LOOT_TABLES
-- [x] **CREA-06**: Every new creature is registered in BIOME_SPAWN_CONFIGS with appropriate spawn weights
+- [ ] **FNDN-01**: DamageType union (Thermal/Cryo/Bio/Kinetic) exported from shared-types and consumed by game-logic damage pipeline
+- [ ] **FNDN-02**: DamageResistances interface on CreatureDefinition as a required field with neutral defaults
+- [ ] **FNDN-03**: Shield and damage_reduction variants added to AbilityEffect discriminated union
+- [ ] **FNDN-04**: DeployableEntity interface in shared-types for automation structures
+- [ ] **FNDN-05**: AiTickResult extended with stampede, packCall, ambush, frenzied signal fields
 
-### Plants
+### Stat Caps
 
-- [ ] **PLNT-01**: Tier I biomes each have 3-4 plants including at least one rare variant
-- [ ] **PLNT-02**: Tier II biomes each have 3-4 plants including rare variants
-- [ ] **PLNT-03**: Tier III biomes each have 3-4 plants including rare and epic variants
-- [ ] **PLNT-04**: Tier IV void_rift has 4 plants including exotic variants
+- [ ] **CAPS-01**: Stat soft cap at 200 with diminishing returns (every point above 200 counts as 0.5)
+- [ ] **CAPS-02**: Stat hard cap at 400 preventing infinite scaling
+- [ ] **CAPS-03**: Diminishing returns applied as post-processing in computeCharStats() covering all consumers
+- [ ] **CAPS-04**: Stats panel UI shows soft cap indicator when a stat exceeds 200
 
-### Minerals
+### Damage Types
 
-- [ ] **MINR-01**: Tier I biomes each have 2-3 minerals
-- [ ] **MINR-02**: Tier II biomes each have 2-3 minerals with rare variants
-- [ ] **MINR-03**: Tier III biomes each have 2-3 minerals with rare/epic variants
-- [ ] **MINR-04**: Tier IV void_rift has 3 minerals including exotic variants
-- [ ] **MINR-05**: All rare/epic mineral variants registered in rarity.ts functions
+- [ ] **DMGT-01**: calculateDamage() accepts damageType and defenderResistances, applies resistance multiplier (0.5x-1.5x)
+- [ ] **DMGT-02**: All 83+ creatures have explicit resistance values populated per biome theme (ice creatures resist Cryo, volcanic resist Thermal, etc.)
+- [ ] **DMGT-03**: Resistance capped at 70% reduction maximum (0.3x floor) — no creature is immune
+- [ ] **DMGT-04**: Damage type label shown in combat log entries
+- [ ] **DMGT-05**: Color-coded floating damage numbers per type (Thermal=orange, Cryo=cyan, Bio=green, Kinetic=white)
+- [ ] **DMGT-06**: Gear items that boost specific damage type output (damage_type_bonus effect on items)
+- [ ] **DMGT-07**: Creature resistance distribution matches biome lore (Frozen Expanse creatures resist Cryo, vulnerable to Thermal)
 
-### Artifacts
+### Ability Rebalance
 
-- [ ] **ARTF-01**: Tier I biomes each have 1-2 artifacts (void_plains, fungal_forest, tidal_pools currently have zero)
-- [ ] **ARTF-02**: Tier II biomes each have 1-2 artifacts
-- [ ] **ARTF-03**: Tier III biomes each have 1-2 artifacts
-- [ ] **ARTF-04**: Tier IV void_rift has 3 artifacts
-- [ ] **ARTF-05**: Crystalline wastes has 2 artifacts (lore: "ancient artifact hotspot")
+- [ ] **ABIL-01**: Plasma Burst base damage reduced from 35 to 28 with bonus +50% to targets above 80% HP (opener niche)
+- [ ] **ABIL-02**: Thermal Lance assigned Thermal damage type with bonus vs frozen biome creatures
+- [ ] **ABIL-03**: Cryo Blast assigned Cryo damage type with bonus vs volcanic biome creatures
+- [ ] **ABIL-04**: Electrocute DoT spreads to creatures within 2 tiles (chain lightning, anti-pack niche)
+- [ ] **ABIL-05**: Overload Pulse range increased to 2, hits all creatures in range (AOE clear niche)
+- [ ] **ABIL-06**: Precision Shot reveals stealthed predators in 6-tile cone for 5s (anti-ambush niche)
+- [ ] **ABIL-07**: Void Drain heal increased from 15 to 25 (anti-maniac sustain niche)
+- [ ] **ABIL-08**: Concussive Strike stuns target for 1s, 3s against maniacs in Frenzy (CC niche)
+- [ ] **ABIL-09**: Emergency Shield changed to absorb pool (80 damage within 8s) instead of toughness buff
+- [ ] **ABIL-10**: Regeneration Protocol buffed to 80 HP over 10s + removes 1 biome hazard debuff
+- [ ] **ABIL-11**: Magnetic Field changed to reflect 30% of ranged damage for 8s
+- [ ] **ABIL-12**: Fortify Systems changed to flat 15% damage reduction for 10s
+- [ ] **ABIL-13**: Energy Barrier changed to immunity to biome hazard effects for 20s
 
-### Faction Suits
+### Creature AI
 
-- [ ] **SUIT-01**: Faction identity pillars defined from lore (Verdant=resilience/biotech, Helix=power/industrial, Nexus=perception/surveillance)
-- [x] **SUIT-02**: Verdant Dynamics suit line across tiers (Common through Legendary) using hazmat/scout archetypes
-- [x] **SUIT-03**: Helix Extraction suit line across tiers (Common through Legendary) using tank/assault archetypes
-- [x] **SUIT-04**: Nexus Frontiers suit line across tiers (Common through Legendary) using recon/balanced archetypes
-- [x] **SUIT-05**: All faction suits use generateSuitStats() utility (no hand-coded stats)
-- [x] **SUIT-06**: Unaffiliated salvaged suit line across tiers with improvised/scavenged aesthetic
+- [ ] **CRAI-01**: Stampede behavior for herbivores — when 3+ flee, deal 50% HP as kinetic damage in path
+- [ ] **CRAI-02**: Pack Call behavior for omnivores — when provoked, 30% chance to summon 1-2 nearby allies (cap 3)
+- [ ] **CRAI-03**: Ambush behavior for predators — first attack from stealth deals 2x damage; high Perception (>150) detects before aggro
+- [ ] **CRAI-04**: Frenzy behavior for maniacs — below 30% HP, attack speed doubles but defense halves
+- [ ] **CRAI-05**: Zone-level pre-processing pass in AiService for group behaviors (Stampede, Pack Call) before per-creature FSM loop
+- [ ] **CRAI-06**: Frenzy visual state change (color overlay) visible to players in EntityRenderer
+- [ ] **CRAI-07**: Frenzy state cleaned up on creature death (no state leak)
 
-### Faction Modules
+### Biome Hazards
 
-- [ ] **MODU-01**: Verdant Dynamics modules across rarity tiers with bio/life-support focus
-- [ ] **MODU-02**: Helix Extraction modules across rarity tiers with armor/power-core focus
-- [ ] **MODU-03**: Nexus Frontiers modules across rarity tiers with sensor/speed focus
-- [ ] **MODU-04**: Unaffiliated salvaged modules across rarity tiers with jury-rigged focus
+- [ ] **HAZD-01**: HazardService with per-player hazard state cache (sync read in tick, updated on biome entry/gear change)
+- [ ] **HAZD-02**: HP drain in hazardous biomes without protection gear (max 8% base HP per tick, ~30-45s survival window)
+- [ ] **HAZD-03**: Stat debuffs in extreme biomes without protection gear
+- [ ] **HAZD-04**: Tiered hazard severity: Tier II = stat debuff only, Tier III = HP drain + debuff, Tier IV = stacking drain
+- [ ] **HAZD-05**: Specific gear items counter specific biome hazards (hazardProtection field on item effects)
+- [ ] **HAZD-06**: Hazard counter gear available in faction trader inventories before any biome hazard tick is enabled
+- [ ] **HAZD-07**: Hazard-specific consumables providing 5-minute timed protection
+- [ ] **HAZD-08**: HUD indicator showing active hazard type and counter stat progress
+- [ ] **HAZD-09**: Hub zones exempt from all hazard processing
+- [ ] **HAZD-10**: 3-second grace period on first hazard tick after biome entry
 
-### Faction Tools
+### Automation
 
-- [ ] **TOOL-01**: Verdant Dynamics tools with bio/research specialization
-- [ ] **TOOL-02**: Helix Extraction tools with mining/combat specialization
-- [ ] **TOOL-03**: Nexus Frontiers tools with recon/anomaly specialization
-- [ ] **TOOL-04**: Unaffiliated salvaged tools with multi-purpose specialization
-
-### Validation
-
-- [ ] **CINF-01**: Entity validation test suite matching item-validation.test.ts pattern
-
-### Integration
-
-- [ ] **INTG-01**: All new entities have ENTITY_IDS constants and are exported from definition indexes
-- [ ] **INTG-02**: All new items have ITEM_IDS constants and are exported from definition indexes
-- [ ] **INTG-03**: All new entity and item definitions are lore-compatible per /lore directory
+- [ ] **AUTO-01**: Deployable extractor items (T2, Levels 10-20) — place on resource node, auto-gathers 1 resource/60s for 5 min, limit 2 per player
+- [ ] **AUTO-02**: Survey beacon items (T3, Levels 20-30) — marks zone for passive resource cache, 1 beacon limit, 24-hour degradation
+- [ ] **AUTO-03**: Planetary extractor deployables (T4, Levels 30-40) — permanent POI deployment, 3-5 resources/hr passive, 3 per player limit, 10%/day degradation
+- [ ] **AUTO-04**: Resource refinery system (T5, Levels 40+) — convert 10 common → 1 rare (30 min), 5 rare → 1 epic (2 hr), cross-biome transmutation (10:1, 1 hr)
+- [ ] **AUTO-05**: Recurring maintenance costs for all automation tiers (>= 60% of hourly output value)
+- [ ] **AUTO-06**: Income/sink balance sheet documented as design artifact before any automation code is written
+- [ ] **AUTO-07**: Deployable persistence in database (new deployables table)
+- [ ] **AUTO-08**: AutomationService with 60s global tick, in-memory accumulation, 5-min DB flush
+- [ ] **AUTO-09**: Automation panel in client HUD for deploying, collecting, and refueling
 
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
 
-### Content Infrastructure
+### Dynamic Events
 
-- **CINF-02**: BIOME_SPAWN_CONFIGS coverage check (all entities with biomes field are in spawn configs)
-- **CINF-03**: Loot table completeness check (all creatures have loot entries)
+- **EVNT-01**: Void storms and acid rain timed hazard pulses
+- **EVNT-02**: Automation-creature interaction (Stampede damages deployed structures)
 
-### Faction Progression
+### Advanced Combat
 
-- **FPRO-01**: Faction reputation system gating faction gear purchases
-- **FPRO-02**: Faction-exclusive abilities (new ability definitions per faction)
-- **FPRO-03**: Faction trader inventory updated with faction gear
+- **ACBT-01**: Ability synergy combos (chain effects from type interactions)
+- **ACBT-02**: Adaptive creature learning AI
 
-### Environmental Equipment
+### Economy
 
-- **ENVR-01**: Biome-specific hazard resistance (thermal, pressure, radiation, toxin)
-- **ENVR-02**: Aquatic-specific modules (pressure adaptation, current resistance)
+- **ECON-01**: Crafting recipes using refined automation output
+- **ECON-02**: Per-biome extractor efficiency modifiers
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| New entity mechanics/behaviors | Pure content expansion — uses existing systems only |
-| Crafting system | Future milestone — separate mechanic |
-| Faction reputation gating | No reputation system yet — faction gear available to all for now |
-| New ability definitions | Existing 21 abilities sufficient for faction gear grants |
-| Sprite art for new entities | Color tile fallbacks per CLAUDE.md — art pipeline separate |
-| PvP balance implications | PvE-only currently |
-| NPC trader inventory updates | Separate phase after gear exists |
+| Player resistance stats per damage type | WoW abandoned this — creates mandatory gear sets per encounter |
+| Damage type immunity (0x multiplier) | Creates hard player lock-out; cap at 70% (0.3x floor) |
+| New ability definitions | Rebalance existing 21; don't add new ones |
+| Crafting system | Automation is gathering-focused; crafting is separate milestone |
+| PvP balance tuning | PvE first; PvP in future milestone |
+| Vulnerability > 1.5x | D&D 2024 removed most vulnerabilities; 2x trivializes fights |
 
 ## Traceability
 
@@ -110,50 +119,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CREA-01 | Phase 110 | Complete |
-| CREA-02 | Phase 110 | Pending |
-| CREA-03 | Phase 110 | Pending |
-| CREA-04 | Phase 110 | Pending |
-| CREA-05 | Phase 110 | Complete |
-| CREA-06 | Phase 110 | Complete |
-| PLNT-01 | Phase 111 | Pending |
-| PLNT-02 | Phase 111 | Pending |
-| PLNT-03 | Phase 111 | Pending |
-| PLNT-04 | Phase 111 | Pending |
-| MINR-01 | Phase 111 | Pending |
-| MINR-02 | Phase 111 | Pending |
-| MINR-03 | Phase 111 | Pending |
-| MINR-04 | Phase 111 | Pending |
-| MINR-05 | Phase 111 | Pending |
-| ARTF-01 | Phase 111 | Pending |
-| ARTF-02 | Phase 111 | Pending |
-| ARTF-03 | Phase 111 | Pending |
-| ARTF-04 | Phase 111 | Pending |
-| ARTF-05 | Phase 111 | Pending |
-| SUIT-01 | Phase 109 | Pending |
-| SUIT-02 | Phase 112 | Complete |
-| SUIT-03 | Phase 112 | Complete |
-| SUIT-04 | Phase 112 | Complete |
-| SUIT-05 | Phase 112 | Complete |
-| SUIT-06 | Phase 112 | Complete |
-| MODU-01 | Phase 113 | Pending |
-| MODU-02 | Phase 113 | Pending |
-| MODU-03 | Phase 113 | Pending |
-| MODU-04 | Phase 113 | Pending |
-| TOOL-01 | Phase 113 | Pending |
-| TOOL-02 | Phase 113 | Pending |
-| TOOL-03 | Phase 113 | Pending |
-| TOOL-04 | Phase 113 | Pending |
-| CINF-01 | Phase 108 | Complete |
-| INTG-01 | Phase 114 | Pending |
-| INTG-02 | Phase 114 | Pending |
-| INTG-03 | Phase 114 | Pending |
+| (populated by roadmapper) | | |
 
 **Coverage:**
-- v1.23 requirements: 38 total
-- Mapped to phases: 38
-- Unmapped: 0 ✓
+- v1.24 requirements: 53 total
+- Mapped to phases: 0
+- Unmapped: 53
 
 ---
-*Requirements defined: 2026-02-27*
-*Last updated: 2026-03-02 — traceability complete, all 38 requirements mapped to phases 108-114*
+*Requirements defined: 2026-03-03*
+*Last updated: 2026-03-03 after initial definition*
