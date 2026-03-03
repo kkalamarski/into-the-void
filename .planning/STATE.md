@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Balance & Automation
 status: unknown
-last_updated: "2026-03-03T15:56:22.476Z"
+last_updated: "2026-03-03T15:58:35.061Z"
 progress:
   total_phases: 117
   completed_phases: 116
   total_plans: 305
-  completed_plans: 303
+  completed_plans: 304
 ---
 
 # Project State
@@ -48,6 +48,7 @@ Progress: [░░░░░░░░░░] 0% (v1.24)
 | 120. Biome Hazard System | TBD | Not started |
 | 121. Automation Tech Tree | TBD | Not started |
 | Phase 117-damage-types-and-creature-resistances P01 | 10 | 2 tasks | 4 files |
+| Phase 117-02 P02 | 12 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,8 @@ New for v1.24:
 - [Phase 117-01]: Resistance applied AFTER armor reduction so armor and resistances are independent layers
 - [Phase 117-01]: applyResistanceMultiplier exported as standalone pure function for direct use by downstream consumers
 - [Phase 117-01]: damageBonusMultiplier only activates when > 1.0 to prevent accidental damage penalties from undefined defaults
+- [Phase 117-02]: All 77 creatures use BIOME_RESISTANCE_PROFILES[primary_biome] — no per-creature resistance overrides
+- [Phase 117-02]: Multi-biome creatures use first biome in biomes array for resistance lookup
 
 ### Pending Todos
 
