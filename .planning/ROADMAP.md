@@ -268,7 +268,10 @@
   3. Combat log entries show the damage type label (e.g., "[Thermal] 34") alongside the numeric value
   4. Floating damage numbers are colored by type — Thermal=orange, Cryo=cyan, Bio=green, Kinetic=white — distinguishable without reading the combat log
   5. At least one gear item per damage type exists that boosts that type's output via a damage_type_bonus effect — players have an itemization path to specialize
-**Plans**: TBD
+**Plans**: 3 plans
+  - [ ] 117-01-PLAN.md -- Resistance calculation in game-logic, damageType on AbilityEffect, damage_type_bonus ItemEffect (DMGT-01, DMGT-03, DMGT-06)
+  - [ ] 117-02-PLAN.md -- BIOME_RESISTANCE_PROFILES lookup + all creature resistances populated (DMGT-02, DMGT-07)
+  - [ ] 117-03-PLAN.md -- Server/client wiring: socket payload, combat log, floating colors, amplifier modules (DMGT-01, DMGT-04, DMGT-05, DMGT-06)
 
 ### Phase 118: Ability Rebalance
 **Goal**: Plasma Burst no longer dominates the offensive meta, defensive abilities have real HP shield absorb and flat damage reduction effects that players can observe in combat, and each rebalanced offensive ability has a situational niche tied to creature type, behavior state, or damage type
@@ -339,7 +342,7 @@
 | 114. Integration and Lore Verification | 3/3 | Complete | 2026-03-03 |
 | 115. Shared Type Foundation | 2/2 | Complete    | 2026-03-03 |
 | 116. Stat Caps | 0/TBD | Complete    | 2026-03-03 |
-| 117. Damage Types and Creature Resistances | 0/TBD | Not started | - |
+| 117. Damage Types and Creature Resistances | 0/3 | Not started | - |
 | 118. Ability Rebalance | 0/TBD | Not started | - |
 | 119. Creature AI Upgrades | 0/TBD | Not started | - |
 | 120. Biome Hazard System | 0/TBD | Not started | - |
@@ -347,4 +350,4 @@
 
 ---
 
-*Last updated: 2026-03-03 - v1.24 roadmap created (Phases 115-121)*
+*Last updated: 2026-03-03 - Phase 117 plans created (3 plans in 2 waves)*
