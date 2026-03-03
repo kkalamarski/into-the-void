@@ -19,6 +19,14 @@ export interface AiTickResult {
   shouldAttack?: boolean;
   /** For leash: whether creature should return to spawn */
   shouldReturn?: boolean;
+  /** Stampede signal — herbivore group flight path deals kinetic damage (Phase 119 CRAI-01) */
+  stampede?: boolean;
+  /** Pack Call signal — omnivore calls nearby allies when provoked (Phase 119 CRAI-02) */
+  packCall?: boolean;
+  /** Ambush signal — predator first-strike from stealth (Phase 119 CRAI-03) */
+  ambush?: boolean;
+  /** Frenzied signal — maniac below 30% HP, attack speed 2x, defense halved (Phase 119 CRAI-04) */
+  frenzied?: boolean;
 }
 
 /**
