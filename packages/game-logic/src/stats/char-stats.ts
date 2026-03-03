@@ -3,6 +3,32 @@ import type { EquipmentJson, InventoryItemJson } from '@into-the-void/database';
 import { ItemRegistry } from '@into-the-void/items';
 import { resolveEffectsForTrigger } from '../inventory/effects';
 
+/** Soft cap threshold — full value below this */
+const SOFT_CAP = 200;
+
+/** Diminishing returns multiplier above soft cap */
+const DR_MULTIPLIER = 0.5;
+
+/** Hard cap — maximum effective stat value */
+const HARD_CAP = 400;
+
+/**
+ * Apply diminishing returns to a single raw stat value.
+ * - Below 200: full value (1:1)
+ * - Above 200: half value (0.5:1)
+ * - Hard capped at 400 effective
+ *
+ * Pure function. No side effects.
+ *
+ * @param raw - Raw stat value (base + equipment + buffs)
+ * @returns Effective stat value after diminishing returns
+ */
+export function applyDiminishingReturns(raw: number): number {
+  if (raw <= SOFT_CAP) return raw;
+  const effective = SOFT_CAP + (raw - SOFT_CAP) * DR_MULTIPLIER;
+  return Math.min(HARD_CAP, effective);
+}
+
 /**
  * Scale constants for each StatScaleTarget.
  * Defines base stats at level 1 and growth per additional level.
@@ -60,10 +86,11 @@ const SCALE_CONSTANTS: Record<
 /**
  * Compute character stats from level and equipped items.
  *
- * AGGREGATION ORDER (base -> equipment -> buffs):
+ * AGGREGATION ORDER (base -> equipment -> buffs -> DR):
  * 1. Base stats: computed from level using linear scaling (base + (level-1) * growth)
  * 2. Equipment bonuses: additive bonuses from all equipped items (on_equip + passive effects)
  * 3. Buff modifiers: temporary stat changes from active abilities (additive)
+ * 4. Diminishing returns: soft cap at 200 (0.5x above), hard cap at 400 effective
  *
  * All layers use ADDITIVE aggregation (stats[key] += value), making the result:
  * - Commutative: equipping items in different order produces same result
@@ -76,13 +103,15 @@ const SCALE_CONSTANTS: Record<
  * @param equipment - Equipment JSON from DB (server-authoritative)
  * @param target - Whether to use player or creature scaling constants
  * @param activeBuffs - Optional array of active buffs to apply stat modifiers
- * @returns Complete 8-stat CharacterStats object
+ * @param options - Optional: { skipDR: true } to get raw uncapped values
+ * @returns Complete 8-stat CharacterStats object (DR-capped unless skipDR)
  */
 export function computeCharStats(
   level: number,
   equipment: EquipmentJson,
   target: StatScaleTarget = 'player',
-  activeBuffs: Buff[] = []
+  activeBuffs: Buff[] = [],
+  options: { skipDR?: boolean } = {}
 ): CharacterStats {
   const { base, growth } = SCALE_CONSTANTS[target];
 
@@ -132,6 +161,13 @@ export function computeCharStats(
     // Only apply if buff.stat is a valid CharacterStats key
     if (buff.stat in stats) {
       (stats as unknown as Record<string, number>)[buff.stat] += buff.amount;
+    }
+  }
+
+  // Apply diminishing returns: soft cap at 200 (0.5x above), hard cap at 400 effective
+  if (!options.skipDR) {
+    for (const key of Object.keys(stats) as Array<keyof CharacterStats>) {
+      stats[key] = applyDiminishingReturns(stats[key]);
     }
   }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { computeCharStats } from './char-stats';
+import { computeCharStats, applyDiminishingReturns } from './char-stats';
 import type { EquipmentJson, InventoryItemJson } from '@into-the-void/database';
 import { ItemRegistry } from '@into-the-void/items';
 import type { ItemDefinition } from '@into-the-void/items';
@@ -109,6 +109,56 @@ function createInventoryItem(itemId: string): InventoryItemJson {
     properties: {},
   };
 }
+
+describe('applyDiminishingReturns', () => {
+  it('below soft cap — no change (CAPS-01)', () => {
+    expect(applyDiminishingReturns(0)).toBe(0);
+    expect(applyDiminishingReturns(100)).toBe(100);
+    expect(applyDiminishingReturns(200)).toBe(200);
+  });
+
+  it('above soft cap — 0.5x returns (CAPS-01)', () => {
+    // 250 raw: 200 + (250-200)*0.5 = 200 + 25 = 225
+    expect(applyDiminishingReturns(250)).toBe(225);
+    // 300 raw: 200 + (300-200)*0.5 = 200 + 50 = 250
+    expect(applyDiminishingReturns(300)).toBe(250);
+    // 400 raw: 200 + (400-200)*0.5 = 200 + 100 = 300
+    expect(applyDiminishingReturns(400)).toBe(300);
+    // 500 raw: 200 + (500-200)*0.5 = 200 + 150 = 350
+    expect(applyDiminishingReturns(500)).toBe(350);
+  });
+
+  it('hard cap at 400 effective (CAPS-02)', () => {
+    // 600 raw: 200 + (600-200)*0.5 = 200 + 200 = 400 (exactly at hard cap)
+    expect(applyDiminishingReturns(600)).toBe(400);
+    // 800 raw: would be 500 but capped at 400
+    expect(applyDiminishingReturns(800)).toBe(400);
+    // 1000 raw: would be 600 but capped at 400
+    expect(applyDiminishingReturns(1000)).toBe(400);
+  });
+
+  it('negative values pass through unchanged', () => {
+    expect(applyDiminishingReturns(-10)).toBe(-10);
+  });
+
+  it('computeCharStats applies DR to high-stat characters (CAPS-03)', () => {
+    const highPowerModuleId = 'test_high_power_module';
+    const mockModule = createMockModule(highPowerModuleId, 'power', 200);
+
+    vi.spyOn(ItemRegistry, 'get').mockReturnValue(mockModule);
+
+    const equipment: EquipmentJson = {
+      modules: [createModuleItem(highPowerModuleId, 0)],
+    };
+
+    // Level 1 base power = 50. With +200 module: raw = 250.
+    // DR: 200 + (250-200)*0.5 = 225
+    const stats = computeCharStats(1, equipment);
+    expect(stats.power).toBe(225);
+
+    vi.restoreAllMocks();
+  });
+});
 
 describe('computeCharStats', () => {
   afterEach(() => {
