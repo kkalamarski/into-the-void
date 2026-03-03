@@ -12,6 +12,9 @@ export type {
 // Registry
 export { EntityRegistry } from './registry';
 
+// Biome resistance profiles
+export { BIOME_RESISTANCE_PROFILES } from './biome-resistance-profiles';
+
 // Definitions
 export { ALL_ENTITIES, ENTITY_IDS } from './definitions';
 export * from './definitions';
