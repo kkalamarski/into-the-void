@@ -1658,26 +1658,31 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const player = this.playerService.getPlayerById(playerId);
     if (!inventory || !player) return;
 
-    // Base stats: level-scaled with empty equipment
     const emptyEquipment: EquipmentJson = { modules: [] };
+    const playerEquipment = inventory.equipment as EquipmentJson;
+
+    // Base stats: level-scaled with empty equipment
     const base = computeCharStats(player.level, emptyEquipment, 'player');
 
-    // Total stats: level-scaled + equipment bonuses
-    const total = computeCharStats(player.level, inventory.equipment as EquipmentJson, 'player');
+    // Total effective stats: DR-capped (base + equipment + DR)
+    const total = computeCharStats(player.level, playerEquipment, 'player');
 
-    // Equipment contribution: delta between total and base
+    // Raw total stats: uncapped (base + equipment, no DR) — for client DR display
+    const raw = computeCharStats(player.level, playerEquipment, 'player', [], { skipDR: true });
+
+    // Equipment contribution: raw delta (uncapped) for breakdown display
     const equipment: CharacterStats = {
-      durability: total.durability - base.durability,
-      toughness: total.toughness - base.toughness,
-      power: total.power - base.power,
-      haste: total.haste - base.haste,
-      vigor: total.vigor - base.vigor,
-      recovery: total.recovery - base.recovery,
-      perception: total.perception - base.perception,
-      resilience: total.resilience - base.resilience,
+      durability: raw.durability - base.durability,
+      toughness: raw.toughness - base.toughness,
+      power: raw.power - base.power,
+      haste: raw.haste - base.haste,
+      vigor: raw.vigor - base.vigor,
+      recovery: raw.recovery - base.recovery,
+      perception: raw.perception - base.perception,
+      resilience: raw.resilience - base.resilience,
     };
 
-    const payload: CharStatsPayload = { level: player.level, total, base, equipment };
+    const payload: CharStatsPayload = { level: player.level, total, base, equipment, raw };
     client.emit('stats:update', payload);
 
     // Update player's maxHealth based on durability stat
