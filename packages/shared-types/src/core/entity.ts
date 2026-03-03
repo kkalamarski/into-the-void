@@ -6,8 +6,9 @@ import { Position } from './position';
  * - common: standard resources (default if undefined)
  * - rare: higher yield, slower respawn, often found in dangerous areas
  * - epic: exceptional yield, very slow respawn, high-tier zones only
+ * - exotic: unique variants found in extreme biomes (void_rift, crystalline_wastes)
  */
-export type NodeRarity = 'common' | 'rare' | 'epic';
+export type NodeRarity = 'common' | 'rare' | 'epic' | 'exotic';
 
 /**
  * Types of entities in the game world
@@ -20,7 +21,8 @@ export type EntityType =
   | 'artifact'   // NEW - one-time discoverable
   | 'structure'
   | 'item'
-  | 'npc';
+  | 'npc'
+  | 'deployable';
 
 /**
  * Base entity interface
@@ -148,4 +150,24 @@ export interface Npc extends Entity {
   npcType: 'trader' | 'guard' | 'faction_rep' | 'ambient' | 'service';
   /** Faction affiliation */
   faction: 'verdant' | 'helix' | 'nexus' | 'neutral';
+}
+
+/**
+ * Deployable automation structure placed by a player in the world.
+ * Used by Phase 121 AutomationService for extractor/beacon/refinery logic.
+ */
+export interface DeployableEntity extends Entity {
+  type: 'deployable';
+  /** Which deployable type (e.g., 'extractor', 'survey_beacon', 'planetary_extractor', 'refinery') */
+  deployableType: string;
+  /** Owner character ID */
+  ownerId: string;
+  /** Current durability (0 = destroyed) */
+  durability: number;
+  /** Maximum durability */
+  maxDurability: number;
+  /** Unix timestamp when deployed */
+  deployedAt: number;
+  /** Unix timestamp when deployable expires (null = no expiry for permanent types) */
+  expiresAt: number | null;
 }

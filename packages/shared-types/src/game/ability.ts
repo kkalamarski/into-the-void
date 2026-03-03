@@ -13,7 +13,9 @@ export type AbilityEffect =
   | { readonly type: 'debuff'; readonly stat: string; readonly amount: number; readonly duration: number }
   | { readonly type: 'dot'; readonly damagePerTick: number; readonly tickInterval: number; readonly duration: number }
   | { readonly type: 'hot'; readonly healPerTick: number; readonly tickInterval: number; readonly duration: number }
-  | { readonly type: 'gather'; readonly gatherType: 'harvest' | 'mine' | 'universal'; readonly baseYield: number };
+  | { readonly type: 'gather'; readonly gatherType: 'harvest' | 'mine' | 'universal'; readonly baseYield: number }
+  | { readonly type: 'shield'; readonly absorbAmount: number; readonly durationMs: number }
+  | { readonly type: 'damage_reduction'; readonly reductionPercent: number; readonly durationMs: number };
 
 /**
  * Complete ability definition

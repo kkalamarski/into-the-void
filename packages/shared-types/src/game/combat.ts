@@ -100,3 +100,35 @@ export interface CombatParticipant {
   /** Active effects */
   effects: CombatEffect[];
 }
+
+/**
+ * Damage type categories for the v1.24 damage system.
+ * - Thermal: heat-based damage (fire, plasma, volcanic)
+ * - Cryo: cold-based damage (ice, freeze)
+ * - Bio: biological/chemical damage (poison, spores, acid)
+ * - Kinetic: physical/impact damage (melee, projectile, explosive)
+ */
+export type DamageType = 'Thermal' | 'Cryo' | 'Bio' | 'Kinetic';
+
+/**
+ * Damage resistance values per damage type.
+ * Values represent percentage resistance (0 = neutral, 50 = 50% reduction, -20 = 20% vulnerable).
+ * Range enforcement (0.3x floor, 1.5x ceiling) is applied by calculateDamage() in Phase 117.
+ */
+export interface DamageResistances {
+  readonly thermal: number;
+  readonly cryo: number;
+  readonly bio: number;
+  readonly kinetic: number;
+}
+
+/**
+ * Neutral resistance profile — used as default for creatures not yet assigned biome resistances.
+ * Phase 117 will replace these with biome-appropriate values per DMGT-02.
+ */
+export const NEUTRAL_RESISTANCES: DamageResistances = {
+  thermal: 0,
+  cryo: 0,
+  bio: 0,
+  kinetic: 0,
+};
