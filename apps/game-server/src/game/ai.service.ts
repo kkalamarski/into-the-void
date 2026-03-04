@@ -374,6 +374,8 @@ export class AiService implements OnModuleInit {
           killed: result.killed,
           damageType: result.damageType,
           defenderPosition: result.defenderPosition,
+          absorbed: result.absorbed,
+          reducedBy: result.reducedBy,
         });
       }
 
@@ -388,6 +390,8 @@ export class AiService implements OnModuleInit {
         killed: result.killed,
         damageType: result.damageType,
         defenderPosition: result.defenderPosition,
+        absorbed: result.absorbed,
+        reducedBy: result.reducedBy,
       });
     }
 

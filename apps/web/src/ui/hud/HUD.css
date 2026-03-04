@@ -54,6 +54,39 @@
   transition: width 0.3s ease;
 }
 
+/* Shield bar - cyan/teal color scheme */
+.shield-bar {
+  position: relative;
+  height: 16px;
+  background: rgba(0, 50, 80, 0.6);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 2px;
+  margin-bottom: 6px;
+}
+
+.shield-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0088aa, #00ccee);
+  transition: width 0.2s ease;
+  border-radius: 4px;
+}
+
+.shield-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #ccffff;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
 .energy-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, #0088aa, #00bfff);

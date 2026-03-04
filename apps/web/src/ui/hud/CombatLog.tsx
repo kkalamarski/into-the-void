@@ -53,6 +53,8 @@ export const CombatLog: React.FC = () => {
                     {entry.damageType ? `[${entry.damageType}] ` : ''}{entry.damage}
                   </span>
                   {' '}damage
+                  {entry.absorbed ? <span className="combat-log-mitigated"> [{entry.absorbed} absorbed]</span> : null}
+                  {entry.reducedBy ? <span className="combat-log-mitigated"> [{entry.reducedBy} reduced]</span> : null}
                 </span>
               )}
             </div>

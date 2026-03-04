@@ -13,6 +13,8 @@ export interface CombatLogEntry {
   critical: boolean;
   killed: boolean;
   damageType?: DamageType;
+  absorbed?: number;      // Shield absorb amount (ABIL-09)
+  reducedBy?: number;     // Damage reduction amount (ABIL-12)
 }
 
 interface CombatLogState {
@@ -64,6 +66,8 @@ gameSocket.on('combat:damage', (data: {
   critical: boolean;
   killed: boolean;
   damageType?: DamageType;
+  absorbed?: number;
+  reducedBy?: number;
 }) => {
   const currentPlayer = useGameStore.getState().player;
   if (!currentPlayer) return;
@@ -83,6 +87,8 @@ gameSocket.on('combat:damage', (data: {
       critical: data.critical,
       killed: data.killed,
       damageType: data.damageType,
+      absorbed: data.absorbed,
+      reducedBy: data.reducedBy,
     });
   } else if (data.defenderId === currentPlayer.id) {
     // Player received damage from creature - prefer name from payload, fallback to entity lookup
@@ -96,6 +102,8 @@ gameSocket.on('combat:damage', (data: {
       critical: data.critical,
       killed: data.killed,
       damageType: data.damageType,
+      absorbed: data.absorbed,
+      reducedBy: data.reducedBy,
     });
   }
   // If neither attacker nor defender is current player, ignore (other player's combat)

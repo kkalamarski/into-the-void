@@ -6,6 +6,7 @@ import { BIOME_DISPLAY_NAMES, BIOME_COLORS, BiomeType } from '@into-the-void/sha
 import { GiShield, GiLightningFrequency, GiPoisonGas, GiCrossedSwords, GiTwoCoins } from 'react-icons/gi';
 import { useCombatStore } from '../../store/combatStore';
 import { useCombatLogStore } from '../../store/combatLogStore';
+import { useShieldStore } from '../../store/shieldStore';
 import { ActionBar } from './ActionBar';
 import { CastBar } from './CastBar';
 import { GameShortcuts } from './GameShortcuts';
@@ -18,6 +19,7 @@ export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
   const { player, zoneState, toggleQuestLog, showCombatLog, toggleCombatLog } = useGameStore();
   const { inventory } = useInventoryStore();
   const { inCombat } = useCombatStore();
+  const { active: shieldActive, remaining: shieldRemaining, maxAbsorb: shieldMax } = useShieldStore();
 
   // Biome display with hysteresis to prevent flickering
   const [displayedBiome, setDisplayedBiome] = useState<BiomeType | null>(null);
@@ -120,6 +122,18 @@ export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
             {player.health} / {player.maxHealth}
           </span>
         </div>
+        {shieldActive && shieldRemaining > 0 && (
+          <div className="shield-bar">
+            <div
+              className="shield-bar-fill"
+              style={{ width: `${(shieldRemaining / shieldMax) * 100}%` }}
+            />
+            <span className="shield-text">
+              <GiShield style={{ marginRight: '4px', fontSize: '10px' }} />
+              {shieldRemaining} / {shieldMax}
+            </span>
+          </div>
+        )}
         <div className="energy-bar">
           <div
             className="energy-bar-fill"

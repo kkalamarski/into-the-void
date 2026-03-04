@@ -95,6 +95,12 @@
   font-weight: 600;
 }
 
+.combat-log-mitigated {
+  color: #66cccc;
+  font-size: 11px;
+  font-style: italic;
+}
+
 /* Scrollbar styling */
 .combat-log-entries::-webkit-scrollbar {
   width: 6px;
