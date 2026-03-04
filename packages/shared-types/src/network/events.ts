@@ -106,7 +106,10 @@ export type ServerEventType =
   | 'gathering:challenge'
   | 'gathering:result'
   | 'cast:start'
-  | 'cast:interrupt';
+  | 'cast:interrupt'
+  | 'shield:apply'
+  | 'shield:absorb'
+  | 'shield:expire';
 
 /**
  * Socket.io event map for type safety
@@ -174,6 +177,8 @@ export interface ServerEvents {
     critical: boolean;
     killed: boolean;
     damageType?: DamageType;
+    absorbed?: number;
+    reducedBy?: number;
   };
   'combat:result': import('../game/combat').CombatResult;
   'combat:end': { combatId: string; winner: string };
@@ -284,6 +289,19 @@ export interface ServerEvents {
   };
   'buff:expire': {
     buffId: string;
+  };
+  'shield:apply': {
+    absorbAmount: number;
+    durationMs: number;
+    expiresAt: number;
+  };
+  'shield:absorb': {
+    absorbed: number;
+    remaining: number;
+    maxAbsorb: number;
+  };
+  'shield:expire': {
+    playerId: string;
   };
   'quest:progress': {
     questId: string;
