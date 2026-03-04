@@ -88,9 +88,11 @@ export class PreloadScene extends Phaser.Scene {
     const directions = Object.keys(directionMap);
 
     // Creature sprite definitions: speciesId -> folder name
+    // Multiple creatures can share the same sprite folder (reuse)
     const creatureSprites: Record<string, string> = {
-      'creature_void_crawler': 'violet-wolf',
-      'creature_coastal_scuttler': 'neon-creature',
+      // --- Sprites with unique assets ---
+      'creature_void_crawler': 'void-crawler',
+      'creature_coastal_scuttler': 'coastal-scuttler',
       'creature_crystal_hunter': 'crystal-hunter',
       'creature_frost_stalker': 'frost-stalker',
       'creature_canopy_grazer': 'canopy-grazer',
@@ -100,6 +102,39 @@ export class PreloadScene extends Phaser.Scene {
       'creature_crystal_crawler': 'crystal-crawler',
       'creature_void_horror': 'void-horror',
       'creature_toxic_lurker': 'toxic-lurker',
+      'creature_spore_carrier': 'spore-carrier',
+      'creature_miasma_drifter': 'miasma-drifter',
+      'creature_marsh_lurker': 'marsh-lurker',
+      // --- Reused sprites (Tier II) ---
+      'creature_dart_runner': 'frost-stalker',
+      'creature_petrified_lurker': 'void-horror',
+      'creature_kelp_grazer': 'neon-creature',
+      'creature_tangle_stalker': 'marsh-lurker',
+      'creature_current_rider': 'frost-stalker',
+      'creature_echo_drifter': 'spore-carrier',
+      'creature_phase_grazer': 'neon-creature',
+      'creature_reality_scavenger': 'void-crawler',
+      // --- Reused sprites (Tier III) ---
+      'creature_magma_beast': 'crystal-hunter',
+      'creature_ash_skimmer': 'coastal-scuttler',
+      'creature_ice_burrower': 'crystal-crawler',
+      'creature_null_feeder': 'neon-creature',
+      'creature_dimensional_hunter': 'void-horror',
+      'creature_rift_hunter': 'marsh-lurker',
+      'creature_pressure_feeder': 'toxic-lurker',
+      'creature_trench_hunter': 'void-horror',
+      'creature_abyssal_scavenger': 'void-crawler',
+      // --- Reused sprites (Tier IV) ---
+      'creature_starfall_grazer': 'neon-creature',
+      'creature_crater_stalker': 'marsh-lurker',
+      'creature_guardian_construct': 'crystal-crawler',
+      'creature_ruin_seeker': 'frost-stalker',
+      'creature_relic_beast': 'crystal-hunter',
+      'creature_void_grazer': 'marsh-lurker',
+      'creature_anomaly_scavenger': 'void-crawler',
+      'creature_void_stalker': 'void-horror',
+      'creature_dimensional_aberration': 'toxic-lurker',
+      'creature_abyssal_leviathan': 'toxic-lurker',
     };
 
     for (const [speciesId, folder] of Object.entries(creatureSprites)) {
@@ -160,8 +195,13 @@ export class PreloadScene extends Phaser.Scene {
       { entityId: 'plant_drought_cactus', folder: 'drought-cactus', variants: 1 },
       // Plants - fungal forest
       { entityId: 'plant_tendril_tree', folder: 'tendril-tree', variants: 1 },
+      { entityId: 'plant_rare_fungi', folder: 'rare-fungi', variants: 4 },
+      // Plants - volcanic ridge
+      { entityId: 'plant_magma_bloom', folder: 'magma-bloom', variants: 4 },
       // Minerals - void plains
       { entityId: 'mineral_void_crystal', folder: 'void-crystal', variants: 1 },
+      // Minerals - crystal caves
+      { entityId: 'mineral_prismatic_crystal', folder: 'prismatic-crystal', variants: 1 },
     ];
 
     for (const { entityId, folder, variants } of featureSprites) {
@@ -479,6 +519,36 @@ export class PreloadScene extends Phaser.Scene {
       'creature_crystal_crawler',
       'creature_void_horror',
       'creature_toxic_lurker',
+      'creature_spore_carrier',
+      'creature_miasma_drifter',
+      'creature_marsh_lurker',
+      'creature_dart_runner',
+      'creature_petrified_lurker',
+      'creature_kelp_grazer',
+      'creature_tangle_stalker',
+      'creature_current_rider',
+      'creature_echo_drifter',
+      'creature_phase_grazer',
+      'creature_reality_scavenger',
+      'creature_magma_beast',
+      'creature_ash_skimmer',
+      'creature_ice_burrower',
+      'creature_null_feeder',
+      'creature_dimensional_hunter',
+      'creature_rift_hunter',
+      'creature_pressure_feeder',
+      'creature_trench_hunter',
+      'creature_abyssal_scavenger',
+      'creature_starfall_grazer',
+      'creature_crater_stalker',
+      'creature_guardian_construct',
+      'creature_ruin_seeker',
+      'creature_relic_beast',
+      'creature_void_grazer',
+      'creature_anomaly_scavenger',
+      'creature_void_stalker',
+      'creature_dimensional_aberration',
+      'creature_abyssal_leviathan',
     ];
 
     // Walk animations (8 frames per direction) for each animated creature
