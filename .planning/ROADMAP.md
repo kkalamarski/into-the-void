@@ -68,7 +68,7 @@
 - [x] **Phase 115: Shared Type Foundation** - DamageType union, DamageResistances, shield/damage_reduction AbilityEffect variants, DeployableEntity interface, AiTickResult behavior signals (completed 2026-03-03)
 - [x] **Phase 116: Stat Caps** - Soft cap at 200 with diminishing returns, hard cap at 400, stats panel indicator (completed 2026-03-03)
 - [x] **Phase 117: Damage Types and Creature Resistances** - DamageType threaded through calculateDamage(), resistances on all 83+ creatures, color-coded floating numbers (completed 2026-03-03)
-- [ ] **Phase 118: Ability Rebalance** - Plasma Burst nerfed, defensive abilities overhauled with real shield/DR mechanics, all 13 rebalanced abilities live
+- [x] **Phase 118: Ability Rebalance** - Plasma Burst nerfed, defensive abilities overhauled with real shield/DR mechanics, all 13 rebalanced abilities live (completed 2026-03-04)
 - [ ] **Phase 119: Creature AI Upgrades** - Stampede, Pack Call, Ambush, Frenzy behaviors with zone-level pre-processing
 - [ ] **Phase 120: Biome Hazard System** - HazardService with per-player state cache, HP drain, stat debuffs, gear counters, HUD indicator
 - [ ] **Phase 121: Automation Tech Tree** - T2 extractors through T5 refinery, AutomationService, deployables DB table, automation panel HUD
@@ -284,10 +284,10 @@
   4. Thermal Lance hitting a Frozen Expanse creature deals more damage than hitting a Volcanic Ridge creature — the damage type bonus from Phase 117 is observable when using a type-specialized ability
   5. Energy Barrier grants immunity to biome hazard effects for 20 seconds — a player in a hazardous biome who activates Energy Barrier does not receive HP drain or stat debuffs during the duration
 **Plans**: 4 plans in 3 waves
-  - [ ] 118-01-PLAN.md -- AbilityEffect union types + all 13 ability definition updates (ABIL-01 through ABIL-13)
-  - [ ] 118-02-PLAN.md -- Server defensive mechanics: shield, DR, stun, hazard immunity, conditional bonus (ABIL-01, ABIL-08, ABIL-09, ABIL-12, ABIL-13)
-  - [ ] 118-03-PLAN.md -- Server offensive mechanics: AoE spread, AoE pulse, reveal, reflect (ABIL-04, ABIL-05, ABIL-06, ABIL-11)
-  - [ ] 118-04-PLAN.md -- Client shield bar, ServerEvents, combat log mitigation display (ABIL-09, ABIL-12)
+  - [x] 118-01-PLAN.md -- AbilityEffect union types + all 13 ability definition updates (ABIL-01 through ABIL-13)
+  - [x] 118-02-PLAN.md -- Server defensive mechanics: shield, DR, stun, hazard immunity, conditional bonus (ABIL-01, ABIL-08, ABIL-09, ABIL-12, ABIL-13)
+  - [x] 118-03-PLAN.md -- Server offensive mechanics: AoE spread, AoE pulse, reveal, reflect (ABIL-04, ABIL-05, ABIL-06, ABIL-11)
+  - [x] 118-04-PLAN.md -- Client shield bar, ServerEvents, combat log mitigation display (ABIL-09, ABIL-12)
 
 ### Phase 119: Creature AI Upgrades
 **Goal**: Each creature behavior archetype has one new meaningful behavior — herbivores trigger Stampede when 3+ flee simultaneously, omnivores have a 30% chance to Pack Call nearby allies when provoked, predators deal 2x damage on first Ambush strike, and maniacs enter Frenzy below 30% HP doubling attack speed
@@ -347,11 +347,11 @@
 | 115. Shared Type Foundation | 2/2 | Complete    | 2026-03-03 |
 | 116. Stat Caps | 0/TBD | Complete    | 2026-03-03 |
 | 117. Damage Types and Creature Resistances | 3/3 | Complete    | 2026-03-03 |
-| 118. Ability Rebalance | 2/4 | In Progress|  |
+| 118. Ability Rebalance | 4/4 | Complete   | 2026-03-04 |
 | 119. Creature AI Upgrades | 0/TBD | Not started | - |
 | 120. Biome Hazard System | 0/TBD | Not started | - |
 | 121. Automation Tech Tree | 0/TBD | Not started | - |
 
 ---
 
-*Last updated: 2026-03-04 - Phase 118 plans created (4 plans in 3 waves)*
+*Last updated: 2026-03-04 - Phase 118 complete (4/4 plans executed)*
