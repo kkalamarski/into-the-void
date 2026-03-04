@@ -27,6 +27,7 @@ import { LoreService } from './lore.service';
 import { ZoneMasteryService } from './zone-mastery.service';
 import { ExpeditionService } from './expedition.service';
 import { ChatService } from './chat.service';
+import { HazardService } from './hazard.service';
 import {
   ClientEvents,
   Direction,
@@ -95,6 +96,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly zoneMasteryService: ZoneMasteryService,
     private readonly expeditionService: ExpeditionService,
     private readonly chatService: ChatService,
+    private readonly hazardService: HazardService,
   ) {}
 
   afterInit(server: Server) {
@@ -108,6 +110,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.zoneMasteryService.setServer(server);
     this.expeditionService.setServer(server);
     this.chatService.setServer(server);
+    this.hazardService.setServer(server);
     this.playerService.setZoneStateProvider((zoneId) => this.gameService.getZoneState(zoneId));
     // Wire aggro checker to ZonesService for immediate aggro on creature respawn
     this.zonesService.setAggroChecker(this.aiService);
@@ -144,6 +147,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       this.combatService.handleDisconnect(player.id);
       this.abilityService.handleDisconnect(player.id);
       this.gatheringService.unloadProficiency(player.id);
+      this.hazardService.onPlayerDisconnect(player.id);
     }
 
     await this.playerService.handleDisconnect(client.id);
@@ -606,6 +610,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         if (result.inventory) {
           client.emit('inventory:update', result.inventory);
           this.emitStats(client, player.id);
+          this.hazardService.onPlayerEquipmentChanged(player.id);
         }
       } else {
         client.emit('error', {
@@ -636,6 +641,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         if (result.inventory) {
           client.emit('inventory:update', result.inventory);
           this.emitStats(client, player.id);
+          this.hazardService.onPlayerEquipmentChanged(player.id);
         }
       } else {
         client.emit('error', {
@@ -942,6 +948,14 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
           newZoneState.entities as Array<{ type: string; npcId?: string }>
         );
 
+        // Emit zone entry event for hazard/quest tracking
+        const portalBiome = this.resolveZoneBiome(result.newZoneId);
+        this.eventEmitter.emit('zone.entered', {
+          characterId: player.id,
+          zoneId: result.newZoneId,
+          biome: portalBiome,
+        });
+
         // Notify new zone of player arrival
         client.to(result.newZoneId).emit('player:joined', {
           id: player.id,
@@ -1107,6 +1121,14 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
           player.faction,
           newZoneState.entities as Array<{ type: string; npcId?: string }>
         );
+
+        // Emit zone entry event for hazard/quest tracking
+        const hubLeaveBiome = this.resolveZoneBiome(result.newZoneId);
+        this.eventEmitter.emit('zone.entered', {
+          characterId: player.id,
+          zoneId: result.newZoneId,
+          biome: hubLeaveBiome,
+        });
 
         // Notify new zone of player arrival
         client.to(result.newZoneId).emit('player:joined', {

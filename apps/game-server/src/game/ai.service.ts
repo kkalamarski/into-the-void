@@ -7,6 +7,7 @@ import { ZonesService } from '../zones/zones.service';
 import { PlayerService } from './player.service';
 import { CombatService } from './combat.service';
 import { InventoryService } from './inventory.service';
+import { HazardService } from './hazard.service';
 
 /**
  * CRAI-09: Type-enforced whitelist for creature broadcasts.
@@ -46,6 +47,7 @@ export class AiService implements OnModuleInit {
     private readonly playerService: PlayerService,
     private readonly combatService: CombatService,
     private readonly inventoryService: InventoryService,
+    private readonly hazardService: HazardService,
   ) {}
 
   onModuleInit(): void {
@@ -591,6 +593,9 @@ export class AiService implements OnModuleInit {
 
     // Process health and energy regeneration for players not in combat
     this.processPlayerRegeneration(zoneId);
+
+    // Process hazard ticks for players in hazardous zones (HAZD-01/02/03/04)
+    this.hazardService.processHazardTick(zoneId);
   }
 
   /**

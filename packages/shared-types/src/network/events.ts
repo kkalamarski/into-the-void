@@ -111,7 +111,10 @@ export type ServerEventType =
   | 'shield:absorb'
   | 'shield:expire'
   | 'creature:frenzy'
-  | 'creature:stampede';
+  | 'creature:stampede'
+  | 'hazard:update'
+  | 'hazard:damage'
+  | 'hazard:clear';
 
 /**
  * Socket.io event map for type safety
@@ -404,6 +407,31 @@ export interface ServerEvents {
     direction: { dx: number; dy: number };
     affectedPlayerIds: string[];
     damage: number;
+  };
+  /** HAZD-08: Hazard state update sent when entering/leaving hazard zones */
+  'hazard:update': {
+    active: boolean;
+    hazardType?: string;
+    displayName?: string;
+    color?: string;
+    protectionPercent: number;
+    tier?: number;
+    inGracePeriod?: boolean;
+    stackCount?: number;
+  };
+  /** HAZD-02: Hazard damage tick notification */
+  'hazard:damage': {
+    playerId: string;
+    damage: number;
+    health: number;
+    maxHealth: number;
+    hazardType: string;
+    protectionPercent: number;
+  };
+  /** HAZD-09: Hazard cleared (left zone, entered hub, or fully protected) */
+  'hazard:clear': {
+    playerId: string;
+    reason: 'left_zone' | 'entered_hub' | 'fully_protected';
   };
 }
 
