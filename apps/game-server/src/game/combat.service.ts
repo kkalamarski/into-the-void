@@ -259,6 +259,46 @@ export class CombatService {
     // Update player health via PlayerService
     this.playerService.updateHealth(player.id, newHealth);
 
+    // Reflect damage back to creature (ABIL-11: Magnetic Field)
+    const reflectDamage = this.abilityService.getReflectDamage(session.targetPlayerId, finalDamage);
+    if (reflectDamage > 0) {
+      creature.health = Math.max(0, creature.health - reflectDamage);
+      const creatureKilled = creature.health <= 0;
+      await this.zonesService.updateEntity(session.zoneId, session.creatureId, {
+        health: creature.health,
+        active: !creatureKilled,
+      } as Partial<Creature>);
+      this.server?.to(session.zoneId).emit('combat:damage', {
+        attackerId: session.targetPlayerId,
+        attackerName: player.name,
+        defenderId: session.creatureId,
+        defenderName: creature.name,
+        damage: reflectDamage,
+        defenderHealth: creature.health,
+        defenderMaxHealth: creature.maxHealth,
+        critical: false,
+        killed: creatureKilled,
+        defenderPosition: { x: creature.position.x, y: creature.position.y },
+      });
+      this.server?.to(session.zoneId).emit('entity:update', {
+        entityId: session.creatureId,
+        changes: { health: creature.health, maxHealth: creature.maxHealth, active: !creatureKilled },
+      });
+      if (creatureKilled) {
+        this.stopCreatureCombat(session.creatureId);
+        const groundItems = await this.handleCreatureDeath(creature, session.zoneId);
+        for (const item of groundItems) {
+          this.server?.to(session.zoneId).emit('entity:spawn', item);
+        }
+        this.server?.to(session.zoneId).emit('entity:despawn', { entityId: session.creatureId });
+        const levelDiff = creature.level - player.level;
+        const levelBonus = levelDiff > 0 ? 1 + levelDiff * 0.1 : 1;
+        const xpReward = Math.floor(10 * creature.level * levelBonus);
+        this.playerService.grantXp(player.id, xpReward);
+        return null; // Creature is dead, stop processing this session
+      }
+    }
+
     // Emit player.damaged event (interrupts casting, etc.)
     this.eventEmitter.emit('player.damaged', { playerId: session.targetPlayerId });
 
