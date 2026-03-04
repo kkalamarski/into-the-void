@@ -45,7 +45,7 @@ Progress: [░░░░░░░░░░] 0% (v1.24)
 | 117. Damage Types and Creature Resistances | TBD | Not started |
 | 118. Ability Rebalance | TBD | Not started |
 | 119. Creature AI Upgrades | TBD | Not started |
-| 120. Biome Hazard System | TBD | Not started |
+| 120. Biome Hazard System | 4/4 | Complete |
 | 121. Automation Tech Tree | TBD | Not started |
 | Phase 117-damage-types-and-creature-resistances P01 | 10 | 2 tasks | 4 files |
 | Phase 117-02 P02 | 12 | 2 tasks | 5 files |

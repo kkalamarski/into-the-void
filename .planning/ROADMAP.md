@@ -70,7 +70,7 @@
 - [x] **Phase 117: Damage Types and Creature Resistances** - DamageType threaded through calculateDamage(), resistances on all 83+ creatures, color-coded floating numbers (completed 2026-03-03)
 - [x] **Phase 118: Ability Rebalance** - Plasma Burst nerfed, defensive abilities overhauled with real shield/DR mechanics, all 13 rebalanced abilities live (completed 2026-03-04)
 - [x] **Phase 119: Creature AI Upgrades** - Stampede, Pack Call, Ambush, Frenzy behaviors with zone-level pre-processing
-- [ ] **Phase 120: Biome Hazard System** - HazardService with per-player state cache, HP drain, stat debuffs, gear counters, HUD indicator
+- [x] **Phase 120: Biome Hazard System** - HazardService with per-player state cache, HP drain, stat debuffs, gear counters, HUD indicator (completed 2026-03-04)
 - [ ] **Phase 121: Automation Tech Tree** - T2 extractors through T5 refinery, AutomationService, deployables DB table, automation panel HUD
 
 ## Phase Details
@@ -349,9 +349,9 @@
 | 117. Damage Types and Creature Resistances | 3/3 | Complete    | 2026-03-03 |
 | 118. Ability Rebalance | 4/4 | Complete   | 2026-03-04 |
 | 119. Creature AI Upgrades | 3/3 | Complete | 2026-03-04 |
-| 120. Biome Hazard System | 0/TBD | Not started | - |
+| 120. Biome Hazard System | 4/4 | Complete | 2026-03-04 |
 | 121. Automation Tech Tree | 0/TBD | Not started | - |
 
 ---
 
-*Last updated: 2026-03-04 - Phase 119 complete (3/3 plans executed)*
+*Last updated: 2026-03-04 - Phase 120 complete (4/4 plans executed)*
