@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { tickCreatureAI, AiTickResult } from './creature-ai';
+import { tickCreatureAI } from './creature-ai';
 import type { Creature, PlayerPublic } from '@into-the-void/shared-types';
 
 // ─── Test Fixtures ──────────────────────────────────────────

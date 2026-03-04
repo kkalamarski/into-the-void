@@ -251,7 +251,7 @@ export class EntityRenderer {
    */
   initStampedeListener(): void {
     if (this.stampedeListener) return;
-    this.stampedeListener = ((event: CustomEvent) => {
+    this.stampedeListener = ((_event: CustomEvent) => {
       // Brief camera shake for stampede impact (CRAI-06)
       this.scene.cameras.main.shake(300, 0.01);
     }) as EventListener;
