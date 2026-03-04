@@ -40,6 +40,8 @@ interface CombatDamageResult {
   damageType?: DamageType;
   groundItems?: ItemEntity[];
   defenderPosition?: { x: number; y: number };
+  absorbed?: number;
+  reducedBy?: number;
 }
 
 @Injectable()
@@ -192,6 +194,11 @@ export class CombatService {
       return null;
     }
 
+    // Check if creature is stunned (ABIL-08: Concussive Strike)
+    if (this.abilityService.isCreatureStunned(creature.id)) {
+      return null; // Creature can't attack while stunned
+    }
+
     // Calculate creature stats for interval calculation
     const emptyEquipment: EquipmentJson = { modules: [] };
     const creatureStats = computeCharStats(creature.level, emptyEquipment, 'creature');
@@ -233,8 +240,20 @@ export class CombatService {
       damageType: 'Kinetic' as const,
     });
 
-    // Apply damage to player
-    const newHealth = Math.max(0, player.health - damageResult.damage);
+    // Shield intercept (ABIL-09: Emergency Shield)
+    const { passthrough: afterShield, absorbed } = this.abilityService.interceptShield(
+      session.targetPlayerId,
+      damageResult.damage,
+    );
+
+    // Damage reduction (ABIL-12: Fortify Systems)
+    const { reducedDamage: finalDamage, reducedBy } = this.abilityService.applyDamageReduction(
+      session.targetPlayerId,
+      afterShield,
+    );
+
+    // Apply final damage to player
+    const newHealth = Math.max(0, player.health - finalDamage);
     const killed = newHealth <= 0;
 
     // Update player health via PlayerService
@@ -279,13 +298,15 @@ export class CombatService {
       attackerName: creature.name,
       defenderId: session.targetPlayerId,
       defenderName: player.name,
-      damage: damageResult.damage,
+      damage: finalDamage,
       defenderHealth: newHealth,
       defenderMaxHealth: player.maxHealth,
       critical: damageResult.critical,
       killed,
       damageType: 'Kinetic' as const,
       defenderPosition: { x: player.position.x, y: player.position.y },
+      absorbed: absorbed > 0 ? absorbed : undefined,
+      reducedBy: reducedBy > 0 ? reducedBy : undefined,
     };
   }
 
