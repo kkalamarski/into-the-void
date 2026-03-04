@@ -20,6 +20,15 @@ interface PublicCreatureUpdate {
 const AI_TICK_INTERVAL_MS = 1000; // Creatures move at half player speed
 const AI_TICK_WARN_MS = 200; // Log warning if tick processing exceeds this threshold
 
+// CRAI-01: Stampede constants
+const FLEE_RADIUS = 5; // Same as creature-ai.ts
+const STAMPEDE_MIN_HERBIVORES = 3; // Minimum fleeing herbivores to trigger stampede
+const STAMPEDE_PATH_LENGTH = 8; // Tiles ahead of stampede corridor
+const STAMPEDE_HALF_WIDTH = 1.5; // 3 tiles wide (1.5 on each side)
+
+// CRAI-03: Ambush perception threshold
+const AMBUSH_PERCEPTION_THRESHOLD = 150;
+
 // Regen scaling: 1% base, scales with Vigor up to 5% max
 const REGEN_BASE_PERCENT = 0.01; // 1% base regen per second
 const REGEN_MAX_PERCENT = 0.05; // 5% max regen per second
@@ -285,6 +294,154 @@ export class AiService implements OnModuleInit {
   }
 
   /**
+   * CRAI-05: Zone-level pre-processing pass for group behaviors.
+   * Runs BEFORE per-creature FSM loop to detect Stampede (3+ fleeing herbivores)
+   * and ensure predators have stealth flags.
+   */
+  private async preProcessGroupBehaviors(
+    zoneId: string,
+    creatures: Creature[],
+    players: PlayerPublic[],
+  ): Promise<void> {
+    // ── CRAI-01: Stampede Detection ──────────────────────────
+    const herbivores = creatures.filter(c => c.behavior === 'herbivore');
+
+    // Count herbivores that are fleeing (have combatTarget or near players)
+    const fleeingHerbivores = herbivores.filter(h => {
+      if (h.combatTarget) return true;
+      // Check if any player is within flee radius
+      return players.some(p =>
+        Math.max(
+          Math.abs(h.position.x - p.position.x),
+          Math.abs(h.position.y - p.position.y),
+        ) <= FLEE_RADIUS,
+      );
+    });
+
+    if (fleeingHerbivores.length >= STAMPEDE_MIN_HERBIVORES) {
+      await this.processStampede(zoneId, fleeingHerbivores, players);
+    }
+
+    // ── CRAI-03: Ensure predators have stealth flag ──────────
+    for (const creature of creatures) {
+      if (creature.behavior === 'predator' && creature.stealthed === undefined && !creature.combatTarget) {
+        await this.zonesService.updateEntity(zoneId, creature.id, {
+          stealthed: true,
+        } as Partial<Creature>);
+        creature.stealthed = true; // Update local reference
+      }
+    }
+  }
+
+  /**
+   * CRAI-01: Process stampede when 3+ herbivores are fleeing.
+   * Computes corridor direction, finds players in path, applies kinetic damage.
+   */
+  private async processStampede(
+    zoneId: string,
+    fleeingHerbivores: Creature[],
+    players: PlayerPublic[],
+  ): Promise<void> {
+    if (players.length === 0) return;
+
+    // Compute centroid of fleeing herbivores
+    let centroidX = 0;
+    let centroidY = 0;
+    let totalLevel = 0;
+    for (const h of fleeingHerbivores) {
+      centroidX += h.position.x;
+      centroidY += h.position.y;
+      totalLevel += h.level;
+    }
+    centroidX /= fleeingHerbivores.length;
+    centroidY /= fleeingHerbivores.length;
+    const averageLevel = totalLevel / fleeingHerbivores.length;
+
+    // Compute average flee direction (away from nearest player to centroid)
+    let nearestPlayer: PlayerPublic | null = null;
+    let nearestDist = Infinity;
+    for (const p of players) {
+      const dist = Math.max(Math.abs(centroidX - p.position.x), Math.abs(centroidY - p.position.y));
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearestPlayer = p;
+      }
+    }
+    if (!nearestPlayer) return;
+
+    const rawDx = centroidX - nearestPlayer.position.x;
+    const rawDy = centroidY - nearestPlayer.position.y;
+    const mag = Math.sqrt(rawDx * rawDx + rawDy * rawDy);
+    if (mag === 0) return;
+    const dirX = rawDx / mag;
+    const dirY = rawDy / mag;
+
+    // Find players in the stampede corridor
+    const affectedPlayerIds: string[] = [];
+    const damage = Math.floor(averageLevel * 2); // 2x creature level kinetic damage
+
+    for (const p of players) {
+      const toPlayerX = p.position.x - centroidX;
+      const toPlayerY = p.position.y - centroidY;
+      // Project player position onto stampede direction
+      const dot = toPlayerX * dirX + toPlayerY * dirY;
+      if (dot < -2 || dot > STAMPEDE_PATH_LENGTH) continue; // Behind or too far ahead
+      // Perpendicular distance
+      const perpDist = Math.abs(toPlayerX * dirY - toPlayerY * dirX);
+      if (perpDist <= STAMPEDE_HALF_WIDTH) {
+        affectedPlayerIds.push(p.id);
+      }
+    }
+
+    // Apply damage to affected players
+    for (const playerId of affectedPlayerIds) {
+      const player = this.playerService.getPlayerById(playerId);
+      if (!player || player.isDead) continue;
+
+      const newHealth = Math.max(0, player.health - damage);
+      this.playerService.updateHealth(playerId, newHealth);
+
+      // Emit combat:damage for stampede hit
+      const playerSocket = this.playerService.getSocketByPlayerId(playerId);
+      if (playerSocket && this.server) {
+        this.server.to(playerSocket).emit('combat:damage', {
+          attackerId: fleeingHerbivores[0].id, // Use first herbivore as source
+          defenderId: playerId,
+          damage,
+          defenderHealth: newHealth,
+          defenderMaxHealth: player.maxHealth,
+          critical: false,
+          killed: newHealth <= 0,
+          damageType: 'Kinetic' as const,
+          defenderPosition: { x: player.position.x, y: player.position.y },
+        });
+      }
+
+      if (newHealth <= 0) {
+        this.playerService.setDead(playerId, true);
+        this.server?.to(zoneId).emit('player:death', {
+          playerId,
+          killerId: fleeingHerbivores[0].id,
+          position: player.position,
+        });
+      }
+    }
+
+    // Emit stampede event to zone
+    if (affectedPlayerIds.length > 0 || fleeingHerbivores.length >= STAMPEDE_MIN_HERBIVORES) {
+      this.server?.to(zoneId).emit('creature:stampede' as any, {
+        zoneId,
+        creatureIds: fleeingHerbivores.map(h => h.id),
+        direction: { dx: Math.round(dirX), dy: Math.round(dirY) },
+        affectedPlayerIds,
+        damage,
+      });
+    }
+
+    console.log(`[AiService] Stampede! ${fleeingHerbivores.length} herbivores, ${affectedPlayerIds.length} players hit for ${damage} damage`);
+  }
+
+  /**
    * Run one AI tick for a zone.
    * Processes all active creatures through the tickCreatureAI FSM and emits a
    * single entity:batch event with all position changes for the tick.
@@ -302,6 +459,9 @@ export class AiService implements OnModuleInit {
     // Get players in zone for flee calculations
     const players = this.playerService.getPlayersInZone(zoneId);
 
+    // CRAI-05: Zone-level pre-processing pass for group behaviors
+    await this.preProcessGroupBehaviors(zoneId, creatures, players);
+
     // Get collision map from chunk
     const chunk = await this.zonesService.getChunk(zoneId);
     const collisions = chunk.collisions;
@@ -315,6 +475,28 @@ export class AiService implements OnModuleInit {
 
       // Handle aggro detection (predator/maniac found player)
       if (result.aggroTarget) {
+        // CRAI-03: Ambush — check if predator is stealthed and player has high perception
+        if (creature.behavior === 'predator' && creature.stealthed) {
+          const targetPlayer = this.playerService.getPlayerById(result.aggroTarget);
+          if (targetPlayer) {
+            const inventory = this.inventoryService.getInventory(result.aggroTarget);
+            const playerStats = computeCharStats(
+              targetPlayer.level,
+              (inventory?.equipment as EquipmentJson) ?? { modules: [] },
+              'player',
+            );
+            if (playerStats.perception > AMBUSH_PERCEPTION_THRESHOLD) {
+              // High perception player detects predator — clear stealth, no ambush bonus
+              await this.zonesService.updateEntity(zoneId, creature.id, {
+                stealthed: false,
+              } as Partial<Creature>);
+              creature.stealthed = false;
+              console.log(`[AiService] Player ${targetPlayer.name} detected stealthed predator ${creature.name} (Perception: ${playerStats.perception})`);
+            }
+            // If perception <= threshold: creature keeps stealthed=true → CombatService applies 2x on first hit
+          }
+        }
+
         await this.combatService.startCreatureCombat(
           creature.id,
           result.aggroTarget,
@@ -336,6 +518,18 @@ export class AiService implements OnModuleInit {
           combatTarget: undefined,
           provoked: false,
         } as Partial<Creature>);
+      }
+
+      // CRAI-04: Handle frenzy state transitions
+      if (result.frenzied === true && !creature.frenzied) {
+        await this.zonesService.updateEntity(zoneId, creature.id, {
+          frenzied: true,
+        } as Partial<Creature>);
+        this.server?.to(zoneId).emit('creature:frenzy' as any, {
+          entityId: creature.id,
+          frenzied: true,
+        });
+        console.log(`[AiService] ${creature.name} enters Frenzy!`);
       }
 
       // Update position if creature moved

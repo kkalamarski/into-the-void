@@ -202,7 +202,12 @@ export class CombatService {
     // Calculate creature stats for interval calculation
     const emptyEquipment: EquipmentJson = { modules: [] };
     const creatureStats = computeCharStats(creature.level, emptyEquipment, 'creature');
-    const attackInterval = calculateAttackInterval(creatureStats.haste);
+    let attackInterval = calculateAttackInterval(creatureStats.haste);
+
+    // CRAI-04: Frenzy — maniacs below 30% HP attack at double speed
+    if (creature.frenzied) {
+      attackInterval = Math.max(200, attackInterval / 2); // Half interval, min 200ms
+    }
 
     // Check if enough time has passed since last attack
     const now = Date.now();
@@ -226,6 +231,18 @@ export class CombatService {
     const activeBuffs = this.abilityService.getActiveBuffs(player.id);
     const playerStats = computeCharStats(player.level, playerEquipment, 'player', activeBuffs);
 
+    // CRAI-03: Ambush — first attack from stealth deals 2x damage
+    let ambushMultiplier = 1;
+    if (creature.stealthed) {
+      ambushMultiplier = 2;
+      // Clear stealth after first attack — no re-stealth
+      await this.zonesService.updateEntity(session.zoneId, session.creatureId, {
+        stealthed: false,
+      } as Partial<Creature>);
+      creature.stealthed = false;
+      console.log(`[CombatService] Ambush! ${creature.name} deals 2x damage on first strike`);
+    }
+
     // Calculate damage: Creature Power vs Player Toughness
     // Creature auto-attacks default to Kinetic damage type
     // Players have no resistance stats (per REQUIREMENTS.md Out-of-Scope), so defenderResistances is omitted
@@ -240,10 +257,13 @@ export class CombatService {
       damageType: 'Kinetic' as const,
     });
 
+    // Apply ambush multiplier to base damage
+    const effectiveDamage = damageResult.damage * ambushMultiplier;
+
     // Shield intercept (ABIL-09: Emergency Shield)
     const { passthrough: afterShield, absorbed } = this.abilityService.interceptShield(
       session.targetPlayerId,
-      damageResult.damage,
+      effectiveDamage,
     );
 
     // Damage reduction (ABIL-12: Fortify Systems)
@@ -376,8 +396,65 @@ export class CombatService {
   /**
    * Mark creature as provoked (for omnivore retaliation).
    * Called when player attacks an omnivore.
+   * CRAI-02: 30% chance to trigger Pack Call, summoning nearby omnivores.
    */
   async provokeCreature(zoneId: string, creatureId: string): Promise<void> {
     await this.zonesService.updateEntity(zoneId, creatureId, { provoked: true } as Partial<Creature>);
+
+    // CRAI-02: Pack Call — 30% chance to summon nearby omnivores
+    if (Math.random() < 0.3) {
+      await this.triggerPackCall(zoneId, creatureId);
+    }
+  }
+
+  /**
+   * CRAI-02: Pack Call — summon up to 2 nearby omnivores within 10 tiles.
+   * Called creatures instantly switch to combat targeting the provoker's target.
+   */
+  private async triggerPackCall(zoneId: string, provokerId: string): Promise<void> {
+    const entities = await this.zonesService.getZoneEntities(zoneId);
+    const provoker = entities.find(e => e.id === provokerId) as Creature | undefined;
+    if (!provoker || !provoker.combatTarget) return;
+
+    const targetPlayerId = provoker.combatTarget;
+    const PACK_CALL_RANGE = 10;
+    const MAX_REINFORCEMENTS = 2;
+
+    // Find eligible nearby omnivores: same zone, within range, not already in combat, not the provoker
+    const nearbyOmnivores = entities.filter((e): e is Creature =>
+      e.type === 'creature' &&
+      e.id !== provokerId &&
+      e.active &&
+      (e as Creature).health > 0 &&
+      (e as Creature).behavior === 'omnivore' &&
+      !this.isCreatureInCombat(e.id) &&
+      !(e as Creature).combatTarget &&
+      Math.max(
+        Math.abs(e.position.x - provoker.position.x),
+        Math.abs(e.position.y - provoker.position.y),
+      ) <= PACK_CALL_RANGE,
+    );
+
+    // Take up to MAX_REINFORCEMENTS, sorted by distance (closest first)
+    const reinforcements = nearbyOmnivores
+      .sort((a, b) => {
+        const distA = Math.max(Math.abs(a.position.x - provoker.position.x), Math.abs(a.position.y - provoker.position.y));
+        const distB = Math.max(Math.abs(b.position.x - provoker.position.x), Math.abs(b.position.y - provoker.position.y));
+        return distA - distB;
+      })
+      .slice(0, MAX_REINFORCEMENTS);
+
+    for (const ally of reinforcements) {
+      // Instantly switch to combat targeting the same player
+      await this.zonesService.updateEntity(zoneId, ally.id, {
+        combatTarget: targetPlayerId,
+        provoked: true,
+      } as Partial<Creature>);
+      await this.startCreatureCombat(ally.id, targetPlayerId, zoneId);
+    }
+
+    if (reinforcements.length > 0) {
+      console.log(`[CombatService] Pack Call: ${provoker.name} called ${reinforcements.length} allies`);
+    }
   }
 }
