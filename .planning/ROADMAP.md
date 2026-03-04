@@ -283,7 +283,11 @@
   3. Fortify Systems grants 15% flat damage reduction for 10 seconds — a player with Fortify active takes visibly fewer HP per hit than without it, and the math is verifiable in the combat log
   4. Thermal Lance hitting a Frozen Expanse creature deals more damage than hitting a Volcanic Ridge creature — the damage type bonus from Phase 117 is observable when using a type-specialized ability
   5. Energy Barrier grants immunity to biome hazard effects for 20 seconds — a player in a hazardous biome who activates Energy Barrier does not receive HP drain or stat debuffs during the duration
-**Plans**: TBD
+**Plans**: 4 plans in 3 waves
+  - [ ] 118-01-PLAN.md -- AbilityEffect union types + all 13 ability definition updates (ABIL-01 through ABIL-13)
+  - [ ] 118-02-PLAN.md -- Server defensive mechanics: shield, DR, stun, hazard immunity, conditional bonus (ABIL-01, ABIL-08, ABIL-09, ABIL-12, ABIL-13)
+  - [ ] 118-03-PLAN.md -- Server offensive mechanics: AoE spread, AoE pulse, reveal, reflect (ABIL-04, ABIL-05, ABIL-06, ABIL-11)
+  - [ ] 118-04-PLAN.md -- Client shield bar, ServerEvents, combat log mitigation display (ABIL-09, ABIL-12)
 
 ### Phase 119: Creature AI Upgrades
 **Goal**: Each creature behavior archetype has one new meaningful behavior — herbivores trigger Stampede when 3+ flee simultaneously, omnivores have a 30% chance to Pack Call nearby allies when provoked, predators deal 2x damage on first Ambush strike, and maniacs enter Frenzy below 30% HP doubling attack speed
@@ -343,11 +347,11 @@
 | 115. Shared Type Foundation | 2/2 | Complete    | 2026-03-03 |
 | 116. Stat Caps | 0/TBD | Complete    | 2026-03-03 |
 | 117. Damage Types and Creature Resistances | 3/3 | Complete    | 2026-03-03 |
-| 118. Ability Rebalance | 0/TBD | Not started | - |
+| 118. Ability Rebalance | 0/4 | Not started | - |
 | 119. Creature AI Upgrades | 0/TBD | Not started | - |
 | 120. Biome Hazard System | 0/TBD | Not started | - |
 | 121. Automation Tech Tree | 0/TBD | Not started | - |
 
 ---
 
-*Last updated: 2026-03-03 - Phase 117 plans created (3 plans in 2 waves)*
+*Last updated: 2026-03-04 - Phase 118 plans created (4 plans in 3 waves)*
