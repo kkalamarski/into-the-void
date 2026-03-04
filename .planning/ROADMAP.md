@@ -347,7 +347,7 @@
 | 115. Shared Type Foundation | 2/2 | Complete    | 2026-03-03 |
 | 116. Stat Caps | 0/TBD | Complete    | 2026-03-03 |
 | 117. Damage Types and Creature Resistances | 3/3 | Complete    | 2026-03-03 |
-| 118. Ability Rebalance | 1/4 | In Progress|  |
+| 118. Ability Rebalance | 2/4 | In Progress|  |
 | 119. Creature AI Upgrades | 0/TBD | Not started | - |
 | 120. Biome Hazard System | 0/TBD | Not started | - |
 | 121. Automation Tech Tree | 0/TBD | Not started | - |
