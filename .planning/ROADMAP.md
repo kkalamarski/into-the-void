@@ -69,7 +69,7 @@
 - [x] **Phase 116: Stat Caps** - Soft cap at 200 with diminishing returns, hard cap at 400, stats panel indicator (completed 2026-03-03)
 - [x] **Phase 117: Damage Types and Creature Resistances** - DamageType threaded through calculateDamage(), resistances on all 83+ creatures, color-coded floating numbers (completed 2026-03-03)
 - [x] **Phase 118: Ability Rebalance** - Plasma Burst nerfed, defensive abilities overhauled with real shield/DR mechanics, all 13 rebalanced abilities live (completed 2026-03-04)
-- [ ] **Phase 119: Creature AI Upgrades** - Stampede, Pack Call, Ambush, Frenzy behaviors with zone-level pre-processing
+- [x] **Phase 119: Creature AI Upgrades** - Stampede, Pack Call, Ambush, Frenzy behaviors with zone-level pre-processing
 - [ ] **Phase 120: Biome Hazard System** - HazardService with per-player state cache, HP drain, stat debuffs, gear counters, HUD indicator
 - [ ] **Phase 121: Automation Tech Tree** - T2 extractors through T5 refinery, AutomationService, deployables DB table, automation panel HUD
 
@@ -299,7 +299,7 @@
   3. A predator that aggros from stealth deals 2x damage on its first attack — a player with Perception above 150 sees the predator before aggro and avoids the doubled first hit
   4. A maniac below 30% HP visibly changes color (Frenzy overlay) and attacks noticeably faster — the behavior change is observable without reading tooltips
   5. A creature that dies while in Frenzy state does not leave orphaned state data — running for 10 minutes in a zone with maniacs does not cause server memory growth from Frenzy Map leaks
-**Plans**: TBD
+**Plans**: 119-01 (Frenzy foundations + AI tests), 119-02 (Server-side AI mechanics), 119-03 (Client visual rendering)
 
 ### Phase 120: Biome Hazard System
 **Goal**: Hazardous biomes drain HP and apply stat debuffs to players without the correct protective gear, hazard protection gear is available in faction trader inventories before any hazard tick is enabled, and players have a HUD indicator showing what hazard is active and how protected they are
@@ -348,10 +348,10 @@
 | 116. Stat Caps | 0/TBD | Complete    | 2026-03-03 |
 | 117. Damage Types and Creature Resistances | 3/3 | Complete    | 2026-03-03 |
 | 118. Ability Rebalance | 4/4 | Complete   | 2026-03-04 |
-| 119. Creature AI Upgrades | 0/TBD | Not started | - |
+| 119. Creature AI Upgrades | 3/3 | Complete | 2026-03-04 |
 | 120. Biome Hazard System | 0/TBD | Not started | - |
 | 121. Automation Tech Tree | 0/TBD | Not started | - |
 
 ---
 
-*Last updated: 2026-03-04 - Phase 118 complete (4/4 plans executed)*
+*Last updated: 2026-03-04 - Phase 119 complete (3/3 plans executed)*
