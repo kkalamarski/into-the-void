@@ -9,15 +9,19 @@ export type AbilityCategory = 'offensive' | 'defensive' | 'utility';
  * Ability effect types - discriminated union for type-safe handling
  */
 export type AbilityEffect =
-  | { readonly type: 'damage'; readonly baseDamage: number; readonly scaling: number; readonly damageType?: DamageType }
+  | { readonly type: 'damage'; readonly baseDamage: number; readonly scaling: number; readonly damageType?: DamageType; readonly conditionBonus?: { readonly hpThresholdAbove: number; readonly multiplier: number } }
   | { readonly type: 'heal'; readonly baseHeal: number; readonly scaling: number }
   | { readonly type: 'buff'; readonly stat: string; readonly amount: number; readonly duration: number }
   | { readonly type: 'debuff'; readonly stat: string; readonly amount: number; readonly duration: number }
-  | { readonly type: 'dot'; readonly damagePerTick: number; readonly tickInterval: number; readonly duration: number }
+  | { readonly type: 'dot'; readonly damagePerTick: number; readonly tickInterval: number; readonly duration: number; readonly spreadRadius?: number }
   | { readonly type: 'hot'; readonly healPerTick: number; readonly tickInterval: number; readonly duration: number }
   | { readonly type: 'gather'; readonly gatherType: 'harvest' | 'mine' | 'universal'; readonly baseYield: number }
   | { readonly type: 'shield'; readonly absorbAmount: number; readonly durationMs: number }
-  | { readonly type: 'damage_reduction'; readonly reductionPercent: number; readonly durationMs: number };
+  | { readonly type: 'damage_reduction'; readonly reductionPercent: number; readonly durationMs: number }
+  | { readonly type: 'stun'; readonly durationMs: number; readonly maniacDurationMs?: number }
+  | { readonly type: 'hazard_immunity'; readonly durationMs: number }
+  | { readonly type: 'reflect'; readonly reflectPercent: number; readonly durationMs: number }
+  | { readonly type: 'reveal'; readonly radiusTiles: number; readonly coneDegrees: number; readonly durationMs: number };
 
 /**
  * Complete ability definition
