@@ -26,7 +26,7 @@ interface CombatLogState {
   clearLog: () => void;
 }
 
-export const useCombatLogStore = create<CombatLogState>((set, get) => ({
+export const useCombatLogStore = create<CombatLogState>((set) => ({
   entries: [],
   visible: true,  // Default visible; persists via toggle
   maxEntries: 100,
@@ -34,7 +34,7 @@ export const useCombatLogStore = create<CombatLogState>((set, get) => ({
   addEntry: (entry) => set((state) => {
     const newEntry: CombatLogEntry = {
       ...entry,
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
     };
     // Keep only last maxEntries
     const updated = [...state.entries, newEntry].slice(-state.maxEntries);
