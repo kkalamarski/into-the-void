@@ -17,6 +17,10 @@ COPY packages/ packages/
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
+# Disable NX daemon (not useful in Docker) and shorten socket path to avoid length limit
+ENV NX_DAEMON=false
+ENV NX_SOCKET_DIR=/tmp/nx
+
 # Build the API application (NX generates package.json with external deps)
 RUN pnpm nx run api:build --prod
 

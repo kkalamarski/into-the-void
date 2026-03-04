@@ -27,6 +27,8 @@ ARG VITE_GAME_SERVER_URL=""
 # Build the web app (increase Node memory limit for large bundle)
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV NX_SKIP_NX_CACHE=true
+ENV NX_DAEMON=false
+ENV NX_SOCKET_DIR=/tmp/nx
 RUN pnpm nx run web:build || (echo "Build failed with exit code $?"; exit 1)
 
 # Stage 2: Runner - Serve with nginx
