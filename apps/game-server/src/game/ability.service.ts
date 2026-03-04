@@ -75,6 +75,9 @@ export class AbilityService {
   /** Hazard immunity indexed by playerId - immunity expiry timestamp */
   private hazardImmunities: Map<string, number> = new Map();
 
+  /** Active damage reflect indexed by playerId */
+  private activeReflects: Map<string, { reflectPercent: number; expiresAt: number }> = new Map();
+
   /** Buff expiration tick interval handle */
   private buffTickInterval: NodeJS.Timeout | null = null;
 
@@ -559,135 +562,226 @@ export class AbilityService {
 
     for (const effect of ability.effects) {
       if (effect.type === 'damage') {
-        // Need creature target for damage
-        if (!targetEntityId) continue;
-        const entity = await this.zonesService.getEntity(player.position.zoneId, targetEntityId);
-        if (!entity || entity.type !== 'creature') continue;
-        const target = entity as Creature;
-
-        // Look up creature definition for resistances
-        const creatureDef = EntityRegistry.get(target.speciesId) as CreatureDefinition | undefined;
-        const defenderResistances = creatureDef?.resistances;
-
         // Read ability damage type
         const abilityDamageType = (effect as { type: 'damage'; baseDamage: number; scaling: number; damageType?: DamageType }).damageType;
 
-        // ABIL-01: Conditional damage bonus (e.g., Plasma Burst +50% above 80% HP)
-        let conditionMultiplier = 1.0;
-        const damageEffect = effect as { type: 'damage'; baseDamage: number; scaling: number; damageType?: DamageType; conditionBonus?: { hpThresholdAbove: number; multiplier: number } };
-        if (damageEffect.conditionBonus && target.health / target.maxHealth > damageEffect.conditionBonus.hpThresholdAbove) {
-          conditionMultiplier = damageEffect.conditionBonus.multiplier;
-        }
+        if (!ability.requiresTarget) {
+          // AoE damage: hit all creatures in range of the player (ABIL-05: Overload Pulse)
+          const nearbyCreatures = await this.getNearbyCreatures(
+            player.position.zoneId,
+            player.position.x,
+            player.position.y,
+            ability.range,
+          );
+          for (const aoeTarget of nearbyCreatures) {
+            const creatureDef = EntityRegistry.get(aoeTarget.speciesId) as CreatureDefinition | undefined;
+            const defenderResistances = creatureDef?.resistances;
+            const inv = this.inventoryService.getInventory(player.id);
+            const playerEquipment = inv?.equipment as EquipmentJson ?? { modules: [] };
+            const playerBuffs = this.getActiveBuffs(player.id);
+            const playerStats = computeCharStats(player.level, playerEquipment, 'player', playerBuffs);
+            const emptyEquipment: EquipmentJson = { modules: [] };
+            const creatureStats = computeCharStats(aoeTarget.level, emptyEquipment, 'creature');
 
-        // Calculate damage
-        const inv = this.inventoryService.getInventory(player.id);
-        const playerEquipment = inv?.equipment as EquipmentJson ?? { modules: [] };
-        const playerBuffs = this.getActiveBuffs(player.id);
-        const playerStats = computeCharStats(player.level, playerEquipment, 'player', playerBuffs);
+            const aoeDamageResult = calculateDamage({
+              baseDamage: effect.baseDamage,
+              attackerLevel: player.level,
+              defenderLevel: aoeTarget.level,
+              attackerStats: playerStats,
+              defenderStats: creatureStats,
+              weaponDamage: effect.baseDamage * effect.scaling,
+              armorReduction: creatureStats.toughness * 0.1,
+              damageType: abilityDamageType,
+              defenderResistances,
+            });
 
-        const emptyEquipment: EquipmentJson = { modules: [] };
-        const creatureStats = computeCharStats(target.level, emptyEquipment, 'creature');
+            const aoeDamage = aoeDamageResult.damage;
+            damage += aoeDamage;
+            aoeTarget.health = Math.max(0, aoeTarget.health - aoeDamage);
+            const aoeKilled = aoeTarget.health <= 0;
 
-        // Read damage_type_bonus from equipped gear for this damage type
-        let damageBonusMultiplier = 1.0;
-        if (abilityDamageType) {
-          const equippedSlots = [
-            inv?.equipment?.exosuit,
-            inv?.equipment?.tool,
-            ...(inv?.equipment?.modules ?? []),
-          ].filter(Boolean);
-          for (const equipped of equippedSlots) {
-            const itemDef = ItemRegistry.get(equipped!.itemId);
-            for (const effectDef of itemDef?.effects ?? []) {
-              if (effectDef.effect.type === 'damage_type_bonus' && effectDef.effect.damageType === abilityDamageType) {
-                damageBonusMultiplier += effectDef.effect.bonusPercent / 100;
+            await this.zonesService.updateEntity(player.position.zoneId, aoeTarget.id, {
+              health: aoeTarget.health,
+              active: !aoeKilled,
+            } as Partial<Creature>);
+
+            this.server?.to(player.position.zoneId).emit('entity:update', {
+              entityId: aoeTarget.id,
+              changes: { health: aoeTarget.health, maxHealth: aoeTarget.maxHealth, active: !aoeKilled },
+            });
+
+            if (!aoeKilled) {
+              if (aoeTarget.behavior === 'omnivore') {
+                await this.combatService.provokeCreature(player.position.zoneId, aoeTarget.id);
+              }
+              await this.zonesService.updateEntity(player.position.zoneId, aoeTarget.id, {
+                combatTarget: player.id,
+              } as Partial<Creature>);
+              if (aoeTarget.behavior === 'predator' || aoeTarget.behavior === 'maniac' || aoeTarget.behavior === 'omnivore') {
+                await this.combatService.startCreatureCombat(aoeTarget.id, player.id, player.position.zoneId);
+              }
+            } else {
+              this.combatService.stopCreatureCombat(aoeTarget.id);
+              const groundItems = await this.handleCreatureDeath(aoeTarget, player.position.zoneId);
+              for (const item of groundItems) {
+                this.server?.to(player.position.zoneId).emit('entity:spawn', item);
+              }
+              const levelDiff = aoeTarget.level - player.level;
+              const levelBonus = levelDiff > 0 ? 1 + levelDiff * 0.1 : 1;
+              const xpReward = Math.floor(10 * aoeTarget.level * levelBonus);
+              this.playerService.grantXp(player.id, xpReward);
+              this.eventEmitter.emit('entity.killed', {
+                characterId: player.id,
+                entityId: aoeTarget.speciesId,
+                entityType: 'creature',
+                creatureLevel: aoeTarget.level,
+                zoneId: player.position.zoneId,
+              });
+              this.server?.to(player.position.zoneId).emit('entity:despawn', { entityId: aoeTarget.id });
+            }
+
+            this.server?.to(player.position.zoneId).emit('combat:damage', {
+              attackerId: player.id,
+              attackerName: player.name,
+              defenderId: aoeTarget.id,
+              defenderName: aoeTarget.name,
+              damage: aoeDamage,
+              defenderHealth: aoeTarget.health,
+              defenderMaxHealth: aoeTarget.maxHealth,
+              critical: aoeDamageResult.critical,
+              killed: aoeKilled,
+              damageType: abilityDamageType,
+              defenderPosition: { x: aoeTarget.position.x, y: aoeTarget.position.y },
+            });
+          }
+        } else {
+          // Single-target damage (existing code)
+          if (!targetEntityId) continue;
+          const entity = await this.zonesService.getEntity(player.position.zoneId, targetEntityId);
+          if (!entity || entity.type !== 'creature') continue;
+          const target = entity as Creature;
+
+          // Look up creature definition for resistances
+          const creatureDef = EntityRegistry.get(target.speciesId) as CreatureDefinition | undefined;
+          const defenderResistances = creatureDef?.resistances;
+
+          // ABIL-01: Conditional damage bonus (e.g., Plasma Burst +50% above 80% HP)
+          let conditionMultiplier = 1.0;
+          const damageEffect = effect as { type: 'damage'; baseDamage: number; scaling: number; damageType?: DamageType; conditionBonus?: { hpThresholdAbove: number; multiplier: number } };
+          if (damageEffect.conditionBonus && target.health / target.maxHealth > damageEffect.conditionBonus.hpThresholdAbove) {
+            conditionMultiplier = damageEffect.conditionBonus.multiplier;
+          }
+
+          // Calculate damage
+          const inv = this.inventoryService.getInventory(player.id);
+          const playerEquipment = inv?.equipment as EquipmentJson ?? { modules: [] };
+          const playerBuffs = this.getActiveBuffs(player.id);
+          const playerStats = computeCharStats(player.level, playerEquipment, 'player', playerBuffs);
+
+          const emptyEquipment: EquipmentJson = { modules: [] };
+          const creatureStats = computeCharStats(target.level, emptyEquipment, 'creature');
+
+          // Read damage_type_bonus from equipped gear for this damage type
+          let damageBonusMultiplier = 1.0;
+          if (abilityDamageType) {
+            const equippedSlots = [
+              inv?.equipment?.exosuit,
+              inv?.equipment?.tool,
+              ...(inv?.equipment?.modules ?? []),
+            ].filter(Boolean);
+            for (const equipped of equippedSlots) {
+              const itemDef = ItemRegistry.get(equipped!.itemId);
+              for (const effectDef of itemDef?.effects ?? []) {
+                if (effectDef.effect.type === 'damage_type_bonus' && effectDef.effect.damageType === abilityDamageType) {
+                  damageBonusMultiplier += effectDef.effect.bonusPercent / 100;
+                }
               }
             }
           }
-        }
 
-        const damageResult = calculateDamage({
-          baseDamage: Math.round(effect.baseDamage * conditionMultiplier),
-          attackerLevel: player.level,
-          defenderLevel: target.level,
-          attackerStats: playerStats,
-          defenderStats: creatureStats,
-          weaponDamage: Math.round(effect.baseDamage * effect.scaling * conditionMultiplier),
-          armorReduction: creatureStats.toughness * 0.1,
-          damageType: abilityDamageType,
-          defenderResistances,
-          damageBonusMultiplier: damageBonusMultiplier > 1.0 ? damageBonusMultiplier : undefined,
-        });
-
-        damage = damageResult.damage;
-        target.health = Math.max(0, target.health - damage);
-        targetHealth = target.health;
-        targetMaxHealth = target.maxHealth;
-
-        const killed = target.health <= 0;
-        let groundItems: ItemEntity[] = [];
-
-        // Update entity in zone
-        await this.zonesService.updateEntity(player.position.zoneId, targetEntityId, {
-          health: target.health,
-          active: !killed,
-        } as Partial<Creature>);
-
-        // Trigger creature retaliation if not killed
-        if (!killed) {
-          if (target.behavior === 'omnivore') {
-            await this.combatService.provokeCreature(player.position.zoneId, targetEntityId);
-          }
-          await this.zonesService.updateEntity(player.position.zoneId, targetEntityId, {
-            combatTarget: player.id,
-          } as Partial<Creature>);
-          if (target.behavior === 'predator' || target.behavior === 'maniac' || target.behavior === 'omnivore') {
-            await this.combatService.startCreatureCombat(targetEntityId, player.id, player.position.zoneId);
-          }
-        }
-
-        // Emit entity:update so entityStore syncs for UI (TargetFrame, etc.)
-        this.server?.to(player.position.zoneId).emit('entity:update', {
-          entityId: targetEntityId,
-          changes: { health: target.health, maxHealth: target.maxHealth, active: !killed },
-        });
-
-        // Handle creature death: spawn loot and schedule respawn
-        if (killed) {
-          this.combatService.stopCreatureCombat(targetEntityId);
-          groundItems = await this.handleCreatureDeath(target, player.position.zoneId);
-          for (const item of groundItems) {
-            this.server?.to(player.position.zoneId).emit('entity:spawn', item);
-          }
-          const levelDiff = target.level - player.level;
-          const levelBonus = levelDiff > 0 ? 1 + levelDiff * 0.1 : 1;
-          const xpReward = Math.floor(10 * target.level * levelBonus);
-          this.playerService.grantXp(player.id, xpReward);
-          this.eventEmitter.emit('entity.killed', {
-            characterId: player.id,
-            entityId: target.speciesId,
-            entityType: 'creature',
-            creatureLevel: target.level,
-            zoneId: player.position.zoneId,
+          const damageResult = calculateDamage({
+            baseDamage: Math.round(effect.baseDamage * conditionMultiplier),
+            attackerLevel: player.level,
+            defenderLevel: target.level,
+            attackerStats: playerStats,
+            defenderStats: creatureStats,
+            weaponDamage: Math.round(effect.baseDamage * effect.scaling * conditionMultiplier),
+            armorReduction: creatureStats.toughness * 0.1,
+            damageType: abilityDamageType,
+            defenderResistances,
+            damageBonusMultiplier: damageBonusMultiplier > 1.0 ? damageBonusMultiplier : undefined,
           });
-          this.server?.to(player.position.zoneId).emit('entity:despawn', { entityId: targetEntityId });
-        }
 
-        // Broadcast damage to zone
-        this.server?.to(player.position.zoneId).emit('combat:damage', {
-          attackerId: player.id,
-          attackerName: player.name,
-          defenderId: targetEntityId,
-          defenderName: target.name,
-          damage,
-          defenderHealth: target.health,
-          defenderMaxHealth: target.maxHealth,
-          critical: damageResult.critical,
-          killed,
-          damageType: abilityDamageType,
-          groundItems: groundItems.length > 0 ? groundItems : undefined,
-          defenderPosition: { x: target.position.x, y: target.position.y },
-        });
+          damage = damageResult.damage;
+          target.health = Math.max(0, target.health - damage);
+          targetHealth = target.health;
+          targetMaxHealth = target.maxHealth;
+
+          const killed = target.health <= 0;
+          let groundItems: ItemEntity[] = [];
+
+          // Update entity in zone
+          await this.zonesService.updateEntity(player.position.zoneId, targetEntityId, {
+            health: target.health,
+            active: !killed,
+          } as Partial<Creature>);
+
+          // Trigger creature retaliation if not killed
+          if (!killed) {
+            if (target.behavior === 'omnivore') {
+              await this.combatService.provokeCreature(player.position.zoneId, targetEntityId);
+            }
+            await this.zonesService.updateEntity(player.position.zoneId, targetEntityId, {
+              combatTarget: player.id,
+            } as Partial<Creature>);
+            if (target.behavior === 'predator' || target.behavior === 'maniac' || target.behavior === 'omnivore') {
+              await this.combatService.startCreatureCombat(targetEntityId, player.id, player.position.zoneId);
+            }
+          }
+
+          // Emit entity:update so entityStore syncs for UI (TargetFrame, etc.)
+          this.server?.to(player.position.zoneId).emit('entity:update', {
+            entityId: targetEntityId,
+            changes: { health: target.health, maxHealth: target.maxHealth, active: !killed },
+          });
+
+          // Handle creature death: spawn loot and schedule respawn
+          if (killed) {
+            this.combatService.stopCreatureCombat(targetEntityId);
+            groundItems = await this.handleCreatureDeath(target, player.position.zoneId);
+            for (const item of groundItems) {
+              this.server?.to(player.position.zoneId).emit('entity:spawn', item);
+            }
+            const levelDiff = target.level - player.level;
+            const levelBonus = levelDiff > 0 ? 1 + levelDiff * 0.1 : 1;
+            const xpReward = Math.floor(10 * target.level * levelBonus);
+            this.playerService.grantXp(player.id, xpReward);
+            this.eventEmitter.emit('entity.killed', {
+              characterId: player.id,
+              entityId: target.speciesId,
+              entityType: 'creature',
+              creatureLevel: target.level,
+              zoneId: player.position.zoneId,
+            });
+            this.server?.to(player.position.zoneId).emit('entity:despawn', { entityId: targetEntityId });
+          }
+
+          // Broadcast damage to zone
+          this.server?.to(player.position.zoneId).emit('combat:damage', {
+            attackerId: player.id,
+            attackerName: player.name,
+            defenderId: targetEntityId,
+            defenderName: target.name,
+            damage,
+            defenderHealth: target.health,
+            defenderMaxHealth: target.maxHealth,
+            critical: damageResult.critical,
+            killed,
+            damageType: abilityDamageType,
+            groundItems: groundItems.length > 0 ? groundItems : undefined,
+            defenderPosition: { x: target.position.x, y: target.position.y },
+          });
+        }
       }
 
       // Handle heal effect (self-heal)
@@ -808,6 +902,117 @@ export class AbilityService {
           iconColor: ability.iconColor,
         });
       }
+
+      // Handle DoT spread effect (ABIL-04: Electrocute chain spread)
+      if (effect.type === 'dot') {
+        const dotEffect = effect as { type: 'dot'; damagePerTick: number; tickInterval: number; duration: number; spreadRadius?: number };
+        if (dotEffect.spreadRadius && dotEffect.spreadRadius > 0 && targetEntityId) {
+          const primaryTarget = await this.zonesService.getEntity(player.position.zoneId, targetEntityId);
+          if (primaryTarget && primaryTarget.type === 'creature') {
+            const primary = primaryTarget as Creature;
+            const nearbyCreatures = await this.getNearbyCreatures(
+              player.position.zoneId,
+              primary.position.x,
+              primary.position.y,
+              dotEffect.spreadRadius,
+              targetEntityId,
+            );
+            for (const nearby of nearbyCreatures) {
+              const spreadDamage = dotEffect.damagePerTick;
+              nearby.health = Math.max(0, nearby.health - spreadDamage);
+              const spreadKilled = nearby.health <= 0;
+              await this.zonesService.updateEntity(player.position.zoneId, nearby.id, {
+                health: nearby.health,
+                active: !spreadKilled,
+              } as Partial<Creature>);
+              this.server?.to(player.position.zoneId).emit('combat:damage', {
+                attackerId: player.id,
+                attackerName: player.name,
+                defenderId: nearby.id,
+                defenderName: nearby.name,
+                damage: spreadDamage,
+                defenderHealth: nearby.health,
+                defenderMaxHealth: nearby.maxHealth,
+                critical: false,
+                killed: spreadKilled,
+                defenderPosition: { x: nearby.position.x, y: nearby.position.y },
+              });
+              if (!spreadKilled) {
+                if (nearby.behavior === 'omnivore') {
+                  await this.combatService.provokeCreature(player.position.zoneId, nearby.id);
+                }
+                if (nearby.behavior === 'predator' || nearby.behavior === 'maniac' || nearby.behavior === 'omnivore') {
+                  await this.combatService.startCreatureCombat(nearby.id, player.id, player.position.zoneId);
+                }
+              } else {
+                this.combatService.stopCreatureCombat(nearby.id);
+                const groundItems = await this.handleCreatureDeath(nearby, player.position.zoneId);
+                for (const item of groundItems) {
+                  this.server?.to(player.position.zoneId).emit('entity:spawn', item);
+                }
+                const levelDiff = nearby.level - player.level;
+                const levelBonus = levelDiff > 0 ? 1 + levelDiff * 0.1 : 1;
+                const xpReward = Math.floor(10 * nearby.level * levelBonus);
+                this.playerService.grantXp(player.id, xpReward);
+                this.server?.to(player.position.zoneId).emit('entity:despawn', { entityId: nearby.id });
+              }
+            }
+          }
+        }
+      }
+
+      // Handle reveal effect (ABIL-06: Precision Shot predator reveal)
+      if (effect.type === 'reveal') {
+        const entities = await this.zonesService.getZoneEntities(player.position.zoneId);
+        const predatorsInRange = entities.filter(
+          (e): e is Creature =>
+            e.type === 'creature' &&
+            (e as Creature).active &&
+            (e as Creature).behavior === 'predator' &&
+            Math.max(
+              Math.abs(e.position.x - player.position.x),
+              Math.abs(e.position.y - player.position.y),
+            ) <= effect.radiusTiles,
+        );
+        for (const pred of predatorsInRange) {
+          await this.zonesService.updateEntity(player.position.zoneId, pred.id, {
+            revealed: true,
+          } as Partial<Creature>);
+          this.server?.to(player.position.zoneId).emit('entity:update', {
+            entityId: pred.id,
+            changes: { revealed: true },
+          });
+          // Schedule reveal expiry
+          const revealZoneId = player.position.zoneId;
+          const revealEntityId = pred.id;
+          setTimeout(async () => {
+            await this.zonesService.updateEntity(revealZoneId, revealEntityId, {
+              revealed: false,
+            } as Partial<Creature>);
+            this.server?.to(revealZoneId).emit('entity:update', {
+              entityId: revealEntityId,
+              changes: { revealed: false },
+            });
+          }, effect.durationMs);
+        }
+      }
+
+      // Handle reflect effect (ABIL-11: Magnetic Field)
+      if (effect.type === 'reflect') {
+        this.activeReflects.set(player.id, {
+          reflectPercent: effect.reflectPercent,
+          expiresAt: Date.now() + effect.durationMs,
+        });
+        // Emit as buff for client display
+        this.server?.to(socketId).emit('buff:apply', {
+          buffId: crypto.randomUUID(),
+          displayName: ability.displayName,
+          stat: 'reflect',
+          amount: Math.round(effect.reflectPercent * 100),
+          expiresAt: Date.now() + effect.durationMs,
+          iconColor: ability.iconColor,
+        });
+      }
     }
 
     return {
@@ -887,6 +1092,18 @@ export class AbilityService {
   }
 
   /**
+   * Calculate reflected damage from Magnetic Field. Returns damage to reflect back to attacker.
+   */
+  getReflectDamage(playerId: string, incomingDamage: number): number {
+    const reflect = this.activeReflects.get(playerId);
+    if (!reflect || Date.now() >= reflect.expiresAt) {
+      this.activeReflects.delete(playerId);
+      return 0;
+    }
+    return Math.round(incomingDamage * reflect.reflectPercent);
+  }
+
+  /**
    * Clean up cooldowns for disconnected player.
    */
   handleDisconnect(playerId: string): void {
@@ -910,6 +1127,7 @@ export class AbilityService {
     this.activeShields.delete(playerId);
     this.activeDamageReductions.delete(playerId);
     this.hazardImmunities.delete(playerId);
+    this.activeReflects.delete(playerId);
     // Note: stunnedCreatures is keyed by creatureId, not playerId — no cleanup needed on player disconnect
   }
 
@@ -1044,6 +1262,31 @@ export class AbilityService {
       }
       this.activeBuffs.delete(playerId);
     }
+  }
+
+  /**
+   * Find active creatures within a given Chebyshev distance radius.
+   * Used for Electrocute DoT spread and Overload Pulse AoE.
+   */
+  private async getNearbyCreatures(
+    zoneId: string,
+    centerX: number,
+    centerY: number,
+    radius: number,
+    excludeId?: string,
+  ): Promise<Creature[]> {
+    const entities = await this.zonesService.getZoneEntities(zoneId);
+    return entities.filter(
+      (e): e is Creature =>
+        e.type === 'creature' &&
+        (e as Creature).active &&
+        (e as Creature).health > 0 &&
+        e.id !== excludeId &&
+        Math.max(
+          Math.abs(e.position.x - centerX),
+          Math.abs(e.position.y - centerY),
+        ) <= radius,
+    );
   }
 
   /**
