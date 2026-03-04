@@ -109,6 +109,8 @@ class GameSocket {
       'gathering:result',
       'cast:start',
       'cast:interrupt',
+      'creature:frenzy',
+      'creature:stampede',
     ];
 
     for (const event of serverEvents) {

@@ -74,3 +74,22 @@ gameSocket.on('entity:batch', ({ updates }: { updates: Array<{ entityId: string;
     store.updateEntity(entityId, changes);
   }
 });
+
+// CRAI-04/06: Frenzy state change — update entity so EntityRenderer can react
+gameSocket.on('creature:frenzy', ({ entityId, frenzied }: { entityId: string; frenzied: boolean }) => {
+  useEntityStore.getState().updateEntity(entityId, { frenzied } as Partial<Entity>);
+});
+
+// CRAI-01: Stampede — dispatch DOM event for Phaser camera shake
+gameSocket.on('creature:stampede', ({ affectedPlayerIds, damage }: {
+  zoneId: string;
+  creatureIds: string[];
+  direction: { dx: number; dy: number };
+  affectedPlayerIds: string[];
+  damage: number;
+}) => {
+  // Dispatch custom event for Phaser scene to pick up (camera shake)
+  window.dispatchEvent(new CustomEvent('creature:stampede', {
+    detail: { affectedPlayerIds, damage },
+  }));
+});

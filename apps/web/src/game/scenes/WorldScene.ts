@@ -153,6 +153,7 @@ export class WorldScene extends Phaser.Scene {
 
     // Initialize EntityRenderer with isometric dimensions
     this.entityRenderer = new EntityRenderer(this, ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
+    this.entityRenderer.initStampedeListener(); // CRAI-06: camera shake on stampede
 
     // Initialize TargetHighlight for entity targeting feedback
     this.targetHighlight = new TargetHighlight(this);
@@ -1469,6 +1470,9 @@ export class WorldScene extends Phaser.Scene {
 
     const container = this.entitySprites.get(entityId);
     if (container) {
+      // CRAI-07: Clean up frenzy tween before destroying container
+      this.entityRenderer?.cleanupFrenzyEffect(entityId);
+
       // Explicitly destroy all children first
       container.each((child: Phaser.GameObjects.GameObject) => {
         child.destroy();
@@ -1714,6 +1718,23 @@ export class WorldScene extends Phaser.Scene {
 
         // Store new reference for next update
         container.setData('yieldBar', newYieldBar);
+      }
+    }
+
+    // CRAI-06: Update frenzy visual state on creatures
+    if ('frenzied' in changes && this.entityRenderer) {
+      this.entityRenderer.applyFrenzyEffect(container, entityId, !!(changes as Partial<Creature>).frenzied);
+    }
+
+    // CRAI-06: Update stealth visibility on creatures
+    if ('stealthed' in changes && this.entityRenderer) {
+      const stealthed = (changes as Partial<Creature>).stealthed;
+      if (stealthed === false && container.getData('stealthed')) {
+        // Predator revealed -- fade in with brief flash
+        this.entityRenderer.applyStealthReveal(container);
+      } else if (stealthed) {
+        container.setAlpha(0);
+        container.setData('stealthed', true);
       }
     }
   }
@@ -2232,6 +2253,7 @@ export class WorldScene extends Phaser.Scene {
     }
     this.isoTransform = null;
     if (this.entityRenderer) {
+      this.entityRenderer.destroyStampedeListener(); // CRAI-06: cleanup stampede listener
       this.entityRenderer = null;
     }
     if (this.zoneHUD) {

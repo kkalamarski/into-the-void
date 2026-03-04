@@ -339,6 +339,15 @@ gameSocket.on('entity:batch', ({ updates }: { updates: Array<{ entityId: string;
   }
 });
 
+// CRAI-06: Handle creature frenzy state change — forward to WorldScene for visual effects
+gameSocket.on('creature:frenzy', ({ entityId, frenzied }: { entityId: string; frenzied: boolean }) => {
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+  if (worldScene) {
+    worldScene.updateEntity(entityId, { frenzied } as Partial<Entity>);
+  }
+});
+
 // Handle player joined
 gameSocket.on('player:joined', (player: PlayerPublic) => {
   const game = useGameStore.getState().game;

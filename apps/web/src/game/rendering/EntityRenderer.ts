@@ -239,6 +239,98 @@ export class EntityRenderer {
     };
   }
 
+  /** Active frenzy tweens indexed by entityId for cleanup (CRAI-07) */
+  private frenzyTweens: Map<string, Phaser.Tweens.Tween> = new Map();
+
+  /** Stampede event listener reference for cleanup */
+  private stampedeListener: EventListener | null = null;
+
+  /**
+   * Initialize stampede camera shake listener.
+   * Call once after scene is ready.
+   */
+  initStampedeListener(): void {
+    if (this.stampedeListener) return;
+    this.stampedeListener = ((event: CustomEvent) => {
+      // Brief camera shake for stampede impact (CRAI-06)
+      this.scene.cameras.main.shake(300, 0.01);
+    }) as EventListener;
+    window.addEventListener('creature:stampede', this.stampedeListener);
+  }
+
+  /**
+   * Clean up stampede listener. Call on scene shutdown.
+   */
+  destroyStampedeListener(): void {
+    if (this.stampedeListener) {
+      window.removeEventListener('creature:stampede', this.stampedeListener);
+      this.stampedeListener = null;
+    }
+  }
+
+  /**
+   * CRAI-06: Apply or remove frenzy red tint overlay on a creature.
+   * Red tint (0xff4444) with pulsing alpha that syncs with faster attack speed.
+   */
+  applyFrenzyEffect(container: Phaser.GameObjects.Container, entityId: string, frenzied: boolean): void {
+    const sprite = container.getData('entitySprite') as Phaser.GameObjects.Sprite | undefined;
+    if (!sprite) return;
+
+    if (frenzied) {
+      // Apply red tint
+      sprite.setTint(0xff4444);
+
+      // Add pulsing alpha tween (syncs with 2x attack speed feel)
+      if (!this.frenzyTweens.has(entityId)) {
+        const tween = this.scene.tweens.add({
+          targets: sprite,
+          alpha: { from: 1.0, to: 0.6 },
+          duration: 400,  // Fast pulse matching doubled attack speed
+          yoyo: true,
+          repeat: -1,     // Infinite loop
+          ease: 'Sine.easeInOut',
+        });
+        this.frenzyTweens.set(entityId, tween);
+      }
+    } else {
+      // Remove frenzy effects
+      sprite.clearTint();
+      sprite.setAlpha(1.0);
+
+      const tween = this.frenzyTweens.get(entityId);
+      if (tween) {
+        tween.destroy();
+        this.frenzyTweens.delete(entityId);
+      }
+    }
+  }
+
+  /**
+   * Clean up frenzy tween for a despawned entity (CRAI-07).
+   */
+  cleanupFrenzyEffect(entityId: string): void {
+    const tween = this.frenzyTweens.get(entityId);
+    if (tween) {
+      tween.destroy();
+      this.frenzyTweens.delete(entityId);
+    }
+  }
+
+  /**
+   * CRAI-06: Apply stealth invisibility to a creature container.
+   * Stealthed predators are invisible (alpha=0). When revealed, fade in over 300ms.
+   */
+  applyStealthReveal(container: Phaser.GameObjects.Container): void {
+    container.setAlpha(0);
+    container.setData('stealthed', false);
+    this.scene.tweens.add({
+      targets: container,
+      alpha: 1,
+      duration: 300,
+      ease: 'Power2',
+    });
+  }
+
   /**
    * Creates a container with entity sprite, nameplate, optional health bar, and optional behavior icon.
    */
@@ -444,6 +536,17 @@ export class EntityRenderer {
     // Initial depth: Y-position with X-tiebreaker and elevation (use world coordinates)
     const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 0, true);
     container.setDepth(depth);
+
+    // CRAI-06: Stealthed predators are invisible on spawn
+    if (this.isCreature(entity) && (entity as Creature).stealthed) {
+      container.setAlpha(0);
+      container.setData('stealthed', true);
+    }
+
+    // CRAI-06: Frenzied maniacs get red tint + pulsing on spawn
+    if (this.isCreature(entity) && (entity as Creature).frenzied) {
+      this.applyFrenzyEffect(container, entity.id, true);
+    }
 
     return container;
   }
