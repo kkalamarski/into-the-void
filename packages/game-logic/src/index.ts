@@ -44,3 +44,6 @@ export * from './quest';
 // Gathering
 export * from './gathering/timing-validation';
 export * from './gathering/proficiency';
+
+// Hazard
+export * from './hazard/hazard';
