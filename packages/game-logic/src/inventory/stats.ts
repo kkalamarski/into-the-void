@@ -14,6 +14,8 @@ export interface ComputedStats {
   energyCapacity: number;
   rechargeRate: number;
   jumpHeight: number;
+  /** Per-hazard-type protection percentages (chemical, thermal, physical, biological, anomalous) */
+  hazardProtection: Record<string, number>;
   /** Extended stat buffs from modules/accessories */
   bonuses: Record<string, number>;
 }
@@ -36,6 +38,7 @@ export function effectiveStats(equipment: EquipmentJson): ComputedStats {
     energyCapacity: 100, // base
     rechargeRate: 1.0,
     jumpHeight: 1.0,
+    hazardProtection: {},
     bonuses: {},
   };
 
@@ -83,8 +86,14 @@ export function effectiveStats(equipment: EquipmentJson): ComputedStats {
             stats.jumpHeight += value;
             break;
           default:
-            // Stat buff or unknown - accumulate in bonuses
-            stats.bonuses[stat] = (stats.bonuses[stat] ?? 0) + value;
+            // Per-type hazard protection (e.g., hazardProtection_chemical)
+            if (stat.startsWith('hazardProtection_')) {
+              const hazardType = stat.replace('hazardProtection_', '');
+              stats.hazardProtection[hazardType] = (stats.hazardProtection[hazardType] ?? 0) + value;
+            } else {
+              // Stat buff or unknown - accumulate in bonuses
+              stats.bonuses[stat] = (stats.bonuses[stat] ?? 0) + value;
+            }
         }
       }
     }

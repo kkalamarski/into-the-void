@@ -32,6 +32,14 @@ const VERDANT_TRADER: TraderDefinition = {
     { itemId: 'pressure_pill_common', buyPrice: 100, sellPrice: 50, stock: 15 },
     { itemId: 'gill_extract_rare', buyPrice: 400, sellPrice: 200, stock: 8 },
     { itemId: 'brine_capacitor_rare', buyPrice: 330, sellPrice: 165, stock: 10 },
+    // Phase 120: Hazard protection (Verdant specializes in Chemical + Biological)
+    { itemId: 'module_chem_filter_rare', buyPrice: 3000, sellPrice: 1500, stock: 3 },
+    { itemId: 'module_bio_seal_rare', buyPrice: 3000, sellPrice: 1500, stock: 3 },
+    { itemId: 'module_chem_filter_epic', buyPrice: 12000, sellPrice: 6000, stock: 1 },
+    { itemId: 'module_bio_seal_epic', buyPrice: 12000, sellPrice: 6000, stock: 1 },
+    { itemId: 'consumable_chem_neutralizer', buyPrice: 500, sellPrice: 250, stock: 10 },
+    { itemId: 'consumable_bio_inoculant', buyPrice: 500, sellPrice: 250, stock: 10 },
+    { itemId: 'consumable_anomaly_anchor', buyPrice: 600, sellPrice: 300, stock: 5 },
   ],
   specialization: 'consumables',
 };

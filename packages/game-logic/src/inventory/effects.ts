@@ -137,6 +137,12 @@ export function resolveEffect(effect: ItemEffect): EffectResult {
         applied: { [effect.damageType]: effect.bonusPercent },
       };
 
+    case 'hazard_protection':
+      return {
+        type: 'hazard_protection',
+        applied: { [`hazardProtection_${effect.hazardType}`]: effect.protectionPercent },
+      };
+
     default: {
       // Exhaustive check - TypeScript will error if a case is missed
       const _exhaustive: never = effect;

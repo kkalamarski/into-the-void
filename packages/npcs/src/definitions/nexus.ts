@@ -31,6 +31,14 @@ const NEXUS_TRADER: TraderDefinition = {
     { itemId: 'pressure_pill_common', buyPrice: 90, sellPrice: 45, stock: 12 },
     { itemId: 'kelp_salve_common', buyPrice: 70, sellPrice: 35, stock: 12 },
     { itemId: 'stability_tonic_epic', buyPrice: 2000, sellPrice: 1000, stock: 4 },
+    // Phase 120: Hazard protection (Nexus specializes in Anomalous + Chemical)
+    { itemId: 'module_anomaly_ward_rare', buyPrice: 3000, sellPrice: 1500, stock: 3 },
+    { itemId: 'module_chem_filter_rare', buyPrice: 3000, sellPrice: 1500, stock: 3 },
+    { itemId: 'module_anomaly_ward_epic', buyPrice: 12000, sellPrice: 6000, stock: 1 },
+    { itemId: 'module_chem_filter_epic', buyPrice: 12000, sellPrice: 6000, stock: 1 },
+    { itemId: 'consumable_anomaly_anchor', buyPrice: 500, sellPrice: 250, stock: 10 },
+    { itemId: 'consumable_chem_neutralizer', buyPrice: 500, sellPrice: 250, stock: 10 },
+    { itemId: 'consumable_thermal_coolant', buyPrice: 600, sellPrice: 300, stock: 5 },
   ],
   specialization: 'general',
 };

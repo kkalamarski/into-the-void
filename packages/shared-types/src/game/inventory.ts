@@ -93,6 +93,8 @@ export interface ComputedStats {
   energyCapacity: number;
   rechargeRate: number;
   jumpHeight: number;
+  /** Per-hazard-type protection percentages (chemical, thermal, physical, biological, anomalous) */
+  hazardProtection: Record<string, number>;
   bonuses: Record<string, number>;
 }
 

@@ -30,6 +30,14 @@ const HELIX_TRADER: TraderDefinition = {
     { itemId: 'suit_diving_rare', buyPrice: 3200, sellPrice: 1600, stock: 2 },
     { itemId: 'tool_harpoon_rare', buyPrice: 2400, sellPrice: 1200, stock: 3 },
     { itemId: 'tool_net_rare', buyPrice: 2200, sellPrice: 1100, stock: 3 },
+    // Phase 120: Hazard protection (Helix specializes in Thermal + Physical)
+    { itemId: 'module_thermal_reg_rare', buyPrice: 3000, sellPrice: 1500, stock: 3 },
+    { itemId: 'module_impact_shield_rare', buyPrice: 3000, sellPrice: 1500, stock: 3 },
+    { itemId: 'module_thermal_reg_epic', buyPrice: 12000, sellPrice: 6000, stock: 1 },
+    { itemId: 'module_impact_shield_epic', buyPrice: 12000, sellPrice: 6000, stock: 1 },
+    { itemId: 'consumable_thermal_coolant', buyPrice: 500, sellPrice: 250, stock: 10 },
+    { itemId: 'consumable_impact_gel', buyPrice: 500, sellPrice: 250, stock: 10 },
+    { itemId: 'consumable_chem_neutralizer', buyPrice: 600, sellPrice: 300, stock: 5 },
   ],
   specialization: 'materials',
 };

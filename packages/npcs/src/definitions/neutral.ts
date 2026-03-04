@@ -25,6 +25,14 @@ const NEUTRAL_TRADER: TraderDefinition = {
     { itemId: 'health_vial_common', buyPrice: 60, sellPrice: 30, stock: 10 },
     { itemId: 'energy_cell_common', buyPrice: 60, sellPrice: 30, stock: 10 },
     { itemId: 'suit_repair_kit_common', buyPrice: 90, sellPrice: 45, stock: 5 },
+    // Phase 120: Hazard protection (Neutral covers Thermal + Biological)
+    { itemId: 'module_thermal_reg_rare', buyPrice: 3200, sellPrice: 1600, stock: 3 },
+    { itemId: 'module_bio_seal_rare', buyPrice: 3200, sellPrice: 1600, stock: 3 },
+    { itemId: 'module_thermal_reg_epic', buyPrice: 12500, sellPrice: 6250, stock: 1 },
+    { itemId: 'module_bio_seal_epic', buyPrice: 12500, sellPrice: 6250, stock: 1 },
+    { itemId: 'consumable_thermal_coolant', buyPrice: 550, sellPrice: 275, stock: 10 },
+    { itemId: 'consumable_bio_inoculant', buyPrice: 550, sellPrice: 275, stock: 10 },
+    { itemId: 'consumable_impact_gel', buyPrice: 600, sellPrice: 300, stock: 5 },
   ],
   specialization: 'general',
 };
@@ -266,6 +274,17 @@ const MODULE_VENDOR: TraderDefinition = {
     // Level 45 rare
     { itemId: 'module_armor_rare_mk5', buyPrice: 36000, sellPrice: 18000, stock: 1 },
     { itemId: 'module_power_core_rare_mk5', buyPrice: 36000, sellPrice: 18000, stock: 1 },
+    // Phase 120: All hazard protection modules
+    { itemId: 'module_chem_filter_rare', buyPrice: 3000, sellPrice: 1500, stock: 3 },
+    { itemId: 'module_chem_filter_epic', buyPrice: 12000, sellPrice: 6000, stock: 1 },
+    { itemId: 'module_thermal_reg_rare', buyPrice: 3000, sellPrice: 1500, stock: 3 },
+    { itemId: 'module_thermal_reg_epic', buyPrice: 12000, sellPrice: 6000, stock: 1 },
+    { itemId: 'module_impact_shield_rare', buyPrice: 3000, sellPrice: 1500, stock: 3 },
+    { itemId: 'module_impact_shield_epic', buyPrice: 12000, sellPrice: 6000, stock: 1 },
+    { itemId: 'module_bio_seal_rare', buyPrice: 3000, sellPrice: 1500, stock: 3 },
+    { itemId: 'module_bio_seal_epic', buyPrice: 12000, sellPrice: 6000, stock: 1 },
+    { itemId: 'module_anomaly_ward_rare', buyPrice: 3000, sellPrice: 1500, stock: 3 },
+    { itemId: 'module_anomaly_ward_epic', buyPrice: 12000, sellPrice: 6000, stock: 1 },
   ],
   specialization: 'modules',
 };

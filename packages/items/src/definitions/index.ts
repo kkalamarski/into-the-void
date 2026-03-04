@@ -16,6 +16,8 @@ import { ALL_EXOTIC_CONSUMABLES } from './exotic-consumables';
 import { ALL_FACTION_SUITS } from './faction-suits';
 import { ALL_FACTION_MODULES } from './faction-modules';
 import { ALL_FACTION_TOOLS } from './faction-tools';
+import { ALL_HAZARD_MODULES } from './hazard-modules';
+import { ALL_HAZARD_CONSUMABLES } from './hazard-consumables';
 
 /**
  * All item definitions — register these with ItemRegistry.
@@ -42,6 +44,9 @@ export const ALL_ITEMS: readonly ItemDefinition[] = [
   // Phase 113 faction modules and tools
   ...ALL_FACTION_MODULES,
   ...ALL_FACTION_TOOLS,
+  // Phase 120 hazard protection items
+  ...ALL_HAZARD_MODULES,
+  ...ALL_HAZARD_CONSUMABLES,
 ];
 
 /**
@@ -452,6 +457,25 @@ export const ITEM_IDS = {
   REAGENT_ANCIENT_STABILIZER: 'reagent_ancient_stabilizer',
   // Phase 110 Tier IV void_rift legendary reagent
   REAGENT_CORRUPTED_ESSENCE: 'reagent_corrupted_essence',
+
+  // ---- HAZARD PROTECTION MODULES (Phase 120) ----
+  MODULE_CHEM_FILTER_RARE: 'module_chem_filter_rare',
+  MODULE_CHEM_FILTER_EPIC: 'module_chem_filter_epic',
+  MODULE_THERMAL_REG_RARE: 'module_thermal_reg_rare',
+  MODULE_THERMAL_REG_EPIC: 'module_thermal_reg_epic',
+  MODULE_IMPACT_SHIELD_RARE: 'module_impact_shield_rare',
+  MODULE_IMPACT_SHIELD_EPIC: 'module_impact_shield_epic',
+  MODULE_BIO_SEAL_RARE: 'module_bio_seal_rare',
+  MODULE_BIO_SEAL_EPIC: 'module_bio_seal_epic',
+  MODULE_ANOMALY_WARD_RARE: 'module_anomaly_ward_rare',
+  MODULE_ANOMALY_WARD_EPIC: 'module_anomaly_ward_epic',
+
+  // ---- HAZARD PROTECTION CONSUMABLES (Phase 120) ----
+  CONSUMABLE_CHEM_NEUTRALIZER: 'consumable_chem_neutralizer',
+  CONSUMABLE_THERMAL_COOLANT: 'consumable_thermal_coolant',
+  CONSUMABLE_IMPACT_GEL: 'consumable_impact_gel',
+  CONSUMABLE_BIO_INOCULANT: 'consumable_bio_inoculant',
+  CONSUMABLE_ANOMALY_ANCHOR: 'consumable_anomaly_anchor',
 } as const;
 
 // Re-export individual items for direct imports
@@ -470,3 +494,5 @@ export * from './exotic-consumables';
 export * from './faction-suits';
 export * from './faction-modules';
 export * from './faction-tools';
+export * from './hazard-modules';
+export * from './hazard-consumables';
