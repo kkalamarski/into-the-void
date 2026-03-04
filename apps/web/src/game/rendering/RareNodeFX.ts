@@ -28,6 +28,13 @@ export const RARITY_GLOW_CONFIG: Record<Exclude<NodeRarity, 'common'>, {
     quality: 0.15,
     distance: 12,
   },
+  exotic: {
+    color: 0x00ffcc,      // Cyan-green
+    outerStrength: 8,
+    innerStrength: 2,
+    quality: 0.2,
+    distance: 14,
+  },
 };
 
 /**
@@ -44,6 +51,10 @@ export const RARITY_MARKER_CONFIG: Record<Exclude<NodeRarity, 'common'>, {
   epic: {
     color: 0x9400d3,   // Purple
     iconScale: 0.7,
+  },
+  exotic: {
+    color: 0x00ffcc,   // Cyan-green
+    iconScale: 0.8,
   },
 };
 

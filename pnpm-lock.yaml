@@ -235,16 +235,6 @@ importers:
       '@into-the-void/shared-types':
         specifier: workspace:*
         version: link:../shared-types
-    devDependencies:
-      '@into-the-void/game-logic':
-        specifier: workspace:*
-        version: link:../game-logic
-      '@into-the-void/items':
-        specifier: workspace:*
-        version: link:../items
-      '@into-the-void/world-gen':
-        specifier: workspace:*
-        version: link:../world-gen
 
   packages/game-logic:
     dependencies:

@@ -1,4 +1,4 @@
-import type { HarvestYield } from '@into-the-void/entities';
+import type { HarvestYield } from '@into-the-void/shared-types';
 import type { InventoryItemJson } from '@into-the-void/database';
 
 /**

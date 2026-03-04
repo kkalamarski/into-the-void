@@ -120,6 +120,20 @@ function tickPredator(
   players: PlayerPublic[],
   collisionMap: boolean[][],
 ): AiTickResult {
+  // CRAI-04: Frenzy detection for maniacs below 30% HP
+  const frenzied = creature.behavior === 'maniac'
+    && creature.health > 0
+    && creature.health < creature.maxHealth * 0.3;
+
+  /**
+   * Helper to attach frenzy signal to any result from this function.
+   * Uses `|| undefined` to keep AiTickResult sparse for non-maniac creatures.
+   */
+  const withFrenzy = (result: AiTickResult): AiTickResult => ({
+    ...result,
+    frenzied: frenzied || undefined,
+  });
+
   // Check leash distance first
   if (creature.spawnPosition) {
     const distFromSpawn = chebyshevDistance(
@@ -131,18 +145,18 @@ function tickPredator(
 
     // If at spawn and no target, just wander
     if (distFromSpawn <= 1 && !creature.combatTarget) {
-      return tickWander(creature, collisionMap);
+      return withFrenzy(tickWander(creature, collisionMap));
     }
 
     // If has target, check leash
     if (creature.combatTarget && distFromSpawn >= LEASH_DISTANCE) {
       // Too far from spawn - return (combat will be stopped by AiService)
-      return moveToward(creature, creature.spawnPosition, collisionMap, true);
+      return withFrenzy(moveToward(creature, creature.spawnPosition, collisionMap, true));
     }
 
     // If no target but far from spawn (was returning), continue returning
     if (!creature.combatTarget && distFromSpawn > 1) {
-      return moveToward(creature, creature.spawnPosition, collisionMap, true);
+      return withFrenzy(moveToward(creature, creature.spawnPosition, collisionMap, true));
     }
   }
 
@@ -159,14 +173,14 @@ function tickPredator(
 
       // Adjacent = attack
       if (distToTarget <= 1) {
-        return { newPosition: null, shouldAttack: true };
+        return withFrenzy({ newPosition: null, shouldAttack: true });
       }
 
       // Chase
-      return moveToward(creature, target.position, collisionMap, false);
+      return withFrenzy(moveToward(creature, target.position, collisionMap, false));
     } else {
       // Target left zone - signal to clear target and return
-      return { newPosition: null, shouldReturn: true };
+      return withFrenzy({ newPosition: null, shouldReturn: true });
     }
   }
 
@@ -186,11 +200,11 @@ function tickPredator(
 
   if (nearbyPlayers.length > 0) {
     // Aggro on closest player
-    return { newPosition: null, aggroTarget: nearbyPlayers[0].player.id };
+    return withFrenzy({ newPosition: null, aggroTarget: nearbyPlayers[0].player.id });
   }
 
   // No players nearby - wander
-  return tickWander(creature, collisionMap);
+  return withFrenzy(tickWander(creature, collisionMap));
 }
 
 /**

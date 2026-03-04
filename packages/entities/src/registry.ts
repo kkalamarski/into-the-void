@@ -1,5 +1,6 @@
 import type { EntityDefinition, EntityClass } from './types';
 import type { BiomeType } from '@into-the-void/shared-types';
+import { NEUTRAL_RESISTANCES } from '@into-the-void/shared-types';
 
 /**
  * Fallback entity for unknown IDs - prevents crashes
@@ -18,6 +19,7 @@ const UNKNOWN_ENTITY: EntityDefinition = {
   levelRange: [1, 1],
   baseXp: 0,
   respawnSeconds: 60,
+  resistances: NEUTRAL_RESISTANCES,
 };
 
 /**

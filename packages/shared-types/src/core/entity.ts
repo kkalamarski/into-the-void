@@ -61,6 +61,10 @@ export interface Creature extends Entity {
   combatTarget?: string;
   /** For omnivores: set to true when a player attacks them, triggering retaliation */
   provoked?: boolean;
+  /** For predators: hidden until detected by high-Perception player or first attack (CRAI-03) */
+  stealthed?: boolean;
+  /** For maniacs: enters Frenzy below 30% HP — 2x attack speed, 25% vulnerability (CRAI-04) */
+  frenzied?: boolean;
 }
 
 /**
@@ -109,6 +113,17 @@ export interface Artifact extends Entity {
   artifactId: string;
   /** Rarity tier */
   rarity: 'rare' | 'epic' | 'exotic' | 'legendary';
+}
+
+/**
+ * Harvest yield entry for plants, minerals, and creature loot tables.
+ * Shared across entities and game-logic packages.
+ */
+export interface HarvestYield {
+  readonly itemId: string;
+  readonly minAmount: number;
+  readonly maxAmount: number;
+  readonly chance: number; // 0.0 to 1.0
 }
 
 /**

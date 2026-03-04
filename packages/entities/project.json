@@ -4,6 +4,7 @@
   "sourceRoot": "packages/entities/src",
   "projectType": "library",
   "tags": ["scope:shared"],
+  "implicitDependencies": ["!game-logic", "!world-gen", "!items"],
   "targets": {
     "build": {
       "executor": "@nx/esbuild:esbuild",

@@ -5,6 +5,10 @@
  */
 
 import type { BiomeType, CreatureBehavior, DamageResistances, NodeRarity } from '@into-the-void/shared-types';
+import type { HarvestYield } from '@into-the-void/shared-types';
+
+// Re-export from shared-types for backward compatibility
+export type { HarvestYield } from '@into-the-void/shared-types';
 
 /** Entity class discriminator */
 export type EntityClass = 'creature' | 'plant' | 'mineral' | 'artifact';
@@ -31,14 +35,6 @@ export interface CreatureDefinition extends BaseEntityDefinition {
   readonly respawnSeconds: number;
   /** Damage resistances per type. Required; use NEUTRAL_RESISTANCES for unlabeled creatures. */
   readonly resistances: DamageResistances;
-}
-
-/** Harvest yield entry for plants and minerals */
-export interface HarvestYield {
-  readonly itemId: string;
-  readonly minAmount: number;
-  readonly maxAmount: number;
-  readonly chance: number; // 0.0 to 1.0
 }
 
 /** Plant entity definition */

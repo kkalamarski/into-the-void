@@ -109,7 +109,9 @@ export type ServerEventType =
   | 'cast:interrupt'
   | 'shield:apply'
   | 'shield:absorb'
-  | 'shield:expire';
+  | 'shield:expire'
+  | 'creature:frenzy'
+  | 'creature:stampede';
 
 /**
  * Socket.io event map for type safety
@@ -390,6 +392,19 @@ export interface ServerEvents {
   'mastery:progress': { biome: string; progress: ZoneMasteryProgress };
   'mastery:completed': { biome: string; tier: MasteryTier; rewards: MasteryReward[] };
   'expedition:complete': { biome: string; position: import('../core/position').Position };
+  /** CRAI-04/06: Frenzy state change for maniac visual overlay */
+  'creature:frenzy': {
+    entityId: string;
+    frenzied: boolean;
+  };
+  /** CRAI-01: Stampede event when 3+ herbivores flee simultaneously */
+  'creature:stampede': {
+    zoneId: string;
+    creatureIds: string[];
+    direction: { dx: number; dy: number };
+    affectedPlayerIds: string[];
+    damage: number;
+  };
 }
 
 /**

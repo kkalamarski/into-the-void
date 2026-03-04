@@ -6,10 +6,5 @@
   "types": "./src/index.ts",
   "dependencies": {
     "@into-the-void/shared-types": "workspace:*"
-  },
-  "devDependencies": {
-    "@into-the-void/items": "workspace:*",
-    "@into-the-void/game-logic": "workspace:*",
-    "@into-the-void/world-gen": "workspace:*"
   }
 }

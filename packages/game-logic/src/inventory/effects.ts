@@ -131,6 +131,12 @@ export function resolveEffect(effect: ItemEffect): EffectResult {
         applied: { healthPercent: effect.healPercent },
       };
 
+    case 'damage_type_bonus':
+      return {
+        type: 'damage_type_bonus',
+        applied: { [effect.damageType]: effect.bonusPercent },
+      };
+
     default: {
       // Exhaustive check - TypeScript will error if a case is missed
       const _exhaustive: never = effect;
