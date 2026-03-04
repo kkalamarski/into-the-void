@@ -111,6 +111,9 @@ class GameSocket {
       'cast:interrupt',
       'creature:frenzy',
       'creature:stampede',
+      'hazard:update',
+      'hazard:damage',
+      'hazard:clear',
     ];
 
     for (const event of serverEvents) {

@@ -13,6 +13,7 @@ import { GameShortcuts } from './GameShortcuts';
 import { TargetFrame } from './TargetFrame';
 import { CombatLog } from './CombatLog';
 import { BuffBar } from './BuffBar';
+import { HazardIndicator } from './HazardIndicator';
 import './HUD.css';
 
 export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
@@ -205,6 +206,7 @@ export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
           <span className="combat-indicator-text">In Combat</span>
         </div>
       )}
+      <HazardIndicator />
       <TargetFrame />
       <div className="hud-minimap" aria-label="Minimap" />
     </div>
