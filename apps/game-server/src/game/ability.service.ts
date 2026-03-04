@@ -63,6 +63,18 @@ export class AbilityService {
   /** Active casts indexed by playerId */
   private activeCasts: Map<string, ActiveCast> = new Map();
 
+  /** Active shield absorb pools indexed by playerId */
+  private activeShields: Map<string, { absorbRemaining: number; maxAbsorb: number; expiresAt: number }> = new Map();
+
+  /** Active damage reduction buffs indexed by playerId */
+  private activeDamageReductions: Map<string, { reductionPercent: number; expiresAt: number }> = new Map();
+
+  /** Stunned creatures indexed by creatureId - stun expiry timestamp */
+  private stunnedCreatures: Map<string, number> = new Map();
+
+  /** Hazard immunity indexed by playerId - immunity expiry timestamp */
+  private hazardImmunities: Map<string, number> = new Map();
+
   /** Buff expiration tick interval handle */
   private buffTickInterval: NodeJS.Timeout | null = null;
 
@@ -560,6 +572,13 @@ export class AbilityService {
         // Read ability damage type
         const abilityDamageType = (effect as { type: 'damage'; baseDamage: number; scaling: number; damageType?: DamageType }).damageType;
 
+        // ABIL-01: Conditional damage bonus (e.g., Plasma Burst +50% above 80% HP)
+        let conditionMultiplier = 1.0;
+        const damageEffect = effect as { type: 'damage'; baseDamage: number; scaling: number; damageType?: DamageType; conditionBonus?: { hpThresholdAbove: number; multiplier: number } };
+        if (damageEffect.conditionBonus && target.health / target.maxHealth > damageEffect.conditionBonus.hpThresholdAbove) {
+          conditionMultiplier = damageEffect.conditionBonus.multiplier;
+        }
+
         // Calculate damage
         const inv = this.inventoryService.getInventory(player.id);
         const playerEquipment = inv?.equipment as EquipmentJson ?? { modules: [] };
@@ -588,12 +607,12 @@ export class AbilityService {
         }
 
         const damageResult = calculateDamage({
-          baseDamage: effect.baseDamage,
+          baseDamage: Math.round(effect.baseDamage * conditionMultiplier),
           attackerLevel: player.level,
           defenderLevel: target.level,
           attackerStats: playerStats,
           defenderStats: creatureStats,
-          weaponDamage: effect.baseDamage * effect.scaling,
+          weaponDamage: Math.round(effect.baseDamage * effect.scaling * conditionMultiplier),
           armorReduction: creatureStats.toughness * 0.1,
           damageType: abilityDamageType,
           defenderResistances,
@@ -716,6 +735,79 @@ export class AbilityService {
           return { success: false, error: gatherResult.error };
         }
       }
+
+      // Handle shield effect (ABIL-09: Emergency Shield)
+      if (effect.type === 'shield') {
+        this.activeShields.set(player.id, {
+          absorbRemaining: effect.absorbAmount,
+          maxAbsorb: effect.absorbAmount,
+          expiresAt: Date.now() + effect.durationMs,
+        });
+        // Emit shield:apply to player's socket for HUD shield bar
+        this.server?.to(socketId).emit('shield:apply', {
+          absorbAmount: effect.absorbAmount,
+          durationMs: effect.durationMs,
+          expiresAt: Date.now() + effect.durationMs,
+        });
+      }
+
+      // Handle damage reduction effect (ABIL-12: Fortify Systems)
+      if (effect.type === 'damage_reduction') {
+        this.activeDamageReductions.set(player.id, {
+          reductionPercent: effect.reductionPercent,
+          expiresAt: Date.now() + effect.durationMs,
+        });
+        // Emit as a buff-like event so client can show buff icon
+        this.server?.to(socketId).emit('buff:apply', {
+          buffId: crypto.randomUUID(),
+          displayName: ability.displayName,
+          stat: 'damage_reduction',
+          amount: Math.round(effect.reductionPercent * 100),
+          expiresAt: Date.now() + effect.durationMs,
+          iconColor: ability.iconColor,
+        });
+      }
+
+      // Handle stun effect (ABIL-08: Concussive Strike)
+      if (effect.type === 'stun' && targetEntityId) {
+        const stunEntity = await this.zonesService.getEntity(player.position.zoneId, targetEntityId);
+        if (stunEntity && stunEntity.type === 'creature') {
+          const stunTarget = stunEntity as Creature;
+          // ABIL-08: 3s vs maniacs, 1s otherwise
+          let stunMs = effect.durationMs;
+          if (stunTarget.behavior === 'maniac' && effect.maniacDurationMs) {
+            stunMs = effect.maniacDurationMs;
+          }
+          this.stunnedCreatures.set(targetEntityId, Date.now() + stunMs);
+          // Emit stun visual to zone
+          this.server?.to(player.position.zoneId).emit('entity:update', {
+            entityId: targetEntityId,
+            changes: { stunned: true },
+          });
+          // Schedule stun expiry emission
+          setTimeout(() => {
+            this.stunnedCreatures.delete(targetEntityId);
+            this.server?.to(player.position.zoneId).emit('entity:update', {
+              entityId: targetEntityId,
+              changes: { stunned: false },
+            });
+          }, stunMs);
+        }
+      }
+
+      // Handle hazard immunity effect (ABIL-13: Energy Barrier)
+      if (effect.type === 'hazard_immunity') {
+        this.hazardImmunities.set(player.id, Date.now() + effect.durationMs);
+        // Emit as a buff-like event for client display
+        this.server?.to(socketId).emit('buff:apply', {
+          buffId: crypto.randomUUID(),
+          displayName: ability.displayName,
+          stat: 'hazard_immunity',
+          amount: 1,
+          expiresAt: Date.now() + effect.durationMs,
+          iconColor: ability.iconColor,
+        });
+      }
     }
 
     return {
@@ -726,6 +818,72 @@ export class AbilityService {
       energyRemaining: newEnergy,
       cooldownEndsAt,
     };
+  }
+
+  /**
+   * Intercept incoming damage with active shield. Returns absorbed and passthrough amounts.
+   */
+  interceptShield(playerId: string, incomingDamage: number): { absorbed: number; passthrough: number } {
+    const shield = this.activeShields.get(playerId);
+    if (!shield || Date.now() >= shield.expiresAt) {
+      this.activeShields.delete(playerId);
+      return { absorbed: 0, passthrough: incomingDamage };
+    }
+    const absorbed = Math.min(shield.absorbRemaining, incomingDamage);
+    shield.absorbRemaining -= absorbed;
+    const playerSocket = this.playerService.getSocketByPlayerId(playerId);
+    if (shield.absorbRemaining <= 0) {
+      this.activeShields.delete(playerId);
+      if (playerSocket) {
+        this.server?.to(playerSocket).emit('shield:expire', { playerId });
+      }
+    } else if (playerSocket) {
+      this.server?.to(playerSocket).emit('shield:absorb', {
+        absorbed,
+        remaining: shield.absorbRemaining,
+        maxAbsorb: shield.maxAbsorb,
+      });
+    }
+    return { absorbed, passthrough: incomingDamage - absorbed };
+  }
+
+  /**
+   * Apply flat damage reduction if active. Returns reduced damage amount.
+   */
+  applyDamageReduction(playerId: string, damage: number): { reducedDamage: number; reducedBy: number } {
+    const dr = this.activeDamageReductions.get(playerId);
+    if (!dr || Date.now() >= dr.expiresAt) {
+      this.activeDamageReductions.delete(playerId);
+      return { reducedDamage: damage, reducedBy: 0 };
+    }
+    const reducedBy = Math.round(damage * dr.reductionPercent);
+    return { reducedDamage: damage - reducedBy, reducedBy };
+  }
+
+  /**
+   * Check if a creature is currently stunned.
+   */
+  isCreatureStunned(creatureId: string): boolean {
+    const expiresAt = this.stunnedCreatures.get(creatureId);
+    if (!expiresAt) return false;
+    if (Date.now() >= expiresAt) {
+      this.stunnedCreatures.delete(creatureId);
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Check if a player has active hazard immunity (for Phase 120 HazardService).
+   */
+  isHazardImmune(playerId: string): boolean {
+    const expiresAt = this.hazardImmunities.get(playerId);
+    if (!expiresAt) return false;
+    if (Date.now() >= expiresAt) {
+      this.hazardImmunities.delete(playerId);
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -747,6 +905,12 @@ export class AbilityService {
     }
     keysToDelete.forEach(k => this.cooldowns.delete(k));
     this.globalCooldowns.delete(playerId);
+
+    // Clean up defensive state maps
+    this.activeShields.delete(playerId);
+    this.activeDamageReductions.delete(playerId);
+    this.hazardImmunities.delete(playerId);
+    // Note: stunnedCreatures is keyed by creatureId, not playerId — no cleanup needed on player disconnect
   }
 
   /**
