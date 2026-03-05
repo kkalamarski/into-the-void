@@ -47,7 +47,7 @@
 - [x] **Phase 122: Crafting Foundation** - Shared types, DB schema, RecipeRegistry package, CraftingService with all server-side validation guards (completed 2026-03-05)
 - [ ] **Phase 123: Recipe Content and Quality System** - Recipe definitions for all disciplines, proficiency XP, quality tier calculation, faction specialty recipes
 - [x] **Phase 124: Automation Production Chain** - Deployable structure recipes validated against AutomationService item mappings (completed 2026-03-05)
-- [ ] **Phase 125: Crafting Panel UI** - Client store, HUD panel with tabs, ingredient availability display, progress bar, proficiency display
+- [x] **Phase 125: Crafting Panel UI** - Client store, HUD panel with tabs, ingredient availability display, progress bar, proficiency display (completed 2026-03-05)
 
 ## Phase Details
 
@@ -108,7 +108,7 @@
 | 122. Crafting Foundation | 2/2 | Complete    | 2026-03-05 |
 | 123. Recipe Content and Quality System | 0/TBD | Not started | - |
 | 124. Automation Production Chain | 0/TBD | Complete    | 2026-03-05 |
-| 125. Crafting Panel UI | 0/TBD | Not started | - |
+| 125. Crafting Panel UI | 3/3 | Complete   | 2026-03-05 |
 
 ---
 
