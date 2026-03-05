@@ -1,4 +1,5 @@
 import type { RecipeDefinition } from '@into-the-void/shared-types';
+import { ALL_FACTION_RECIPES } from './faction-recipes';
 
 // ============================================================
 // RECIPE DEFINITIONS — Phase 123
@@ -589,6 +590,8 @@ export const ALL_RECIPES: readonly RecipeDefinition[] = [
   RECIPE_SPEED_MODULE,
   RECIPE_SENSOR_MODULE,
   RECIPE_POWER_CORE_MODULE,
+  // Phase 123 faction specialty recipes (9)
+  ...ALL_FACTION_RECIPES,
 ];
 
 /**
@@ -630,4 +633,15 @@ export const RECIPE_IDS = {
   RECIPE_SPEED_MODULE: 'recipe_speed_module',
   RECIPE_SENSOR_MODULE: 'recipe_sensor_module',
   RECIPE_POWER_CORE_MODULE: 'recipe_power_core_module',
+
+  // ---- FACTION SPECIALTY RECIPES ----
+  RECIPE_VERDANT_BIOWEAVE_SUIT: 'recipe_verdant_bioweave_suit',
+  RECIPE_VERDANT_CHLORO_FILTER: 'recipe_verdant_chloro_filter',
+  RECIPE_VERDANT_ENZYME_PROBE: 'recipe_verdant_enzyme_probe',
+  RECIPE_HELIX_IRONCLAD_SUIT: 'recipe_helix_ironclad_suit',
+  RECIPE_HELIX_SLAG_PLATING: 'recipe_helix_slag_plating',
+  RECIPE_HELIX_BORE_DRILL: 'recipe_helix_bore_drill',
+  RECIPE_NEXUS_CIPHER_ARRAY: 'recipe_nexus_cipher_array',
+  RECIPE_NEXUS_SIGNAL_PROBE: 'recipe_nexus_signal_probe',
+  RECIPE_NEXUS_SPECTRE_SUIT: 'recipe_nexus_spectre_suit',
 } as const;

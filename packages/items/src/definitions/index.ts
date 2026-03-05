@@ -526,4 +526,5 @@ export * from './hazard-consumables';
 export * from './fuel-items';
 export * from './deployable-items';
 export * from './processed-reagents';
+export * from './faction-recipes';
 export * from './recipes';
