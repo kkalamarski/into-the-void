@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Crafting
-status: unknown
-last_updated: "2026-03-05T11:36:56.338Z"
+status: executing
+last_updated: "2026-03-05T13:32:00.000Z"
 progress:
   total_phases: 115
-  completed_phases: 115
-  total_plans: 299
-  completed_plans: 299
+  completed_phases: 116
+  total_plans: 303
+  completed_plans: 303
 ---
 
 # Project State
@@ -18,29 +18,29 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 122 — Crafting Foundation
+**Current focus:** Phase 123 — Recipe Content and Quality System (completed)
 
 ## Current Position
 
-Phase: 122 of 125 (Crafting Foundation) — executing verification
-Plan: 2 of 2 in current phase (complete)
-Status: Verifying
-Last activity: 2026-03-05 — Phase 122 plans executed (2/2)
+Phase: 123 of 125 (Recipe Content and Quality System) — completed
+Plan: 4 of 4 in current phase (complete)
+Status: Complete
+Last activity: 2026-03-05 — Phase 123 executed (4/4 plans across 2 waves)
 
-Progress: [██░░░░░░░░] 25%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0 (v1.25 milestone)
-- Average duration: -
-- Total execution time: -
+- Total plans completed: 4 (Phase 123)
+- Average duration: ~11 min
+- Total execution time: ~45 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 123 | 4 | ~45m | ~11m |
 
 *Updated after each plan completion*
 
@@ -53,7 +53,11 @@ Recent decisions affecting current work:
 
 - [Phase 122]: Use `recipe_unlocks` join table (not JSONB) for unlock persistence — append-only, survives server restart
 - [Phase 122]: Ingredients consumed on craft start (not completion) — prevents duplication exploit during timer window
-- [Phase 123]: Quality tier model to be resolved in Phase 123 design pass before authoring recipe definitions
+- ~~[Phase 123]: Quality tier model to be resolved in Phase 123 design pass before authoring recipe definitions~~ RESOLVED
+- [Phase 123]: Quality scaling uses power curve (exponent 1.3) with 0.7 tier penalty; injectable RNG for testing
+- [Phase 123]: XP decay uses 2^(-diff/3) with 2-level grace zone and 10% floor
+- [Phase 123]: Standard quality items get no qualityTier property (cleaner data)
+- [Phase 123]: No Unaffiliated faction specialty recipes; faction restriction on recipes not items
 
 ### Pending Todos
 
@@ -62,15 +66,15 @@ None.
 ### Blockers/Concerns
 
 - ~~[Phase 122]: Verify `InventoryService` has bulk atomic removal method~~ RESOLVED: consumeItems() added
-- ~~[Phase 122]: Confirm `CombatService.isInCombat()` is accessible~~ RESOLVED: No combat gate needed (crafting continues during combat per user decision)
-- [Phase 123]: Economy balance check required before writing recipe definitions (crafting cost vs trader price vs loot rate)
+- ~~[Phase 122]: Confirm `CombatService.isInCombat()` is accessible~~ RESOLVED: No combat gate needed
+- ~~[Phase 123]: Economy balance check required before writing recipe definitions~~ RESOLVED: Balance comments on all 39 recipes
 
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: Phase 122 executed (2/2 plans), awaiting verification
+Stopped at: Phase 123 complete (4/4 plans, all committed)
 Resume file: None
-Next action: Verify Phase 122, then `/gsd:plan-phase 123`
+Next action: `/gsd:plan-phase 124` or `/gsd:verify-work 123`
 
 ---
-*Last updated: 2026-03-05 — Phase 122 Crafting Foundation executed*
+*Last updated: 2026-03-05 — Phase 123 Recipe Content and Quality System complete*
