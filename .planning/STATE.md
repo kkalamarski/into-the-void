@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.24
-milestone_name: Balance & Automation
-status: shipped
+milestone: v1.25
+milestone_name: Crafting
+status: defining_requirements
 last_updated: "2026-03-05T00:00:00.000Z"
 progress:
-  total_phases: 121
-  completed_phases: 121
-  total_plans: 320
-  completed_plans: 320
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -18,20 +18,20 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Planning next milestone
+**Current focus:** Defining requirements for v1.25 Crafting
 
 ## Current Position
 
-Milestone v1.24 Balance & Automation: SHIPPED 2026-03-05
-All 121 phases across 24 milestones complete.
-
-Progress: [##########] 100% (v1.0-v1.24)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-05 — Milestone v1.25 started
 
 ## Accumulated Context
 
 ### Decisions
 
-_(Cleared at milestone boundary — full log in PROJECT.md Key Decisions table)_
+_(New milestone — no decisions yet)_
 
 ### Pending Todos
 
@@ -44,9 +44,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: v1.24 milestone archived
+Stopped at: Defining v1.25 requirements
 Resume file: None
-Next action: /gsd:new-milestone
+Next action: Define requirements
 
 ---
-*Last updated: 2026-03-05 — v1.24 Balance & Automation milestone shipped*
+*Last updated: 2026-03-05 — Milestone v1.25 Crafting started*

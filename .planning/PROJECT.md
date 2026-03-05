@@ -219,7 +219,18 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 ### Active
 
-_(No active milestone — run `/gsd:new-milestone` to define next)_
+## Current Milestone: v1.25 Crafting
+
+**Goal:** Add a manual crafting system with recipe progression, per-category skill proficiency, faction specialties, and quality tiers.
+
+**Target features:**
+- Recipe-based crafting panel accessible from HUD anywhere
+- Full production chain (equipment, consumables, automation structures, reagents)
+- Progression-unlocked recipes (level, quests, exploration, faction standing)
+- Core recipes universal, faction-specific specialties for higher tiers
+- Per-category crafting proficiency (separate skills per discipline)
+- Quality tiers influenced by proficiency level
+- Short crafting timer with progress bar
 
 ### Out of Scope
 
@@ -277,4 +288,4 @@ _(No active milestone — run `/gsd:new-milestone` to define next)_
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-03-05 after v1.24 milestone*
+*Last updated: 2026-03-05 after v1.25 milestone started*
