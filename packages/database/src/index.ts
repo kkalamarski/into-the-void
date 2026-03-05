@@ -14,3 +14,4 @@ export * from './queries/lore';
 export * from './queries/zone-mastery';
 export * from './queries/ability-cooldowns';
 export * from './queries/moderation';
+export * from './queries/deployables';

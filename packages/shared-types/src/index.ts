@@ -23,6 +23,7 @@ export * from './game/proficiency';
 export * from './game/lore';
 export * from './game/zone-mastery';
 export * from './game/hazard';
+export * from './game/automation';
 
 // Network types
 export * from './network/events';

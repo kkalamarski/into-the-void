@@ -43,3 +43,6 @@ export * from './character-rewards';
 
 // Moderation (MOD-04)
 export * from './moderation';
+
+// Automation deployables (AUTO-07)
+export * from './deployables';

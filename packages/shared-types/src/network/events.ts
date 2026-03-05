@@ -1,6 +1,7 @@
 import type { TimingChallenge, TimingResult, GatheringAccuracy, ResourceCategory } from '../game/proficiency';
 import type { ZoneMasteryProgress, MasteryTier, MasteryReward } from '../game/zone-mastery';
 import type { DamageType } from '../game/combat';
+import type { AutomationPanelEntry, LootWindowData } from '../game/automation';
 
 /**
  * Expedition destination with tier and lock status
@@ -59,7 +60,13 @@ export type ClientEventType =
   | 'poi:discover'
   | 'gathering:start'
   | 'gathering:complete'
-  | 'cast:cancel';
+  | 'cast:cancel'
+  | 'automation:deploy'
+  | 'automation:interact'
+  | 'automation:collect'
+  | 'automation:refuel'
+  | 'automation:dismantle'
+  | 'automation:panel_request';
 
 /**
  * Server-to-client event types
@@ -114,7 +121,14 @@ export type ServerEventType =
   | 'creature:stampede'
   | 'hazard:update'
   | 'hazard:damage'
-  | 'hazard:clear';
+  | 'hazard:clear'
+  | 'automation:deployed'
+  | 'automation:loot_window'
+  | 'automation:collected'
+  | 'automation:refueled'
+  | 'automation:dismantled'
+  | 'automation:panel_state'
+  | 'automation:status_update';
 
 /**
  * Socket.io event map for type safety
@@ -156,6 +170,12 @@ export interface ClientEvents {
   'lore:collect': { loreId: string; worldX: number; worldY: number };
   'mastery:query': { biome: string };
   'expedition:start': { biome: string };
+  'automation:deploy': { deployableItemId: string; position: { x: number; y: number; zoneId: string } };
+  'automation:interact': { entityId: string };
+  'automation:collect': { deployableId: string };
+  'automation:refuel': { deployableId: string; fuelInstanceId: string };
+  'automation:dismantle': { deployableId: string };
+  'automation:panel_request': Record<string, never>;
 }
 
 /**
@@ -432,6 +452,42 @@ export interface ServerEvents {
   'hazard:clear': {
     playerId: string;
     reason: 'left_zone' | 'entered_hub' | 'fully_protected';
+  };
+  /** AUTO-08: Automation structure deployed */
+  'automation:deployed': {
+    deployableId: string;
+    deployableType: string;
+    position: { x: number; y: number; zoneId: string };
+  };
+  /** AUTO-09: Loot window data for interacting with deployed structure */
+  'automation:loot_window': LootWindowData;
+  /** AUTO-09: Resources collected from a deployable */
+  'automation:collected': {
+    deployableId: string;
+    items: { itemId: string; quantity: number }[];
+  };
+  /** AUTO-09: Deployable refueled */
+  'automation:refueled': {
+    deployableId: string;
+    fuelLevel: number;
+    maxFuel: number;
+  };
+  /** AUTO-09: Deployable dismantled */
+  'automation:dismantled': {
+    deployableId: string;
+    recoveredItems: { itemId: string; quantity: number }[];
+  };
+  /** AUTO-09: Panel state with all owned structures */
+  'automation:panel_state': {
+    structures: AutomationPanelEntry[];
+  };
+  /** AUTO-08: Status update for a specific deployable */
+  'automation:status_update': {
+    deployableId: string;
+    status: string;
+    fuelLevel: number;
+    durabilityPercent: number;
+    accumulatedCount: number;
   };
 }
 
