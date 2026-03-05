@@ -44,7 +44,7 @@
 
 **Milestone Goal:** Add a manual crafting system with recipe progression, per-category skill proficiency, faction specialties, and quality tiers — accessible from the HUD anywhere.
 
-- [ ] **Phase 122: Crafting Foundation** - Shared types, DB schema, RecipeRegistry package, CraftingService with all server-side validation guards
+- [x] **Phase 122: Crafting Foundation** - Shared types, DB schema, RecipeRegistry package, CraftingService with all server-side validation guards (completed 2026-03-05)
 - [ ] **Phase 123: Recipe Content and Quality System** - Recipe definitions for all disciplines, proficiency XP, quality tier calculation, faction specialty recipes
 - [ ] **Phase 124: Automation Production Chain** - Deployable structure recipes validated against AutomationService item mappings
 - [ ] **Phase 125: Crafting Panel UI** - Client store, HUD panel with tabs, ingredient availability display, progress bar, proficiency display
@@ -105,7 +105,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 122. Crafting Foundation | 0/2 | Planned | - |
+| 122. Crafting Foundation | 2/2 | Complete    | 2026-03-05 |
 | 123. Recipe Content and Quality System | 0/TBD | Not started | - |
 | 124. Automation Production Chain | 0/TBD | Not started | - |
 | 125. Crafting Panel UI | 0/TBD | Not started | - |

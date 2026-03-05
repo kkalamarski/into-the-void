@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.25
+milestone: v1.0
 milestone_name: Crafting
-status: ready_to_plan
-last_updated: "2026-03-05T00:00:00.000Z"
+status: unknown
+last_updated: "2026-03-05T11:36:56.338Z"
 progress:
-  total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 115
+  completed_phases: 115
+  total_plans: 299
+  completed_plans: 299
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 
 ## Current Position
 
-Phase: 122 of 125 (Crafting Foundation)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-05 — v1.25 Crafting roadmap created (4 phases, 31 requirements mapped)
+Phase: 122 of 125 (Crafting Foundation) — executing verification
+Plan: 2 of 2 in current phase (complete)
+Status: Verifying
+Last activity: 2026-03-05 — Phase 122 plans executed (2/2)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 25%
 
 ## Performance Metrics
 
@@ -61,16 +61,16 @@ None.
 
 ### Blockers/Concerns
 
-- [Phase 122]: Verify `InventoryService` has bulk atomic removal method — must add if missing before CraftingService can be implemented safely
-- [Phase 122]: Confirm `CombatService.isInCombat()` is accessible for the combat gate guard in CraftingService
+- ~~[Phase 122]: Verify `InventoryService` has bulk atomic removal method~~ RESOLVED: consumeItems() added
+- ~~[Phase 122]: Confirm `CombatService.isInCombat()` is accessible~~ RESOLVED: No combat gate needed (crafting continues during combat per user decision)
 - [Phase 123]: Economy balance check required before writing recipe definitions (crafting cost vs trader price vs loot rate)
 
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: Roadmap created for v1.25 Crafting — ready to plan Phase 122
+Stopped at: Phase 122 executed (2/2 plans), awaiting verification
 Resume file: None
-Next action: `/gsd:plan-phase 122`
+Next action: Verify Phase 122, then `/gsd:plan-phase 123`
 
 ---
-*Last updated: 2026-03-05 — v1.25 Crafting roadmap created*
+*Last updated: 2026-03-05 — Phase 122 Crafting Foundation executed*
