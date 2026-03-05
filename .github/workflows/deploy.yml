@@ -50,8 +50,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service }}
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            ${{ github.event_name == 'workflow_dispatch' && format('type=raw,value={0}', github.event.inputs.tag) || 'type=semver,pattern={{version}}' }}
+            ${{ github.event_name != 'workflow_dispatch' && 'type=semver,pattern={{major}}.{{minor}}' || '' }}
             type=raw,value=latest
 
       - name: Build and push Docker image
