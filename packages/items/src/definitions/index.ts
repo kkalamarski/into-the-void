@@ -20,11 +20,12 @@ import { ALL_HAZARD_MODULES } from './hazard-modules';
 import { ALL_HAZARD_CONSUMABLES } from './hazard-consumables';
 import { ALL_FUEL_ITEMS } from './fuel-items';
 import { ALL_DEPLOYABLE_ITEMS } from './deployable-items';
+import { ALL_PROCESSED_REAGENTS } from './processed-reagents';
 
 /**
  * All item definitions — register these with ItemRegistry.
- * Total: 242 items (234 previous + 4 fuel items + 4 deployable items)
- * Phase 121 adds 4 fuel items (reagent category) and 4 deployable structure items (consumable category).
+ * Total: 247 items (242 previous + 5 processed reagents)
+ * Phase 123 adds 5 processed reagent intermediates for crafting chains.
  */
 export const ALL_ITEMS: readonly ItemDefinition[] = [
   ...ALL_SUITS,
@@ -52,6 +53,8 @@ export const ALL_ITEMS: readonly ItemDefinition[] = [
   // Phase 121 automation fuel and deployable items
   ...ALL_FUEL_ITEMS,
   ...ALL_DEPLOYABLE_ITEMS,
+  // Phase 123 processed reagent intermediates
+  ...ALL_PROCESSED_REAGENTS,
 ];
 
 /**
@@ -493,6 +496,13 @@ export const ITEM_IDS = {
   DEPLOYABLE_SURVEY_BEACON: 'deployable_survey_beacon',
   DEPLOYABLE_PLANETARY_EXTRACTOR: 'deployable_planetary_extractor',
   DEPLOYABLE_REFINERY: 'deployable_refinery',
+
+  // ---- PROCESSED REAGENTS (Phase 123) ----
+  PROCESSED_BIOWEAVE_FIBER: 'processed_bioweave_fiber',
+  PROCESSED_THERMAL_ALLOY: 'processed_thermal_alloy',
+  PROCESSED_CRYSTAL_LENS: 'processed_crystal_lens',
+  PROCESSED_SYNTH_COMPOUND: 'processed_synth_compound',
+  PROCESSED_CIRCUIT_MATRIX: 'processed_circuit_matrix',
 } as const;
 
 // Re-export individual items for direct imports
@@ -515,3 +525,5 @@ export * from './hazard-modules';
 export * from './hazard-consumables';
 export * from './fuel-items';
 export * from './deployable-items';
+export * from './processed-reagents';
+export * from './recipes';
