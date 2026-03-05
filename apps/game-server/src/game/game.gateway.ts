@@ -29,6 +29,7 @@ import { ExpeditionService } from './expedition.service';
 import { ChatService } from './chat.service';
 import { HazardService } from './hazard.service';
 import { AutomationService } from './automation.service';
+import { CraftingService } from './crafting.service';
 import {
   ClientEvents,
   Direction,
@@ -99,6 +100,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly chatService: ChatService,
     private readonly hazardService: HazardService,
     private readonly automationService: AutomationService,
+    private readonly craftingService: CraftingService,
   ) {}
 
   afterInit(server: Server) {
@@ -150,6 +152,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       this.combatService.handleDisconnect(player.id);
       this.abilityService.handleDisconnect(player.id);
       this.gatheringService.unloadProficiency(player.id);
+      this.craftingService.unloadPlayer(player.id);
       this.hazardService.onPlayerDisconnect(player.id);
       this.automationService.onPlayerDisconnect(player.id);
     }
@@ -211,6 +214,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
         // Load gathering proficiency for this session
         await this.gatheringService.loadProficiency(result.player.id);
+
+        // Load crafting proficiency for this session (PROF-05)
+        await this.craftingService.loadProficiency(result.player.id);
 
         // Send discovered rare nodes on join
         const discoveredResources = await this.discoveryService.getDiscoveredResources(result.player.id);
@@ -2051,6 +2057,67 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     if (markerArray.length > 0) {
       client.emit('npc:quest-markers', { markers: markerArray });
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Crafting handlers (CRFT-03, CRFT-05, CRFT-06)
+  // ────────────────────────────────────────────────────────────────
+
+  @SubscribeMessage('crafting:start')
+  async handleCraftingStart(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: ClientEvents['crafting:start']
+  ) {
+    const result = await this.craftingService.startCraft(client.id, data.recipeId);
+    if (!result.success) {
+      client.emit('crafting:error', { code: result.code, message: result.message });
+      return;
+    }
+
+    // Send craft started to player
+    client.emit('crafting:started', {
+      recipeId: result.recipeId,
+      durationMs: result.durationMs,
+      startedAt: result.startedAt,
+    });
+
+    // Broadcast to nearby players in same zone (social indicator)
+    const player = this.playerService.getPlayerBySocket(client.id);
+    if (player) {
+      client.to(player.position.zoneId).emit('crafting:nearby', {
+        playerId: player.id,
+        recipeId: result.recipeId,
+      });
+    }
+  }
+
+  @SubscribeMessage('crafting:collect')
+  async handleCraftingCollect(
+    @ConnectedSocket() client: Socket,
+  ) {
+    const result = await this.craftingService.collectCraft(client.id);
+    if (!result.success) {
+      client.emit('crafting:error', { code: result.code, message: result.message });
+      return;
+    }
+
+    // Send completion to player
+    client.emit('crafting:completed', {
+      recipeId: result.recipeId,
+      outputItemId: result.outputItemId,
+      qualityTier: result.qualityTier,
+      proficiencyXP: result.proficiencyXP,
+      discipline: result.discipline,
+    });
+
+    // Send updated inventory
+    const player = this.playerService.getPlayerBySocket(client.id);
+    if (player) {
+      const inventory = this.inventoryService.getInventory(player.id);
+      if (inventory) {
+        client.emit('inventory:update', inventory);
+      }
     }
   }
 }

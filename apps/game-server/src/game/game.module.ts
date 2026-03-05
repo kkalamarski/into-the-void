@@ -21,6 +21,7 @@ import { ExpeditionService } from './expedition.service';
 import { ChatService } from './chat.service';
 import { HazardService } from './hazard.service';
 import { AutomationService } from './automation.service';
+import { CraftingService } from './crafting.service';
 import { ZonesModule } from '../zones/zones.module';
 
 @Module({
@@ -36,7 +37,7 @@ import { ZonesModule } from '../zones/zones.module';
     }),
     ZonesModule,
   ],
-  providers: [GameGateway, GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService, QuestService, DiscoveryService, GatheringService, LoreService, ZoneMasteryService, ExpeditionService, ChatService, HazardService, AutomationService],
-  exports: [GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService, QuestService, DiscoveryService, GatheringService, LoreService, ZoneMasteryService, ExpeditionService, ChatService, HazardService, AutomationService],
+  providers: [GameGateway, GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService, QuestService, DiscoveryService, GatheringService, LoreService, ZoneMasteryService, ExpeditionService, ChatService, HazardService, AutomationService, CraftingService],
+  exports: [GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService, QuestService, DiscoveryService, GatheringService, LoreService, ZoneMasteryService, ExpeditionService, ChatService, HazardService, AutomationService, CraftingService],
 })
 export class GameModule {}
