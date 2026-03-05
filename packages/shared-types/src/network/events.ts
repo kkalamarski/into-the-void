@@ -2,7 +2,7 @@ import type { TimingChallenge, TimingResult, GatheringAccuracy, ResourceCategory
 import type { ZoneMasteryProgress, MasteryTier, MasteryReward } from '../game/zone-mastery';
 import type { DamageType } from '../game/combat';
 import type { AutomationPanelEntry, LootWindowData } from '../game/automation';
-import type { CraftingDiscipline, QualityTier } from '../game/crafting';
+import type { CraftingDiscipline, QualityTier, RecipeDefinition } from '../game/crafting';
 
 /**
  * Expedition destination with tier and lock status
@@ -69,7 +69,8 @@ export type ClientEventType =
   | 'automation:dismantle'
   | 'automation:panel_request'
   | 'crafting:start'
-  | 'crafting:collect';
+  | 'crafting:collect'
+  | 'crafting:recipes';
 
 /**
  * Server-to-client event types
@@ -135,7 +136,8 @@ export type ServerEventType =
   | 'crafting:started'
   | 'crafting:completed'
   | 'crafting:error'
-  | 'crafting:nearby';
+  | 'crafting:nearby'
+  | 'crafting:recipe-list';
 
 /**
  * Socket.io event map for type safety
@@ -185,6 +187,7 @@ export interface ClientEvents {
   'automation:panel_request': Record<string, never>;
   'crafting:start': { recipeId: string };
   'crafting:collect': Record<string, never>;
+  'crafting:recipes': Record<string, never>;
 }
 
 /**
@@ -521,6 +524,14 @@ export interface ServerEvents {
   'crafting:nearby': {
     playerId: string;
     recipeId: string;
+  };
+  /** Phase 123: Recipe list with per-character unlock status */
+  'crafting:recipe-list': {
+    recipes: Array<{
+      recipe: RecipeDefinition;
+      unlocked: boolean;
+      unlockReasons: string[];
+    }>;
   };
 }
 

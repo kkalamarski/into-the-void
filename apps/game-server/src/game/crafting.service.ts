@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DatabaseService } from '../database/database.service';
 import { PlayerService } from './player.service';
 import { InventoryService } from './inventory.service';
 import {
   RecipeDefinition,
+  RecipeIngredient,
   RecipeUnlockCondition,
   CraftingDiscipline,
   QualityTier,
@@ -15,6 +16,8 @@ import {
   DEFAULT_CRAFTING_PROFICIENCY,
   recipeUnlocks,
 } from '@into-the-void/database';
+import { ALL_RECIPES } from '@into-the-void/items';
+import { rollQualityTier, calculateEffectiveXP, getQualityStatMultiplier } from '@into-the-void/game-logic';
 import { eq, and } from 'drizzle-orm';
 
 /**
@@ -61,7 +64,9 @@ export function getAllRecipes(): RecipeDefinition[] {
 const MAX_CRAFT_LEVEL = 50;
 
 @Injectable()
-export class CraftingService {
+export class CraftingService implements OnModuleInit {
+  private readonly logger = new Logger(CraftingService.name);
+
   /** Active crafts keyed by characterId. One per player max (CRFT-06). */
   private activeCrafts: Map<string, ActiveCraft> = new Map();
   /** Cached proficiency keyed by characterId. Loaded on join, evicted on disconnect. */
@@ -73,6 +78,18 @@ export class CraftingService {
     private readonly inventoryService: InventoryService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
+
+  /**
+   * Register all recipes from the items package on server startup.
+   * Phase 123: Replaces manual registration with auto-registration of ALL_RECIPES.
+   */
+  onModuleInit(): void {
+    for (const recipe of ALL_RECIPES) {
+      registerRecipe(recipe);
+    }
+    const disciplines = new Set(ALL_RECIPES.map(r => r.discipline));
+    this.logger.log(`Registered ${ALL_RECIPES.length} recipes across ${disciplines.size} disciplines`);
+  }
 
   // ────────────────────────────────────────────────────────────────
   // Lifecycle: Load / Unload
@@ -248,41 +265,59 @@ export class CraftingService {
       return { success: false, code: 'RECIPE_NOT_FOUND', message: 'Recipe no longer exists' };
     }
 
+    // Phase 123: Roll quality tier based on proficiency level
+    const prof = await this.loadProficiency(characterId);
+    const disciplineData = prof[recipe.discipline];
+    const qualityResult = rollQualityTier(disciplineData.level, recipe.tier);
+    const qualityTier = qualityResult.tier;
+
     // Add output item to inventory (exactly 1 item per user decision)
+    // Store quality tier in properties for stat computation (standard omitted for cleaner data)
     const addResult = await this.inventoryService.addItem(characterId, {
       instanceId: crypto.randomUUID(),
       itemId: recipe.outputItemId,
       quantity: 1,
       slot: -1, // addItem finds an available slot
-      properties: {},
+      properties: {
+        ...(qualityTier !== 'standard' ? { qualityTier } : {}),
+      },
     });
 
     if (!addResult.success) {
       // Edge case: inventory full after consuming ingredients.
       // Item is lost — player should manage inventory before crafting.
-      // TODO: Consider dropping as ground item in Phase 123+
+      // TODO: Consider dropping as ground item in future phase
     }
 
-    // Award proficiency XP
-    await this.awardProficiencyXP(characterId, recipe.discipline, recipe.proficiencyXP);
+    // Phase 123: Award proficiency XP with decay for low-tier recipes
+    const effectiveXP = calculateEffectiveXP(recipe.proficiencyXP, disciplineData.level, recipe.tier);
+    await this.awardProficiencyXP(characterId, recipe.discipline, effectiveXP);
 
-    // Quality tier: always 'standard' for Phase 122 (calculation in Phase 123)
-    const qualityTier: QualityTier = 'standard';
-
-    // Emit internal event for quest tracking
+    // Emit internal event for quest tracking (includes quality for Phase 123)
     this.eventEmitter.emit('craft.completed', {
       characterId,
       recipeId: recipe.id,
       outputItemId: recipe.outputItemId,
       discipline: recipe.discipline,
+      qualityTier,
     });
+
+    // Phase 123: Masterwork prestige broadcast to nearby players
+    if (qualityTier === 'masterwork') {
+      this.eventEmitter.emit('craft.masterwork', {
+        characterId,
+        recipeId: recipe.id,
+        outputItemId: recipe.outputItemId,
+        qualityTier,
+      });
+    }
 
     return {
       success: true,
       recipeId: recipe.id,
       outputItemId: recipe.outputItemId,
       qualityTier,
-      proficiencyXP: recipe.proficiencyXP,
+      proficiencyXP: effectiveXP,
       discipline: recipe.discipline,
     };
   }
@@ -409,5 +444,53 @@ export class CraftingService {
     const normalizedLevel = Math.min(level, MAX_CRAFT_LEVEL) / MAX_CRAFT_LEVEL;
     const speedFactor = 1 - 0.5 * Math.pow(normalizedLevel, 0.7);
     return Math.max(1000, Math.round(baseDurationMs * speedFactor)); // Minimum 1s
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Query: Recipe list with per-character unlock status (Phase 123)
+  // ────────────────────────────────────────────────────────────────
+
+  /**
+   * Get all recipes with per-character unlock status.
+   * Used by client to render recipe browser (RCPE-01, RCPE-03, RCPE-04).
+   */
+  async getRecipeList(
+    characterId: string,
+    player: { level: number; faction: string }
+  ): Promise<Array<{
+    recipe: RecipeDefinition;
+    unlocked: boolean;
+    unlockReasons: string[];
+  }>> {
+    const allRecipes = getAllRecipes();
+    const results: Array<{
+      recipe: RecipeDefinition;
+      unlocked: boolean;
+      unlockReasons: string[];
+    }> = [];
+
+    for (const recipe of allRecipes) {
+      const unlockReasons: string[] = [];
+      let unlocked = true;
+
+      // Check faction restriction
+      if (recipe.factionRestriction && player.faction !== recipe.factionRestriction) {
+        unlocked = false;
+        unlockReasons.push(`Requires ${recipe.factionRestriction} faction membership`);
+      }
+
+      // Check unlock conditions
+      for (const condition of recipe.unlockConditions) {
+        const conditionMet = await this.checkUnlockCondition(characterId, player as any, condition);
+        if (!conditionMet) {
+          unlocked = false;
+          unlockReasons.push(this.formatUnlockReason(condition));
+        }
+      }
+
+      results.push({ recipe, unlocked, unlockReasons });
+    }
+
+    return results;
   }
 }

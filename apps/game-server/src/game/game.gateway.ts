@@ -2120,4 +2120,47 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
     }
   }
+
+  @SubscribeMessage('crafting:recipes')
+  async handleCraftingRecipes(
+    @ConnectedSocket() client: Socket,
+  ) {
+    const player = this.playerService.getPlayerBySocket(client.id);
+    if (!player) {
+      client.emit('crafting:error', { code: 'PLAYER_NOT_FOUND', message: 'Player not found' });
+      return;
+    }
+    const recipes = await this.craftingService.getRecipeList(player.id, {
+      level: player.level,
+      faction: player.faction,
+    });
+    client.emit('crafting:recipe-list', { recipes });
+  }
+
+  /**
+   * Phase 123: Masterwork craft broadcast to nearby players in same zone.
+   * Triggers when a player crafts a masterwork quality item.
+   */
+  @OnEvent('craft.masterwork')
+  handleMasterworkBroadcast(data: {
+    characterId: string;
+    recipeId: string;
+    outputItemId: string;
+    qualityTier: string;
+  }): void {
+    const player = this.playerService.getPlayerById(data.characterId);
+    if (!player) return;
+
+    const socketId = this.playerService.getSocketByPlayerId(data.characterId);
+    if (!socketId) return;
+
+    // Broadcast to all other players in the same zone via Socket.IO room
+    const socket = this.server.sockets.sockets.get(socketId);
+    if (socket) {
+      socket.to(player.position.zoneId).emit('crafting:nearby', {
+        playerId: data.characterId,
+        recipeId: data.recipeId,
+      });
+    }
+  }
 }
