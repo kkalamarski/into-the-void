@@ -91,3 +91,32 @@
 
 ---
 
+
+## v1.24 Balance & Automation (Shipped: 2026-03-05)
+
+**Phases completed:** 7 phases (115-121), 20 plans
+
+**Delivered:** Situational combat depth with 4 damage types and creature resistances, biome environmental hazards, creature AI upgrades (Stampede/Pack Call/Ambush/Frenzy), full ability rebalance giving defensive skills real value, stat caps with diminishing returns, and automation tech tree from manual extractors to resource refineries.
+
+**Key accomplishments:**
+- Shared type foundation: DamageType union, DamageResistances, shield/DR AbilityEffect variants, DeployableEntity interface
+- Stat caps: soft cap at 200 with diminishing returns, hard cap at 400, stats panel indicator
+- 4 damage types (Thermal/Cryo/Bio/Kinetic) threaded through calculateDamage() with biome-themed creature resistances on all 83+ creatures and color-coded floating numbers
+- Full ability rebalance: Plasma Burst nerfed, 13 abilities with new effect types (stun, shield absorb, DR, reflect, hazard immunity, AoE spread)
+- Creature AI upgrades: Stampede (herbivores), Pack Call (omnivores), Ambush (predators), Frenzy (maniacs) with zone-level pre-processing and client visual rendering
+- Biome hazard system: 5 hazard groups, 3 severity tiers, HP drain, stat debuffs, 10 protection modules, 5 consumables, HUD indicator
+- Automation tech tree: T2 extractors through T5 refineries, AutomationService with 60s tick loop, deployables DB table, automation panel HUD
+
+**Stats:**
+- Timeline: 3 days (2026-03-03 → 2026-03-05)
+- Commits: 75
+- Files modified: 542
+- Lines of code: ~69,131 TypeScript/CSS total
+- Git range: docs(115) → docs(121)
+
+**Archives:**
+- `.planning/milestones/v1.24-ROADMAP.md`
+- `.planning/milestones/v1.24-REQUIREMENTS.md`
+
+---
+

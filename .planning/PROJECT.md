@@ -4,17 +4,17 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, expedition travel, and a dual action bar system for ability management.
 
-## Current State (v1.20 shipped)
+## Current State (v1.24 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
 - World: Procedural biomes (reduced scale for walkable exploration), elevation, structures, seamless chunk streaming
 - Movement: 8-directional WASD, click-to-move pathfinding, client prediction
 - Inventory: 100+ items, exo-suit equipment, module slots, action bar, storage
-- Stats: 8 primary stats with equipment bonuses, level scaling
-- Entities: 60+ definitions, fertility-based spawning, creature AI, tool interaction, loot, respawn
-- Combat: Ability-based system with energy costs and cooldowns, creature aggro AI, player death/respawn, balanced TTK
-- Abilities: 21 abilities across offensive/defensive/utility, item-granted, buff system with durations
+- Stats: 8 primary stats with equipment bonuses, level scaling, soft cap at 200 with diminishing returns, hard cap at 400
+- Entities: 83+ creature definitions, fertility-based spawning, creature AI with Stampede/Pack Call/Ambush/Frenzy behaviors, tool interaction, loot, respawn
+- Combat: 4 damage types (Thermal/Cryo/Bio/Kinetic) with creature resistance multipliers, ability-based system with energy costs and cooldowns, creature aggro AI, player death/respawn, balanced TTK
+- Abilities: 21 abilities across offensive/defensive/utility, rebalanced with real shield absorb, damage reduction, stun, reflect, AoE spread, hazard immunity
 - NPCs: Definition system, 5 types (Trader/Guard/Rep/Ambient/Service/Expedition), interaction modal, dialogue
 - Trading: Buy/sell with credits, trader inventory, credit balance in HUD
 - Hubs: 4 orbital faction stations, portal travel, home recall ability (5 min cooldown)
@@ -24,9 +24,12 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - UI Polish: Unified NPC modal, quest tracker HUD, glassmorphism, quest markers, completion feedback
 - Gathering: Timing mini-game, proficiency progression, rare/epic node variants, risk/reward placement
 - Exploration: Fog of war, POI discovery, lore fragments, zone mastery system
-- Content: 6 new biomes (aquatic + exotic), 30+ new gatherables, 20+ new creatures, 40+ new items
+- Content: 16 biomes (including aquatic + exotic), 83+ creatures, full plant/mineral/artifact coverage, faction gear lines
 - Action Bar: Dual bars (16 slots), click-to-trigger, shift+drag relocation, panel-to-bar drag, drop-outside-to-remove
-- HUD: Compact shortcuts bottom-right near minimap, CSS Grid layout
+- HUD: Compact shortcuts, CSS Grid layout, hazard indicator, shield bar, automation panel
+- Chat: 5-channel system (local/zone/faction/global/whisper), moderation (mute/block), persistence
+- Biome Hazards: HP drain, stat debuffs, tiered severity, protection gear counters, grace period, HUD indicator
+- Automation: T2-T5 deployable structures (extractors, beacons, planetary extractors, refineries), AutomationService with tick loop, maintenance costs, automation panel HUD
 
 **Tech stack:**
 - Frontend: React 18, Phaser 3, Zustand, React Router v7
@@ -35,7 +38,7 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Monorepo: NX with 3 apps + 5 shared packages
 - Deployment: Docker Swarm, Traefik reverse proxy, GitHub Actions CI/CD
 
-**Codebase:** ~52,700 LOC TypeScript/CSS
+**Codebase:** ~69,131 LOC TypeScript/CSS
 
 ## Core Value
 
@@ -189,32 +192,34 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Player mute (hide messages from specific players) — v1.22
 - ✓ Player block (prevent whispers from specific players) — v1.22
 - ✓ Mute/block lists persist across sessions — v1.22
-
-## Current Milestone: v1.24 Balance & Automation
-
-**Goal:** Introduce situational combat depth (damage types, biome hazards, creature AI upgrades), rebalance abilities so defensive/utility skills have purpose, and build the automation progression arc from manual gathering to planetary extractors.
-
-**Target features:**
-- 4 damage types (Thermal/Cryo/Bio/Kinetic) with creature resistances
-- Biome environmental hazards requiring specific gear counters
-- Creature behavior upgrades (Stampede, Pack Call, Ambush, Frenzy)
-- Ability rebalance removing Plasma Burst dominance and giving defensive abilities real value
-- Automation tech tree: Extractors → Survey Beacons → Planetary Extractors → Resource Processing
-- Credit sinks tied to automation deployments
+- ✓ Entity validation infrastructure with 4-category test suite — v1.23
+- ✓ Faction identity design artifact (stat archetypes, ability matrices, naming) — v1.23
+- ✓ All 16 biomes with 4-6 creatures, behavioral variety — v1.23
+- ✓ All biomes with 3-4 plants, 2-3 minerals, 1-2 artifacts — v1.23
+- ✓ Faction suit lines (Verdant/Helix/Nexus/Unaffiliated) Common through Legendary — v1.23
+- ✓ Faction modules and tools completing gear identity — v1.23
+- ✓ DamageType union and DamageResistances on all creatures — v1.24
+- ✓ Shield/damage_reduction AbilityEffect variants — v1.24
+- ✓ DeployableEntity interface and AiTickResult behavior signals — v1.24
+- ✓ Stat soft cap at 200 with diminishing returns, hard cap at 400 — v1.24
+- ✓ 4 damage types threaded through calculateDamage() with resistance multipliers — v1.24
+- ✓ Creature resistances matching biome lore (70% cap, 0.3x floor) — v1.24
+- ✓ Color-coded floating damage numbers per type — v1.24
+- ✓ All 13 abilities rebalanced with situational niches — v1.24
+- ✓ Emergency Shield as absorb pool, Fortify as flat DR, Magnetic Field as reflect — v1.24
+- ✓ Energy Barrier biome hazard immunity — v1.24
+- ✓ Creature AI: Stampede, Pack Call, Ambush, Frenzy behaviors — v1.24
+- ✓ Zone-level pre-processing for group AI behaviors — v1.24
+- ✓ HazardService with per-player state, HP drain, stat debuffs, gear counters — v1.24
+- ✓ Hazard protection gear and consumables in trader inventories — v1.24
+- ✓ Hazard HUD indicator with protection bar — v1.24
+- ✓ Automation tech tree: T2 extractors through T5 refineries — v1.24
+- ✓ AutomationService with 60s tick, maintenance costs, DB persistence — v1.24
+- ✓ Automation panel HUD for deploy/collect/refuel — v1.24
 
 ### Active
 
-- [ ] 4 damage types with per-creature resistance/vulnerability multipliers
-- [ ] Biome hazard system with environmental stat drains and gear counters
-- [ ] Creature behavior upgrades (4 new mechanics per behavior type)
-- [ ] Offensive ability rebalance with situational niches
-- [ ] Defensive ability rebalance with real damage reduction/shields
-- [ ] Stat caps with diminishing returns above 200
-- [ ] Deployable extractors (T2 automation)
-- [ ] Survey beacons with passive resource caching (T3 automation)
-- [ ] Planetary extractors with maintenance loops (T4 automation)
-- [ ] Resource processing/refinery system (T5 automation)
-- [ ] Credit sinks for automation deployment and maintenance
+_(No active milestone — run `/gsd:new-milestone` to define next)_
 
 ### Out of Scope
 
@@ -258,6 +263,13 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 | Home recall as universal ability | Available without equipment dependency | ✓ Good |
 | Dual action bars with bar-prefixed DnD | Prevents slot ID collisions | ✓ Good |
 | CSS Grid HUD layout | Clean separation of bars and shortcuts | ✓ Good |
+| Resistance cap at 70% (0.3x floor) | No creature immunity, prevents hard lock-out | ✓ Good |
+| Resistance after armor reduction | Independent armor and resistance layers | ✓ Good |
+| BIOME_RESISTANCE_PROFILES lookup | All 77 creatures use biome-based profiles, no per-creature overrides | ✓ Good |
+| Fuel items use 'reagent' category | Prevents accidental consumption via inventory:use | ✓ Good |
+| AutomationService sync processTick() | No async calls for tick-budget safety | ✓ Good |
+| PvP deployable looting (no owner check) | Any player can collect from any deployable | ⚠️ Revisit |
+| Maintenance cost >= 60% of output | Prevents runaway credit inflation from automation | ✓ Good |
 
 ## Known Issues
 
@@ -265,4 +277,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-03-03 after v1.24 milestone started*
+*Last updated: 2026-03-05 after v1.24 milestone*
