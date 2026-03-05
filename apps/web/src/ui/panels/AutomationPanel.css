@@ -1,0 +1,227 @@
+.automation-panel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 340px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.automation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-bg-tertiary);
+  margin-bottom: 0;
+  cursor: grab;
+}
+
+.automation-header span {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.automation-header .close-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+.automation-header .close-btn:hover {
+  color: var(--color-text-primary);
+}
+
+/* Tab bar */
+.automation-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px 0 0 0;
+  border-bottom: 1px solid var(--color-bg-tertiary);
+}
+
+.automation-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 11px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.automation-tab:hover {
+  color: var(--color-text-primary);
+}
+
+.automation-tab svg {
+  font-size: 16px;
+}
+
+.automation-tab--active {
+  color: var(--color-accent, #4488ff);
+  border-bottom-color: var(--color-accent, #4488ff);
+}
+
+.automation-tab-label {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* Content area */
+.automation-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  min-height: 120px;
+  max-height: 300px;
+}
+
+.automation-empty {
+  text-align: center;
+  color: var(--color-text-secondary);
+  padding: 24px 0;
+  font-size: 13px;
+}
+
+/* Structure list */
+.automation-structure-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.automation-structure-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  background: var(--color-bg-tertiary);
+  border-radius: 4px;
+  gap: 8px;
+}
+
+.automation-structure-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.automation-structure-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.automation-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.automation-structure-location {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.automation-structure-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Fuel bar */
+.automation-fuel-bar-container {
+  width: 60px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.automation-fuel-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.automation-structure-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.automation-count-badge {
+  background: var(--color-accent, #4488ff);
+  color: #fff;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.automation-durability {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+}
+
+/* Footer */
+.automation-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-bg-tertiary);
+}
+
+.automation-deploy-btn {
+  flex: 1;
+  padding: 6px 12px;
+  background: var(--color-accent, #4488ff);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+
+.automation-deploy-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.automation-deploy-btn:disabled {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}
+
+.automation-limit-text {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  margin-left: 8px;
+  flex-shrink: 0;
+}

@@ -1,0 +1,315 @@
+.loot-window-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loot-window {
+  width: 380px;
+  max-height: 80vh;
+  background: var(--color-bg-secondary, #14141f);
+  border: 1px solid var(--color-bg-tertiary, #1e1e2e);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+/* Header */
+.loot-window-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.loot-window-title {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.loot-window-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--color-text-primary);
+}
+
+.loot-window-owner {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.loot-window-status {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.loot-window-close {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.loot-window-close:hover {
+  color: var(--color-text-primary);
+}
+
+/* Sections */
+.loot-section {
+  padding: 8px 0;
+  border-top: 1px solid var(--color-bg-tertiary, #1e1e2e);
+}
+
+.loot-section-label {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.loot-empty {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  padding: 8px 0;
+}
+
+/* Resource grid */
+.loot-resource-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.loot-resource-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  background: var(--color-bg-tertiary, #1e1e2e);
+  border-radius: 4px;
+}
+
+.loot-resource-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.loot-resource-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.loot-resource-name {
+  font-size: 12px;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loot-resource-qty {
+  font-size: 12px;
+  color: var(--color-accent, #4488ff);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* Collect button */
+.loot-collect-btn {
+  width: 100%;
+  padding: 6px 12px;
+  background: #44cc44;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+
+.loot-collect-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.loot-collect-btn:disabled {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}
+
+.loot-collect-btn--loot {
+  background: #cccc44;
+  color: #1a1a1a;
+}
+
+/* Fuel gauge */
+.loot-fuel-gauge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.loot-fuel-bar-container {
+  flex: 1;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.loot-fuel-bar {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.loot-fuel-text {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  min-width: 50px;
+  text-align: right;
+}
+
+.loot-refuel-btn {
+  width: 100%;
+  padding: 5px 12px;
+  background: var(--color-accent, #4488ff);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: opacity 0.15s;
+}
+
+.loot-refuel-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.loot-refuel-btn:disabled {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}
+
+/* Recipe progress */
+.loot-recipe-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loot-recipe-bar-container {
+  flex: 1;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.loot-recipe-bar {
+  height: 100%;
+  border-radius: 5px;
+  background: #ff8800;
+  transition: width 0.3s ease;
+}
+
+.loot-recipe-text {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+/* Durability */
+.loot-durability-bar-container {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.loot-durability-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.loot-durability-text {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+/* Dismantle */
+.loot-dismantle-section {
+  display: flex;
+  gap: 8px;
+}
+
+.loot-dismantle-btn {
+  flex: 1;
+  padding: 5px 12px;
+  background: rgba(204, 68, 68, 0.2);
+  color: #cc4444;
+  border: 1px solid #cc4444;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s;
+}
+
+.loot-dismantle-btn:hover {
+  background: rgba(204, 68, 68, 0.3);
+}
+
+.loot-dismantle-btn--confirm {
+  background: #cc4444;
+  color: #fff;
+}
+
+.loot-dismantle-btn--confirm:hover {
+  background: #dd5555;
+}
+
+.loot-dismantle-cancel {
+  padding: 5px 12px;
+  background: none;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.loot-dismantle-cancel:hover {
+  color: var(--color-text-primary);
+}

@@ -75,6 +75,10 @@ interface GameState {
   isQuestLogOpen: boolean;
   toggleQuestLog: () => void;
 
+  // Automation panel
+  showAutomation: boolean;
+  toggleAutomation: () => void;
+
   // Discovered resources (rare nodes)
   discoveredResources: DiscoveredResource[];
   setDiscoveredResources: (resources: DiscoveredResource[]) => void;
@@ -138,6 +142,10 @@ export const useGameStore = create<GameState>((set) => ({
   // Quest log
   isQuestLogOpen: false,
   toggleQuestLog: () => set((state) => ({ isQuestLogOpen: !state.isQuestLogOpen })),
+
+  // Automation panel
+  showAutomation: false,
+  toggleAutomation: () => set((state) => ({ showAutomation: !state.showAutomation })),
 
   // Discovered resources
   discoveredResources: [],

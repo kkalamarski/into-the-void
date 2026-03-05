@@ -143,6 +143,14 @@ export function resolveEffect(effect: ItemEffect): EffectResult {
         applied: { [`hazardProtection_${effect.hazardType}`]: effect.protectionPercent },
       };
 
+    case 'deploy':
+      // Deploy effect is handled by the automation system, not the standard effect resolver.
+      // The deployableType is read directly from the item definition by AutomationService.
+      return {
+        type: 'deploy',
+        applied: {},
+      };
+
     default: {
       // Exhaustive check - TypeScript will error if a case is missed
       const _exhaustive: never = effect;

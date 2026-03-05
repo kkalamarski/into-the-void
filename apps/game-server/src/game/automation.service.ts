@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { Server } from 'socket.io';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { v4 as uuidv4 } from 'uuid';
+// Uses Node built-in crypto.randomUUID() instead of uuid package
 import {
   AUTOMATION_CONFIGS,
   REFINERY_RECIPES,
@@ -361,7 +361,7 @@ export class AutomationService implements OnModuleInit, OnModuleDestroy {
 
     // Create DB record
     const db = this.databaseService.getClient();
-    const deployableId = uuidv4();
+    const deployableId = crypto.randomUUID();
     const itemDef = ItemRegistry.get(deployableItemId);
     const now = new Date();
 
@@ -415,8 +415,7 @@ export class AutomationService implements OnModuleInit, OnModuleDestroy {
       type: 'deployable',
       deployableType: structureType,
       ownerId: playerId,
-      x: position.x,
-      y: position.y,
+      position: { x: position.x, y: position.y, zoneId: position.zoneId },
       name: itemDef?.displayName || config.displayName,
       active: true,
       durability: config.maxDurability,
@@ -453,7 +452,7 @@ export class AutomationService implements OnModuleInit, OnModuleDestroy {
     // Add each collected item to player inventory
     for (const resource of collected) {
       await this.inventoryService.addItem(playerId, {
-        instanceId: uuidv4(),
+        instanceId: crypto.randomUUID(),
         itemId: resource.itemId,
         quantity: resource.quantity,
         slot: -1,
@@ -563,7 +562,7 @@ export class AutomationService implements OnModuleInit, OnModuleDestroy {
     // Add recovered items to inventory
     for (const item of recoveredItems) {
       await this.inventoryService.addItem(playerId, {
-        instanceId: uuidv4(),
+        instanceId: crypto.randomUUID(),
         itemId: item.itemId,
         quantity: item.quantity,
         slot: -1,
@@ -575,7 +574,7 @@ export class AutomationService implements OnModuleInit, OnModuleDestroy {
     if (state.accumulatedResources.length > 0) {
       for (const resource of state.accumulatedResources) {
         await this.inventoryService.addItem(playerId, {
-          instanceId: uuidv4(),
+          instanceId: crypto.randomUUID(),
           itemId: resource.itemId,
           quantity: resource.quantity,
           slot: -1,

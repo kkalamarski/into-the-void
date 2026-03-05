@@ -15,8 +15,10 @@ import '../store/loreStore'; // Side-effect: registers lore socket handlers
 import '../store/zoneMasteryStore'; // Side-effect: registers mastery socket handlers
 import '../store/chatStore'; // Side-effect: registers chat:message socket handler
 import '../store/moderationStore'; // Side-effect: auto-loads mute/block lists when player authenticates
+import '../store/automationStore'; // Side-effect: registers automation socket handlers
 import { useActionBarStore } from '../store/actionBarStore';
 import { useNpcStore } from '../store/npcStore';
+import { useAutomationStore } from '../store/automationStore';
 import { useModalStackStore } from '../store/modalStackStore';
 import { useCombatStore } from '../store/combatStore';
 import { useAbilityStore } from '../store/abilityStore';
@@ -30,6 +32,8 @@ import { AbilitiesPanel } from './panels/AbilitiesPanel';
 import { QuestLogPanel } from './panels/QuestLogPanel';
 import { NpcInteractionModal } from './panels/NpcInteractionModal';
 import { QuestTracker } from './hud/QuestTracker';
+import { AutomationPanel } from './panels/AutomationPanel';
+import { LootWindow } from './panels/LootWindow';
 import { DeathScreen } from './DeathScreen';
 import { AlertNotification } from './AlertNotification';
 import { LevelUpNotification } from '../components/LevelUpNotification';
@@ -39,8 +43,9 @@ import { ZoneMasteryHUD } from '../components/ZoneMasteryHUD';
 import './GameUI.css';
 
 export const GameUI: React.FC = () => {
-  const { showInventory, showEquipment, showAbilities, showDeathScreen, isQuestLogOpen, player } = useGameStore();
+  const { showInventory, showEquipment, showAbilities, showAutomation, showDeathScreen, isQuestLogOpen, player } = useGameStore();
   const { interactingNpc } = useNpcStore();
+  const { lootWindow } = useAutomationStore();
   const [shiftHeld, setShiftHeld] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -250,6 +255,8 @@ export const GameUI: React.FC = () => {
         {showEquipment && <EquipmentPanel />}
         {showAbilities && <AbilitiesPanel />}
         {isQuestLogOpen && <QuestLogPanel />}
+        {showAutomation && <AutomationPanel />}
+        {lootWindow && <LootWindow />}
         <LoreCodex />
         <LevelUpNotification />
         <QuestCompleteModal />

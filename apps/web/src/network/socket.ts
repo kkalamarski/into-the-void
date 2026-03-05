@@ -114,6 +114,13 @@ class GameSocket {
       'hazard:update',
       'hazard:damage',
       'hazard:clear',
+      'automation:deployed',
+      'automation:loot_window',
+      'automation:collected',
+      'automation:refueled',
+      'automation:dismantled',
+      'automation:panel_state',
+      'automation:status_update',
     ];
 
     for (const event of serverEvents) {

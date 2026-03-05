@@ -17,7 +17,7 @@ import { HazardIndicator } from './HazardIndicator';
 import './HUD.css';
 
 export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
-  const { player, zoneState, toggleQuestLog, showCombatLog, toggleCombatLog } = useGameStore();
+  const { player, zoneState, toggleQuestLog, showCombatLog, toggleCombatLog, showAutomation, toggleAutomation } = useGameStore();
   const { inventory } = useInventoryStore();
   const { inCombat } = useCombatStore();
   const { active: shieldActive, remaining: shieldRemaining, maxAbsorb: shieldMax } = useShieldStore();
@@ -81,12 +81,20 @@ export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
         } else if (!isOpen) {
           toggleQuestLog(); // QUEST-45: Q toggles quest log
         }
+      } else if (key === 'j') {
+        // Automation panel: opening always allowed; closing only if it's topmost
+        const automationOpen = useGameStore.getState().showAutomation;
+        if (automationOpen && top?.id === 'automation-panel') {
+          toggleAutomation();
+        } else if (!automationOpen) {
+          toggleAutomation();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleCombatLog, toggleQuestLog, showCombatLog]);
+  }, [toggleCombatLog, toggleQuestLog, toggleAutomation, showCombatLog, showAutomation]);
 
   if (!player) return null;
 
