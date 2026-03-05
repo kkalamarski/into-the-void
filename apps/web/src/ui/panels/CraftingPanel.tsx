@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCraftingStore } from '../../store/craftingStore';
-import type { RecipeEntry } from '../../store/craftingStore';
 import { useGameStore } from '../../store/gameStore';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { useModalStack } from '../../hooks/useModalStack';
@@ -16,7 +15,7 @@ import type {
 import {
   GiAnvil,
   GiCauldron,
-  GiMortarPestle,
+  GiPestleMortar,
   GiGears,
   GiPadlock,
 } from 'react-icons/gi';
@@ -30,7 +29,7 @@ const DISCIPLINE_CONFIG: {
 }[] = [
   { id: 'equipment', label: 'Equipment', icon: GiAnvil },
   { id: 'consumables', label: 'Consumables', icon: GiCauldron },
-  { id: 'reagents', label: 'Reagents', icon: GiMortarPestle },
+  { id: 'reagents', label: 'Reagents', icon: GiPestleMortar },
   { id: 'automation', label: 'Automation', icon: GiGears },
 ];
 
