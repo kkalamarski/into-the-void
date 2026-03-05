@@ -47,3 +47,6 @@ export * from './gathering/proficiency';
 
 // Hazard
 export * from './hazard/hazard';
+
+// Crafting quality and XP decay (Phase 123)
+export * from './crafting';
