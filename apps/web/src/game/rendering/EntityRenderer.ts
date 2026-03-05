@@ -407,7 +407,17 @@ export class EntityRenderer {
     }
     const { key: textureKey, frame: textureFrame } = this.getEntityTexture(entity);
     const sprite = this.scene.add.sprite(0, spriteYOffset, textureKey, textureFrame);
-    sprite.setOrigin(0.5, 1.0); // Bottom-center origin for ground alignment
+
+    // Feature sprites (plants/minerals) are isometric objects centered in 256x256 frames.
+    // They need origin aligned to the diamond center (0.5, 0.25) like tile sprites so
+    // the visual content matches the collision tile position.
+    // Characters, creatures, and NPCs use bottom-center (0.5, 1.0) for standing alignment.
+    const isFeature = this.isPlant(entity) || this.isMineral(entity);
+    if (isFeature) {
+      sprite.setOrigin(0.5, 0.25); // Diamond-center origin — matches tile positioning
+    } else {
+      sprite.setOrigin(0.5, 1.0); // Bottom-center origin for standing entities
+    }
     sprite.setScale(scaleX, scaleY);
 
     // Apply glow effect for rare/epic minerals and plants
@@ -467,8 +477,10 @@ export class EntityRenderer {
     }
 
     // UI positioning based on actual sprite height (not BASE_SPRITE_HEIGHT)
-    // Sprite has origin(0.5, 1.0) at y=0, so sprite top is at y = -actualSpriteHeight in container space
-    const uiBaseY = -actualSpriteHeight - 20; // 20px padding above sprite top
+    // Standing entities: origin(0.5, 1.0) → sprite top at y = -actualSpriteHeight
+    // Feature entities:  origin(0.5, 0.25) → sprite top at y = -0.25 * actualSpriteHeight
+    const spriteTopY = isFeature ? -0.25 * actualSpriteHeight : -actualSpriteHeight;
+    const uiBaseY = spriteTopY - 20; // 20px padding above sprite top
     const { name: displayName, gated } = this.applyPerceptionGate(entity);
 
     // Creatures get WoW-style health bar with behavior icon and name inside
@@ -802,6 +814,13 @@ export class EntityRenderer {
     // Minerals - crystal caves (from crystal-biome-features spritesheet)
     mineral_cave_geode: 1,
     mineral_prismatic_crystal: 1,
+    // Plants - toxic wastes (from acid-biome-features spritesheet)
+    plant_acid_fern: 1,
+    plant_acid_bloom: 1,
+    plant_chemical_bloom: 1,
+    // Minerals - toxic wastes (from acid-biome-features spritesheet)
+    mineral_corrosive_deposit: 1,
+    mineral_acid_stone: 1,
   };
 
   /**

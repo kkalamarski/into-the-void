@@ -22,9 +22,48 @@ docker pull "$REGISTRY/game-server:$TAG"
 docker pull "$REGISTRY/web:$TAG"
 echo "✓ Images pulled successfully"
 
-# Step 2: Deploy stack with rolling update
+# Step 2: Run database migrations
 echo ""
-echo "Step 2/3: Deploying stack (rolling update)..."
+echo "Step 2/4: Running database migrations..."
+POSTGRES_CONTAINER=$(docker ps -q -f name=itv_postgres)
+if [ -n "$POSTGRES_CONTAINER" ] && [ -d "/opt/itv/drizzle" ]; then
+  # Create migration tracking table if it doesn't exist
+  docker exec "$POSTGRES_CONTAINER" psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-into_the_void}" -c "
+    CREATE TABLE IF NOT EXISTS __deploy_migrations (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL UNIQUE,
+      applied_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  " > /dev/null
+
+  APPLIED=0
+  SKIPPED=0
+  for migration in /opt/itv/drizzle/[0-9]*.sql; do
+    [ -f "$migration" ] || continue
+    name=$(basename "$migration")
+    already_applied=$(docker exec "$POSTGRES_CONTAINER" psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-into_the_void}" -t -c "
+      SELECT COUNT(*) FROM __deploy_migrations WHERE name = '$name';
+    " | tr -d ' ')
+
+    if [ "$already_applied" = "0" ]; then
+      echo "  Applying: $name"
+      docker exec -i "$POSTGRES_CONTAINER" psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-into_the_void}" < "$migration"
+      docker exec "$POSTGRES_CONTAINER" psql -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-into_the_void}" -c "
+        INSERT INTO __deploy_migrations (name) VALUES ('$name');
+      " > /dev/null
+      APPLIED=$((APPLIED + 1))
+    else
+      SKIPPED=$((SKIPPED + 1))
+    fi
+  done
+  echo "✓ Migrations complete ($APPLIED applied, $SKIPPED already up-to-date)"
+else
+  echo "⚠ Skipping migrations (postgres container or migration files not found)"
+fi
+
+# Step 3: Deploy stack with rolling update
+echo ""
+echo "Step 3/4: Deploying stack (rolling update)..."
 export TAG="$TAG"
 export REGISTRY="$REGISTRY"
 docker stack deploy -c docker-stack.yml --with-registry-auth itv
@@ -32,7 +71,7 @@ echo "✓ Stack deployment initiated"
 
 # Step 4: Wait for services to stabilize
 echo ""
-echo "Step 3/3: Waiting for services to stabilize..."
+echo "Step 4/4: Waiting for services to stabilize..."
 sleep 30
 
 # Check service status

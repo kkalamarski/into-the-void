@@ -200,6 +200,13 @@ export class PreloadScene extends Phaser.Scene {
       frameHeight: 256,
     });
 
+    // Acid/toxic biome features loaded from spritesheet (5 frames at 256x256):
+    // 0: acid fern, 1: acid bloom, 2: chemical bloom, 3: corrosive deposit, 4: acid stone
+    this.load.spritesheet('acid-biome-features-sheet', 'sprites/features/acid-biome-features.png', {
+      frameWidth: 256,
+      frameHeight: 256,
+    });
+
     // Remaining feature sprites loaded from individual variant files
     const featureSprites: Array<{ entityId: string; folder: string; variants: number }> = [
       // Plants - fungal forest
@@ -565,6 +572,16 @@ export class PreloadScene extends Phaser.Scene {
       { frame: 4, key: 'mineral_prismatic_crystal-v1' },
     ];
     this.extractFrames('crystal-biome-features-sheet', crystalFeatureMap, 256, 256);
+
+    // Acid/toxic biome features spritesheet: 5 frames
+    const acidFeatureMap: Array<{ frame: number; key: string }> = [
+      { frame: 0, key: 'plant_acid_fern-v1' },
+      { frame: 1, key: 'plant_acid_bloom-v1' },
+      { frame: 2, key: 'plant_chemical_bloom-v1' },
+      { frame: 3, key: 'mineral_corrosive_deposit-v1' },
+      { frame: 4, key: 'mineral_acid_stone-v1' },
+    ];
+    this.extractFrames('acid-biome-features-sheet', acidFeatureMap, 256, 256);
   }
 
   /**
