@@ -10,7 +10,7 @@ export const DEPLOYABLE_EXTRACTOR: ItemDefinition = {
   id: 'deployable_extractor',
   displayName: 'Portable Extractor',
   description:
-    'A compact extraction unit that can be deployed on resource nodes. Automatically harvests resources when fueled. Limit: 2 per operator.',
+    'A compact extraction unit that can be deployed on resource nodes. Automatically harvests resources when fueled. Limit: 2 per operator. Craftable via the Automation discipline.',
   category: 'consumable',
   rarity: 'common',
   maxStack: 5,
@@ -27,7 +27,7 @@ export const DEPLOYABLE_SURVEY_BEACON: ItemDefinition = {
   id: 'deployable_survey_beacon',
   displayName: 'Survey Beacon',
   description:
-    'An advanced scanning beacon that marks a zone for passive resource caching. Expires after 24 hours. Limit: 1 per operator.',
+    'An advanced scanning beacon that marks a zone for passive resource caching. Expires after 24 hours. Limit: 1 per operator. Craftable via the Automation discipline.',
   category: 'consumable',
   rarity: 'rare',
   maxStack: 3,
@@ -44,7 +44,7 @@ export const DEPLOYABLE_PLANETARY_EXTRACTOR: ItemDefinition = {
   id: 'deployable_planetary_extractor',
   displayName: 'Planetary Extractor',
   description:
-    'A heavy-duty extraction platform for permanent deployment. Requires regular maintenance and degrades over time. Limit: 3 per operator.',
+    'A heavy-duty extraction platform for permanent deployment. Requires regular maintenance and degrades over time. Limit: 3 per operator. Craftable via the Automation discipline.',
   category: 'consumable',
   rarity: 'epic',
   maxStack: 3,
@@ -61,7 +61,7 @@ export const DEPLOYABLE_REFINERY: ItemDefinition = {
   id: 'deployable_refinery',
   displayName: 'Resource Refinery',
   description:
-    'A sophisticated transmutation facility that converts raw resources into refined materials. Recipes are net-negative in value — the benefit is resource type conversion. Limit: 1 per operator.',
+    'A sophisticated transmutation facility that converts raw resources into refined materials. Recipes are net-negative in value — the benefit is resource type conversion. Limit: 1 per operator. Craftable via the Automation discipline.',
   category: 'consumable',
   rarity: 'exotic',
   maxStack: 1,

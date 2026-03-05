@@ -1,5 +1,6 @@
 import type { RecipeDefinition } from '@into-the-void/shared-types';
 import { ALL_FACTION_RECIPES } from './faction-recipes';
+import { ALL_AUTOMATION_RECIPES } from './automation-recipes';
 
 // ============================================================
 // RECIPE DEFINITIONS — Phase 123
@@ -592,6 +593,8 @@ export const ALL_RECIPES: readonly RecipeDefinition[] = [
   RECIPE_POWER_CORE_MODULE,
   // Phase 123 faction specialty recipes (9)
   ...ALL_FACTION_RECIPES,
+  // Phase 124 automation structure recipes (4)
+  ...ALL_AUTOMATION_RECIPES,
 ];
 
 /**
@@ -644,4 +647,10 @@ export const RECIPE_IDS = {
   RECIPE_NEXUS_CIPHER_ARRAY: 'recipe_nexus_cipher_array',
   RECIPE_NEXUS_SIGNAL_PROBE: 'recipe_nexus_signal_probe',
   RECIPE_NEXUS_SPECTRE_SUIT: 'recipe_nexus_spectre_suit',
+
+  // ---- AUTOMATION DISCIPLINE (Phase 124) ----
+  RECIPE_DEPLOYABLE_EXTRACTOR: 'recipe_deployable_extractor',
+  RECIPE_DEPLOYABLE_SURVEY_BEACON: 'recipe_deployable_survey_beacon',
+  RECIPE_DEPLOYABLE_PLANETARY_EXTRACTOR: 'recipe_deployable_planetary_extractor',
+  RECIPE_DEPLOYABLE_REFINERY: 'recipe_deployable_refinery',
 } as const;
