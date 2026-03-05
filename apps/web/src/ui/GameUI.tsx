@@ -16,6 +16,7 @@ import '../store/zoneMasteryStore'; // Side-effect: registers mastery socket han
 import '../store/chatStore'; // Side-effect: registers chat:message socket handler
 import '../store/moderationStore'; // Side-effect: auto-loads mute/block lists when player authenticates
 import '../store/automationStore'; // Side-effect: registers automation socket handlers
+import '../store/craftingStore'; // Side-effect: registers crafting socket handlers
 import { useActionBarStore } from '../store/actionBarStore';
 import { useNpcStore } from '../store/npcStore';
 import { useAutomationStore } from '../store/automationStore';
@@ -33,6 +34,7 @@ import { QuestLogPanel } from './panels/QuestLogPanel';
 import { NpcInteractionModal } from './panels/NpcInteractionModal';
 import { QuestTracker } from './hud/QuestTracker';
 import { AutomationPanel } from './panels/AutomationPanel';
+import { CraftingPanel } from './panels/CraftingPanel';
 import { LootWindow } from './panels/LootWindow';
 import { DeathScreen } from './DeathScreen';
 import { AlertNotification } from './AlertNotification';
@@ -43,7 +45,7 @@ import { ZoneMasteryHUD } from '../components/ZoneMasteryHUD';
 import './GameUI.css';
 
 export const GameUI: React.FC = () => {
-  const { showInventory, showEquipment, showAbilities, showAutomation, showDeathScreen, isQuestLogOpen, player } = useGameStore();
+  const { showInventory, showEquipment, showAbilities, showAutomation, showCrafting, showDeathScreen, isQuestLogOpen, player } = useGameStore();
   const { interactingNpc } = useNpcStore();
   const { lootWindow } = useAutomationStore();
   const [shiftHeld, setShiftHeld] = useState(false);
@@ -256,6 +258,7 @@ export const GameUI: React.FC = () => {
         {showAbilities && <AbilitiesPanel />}
         {isQuestLogOpen && <QuestLogPanel />}
         {showAutomation && <AutomationPanel />}
+        {showCrafting && <CraftingPanel />}
         {lootWindow && <LootWindow />}
         <LoreCodex />
         <LevelUpNotification />

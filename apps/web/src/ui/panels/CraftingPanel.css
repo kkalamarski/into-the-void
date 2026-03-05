@@ -1,0 +1,430 @@
+.crafting-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 620px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.crafting-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-bg-tertiary);
+  margin-bottom: 10px;
+  cursor: grab;
+}
+
+.crafting-header span {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.crafting-header .close-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+.crafting-header .close-btn:hover {
+  color: var(--color-text-primary);
+}
+
+/* Three-column body */
+.crafting-body {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  height: 420px;
+}
+
+/* ── Left Column: Discipline Tabs ── */
+.crafting-tabs {
+  width: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-right: 1px solid var(--color-bg-tertiary);
+  padding-right: 8px;
+  flex-shrink: 0;
+}
+
+.crafting-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.crafting-tab:hover {
+  background: var(--color-bg-tertiary);
+}
+
+.crafting-tab--active {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}
+
+.crafting-tab-icon {
+  font-size: 20px;
+}
+
+.crafting-tab-label {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.crafting-tab-level {
+  font-size: 9px;
+  color: var(--color-text-secondary);
+  opacity: 0.8;
+}
+
+/* XP Progress bar below tabs */
+.crafting-xp-section {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.crafting-xp-bar {
+  height: 4px;
+  background: var(--color-bg-tertiary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.crafting-xp-bar-fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.crafting-xp-label {
+  font-size: 9px;
+  color: var(--color-text-secondary);
+  display: block;
+  text-align: center;
+  margin-top: 2px;
+}
+
+/* ── Middle Column: Recipe List ── */
+.crafting-recipe-list {
+  width: 200px;
+  overflow-y: auto;
+  border-right: 1px solid var(--color-bg-tertiary);
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.crafting-recipe-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.crafting-recipe-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  transition: background 0.1s;
+}
+
+.crafting-recipe-row:hover {
+  background: var(--color-bg-tertiary);
+}
+
+.crafting-recipe--selected {
+  background: var(--color-bg-tertiary);
+  border-left: 2px solid var(--color-accent);
+}
+
+.crafting-recipe--locked {
+  opacity: 0.5;
+}
+
+.crafting-recipe-icon {
+  flex-shrink: 0;
+}
+
+.crafting-recipe-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+}
+
+.crafting-recipe-status {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.crafting-recipe-status--craftable {
+  background: #44cc44;
+}
+
+.crafting-recipe-status--missing {
+  background: #cc8844;
+}
+
+.crafting-recipe-status--locked {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
+}
+
+/* ── Right Column: Detail Pane ── */
+.crafting-detail {
+  flex: 1;
+  padding: 0 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.crafting-detail-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.crafting-detail-header {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.crafting-detail-icon {
+  flex-shrink: 0;
+}
+
+.crafting-detail-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.crafting-detail-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.crafting-detail-desc {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+/* Locked banner */
+.crafting-locked-banner {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 8px;
+  background: rgba(204, 68, 68, 0.1);
+  border: 1px solid rgba(204, 68, 68, 0.3);
+  border-radius: 4px;
+}
+
+.crafting-locked-icon {
+  font-size: 16px;
+  color: #cc4444;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.crafting-locked-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: #cc4444;
+}
+
+/* Ingredients */
+.crafting-ingredients {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.crafting-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.crafting-ingredient {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 12px;
+}
+
+.crafting-ingredient-icon {
+  flex-shrink: 0;
+}
+
+.crafting-ingredient-name {
+  flex: 1;
+}
+
+.crafting-ingredient-count {
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.crafting-ing--sufficient {
+  color: #44cc44;
+}
+
+.crafting-ing--sufficient .crafting-ingredient-name {
+  color: var(--color-text-primary);
+}
+
+.crafting-ing--insufficient {
+  color: #cc4444;
+}
+
+.crafting-ing--insufficient .crafting-ingredient-name {
+  color: var(--color-text-primary);
+}
+
+/* Quality badges */
+.crafting-quality {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.crafting-quality-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.crafting-quality-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.crafting-quality-badge--standard {
+  color: #888;
+  background: rgba(136, 136, 136, 0.15);
+}
+
+.crafting-quality-badge--refined {
+  color: #4488ff;
+  background: rgba(68, 136, 255, 0.15);
+}
+
+.crafting-quality-badge--masterwork {
+  color: #ffaa00;
+  background: rgba(255, 170, 0, 0.15);
+}
+
+/* Action area */
+.crafting-action {
+  margin-top: auto;
+}
+
+.crafting-craft-btn {
+  width: 100%;
+  padding: 10px;
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.crafting-craft-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.crafting-craft-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Progress bar */
+.crafting-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.crafting-progress-bar {
+  height: 8px;
+  background: var(--color-bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.crafting-progress-fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 4px;
+  transition: width 0.1s linear;
+}
+
+.crafting-progress-text {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+/* Craft time info */
+.crafting-time-info {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}

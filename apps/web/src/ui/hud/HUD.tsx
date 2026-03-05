@@ -17,7 +17,7 @@ import { HazardIndicator } from './HazardIndicator';
 import './HUD.css';
 
 export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
-  const { player, zoneState, toggleQuestLog, showCombatLog, toggleCombatLog, showAutomation, toggleAutomation } = useGameStore();
+  const { player, zoneState, toggleQuestLog, showCombatLog, toggleCombatLog, showAutomation, toggleAutomation, showCrafting, toggleCrafting } = useGameStore();
   const { inventory } = useInventoryStore();
   const { inCombat } = useCombatStore();
   const { active: shieldActive, remaining: shieldRemaining, maxAbsorb: shieldMax } = useShieldStore();
@@ -89,12 +89,20 @@ export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
         } else if (!automationOpen) {
           toggleAutomation();
         }
+      } else if (key === 'c') {
+        // Crafting panel: opening always allowed; closing only if it's topmost
+        const craftingOpen = useGameStore.getState().showCrafting;
+        if (craftingOpen && top?.id === 'crafting-panel') {
+          toggleCrafting();
+        } else if (!craftingOpen) {
+          toggleCrafting();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleCombatLog, toggleQuestLog, toggleAutomation, showCombatLog, showAutomation]);
+  }, [toggleCombatLog, toggleQuestLog, toggleAutomation, toggleCrafting, showCombatLog, showAutomation, showCrafting]);
 
   if (!player) return null;
 
