@@ -2,6 +2,7 @@ import type { TimingChallenge, TimingResult, GatheringAccuracy, ResourceCategory
 import type { ZoneMasteryProgress, MasteryTier, MasteryReward } from '../game/zone-mastery';
 import type { DamageType } from '../game/combat';
 import type { AutomationPanelEntry, LootWindowData } from '../game/automation';
+import type { CraftingDiscipline, QualityTier } from '../game/crafting';
 
 /**
  * Expedition destination with tier and lock status
@@ -66,7 +67,9 @@ export type ClientEventType =
   | 'automation:collect'
   | 'automation:refuel'
   | 'automation:dismantle'
-  | 'automation:panel_request';
+  | 'automation:panel_request'
+  | 'crafting:start'
+  | 'crafting:collect';
 
 /**
  * Server-to-client event types
@@ -128,7 +131,11 @@ export type ServerEventType =
   | 'automation:refueled'
   | 'automation:dismantled'
   | 'automation:panel_state'
-  | 'automation:status_update';
+  | 'automation:status_update'
+  | 'crafting:started'
+  | 'crafting:completed'
+  | 'crafting:error'
+  | 'crafting:nearby';
 
 /**
  * Socket.io event map for type safety
@@ -176,6 +183,8 @@ export interface ClientEvents {
   'automation:refuel': { deployableId: string; fuelInstanceId: string };
   'automation:dismantle': { deployableId: string };
   'automation:panel_request': Record<string, never>;
+  'crafting:start': { recipeId: string };
+  'crafting:collect': Record<string, never>;
 }
 
 /**
@@ -488,6 +497,30 @@ export interface ServerEvents {
     fuelLevel: number;
     durabilityPercent: number;
     accumulatedCount: number;
+  };
+  /** CRFT-05: Craft timer started — client uses durationMs for local countdown */
+  'crafting:started': {
+    recipeId: string;
+    durationMs: number;
+    startedAt: number;
+  };
+  /** CRFT-03: Craft completed — output item + proficiency XP */
+  'crafting:completed': {
+    recipeId: string;
+    outputItemId: string;
+    qualityTier: QualityTier;
+    proficiencyXP: number;
+    discipline: CraftingDiscipline;
+  };
+  /** CRFT-03: Crafting error with machine-readable code */
+  'crafting:error': {
+    code: string;
+    message: string;
+  };
+  /** Social broadcast: nearby players see crafting activity */
+  'crafting:nearby': {
+    playerId: string;
+    recipeId: string;
   };
 }
 

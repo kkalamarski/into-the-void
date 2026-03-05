@@ -24,6 +24,7 @@ export * from './game/lore';
 export * from './game/zone-mastery';
 export * from './game/hazard';
 export * from './game/automation';
+export * from './game/crafting';
 
 // Network types
 export * from './network/events';

@@ -46,3 +46,9 @@ export * from './moderation';
 
 // Automation deployables (AUTO-07)
 export * from './deployables';
+
+// Crafting proficiency (PROF-05)
+export * from './crafting-proficiency';
+
+// Recipe unlocks (RCPE-07)
+export * from './recipe-unlocks';

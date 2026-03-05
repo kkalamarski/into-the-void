@@ -459,4 +459,64 @@ export class InventoryService {
 
     return { success: true };
   }
+
+  /**
+   * Atomically consume multiple ingredients from inventory (CRFT-04).
+   * Validates ALL ingredients are present with sufficient quantities BEFORE any mutation.
+   * Used by CraftingService for atomic ingredient consumption.
+   *
+   * @returns success=true if all consumed, success=false with reason if any ingredient missing/insufficient
+   */
+  async consumeItems(
+    playerId: string,
+    ingredients: { itemId: string; quantity: number }[]
+  ): Promise<{ success: boolean; reason?: string }> {
+    const inventory = this.inventories.get(playerId);
+    if (!inventory) {
+      return { success: false, reason: 'Player inventory not loaded' };
+    }
+
+    // Phase 1: VALIDATE all ingredients are present with sufficient quantities
+    const availableMap = new Map<string, number>();
+    for (const item of inventory.items) {
+      const current = availableMap.get(item.itemId) ?? 0;
+      availableMap.set(item.itemId, current + item.quantity);
+    }
+
+    for (const ingredient of ingredients) {
+      const available = availableMap.get(ingredient.itemId) ?? 0;
+      if (available < ingredient.quantity) {
+        const itemDef = ItemRegistry.get(ingredient.itemId);
+        const name = itemDef?.displayName ?? ingredient.itemId;
+        return {
+          success: false,
+          reason: `Insufficient ${name}: need ${ingredient.quantity}, have ${available}`,
+        };
+      }
+    }
+
+    // Phase 2: MUTATE — all validation passed, now consume
+    for (const ingredient of ingredients) {
+      let remaining = ingredient.quantity;
+
+      for (let i = inventory.items.length - 1; i >= 0 && remaining > 0; i--) {
+        const item = inventory.items[i];
+        if (item.itemId !== ingredient.itemId) continue;
+
+        if (item.quantity <= remaining) {
+          remaining -= item.quantity;
+          inventory.items.splice(i, 1);
+        } else {
+          item.quantity -= remaining;
+          remaining = 0;
+        }
+      }
+    }
+
+    // Phase 3: PERSIST — single DB write
+    const db = this.databaseService.getClient();
+    await updateInventoryItems(db, playerId, inventory.items);
+
+    return { success: true };
+  }
 }
