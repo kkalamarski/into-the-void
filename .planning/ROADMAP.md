@@ -71,7 +71,7 @@
 - [x] **Phase 118: Ability Rebalance** - Plasma Burst nerfed, defensive abilities overhauled with real shield/DR mechanics, all 13 rebalanced abilities live (completed 2026-03-04)
 - [x] **Phase 119: Creature AI Upgrades** - Stampede, Pack Call, Ambush, Frenzy behaviors with zone-level pre-processing
 - [x] **Phase 120: Biome Hazard System** - HazardService with per-player state cache, HP drain, stat debuffs, gear counters, HUD indicator (completed 2026-03-04)
-- [ ] **Phase 121: Automation Tech Tree** - T2 extractors through T5 refinery, AutomationService, deployables DB table, automation panel HUD
+- [x] **Phase 121: Automation Tech Tree** - T2 extractors through T5 refinery, AutomationService, deployables DB table, automation panel HUD (completed 2026-03-05)
 
 ## Phase Details
 
@@ -323,7 +323,7 @@
   3. The automation panel in the HUD shows all deployed structures with their status (active, depleted, degraded) and a Collect button that transfers accumulated items to inventory
   4. A T5 refinery accepts 10 common resources and produces 1 rare resource after 30 minutes — the transmutation recipe completes and the output is collectable
   5. The income/sink balance sheet documenting maintenance cost >= 60% of hourly output value per tier exists as a committed design artifact before any automation server code is written
-**Plans**: TBD
+**Plans**: 4 plans
 
 ## Progress
 
@@ -350,7 +350,7 @@
 | 118. Ability Rebalance | 4/4 | Complete   | 2026-03-04 |
 | 119. Creature AI Upgrades | 3/3 | Complete | 2026-03-04 |
 | 120. Biome Hazard System | 4/4 | Complete | 2026-03-04 |
-| 121. Automation Tech Tree | 0/TBD | Not started | - |
+| 121. Automation Tech Tree | 4/4 | Complete | 2026-03-05 |
 
 ---
 
