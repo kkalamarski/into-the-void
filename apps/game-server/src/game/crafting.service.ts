@@ -5,6 +5,7 @@ import { PlayerService } from './player.service';
 import { InventoryService } from './inventory.service';
 import {
   RecipeDefinition,
+  RecipeUnlockCondition,
   CraftingDiscipline,
   QualityTier,
 } from '@into-the-void/shared-types';
@@ -304,17 +305,15 @@ export class CraftingService {
   private async checkUnlockCondition(
     characterId: string,
     player: { level: number },
-    condition: { readonly type: string; [key: string]: unknown }
+    condition: RecipeUnlockCondition
   ): Promise<boolean> {
     switch (condition.type) {
       case 'level':
-        return player.level >= (condition as { type: 'level'; requiredLevel: number }).requiredLevel;
+        return player.level >= condition.requiredLevel;
 
       case 'quest':
       case 'poi': {
-        // Check recipe_unlocks table for a matching entry
-        // Quest/POI unlocks are written to this table when the condition is met
-        // (handled by quest/discovery event listeners, wired in Phase 123)
+        const unlockKey = condition.type === 'quest' ? condition.questId : condition.poiId;
         const db = this.databaseService.getClient();
         const [unlock] = await db
           .select()
@@ -322,7 +321,7 @@ export class CraftingService {
           .where(
             and(
               eq(recipeUnlocks.characterId, characterId),
-              eq(recipeUnlocks.recipeId, `unlock:${condition.type}:${(condition as { questId?: string; poiId?: string }).questId ?? (condition as { questId?: string; poiId?: string }).poiId}`),
+              eq(recipeUnlocks.recipeId, `unlock:${condition.type}:${unlockKey}`),
             )
           );
         return !!unlock;
@@ -333,14 +332,14 @@ export class CraftingService {
     }
   }
 
-  private formatUnlockReason(condition: { readonly type: string; [key: string]: unknown }): string {
+  private formatUnlockReason(condition: RecipeUnlockCondition): string {
     switch (condition.type) {
       case 'level':
-        return `Requires character level ${(condition as { requiredLevel: number }).requiredLevel}`;
+        return `Requires character level ${condition.requiredLevel}`;
       case 'quest':
-        return `Requires completing quest ${(condition as { questId: string }).questId}`;
+        return `Requires completing quest ${condition.questId}`;
       case 'poi':
-        return `Requires discovering location ${(condition as { poiId: string }).poiId}`;
+        return `Requires discovering location ${condition.poiId}`;
       default:
         return 'Unknown requirement';
     }
