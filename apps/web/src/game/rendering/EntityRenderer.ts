@@ -405,18 +405,25 @@ export class EntityRenderer {
     if (this.isCreature(entity) && entity.speciesId && entity.speciesId in ANIMATED_CREATURE_Y_OFFSET) {
       spriteYOffset = ANIMATED_CREATURE_Y_OFFSET[entity.speciesId];
     }
+
+    // Feature sprites (plants/minerals) use tile-matching origin (0.5, 0.25) but need
+    // a Y offset to compensate for scaling. At scale > 1x, the sprite extends further
+    // below the origin, pushing visual content below the collision tile. The offset
+    // corrects by the extra distance: 64 * (scale - 1) where 64 = originY * spriteSize.
+    const isFeature = this.isPlant(entity) || this.isMineral(entity);
+    if (isFeature) {
+      spriteYOffset = -64 * (scale - 1);
+    }
+
     const { key: textureKey, frame: textureFrame } = this.getEntityTexture(entity);
     const sprite = this.scene.add.sprite(0, spriteYOffset, textureKey, textureFrame);
 
-    // Feature sprites (plants/minerals) are isometric objects centered in 256x256 frames.
-    // They need origin aligned to the diamond center (0.5, 0.25) like tile sprites so
-    // the visual content matches the collision tile position.
-    // Characters, creatures, and NPCs use bottom-center (0.5, 1.0) for standing alignment.
-    const isFeature = this.isPlant(entity) || this.isMineral(entity);
+    // Feature sprites use diamond-center origin matching tile sprites.
+    // Characters, creatures, and NPCs use bottom-center for standing alignment.
     if (isFeature) {
-      sprite.setOrigin(0.5, 0.25); // Diamond-center origin — matches tile positioning
+      sprite.setOrigin(0.5, 0.25);
     } else {
-      sprite.setOrigin(0.5, 1.0); // Bottom-center origin for standing entities
+      sprite.setOrigin(0.5, 1.0);
     }
     sprite.setScale(scaleX, scaleY);
 
@@ -479,7 +486,7 @@ export class EntityRenderer {
     // UI positioning based on actual sprite height (not BASE_SPRITE_HEIGHT)
     // Standing entities: origin(0.5, 1.0) → sprite top at y = -actualSpriteHeight
     // Feature entities:  origin(0.5, 0.25) → sprite top at y = -0.25 * actualSpriteHeight
-    const spriteTopY = isFeature ? -0.25 * actualSpriteHeight : -actualSpriteHeight;
+    const spriteTopY = isFeature ? spriteYOffset - 0.25 * actualSpriteHeight : -actualSpriteHeight;
     const uiBaseY = spriteTopY - 20; // 20px padding above sprite top
     const { name: displayName, gated } = this.applyPerceptionGate(entity);
 
