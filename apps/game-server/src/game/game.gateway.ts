@@ -28,6 +28,7 @@ import { ZoneMasteryService } from './zone-mastery.service';
 import { ExpeditionService } from './expedition.service';
 import { ChatService } from './chat.service';
 import { HazardService } from './hazard.service';
+import { AutomationService } from './automation.service';
 import {
   ClientEvents,
   Direction,
@@ -97,6 +98,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly expeditionService: ExpeditionService,
     private readonly chatService: ChatService,
     private readonly hazardService: HazardService,
+    private readonly automationService: AutomationService,
   ) {}
 
   afterInit(server: Server) {
@@ -111,6 +113,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.expeditionService.setServer(server);
     this.chatService.setServer(server);
     this.hazardService.setServer(server);
+    this.automationService.setServer(server);
     this.playerService.setZoneStateProvider((zoneId) => this.gameService.getZoneState(zoneId));
     // Wire aggro checker to ZonesService for immediate aggro on creature respawn
     this.zonesService.setAggroChecker(this.aiService);
@@ -148,6 +151,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       this.abilityService.handleDisconnect(player.id);
       this.gatheringService.unloadProficiency(player.id);
       this.hazardService.onPlayerDisconnect(player.id);
+      this.automationService.onPlayerDisconnect(player.id);
     }
 
     await this.playerService.handleDisconnect(client.id);
@@ -1843,6 +1847,173 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
     }
   }
+
+  // ─── AUTOMATION EVENT HANDLERS (Phase 121) ─────────────────────
+
+  @SubscribeMessage('automation:deploy')
+  async handleAutomationDeploy(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: ClientEvents['automation:deploy'],
+  ): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const result = await this.automationService.handleDeploy(player.id, data.deployableItemId, data.position);
+      if (!result.success) {
+        client.emit('error', { code: 'AUTOMATION_DEPLOY_FAILED', message: result.error });
+        return;
+      }
+
+      // Emit inventory update to player
+      const inventory = this.inventoryService.getInventory(player.id);
+      if (inventory) client.emit('inventory:update', inventory);
+
+      // Emit deployed event to player
+      client.emit('automation:deployed', {
+        deployableId: result.deployable!.id,
+        deployableType: result.deployable!.deployableType,
+        position: data.position,
+      });
+
+      // Broadcast entity spawn to zone
+      if (result.deployable) {
+        this.server.to(player.position.zoneId).emit('entity:spawn', result.deployable);
+      }
+    } catch (error) {
+      client.emit('error', { code: 'AUTOMATION_ERROR', message: 'Failed to deploy structure' });
+    }
+  }
+
+  @SubscribeMessage('automation:interact')
+  async handleAutomationInteract(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: ClientEvents['automation:interact'],
+  ): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const lootData = this.automationService.handleInteract(player.id, data.entityId);
+      if (lootData) {
+        client.emit('automation:loot_window', lootData);
+      } else {
+        client.emit('error', { code: 'AUTOMATION_INTERACT_FAILED', message: 'Structure not found' });
+      }
+    } catch (error) {
+      client.emit('error', { code: 'AUTOMATION_ERROR', message: 'Failed to interact with structure' });
+    }
+  }
+
+  @SubscribeMessage('automation:collect')
+  async handleAutomationCollect(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: ClientEvents['automation:collect'],
+  ): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const result = await this.automationService.handleCollect(player.id, data.deployableId);
+      if (!result.success) {
+        client.emit('error', { code: 'AUTOMATION_COLLECT_FAILED', message: result.error });
+        return;
+      }
+
+      // Emit collected event
+      client.emit('automation:collected', {
+        deployableId: data.deployableId,
+        items: result.items || [],
+      });
+
+      // Emit inventory update
+      const inventory = this.inventoryService.getInventory(player.id);
+      if (inventory) client.emit('inventory:update', inventory);
+    } catch (error) {
+      client.emit('error', { code: 'AUTOMATION_ERROR', message: 'Failed to collect resources' });
+    }
+  }
+
+  @SubscribeMessage('automation:refuel')
+  async handleAutomationRefuel(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: ClientEvents['automation:refuel'],
+  ): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const result = await this.automationService.handleRefuel(player.id, data.deployableId, data.fuelInstanceId);
+      if (!result.success) {
+        client.emit('error', { code: 'AUTOMATION_REFUEL_FAILED', message: result.error });
+        return;
+      }
+
+      // Emit refueled event
+      client.emit('automation:refueled', {
+        deployableId: data.deployableId,
+        fuelLevel: result.fuelLevel!,
+        maxFuel: result.maxFuel!,
+      });
+
+      // Emit inventory update
+      const inventory = this.inventoryService.getInventory(player.id);
+      if (inventory) client.emit('inventory:update', inventory);
+    } catch (error) {
+      client.emit('error', { code: 'AUTOMATION_ERROR', message: 'Failed to refuel structure' });
+    }
+  }
+
+  @SubscribeMessage('automation:dismantle')
+  async handleAutomationDismantle(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: ClientEvents['automation:dismantle'],
+  ): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const result = await this.automationService.handleDismantle(player.id, data.deployableId);
+      if (!result.success) {
+        client.emit('error', { code: 'AUTOMATION_DISMANTLE_FAILED', message: result.error });
+        return;
+      }
+
+      // Emit dismantled event
+      client.emit('automation:dismantled', {
+        deployableId: data.deployableId,
+        recoveredItems: result.recoveredItems || [],
+      });
+
+      // Emit inventory update
+      const inventory = this.inventoryService.getInventory(player.id);
+      if (inventory) client.emit('inventory:update', inventory);
+
+      // Broadcast entity despawn to zone
+      this.server.to(player.position.zoneId).emit('entity:despawn', {
+        entityId: `deployable_${data.deployableId}`,
+      });
+    } catch (error) {
+      client.emit('error', { code: 'AUTOMATION_ERROR', message: 'Failed to dismantle structure' });
+    }
+  }
+
+  @SubscribeMessage('automation:panel_request')
+  async handleAutomationPanelRequest(
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    try {
+      const player = this.playerService.getPlayerBySocket(client.id);
+      if (!player) return;
+
+      const structures = this.automationService.handlePanelRequest(player.id);
+      client.emit('automation:panel_state', { structures });
+    } catch (error) {
+      client.emit('error', { code: 'AUTOMATION_ERROR', message: 'Failed to get panel state' });
+    }
+  }
+
+  // ─── HELPER METHODS ───────────────────────────────────────────
 
   /**
    * Emit quest markers for all NPCs in a zone.
