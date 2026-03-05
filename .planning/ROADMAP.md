@@ -61,7 +61,9 @@
   3. Starting a second craft while one is already active is rejected by the server
   4. Disconnecting mid-craft cancels the active craft with no orphaned timer or inventory corruption
   5. Player reconnects after server restart with recipe unlocks intact (persisted in DB, not in-memory only)
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 122-01-PLAN.md — Shared crafting types, DB schema (crafting_proficiency + recipe_unlocks), WebSocket events, InventoryService.consumeItems
+- [ ] 122-02-PLAN.md — CraftingService with all validation guards, GameGateway wiring, disconnect cleanup
 
 ### Phase 123: Recipe Content and Quality System
 **Goal**: Players can browse a full set of economically-balanced recipes across all disciplines, earn proficiency XP per discipline, and receive higher quality output as proficiency grows
@@ -103,11 +105,11 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 122. Crafting Foundation | 0/TBD | Not started | - |
+| 122. Crafting Foundation | 0/2 | Planned | - |
 | 123. Recipe Content and Quality System | 0/TBD | Not started | - |
 | 124. Automation Production Chain | 0/TBD | Not started | - |
 | 125. Crafting Panel UI | 0/TBD | Not started | - |
 
 ---
 
-*Last updated: 2026-03-05 — v1.25 Crafting roadmap created*
+*Last updated: 2026-03-05 — Phase 122 planned (2 plans, 2 waves)*
