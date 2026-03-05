@@ -47,7 +47,8 @@ export type ItemEffect =
   | { readonly type: 'mobility'; readonly jumpHeight: number }
   | { readonly type: 'stats'; readonly durability?: number; readonly toughness?: number; readonly power?: number; readonly haste?: number; readonly vigor?: number; readonly recovery?: number; readonly perception?: number; readonly resilience?: number; readonly yieldBonus?: number; readonly gatherSpeed?: number }
   | { readonly type: 'damage_type_bonus'; readonly damageType: DamageType; readonly bonusPercent: number }
-  | { readonly type: 'hazard_protection'; readonly hazardType: 'chemical' | 'thermal' | 'physical' | 'biological' | 'anomalous'; readonly protectionPercent: number };
+  | { readonly type: 'hazard_protection'; readonly hazardType: 'chemical' | 'thermal' | 'physical' | 'biological' | 'anomalous'; readonly protectionPercent: number }
+  | { readonly type: 'deploy'; readonly deployableType: string };
 
 /**
  * Tool specialization types

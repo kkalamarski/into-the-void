@@ -18,11 +18,13 @@ import { ALL_FACTION_MODULES } from './faction-modules';
 import { ALL_FACTION_TOOLS } from './faction-tools';
 import { ALL_HAZARD_MODULES } from './hazard-modules';
 import { ALL_HAZARD_CONSUMABLES } from './hazard-consumables';
+import { ALL_FUEL_ITEMS } from './fuel-items';
+import { ALL_DEPLOYABLE_ITEMS } from './deployable-items';
 
 /**
  * All item definitions — register these with ItemRegistry.
- * Total: 234 items (16 suits + 34 modules + 21 tools + 40 consumables + 15 world-items + 15 reagents + 28 faction suits + 40 faction modules + 40 faction tools)
- * Phase 117 adds 4 damage type amplifier modules.
+ * Total: 242 items (234 previous + 4 fuel items + 4 deployable items)
+ * Phase 121 adds 4 fuel items (reagent category) and 4 deployable structure items (consumable category).
  */
 export const ALL_ITEMS: readonly ItemDefinition[] = [
   ...ALL_SUITS,
@@ -47,6 +49,9 @@ export const ALL_ITEMS: readonly ItemDefinition[] = [
   // Phase 120 hazard protection items
   ...ALL_HAZARD_MODULES,
   ...ALL_HAZARD_CONSUMABLES,
+  // Phase 121 automation fuel and deployable items
+  ...ALL_FUEL_ITEMS,
+  ...ALL_DEPLOYABLE_ITEMS,
 ];
 
 /**
@@ -476,6 +481,18 @@ export const ITEM_IDS = {
   CONSUMABLE_IMPACT_GEL: 'consumable_impact_gel',
   CONSUMABLE_BIO_INOCULANT: 'consumable_bio_inoculant',
   CONSUMABLE_ANOMALY_ANCHOR: 'consumable_anomaly_anchor',
+
+  // ---- FUEL ITEMS (Phase 121) ----
+  FUEL_CELL_BASIC: 'fuel_cell_basic',
+  FUEL_CELL_ADVANCED: 'fuel_cell_advanced',
+  POWER_CORE: 'power_core',
+  REFINERY_CORE: 'refinery_core',
+
+  // ---- DEPLOYABLE ITEMS (Phase 121) ----
+  DEPLOYABLE_EXTRACTOR: 'deployable_extractor',
+  DEPLOYABLE_SURVEY_BEACON: 'deployable_survey_beacon',
+  DEPLOYABLE_PLANETARY_EXTRACTOR: 'deployable_planetary_extractor',
+  DEPLOYABLE_REFINERY: 'deployable_refinery',
 } as const;
 
 // Re-export individual items for direct imports
@@ -496,3 +513,5 @@ export * from './faction-modules';
 export * from './faction-tools';
 export * from './hazard-modules';
 export * from './hazard-consumables';
+export * from './fuel-items';
+export * from './deployable-items';
