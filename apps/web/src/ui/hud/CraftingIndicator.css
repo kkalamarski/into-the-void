@@ -1,0 +1,60 @@
+.crafting-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: 6px;
+  cursor: pointer;
+  pointer-events: auto;
+  opacity: 0.9;
+  min-width: 160px;
+}
+
+.crafting-indicator:hover {
+  opacity: 1;
+  border-color: var(--color-accent);
+}
+
+.crafting-indicator-icon {
+  font-size: 16px;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.crafting-indicator-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.crafting-indicator-name {
+  font-size: 11px;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.crafting-indicator-bar {
+  height: 4px;
+  background: var(--color-bg-tertiary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.crafting-indicator-bar-fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
+
+.crafting-indicator-time {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  text-align: right;
+}
