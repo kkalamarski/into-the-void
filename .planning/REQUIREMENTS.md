@@ -1,0 +1,122 @@
+# Requirements: Into the Void
+
+**Defined:** 2026-03-05
+**Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
+
+## v1.25 Requirements
+
+Requirements for the Crafting milestone. Each maps to roadmap phases.
+
+### Recipe System
+
+- [ ] **RCPE-01**: Player can browse recipes organized by crafting discipline (category tabs)
+- [ ] **RCPE-02**: Player can see ingredient requirements for each recipe with have/need counts
+- [ ] **RCPE-03**: Player can see which recipes are locked and what unlocks them (level, quest, exploration)
+- [ ] **RCPE-04**: Player can filter recipes by craftable-now (has all ingredients) vs all
+- [ ] **RCPE-05**: Recipes unlock progressively via character level, quest completion, or POI discovery
+- [ ] **RCPE-06**: Faction-specific specialty recipes are available only to members of that faction
+- [ ] **RCPE-07**: Recipe definitions exist as static data in a shared package usable by server and client
+
+### Crafting Execution
+
+- [ ] **CRFT-01**: Player can craft an item by selecting a recipe and confirming, consuming required ingredients
+- [ ] **CRFT-02**: Crafting shows a progress timer (few seconds) before producing the output item
+- [ ] **CRFT-03**: Server validates crafting requests (ingredient ownership, recipe unlock, faction eligibility)
+- [ ] **CRFT-04**: Ingredient consumption is atomic (all-or-nothing, no partial consumption on failure)
+- [ ] **CRFT-05**: Server tracks crafting timer independently (prevents client-side timer skip exploits)
+- [ ] **CRFT-06**: Player can only have one active craft at a time
+- [ ] **CRFT-07**: Active craft is cancelled on disconnect (no orphaned timers)
+
+### Proficiency
+
+- [ ] **PROF-01**: Player earns crafting XP in the relevant discipline when completing a craft
+- [ ] **PROF-02**: Each crafting discipline has an independent proficiency level
+- [ ] **PROF-03**: Higher proficiency increases chance of producing higher quality tier output
+- [ ] **PROF-04**: Quality tiers provide stat bonuses on crafted items (e.g., Standard/Refined/Masterwork)
+- [ ] **PROF-05**: Proficiency data persists in the database across sessions
+
+### Crafting UI
+
+- [ ] **CRUI-01**: Player can open a crafting panel from the HUD at any location
+- [ ] **CRUI-02**: Crafting panel shows discipline tabs to switch between recipe categories
+- [ ] **CRUI-03**: Each recipe shows name, ingredients (with inventory counts), output item, and quality chance
+- [ ] **CRUI-04**: Craft button is enabled only when player has all ingredients and recipe is unlocked
+- [ ] **CRUI-05**: Active craft shows a progress bar with remaining time
+- [ ] **CRUI-06**: Locked recipes appear greyed out with unlock requirement tooltip
+- [ ] **CRUI-07**: Crafting panel shows current proficiency level and XP progress per discipline
+
+### Recipe Content
+
+- [ ] **CONT-01**: Equipment recipes exist for suits, tools, and modules across tiers
+- [ ] **CONT-02**: Consumable recipes exist for health items, buffs, and hazard protection
+- [ ] **CONT-03**: Automation structure recipes exist for deployable extractors, beacons, and refineries
+- [ ] **CONT-04**: Reagent/material processing recipes exist for intermediate crafting materials
+- [ ] **CONT-05**: Each faction has at least 3 exclusive specialty recipes for higher-tier faction gear
+
+## v2 Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Crafting Expansion
+
+- **CREX-01**: Crafting mini-game (skill-based quality influence, like gathering timing)
+- **CREX-02**: Bulk crafting (craft multiple of same recipe in queue)
+- **CREX-03**: Crafting quest objectives (craft X items for quest progress)
+- **CREX-04**: Recipe trading between players
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Crafting failure/material loss | Research identifies this as most-hated mechanic; quality tiers provide variation without punishment |
+| Crafting stations in world | Player requested anywhere-access; stations add complexity without clear value for v1 |
+| Junk-craft XP grinding | Anti-feature; XP should scale with item tier, not recipe count |
+| Automation-crafting integration | Explicitly separate systems per user direction |
+| New item IDs per quality tier | Quality is a runtime modifier on inventory slots, not separate items (prevents registry bloat) |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| RCPE-01 | — | Pending |
+| RCPE-02 | — | Pending |
+| RCPE-03 | — | Pending |
+| RCPE-04 | — | Pending |
+| RCPE-05 | — | Pending |
+| RCPE-06 | — | Pending |
+| RCPE-07 | — | Pending |
+| CRFT-01 | — | Pending |
+| CRFT-02 | — | Pending |
+| CRFT-03 | — | Pending |
+| CRFT-04 | — | Pending |
+| CRFT-05 | — | Pending |
+| CRFT-06 | — | Pending |
+| CRFT-07 | — | Pending |
+| PROF-01 | — | Pending |
+| PROF-02 | — | Pending |
+| PROF-03 | — | Pending |
+| PROF-04 | — | Pending |
+| PROF-05 | — | Pending |
+| CRUI-01 | — | Pending |
+| CRUI-02 | — | Pending |
+| CRUI-03 | — | Pending |
+| CRUI-04 | — | Pending |
+| CRUI-05 | — | Pending |
+| CRUI-06 | — | Pending |
+| CRUI-07 | — | Pending |
+| CONT-01 | — | Pending |
+| CONT-02 | — | Pending |
+| CONT-03 | — | Pending |
+| CONT-04 | — | Pending |
+| CONT-05 | — | Pending |
+
+**Coverage:**
+- v1.25 requirements: 31 total
+- Mapped to phases: 0
+- Unmapped: 31 ⚠️
+
+---
+*Requirements defined: 2026-03-05*
+*Last updated: 2026-03-05 after initial definition*
