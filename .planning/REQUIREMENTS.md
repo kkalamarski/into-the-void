@@ -80,43 +80,43 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RCPE-01 | — | Pending |
-| RCPE-02 | — | Pending |
-| RCPE-03 | — | Pending |
-| RCPE-04 | — | Pending |
-| RCPE-05 | — | Pending |
-| RCPE-06 | — | Pending |
-| RCPE-07 | — | Pending |
-| CRFT-01 | — | Pending |
-| CRFT-02 | — | Pending |
-| CRFT-03 | — | Pending |
-| CRFT-04 | — | Pending |
-| CRFT-05 | — | Pending |
-| CRFT-06 | — | Pending |
-| CRFT-07 | — | Pending |
-| PROF-01 | — | Pending |
-| PROF-02 | — | Pending |
-| PROF-03 | — | Pending |
-| PROF-04 | — | Pending |
-| PROF-05 | — | Pending |
-| CRUI-01 | — | Pending |
-| CRUI-02 | — | Pending |
-| CRUI-03 | — | Pending |
-| CRUI-04 | — | Pending |
-| CRUI-05 | — | Pending |
-| CRUI-06 | — | Pending |
-| CRUI-07 | — | Pending |
-| CONT-01 | — | Pending |
-| CONT-02 | — | Pending |
-| CONT-03 | — | Pending |
-| CONT-04 | — | Pending |
-| CONT-05 | — | Pending |
+| RCPE-01 | Phase 123 | Pending |
+| RCPE-02 | Phase 123 | Pending |
+| RCPE-03 | Phase 123 | Pending |
+| RCPE-04 | Phase 123 | Pending |
+| RCPE-05 | Phase 123 | Pending |
+| RCPE-06 | Phase 123 | Pending |
+| RCPE-07 | Phase 122 | Pending |
+| CRFT-01 | Phase 125 | Pending |
+| CRFT-02 | Phase 125 | Pending |
+| CRFT-03 | Phase 122 | Pending |
+| CRFT-04 | Phase 122 | Pending |
+| CRFT-05 | Phase 122 | Pending |
+| CRFT-06 | Phase 122 | Pending |
+| CRFT-07 | Phase 122 | Pending |
+| PROF-01 | Phase 123 | Pending |
+| PROF-02 | Phase 123 | Pending |
+| PROF-03 | Phase 123 | Pending |
+| PROF-04 | Phase 123 | Pending |
+| PROF-05 | Phase 122 | Pending |
+| CRUI-01 | Phase 125 | Pending |
+| CRUI-02 | Phase 125 | Pending |
+| CRUI-03 | Phase 125 | Pending |
+| CRUI-04 | Phase 125 | Pending |
+| CRUI-05 | Phase 125 | Pending |
+| CRUI-06 | Phase 125 | Pending |
+| CRUI-07 | Phase 125 | Pending |
+| CONT-01 | Phase 123 | Pending |
+| CONT-02 | Phase 123 | Pending |
+| CONT-03 | Phase 124 | Pending |
+| CONT-04 | Phase 123 | Pending |
+| CONT-05 | Phase 123 | Pending |
 
 **Coverage:**
 - v1.25 requirements: 31 total
-- Mapped to phases: 0
-- Unmapped: 31 ⚠️
+- Mapped to phases: 31
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-05*
-*Last updated: 2026-03-05 after initial definition*
+*Last updated: 2026-03-05 — traceability updated after roadmap creation*

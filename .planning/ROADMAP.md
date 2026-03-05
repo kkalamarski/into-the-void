@@ -27,6 +27,7 @@
 - ✅ **v1.22 In-Game Chat** - Phases 103-107 (shipped 2026-02-26)
 - ✅ **v1.23 Content Expansion & Faction Gear** - Phases 108-114 (shipped 2026-03-03)
 - ✅ **v1.24 Balance & Automation** - Phases 115-121 (shipped 2026-03-05)
+- 🚧 **v1.25 Crafting** - Phases 122-125 (in progress)
 
 ## Phases
 
@@ -39,4 +40,74 @@
 
 ---
 
-*Last updated: 2026-03-05 — v1.24 Balance & Automation shipped*
+### 🚧 v1.25 Crafting (In Progress)
+
+**Milestone Goal:** Add a manual crafting system with recipe progression, per-category skill proficiency, faction specialties, and quality tiers — accessible from the HUD anywhere.
+
+- [ ] **Phase 122: Crafting Foundation** - Shared types, DB schema, RecipeRegistry package, CraftingService with all server-side validation guards
+- [ ] **Phase 123: Recipe Content and Quality System** - Recipe definitions for all disciplines, proficiency XP, quality tier calculation, faction specialty recipes
+- [ ] **Phase 124: Automation Production Chain** - Deployable structure recipes validated against AutomationService item mappings
+- [ ] **Phase 125: Crafting Panel UI** - Client store, HUD panel with tabs, ingredient availability display, progress bar, proficiency display
+
+## Phase Details
+
+### Phase 122: Crafting Foundation
+**Goal**: The crafting service exists on the server with all correctness guarantees — atomic ingredient consumption, server-side timer enforcement, faction gating, one-active-craft enforcement, and recipe unlock persistence
+**Depends on**: Phase 121 (v1.24 complete)
+**Requirements**: RCPE-07, CRFT-03, CRFT-04, CRFT-05, CRFT-06, CRFT-07, PROF-05
+**Success Criteria** (what must be TRUE):
+  1. `crafting:start` with valid ingredients marks them consumed and starts a server-managed timer; sending `crafting:complete` immediately after is rejected until the timer elapses
+  2. Attempting to start a craft with insufficient ingredients, an unowned recipe, or wrong-faction specialty returns a descriptive error event with no inventory mutation
+  3. Starting a second craft while one is already active is rejected by the server
+  4. Disconnecting mid-craft cancels the active craft with no orphaned timer or inventory corruption
+  5. Player reconnects after server restart with recipe unlocks intact (persisted in DB, not in-memory only)
+**Plans**: TBD
+
+### Phase 123: Recipe Content and Quality System
+**Goal**: Players can browse a full set of economically-balanced recipes across all disciplines, earn proficiency XP per discipline, and receive higher quality output as proficiency grows
+**Depends on**: Phase 122
+**Requirements**: RCPE-01, RCPE-02, RCPE-03, RCPE-04, RCPE-05, RCPE-06, PROF-01, PROF-02, PROF-03, PROF-04, CONT-01, CONT-02, CONT-04, CONT-05
+**Success Criteria** (what must be TRUE):
+  1. Recipes exist across Equipment, Consumables, and Reagents disciplines with ingredient costs within 80-120% of the cheapest equivalent acquisition path (trader price or loot time)
+  2. Completing a craft awards proficiency XP in the relevant discipline; each discipline tracks XP independently
+  3. A low-proficiency crafter always produces Standard quality output; a high-proficiency crafter can produce Refined or Masterwork output based on per-recipe thresholds
+  4. Recipes locked by level, quest completion, or POI discovery are not available until the unlock condition is met
+  5. Faction specialty recipes are only craftable by members of the corresponding faction
+**Plans**: TBD
+
+### Phase 124: Automation Production Chain
+**Goal**: Players can craft deployable automation structures that deploy correctly via the automation panel — no item ID mismatches between the crafting and automation systems
+**Depends on**: Phase 123
+**Requirements**: CONT-03
+**Success Criteria** (what must be TRUE):
+  1. Deployable structure recipes (extractors, beacons, refineries) exist and produce items whose IDs resolve correctly in the automation panel's deploy action
+  2. Crafting a deployable item and then placing it via the automation panel succeeds without errors
+**Plans**: TBD
+
+### Phase 125: Crafting Panel UI
+**Goal**: Players can open a crafting panel from the HUD at any location, browse recipes by discipline, see ingredient availability, trigger crafts, and watch a progress bar count down to completion
+**Depends on**: Phase 122
+**Requirements**: CRFT-01, CRFT-02, CRUI-01, CRUI-02, CRUI-03, CRUI-04, CRUI-05, CRUI-06, CRUI-07
+**Success Criteria** (what must be TRUE):
+  1. Pressing C (or clicking the HUD shortcut) opens the crafting panel from any location without interrupting movement or combat
+  2. The panel shows discipline tabs; switching tabs filters the recipe list to that category
+  3. Each recipe displays name, output item, all required ingredients with current inventory counts highlighted green (have) or red (missing), and the quality range achievable at current proficiency
+  4. The Craft button is only enabled when the player has all ingredients and the recipe is unlocked; disabled state shows the blocking reason on hover
+  5. An active craft shows a progress bar counting down in real time; the panel reflects the crafted item and XP gain on completion
+  6. Locked recipes appear in the list greyed out with a tooltip stating the unlock condition
+**Plans**: TBD
+
+## Progress
+
+**Execution Order:** 122 → 123 → 124 → 125
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 122. Crafting Foundation | 0/TBD | Not started | - |
+| 123. Recipe Content and Quality System | 0/TBD | Not started | - |
+| 124. Automation Production Chain | 0/TBD | Not started | - |
+| 125. Crafting Panel UI | 0/TBD | Not started | - |
+
+---
+
+*Last updated: 2026-03-05 — v1.25 Crafting roadmap created*
