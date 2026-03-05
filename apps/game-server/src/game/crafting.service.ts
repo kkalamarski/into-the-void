@@ -111,8 +111,10 @@ export class CraftingService implements OnModuleInit {
       .where(eq(craftingProficiency.characterId, characterId));
 
     if (row) {
-      this.proficiencyCache.set(characterId, row.proficiency);
-      return row.proficiency;
+      // Defensive: merge defaults for any disciplines added after character creation (Phase 124+)
+      const merged = { ...DEFAULT_CRAFTING_PROFICIENCY, ...row.proficiency };
+      this.proficiencyCache.set(characterId, merged);
+      return merged;
     }
 
     // Create new proficiency row for character
@@ -362,6 +364,12 @@ export class CraftingService implements OnModuleInit {
         return !!unlock;
       }
 
+      case 'proficiency': {
+        const prof = await this.loadProficiency(characterId);
+        const disciplineData = prof[condition.discipline];
+        return disciplineData.level >= condition.requiredLevel;
+      }
+
       default:
         return false;
     }
@@ -375,6 +383,8 @@ export class CraftingService implements OnModuleInit {
         return `Requires completing quest ${condition.questId}`;
       case 'poi':
         return `Requires discovering location ${condition.poiId}`;
+      case 'proficiency':
+        return `Requires ${condition.discipline} proficiency level ${condition.requiredLevel}`;
       default:
         return 'Unknown requirement';
     }

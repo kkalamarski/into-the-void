@@ -4,12 +4,14 @@ import { characters } from './characters';
 /**
  * Crafting proficiency data stored as JSONB.
  * Matches CraftingProficiencyData from shared-types.
- * Three independent discipline tracks: equipment, consumables, reagents.
+ * Four independent discipline tracks: equipment, consumables, reagents, automation.
+ * Phase 124 adds 'automation' for deployable structure crafting.
  */
 export interface CraftingProficiencyJson {
   equipment: { xp: number; level: number };
   consumables: { xp: number; level: number };
   reagents: { xp: number; level: number };
+  automation: { xp: number; level: number };
 }
 
 /**
@@ -20,6 +22,7 @@ export const DEFAULT_CRAFTING_PROFICIENCY: CraftingProficiencyJson = {
   equipment: { xp: 0, level: 1 },
   consumables: { xp: 0, level: 1 },
   reagents: { xp: 0, level: 1 },
+  automation: { xp: 0, level: 1 },
 };
 
 /**
