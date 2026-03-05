@@ -1,9 +1,10 @@
 import type { FactionId } from './faction';
 
 /**
- * Crafting discipline categories — three independent proficiency tracks
+ * Crafting discipline categories — four independent proficiency tracks.
+ * Phase 124 adds 'automation' for deployable structure crafting.
  */
-export type CraftingDiscipline = 'equipment' | 'consumables' | 'reagents';
+export type CraftingDiscipline = 'equipment' | 'consumables' | 'reagents' | 'automation';
 
 /**
  * Recipe ingredient requirement
@@ -14,17 +15,19 @@ export interface RecipeIngredient {
 }
 
 /**
- * Recipe unlock condition — recipes can require level, quest, or POI discovery
+ * Recipe unlock condition — recipes can require level, quest, POI discovery, or proficiency level.
+ * Phase 124 adds 'proficiency' for dual-gate (character level + discipline proficiency) recipes.
  */
 export type RecipeUnlockCondition =
   | { readonly type: 'level'; readonly requiredLevel: number }
   | { readonly type: 'quest'; readonly questId: string }
-  | { readonly type: 'poi'; readonly poiId: string };
+  | { readonly type: 'poi'; readonly poiId: string }
+  | { readonly type: 'proficiency'; readonly discipline: CraftingDiscipline; readonly requiredLevel: number };
 
 /**
  * Complete recipe definition — static data, compile-time validated.
  * Recipes produce exactly one output item (per user decision).
- * Timer range: 5000-30000ms (per user decision).
+ * Timer range: 5000-30000ms for standard disciplines; 30000-60000ms for automation (per user decision).
  */
 export interface RecipeDefinition {
   readonly id: string;
@@ -45,13 +48,15 @@ export interface RecipeDefinition {
 }
 
 /**
- * Per-character crafting proficiency state — three independent discipline tracks.
+ * Per-character crafting proficiency state — four independent discipline tracks.
  * Mirrors ProficiencyData shape from gathering.
+ * Phase 124 adds 'automation' track for deployable structure crafting.
  */
 export interface CraftingProficiencyData {
   equipment: { xp: number; level: number };
   consumables: { xp: number; level: number };
   reagents: { xp: number; level: number };
+  automation: { xp: number; level: number };
 }
 
 /**
