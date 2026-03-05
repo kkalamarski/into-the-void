@@ -186,22 +186,27 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private loadFeatureSprites(): void {
-    // Feature sprite definitions: entityId -> folder name and variant count
-    // Variants are used to add visual variety to features of the same type
+    // Void biome features loaded from spritesheet (5 frames at 256x256):
+    // 0: void tree, 1: void fern, 2: void crystal, 3: void slate, 4: void moss
+    this.load.spritesheet('void-biome-features-sheet', 'sprites/features/void-biome-features.png', {
+      frameWidth: 256,
+      frameHeight: 256,
+    });
+
+    // Crystal biome features loaded from spritesheet (5 frames at 256x256):
+    // 0: lattice moss, 1: crystal lichen, 2: prism bloom, 3: cave geode, 4: prismatic crystal
+    this.load.spritesheet('crystal-biome-features-sheet', 'sprites/features/crystal-biome-features.png', {
+      frameWidth: 256,
+      frameHeight: 256,
+    });
+
+    // Remaining feature sprites loaded from individual variant files
     const featureSprites: Array<{ entityId: string; folder: string; variants: number }> = [
-      // Plants - void plains
-      { entityId: 'plant_void_tree', folder: 'void-tree', variants: 8 },
-      { entityId: 'plant_void_fern', folder: 'void-fern', variants: 2 },
-      { entityId: 'plant_drought_cactus', folder: 'drought-cactus', variants: 1 },
       // Plants - fungal forest
       { entityId: 'plant_tendril_tree', folder: 'tendril-tree', variants: 1 },
       { entityId: 'plant_rare_fungi', folder: 'rare-fungi', variants: 4 },
       // Plants - volcanic ridge
       { entityId: 'plant_magma_bloom', folder: 'magma-bloom', variants: 4 },
-      // Minerals - void plains
-      { entityId: 'mineral_void_crystal', folder: 'void-crystal', variants: 1 },
-      // Minerals - crystal caves
-      { entityId: 'mineral_prismatic_crystal', folder: 'prismatic-crystal', variants: 1 },
     ];
 
     for (const { entityId, folder, variants } of featureSprites) {
@@ -293,10 +298,8 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private loadFloorTileSprites(): void {
-    // Floor tile bases (8 biomes)
+    // Floor tile bases (non-void biomes — void loaded from spritesheet below)
     const floorTiles = [
-      'tile_void_floor',
-      'tile_crystal_floor',
       'tile_toxic_floor',
       'tile_ruins_floor',
       'tile_ice_floor',
@@ -305,10 +308,8 @@ export class PreloadScene extends Phaser.Scene {
       'tile_crater_floor',
     ];
 
-    // Feature tiles (walls, pools, formations, etc.)
+    // Feature tiles (non-void — void wall loaded from spritesheet below)
     const featureTiles = [
-      'tile_void_wall',
-      'tile_crystal_formation',
       'tile_toxic_pool',
       'tile_ruins_wall',
       'tile_ice_wall',
@@ -317,12 +318,28 @@ export class PreloadScene extends Phaser.Scene {
       'tile_crater_debris',
     ];
 
+    // Load void tiles from spritesheet (2 frames: floor, wall)
+    this.load.spritesheet('void-tiles-sheet', 'sprites/void-tiles.png', {
+      frameWidth: 256,
+      frameHeight: 256,
+    });
+
+    // Load crystal tiles from spritesheet (4 frames: floor, floor v2, formation, formation v2)
+    this.load.spritesheet('crystal-tiles-sheet', 'sprites/crystal-tiles.png', {
+      frameWidth: 256,
+      frameHeight: 256,
+    });
+
     // Load base floor tiles and their variants (_v2, _v3)
     for (const key of floorTiles) {
       this.load.image(key, `sprites/${key}.png`);
       this.load.image(`${key}_v2`, `sprites/${key}_v2.png`);
       this.load.image(`${key}_v3`, `sprites/${key}_v3.png`);
     }
+
+    // Load void floor variants (v2, v3 still separate files for now)
+    this.load.image('tile_void_floor_v2', 'sprites/tile_void_floor_v2.png');
+    this.load.image('tile_void_floor_v3', 'sprites/tile_void_floor_v3.png');
 
     // Load feature tiles (no variants for now)
     for (const key of featureTiles) {
@@ -499,10 +516,83 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Extract named textures from spritesheets
+    this.extractSpritesheetFrames();
+
     // Create animations after all sprites are loaded
     this.createCharacterAnimations();
     this.createCreatureAnimations();
     this.scene.start('WorldScene');
+  }
+
+  /**
+   * Extract individual named textures from loaded spritesheets.
+   * Renders each frame to a canvas and registers it as a standalone texture.
+   */
+  private extractSpritesheetFrames(): void {
+    // Void tile spritesheet: frame 0 = floor, frame 1 = wall
+    const voidTileMap: Array<{ frame: number; key: string }> = [
+      { frame: 0, key: 'tile_void_floor' },
+      { frame: 1, key: 'tile_void_wall' },
+    ];
+    this.extractFrames('void-tiles-sheet', voidTileMap, 256, 256);
+
+    // Crystal tile spritesheet: frame 0 = floor, 1 = floor v2, 2 = formation, 3 = formation v2
+    const crystalTileMap: Array<{ frame: number; key: string }> = [
+      { frame: 0, key: 'tile_crystal_floor' },
+      { frame: 1, key: 'tile_crystal_floor_v2' },
+      { frame: 2, key: 'tile_crystal_formation' },
+      { frame: 3, key: 'tile_crystal_formation_v2' },
+    ];
+    this.extractFrames('crystal-tiles-sheet', crystalTileMap, 256, 256);
+
+    // Void biome features spritesheet: 5 frames
+    const voidFeatureMap: Array<{ frame: number; key: string }> = [
+      { frame: 0, key: 'plant_void_tree-v1' },
+      { frame: 1, key: 'plant_void_fern-v1' },
+      { frame: 2, key: 'plant_drought_cactus-v1' },
+      { frame: 3, key: 'mineral_void_crystal-v1' },
+      { frame: 4, key: 'mineral_void_slate-v1' },
+    ];
+    this.extractFrames('void-biome-features-sheet', voidFeatureMap, 256, 256);
+
+    // Crystal biome features spritesheet: 5 frames
+    const crystalFeatureMap: Array<{ frame: number; key: string }> = [
+      { frame: 0, key: 'plant_lattice_moss-v1' },
+      { frame: 1, key: 'plant_crystal_lichen-v1' },
+      { frame: 2, key: 'plant_prism_bloom-v1' },
+      { frame: 3, key: 'mineral_cave_geode-v1' },
+      { frame: 4, key: 'mineral_prismatic_crystal-v1' },
+    ];
+    this.extractFrames('crystal-biome-features-sheet', crystalFeatureMap, 256, 256);
+  }
+
+  /**
+   * Extract frames from a spritesheet into individual named textures.
+   */
+  private extractFrames(
+    sheetKey: string,
+    frameMap: Array<{ frame: number; key: string }>,
+    frameWidth: number,
+    frameHeight: number,
+  ): void {
+    const sheet = this.textures.get(sheetKey);
+    if (!sheet || sheet.key === '__MISSING') return;
+
+    const source = sheet.getSourceImage() as HTMLImageElement;
+
+    for (const { frame, key } of frameMap) {
+      const canvas = document.createElement('canvas');
+      canvas.width = frameWidth;
+      canvas.height = frameHeight;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(
+        source,
+        frame * frameWidth, 0, frameWidth, frameHeight,
+        0, 0, frameWidth, frameHeight,
+      );
+      this.textures.addCanvas(key, canvas);
+    }
   }
 
   private createCreatureAnimations(): void {

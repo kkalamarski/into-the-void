@@ -386,11 +386,12 @@ export class TileRenderer {
    */
   private createCubeSprite(tileId: TileId, x: number, y: number): Phaser.GameObjects.GameObject {
     const baseTextureKey = this.getTextureKey(tileId);
-    const isFloorTile = baseTextureKey.endsWith('_floor');
+    const hasVariants = baseTextureKey.endsWith('_floor')
+      || baseTextureKey === 'tile_crystal_formation';
 
-    // Select variant for floor tiles based on position
+    // Select variant for tiles with variants based on position
     let textureKey = baseTextureKey;
-    if (isFloorTile) {
+    if (hasVariants) {
       const rand = seededRandom(x, y);
       if (rand > VARIANT_WEIGHTS[0] + VARIANT_WEIGHTS[1]) {
         // 10% chance for v3

@@ -159,7 +159,7 @@ const ANIMATED_CREATURE_Y_OFFSET: Record<string, number> = {
 
 // Scale overrides for specific plants (speciesId -> scale multiplier)
 const PLANT_SCALE_OVERRIDE: Record<string, number> = {
-  plant_void_tree: 7.5,  // Large tree - towering over players (cropped ~60px sprite)
+  plant_void_tree: 3.0,  // Large tree - towering over players (256px spritesheet frame)
   plant_tendril_tree: 3.0,  // Large fungal tree (256px sprite)
 };
 
@@ -784,15 +784,23 @@ export class EntityRenderer {
   // Features with sprite variants: entityId -> number of variants
   // Used for plants, minerals, and artifacts
   private static readonly FEATURE_SPRITE_VARIANTS: Record<string, number> = {
-    // Plants
-    plant_void_tree: 8,
-    plant_void_fern: 2,
+    // Plants - void plains (from void-biome-features spritesheet)
+    plant_void_tree: 1,
+    plant_void_fern: 1,
     plant_drought_cactus: 1,
+    // Plants - other biomes
     plant_tendril_tree: 1,
     plant_rare_fungi: 4,
     plant_magma_bloom: 4,
-    // Minerals
+    // Minerals - void plains (from void-biome-features spritesheet)
     mineral_void_crystal: 1,
+    mineral_void_slate: 1,
+    // Plants - crystal caves (from crystal-biome-features spritesheet)
+    plant_lattice_moss: 1,
+    plant_crystal_lichen: 1,
+    plant_prism_bloom: 1,
+    // Minerals - crystal caves (from crystal-biome-features spritesheet)
+    mineral_cave_geode: 1,
     mineral_prismatic_crystal: 1,
   };
 
