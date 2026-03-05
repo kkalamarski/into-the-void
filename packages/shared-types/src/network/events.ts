@@ -507,13 +507,15 @@ export interface ServerEvents {
     durationMs: number;
     startedAt: number;
   };
-  /** CRFT-03: Craft completed — output item + proficiency XP */
+  /** CRFT-03: Craft completed — output item + proficiency XP + updated proficiency */
   'crafting:completed': {
     recipeId: string;
     outputItemId: string;
     qualityTier: QualityTier;
     proficiencyXP: number;
     discipline: CraftingDiscipline;
+    newProficiencyLevel: number;
+    newProficiencyXP: number;
   };
   /** CRFT-03: Crafting error with machine-readable code */
   'crafting:error': {
@@ -525,13 +527,14 @@ export interface ServerEvents {
     playerId: string;
     recipeId: string;
   };
-  /** Phase 123: Recipe list with per-character unlock status */
+  /** Phase 123: Recipe list with per-character unlock status + proficiency */
   'crafting:recipe-list': {
     recipes: Array<{
       recipe: RecipeDefinition;
       unlocked: boolean;
       unlockReasons: string[];
     }>;
+    proficiency: import('../game/crafting').CraftingProficiencyData;
   };
 }
 

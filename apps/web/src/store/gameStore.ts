@@ -79,6 +79,10 @@ interface GameState {
   showAutomation: boolean;
   toggleAutomation: () => void;
 
+  // Crafting panel
+  showCrafting: boolean;
+  toggleCrafting: () => void;
+
   // Discovered resources (rare nodes)
   discoveredResources: DiscoveredResource[];
   setDiscoveredResources: (resources: DiscoveredResource[]) => void;
@@ -146,6 +150,10 @@ export const useGameStore = create<GameState>((set) => ({
   // Automation panel
   showAutomation: false,
   toggleAutomation: () => set((state) => ({ showAutomation: !state.showAutomation })),
+
+  // Crafting panel
+  showCrafting: false,
+  toggleCrafting: () => set((state) => ({ showCrafting: !state.showCrafting })),
 
   // Discovered resources
   discoveredResources: [],

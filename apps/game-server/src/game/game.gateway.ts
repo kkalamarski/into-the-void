@@ -2102,18 +2102,22 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       return;
     }
 
-    // Send completion to player
-    client.emit('crafting:completed', {
-      recipeId: result.recipeId,
-      outputItemId: result.outputItemId,
-      qualityTier: result.qualityTier,
-      proficiencyXP: result.proficiencyXP,
-      discipline: result.discipline,
-    });
-
-    // Send updated inventory
+    // Send completion to player with updated proficiency data
     const player = this.playerService.getPlayerBySocket(client.id);
     if (player) {
+      const updatedProf = await this.craftingService.loadProficiency(player.id);
+      const discData = updatedProf[result.discipline];
+      client.emit('crafting:completed', {
+        recipeId: result.recipeId,
+        outputItemId: result.outputItemId,
+        qualityTier: result.qualityTier,
+        proficiencyXP: result.proficiencyXP,
+        discipline: result.discipline,
+        newProficiencyLevel: discData.level,
+        newProficiencyXP: discData.xp,
+      });
+
+      // Send updated inventory
       const inventory = this.inventoryService.getInventory(player.id);
       if (inventory) {
         client.emit('inventory:update', inventory);
@@ -2134,7 +2138,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       level: player.level,
       faction: player.faction,
     });
-    client.emit('crafting:recipe-list', { recipes });
+    const proficiency = await this.craftingService.loadProficiency(player.id);
+    client.emit('crafting:recipe-list', { recipes, proficiency });
   }
 
   /**
