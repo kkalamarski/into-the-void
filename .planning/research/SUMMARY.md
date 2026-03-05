@@ -1,230 +1,253 @@
 # Project Research Summary
 
-**Project:** Into the Void v1.24 — Balance & Automation
-**Domain:** Sci-fi survival MMO systems expansion (combat depth, environmental hazards, creature AI, ability rebalance, stat caps, automation tech tree)
-**Researched:** 2026-03-03
+**Project:** Into the Void — v1.25 Manual Crafting System
+**Domain:** MMO crafting system integration (recipe definitions, proficiency, quality tiers, unlock progression, faction gating)
+**Researched:** 2026-03-05
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Into the Void v1.24 is a systems expansion milestone on top of an already-functional monorepo. The stack is entirely settled — zero new runtime dependencies are required. All 6 feature systems (damage types, biome hazards, creature AI upgrades, ability rebalance, stat caps, automation tech tree) integrate via extension points that already exist in the codebase. The primary work is threading data through established pipelines, adding two new NestJS services (HazardService, AutomationService), extending several pure-function packages in `game-logic`, and writing new DB schemas for automation deployables. This is not a build-from-scratch milestone — it is a precision extension of a working system.
+The v1.25 crafting system is a well-scoped addition to an existing, stable game architecture. All framework and tooling decisions are fixed — the stack is TypeScript, NestJS, Drizzle ORM, Zustand, and React 18, all already installed and in use. No new runtime dependencies are required. The implementation path is to mirror three established codebase patterns: the gathering system (per-category proficiency JSONB, server-side timer with `setTimeout`), the quest system (definition registry package, cross-service EventEmitter2 events, unlock storage), and the automation system (Zustand store with side-effect socket handlers, draggable React panel). The primary structural deliverable is a new `packages/recipes` NX package following the `packages/quests` pattern exactly.
 
-The recommended build order has a hard dependency chain at the top: shared-type additions must precede everything; stat caps must precede ability rebalance tuning; damage types must precede creature resistance population and ability niche assignments. Automation is the one independent vertical — it has zero code dependency on combat systems and can be built in parallel with the AI and hazard work. The 83 existing creature definitions need a one-time resistance migration, and that migration strategy must be decided at the start of the damage types phase. Required-field-with-bulk-defaults is safer than optional-field-with-deferred-cleanup. Automation economy balance (maintenance cost vs. output rate) must be documented as a design artifact before any automation code is written — resource inflation is the highest-severity design failure mode of this milestone.
+The recommended approach is a five-phase build: shared foundation first (types, schema, `RecipeRegistry`), then the server `CraftingService`, then quest integration, then recipe content authoring, and finally the client panel. This order is dictated by dependencies — the server service cannot compile without types, the client store cannot wire without server events, and recipe definitions cannot be authored without both the registry and `ItemRegistry` existing. Quality tiers and faction gating are straightforward given the existing `FactionBonuses.craftingModifier` field already seeded in the database and the `calculateLevelFromXP()` function already in `packages/game-logic`.
 
-The three sharpest risks are: (1) damage type data added to the type system but never threaded into `calculateDamage()`, leaving the feature invisible at runtime; (2) biome hazard tick processing doing async per-player inventory and biome lookups inside the zone tick, blowing the 200ms tick budget; (3) automation structures with deployment costs only and no recurring maintenance, producing runaway credit inflation. All three have concrete prevention strategies: a required-field test that fails to compile without damage type wiring, a player hazard state cache that is read synchronously in the tick, and a mandatory income/sink balance sheet before automation implementation begins.
+The key risks are not technical complexity but implementation discipline: ingredient consumption must be atomic (single in-memory write, not two sequential DB writes), server-side validation must mirror every client-side guard, recipe unlocks must be persisted from day one, and crafted item economy balance must be checked against existing trader prices and loot drop rates before recipe definitions are written. All ten identified pitfalls have clear prevention patterns drawn directly from existing codebase precedents. None requires novel architecture.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The monorepo stack is entirely fixed. Zero new npm installs are required. All dependencies are already present: Phaser 3.90.0 (client rendering), NestJS 10.3.x (game-server services), Drizzle ORM 0.30.10 (PostgreSQL persistence), TypeScript 5.4+ (type safety across packages), Vitest 4.0.18 (unit testing). The existing `@nestjs/event-emitter` (3.0.1) and `setInterval`/`setTimeout` tick patterns cover all new async requirements. No `@nestjs/schedule`, no BullMQ, no new Redis queues.
-
-The six gaps that need new code but no new libraries: `DamageParams` lacks a `damageType` field; `CreatureDefinition` lacks a `resistances` field; `BiomeHazard` lacks `statDrain` and `gearCounterStat` fields; `AiTickResult` lacks behavior upgrade signals (stampede, packCall, ambush, frenzied); no `HazardService` exists; no `AutomationService` exists.
-
-**Core technologies:**
-- TypeScript 5.4+: discriminated unions for `DamageType` and `AbilityEffect` extensions — compile errors surface at definition sites, not at runtime; `satisfies` operator validates creature resistance shape at author time
-- NestJS 10.3.x: `HazardService` and `AutomationService` as new injectable services — the pattern is proven across 19 existing services in game-server; register both in `game.module.ts`
-- Drizzle ORM 0.30.10: new `deployables` table for automation persistence — existing `structures` table `properties` jsonb handles lighter extractor config; no ORM upgrade needed
-- Phaser 3.90.0: `HazardOverlay` HUD element and damage type color-coded floating numbers — all via existing `this.add.text()` and `this.tweens.add()` APIs already used in `EntityRenderer.ts`
-- Vitest 4.0.18: extend existing `damage.test.ts`; add `stat-caps.test.ts` and `biome-hazard.test.ts` for new pure functions in `game-logic`
+Zero new dependencies are needed. The crafting system slots into the existing stack by creating new files and one new `packages/recipes` package. The two new Drizzle tables (`crafting_proficiency` and `recipe_unlocks`) require a single migration run via `pnpm db:generate && pnpm db:migrate`. The `CraftingService` registers as a standard NestJS injectable in `game.module.ts`, alongside the 20 existing services.
 
 **See:** `.planning/research/STACK.md`
 
+**Core technologies:**
+- `packages/recipes` (new NX lib): Static `RecipeDefinition` objects, `RecipeRegistry` singleton — mirrors `packages/quests` exactly; prerequisite for all other crafting code
+- `NestJS CraftingService`: Timer management, ingredient validation, proficiency XP, quality roll — slots into `game.module.ts` alongside existing services
+- `Drizzle ORM` (two new tables): `crafting_proficiency` (JSONB per character, mirrors `gathering_proficiency`) and `recipe_unlocks` (join table, append-only, source of truth for unlock persistence)
+- `Zustand + immer` (`craftingStore.ts`): Client recipe list, active craft timer, proficiency state — mirrors `automationStore.ts` side-effect socket pattern
+- `React 18` (`CraftingPanel.tsx`): Draggable HUD panel with category tabs, ingredient checklist, progress bar — mirrors `AutomationPanel.tsx` and `QuestLogPanel.tsx`
+
 ### Expected Features
 
-**Must have (table stakes — P1):**
-- 4 named damage types (Thermal/Cryo/Bio/Kinetic) with per-creature resistance multipliers (0.5-1.5x soft bands) — players expect thematically named abilities to differ mechanically beyond raw numbers
-- Plasma Burst dominance removed — current 35 baseDamage + 1.2 scaling makes all other offensive abilities irrelevant; no meaningful ability diversity exists today
-- Defensive abilities with real HP shield absorb and flat damage reduction — current toughness-buff approach produces invisible ~2% effective DR at endgame stats; players never slot defensive abilities
-- Stat soft cap at 200 with diminishing returns, hard cap at 400 — prevents infinite-scaling cheese builds; must apply to equipment+buff contributions only, not base level stats
-- Biome HP drain and stat debuffs in Tier II+ zones — `BiomeHazard` type is defined in `biome.ts` but the tick is not implemented; hazard gear must exist in trader inventories before any biome's hazard tick is enabled
-- Pack Call (omnivore), Frenzy (maniac), Ambush (predator), Stampede (herbivore) — one meaningful behavior upgrade per archetype
-- Deployable extractors (T2) with passive accumulation, storage cap, and maintenance cost credit sink
-- Credit sinks tied to automation deployment and recurring maintenance — economy currently has no meaningful drain mechanism
+**See:** `.planning/research/FEATURES-CRAFTING.md`
 
-**Should have (competitive — P2):**
-- Color-coded floating damage numbers per type (Thermal = orange, Cryo = cyan, Bio = green, Kinetic = white)
-- Frenzy visual state change on creature color overlay — teaches the mechanic through observation rather than tooltips
-- Survey beacons (T3) and planetary extractors (T4) extending the automation progression arc
-- Resource refinery (T5) for raw-to-refined material conversion
-- Tiered hazard severity (Tier II: stat debuff only; Tier III: HP drain + debuff; Tier IV: stacking drain)
-- Hazard-specific consumables as emergency counter items
+**Must have (table stakes):**
+- Recipe browser panel accessible from HUD anywhere — players expect this in any crafting game
+- Ingredient requirement display with craftable/uncraftable visual distinction (green/red per availability)
+- Craft button with crafting timer and progress bar — short timers (2-10s), not instant, not a waiting-room system
+- Inventory integration — ingredients consumed on craft start, output delivered on completion, `INSUFFICIENT_RESOURCES` error if missing
+- Recipe output preview — item icon, name, rarity, quantity shown before committing
+- Category filtering — tabs for Equipment / Consumables / Reagents / Structures
 
-**Defer (v1.25+):**
-- Dynamic hazard events (void storms, acid rain timed pulses) — after hazard tick infrastructure is proven stable
-- Automation-creature interaction (Stampede damages deployed structures) — after both systems are independently stable
-- Per-biome extractor efficiency modifiers — after automation usage patterns are measured
+**Should have (competitive differentiators):**
+- Per-category crafting proficiency — 4 disciplines mirroring gathering proficiency, level gates quality tier outcome
+- Quality tiers (Standard / Refined / Masterwork) — outcome influenced by proficiency level, per-recipe thresholds, stat modifier not separate item IDs
+- Progression-unlocked recipes — level-gated, quest-reward, exploration-discovered, faction-gated vectors; multiple unlock paths prevent single bottleneck
+- Faction specialty recipes — Verdant biotech, Helix heavy armor, Nexus tech modules; `requiredFaction` on `RecipeDefinition`
+- Full production chain scope — equipment, consumables, deployable structures, reagents all craftable
 
 **Defer (v2+):**
-- Adaptive creature learning AI — no production MMO implements ML-based per-creature learning; implementation cost too high
-- Ability synergy combos (chain effects from type interactions) — after base balance is proven; requires new server-side state
-- Crafting recipes using refined automation output — next systems milestone; explicitly out of scope in PROJECT.md
-- Player resistance stats per damage type — WoW abandoned this; creates mandatory gear sets per encounter type
-- Damage type immunity (0x multiplier) — creates hard player lock-out; cap resistance at 70% maximum instead
+- Batch crafting (inflation risk; design space needs economy data first)
+- Crafting orders / commission system (requires player-to-player economy infrastructure)
+- Recipe research / random invention (high complexity, uncertain payoff)
+- Crafting station spatial requirements (conflicts with hub-accessible design in v1.25)
+- Recipe search/text filter (needed only when recipe count exceeds ~30; add post-validation)
 
-**Anti-features to avoid:**
-- Plasma Burst nerf that distributes dominance to a different single ability — each ability needs a type-based situational niche
-- Defensive ability rebalance implemented as larger numbers on existing `buff` effects (not new effect types) — invisible to players
-- Front-loaded automation costs with no recurring maintenance — produces resource inflation after initial payoff period
-- Ambush behavior using ray-casting for line-of-sight computation inside the FSM tick — breaks tick budget at 3+ Ambush creatures per zone
-- Pack Call that spawns new creatures — only signal existing nearby creatures; never spawn
-
-**See:** `.planning/research/FEATURES.md`
+**Anti-features to never implement:**
+- Crafting failure chance — use quality tiers for outcome variation instead
+- Unlimited recipe visibility from the start — show locked recipes as silhouettes with hint text
+- Crafting skill XP from junk recipes — award XP proportional to item tier, not volume
 
 ### Architecture Approach
 
-The architecture is an extension of the existing 3-tier monorepo pattern: pure functions in `packages/game-logic` (damage, stat caps, hazard math, AI FSM), server coordination in `apps/game-server/src/game/` (HazardService, AutomationService, modified CombatService/AiService/AbilityService), persistence in `packages/database` (new deployables schema). The four key structural decisions are: (1) resistance multiplier applied inside `calculateDamage()` as a single multiplicative step — both auto-attacks and ability-triggered attacks use the same path; (2) hazard processing cached on biome entry and gear change events, read synchronously from a Map in the tick — not recomputed async per-player per-tick; (3) group AI behaviors (Stampede, Pack Call) computed in a zone-level pre-processing pass before the per-creature FSM loop — `tickCreatureAI()` remains a pure single-creature function; (4) automation state accumulated in-memory and flushed to the `deployables` DB table on collection or on a 5-minute interval — not written to DB on every 60s accumulation tick.
-
-**Major components:**
-1. `packages/game-logic/src/combat/` — extended with `stat-caps.ts` (NEW) and `biome-hazard.ts` (NEW); `damage.ts` and `creature-ai.ts` modified to accept new parameters
-2. `apps/game-server/src/game/hazard.service.ts` (NEW) — biome hazard tick processor injected into AiService; reads cached `Map<playerId, HazardState>` synchronously
-3. `apps/game-server/src/game/automation.service.ts` (NEW) — deployable lifecycle, 60s global tick, resource accumulation, maintenance cost deduction, processing queue management
-4. `packages/database/src/schema/deployables.ts` (NEW) — automation structure persistence (ownerId, deployableType, fuelRemaining, accumulatedItems, processingQueue config)
-5. `apps/web/src/game/rendering/HazardOverlay.ts` (NEW) — HUD hazard warning with counter stat progress indicator
-
-**Internal boundaries that must not be crossed:**
-- `game-logic` functions must remain pure — no NestJS imports, no DB calls
-- `HazardService` calls AiService's zone data but AiService must not call HazardService (circular dependency)
-- `AutomationService` has no dependency on CombatService — automation is resource management only
-- `tickCreatureAI()` is single-creature and pure; AiService handles multi-creature coordination
+The crafting system integrates entirely through established extension points. `GameGateway` gains three new `@SubscribeMessage` handlers. `CraftingService` injects `InventoryService`, `PlayerService`, and `EventEmitter2`. `QuestService` gains an `@OnEvent('item.crafted')` handler. The client pattern is identical to automation: `craftingStore.ts` registers socket event handlers as module-level side effects, `GameUI.tsx` imports the store to activate them, and `CraftingPanel` is rendered conditionally behind `gameStore.showCrafting`. Keyboard shortcut `C` toggles the panel via `GameShortcuts.tsx` and `HUD.tsx`.
 
 **See:** `.planning/research/ARCHITECTURE.md`
 
+**Major components:**
+1. `packages/recipes/` — `RecipeDefinition`, `RecipeRegistry`, definition files; new NX package; prerequisite for all other crafting components
+2. `packages/shared-types/src/game/crafting.ts` — `CraftingCategory`, `CraftResult`, `RecipeSummary`, `CraftingProficiency` types; must exist before server or client code compiles
+3. `packages/database/src/schema/crafting-proficiency.ts` + `recipe-unlocks.ts` — DB schema; must be migrated before `CraftingService` runs
+4. `apps/game-server/src/game/crafting.service.ts` — timer via `setTimeout`, ingredient validation, proficiency cache, quality roll, `item.crafted` event emission
+5. `apps/web/src/store/craftingStore.ts` + `apps/web/src/ui/panels/CraftingPanel.tsx` — client state and HUD panel
+
+**Key patterns:**
+- `setTimeout` per craft (not `setInterval`) — same as gathering challenge expiry; individual completion times (5-30s) make per-craft timers correct
+- Ingredients consumed on craft start (not on completion) — prevents duplication exploit where player uses ingredients during timer window
+- Server-side `activeCrafts: Map<string, ActiveCraft>` — mirrors `activeChallenges` in `GatheringService`; enforces one craft per character; source of truth for timer validation
+- EventEmitter2 cross-service event — `CraftingService` emits `item.crafted`; `QuestService` subscribes via `@OnEvent`; no direct coupling
+
 ### Critical Pitfalls
 
-Top 5 by impact and prevention urgency (from PITFALLS.md):
+**See:** `.planning/research/PITFALLS-CRAFTING.md`
 
-1. **Damage type field added to types but never read in `calculateDamage()`** — make `damageType` required (not optional) on `DamageParams`; TypeScript will fail to compile at all call sites; write the resistance unit test first, before any creature definition changes
-2. **83 existing creatures get no `resistances` field — partial migration breaks biome balance** — make `resistances` required with a neutral default profile (`{ thermal: 1.0, cryo: 1.0, bio: 1.0, kinetic: 1.0 }`) bulk-applied per biome as the base thematic assignment; never leave the field optional
-3. **Biome hazard tick does async zone/inventory lookups per-player per-tick — blows 200ms budget** — cache player hazard vulnerability state on biome entry and gear change events; read synchronously from a `Map<playerId, HazardState>` in the tick; benchmark tick duration before and after adding any hazard processing
-4. **Automation extractors have only deploy costs and no recurring maintenance — runaway credit inflation** — document income/sink balance sheet (maintenance cost per hour >= 60% of output value at each tier) before writing any automation code; this is the highest-severity economic failure mode
-5. **Defensive ability rebalance uses larger numbers on existing `buff` effects — players still ignore defensives** — add `shield` (HP absorb pool) and `damage_reduction` (flat DR%) as new variants to the `AbilityEffect` discriminated union; toughness buffs at endgame produce ~2% effective DR and are completely invisible to players
+1. **Non-atomic ingredient consumption** — Calling `removeItems()` then `addItem()` as two separate operations creates partial-failure exposure (player loses materials with no output, or receives output for free). Prevention: implement crafting as a single in-memory mutation — read inventory, validate ingredients, compute final state (ingredients removed, output added), write in one `updateInventoryFull()` call. Address in Phase 1 before any recipe definitions exist.
 
-Additional pitfalls documented: stat cap set below natural legendary gear output (invalidates existing legendaries); Pack Call / Stampede implemented inside `tickCreatureAI()` causing O(n²) per-tick (requires zone-level pre-processing architecture); Frenzy Map not cleared on creature death (state leak); Ambush using ray-casting inside FSM tick (breaks tick budget).
+2. **Crafting timer tracked client-side only** — Client sends `crafting:complete` event; server awards output without validating when crafting started; modified clients skip timers. Prevention: server records `startedAt: Date.now()` in `activeCrafts` Map on `crafting:start`; validates `elapsed >= craftTimeMs - LATENCY_TOLERANCE` on completion. Mirror `GatheringService` exactly. Address in Phase 1.
 
-**See:** `.planning/research/PITFALLS.md`
+3. **Recipe unlocks not persisted** — In-memory `Map<characterId, Set<recipeId>>` evaporates on server restart; players lose one-time quest-unlocked recipes permanently. Prevention: `recipe_unlocks` table (append-only, never delete rows) is the source of truth; in-memory Set is a cache loaded on player join. Must exist before any unlock logic is written. Address in Phase 1 schema.
+
+4. **Faction recipe bypass via socket injection** — UI filter hides faction recipes from wrong-faction players, but server handler does not validate `player.factionId` against `recipe.requiredFaction`; modified clients craft faction-exclusive items. Prevention: `if (recipe.requiredFaction && recipe.requiredFaction !== player.factionId) reject` as first check in `craftItem()`. 3-line guard. Address in Phase 1.
+
+5. **Crafted items invalidate trader/loot economy** — Recipe material costs set without reference to existing trader prices or loot drop rates; crafting becomes strictly dominant over buying or looting. Prevention: for every craftable item, compare (crafting material effort) vs (trader buy price) vs (expected loot time) before writing the recipe definition. Crafting cost should land at 80-120% of cheapest alternative. Address in Phase 2 with a balance comparison before recipe files are written.
+
+6. **Quality tier progression too fast or too slow** — Copying gathering XP curve applies a gentle yield-quantity effect to quality tier unlocks — a qualitatively different power jump that either shortcuts gear progression or makes crafting feel pointless. Prevention: define `qualityThresholds` per recipe (which proficiency level enables Refined/Masterwork output for that specific recipe). Address in Phase 2.
+
+7. **Recipe definitions reference unknown item IDs** — `ItemRegistry.get()` returns `UNKNOWN_ITEM` silently; typos in ingredient/output IDs produce "Unknown Item" crafted items. Prevention: add `validateRecipeDefinitions()` startup check in `CraftingService.onModuleInit()` that calls `ItemRegistry.has()` on every ingredient and output ID; throw on unknown IDs. Write as a test that fails the build. Address in Phase 2.
 
 ## Implications for Roadmap
 
-Based on combined research, the following 7-phase structure is recommended. Phase 7 (Automation) is fully independent and can be built in parallel with Phases 5-6 by a separate contributor after Phase 1 is complete.
+Based on the research dependency graph and pitfall-to-phase mapping, a five-phase structure is recommended.
 
-### Phase 1: Shared Type Foundation
+### Phase 1: Shared Foundation and CraftingService Core
 
-**Rationale:** Every subsequent system depends on type contracts being in place. `DamageType` union, `DamageResistances` interface, `shield`/`damage_reduction` AbilityEffect variants, `DeployableEntity` interface, and `AiTickResult` behavior signal fields are all consumed by Phases 2-7. Making fields required (not optional) is the primary prevention mechanism for the most common pitfall in this milestone.
-**Delivers:** Compilable type contracts for all v1.24 features across `shared-types`, `entities`, and `game-logic` index exports; no behavioral changes yet; TypeScript compile confirms all new interfaces are wired
-**Addresses:** DamageType union + DamageResistances (FEATURES.md), DeployableEntity interface (FEATURES.md), AiTickResult extensions (ARCHITECTURE.md Pattern 3)
-**Avoids:** Pitfall 1 (damage type ignored) — required field is the prevention; Pitfall 2 (partial creature migration) — forces all consumers to handle new fields
+**Rationale:** Everything else in the system imports from this phase. TypeScript types must exist before services compile. DB schema must be migrated before services query tables. Server-side validation guards (atomic inventory, timer tracking, faction check, unlock persistence) must be built into the service foundation before recipe content is authored — retrofitting these into an already-running service is error-prone.
 
-### Phase 2: Stat Caps
+**Delivers:**
+- `packages/shared-types/src/game/crafting.ts` — `CraftingCategory`, `CraftResult`, `RecipeSummary`, `CraftingProficiency`
+- `packages/shared-types/src/network/events.ts` — all `crafting:*` `ClientEvents` and `ServerEvents` additions
+- `packages/recipes/` — `RecipeDefinition` type, `RecipeRegistry` singleton, empty definition barrel (definitions added in Phase 2-3)
+- `packages/database/src/schema/crafting-proficiency.ts` — JSONB proficiency table
+- `packages/database/src/schema/recipe-unlocks.ts` — unlock persistence join table (append-only)
+- `packages/database/src/queries/crafting.ts` — DB helper functions
+- DB migration (single file for both new tables)
+- `apps/game-server/src/game/crafting.service.ts` — full service with: atomic inventory mutation, server-side `activeCrafts` Map with timing validation, faction guard, proficiency load/cache/unload lifecycle, quality roll with injected random, `item.crafted` event emission
+- `game.gateway.ts` modifications — three new `@SubscribeMessage` handlers, `cancelActiveCraft` in `handleDisconnect`
+- `game.module.ts` modification — `CraftingService` registered as provider
 
-**Rationale:** Stat caps must precede ability rebalance tuning. Current buff amounts (+8 to +12 toughness) were designed without a cap in mind. Setting the cap before tuning ability values ensures all new buff numbers are calibrated to the post-cap stat landscape. Also requires a pre-implementation audit of current gear stat distributions — set cap value at or above the 85th percentile of natural endgame stat totals, not below the median.
-**Delivers:** `applyDiminishingReturns()` pure function in `packages/game-logic/src/combat/stat-caps.ts`; soft cap 200, hard cap 400 applied at end of `computeCharStats()`; stats panel soft cap indicator; gear distribution simulation documented
-**Uses:** Single modification to `computeCharStats()` loop; `stat-caps.test.ts` verifying DR curve above 200 (STACK.md)
-**Avoids:** Pitfall 7 (cap invalidates existing legendaries) — gear distribution simulation gates the cap value selection
+**Avoids:** Non-atomic consumption, timer skip exploit, recipe unlocks not persisted, faction bypass, XP race condition (one-active-craft enforcement), proficiency schema collision with gathering
 
-### Phase 3: Damage Types and Creature Resistances
+**Test gate:** TypeScript compiles. DB migration runs. `crafting:start` with valid ingredients returns `crafting:started`. Timer fires and returns `crafting:result`. Faction guard rejects wrong-faction attempt. `crafting:complete` sent immediately after `crafting:start` is rejected. Server restart + player reconnect restores recipe unlocks from DB.
 
-**Rationale:** Damage types must precede ability rebalance — assigning damage types to abilities is only testable after creature resistance data exists. The 83-creature resistance migration must happen atomically in this phase using the required-field strategy. The critical integration point is modifying `calculateDamage()` to accept `damageType` and `defenderResistances` and apply the multiplier.
-**Delivers:** `DamageType` threaded through `calculateDamage()`; resistance data on all 83+ creatures (bulk per-biome assignment + thematic tuning); damage type label and color in combat log and floating numbers; `damage-types.test.ts` verifying half-damage on 0.5x resistance
-**Implements:** Pattern 1 from ARCHITECTURE.md — DamageType as multiplicative layer on existing pipeline
-**Avoids:** Pitfall 1 (type ignored) and Pitfall 2 (partial creature migration); confirms damage type system is visibly functional before ability rebalance assigns types to abilities
+### Phase 2: Recipe Content and Quality System
 
-### Phase 4: Ability Rebalance
+**Rationale:** Service mechanics from Phase 1 are stable. Recipe definitions and the quality threshold system are authored together because quality thresholds are per-recipe fields — they cannot be balanced in isolation from the recipe definitions themselves. Economy balance comparison happens here, before recipe files are committed.
 
-**Rationale:** Depends on Phase 2 (stat caps stable for buff amount calibration) and Phase 3 (damage types on creatures make ability type niche assignments testable). The shield effect type is a new `AbilityEffect` discriminant — not larger numbers on existing buff effects. Plasma Burst nerf and defensive ability overhaul are the two highest player-visibility changes of the entire milestone.
-**Delivers:** `shield` and `damage_reduction` effect variants in `AbilityEffect` union; 6 ability definition changes (Plasma Burst nerf, Emergency Shield → HP absorb, Magnetic Field → flat DR, Thermal Lance → Thermal type + cooldown reduction, Cryo Blast → Cryo type + perception debuff, Fortify Systems → HP absorb); `AbilityService.shieldPools` Map; `consumeShield()` call in `CombatService.creatureAttackTick()`; shield bar in HUD
-**Uses:** Pattern 4 from ARCHITECTURE.md — shield pool as new effect type; `shieldPools` and `damageReductions` Maps in AbilityService
-**Avoids:** Pitfall 6 (defensive abilities still invisible after rebalance); integration gotcha (toughness buff at endgame is ~2% DR — confirmed invisible)
+**Delivers:**
+- Economy balance review for each craftable item (material cost vs. trader price vs. loot drop rate) — must complete before recipe files are written
+- Per-recipe `qualityThresholds` field authored into every `RecipeDefinition`
+- Definition files: `equipment.ts`, `consumables.ts`, `reagents.ts`, faction-specific definitions in `faction/`
+- Startup validation test (`crafting-recipe-validation.test.ts`) — fails build if any ingredient/output item ID not in `ItemRegistry`
+- `packages/game-logic/src/crafting/quality.ts` — `calculateQualityTier()` with injected random, `qualityToOutputMultiplier()`
+- `packages/game-logic/src/crafting/proficiency.ts` — reuses `calculateLevelFromXP()` from gathering, no duplication
+- `packages/game-logic/src/crafting/validation.ts` — `validateRecipeIngredients()`, `canCraft()` pure functions
+- Unit tests for quality calculation and proficiency XP curve
 
-### Phase 5: Creature AI Upgrades
+**Avoids:** Economy invalidation, quality tier progression miscalibration, unknown item ID references
 
-**Rationale:** Group behaviors (Stampede, Pack Call) require zone-level pre-processing architecture to be designed before any behavior code is written — the per-creature FSM must remain pure and single-creature. Frenzy requires extending the centralized `handleCreatureDeath()` before any per-behavior state Maps are created. Ambush must be implemented as a directional-bias FSM state, not as ray-casting inside the tick.
-**Delivers:** 4 new `AiTickResult` fields; `detectGroupBehaviorTriggers()` zone-level pre-pass in AiService; Stampede (herbivore flee cascade), Pack Call (omnivore ally signaling, hard cap 2-3 allies), Ambush (predator directional-approach state), Frenzy (maniac speed/damage boost below 30% HP) behaviors; Frenzy creature color overlay in EntityRenderer; centralized `handleCreatureDeath()` extended for new state Maps
-**Implements:** Pattern 3 from ARCHITECTURE.md — FSM branches with zone-level coordination separated from per-creature tick
-**Avoids:** Pitfall 5 (O(n²) group behavior detection), Pitfall 9 (Ambush ray-casting in FSM tick), Pitfall 10 (Frenzy Map leak on creature death)
+**Test gate:** Recipe validation test passes with zero unknown item IDs. Level 1 crafter with an epic recipe produces Standard quality output. Level 15 crafter produces quality tier as per recipe threshold. All craftable items sit within 80-120% of cheapest alternative acquisition path.
 
-### Phase 6: Biome Hazard System
+### Phase 3: Automation Production Chain
 
-**Rationale:** Depends on Phase 3 (DamageType enum used for hazard classification) and benefits from Phase 5 (creature behaviors provide in-zone threats that make hazard zones narratively coherent). Requires caching architecture for player hazard state designed before tick code is written. Requires hazard protection gear available in faction traders before any biome's hazard tick is enabled — this is a hard design gate.
-**Delivers:** `HazardService` injectable with player hazard state cache; `computeHazardDrain()` pure function in `biome-hazard.ts`; `BiomeHazard` interface extended with `gearCounterStat` and `gearCounterThreshold`; `player:hazard` socket event; HazardOverlay HUD component with counter stat progress bar; hazard protection items in faction trader inventories; `isHubZone()` guard applied to all hazard tick paths; first-tick 3-second grace period
-**Implements:** Pattern 2 from ARCHITECTURE.md — HazardService as independent injectable called from AiService.runZoneTick()
-**Avoids:** Pitfall 3 (tick budget overrun — synchronous Map read instead of async lookups), Pitfall 4 (instant-kill tick damage — max 8% base HP drain per tick, validated against minimum-level entrant), integration gotcha (hub zone hazard guard)
+**Rationale:** Separated from Phase 2 because automation crafting requires cross-system validation against `DEPLOYABLE_TYPE_TO_ITEM` in `AutomationService`. Recipe outputs must be the same item IDs already in the deployable mapping — not new item IDs. This validation is specific enough to warrant its own phase with its own test gate.
 
-### Phase 7: Automation Tech Tree
+**Delivers:**
+- `packages/recipes/src/definitions/automation.ts` — deployable structure recipes
+- Validation that all deployable recipe output IDs are present in `DEPLOYABLE_TYPE_TO_ITEM`
+- Integration test confirming a crafted deployable item can be deployed via automation panel without errors
+- Any new deployable item definitions in `packages/items` (if new tiers needed), paired with `DEPLOYABLE_TYPE_TO_ITEM` update in the same changeset
 
-**Rationale:** Fully independent of all combat systems — zero code dependency on Phases 1-6. Can be built in parallel with Phases 5-6. The income/sink balance sheet must be the first deliverable of this phase before any implementation begins. Sequencing it as a dedicated vertical avoids context-switching between combat balance tuning and economy design.
-**Delivers:** `deployables` and `automation-jobs` DB schemas + Drizzle migration; `AutomationService` with 60s global tick, fuel/maintenance deduction, in-memory accumulation with 5-minute DB flush; T2 extractor → T3 survey beacon → T4 planetary extractor → T5 refinery progression; `deployable:place/collect/refuel` socket events in `game.gateway.ts`; automation panel in client HUD; income/sink balance sheet documented (maintenance cost >= 60% of output value per tier)
-**Uses:** Drizzle `pgTable` schema patterns from `packages/database`; `setInterval` service pattern from existing AiService/ZonesService (STACK.md)
-**Avoids:** Pitfall 8 (credit inflation — balance sheet gates implementation), Pitfall — DB write on every accumulation tick (in-memory flush pattern)
+**Avoids:** Automation deployable item ID mismatch (crafted deployable outputs an item ID not in the automation mapping)
+
+**Test gate:** All deployable recipe output IDs resolve in `DEPLOYABLE_TYPE_TO_ITEM`. Crafted `deployable_extractor` can be placed via `AutomationService` without error.
+
+### Phase 4: Quest Integration
+
+**Rationale:** An isolated server-side change that builds on the `item.crafted` event from Phase 1. No client changes needed. Separated because it touches the quest system — a stable system that should not be modified speculatively while earlier crafting phases are still in flux.
+
+**Delivers:**
+- `packages/quests/src/types.ts` — `CraftObjective` with `objectiveType: 'craft'` and `itemId`/`recipeId` fields
+- `packages/database/src/schema/quest-progress.ts` — add `'craft'` to `ObjectiveProgressJson.objectiveType` union
+- `apps/game-server/src/game/quest.service.ts` — `@OnEvent('item.crafted')` handler, `ItemCraftedPayload` interface
+- Quest reward extension: `QuestRewards.recipeIds?: string[]` — enables quest-reward recipe unlocks
+- `QuestService.grantRewards()` modification — calls `craftingService.unlockRecipe()` for reward recipe IDs
+
+**Test gate:** Accept a test quest with `craft` objective. Complete a craft. Verify `quest:progress` event emitted with incremented counter. Complete a quest with `recipeIds` reward. Verify recipe appears unlocked after server restart.
+
+### Phase 5: Client Store and CraftingPanel
+
+**Rationale:** Server events are stable and fully typed (Phase 1). The client panel wires against a live server. All socket event names and payload shapes are already in `shared-types/events.ts` — no guessing or mock-typing required.
+
+**Delivers:**
+- `apps/web/src/store/craftingStore.ts` — Zustand store with immer middleware, socket event side-effects for all `crafting:*` server events
+- `apps/web/src/ui/panels/CraftingPanel.tsx` — draggable panel, category tabs (Equipment / Consumables / Reagents / Structures), recipe list with craftable/locked states, ingredient checklist (green/red per inventory), quality range display at current proficiency, craft button, progress bar (client-side countdown from `completesAt` timestamp)
+- `apps/web/src/ui/panels/CraftingPanel.css` — glassmorphism styles matching existing panels
+- `apps/web/src/store/gameStore.ts` — add `showCrafting: boolean`, `toggleCrafting()`
+- `apps/web/src/ui/hud/GameShortcuts.tsx` — crafting shortcut button (key `C`)
+- `apps/web/src/ui/hud/HUD.tsx` — `C` keydown handler
+- `apps/web/src/ui/GameUI.tsx` — import `craftingStore` (side-effect activation), conditional `<CraftingPanel />`
+- Keyboard disable pattern on panel mount (same as `QuestLogPanel.tsx`)
+
+**Test gate:** `C` key opens panel. Panel requests and renders recipe list on open. Selecting a recipe shows ingredients with availability indicators. Triggering a craft shows progress bar counting down. Craft result shows proficiency XP feedback toast. Panel closes cleanly and re-enables Phaser keyboard.
 
 ### Phase Ordering Rationale
 
-- Phase 1 before all others because TypeScript contract correctness is a compile-time gating mechanism, not a feature — required fields prevent the most common silent failure mode in this milestone
-- Phase 2 before Phase 4 because all ability buff amounts must be calibrated against the post-cap stat landscape; setting the cap after writing buff values means re-tuning everything
-- Phase 3 before Phase 4 because ability type niche assignments (Thermal Lance = Thermal) are only testable against real creature resistance data; assigning types without resistance data means no way to verify the system has effect
-- Phase 4 before Phase 5 because Frenzy and Stampede behaviors create the in-combat threats that give defensive abilities meaningful deployment context; without AI threats, players cannot experience why Emergency Shield matters
-- Phase 5 before Phase 6 because dangerous creature behaviors in Tier III+ zones make biome hazard severity narratively coherent — both systems together create zone identity, individually they are partial
-- Phase 7 parallel-capable with Phases 5-6 because automation has no shared code with creature AI or hazard systems; routing it as a separate track avoids single-contributor bottleneck
+- Phase 1 is mandatory first: `RecipeRegistry`, shared types, and DB schema are compile-time and runtime prerequisites for every downstream component. Skipping or deferring any part of Phase 1 causes cascading compilation failures.
+- Automation crafting (Phase 3) is separated from main recipe content (Phase 2) because it requires cross-system validation against `AutomationService` that is independent of the rest of the recipe balancing work.
+- Quest integration (Phase 4) is server-only and touches a stable system. Keeping it isolated after Phase 3 means the quest system modification is a clean, focused changeset that can be reviewed and reverted independently.
+- The client panel (Phase 5) is last because it should wire against a working server, not a stubbed one. The panel UX (loading states, error overlays, combat gate messaging) requires knowing exactly what events the server sends — which is only certain once Phase 1 is complete.
+- Recipe content authoring (Phases 2-3) can begin as soon as Phase 1 type definitions exist. Definition files are pure TypeScript data objects; they do not require a running server. Content authoring can proceed in parallel with late Phase 1 server work if capacity allows.
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase 7 (Automation):** Income/sink balance sheet requires simulation against current credit economy data (credit generation rates per tier, current player credit ceilings). Refinery recipe table design (input → output raw-to-refined mappings) is not documented in research and must be validated against `lore/world-bible.md` faction material names.
-- **Phase 6 (Biome Hazards):** Specific named protective gear items for cold, heat, and pressure hazard counters are not enumerated in research. The `hazmat` archetype covers toxic/void/radiation but the remaining 3 hazard types need gear item names confirmed against `lore/world-bible.md` faction gear sections before trader inventories can be populated.
+Phases with standard patterns (skip research-phase — well-documented within codebase):
+- **Phase 1:** Fully documented by analogues in `GatheringService`, `QuestRegistry`, `gathering-proficiency` schema, `automationStore`. No external research needed.
+- **Phase 4:** Quest system extension is a straightforward `@OnEvent` addition. Pattern is already used for `item.collected` and `entity.killed`.
+- **Phase 5:** Client panel follows `AutomationPanel.tsx` and `QuestLogPanel.tsx` templates exactly.
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1 (Shared Types):** TypeScript discriminated union extension is a zero-risk pattern established throughout this codebase
-- **Phase 2 (Stat Caps):** Single pure function addition to `computeCharStats()` — one file change, pattern fully specified in ARCHITECTURE.md
-- **Phase 3 (Damage Types):** Multiplicative resistance layer in `calculateDamage()` has exact code specified in STACK.md and ARCHITECTURE.md; no unknowns
-- **Phase 4 (Ability Rebalance):** AbilityEffect union extension follows established shared-types pattern; AbilityService Map tracking follows existing `activeBuffs` pattern
-- **Phase 5 (AI Upgrades):** Zone-level pre-processing architecture is documented in detail in PITFALLS.md; FSM extension patterns are clear
+Phases that benefit from a design pass before execution (not external research, but internal design decisions):
+- **Phase 2 (economy balance):** Recipe material costs require a structured comparison against existing trader prices and loot drop rates before recipe definitions are written. Deliverable: a balance spreadsheet or inline comments in recipe files documenting the acquisition-cost comparison for each item.
+- **Phase 2 (quality thresholds):** The per-recipe quality threshold values (which proficiency level enables Refined/Masterwork output for each recipe category) require calibration decisions grounded in expected character progression. Recommend establishing tier tables before authoring recipe definitions.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Codebase directly inspected; all installed versions verified from pnpm-lock.yaml; zero new dependencies required; integration points identified via source file examination |
-| Features | MEDIUM-HIGH | Table stakes features validated against WoW, NMS, Elden Ring, D&D 5e; anti-features have documented industry precedent with citations; automation income balancing is directional (needs credit economy simulation before Phase 7 implementation) |
-| Architecture | HIGH | All referenced source files directly inspected; data flow diagrams derived from existing service wiring; specific code snippets provided for each integration point; no speculative architecture |
-| Pitfalls | HIGH | Each pitfall is derived from a confirmed existing gap in the codebase (no `damageType` in `calculateDamage()`, no `shield` in `AbilityEffect`, no group behavior coordination in AiService); not speculative — direct source inspection confirmed each gap |
+| Stack | HIGH | All versions confirmed from installed `package.json` and `pnpm-lock.yaml`; all patterns verified by direct codebase inspection of 3 analogous systems |
+| Features | HIGH (core UI/UX), MEDIUM (quality tier calibration numbers) | Table stakes features grounded in established MMO conventions; quality tier threshold values are design decisions, not research findings |
+| Architecture | HIGH | Derived entirely from direct codebase inspection; every component has a named analogue in the existing codebase; no speculative patterns |
+| Pitfalls | HIGH | 10 of 10 pitfalls grounded in direct codebase analysis of specific files and line numbers; secondary sources from MMO crafting post-mortems align with codebase observations |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Stat cap value validation:** The 200 soft cap / 400 hard cap values are reasonable defaults but must be validated against a simulation of current best-in-slot gear at each tier before Phase 2 ships. Run `computeCharStats()` for a simulated BIS loadout at level 20 Tier II, level 30 Tier III, and level 40 Tier IV. Set the soft cap at or above the 85th percentile of natural endgame totals. This is a 1-2 hour task but cannot be skipped without risking retroactive legendary gear invalidation.
-- **Automation income/sink balance sheet:** Output rates and maintenance costs for T2-T5 automation tiers are directional estimates only. The per-hour income vs. maintenance balance at each tier requires simulation against real credit economy data (current credit generation rates from trading and gathering). This must be the first deliverable in Phase 7 before any implementation begins.
-- **Hazard counter gear for cold, heat, and pressure biomes:** The `hazmat` archetype in `packages/items/src/utils.ts` maps to toxic/void/radiation. Named protective gear items for `frozen_expanse`/`crystalline_wastes` (cold), `volcanic_ridge` (heat), and `deep_trenches` (pressure) are not documented in research. Validate against `lore/world-bible.md` faction gear sections during Phase 6 planning.
-- **Creature resistance tuning granularity:** Bulk biome-assignment (all Frozen Expanse creatures get high Cryo resistance, all Volcanic Ridge creatures get high Thermal resistance) is the recommended base migration strategy. Individual per-creature tuning for 83 creatures is a design effort not time-estimated in the research. Allocate explicit capacity in Phase 3 for the full resistance data pass — this is authoring work, not engineering work.
-- **Refinery recipe table:** The T5 refinery requires a raw → refined material mapping. Research establishes the mechanic but not the specific recipes. These must align with `lore/world-bible.md` faction material identities and the automation economy balance sheet established in Phase 7 planning.
+- **Recipe unlock storage pattern inconsistency:** STACK.md recommends JSONB `unlockedRecipeIds` on `crafting_proficiency`; ARCHITECTURE.md and PITFALLS.md recommend a separate `recipe_unlocks` join table. These are mutually exclusive schema decisions. The join table is the stronger choice (append-only audit trail, server-restart durability, accurate source of truth). Resolve explicitly at the start of Phase 1 before writing any schema files. Recommendation: use the join table.
+
+- **Quality tier model inconsistency:** FEATURES.md specifies Standard +0% / Refined +15% / Masterwork +30% as stat modifiers. STACK.md specifies quantity multipliers (1.0 / 1.1 / 1.25 / 1.5) with four named tiers. These differ in both tier count and modifier type. Resolve during Phase 2 design pass — choose one model and apply consistently across all recipe definitions and game-logic functions.
+
+- **`InventoryService.removeItems()` bulk atomic method:** ARCHITECTURE.md flags that `InventoryService` may lack a bulk atomic removal method; the current `inventory:drop` flow removes one item at a time and is not atomic for multi-ingredient removal. If this method does not exist, it must be added before `CraftingService.startCraft()` can be implemented safely. Verify at the start of Phase 1; add as the first task if missing.
+
+- **Combat gate behavior on panel open:** PITFALLS.md recommends showing "Cannot craft while in combat" overlay on panel open. This requires `CombatService.isInCombat()` to be accessible from `CraftingService`. Confirm the check exists and add to Phase 1 `CraftingService` validation sequence.
 
 ## Sources
 
 ### Primary (HIGH confidence)
 
-- Direct codebase inspection: `packages/game-logic/src/combat/damage.ts`, `packages/game-logic/src/ai/creature-ai.ts`, `packages/game-logic/src/stats/char-stats.ts`, `packages/shared-types/src/game/combat.ts`, `packages/shared-types/src/game/biome.ts`, `packages/shared-types/src/game/ability.ts`, `packages/items/src/types.ts`, `packages/items/src/utils.ts`, `packages/entities/src/types.ts`, `packages/database/src/schema/structures.ts`, `apps/game-server/src/game/combat.service.ts`, `apps/game-server/src/game/ai.service.ts`, `apps/game-server/src/game/ability.service.ts`, `apps/game-server/src/zones/zones.service.ts`
-- pnpm-lock.yaml: installed version verification for phaser@3.90.0, drizzle-orm@0.30.10, @nestjs/event-emitter@3.0.1, lru-cache@11.2.6
-- `.planning/PROJECT.md`: v1.24 milestone scope and explicitly out-of-scope items
-- `lore/world-bible.md`: biome hazard types and faction identity (non-negotiable per CLAUDE.md)
-- [Elden Ring Stat Caps — Game Rant](https://gamerant.com/elden-ring-stat-attribute-soft-hard-caps-diminishing-returns/) — verified against shipped soft cap inflection points
-- [Dark Souls Environmental Hazards — Dark Souls Wiki](https://darksouls.fandom.com/wiki/Environmental_Hazards) — official mechanics; poison swamp design documented
-- [Passive Resource Systems in Idle Games — Adrian Crook](https://adriancrook.com/passive-resource-systems-in-idle-games/) — industry practitioner on automation income/sink balance
+- Direct codebase inspection — `apps/game-server/src/game/gathering.service.ts`, `automation.service.ts`, `quest.service.ts`, `game.gateway.ts`, `game.module.ts`, `inventory.service.ts` — timer, proficiency, event, and inventory patterns
+- Direct codebase inspection — `packages/items/src/registry.ts`, `packages/quests/src/registry.ts`, `packages/quests/src/types.ts` — registry and definition package patterns
+- Direct codebase inspection — `packages/database/src/schema/gathering-proficiency.ts`, `quest-progress.ts`, `deployables.ts` — DB schema patterns
+- Direct codebase inspection — `packages/shared-types/src/network/events.ts`, `shared-types/game/faction.ts` — typed event maps, faction bonus fields
+- Direct codebase inspection — `apps/web/src/store/automationStore.ts`, `inventoryStore.ts`, `gameStore.ts` — Zustand store patterns
+- Direct codebase inspection — `apps/web/src/ui/panels/AutomationPanel.tsx`, `QuestLogPanel.tsx`, `GameUI.tsx` — panel rendering patterns
+- `.planning/PROJECT.md` — v1.25 milestone scope definition
+- `lore/world-bible.md` — faction identities, crafting modifier design intent (authoritative per CLAUDE.md)
 
 ### Secondary (MEDIUM confidence)
 
-- [WoW Resistance System — Wowpedia](https://wowpedia.fandom.com/wiki/Resistance) — community wiki; historical accuracy on mechanic removal rationale
-- [D&D 5e Vulnerability Analysis — Blog of Holding](https://www.blogofholding.com/?p=8544) — quantitative analysis of why 2x vulnerability is too punishing
-- [D&D 2024 Monster Manual resistance removal — D&D Beyond](https://www.dndbeyond.com/forums/dungeons-dragons-discussion/rules-game-mechanics/215361-opinions-about-removal-of-resistances-and) — community analysis of WotC design decision
-- [NMS Mineral Extractor — No Man's Sky Wiki](https://nomanssky.fandom.com/wiki/Mineral_Extractor) — community wiki for shipped automation feature
-- [Designing Game Economies — Medium](https://medium.com/@msahinn21/designing-game-economies-inflation-resource-management-and-balance-fa1e6c894670) — practitioner overview of inflation and credit sink design
-- [Boids Algorithm — Wikipedia](https://en.wikipedia.org/wiki/Boids) — academic source for pack/herd AI framework
-- [AI for Game Developers: Flocking — O'Reilly](https://www.oreilly.com/library/view/ai-for-game/0596005555/ch04.html) — group behavior architecture patterns
+- [Designing an MMORPG: Crafting Systems — MMOGames.com](https://www.mmogames.com/gamearticles/designing-an-mmorpg-crafting-systems/) — table stakes features validation
+- [FFXIV Crafting — Final Fantasy XIV Online Wiki](https://ffxiv.consolegameswiki.com/wiki/Crafting) — quality tier patterns
+- [Quality System — RimWorld Wiki](https://rimworldwiki.com/wiki/Quality) — quality tier proficiency reference
+- [How we unbroke our crafting system — Game Developer (Crashlands post-mortem)](https://www.gamedeveloper.com/design/how-we-unbroke-our-crafting-system) — recipe overwhelm and unlock progression anti-patterns
+- [Virtual Economic Theory: How MMOs Really Work — Game Developer](https://www.gamedeveloper.com/business/virtual-economic-theory-how-mmos-really-work) — crafted vs looted economy balance
+- [MMO Architecture: Source of truth, Dataflows — PRDeving](https://prdeving.wordpress.com/2023/09/29/mmo-architecture-source-of-truth-dataflows-i-o-bottlenecks-and-how-to-solve-them/) — server-side validation principles
 
 ### Tertiary (LOW confidence)
 
-- [ESO Damage Shields Forum Thread](https://forums.elderscrollsonline.com/en/discussion/165765/the-problem-with-damage-shields) — community analysis of shield ability underuse; confirms player-invisible toughness buffs but does not quantify
-- [6 Core Systems That Make or Break Idle Games](https://subtlezungle.substack.com/p/6-core-systems-that-make-or-break) — design analysis; directional guidance on automation resource sinks; single practitioner source
+- Various MMO crafting design forum threads (GameDev.net, MMORPG.com, Pantheon Forums, Ashes of Creation Forums) — community consensus on anti-features (failure chance, batch crafting, junk-recipe XP grinding)
+- [Crafting quality and progression — Ashes of Creation Forums](https://forums.ashesofcreation.com/discussion/65342/crafting-quality-rating-and-its-usefulness) — quality tier proficiency design discussion
 
 ---
-*Research completed: 2026-03-03*
+*Research completed: 2026-03-05*
 *Ready for roadmap: yes*

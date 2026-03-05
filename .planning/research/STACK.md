@@ -1,32 +1,46 @@
 # Stack Research
 
-**Domain:** Combat depth, biome hazards, creature AI upgrades, ability rebalance, automation tech tree (v1.24)
-**Researched:** 2026-03-03
-**Confidence:** HIGH (codebase directly inspected, installed versions verified from lockfile)
+**Domain:** Manual crafting system — recipe definitions, per-category proficiency, quality tiers, crafting timers, recipe unlock progression, faction-gating (v1.25)
+**Researched:** 2026-03-05
+**Confidence:** HIGH (codebase directly inspected; all versions confirmed from installed package.json and pnpm-lock.yaml; patterns matched against 3 existing analogous systems: gathering, automation, quests)
 
 ---
 
 ## Context: What the Codebase Already Has
 
-This is subsequent-milestone research for v1.24. The monorepo stack is settled — no framework changes. Direct inspection of source files, `package.json`, and `pnpm-lock.yaml` confirms:
+This is subsequent-milestone research for v1.25. No framework decisions to make — the stack is settled. The question is: which existing extension points accept the crafting features, and where are the gaps requiring new files or schema?
 
-- **Phaser 3.90.0** (locked) — game client; `this.time.addEvent()` and `this.tweens.add()` already used for floating damage numbers, no new plugins needed
-- **NestJS 10.3.x** — `EventEmitter2 3.0.1` (pinned) already wires cross-service events; `setInterval` + `setTimeout` pattern already powers AI ticks, buff ticks, respawn ticks
-- **Drizzle ORM 0.30.10** — `structures` table already has a `properties: jsonb` catch-all column for arbitrary config; `entity_lifecycle` table handles respawn state
-- **TypeScript 5.4+** — discriminated unions and `satisfies` already used across all packages
-- **`game-logic` package** — pure functions: `calculateDamage()`, `tickCreatureAI()`, `computeCharStats()` — the right place for all new pure math
-- **`shared-types` package** — `CombatResult`, `BiomeHazard`, `CreatureBehavior`, `AbilityEffect` types already exist and extend cleanly
-- **`items` package** — `ItemDefinition` has `effects?: readonly ItemEffectDef[]`; `life_support` and `armor` effect types already exist
+**Installed versions confirmed from `package.json` and lockfile:**
+- TypeScript: ^5.4.0 (5.9.3 at runtime)
+- Drizzle ORM: ^0.30.0 (0.30.10 locked)
+- NestJS: ^10.3.0
+- Zustand: ^4.5.0 with `immer` middleware (^11.1.4)
+- Vitest: ^4.0.18
+- React: ^18.2.0
+- `@dnd-kit/core`: ^6.3.1 (already installed — used for action bar drag-and-drop)
 
-**The question for v1.24 is not what framework to pick. It is: which existing extension points accept the new features, and do any gaps require a new helper or schema column?**
+**Three directly analogous systems to model from:**
 
-Gaps found:
-1. `DamageParams` in `game-logic/combat/damage.ts` has no `damageType` field — needs extending
-2. `CreatureDefinition` in `packages/entities` has no `resistances` field — needs extending
-3. `BiomeHazard` in `shared-types/game/biome.ts` has `damage` and `frequency` but no `statDrain` or `counterItemEffect` field — needs extending
-4. `AiTickResult` in `game-logic/ai/creature-ai.ts` returns only `newPosition | aggroTarget | shouldAttack | shouldReturn` — Stampede/PackCall/Ambush/Frenzy results need new fields
-5. `structures` table `properties` jsonb column is already the right persistence slot for extractor state — no new table needed until v1.25+
-6. No `HazardService` exists yet — biome-position-based tick loop needs a new NestJS service
+| System | Recipe Model | Proficiency | Timer | Progression Gate | DB Pattern |
+|--------|-------------|------------|-------|-----------------|------------|
+| Gathering | N/A | JSONB column per character, 3-category `{xp, level}` map | `setTimeout` expiry on server | Tool level gates node access | `gathering_proficiency` table |
+| Automation | Config objects in `shared-types` | N/A | `setInterval` 60s tick | `requiredLevel` field on config | `deployables` table with `properties: jsonb` |
+| Quests | `QuestDefinition` in `packages/quests` | N/A | N/A | `faction?`, `prerequisiteQuestIds?`, `minLevel?` | `quest_progress` table, UNIQUE (characterId, questId) |
+
+Crafting combines patterns from all three: quest-style definition objects, gathering-style per-category proficiency JSONB, automation-style server-side timer, and quest-style unlock gating.
+
+**Gaps found (no new framework, only new files and one new table):**
+
+1. No `packages/recipes` package exists yet — needed for `RecipeDefinition` objects, `RecipeRegistry`, and definitions (parallel to `packages/quests` and `packages/items`)
+2. No `crafting_proficiency` DB table — needed for per-character, per-category crafting skill (parallel to `gathering_proficiency`)
+3. No `crafting_progress` DB table — needed to persist in-progress crafts across server restarts (same concern that caused the `quest_progress` UNIQUE constraint pattern)
+4. `ClientEvents` in `shared-types/network/events.ts` needs new `crafting:*` event types
+5. `ServerEvents` in `shared-types/network/events.ts` needs new `crafting:*` response event types
+6. `apps/game-server/src/game/` needs a new `crafting.service.ts` — registered in `game.module.ts`
+7. `apps/web/src/store/` needs `craftingStore.ts` (parallel to `automationStore.ts`, `questStore.ts`)
+8. `apps/web/src/ui/panels/` needs `CraftingPanel.tsx` + `CraftingPanel.css`
+9. `apps/web/src/ui/hud/` needs a crafting shortcut button in `GameShortcuts.tsx`
+10. `gameStore.ts` needs `craftingPanelOpen: boolean` and `toggleCrafting` (parallel to `questLogOpen`, `automationPanelOpen`)
 
 ---
 
@@ -34,186 +48,391 @@ Gaps found:
 
 ### Core Technologies
 
-All already installed. Zero new runtime dependencies.
+All already installed. Zero new runtime dependencies required for the crafting system.
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| TypeScript | 5.4+ (installed, 5.9.3 at runtime) | All new type extensions | Discriminated unions make `DamageType` and `AbilityEffect` changes type-safe across packages; compile errors surface at definition site |
-| NestJS | 10.3.x (installed) | `HazardService` and `AutomationService` as new injectable services | Pattern is proven — 19 services in `apps/game-server/src/game/`; new services slot in via `game.module.ts` |
-| Drizzle ORM | 0.30.10 (installed) | `structures` table `properties` jsonb for extractor/beacon state | Already designed for this — `properties: jsonb` is a catch-all; use `sql` template for partial updates |
-| Phaser 3 | 3.90.0 (locked) | HUD hazard indicator + damage type color coding in floating numbers | `this.add.text()`, `this.tweens.add()`, `this.time.addEvent()` already used in `EntityRenderer.ts`; no new scene needed |
-| Vitest | 4.0.18 (installed) | Unit tests for new pure functions in `game-logic` | `calculateDamage.test.ts` already exists; extend it for resistance math and diminishing-returns stat cap |
+| TypeScript | 5.4+ | `RecipeDefinition`, `CraftingProficiency`, `QualityTier` types; discriminated unions for recipe categories | Discriminated unions already used across all packages; `satisfies RecipeDefinition` pattern at definition-author time catches errors before runtime |
+| NestJS | 10.3.x | `CraftingService` injectable — handles recipe validation, timer, proficiency XP award, quality roll | 20 services already in `apps/game-server/src/game/`; `CraftingService` slots in identically; registers in `game.module.ts` |
+| Drizzle ORM | 0.30.10 | Two new tables: `crafting_proficiency` (JSONB, mirrors `gathering_proficiency`) and `crafting_progress` (timer persistence) | JSONB pattern for proficiency is already proven at this scale; `crafting_progress` follows `quest_progress` pattern with UNIQUE constraint |
+| Zustand + immer | 4.5.0 + 11.1.4 | `craftingStore.ts` — recipe list, active craft progress, proficiency data | `immer` middleware already used in `inventoryStore.ts`; use it for mutable-style updates to active craft state |
+| React 18 | 18.2.0 | `CraftingPanel.tsx` — recipe browser, ingredient list, quality display, progress bar | All existing panels are React with plain CSS; no exceptions; consistent with HUD architecture |
 
 ### Supporting Libraries
 
-No new installs. All are already in the monorepo.
-
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| `@nestjs/event-emitter` | 3.0.1 (installed) | Broadcast hazard damage events and automation tick results to connected players | Already wires `CombatService` → `PlayerService` → Socket.IO; use the same `EventEmitter2.emit()` pattern for `hazard.damage` and `automation.yield` events |
-| `lru-cache` | 11.2.6 (installed) | Zone-scoped in-memory cache for active hazard state per player | `ZonesService` already uses it for chunk LRU; `HazardService` can maintain a `Map<playerId, HazardState>` in memory (no LRU needed at this scale) |
-| `heap-js` | 2.7.1 (installed) | Priority queue — already used in pathfinding; available if automation processing queue needs ordering | Use only if resource processing queue needs priority ordering (probably not needed for v1.24 queue-as-array approach) |
+| `@dnd-kit/core` + `@dnd-kit/sortable` | 6.3.1 + 10.0.0 | Drag ingredients from inventory into recipe slots (if recipe requires manual slot assignment) | Already installed for action bar; use only if the crafting UI needs drag-from-inventory-to-recipe-slot interaction; if recipes auto-consume from inventory, skip DnD entirely |
+| `@floating-ui/react` | 0.27.18 | Recipe ingredient tooltips (show where to obtain missing ingredients) | Already installed; used for tooltips elsewhere; use `useFloating` for ingredient hover-tooltips in the recipe browser |
+| `@nestjs/event-emitter` | 3.0.1 | Broadcast `crafting.completed` event for quest objective tracking (gather/craft objectives) | Already wires `resource.gathered` from `GatheringService` to `QuestService`; use same `EventEmitter2.emit()` pattern for `item.crafted` event |
+| Vitest | 4.0.18 | Unit tests for quality calculation formula, proficiency XP curve, recipe validation | `packages/game-logic` test suite already exists; add `crafting/quality.test.ts` and `crafting/proficiency.test.ts` |
 
 ### Development Tools
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| `satisfies CreatureDefinition` | Validate resistance shape at definition-author time | Add to every new creature entry with resistances; already established pattern in items |
-| `game-logic` unit tests (`vitest`) | Validate resistance multiplier math and stat cap curves | Extend existing `damage.test.ts`; add `diminishing-returns.test.ts` for the stat cap above 200 |
-| NX `affected` targeting | Run only changed-package tests | `nx affected --target=test` confirms no regressions in `game-logic` after `DamageParams` extension |
+| `satisfies RecipeDefinition` | Validate recipe shape at definition-author time in `packages/recipes/src/definitions/` | Same pattern as item definitions in `packages/items`; compile errors surface when a definition is malformed |
+| `nx affected --target=test` | Run only tests for changed packages | After touching `packages/recipes` or `packages/game-logic`, run `nx affected` to confirm no regressions in dependent packages |
+| `pnpm db:generate` + `pnpm db:migrate` | Generate and run Drizzle migrations for the two new tables | Pattern already established; new tables follow `pgTable()` + `$inferSelect` convention |
 
 ---
 
-## Integration Points: Where Each Feature Plugs In
+## New Package: `packages/recipes`
 
-### Damage Types (Thermal / Cryo / Bio / Kinetic)
+Create this package following the exact `packages/quests` structure:
 
-**Package:** `packages/game-logic` + `packages/shared-types` + `packages/entities`
-
-The existing `calculateDamage(params: DamageParams)` function is the single change point. Add `damageType: DamageType` to `DamageParams` and apply the creature resistance multiplier before the final damage value:
-
-```typescript
-// packages/shared-types/src/game/combat.ts — extend existing type
-export type DamageType = 'thermal' | 'cryo' | 'bio' | 'kinetic';
-
-// packages/entities/src/types.ts — extend CreatureDefinition
-export interface CreatureResistances {
-  thermal: number;   // 0.5 = 50% less damage; 1.5 = 50% more damage
-  cryo: number;
-  bio: number;
-  kinetic: number;
-}
-
-// packages/game-logic/src/combat/damage.ts — extend DamageParams
-export interface DamageParams {
-  // ... existing fields
-  damageType?: DamageType;          // NEW — defaults to 'kinetic' if absent
-  targetResistances?: CreatureResistances; // NEW — from EntityRegistry lookup
-}
+```
+packages/recipes/
+  package.json          # name: @into-the-void/recipes
+  src/
+    index.ts            # re-exports types, registry, definitions
+    types.ts            # RecipeDefinition, RecipeCategory, QualityTier, RecipeIngredient
+    registry.ts         # RecipeRegistry singleton (mirrors ItemRegistry / QuestRegistry)
+    definitions/
+      equipment.ts      # Suits, tools, modules
+      consumables.ts    # Healing vials, boosters
+      reagents.ts       # Refined materials, fuel cells
+      structures.ts     # Deployable automation items
+      faction/
+        verdant.ts      # Verdant-specific higher-tier recipes
+        helix.ts        # Helix-specific higher-tier recipes
+        nexus.ts        # Nexus-specific higher-tier recipes
 ```
 
-Resistance multiplier applies as a single multiplicative step after armor reduction: `damage *= targetResistances[damageType]`. No other combat code changes — `CombatService` passes the creature's resistance from `EntityRegistry.get(creature.speciesId).resistances`.
-
-**Ability damage types:** `AbilityEffect` in `shared-types/game/ability.ts` needs `damageType?: DamageType` on the `damage` variant. This tells `AbilityService` what multiplier to apply when an ability hits.
-
-**Item effect for resistances:** Suits can grant resistance via the existing `life_support` effect type or a new `resistance` effect variant in `packages/items/src/types.ts`. The `life_support` effect already has `hazardResistance: number` but it's a single scalar. A new `resistance` effect type with per-element values is cleaner:
+**`RecipeDefinition` type (goes in `packages/recipes/src/types.ts`):**
 
 ```typescript
-// packages/items/src/types.ts — add to ItemEffect union
-| { readonly type: 'resistance'; readonly thermal?: number; readonly cryo?: number; readonly bio?: number; readonly kinetic?: number }
-```
+export type RecipeCategory =
+  | 'equipment'    // suits, tools, modules
+  | 'consumable'   // healing vials, boosters
+  | 'reagent'      // refined materials, fuel cells
+  | 'structure';   // deployable automation items
 
-### Biome Hazard Tick System
+export type QualityTier = 'standard' | 'refined' | 'superior' | 'masterwork';
 
-**Package:** `apps/game-server/src/game/` (new `HazardService`)
-
-The existing `setInterval(() => this.processRespawnTick(), 10_000)` in `ZonesService` is the reference pattern. `HazardService` follows the same self-rescheduling `setTimeout` approach already used in `AiService` (to prevent event loop stalls).
-
-`BiomeHazard` in `shared-types/game/biome.ts` already has `type`, `damage`, and `frequency`. Extend it:
-
-```typescript
-export interface BiomeHazard {
-  type: 'radiation' | 'toxic' | 'cold' | 'heat' | 'void_storm' | 'pressure';
-  damage: number;
-  frequency: number;
-  damageType: DamageType;          // NEW — maps to damage type system
-  statDrain?: { stat: keyof CharacterStats; amount: number }; // NEW — e.g., Vigor drain in cold
-  counterEffect?: string;          // NEW — item effect type that negates this hazard (e.g., 'life_support')
+export interface RecipeIngredient {
+  readonly itemId: string;
+  readonly quantity: number;
 }
-```
 
-`HazardService.tickHazards()` runs every 5 seconds, iterates all connected players, checks their current biome tile's hazard list, applies damage/stat drain if the player lacks the counter gear, and broadcasts via `server.to(socketId).emit('hazard:damage', { ... })`.
-
-**No new Socket.IO events beyond the existing pattern** — `hazard:damage` follows the same shape as `combat:attacked`.
-
-### Creature AI Upgrades (Stampede / Pack Call / Ambush / Frenzy)
-
-**Package:** `packages/game-logic/src/ai/creature-ai.ts` + `apps/game-server/src/game/ai.service.ts`
-
-`AiTickResult` in `creature-ai.ts` already has `aggroTarget`, `shouldAttack`, `shouldReturn`. Extend it:
-
-```typescript
-export interface AiTickResult {
-  newPosition: Position | null;
-  aggroTarget?: string;
-  shouldAttack?: boolean;
-  shouldReturn?: boolean;
-  // NEW fields:
-  stampede?: boolean;              // herbivore: all herd members flee together
-  packCallRadius?: number;         // predator: aggro all nearby same-species within radius
-  ambushStrike?: boolean;          // predator: bonus damage multiplier on first hit
-  frenzyActivated?: boolean;       // maniac: speed/damage boost when health < 30%
+export interface RecipeDefinition {
+  readonly id: string;
+  readonly displayName: string;
+  readonly description: string;
+  readonly category: RecipeCategory;
+  /** Output item ID from packages/items */
+  readonly outputItemId: string;
+  readonly outputQuantity: number;
+  readonly ingredients: readonly RecipeIngredient[];
+  /** Crafting duration in milliseconds (5_000 – 30_000 range) */
+  readonly craftTimeMs: number;
+  /** Minimum crafting proficiency level in this category to attempt */
+  readonly requiredProficiencyLevel: number;
+  /** Minimum character level to unlock */
+  readonly requiredLevel?: number;
+  /** If set, only this faction's players can craft this recipe */
+  readonly factionGate?: FactionId;
+  /** Quest ID that must be completed to unlock this recipe */
+  readonly questUnlock?: string;
+  /** If set, recipe is found by exploring this biome (discovery unlock) */
+  readonly explorationUnlock?: string;
+  /** Base quality ranges per tier: proficiency thresholds that unlock higher tiers */
+  readonly qualityThresholds?: {
+    refined: number;    // proficiency level for 'refined' to become possible
+    superior: number;   // proficiency level for 'superior' to become possible
+    masterwork: number; // proficiency level for 'masterwork' to become possible
+  };
 }
 ```
 
-All new behaviors are **pure functions** returning new `AiTickResult` variants. `AiService` handles the side effects (broadcasting to all zone clients, applying frenzy multiplier to combat sessions).
-
-`CreatureDefinition` in `packages/entities/src/types.ts` gets optional behavior upgrade flags:
+**`RecipeRegistry` (mirrors `ItemRegistry` in `packages/items/src/registry.ts`):**
 
 ```typescript
-export interface CreatureDefinition extends BaseEntityDefinition {
-  // ... existing fields
-  behaviorUpgrade?: 'stampede' | 'pack_call' | 'ambush' | 'frenzy'; // NEW
-  packCallRadius?: number;          // tiles — only for pack_call creatures
+class RecipeRegistryImpl {
+  private readonly recipes: Map<string, RecipeDefinition> = new Map();
+  register(recipe: RecipeDefinition): void { ... }
+  registerAll(recipes: readonly RecipeDefinition[]): void { ... }
+  get(id: string): RecipeDefinition | undefined { ... }
+  getByCategory(category: RecipeCategory): RecipeDefinition[] { ... }
+  getForFaction(factionId: FactionId | 'neutral'): RecipeDefinition[] { ... } // returns universal + faction-specific
+}
+export const RecipeRegistry = new RecipeRegistryImpl();
+```
+
+---
+
+## New DB Tables
+
+### `crafting_proficiency` Table
+
+Mirrors `gathering_proficiency` exactly. One row per character, JSONB for all categories.
+
+```typescript
+// packages/database/src/schema/crafting-proficiency.ts
+
+export interface CraftingProficiencyJson {
+  equipment:  { xp: number; level: number };
+  consumable: { xp: number; level: number };
+  reagent:    { xp: number; level: number };
+  structure:  { xp: number; level: number };
+}
+
+export const DEFAULT_CRAFTING_PROFICIENCY: CraftingProficiencyJson = {
+  equipment:  { xp: 0, level: 1 },
+  consumable: { xp: 0, level: 1 },
+  reagent:    { xp: 0, level: 1 },
+  structure:  { xp: 0, level: 1 },
+};
+
+export const craftingProficiency = pgTable('crafting_proficiency', {
+  id:           uuid('id').primaryKey().defaultRandom(),
+  characterId:  uuid('character_id').notNull().references(() => characters.id, { onDelete: 'cascade' }).unique(),
+  proficiency:  jsonb('proficiency').$type<CraftingProficiencyJson>().notNull().default(DEFAULT_CRAFTING_PROFICIENCY),
+  unlockedRecipeIds: jsonb('unlocked_recipe_ids').$type<string[]>().notNull().default([]),
+  updatedAt:    timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+```
+
+**Why `unlockedRecipeIds` on this table rather than a separate table:** Recipe unlocks are character-scoped data queried together with proficiency on every craft attempt. Storing as JSONB on the same row avoids a JOIN on the hot path. At the scale of hundreds of unlocked recipes per character, a JSONB array query is fast. If query complexity grows (filtering by category, sorting by unlock order), migrate to a dedicated `recipe_unlocks` table — that is a v1.26+ concern.
+
+### `crafting_progress` Table
+
+Persists in-progress crafts across server restarts. Follows `quest_progress` pattern.
+
+```typescript
+// packages/database/src/schema/crafting-progress.ts
+
+export const craftingProgress = pgTable('crafting_progress', {
+  id:            uuid('id').primaryKey().defaultRandom(),
+  characterId:   uuid('character_id').notNull().references(() => characters.id, { onDelete: 'cascade' }),
+  recipeId:      varchar('recipe_id', { length: 100 }).notNull(),
+  startedAt:     timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+  completesAt:   timestamp('completes_at', { withTimezone: true }).notNull(),
+  ingredientsConsumed: boolean('ingredients_consumed').notNull().default(false),
+  status:        varchar('status', { length: 20 }).notNull().default('in_progress'), // 'in_progress' | 'completed' | 'cancelled'
+}, (table) => ({
+  // A character can only have one craft in progress at a time
+  uniqueCharacterCraft: unique('unique_character_craft').on(table.characterId),
+}));
+```
+
+**Why a dedicated `crafting_progress` table rather than `properties: jsonb` on characters:** Active craft state has a well-defined row lifecycle (insert on start, delete on complete/cancel), a timestamp that needs querying on server restart, and a UNIQUE constraint. These needs fit a proper table better than a side-car JSONB blob.
+
+---
+
+## New Game Logic: `packages/game-logic/src/crafting/`
+
+All crafting math lives here as pure functions. No NestJS dependencies, fully unit-testable.
+
+```
+packages/game-logic/src/crafting/
+  quality.ts       # calculateQualityTier(), qualityToOutputMultiplier()
+  proficiency.ts   # calculateCraftingLevelFromXP() — reuse gathering XP curve
+  validation.ts    # validateRecipeIngredients(), canCraft()
+```
+
+**Quality calculation (in `packages/game-logic/src/crafting/quality.ts`):**
+
+```typescript
+/**
+ * Calculate output quality tier based on proficiency level and dice roll.
+ *
+ * Roll mechanic: proficiency level sets the probability of higher tiers.
+ * At level 1: 100% standard.
+ * At threshold level for 'refined': 50% standard, 50% refined.
+ * Each 5 levels above threshold adds ~10% chance of the higher tier.
+ *
+ * This is pure math — no RNG dependency needed in callee; caller passes a [0,1) random.
+ */
+export function calculateQualityTier(
+  proficiencyLevel: number,
+  thresholds: { refined: number; superior: number; masterwork: number },
+  random: number // [0, 1) — caller provides for testability
+): QualityTier {
+  // Implementation: compare random against tier probability brackets
+  // ...
+}
+
+/**
+ * Output quantity multiplier per quality tier.
+ * Standard: 1.0, Refined: 1.1, Superior: 1.25, Masterwork: 1.5
+ */
+export function qualityToOutputMultiplier(tier: QualityTier): number {
+  const multipliers: Record<QualityTier, number> = {
+    standard:   1.0,
+    refined:    1.1,
+    superior:   1.25,
+    masterwork: 1.5,
+  };
+  return multipliers[tier];
 }
 ```
 
-### Ability Rebalance
+**Why pure random injection:** `CraftingService` calls `calculateQualityTier(level, thresholds, Math.random())`. Tests call `calculateQualityTier(level, thresholds, 0.0)` or `(level, thresholds, 0.99)` to assert boundary behavior deterministically. This is the standard approach for testable randomness — no mocking library needed.
 
-**Package:** `packages/game-logic/src/ability/` + `packages/shared-types/src/game/ability.ts`
+**XP curve:** Reuse `calculateLevelFromXP()` from `packages/game-logic/src/gathering/proficiency.ts` directly. The crafting level formula is identical (level 1→2 = 100 XP, each subsequent level +50 more). Do NOT duplicate the function — import it. If crafting needs a different curve later, add a `craftingLevelFromXP()` variant then.
 
-This is pure data/logic change — no new stack required. Defensive ability overhaul (shields, real damage reduction) uses the existing `buff` and `debuff` effect types in `AbilityEffect`. A shield absorb mechanic adds a new effect variant:
+---
+
+## `CraftingService` (Server)
+
+New file: `apps/game-server/src/game/crafting.service.ts`
+
+**Responsibilities:**
+1. Load crafting proficiency on player join (from DB, then cache in `Map<characterId, CraftingProficiencyJson>`)
+2. Handle `crafting:start` event — validate ingredients, validate unlock, consume ingredients, insert `crafting_progress` row, start `setTimeout`
+3. Handle `crafting:cancel` event — restore ingredients if `ingredientsConsumed = true`, delete `crafting_progress` row
+4. On `setTimeout` fire — roll quality tier, award output items, award proficiency XP, delete `crafting_progress` row, emit `crafting:completed` to client
+5. On server restart — query `crafting_progress` table for any in-progress crafts, reschedule `setTimeout` for remaining `completesAt - Date.now()` ms
+
+**Timer pattern — use `setTimeout`, not `setInterval`:**
 
 ```typescript
-// packages/shared-types/src/game/ability.ts — add to AbilityEffect union
-| { readonly type: 'shield'; readonly absorb: number; readonly duration: number }
+// Same pattern as gathering.service.ts challenge timeout
+private startCraftTimer(characterId: string, recipeId: string, remainingMs: number): void {
+  const timer = setTimeout(async () => {
+    await this.completeCraft(characterId, recipeId);
+  }, remainingMs);
+  this.activeTimers.set(characterId, timer);
+}
 ```
 
-`AbilityService` checks for active shields before applying damage in `applyAbilityDamage()`. No new NestJS service — this slots into the existing ability resolution loop.
+One active craft per character at a time (enforced by UNIQUE constraint on `crafting_progress.characterId`). The `activeTimers: Map<string, ReturnType<typeof setTimeout>>` in-memory map mirrors the `activeChallenges` pattern in `GatheringService`.
 
-Stat cap with diminishing returns above 200 belongs in `packages/game-logic/src/stats/stat-helpers.ts` as a new `capStat(value: number): number` pure function. The cap formula is implementation detail — the integration point is calling it inside `computeCharStats()` after all additive stacking.
+**Faction crafting modifier:** `factions` table already has `bonuses.craftingModifier` (e.g., Nexus: 1.2x). Apply it as a multiplier to `craftTimeMs`:
 
-### Automation Tech Tree (Extractors → Beacons → Planetary Extractors → Resource Processing)
+```typescript
+const adjustedTime = Math.round(recipe.craftTimeMs / player.faction.bonuses.craftingModifier);
+```
 
-**Package:** `apps/game-server/src/game/` (new `AutomationService`) + `packages/database/src/schema/structures.ts` (minor extension)
+Nexus players craft 20% faster than base. Verdant 10% faster. Helix at base speed. The data is already seeded.
 
-The `structures` DB table already has `structureType`, `ownerId`, `position`, `durability`, and `properties: jsonb`. This is exactly right for deployed automation items. No schema migration needed for v1.24:
+**Quest integration:** After `completeCraft()` succeeds, emit `EventEmitter2.emit('item.crafted', { characterId, itemId, quantity })`. `QuestService` already subscribes to `resource.gathered` events — add a listener for `item.crafted` to support "craft X items" quest objectives (future-proofing even if v1.25 doesn't add such quests).
 
-- `structureType`: `'extractor' | 'survey_beacon' | 'planetary_extractor' | 'refinery'`
-- `properties`: stores extractor config (`{ targetResourceId, tier, lastHarvestAt, maintenanceDue, fuelRemaining }`)
+---
 
-`AutomationService` manages deployed structures:
+## `craftingStore.ts` (Client)
 
-- On deploy: insert into `structures` table, register in-memory in a `Map<structureId, AutomationState>`
-- Tick loop (60s interval via `setInterval`): iterate all active structures, calculate yield since last harvest, add resources to owner's storage, update `lastHarvestAt` in DB
-- Maintenance loop (separate 5min interval): decrement fuel/maintenance counters, deactivate if zero
-- Credit sink: deploy cost deducted at placement via existing `PlayerService.deductCredits()`
+New file: `apps/web/src/store/craftingStore.ts`
 
-The processing queue (T5 refinery) is a simple in-memory array per structure: `processingQueue: ProcessingJob[]` stored in `properties` jsonb. No BullMQ or external queue needed at this scale — the 60s automation tick drains the queue.
+Pattern: mirrors `automationStore.ts` (socket event wiring) and `inventoryStore.ts` (immer middleware for nested state updates).
 
-**No Redis queues, no BullMQ** — the existing `setInterval` pattern with in-memory state + DB persistence is sufficient. The project already rejected Redis-backed queues (ioredis is installed but used only for session management, not queuing).
+```typescript
+interface CraftingState {
+  // Static data (loaded once on login from server)
+  availableRecipes: RecipeDefinition[];
+  proficiency: CraftingProficiencyJson | null;
+  unlockedRecipeIds: string[];
+
+  // Active craft progress (updated via socket events)
+  activeCraft: {
+    recipeId: string;
+    startedAt: number;
+    completesAt: number;
+  } | null;
+
+  // UI state
+  selectedCategory: RecipeCategory;
+  selectedRecipeId: string | null;
+  panelOpen: boolean;
+
+  // Actions
+  setRecipes: (recipes: RecipeDefinition[], proficiency: CraftingProficiencyJson, unlockedIds: string[]) => void;
+  setActiveCraft: (craft: CraftingState['activeCraft']) => void;
+  clearActiveCraft: () => void;
+  setSelectedCategory: (cat: RecipeCategory) => void;
+  setSelectedRecipe: (id: string | null) => void;
+}
+```
+
+Socket event wiring at module bottom (same side-effect import pattern as `automationStore.ts`):
+
+```typescript
+gameSocket.on('crafting:state', (data) => {
+  useCraftingStore.getState().setRecipes(data.recipes, data.proficiency, data.unlockedRecipeIds);
+});
+gameSocket.on('crafting:started', (data) => {
+  useCraftingStore.getState().setActiveCraft(data);
+});
+gameSocket.on('crafting:completed', () => {
+  useCraftingStore.getState().clearActiveCraft();
+  // inventory:update arrives separately via existing channel
+});
+gameSocket.on('crafting:cancelled', () => {
+  useCraftingStore.getState().clearActiveCraft();
+});
+```
+
+---
+
+## `CraftingPanel.tsx` (Client UI)
+
+New file: `apps/web/src/ui/panels/CraftingPanel.tsx`
+
+**Structure:** Mirrors `QuestLogPanel.tsx` (tabbed by category) and `AutomationPanel.tsx` (draggable, `useDraggablePanel` hook).
+
+Layout (plain CSS Grid):
+- Left column: category tabs (Equipment / Consumables / Reagents / Structures)
+- Center column: recipe list with search/filter, ingredient preview
+- Right column: selected recipe detail — ingredient checklist (green/red per availability), quality range at current proficiency, craft button, active progress bar
+
+**Progress bar:** Client-side countdown. On `crafting:started` event, `completesAt` timestamp arrives. The panel renders `(completesAt - Date.now()) / totalCraftTime` as a CSS width percentage, updating via `requestAnimationFrame` or a `useInterval` hook. No server polling — the server manages truth, the client just counts down.
+
+**No new drag-and-drop:** Recipes auto-consume ingredients from inventory on `crafting:start`. The existing `@dnd-kit` is available but not needed unless a future feature requires manual slot-filling. Auto-consume is simpler and matches the gathering model.
+
+**Keyboard disable pattern:** Same as `QuestLogPanel.tsx` — disable Phaser keyboard on mount, re-enable on unmount.
+
+---
+
+## Socket Events to Add
+
+Add to `ClientEventType` and `ServerEventType` unions in `packages/shared-types/src/network/events.ts`:
+
+```typescript
+// ClientEventType additions
+| 'crafting:start'      // { recipeId: string }
+| 'crafting:cancel'     // {}
+| 'crafting:request_state'  // {} — fetch current state on panel open
+
+// ServerEventType additions
+| 'crafting:state'      // full state on login and panel request
+| 'crafting:started'    // { recipeId, startedAt, completesAt }
+| 'crafting:completed'  // { recipeId, outputItemId, quantity, qualityTier, proficiencyXP, proficiencyLevel }
+| 'crafting:cancelled'  // { recipeId }
+| 'crafting:error'      // { code: string; message: string }
+| 'crafting:recipe_unlocked'  // { recipeId } — sent when a quest/exploration unlock fires
+```
+
+Add to `ClientEvents` and `ServerEvents` interface maps with typed payloads.
 
 ---
 
 ## Installation
 
-No new packages required. All work is new files and extensions within the existing monorepo structure.
+No new npm packages. All work is new files within the existing monorepo.
 
 ```bash
 # Zero new npm installs.
 
 # New files to create:
-# apps/game-server/src/game/hazard.service.ts        (biome hazard tick loop)
-# apps/game-server/src/game/automation.service.ts    (extractor/beacon/refinery management)
-# packages/game-logic/src/stats/diminishing-returns.ts  (stat cap pure function)
-# packages/game-logic/src/combat/resistance.ts       (resistance multiplier pure function)
+# packages/recipes/                          (new NX lib package)
+# packages/game-logic/src/crafting/          (pure function modules)
+# packages/database/src/schema/crafting-proficiency.ts
+# packages/database/src/schema/crafting-progress.ts
+# apps/game-server/src/game/crafting.service.ts
+# apps/web/src/store/craftingStore.ts
+# apps/web/src/ui/panels/CraftingPanel.tsx
+# apps/web/src/ui/panels/CraftingPanel.css
 
-# New test files:
-# packages/game-logic/src/combat/damage-types.test.ts
-# packages/game-logic/src/stats/stat-cap.test.ts
+# Migrations:
+pnpm db:generate   # generates migration for crafting_proficiency + crafting_progress tables
+pnpm db:migrate    # runs migration against local PostgreSQL
 
-# Register new services in:
-# apps/game-server/src/game/game.module.ts  (add HazardService, AutomationService to providers)
+# Registrations:
+# apps/game-server/src/game/game.module.ts   (add CraftingService to providers)
+# packages/database/src/schema/index.ts      (export new schema tables)
+# apps/web/src/ui/hud/GameShortcuts.tsx      (add crafting shortcut button)
+# apps/web/src/store/gameStore.ts            (add craftingPanelOpen + toggleCrafting)
 ```
 
 ---
@@ -222,12 +441,12 @@ No new packages required. All work is new files and extensions within the existi
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| Extend `DamageParams` with `damageType?: DamageType` | Separate `calculateElementalDamage()` function | Only if elemental and kinetic damage had completely different formula shapes — they don't; it's a single multiplier |
-| In-memory `Map<playerId, HazardState>` in `HazardService` | Redis-backed hazard state | Only if multiple game-server instances need to share state — this is single-instance; in-memory is simpler, faster, and already the project pattern |
-| `setInterval` in `AutomationService` | `@nestjs/schedule` `@Interval()` decorator | `@nestjs/schedule` is not installed; `setInterval` is the codebase's established pattern (AI ticks, buff ticks, respawn ticks); adding a dependency for syntactic sugar is not warranted |
-| `structures` table `properties` jsonb | New `automation_structures` table | New table is premature; `structures.properties` is already a catch-all jsonb designed for this; create a dedicated table only if query patterns outgrow jsonb |
-| `AbilityEffect` shield variant | Separate `ShieldState` tracked outside abilities | Shield is a buff with absorb semantics — it fits the existing buff/duration model; separate state would require new DB schema |
-| BullMQ for resource processing queue | In-memory `processingQueue` in `properties` | BullMQ requires Redis queues and adds operational complexity; at v1.24 scale (dozens of refineries per player), an array in jsonb is sufficient; escalate to BullMQ only if processing jobs need persistence across server restarts |
+| `packages/recipes` as new NX lib | Inline recipe definitions in `packages/items` | Items are for item definitions, not production rules; mixing them creates a circular dependency risk when game-logic imports both; separate package is the established pattern (quests, entities, npcs all separate) |
+| JSONB `unlockedRecipeIds` on `crafting_proficiency` row | Separate `recipe_unlocks` join table | Use the join table when you need SQL queries like "all characters who unlocked recipe X" (for analytics or server-side events); at v1.25 scope, per-character unlock reads are the only use case — JSONB array suffices |
+| Single in-progress craft per character | Queue of up to N concurrent crafts | Queue is significantly more complex (ordered processing, separate cancel semantics per slot); the gathering system similarly allows only one active challenge; start with one and expand in a later milestone if demand justifies it |
+| `setTimeout` per craft with DB persistence | `setInterval` batch processor | `setInterval` batch is appropriate when many items complete on roughly the same schedule (automation's 60s tick); crafts have individual completion times ranging 5–30s; per-craft `setTimeout` with DB-backed resume is correct and matches the gathering challenge pattern |
+| Pure function quality roll with injected `Math.random()` | `crypto.randomUUID()` or server-side RNG module | The quality roll is not a security-sensitive random (it's a gameplay UX value); testable pure function with injected random is simpler and fully covered by deterministic unit tests without mocking |
+| Client-side countdown from `completesAt` timestamp | Server polling for progress | Polling wastes bandwidth and adds server load; `completesAt` is a stable timestamp; client counts down locally; server is the authority on actual completion (fires the result event) |
 
 ---
 
@@ -235,37 +454,37 @@ No new packages required. All work is new files and extensions within the existi
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `@nestjs/schedule` | Not installed; `setInterval` is the proven project pattern for all tick loops (AI, buffs, respawns, entity lifecycle); adding a dependency for decorator syntax is over-engineering | `setInterval` / `setTimeout` self-rescheduling pattern, already in `AiService` and `ZonesService` |
-| BullMQ / `@nestjs/bull` | Not installed; introduces Redis queue dependency for a processing queue that an in-memory array handles fine at current scale | `processingQueue: ProcessingJob[]` in `structures.properties` jsonb, drained on each 60s automation tick |
-| New `automation` PostgreSQL tables (v1.24) | Premature schema growth; `structures` table `properties` jsonb already handles extractor config and processing queues; a dedicated table only pays off with complex query patterns | `structures` table with `structureType` discriminator and `properties` jsonb |
-| Phaser particle system for hazard effects | The project is color-tiles-only (no sprite art pipeline yet); particle emitters add visual complexity without art assets | `this.add.text()` floating text with damage type color coding, same as existing floating damage numbers |
-| Separate `DamageTypeService` on the backend | Damage type resolution is pure math (a lookup + multiply); a service is overkill; pure functions belong in `game-logic` | `applyResistance(damage, type, resistances)` pure function in `packages/game-logic/src/combat/resistance.ts` |
-| Modifying `CombatResult` shape | `CombatResult` is a shared-types contract used by both game-server and web client; adding `damageType` to it is correct, but changing `damage` to a per-type breakdown would break all existing consumers | Add `damageType?: DamageType` as optional field; the single `damage` number remains the applied post-resistance value |
+| `@nestjs/schedule` `@Interval()` / `@Cron()` decorators | Not installed; `setTimeout`/`setInterval` is the established project pattern for all tick-based work (AI, buffs, hazards, automation); adding a dependency for decorator syntax is not warranted | `setTimeout` in `CraftingService`, same pattern as `GatheringService` challenge expiry |
+| BullMQ or Redis queues for crafting jobs | Not needed at this scale; crafting is per-character (one active job), not a shared distributed queue; ioredis is installed only for session management | `setTimeout` per craft with DB-backed resume on server restart |
+| Separate `recipe_unlocks` table at v1.25 | Premature normalization; JSONB array on `crafting_proficiency` is readable and fast for per-character reads | `unlockedRecipeIds: jsonb` on `crafting_proficiency` row |
+| Storing recipe definitions in PostgreSQL | Recipe data is static code, not dynamic player data; DB storage adds schema complexity and requires a migration for every new recipe; 100+ recipes load fine from code registry at startup | `RecipeRegistry` singleton in `packages/recipes`, mirroring `ItemRegistry` and `QuestRegistry` |
+| Phaser scene for crafting UI | All HUD panels are React + CSS; mixing Phaser and React for UI is an established anti-pattern in this codebase (CLAUDE.md: "The UI is divided in two parts — game canvas and HUD"); React panels already handle all non-game-canvas interactions | React `CraftingPanel.tsx` registered in `GameUI.tsx`, same as all other panels |
+| `Math.random()` called inside the quality pure function | Makes the function non-deterministic and therefore untestable without mocking | Pass `random: number` parameter — caller provides `Math.random()` in production, `0.0` or `0.99` in tests |
 
 ---
 
 ## Stack Patterns by Variant
 
-**If adding a new damage type beyond the 4 (Thermal/Cryo/Bio/Kinetic):**
-- Add to the `DamageType` union in `shared-types/game/combat.ts`
-- Add optional field to `CreatureResistances` interface (defaults to `1.0` if absent)
-- Add to `BiomeHazard.damageType` union
-- No service changes — the lookup is a runtime property
+**If a recipe requires a crafting station (future milestone scope):**
+- Add `requiredStationId?: string` to `RecipeDefinition`
+- `CraftingService.validateRecipe()` checks player proximity to the station entity
+- Station entities are `DeployableEntity` instances — already in the entity system
+- Do NOT add this for v1.25; all recipes are craftable anywhere per PROJECT.md scope
 
-**If automation structures need cross-zone ownership queries:**
-- Add a DB index on `structures.ownerId` — Drizzle's `index()` call on the table definition
-- Query with `db.select().from(structures).where(eq(structures.ownerId, characterId))`
-- No ORM upgrade needed; this is a standard Drizzle pattern at 0.30.x
+**If crafting proficiency needs separate XP curves per category:**
+- Add a `category` parameter to the level calculation function
+- Keep gathering and crafting on the same curve by default (levels feel comparable across skills)
+- Only diverge curves if playtesting shows one category progresses trivially fast
 
-**If biome hazard ticks need per-tile granularity (not biome-wide):**
-- Store `hazards` in tile definitions (`packages/tiles`) rather than biome definitions (`shared-types/game/biome.ts`)
-- `HazardService` reads the tile at the player's current position rather than the zone's biome type
-- The `tiles` package already has tile definition infrastructure; this is an extension, not a rewrite
+**If recipe unlocks need to fire on quest completion (cross-system integration):**
+- Add an `onQuestCompleted(questId: string, characterId: string)` method to `CraftingService`
+- `QuestService` calls it after awarding quest rewards
+- `CraftingService` checks all recipes with `questUnlock === questId`, adds to `unlockedRecipeIds`, emits `crafting:recipe_unlocked` event to client
 
-**If resource processing queue needs persistence across server restarts:**
-- Move `processingQueue` from jsonb to a new `processing_jobs` table
-- Use Drizzle `pgTable` with `characterId`, `structureId`, `inputItemId`, `outputItemId`, `completesAt`, `status` columns
-- This is a v1.25+ concern — not needed for v1.24
+**If faction-gated recipes need a grace period (player changed faction — hypothetical):**
+- Faction-gated recipes are checked at craft-start, not at unlock time
+- A player who changes faction loses access to faction recipes immediately
+- Faction switching is out of scope per PROJECT.md; no defensive coding needed
 
 ---
 
@@ -273,41 +492,40 @@ No new packages required. All work is new files and extensions within the existi
 
 | Package | Compatible With | Notes |
 |---------|-----------------|-------|
-| phaser@3.90.0 (locked) | All existing rendering code | The `this.time.addEvent()` API is stable since 3.60; hazard HUD uses only established APIs |
-| drizzle-orm@0.30.10 | jsonb partial updates via `sql` template | The `||` merge operator approach works at 0.30.x; no upgrade needed |
-| @nestjs/event-emitter@3.0.1 | NestJS 10.3.x | Already installed and working; `HazardService` emits `hazard:damage` using the same pattern as `CombatService` |
-| TypeScript 5.4+ | Discriminated union extensions | `satisfies` operator and const union narrowing both available; no TS upgrade needed |
+| drizzle-orm@0.30.10 | JSONB array columns (`$type<string[]>`) | JSONB array pattern already used in `deployables.accumulatedResources`; no upgrade needed |
+| drizzle-orm@0.30.10 | `unique()` constraint helper in table definition | Already used in `quest_progress` table for UNIQUE (characterId, questId); identical pattern for UNIQUE(characterId) on `crafting_progress` |
+| @nestjs/event-emitter@3.0.1 | NestJS 10.3.x | Already installed and working; `CraftingService` uses `eventEmitter.emit('item.crafted', ...)` same as `GatheringService` uses `resource.gathered` |
+| zustand@4.5.0 + immer@11.1.4 | React 18.2.0 | Already working in `inventoryStore.ts`; `craftingStore.ts` uses same immer middleware pattern |
 
 ---
 
 ## Key Integration Facts for Roadmap Authors
 
-1. **Damage types require 3 coordinated changes** across 3 packages: (a) `DamageType` union in `shared-types`, (b) `resistances` field in `CreatureDefinition` in `entities`, (c) `DamageParams` extension in `game-logic/combat/damage.ts`. All three must land before `CombatService` can pass resistance data.
+1. **`packages/recipes` is a prerequisite for everything.** `CraftingService`, `CraftingPanel`, and `craftingStore` all import from it. Create the package and register it in the NX workspace before writing service or UI code.
 
-2. **`HazardService` is a new service with no circular dependencies.** It reads player position from `PlayerService`, reads biome data from `ZonesService`, applies damage via direct calculation (no `CombatService`), and emits Socket.IO events directly. Register it in `game.module.ts`.
+2. **Two DB migrations land in a single phase.** `crafting_proficiency` and `crafting_progress` are always needed together (service loads proficiency on join, progress on restart). Create both tables in one migration file.
 
-3. **`AutomationService` writes to the `structures` table.** The existing `DatabaseService` in `apps/game-server/src/database/` provides the Drizzle client. `AutomationService` calls `db.insert(structures)`, `db.update(structures)`, and `db.select().from(structures)` — no new DB infrastructure.
+3. **Proficiency load pattern is identical to gathering.** `CraftingService.loadProficiency(characterId)` queries `crafting_proficiency`, caches in `Map<characterId, CraftingProficiencyJson>`, unloads on disconnect. Copy `GatheringService.loadProficiency()` as the template — the read-modify-write XP update pattern is already proven.
 
-4. **AI upgrade flags are additive to existing behavior tree.** `tickCreatureAI()` is a switch on `creature.behavior`. Stampede adds a check inside `tickHerbivore()`. Pack Call adds a check inside `tickPredator()`. Ambush and Frenzy add optional modifiers before returning `AiTickResult`. The FSM shape does not change.
+4. **Faction bonus is already in the DB.** `factions.bonuses.craftingModifier` is seeded: Nexus=1.2, Verdant=1.1, Helix=1.0, neutral=1.0. `CraftingService` reads it from `PlayerService.getPlayerById(characterId).faction` — no new DB query needed.
 
-5. **Ability rebalance is pure data + one new effect type.** No new services, no new DB tables, no new Socket.IO events. Change ability definitions in `packages/game-logic/src/ability/` and add shield absorb logic to `AbilityService.handleAbilityEffect()`. The 21-ability limit is enforced by scope (see PROJECT.md).
+5. **Quality tier output is a multiplier on item quantity, not a separate item ID.** The output item stays the same ID; quantity scales by `qualityToOutputMultiplier(tier)`. This avoids needing separate "refined sword" vs "standard sword" item IDs and the associated inventory complexity.
 
-6. **The stat cap function belongs in `game-logic/src/stats/stat-helpers.ts`**, which already has `applyLevelGapMultiplier()` and is imported by `computeCharStats()`. Adding `capStat()` here follows the existing single-responsibility pattern for stat math.
+6. **`crafting:state` event on panel open mirrors `automation:panel_request`.** Client emits `crafting:request_state`, server responds with `crafting:state` containing available recipes, current proficiency, unlocked IDs, and any active in-progress craft. This lazy-load approach avoids sending crafting data to clients who never open the panel.
 
-7. **Socket.IO event additions are minimal.** Hazard system needs `hazard:damage` event. Automation system needs `automation:yield` and `automation:status` events. Both follow the existing pattern: server emits to individual `socketId`, client Zustand store handles the update.
+7. **Crafting panel is a draggable React panel, not a Phaser scene.** Register it in `GameUI.tsx` behind `gameStore.craftingPanelOpen`, add a shortcut button in `GameShortcuts.tsx`. Follow the identical mount/unmount keyboard-disable pattern from `QuestLogPanel.tsx`.
 
 ---
 
 ## Sources
 
-- Codebase direct inspection: `packages/game-logic/src/combat/damage.ts`, `packages/game-logic/src/ai/creature-ai.ts`, `packages/game-logic/src/stats/char-stats.ts`, `packages/shared-types/src/game/combat.ts`, `packages/shared-types/src/game/biome.ts`, `packages/shared-types/src/game/ability.ts`, `packages/items/src/types.ts`, `packages/entities/src/types.ts`, `packages/database/src/schema/structures.ts`, `apps/game-server/src/game/combat.service.ts`, `apps/game-server/src/game/ai.service.ts`, `apps/game-server/src/game/ability.service.ts`, `apps/game-server/src/zones/zones.service.ts` — HIGH confidence
-- Installed version verification from `pnpm-lock.yaml`: phaser@3.90.0, drizzle-orm@0.30.10, @nestjs/event-emitter@3.0.1 — HIGH confidence
-- `package.json` root: NestJS 10.3.x, TypeScript ^5.4.0 — HIGH confidence
-- WebSearch verification: Phaser current stable is 3.90.0 "Tsugumi" (May 2025); drizzle-orm latest is 0.45.1 (project pinned at 0.30.10, upgrade not warranted); @nestjs/schedule alternative evaluated and rejected (not installed, setInterval is established pattern) — MEDIUM confidence (single search source per item)
-- `.planning/PROJECT.md` — v1.24 milestone scope and out-of-scope items — HIGH confidence
-- `lore/world-bible.md` — biome hazard types and faction identity — HIGH confidence (authoritative per CLAUDE.md)
+- Codebase direct inspection: `packages/database/src/schema/gathering-proficiency.ts`, `packages/database/src/schema/quest-progress.ts`, `packages/database/src/schema/deployables.ts`, `packages/database/src/schema/factions.ts`, `packages/database/src/schema/characters.ts`, `packages/game-logic/src/gathering/proficiency.ts`, `apps/game-server/src/game/gathering.service.ts`, `apps/game-server/src/game/automation.service.ts`, `packages/items/src/types.ts`, `packages/items/src/registry.ts`, `packages/quests/src/types.ts`, `packages/quests/src/registry.ts`, `packages/shared-types/src/network/events.ts`, `packages/shared-types/src/game/faction.ts`, `packages/shared-types/src/core/player.ts`, `apps/web/src/store/automationStore.ts`, `apps/web/src/store/inventoryStore.ts`, `apps/web/src/ui/panels/AutomationPanel.tsx`, `apps/web/src/ui/panels/QuestLogPanel.tsx` — HIGH confidence
+- Installed version verification: `package.json` root + pnpm-lock.yaml: drizzle-orm@0.30.10, zustand@4.5.0, immer@11.1.4, @dnd-kit/core@6.3.1, @nestjs/event-emitter@3.0.1 — HIGH confidence
+- `.planning/PROJECT.md` — v1.25 milestone scope (crafting panel, proficiency, quality tiers, faction gating, recipe unlock progression) — HIGH confidence
+- `.planning/research/STACK.md` (v1.24) — confirms automation pattern (setInterval, in-memory + DB persistence, no BullMQ, no @nestjs/schedule) — HIGH confidence
+- `lore/world-bible.md` — faction identities and crafting modifier design intent; confirms factions: verdant/helix/nexus/neutral — HIGH confidence (authoritative per CLAUDE.md)
 
 ---
 
-*Stack research for: damage types, biome hazards, creature AI upgrades, ability rebalance, automation tech tree (v1.24)*
-*Researched: 2026-03-03*
+*Stack research for: crafting system — recipe definitions, per-category proficiency, quality tier calculation, crafting timer/progress, recipe unlock progression, faction-specific recipe gating (v1.25)*
+*Researched: 2026-03-05*
