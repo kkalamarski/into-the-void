@@ -1,253 +1,199 @@
 # Project Research Summary
 
-**Project:** Into the Void — v1.25 Manual Crafting System
-**Domain:** MMO crafting system integration (recipe definitions, proficiency, quality tiers, unlock progression, faction gating)
-**Researched:** 2026-03-05
+**Project:** Into the Void — v1.26 Visual Overhaul & Atmosphere
+**Domain:** Phaser 3 isometric 2D game rendering — procedural terrain, particle weather, day/night cycle, biome atmospheric effects
+**Researched:** 2026-03-17
 **Confidence:** HIGH
 
 ## Executive Summary
 
-The v1.25 crafting system is a well-scoped addition to an existing, stable game architecture. All framework and tooling decisions are fixed — the stack is TypeScript, NestJS, Drizzle ORM, Zustand, and React 18, all already installed and in use. No new runtime dependencies are required. The implementation path is to mirror three established codebase patterns: the gathering system (per-category proficiency JSONB, server-side timer with `setTimeout`), the quest system (definition registry package, cross-service EventEmitter2 events, unlock storage), and the automation system (Zustand store with side-effect socket handlers, draggable React panel). The primary structural deliverable is a new `packages/recipes` NX package following the `packages/quests` pattern exactly.
+v1.26 is a pure rendering milestone requiring zero new npm packages and zero server-side changes. Every required capability — procedural cube textures, particle weather, day/night ColorMatrix tinting, and biome atmosphere effects — is built into the already-installed Phaser 3.90.0. The entire milestone is four new system classes (`ProceduralTileRenderer`, `WeatherSystem`, `DayNightSystem`, `AtmosphereSystem`) plus targeted modifications to `TileRenderer`, `WorldScene`, and `PreloadScene`. The work is additive and self-contained within the client game layer.
 
-The recommended approach is a five-phase build: shared foundation first (types, schema, `RecipeRegistry`), then the server `CraftingService`, then quest integration, then recipe content authoring, and finally the client panel. This order is dictated by dependencies — the server service cannot compile without types, the client store cannot wire without server events, and recipe definitions cannot be authored without both the registry and `ItemRegistry` existing. Quality tiers and faction gating are straightforward given the existing `FactionBonuses.craftingModifier` field already seeded in the database and the `calculateLevelFromXP()` function already in `packages/game-logic`.
+The recommended approach is to build in strict dependency order: procedural cube rendering as the foundation, then day/night cycle, then biome atmosphere (which reuses the day/night ColorMatrix infrastructure), then particle weather (which is independent of the other two but needs the visual base in place). The highest-value, lowest-risk path is to bake all procedural cube geometry into named GPU textures once at scene init using `graphics.generateTexture()`, then render tiles as `Image` objects — this preserves the existing elevation tinting, batching, and depth-sort pipeline with no structural changes to callers.
 
-The key risks are not technical complexity but implementation discipline: ingredient consumption must be atomic (single in-memory write, not two sequential DB writes), server-side validation must mirror every client-side guard, recipe unlocks must be persisted from day one, and crafted item economy balance must be checked against existing trader prices and loot drop rates before recipe definitions are written. All ten identified pitfalls have clear prevention patterns drawn directly from existing codebase precedents. None requires novel architecture.
+The critical risk cluster is around Phaser object lifecycle and depth layering. Three patterns have been confirmed to cause hard regressions in this specific codebase: per-tile `Graphics` objects (draw call explosion to sub-10 FPS), per-tile `setTint()` for day/night (overwrites elevation shading), and missing biome hook in `fullZoneReset()` (atmosphere breaks on teleport). All three are preventable with upfront design decisions before any implementation begins.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-Zero new dependencies are needed. The crafting system slots into the existing stack by creating new files and one new `packages/recipes` package. The two new Drizzle tables (`crafting_proficiency` and `recipe_unlocks`) require a single migration run via `pnpm db:generate && pnpm db:migrate`. The `CraftingService` registers as a standard NestJS injectable in `game.module.ts`, alongside the 20 existing services.
+No dependency changes are required. All APIs are native to Phaser 3.90.0 (installed; semver `^3.80.0`). PostFX pipelines, the v3.60+ `ParticleEmitter` API, `graphics.generateTexture()`, and `camera.postFX.addColorMatrix()` are all built-in and verified against official docs and the installed package.
+
+The old `ParticleEmitterManager` API was removed in Phaser v3.60 and must not be used. All particle creation goes through `scene.add.particles(x, y, key, config)` which returns a `ParticleEmitter` directly. All camera postFX are WebGL-only; a Canvas fallback (full-screen `Rectangle` overlay) is required but straightforward.
 
 **See:** `.planning/research/STACK.md`
 
 **Core technologies:**
-- `packages/recipes` (new NX lib): Static `RecipeDefinition` objects, `RecipeRegistry` singleton — mirrors `packages/quests` exactly; prerequisite for all other crafting code
-- `NestJS CraftingService`: Timer management, ingredient validation, proficiency XP, quality roll — slots into `game.module.ts` alongside existing services
-- `Drizzle ORM` (two new tables): `crafting_proficiency` (JSONB per character, mirrors `gathering_proficiency`) and `recipe_unlocks` (join table, append-only, source of truth for unlock persistence)
-- `Zustand + immer` (`craftingStore.ts`): Client recipe list, active craft timer, proficiency state — mirrors `automationStore.ts` side-effect socket pattern
-- `React 18` (`CraftingPanel.tsx`): Draggable HUD panel with category tabs, ingredient checklist, progress bar — mirrors `AutomationPanel.tsx` and `QuestLogPanel.tsx`
+- **Phaser 3.90.0**: All rendering, FX pipelines, particles — no capability gaps; all required features present
+- **TypeScript 5.4**: Four new typed system classes following existing conventions in `TileRenderer.ts`, `FogManager`, `RareNodeFX`
+- **`graphics.generateTexture()`**: Bakes procedural cube geometry to named GPU textures at scene init; ~14ms one-time cost enables hardware-accelerated `Image` rendering for all tiles
+- **`camera.postFX.addColorMatrix()`**: Single GPU pass for day/night brightness and biome color grading — O(1) cost, not O(tiles)
+- **`scene.add.particles()`**: v3.60+ direct emitter API for screen-space weather particles with `setScrollFactor(0)` viewport anchoring
 
 ### Expected Features
 
-**See:** `.planning/research/FEATURES-CRAFTING.md`
+**See:** `.planning/research/FEATURES.md`
 
-**Must have (table stakes):**
-- Recipe browser panel accessible from HUD anywhere — players expect this in any crafting game
-- Ingredient requirement display with craftable/uncraftable visual distinction (green/red per availability)
-- Craft button with crafting timer and progress bar — short timers (2-10s), not instant, not a waiting-room system
-- Inventory integration — ingredients consumed on craft start, output delivered on completion, `INSUFFICIENT_RESOURCES` error if missing
-- Recipe output preview — item icon, name, rarity, quantity shown before committing
-- Category filtering — tabs for Equipment / Consumables / Reagents / Structures
+**Must have (table stakes — v1.26 launch):**
+- 3-shade procedural cube rendering (top + lit south face + shadow east face) as primary tile renderer
+- Per-biome 3-shade color palettes derived from existing `BIOME_COLORS` entries in `biome.ts`
+- Biome weather particles: rain (tidal/kelp/shore), snow (ice/frozen expanse), ash (volcanic/crater), spores (fungal/bioluminescent/toxic)
+- Gradual day/night cycle (visual-only, no gameplay effect) using camera postFX ColorMatrix brightness tween
+- Biome atmosphere overlay: vignette for deep/trench biomes, bloom for void_rift/bioluminescent/crystal, color grading for ice/volcanic/toxic
+- Rendering code cleanup: remove or guard dead PNG load paths in `PreloadScene.ts`
 
-**Should have (competitive differentiators):**
-- Per-category crafting proficiency — 4 disciplines mirroring gathering proficiency, level gates quality tier outcome
-- Quality tiers (Standard / Refined / Masterwork) — outcome influenced by proficiency level, per-recipe thresholds, stat modifier not separate item IDs
-- Progression-unlocked recipes — level-gated, quest-reward, exploration-discovered, faction-gated vectors; multiple unlock paths prevent single bottleneck
-- Faction specialty recipes — Verdant biotech, Helix heavy armor, Nexus tech modules; `requiredFaction` on `RecipeDefinition`
-- Full production chain scope — equipment, consumables, deployable structures, reagents all craftable
+**Should have (add within milestone if time allows):**
+- Dawn/dusk color temperature shift (warm orange bias at dawn, cool blue at dusk)
+- Configurable weather and atmosphere toggles in existing `uiSettingsStore` settings menu
 
 **Defer (v2+):**
-- Batch crafting (inflation risk; design space needs economy data first)
-- Crafting orders / commission system (requires player-to-player economy infrastructure)
-- Recipe research / random invention (high complexity, uncertain payoff)
-- Crafting station spatial requirements (conflicts with hub-accessible design in v1.25)
-- Recipe search/text filter (needed only when recipe count exceeds ~30; add post-validation)
+- Night visibility reduction via fog-of-war integration (requires fixing the disabled `FogRenderer`)
+- Per-tile dynamic shadow recalculation at sun angle (too expensive: 7,000+ re-tint calls per update)
+- Weather gameplay effects (requires server-side behavioral changes)
+- Weather-reactive ambient audio (no audio assets exist yet)
 
-**Anti-features to never implement:**
-- Crafting failure chance — use quality tiers for outcome variation instead
-- Unlimited recipe visibility from the start — show locked recipes as silhouettes with hint text
-- Crafting skill XP from junk recipes — award XP proportional to item tier, not volume
+**Anti-features confirmed — never implement:**
+- World-relative weather particles (appear to scroll with terrain; use `setScrollFactor(0)` instead)
+- Instant day/night transitions (jarring; minimum 60-second real-time tween)
+- Per-tile `setTint()` for ambient day/night (overwrites elevation shading; use camera ColorMatrix)
+- Shader-based fog-of-war replacement (risks breaking existing `FogRenderer` persistence logic)
 
 ### Architecture Approach
 
-The crafting system integrates entirely through established extension points. `GameGateway` gains three new `@SubscribeMessage` handlers. `CraftingService` injects `InventoryService`, `PlayerService`, and `EventEmitter2`. `QuestService` gains an `@OnEvent('item.crafted')` handler. The client pattern is identical to automation: `craftingStore.ts` registers socket event handlers as module-level side effects, `GameUI.tsx` imports the store to activate them, and `CraftingPanel` is rendered conditionally behind `gameStore.showCrafting`. Keyboard shortcut `C` toggles the panel via `GameShortcuts.tsx` and `HUD.tsx`.
+All four new systems operate entirely within `WorldScene` as standalone classes with single-responsibility interfaces. `DayNightSystem` lives in `apps/web/src/game/systems/` (simulated state, not rendering). `WeatherSystem` and `AtmosphereSystem` live in `apps/web/src/game/rendering/`. The data layer is a static `BIOME_ATMOSPHERE_CONFIG` lookup (BiomeType → weather type + atmosphere FX params) derived from `lore/world-bible.md`. `WorldScene` owns instantiation, drives `.update()` calls, and fires `.setBiome()` at both zone transition paths.
 
 **See:** `.planning/research/ARCHITECTURE.md`
 
 **Major components:**
-1. `packages/recipes/` — `RecipeDefinition`, `RecipeRegistry`, definition files; new NX package; prerequisite for all other crafting components
-2. `packages/shared-types/src/game/crafting.ts` — `CraftingCategory`, `CraftResult`, `RecipeSummary`, `CraftingProficiency` types; must exist before server or client code compiles
-3. `packages/database/src/schema/crafting-proficiency.ts` + `recipe-unlocks.ts` — DB schema; must be migrated before `CraftingService` runs
-4. `apps/game-server/src/game/crafting.service.ts` — timer via `setTimeout`, ingredient validation, proficiency cache, quality roll, `item.crafted` event emission
-5. `apps/web/src/store/craftingStore.ts` + `apps/web/src/ui/panels/CraftingPanel.tsx` — client state and HUD panel
+1. **`ProceduralTileRenderer`** — bakes 3-shade cube geometry to GPU textures once at scene init; `TileRenderer.createCubeSprite()` uses these textures as primary path; PNG sprites remain as optional override
+2. **`DayNightSystem`** — advances `dayProgress` float (0–1) each frame via `Math.sin`; exposes `getBrightness()` consumed by `AtmosphereSystem`; drives ColorMatrix (WebGL) or Canvas Rectangle overlay fallback
+3. **`WeatherSystem`** — one active `ParticleEmitter` at a time; destroy + recreate on biome change; `setScrollFactor(0)` for viewport-fixed weather; emitters registered per `zoneId` for cleanup on chunk unload
+4. **`AtmosphereSystem`** — calls `cameras.main.postFX.clear()` on every biome transition, then re-adds DayNight ColorMatrix, then applies fresh vignette/bloom/color-matrix per `BIOME_ATMOSPHERE_CONFIG`
 
-**Key patterns:**
-- `setTimeout` per craft (not `setInterval`) — same as gathering challenge expiry; individual completion times (5-30s) make per-craft timers correct
-- Ingredients consumed on craft start (not on completion) — prevents duplication exploit where player uses ingredients during timer window
-- Server-side `activeCrafts: Map<string, ActiveCraft>` — mirrors `activeChallenges` in `GatheringService`; enforces one craft per character; source of truth for timer validation
-- EventEmitter2 cross-service event — `CraftingService` emits `item.crafted`; `QuestService` subscribes via `@OnEvent`; no direct coupling
+**Key integration points (both must be updated — confirmed from codebase):**
+- `WorldScene.commitZoneTransition()` — walking between zones
+- `WorldScene.fullZoneReset()` — teleport, hub recall, portal use
 
 ### Critical Pitfalls
 
-**See:** `.planning/research/PITFALLS-CRAFTING.md`
+**See:** `.planning/research/PITFALLS.md`
 
-1. **Non-atomic ingredient consumption** — Calling `removeItems()` then `addItem()` as two separate operations creates partial-failure exposure (player loses materials with no output, or receives output for free). Prevention: implement crafting as a single in-memory mutation — read inventory, validate ingredients, compute final state (ingredients removed, output added), write in one `updateInventoryFull()` call. Address in Phase 1 before any recipe definitions exist.
+1. **Per-tile `Graphics` objects cause draw call explosion** — at 7,000+ visible tiles each Graphics object is a separate WebGL batch flush; sub-10 FPS in open biomes. Prevention: bake all cube geometry to named textures via `graphics.generateTexture()` at scene init, render as `Image` objects. Must be addressed in Phase 1 before any day/night or atmosphere system is built on top.
 
-2. **Crafting timer tracked client-side only** — Client sends `crafting:complete` event; server awards output without validating when crafting started; modified clients skip timers. Prevention: server records `startedAt: Date.now()` in `activeCrafts` Map on `crafting:start`; validates `elapsed >= craftTimeMs - LATENCY_TOLERANCE` on completion. Mirror `GatheringService` exactly. Address in Phase 1.
+2. **Per-tile `setTint()` for day/night overwrites elevation tinting** — `applyElevationTint()` already sets per-tile tint state; any day/night system that calls `setTint()` per tile destroys the elevation depth cue and costs ~7,000 calls per transition. Prevention: use `camera.postFX.addColorMatrix()` (single GPU pass) — confirmed correct approach in both STACK.md and PITFALLS.md.
 
-3. **Recipe unlocks not persisted** — In-memory `Map<characterId, Set<recipeId>>` evaporates on server restart; players lose one-time quest-unlocked recipes permanently. Prevention: `recipe_unlocks` table (append-only, never delete rows) is the source of truth; in-memory Set is a cache loaded on player join. Must exist before any unlock logic is written. Address in Phase 1 schema.
+3. **Missing `fullZoneReset()` biome hook breaks atmosphere on teleport** — systems updated only in `commitZoneTransition()` will be correct when walking but wrong after portal/hub recall. Prevention: always call `setBiome()` and `setWeather()` in both transition methods. Exact line numbers confirmed in codebase (commit ~1033, fullReset ~1187).
 
-4. **Faction recipe bypass via socket injection** — UI filter hides faction recipes from wrong-faction players, but server handler does not validate `player.factionId` against `recipe.requiredFaction`; modified clients craft faction-exclusive items. Prevention: `if (recipe.requiredFaction && recipe.requiredFaction !== player.factionId) reject` as first check in `craftItem()`. 3-line guard. Address in Phase 1.
+4. **`cameras.main.postFX.clear()` not called on biome transition causes FX stacking** — each `add*()` call stacks a new effect; after 3 biome transitions you have 3 conflicting ColorMatrix effects. Prevention: `AtmosphereSystem.setAtmosphere()` always calls `postFX.clear()` first, then re-adds DayNight ColorMatrix reference, then adds biome FX.
 
-5. **Crafted items invalidate trader/loot economy** — Recipe material costs set without reference to existing trader prices or loot drop rates; crafting becomes strictly dominant over buying or looting. Prevention: for every craftable item, compare (crafting material effort) vs (trader buy price) vs (expected loot time) before writing the recipe definition. Crafting cost should land at 80-120% of cheapest alternative. Address in Phase 2 with a balance comparison before recipe files are written.
+5. **Particle emitters not destroyed on chunk unload cause memory leak and FPS degradation** — emitters are top-level `GameObjects` not part of the chunk container; they do not auto-destroy on `unloadChunkContainer()`. Prevention: register all emitters in a `Map<zoneId, ParticleEmitter[]>` and hook into `onChunkUnloaded()`.
 
-6. **Quality tier progression too fast or too slow** — Copying gathering XP curve applies a gentle yield-quantity effect to quality tier unlocks — a qualitatively different power jump that either shortcuts gear progression or makes crafting feel pointless. Prevention: define `qualityThresholds` per recipe (which proficiency level enables Refined/Masterwork output for that specific recipe). Address in Phase 2.
-
-7. **Recipe definitions reference unknown item IDs** — `ItemRegistry.get()` returns `UNKNOWN_ITEM` silently; typos in ingredient/output IDs produce "Unknown Item" crafted items. Prevention: add `validateRecipeDefinitions()` startup check in `CraftingService.onModuleInit()` that calls `ItemRegistry.has()` on every ingredient and output ID; throw on unknown IDs. Write as a test that fails the build. Address in Phase 2.
+---
 
 ## Implications for Roadmap
 
-Based on the research dependency graph and pitfall-to-phase mapping, a five-phase structure is recommended.
+All four research files independently converged on the same 5-phase dependency order. The phase sequence is determined by hard compile-time and render-time dependencies.
 
-### Phase 1: Shared Foundation and CraftingService Core
+### Phase 1: Procedural Terrain Cubes
+**Rationale:** Foundation for everything else. Day/night and atmosphere both rely on all tiles being `Image` objects (not `Graphics`) so that camera-level postFX applies uniformly. The Graphics fallback path in `createFallbackCube()` silently defeats both systems. This phase eliminates the fallback path and makes procedural cubes the permanent primary renderer.
+**Delivers:** `ProceduralTileRenderer` class; all tiles baked to named GPU textures at scene init; `TileRenderer.createCubeSprite()` returns `Image` objects using procedural textures; PNG sprites remain as optional per-tile override; dead PNG load paths cleaned from `PreloadScene.ts`
+**Addresses:** 3-shade procedural cube rendering (P1), biome color palettes (P1), rendering cleanup (P1)
+**Avoids:** Draw call explosion (Pitfall 1), Graphics fallback breaking uniform tinting (Pitfall 6)
 
-**Rationale:** Everything else in the system imports from this phase. TypeScript types must exist before services compile. DB schema must be migrated before services query tables. Server-side validation guards (atomic inventory, timer tracking, faction check, unlock persistence) must be built into the service foundation before recipe content is authored — retrofitting these into an already-running service is error-prone.
+### Phase 2: Particle Weather System
+**Rationale:** Independent of day/night and atmosphere after Phase 1 — can be built in parallel once tile rendering is stable. Establishing the weather particle depth budget (depth 950) before atmosphere claims depth 900 and day/night overlay claims depth 500 prevents depth conflicts at design time. Chunk lifecycle hooks are simpler to design before the other two systems add more scene objects.
+**Delivers:** `WeatherSystem` class; 4 weather types (rain/snow/ash/spores); viewport-fixed emitters via `setScrollFactor(0)`; fade in/out alpha tween on biome transition (3 seconds); `Map<zoneId, emitter[]>` cleanup on chunk unload; weather textures generated via `generateTexture` (no external assets)
+**Addresses:** Biome weather particles (P1 feature)
+**Avoids:** Particle emitter memory leak (Pitfall 7), particle depth breaks isometric sorting (Pitfall 3)
 
-**Delivers:**
-- `packages/shared-types/src/game/crafting.ts` — `CraftingCategory`, `CraftResult`, `RecipeSummary`, `CraftingProficiency`
-- `packages/shared-types/src/network/events.ts` — all `crafting:*` `ClientEvents` and `ServerEvents` additions
-- `packages/recipes/` — `RecipeDefinition` type, `RecipeRegistry` singleton, empty definition barrel (definitions added in Phase 2-3)
-- `packages/database/src/schema/crafting-proficiency.ts` — JSONB proficiency table
-- `packages/database/src/schema/recipe-unlocks.ts` — unlock persistence join table (append-only)
-- `packages/database/src/queries/crafting.ts` — DB helper functions
-- DB migration (single file for both new tables)
-- `apps/game-server/src/game/crafting.service.ts` — full service with: atomic inventory mutation, server-side `activeCrafts` Map with timing validation, faction guard, proficiency load/cache/unload lifecycle, quality roll with injected random, `item.crafted` event emission
-- `game.gateway.ts` modifications — three new `@SubscribeMessage` handlers, `cancelActiveCraft` in `handleDisconnect`
-- `game.module.ts` modification — `CraftingService` registered as provider
+### Phase 3: Day/Night Cycle
+**Rationale:** Requires Phase 1 (all tiles Image-backed for uniform camera postFX). Provides `DayNightSystem` that `AtmosphereSystem` (Phase 4) receives via constructor injection. WebGL `ColorMatrix` approach is confirmed; Canvas `Rectangle` fallback is documented and simple. Documents the depth layer table in `WorldScene.ts` before Phase 4 adds more layers.
+**Delivers:** `DayNightSystem` class; camera brightness tween (0.55–1.0 range); blue-shift night tone via `colorMatrix.night()`; configurable game-day duration (default 20 minutes real-time); Canvas fallback `Rectangle` overlay at depth 500; `getDayBrightness()` accessor for `AtmosphereSystem`
+**Addresses:** Day/night cycle (P1 feature)
+**Avoids:** Per-tile setTint overwriting elevation tinting (Pitfall 2), fog-of-war + overlay depth conflict (Pitfall 5)
 
-**Avoids:** Non-atomic consumption, timer skip exploit, recipe unlocks not persisted, faction bypass, XP race condition (one-active-craft enforcement), proficiency schema collision with gathering
+### Phase 4: Biome Atmospheric Effects
+**Rationale:** Depends on Phase 3 — `AtmosphereSystem` shares the camera postFX channel with `DayNightSystem` and must re-add the DayNight ColorMatrix instance after each `postFX.clear()`. The `BIOME_ATMOSPHERE_CONFIG` covers all 16 biomes from `lore/world-bible.md`. Position-based density blending prevents hard seams at chunk boundaries.
+**Delivers:** `AtmosphereSystem` class; `BIOME_ATMOSPHERE_CONFIG` covering all 16 biomes; vignette (deep/trench/void), bloom (bioluminescent/void_rift/crystal), color grading (ice/volcanic/toxic); 2-second cross-fade on biome transition; biome hook wired in both `commitZoneTransition()` and `fullZoneReset()`
+**Addresses:** Biome atmosphere overlay (P1 feature), biome visual identity reinforcement
+**Avoids:** FX stacking on biome transition (Pitfall 4), atmosphere hard lines at chunk boundaries (Pitfall 4 corollary), missing fullZoneReset hook (Pitfall — confirmed integration gotcha)
 
-**Test gate:** TypeScript compiles. DB migration runs. `crafting:start` with valid ingredients returns `crafting:started`. Timer fires and returns `crafting:result`. Faction guard rejects wrong-faction attempt. `crafting:complete` sent immediately after `crafting:start` is rejected. Server restart + player reconnect restores recipe unlocks from DB.
-
-### Phase 2: Recipe Content and Quality System
-
-**Rationale:** Service mechanics from Phase 1 are stable. Recipe definitions and the quality threshold system are authored together because quality thresholds are per-recipe fields — they cannot be balanced in isolation from the recipe definitions themselves. Economy balance comparison happens here, before recipe files are committed.
-
-**Delivers:**
-- Economy balance review for each craftable item (material cost vs. trader price vs. loot drop rate) — must complete before recipe files are written
-- Per-recipe `qualityThresholds` field authored into every `RecipeDefinition`
-- Definition files: `equipment.ts`, `consumables.ts`, `reagents.ts`, faction-specific definitions in `faction/`
-- Startup validation test (`crafting-recipe-validation.test.ts`) — fails build if any ingredient/output item ID not in `ItemRegistry`
-- `packages/game-logic/src/crafting/quality.ts` — `calculateQualityTier()` with injected random, `qualityToOutputMultiplier()`
-- `packages/game-logic/src/crafting/proficiency.ts` — reuses `calculateLevelFromXP()` from gathering, no duplication
-- `packages/game-logic/src/crafting/validation.ts` — `validateRecipeIngredients()`, `canCraft()` pure functions
-- Unit tests for quality calculation and proficiency XP curve
-
-**Avoids:** Economy invalidation, quality tier progression miscalibration, unknown item ID references
-
-**Test gate:** Recipe validation test passes with zero unknown item IDs. Level 1 crafter with an epic recipe produces Standard quality output. Level 15 crafter produces quality tier as per recipe threshold. All craftable items sit within 80-120% of cheapest alternative acquisition path.
-
-### Phase 3: Automation Production Chain
-
-**Rationale:** Separated from Phase 2 because automation crafting requires cross-system validation against `DEPLOYABLE_TYPE_TO_ITEM` in `AutomationService`. Recipe outputs must be the same item IDs already in the deployable mapping — not new item IDs. This validation is specific enough to warrant its own phase with its own test gate.
-
-**Delivers:**
-- `packages/recipes/src/definitions/automation.ts` — deployable structure recipes
-- Validation that all deployable recipe output IDs are present in `DEPLOYABLE_TYPE_TO_ITEM`
-- Integration test confirming a crafted deployable item can be deployed via automation panel without errors
-- Any new deployable item definitions in `packages/items` (if new tiers needed), paired with `DEPLOYABLE_TYPE_TO_ITEM` update in the same changeset
-
-**Avoids:** Automation deployable item ID mismatch (crafted deployable outputs an item ID not in the automation mapping)
-
-**Test gate:** All deployable recipe output IDs resolve in `DEPLOYABLE_TYPE_TO_ITEM`. Crafted `deployable_extractor` can be placed via `AutomationService` without error.
-
-### Phase 4: Quest Integration
-
-**Rationale:** An isolated server-side change that builds on the `item.crafted` event from Phase 1. No client changes needed. Separated because it touches the quest system — a stable system that should not be modified speculatively while earlier crafting phases are still in flux.
-
-**Delivers:**
-- `packages/quests/src/types.ts` — `CraftObjective` with `objectiveType: 'craft'` and `itemId`/`recipeId` fields
-- `packages/database/src/schema/quest-progress.ts` — add `'craft'` to `ObjectiveProgressJson.objectiveType` union
-- `apps/game-server/src/game/quest.service.ts` — `@OnEvent('item.crafted')` handler, `ItemCraftedPayload` interface
-- Quest reward extension: `QuestRewards.recipeIds?: string[]` — enables quest-reward recipe unlocks
-- `QuestService.grantRewards()` modification — calls `craftingService.unlockRecipe()` for reward recipe IDs
-
-**Test gate:** Accept a test quest with `craft` objective. Complete a craft. Verify `quest:progress` event emitted with incremented counter. Complete a quest with `recipeIds` reward. Verify recipe appears unlocked after server restart.
-
-### Phase 5: Client Store and CraftingPanel
-
-**Rationale:** Server events are stable and fully typed (Phase 1). The client panel wires against a live server. All socket event names and payload shapes are already in `shared-types/events.ts` — no guessing or mock-typing required.
-
-**Delivers:**
-- `apps/web/src/store/craftingStore.ts` — Zustand store with immer middleware, socket event side-effects for all `crafting:*` server events
-- `apps/web/src/ui/panels/CraftingPanel.tsx` — draggable panel, category tabs (Equipment / Consumables / Reagents / Structures), recipe list with craftable/locked states, ingredient checklist (green/red per inventory), quality range display at current proficiency, craft button, progress bar (client-side countdown from `completesAt` timestamp)
-- `apps/web/src/ui/panels/CraftingPanel.css` — glassmorphism styles matching existing panels
-- `apps/web/src/store/gameStore.ts` — add `showCrafting: boolean`, `toggleCrafting()`
-- `apps/web/src/ui/hud/GameShortcuts.tsx` — crafting shortcut button (key `C`)
-- `apps/web/src/ui/hud/HUD.tsx` — `C` keydown handler
-- `apps/web/src/ui/GameUI.tsx` — import `craftingStore` (side-effect activation), conditional `<CraftingPanel />`
-- Keyboard disable pattern on panel mount (same as `QuestLogPanel.tsx`)
-
-**Test gate:** `C` key opens panel. Panel requests and renders recipe list on open. Selecting a recipe shows ingredients with availability indicators. Triggering a craft shows progress bar counting down. Craft result shows proficiency XP feedback toast. Panel closes cleanly and re-enables Phaser keyboard.
+### Phase 5: Rendering Cleanup and Verification
+**Rationale:** Deferred until all systems are stable. Removing dead PNG load paths early risks breaking PNG sprite overrides for biomes that still have valid sprites. Cleanup is only safe when Phases 1–4 are verified working. Performance baseline comparison requires a stable build.
+**Delivers:** All dead PNG tile load paths removed from `PreloadScene.ts`; depth layer table documented as a comment block in `WorldScene.ts`; `FogRenderer` confirmed disabled (not accidentally re-enabled during refactor); FPS baseline check in high-density tile zone (target: 5% or less regression vs v1.25)
+**Addresses:** Rendering cleanup (P1 feature), technical debt documentation, performance gate
+**Avoids:** Accidental `FogRenderer` re-enable (Pitfall 5), accumulated stale load paths
 
 ### Phase Ordering Rationale
 
-- Phase 1 is mandatory first: `RecipeRegistry`, shared types, and DB schema are compile-time and runtime prerequisites for every downstream component. Skipping or deferring any part of Phase 1 causes cascading compilation failures.
-- Automation crafting (Phase 3) is separated from main recipe content (Phase 2) because it requires cross-system validation against `AutomationService` that is independent of the rest of the recipe balancing work.
-- Quest integration (Phase 4) is server-only and touches a stable system. Keeping it isolated after Phase 3 means the quest system modification is a clean, focused changeset that can be reviewed and reverted independently.
-- The client panel (Phase 5) is last because it should wire against a working server, not a stubbed one. The panel UX (loading states, error overlays, combat gate messaging) requires knowing exactly what events the server sends — which is only certain once Phase 1 is complete.
-- Recipe content authoring (Phases 2-3) can begin as soon as Phase 1 type definitions exist. Definition files are pure TypeScript data objects; they do not require a running server. Content authoring can proceed in parallel with late Phase 1 server work if capacity allows.
+- Phase 1 must come first: `Image`-backed tiles are a prerequisite for correct camera-level tinting; any remaining `Graphics` objects silently defeat both day/night (Pitfall 2) and atmosphere systems
+- Phase 2 is independent of Phases 3 and 4 after Phase 1 — weather and atmosphere have no shared state; building them in parallel is possible; weather comes second to establish depth budget first
+- Phase 3 before Phase 4: `AtmosphereSystem` constructor receives `DayNightSystem` reference; the clear/restore cycle for camera postFX requires the DayNight ColorMatrix instance to exist first
+- Phase 5 last: cleanup is safest when the visual baseline is locked and no system is still in flux
 
 ### Research Flags
 
-Phases with standard patterns (skip research-phase — well-documented within codebase):
-- **Phase 1:** Fully documented by analogues in `GatheringService`, `QuestRegistry`, `gathering-proficiency` schema, `automationStore`. No external research needed.
-- **Phase 4:** Quest system extension is a straightforward `@OnEvent` addition. Pattern is already used for `item.collected` and `entity.killed`.
-- **Phase 5:** Client panel follows `AutomationPanel.tsx` and `QuestLogPanel.tsx` templates exactly.
+Phases with well-documented patterns (skip `/gsd:research-phase`):
+- **Phase 1** — `graphics.generateTexture()` pattern fully documented in Phaser official docs; integration points confirmed by direct code inspection of `TileRenderer.ts` at exact line numbers; no unknowns remain
+- **Phase 2** — Phaser v3.60+ `ParticleEmitter` API fully documented; `setScrollFactor(0)` viewport-anchor pattern confirmed; chunk lifecycle hook (`onChunkUnloaded`) identified in `ChunkManager.ts`
+- **Phase 5** — pure cleanup; no new APIs; verification checklist is in PITFALLS.md
 
-Phases that benefit from a design pass before execution (not external research, but internal design decisions):
-- **Phase 2 (economy balance):** Recipe material costs require a structured comparison against existing trader prices and loot drop rates before recipe definitions are written. Deliverable: a balance spreadsheet or inline comments in recipe files documenting the acquisition-cost comparison for each item.
-- **Phase 2 (quality thresholds):** The per-recipe quality threshold values (which proficiency level enables Refined/Masterwork output for each recipe category) require calibration decisions grounded in expected character progression. Recommend establishing tier tables before authoring recipe definitions.
+Phases that may benefit from targeted investigation during planning:
+- **Phase 3** — confirm `this.renderer.type === Phaser.WEBGL` detection works as expected in the production Vite build (minification may affect Phaser constant access); verify Canvas fallback path in a non-WebGL browser before committing to the architecture
+- **Phase 4** — the position-based density field for atmosphere blending at chunk boundaries is the highest architectural complexity in this milestone; the 5-tile interpolation radius suggestion is unvalidated against actual chunk grid dimensions; confirm the blend produces smooth transitions before implementation
+
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All versions confirmed from installed `package.json` and `pnpm-lock.yaml`; all patterns verified by direct codebase inspection of 3 analogous systems |
-| Features | HIGH (core UI/UX), MEDIUM (quality tier calibration numbers) | Table stakes features grounded in established MMO conventions; quality tier threshold values are design decisions, not research findings |
-| Architecture | HIGH | Derived entirely from direct codebase inspection; every component has a named analogue in the existing codebase; no speculative patterns |
-| Pitfalls | HIGH | 10 of 10 pitfalls grounded in direct codebase analysis of specific files and line numbers; secondary sources from MMO crafting post-mortems align with codebase observations |
+| Stack | HIGH | All Phaser APIs verified against 3.90.0 installed; official docs cited for every method signature; no new packages required; direct `node_modules` inspection |
+| Features | HIGH | Feature landscape drawn from codebase analysis + official Phaser docs + industry tutorials; biome mapping from `lore/world-bible.md` (authoritative per CLAUDE.md) |
+| Architecture | HIGH | Integration points confirmed by direct code inspection of `TileRenderer.ts`, `WorldScene.ts`, `RareNodeFX.ts`; exact line numbers cited for zone transition hooks |
+| Pitfalls | HIGH (analysis) / MEDIUM (performance estimates) | Draw call explosion and setTint override confirmed via Phaser source and codebase; particle count thresholds (200 max, 7,000 tile count) are estimates from community benchmarks |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Recipe unlock storage pattern inconsistency:** STACK.md recommends JSONB `unlockedRecipeIds` on `crafting_proficiency`; ARCHITECTURE.md and PITFALLS.md recommend a separate `recipe_unlocks` join table. These are mutually exclusive schema decisions. The join table is the stronger choice (append-only audit trail, server-restart durability, accurate source of truth). Resolve explicitly at the start of Phase 1 before writing any schema files. Recommendation: use the join table.
+- **Atmosphere chunk-boundary blending radius**: The 5-tile blend radius is a design suggestion, not a measured value. Validate during Phase 4 planning by mapping actual chunk grid dimensions (3×3 grid at ZONE_SIZE tiles) against tile screen size to confirm the radius produces visually smooth transitions.
 
-- **Quality tier model inconsistency:** FEATURES.md specifies Standard +0% / Refined +15% / Masterwork +30% as stat modifiers. STACK.md specifies quantity multipliers (1.0 / 1.1 / 1.25 / 1.5) with four named tiers. These differ in both tier count and modifier type. Resolve during Phase 2 design pass — choose one model and apply consistently across all recipe definitions and game-logic functions.
+- **ColorMatrix + Bloom render order**: When `DayNightSystem` and `AtmosphereSystem` both write to the camera's postFX chain after `clear()`, the order of ColorMatrix (brightness) vs Bloom may affect the final output. Verify the combined visual result during Phase 4 — brightness before bloom is the expected order.
 
-- **`InventoryService.removeItems()` bulk atomic method:** ARCHITECTURE.md flags that `InventoryService` may lack a bulk atomic removal method; the current `inventory:drop` flow removes one item at a time and is not atomic for multi-ingredient removal. If this method does not exist, it must be added before `CraftingService.startCraft()` can be implemented safely. Verify at the start of Phase 1; add as the first task if missing.
+- **Canvas fallback coverage**: The game uses `Phaser.AUTO` which prefers WebGL. The Canvas fallback path for day/night (Rectangle overlay) is architecturally defined but untested. Verify in a Canvas-forced browser environment before marking Phase 3 complete.
 
-- **Combat gate behavior on panel open:** PITFALLS.md recommends showing "Cannot craft while in combat" overlay on panel open. This requires `CombatService.isInCombat()` to be accessible from `CraftingService`. Confirm the check exists and add to Phase 1 `CraftingService` validation sequence.
+- **`FogRenderer` re-enable path**: The fog-of-war RenderTexture is disabled with a known camera-tracking bug (`WorldScene.ts` line 142). v1.26 must not re-enable it. The camera-tracking bug is not scoped to this milestone but should be tracked as follow-on work separate from the visual overhaul.
+
+---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-
-- Direct codebase inspection — `apps/game-server/src/game/gathering.service.ts`, `automation.service.ts`, `quest.service.ts`, `game.gateway.ts`, `game.module.ts`, `inventory.service.ts` — timer, proficiency, event, and inventory patterns
-- Direct codebase inspection — `packages/items/src/registry.ts`, `packages/quests/src/registry.ts`, `packages/quests/src/types.ts` — registry and definition package patterns
-- Direct codebase inspection — `packages/database/src/schema/gathering-proficiency.ts`, `quest-progress.ts`, `deployables.ts` — DB schema patterns
-- Direct codebase inspection — `packages/shared-types/src/network/events.ts`, `shared-types/game/faction.ts` — typed event maps, faction bonus fields
-- Direct codebase inspection — `apps/web/src/store/automationStore.ts`, `inventoryStore.ts`, `gameStore.ts` — Zustand store patterns
-- Direct codebase inspection — `apps/web/src/ui/panels/AutomationPanel.tsx`, `QuestLogPanel.tsx`, `GameUI.tsx` — panel rendering patterns
-- `.planning/PROJECT.md` — v1.25 milestone scope definition
-- `lore/world-bible.md` — faction identities, crafting modifier design intent (authoritative per CLAUDE.md)
+- Phaser 3 official docs — `https://docs.phaser.io/api-documentation/class/gameobjects-particles-particleemitter` — ParticleEmitter v3.60+ API, `setScrollFactor()`, `ParticleEmitterManager` removal confirmed
+- Phaser 3 official docs — `https://docs.phaser.io/phaser/concepts/fx` — camera postFX: ColorMatrix, Bloom, Vignette, Glow
+- Phaser 3 official docs — `https://photonstorm.github.io/phaser3-docs/Phaser.Display.ColorMatrix.html` — `brightness()`, `night()`, `contrast()`, `hue()` method signatures
+- Phaser 3 official docs — `https://newdocs.phaser.io/docs/3.80.0/focus/Phaser.GameObjects.Graphics-generateTexture` — generateTexture caching pattern; performance advice
+- `node_modules/phaser/package.json` — confirmed Phaser 3.90.0 installed
+- `apps/web/src/game/rendering/TileRenderer.ts` — `createFallbackCube()`, `applyElevationTint()`, integration hooks
+- `apps/web/src/game/rendering/RareNodeFX.ts` — `postFX.addGlow()` pattern working in this codebase
+- `apps/web/src/game/scenes/WorldScene.ts` — `commitZoneTransition()`, `fullZoneReset()`, `currentBiome`, line 142 fog-of-war disabled comment
+- `lore/world-bible.md` — biome atmosphere descriptions (source of truth per CLAUDE.md)
 
 ### Secondary (MEDIUM confidence)
+- Josh Morony — `https://www.joshmorony.com/how-to-add-weather-effects-in-phaser-games/` — screen-relative weather particle pattern
+- Josh Morony — `https://www.joshmorony.com/how-to-create-a-day-night-cycle-in-phaser/` — tween-based tinting for day/night
+- Phaser discourse — `https://phaser.discourse.group/t/webgl-performance-issue/12500` — Graphics objects cause WebGL batch flushes
+- Phaser discourse — `https://phaser.discourse.group/t/setdepth-to-particles-emitter/4232` — v3.60+ emitter depth API change
+- Phaser GitHub issue #5456 — particle memory management; explicit `destroy()` required; no auto-cleanup from manager
 
-- [Designing an MMORPG: Crafting Systems — MMOGames.com](https://www.mmogames.com/gamearticles/designing-an-mmorpg-crafting-systems/) — table stakes features validation
-- [FFXIV Crafting — Final Fantasy XIV Online Wiki](https://ffxiv.consolegameswiki.com/wiki/Crafting) — quality tier patterns
-- [Quality System — RimWorld Wiki](https://rimworldwiki.com/wiki/Quality) — quality tier proficiency reference
-- [How we unbroke our crafting system — Game Developer (Crashlands post-mortem)](https://www.gamedeveloper.com/design/how-we-unbroke-our-crafting-system) — recipe overwhelm and unlock progression anti-patterns
-- [Virtual Economic Theory: How MMOs Really Work — Game Developer](https://www.gamedeveloper.com/business/virtual-economic-theory-how-mmos-really-work) — crafted vs looted economy balance
-- [MMO Architecture: Source of truth, Dataflows — PRDeving](https://prdeving.wordpress.com/2023/09/29/mmo-architecture-source-of-truth-dataflows-i-o-bottlenecks-and-how-to-solve-them/) — server-side validation principles
-
-### Tertiary (LOW confidence)
-
-- Various MMO crafting design forum threads (GameDev.net, MMORPG.com, Pantheon Forums, Ashes of Creation Forums) — community consensus on anti-features (failure chance, batch crafting, junk-recipe XP grinding)
-- [Crafting quality and progression — Ashes of Creation Forums](https://forums.ashesofcreation.com/discussion/65342/crafting-quality-rating-and-its-usefulness) — quality tier proficiency design discussion
+### Tertiary (context and validation)
+- Springer — isometric lighting for procedurally generated 2D terrain — academic reference for 3-shade face lighting model
+- Kvachev blog — depth-layered fog mesh for top-down games — validated depth-layer separation approach
+- Mazebert forum — isometric depth sorting with elevation z-axis offset — depth formula context
 
 ---
-*Research completed: 2026-03-05*
+*Research completed: 2026-03-17*
 *Ready for roadmap: yes*

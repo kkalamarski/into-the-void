@@ -1,438 +1,194 @@
 # Stack Research
 
-**Domain:** Manual crafting system — recipe definitions, per-category proficiency, quality tiers, crafting timers, recipe unlock progression, faction-gating (v1.25)
-**Researched:** 2026-03-05
-**Confidence:** HIGH (codebase directly inspected; all versions confirmed from installed package.json and pnpm-lock.yaml; patterns matched against 3 existing analogous systems: gathering, automation, quests)
+**Domain:** Phaser 3 visual overhaul — procedural light-aware terrain cubes, particle weather, day/night cycle, biome atmospheric effects (v1.26)
+**Researched:** 2026-03-17
+**Confidence:** HIGH (all Phaser APIs verified against 3.90.0 installed in node_modules; official docs consulted; integration points confirmed by direct code inspection of TileRenderer.ts, WorldScene.ts, RareNodeFX.ts)
 
 ---
 
-## Context: What the Codebase Already Has
+## Summary
 
-This is subsequent-milestone research for v1.25. No framework decisions to make — the stack is settled. The question is: which existing extension points accept the crafting features, and where are the gaps requiring new files or schema?
-
-**Installed versions confirmed from `package.json` and lockfile:**
-- TypeScript: ^5.4.0 (5.9.3 at runtime)
-- Drizzle ORM: ^0.30.0 (0.30.10 locked)
-- NestJS: ^10.3.0
-- Zustand: ^4.5.0 with `immer` middleware (^11.1.4)
-- Vitest: ^4.0.18
-- React: ^18.2.0
-- `@dnd-kit/core`: ^6.3.1 (already installed — used for action bar drag-and-drop)
-
-**Three directly analogous systems to model from:**
-
-| System | Recipe Model | Proficiency | Timer | Progression Gate | DB Pattern |
-|--------|-------------|------------|-------|-----------------|------------|
-| Gathering | N/A | JSONB column per character, 3-category `{xp, level}` map | `setTimeout` expiry on server | Tool level gates node access | `gathering_proficiency` table |
-| Automation | Config objects in `shared-types` | N/A | `setInterval` 60s tick | `requiredLevel` field on config | `deployables` table with `properties: jsonb` |
-| Quests | `QuestDefinition` in `packages/quests` | N/A | N/A | `faction?`, `prerequisiteQuestIds?`, `minLevel?` | `quest_progress` table, UNIQUE (characterId, questId) |
-
-Crafting combines patterns from all three: quest-style definition objects, gathering-style per-category proficiency JSONB, automation-style server-side timer, and quest-style unlock gating.
-
-**Gaps found (no new framework, only new files and one new table):**
-
-1. No `packages/recipes` package exists yet — needed for `RecipeDefinition` objects, `RecipeRegistry`, and definitions (parallel to `packages/quests` and `packages/items`)
-2. No `crafting_proficiency` DB table — needed for per-character, per-category crafting skill (parallel to `gathering_proficiency`)
-3. No `crafting_progress` DB table — needed to persist in-progress crafts across server restarts (same concern that caused the `quest_progress` UNIQUE constraint pattern)
-4. `ClientEvents` in `shared-types/network/events.ts` needs new `crafting:*` event types
-5. `ServerEvents` in `shared-types/network/events.ts` needs new `crafting:*` response event types
-6. `apps/game-server/src/game/` needs a new `crafting.service.ts` — registered in `game.module.ts`
-7. `apps/web/src/store/` needs `craftingStore.ts` (parallel to `automationStore.ts`, `questStore.ts`)
-8. `apps/web/src/ui/panels/` needs `CraftingPanel.tsx` + `CraftingPanel.css`
-9. `apps/web/src/ui/hud/` needs a crafting shortcut button in `GameShortcuts.tsx`
-10. `gameStore.ts` needs `craftingPanelOpen: boolean` and `toggleCrafting` (parallel to `questLogOpen`, `automationPanelOpen`)
+No new npm packages are required for v1.26. Every feature — procedural cube rendering, particle weather, day/night cycle, and biome atmosphere — is covered by APIs already present in Phaser 3.90.0 (installed; package.json semver `^3.80.0`). PostFX pipelines (v3.60+), the redesigned ParticleEmitter (v3.60+), Graphics.generateTexture(), and ColorMatrix on cameras are all built-in and confirmed in official docs. The work is entirely additive: four new renderer/system classes that slot into the existing `WorldScene` → `TileRenderer` / `EntityRenderer` architecture.
 
 ---
 
 ## Recommended Stack
 
-### Core Technologies
+### Core Technologies (no changes, no new packages)
 
-All already installed. Zero new runtime dependencies required for the crafting system.
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| Phaser 3 | 3.90.0 (installed) | All rendering, particles, FX pipeline, tween animation | PostFX pipelines, ParticleEmitter, ColorMatrix, Graphics.generateTexture() — all built-in since v3.60; current install is v3.90.0, fully compatible |
+| TypeScript | 5.4.x (installed) | Type-safe system classes | Existing pattern; four new classes follow same typing conventions as TileRenderer, EntityRenderer, FogManager |
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| TypeScript | 5.4+ | `RecipeDefinition`, `CraftingProficiency`, `QualityTier` types; discriminated unions for recipe categories | Discriminated unions already used across all packages; `satisfies RecipeDefinition` pattern at definition-author time catches errors before runtime |
-| NestJS | 10.3.x | `CraftingService` injectable — handles recipe validation, timer, proficiency XP award, quality roll | 20 services already in `apps/game-server/src/game/`; `CraftingService` slots in identically; registers in `game.module.ts` |
-| Drizzle ORM | 0.30.10 | Two new tables: `crafting_proficiency` (JSONB, mirrors `gathering_proficiency`) and `crafting_progress` (timer persistence) | JSONB pattern for proficiency is already proven at this scale; `crafting_progress` follows `quest_progress` pattern with UNIQUE constraint |
-| Zustand + immer | 4.5.0 + 11.1.4 | `craftingStore.ts` — recipe list, active craft progress, proficiency data | `immer` middleware already used in `inventoryStore.ts`; use it for mutable-style updates to active craft state |
-| React 18 | 18.2.0 | `CraftingPanel.tsx` — recipe browser, ingredient list, quality display, progress bar | All existing panels are React with plain CSS; no exceptions; consistent with HUD architecture |
+---
 
-### Supporting Libraries
+## Phaser 3 Built-in APIs Required
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| `@dnd-kit/core` + `@dnd-kit/sortable` | 6.3.1 + 10.0.0 | Drag ingredients from inventory into recipe slots (if recipe requires manual slot assignment) | Already installed for action bar; use only if the crafting UI needs drag-from-inventory-to-recipe-slot interaction; if recipes auto-consume from inventory, skip DnD entirely |
-| `@floating-ui/react` | 0.27.18 | Recipe ingredient tooltips (show where to obtain missing ingredients) | Already installed; used for tooltips elsewhere; use `useFloating` for ingredient hover-tooltips in the recipe browser |
-| `@nestjs/event-emitter` | 3.0.1 | Broadcast `crafting.completed` event for quest objective tracking (gather/craft objectives) | Already wires `resource.gathered` from `GatheringService` to `QuestService`; use same `EventEmitter2.emit()` pattern for `item.crafted` event |
-| Vitest | 4.0.18 | Unit tests for quality calculation formula, proficiency XP curve, recipe validation | `packages/game-logic` test suite already exists; add `crafting/quality.test.ts` and `crafting/proficiency.test.ts` |
+These are not new dependencies — they are APIs already available in the installed Phaser version. Listed explicitly so implementors know exactly which namespaces to use.
 
-### Development Tools
+### Procedural Tile Rendering
+
+| API | Phaser Namespace | Purpose | Notes |
+|-----|-----------------|---------|-------|
+| `scene.add.graphics()` | `Phaser.GameObjects.Graphics` | Draw procedural isometric cube faces (top diamond, south face, east face) with per-face color shading | Already used in `TileRenderer.createFallbackCube()` — this becomes the primary path, not the fallback |
+| `graphics.generateTexture(key, width, height)` | `Phaser.GameObjects.Graphics` | Bake procedural cube geometry into a named texture cached in `scene.textures` | Call once per tile type at scene init. Returns texture added to TextureManager. Then use `scene.add.image(0, 0, key)` for fast GPU-accelerated rendering. Do NOT redraw Graphics objects per frame — that is prohibitively expensive for hundreds of visible tiles. |
+| `scene.add.image(0, 0, key)` | `Phaser.GameObjects.Image` | Render cached procedural cube textures | Image supports `setTint()`, unlike Graphics. After generating textures, use Image for all tile rendering. Same interface as current PNG sprite path — zero change to callers. |
+| `image.setTint(value)` | `Phaser.GameObjects.Components.Tint` | Per-tile tint for elevation darkening and shadow effects | ONLY available on Image/Sprite, NOT on Graphics. The existing `applyElevationTint()` in TileRenderer already uses this correctly for the Image path. |
+
+**Critical: Graphics does not expose `setTint()`** — confirmed via Phaser docs. Color math (face brightness calculation) must be done before `graphics.fillStyle()` calls during texture generation, not after.
+
+### Particle Weather System
+
+| API | Phaser Namespace | Purpose | Notes |
+|-----|-----------------|---------|-------|
+| `scene.add.particles(x, y, textureKey, config)` | `Phaser.GameObjects.Particles.ParticleEmitter` | Create weather particle emitter | v3.60+ API: returns `ParticleEmitter` directly (no Manager needed). `ParticleEmitterManager` was removed in v3.60. |
+| `emitter.setScrollFactor(0)` | `Phaser.GameObjects.Particles.ParticleEmitter` | Fix weather to screen coordinates regardless of camera pan/zoom | ParticleEmitter extends GameObject and inherits `ScrollFactor` component. Confirmed in official API docs. Essential for screen-space weather. |
+| `emitter.stop()` / `emitter.destroy()` | `Phaser.GameObjects.Particles.ParticleEmitter` | Stop and remove weather on biome change | Call `destroy()` on zone transition; create a fresh emitter for new biome |
+| Emitter config: `gravityY`, `speedY`, `angle`, `scaleX`, `scaleY`, `lifespan`, `quantity`, `alpha`, `tint` | `Phaser.Types.GameObjects.Particles.ParticleEmitterConfig` | Configure particle behavior per weather type | All are standard config properties on the emitter config object |
+| Emitter config: `emitZone` with `type: 'random'` | `Phaser.Types.GameObjects.Particles.EmitZoneData` | Emit particles from a rectangle zone covering viewport top | `source: new Phaser.Geom.Rectangle(0, 0, viewportWidth, 1)` for top-of-screen emission |
+
+**Texture for particles:** Use `graphics.generateTexture('weather_rain', 2, 8)` (2px wide, 8px tall white rectangle) and `graphics.generateTexture('weather_dot', 4, 4)` (4×4 white circle) generated at boot. No external image assets needed.
+
+### Day/Night Cycle
+
+| API | Phaser Namespace | Purpose | Notes |
+|-----|-----------------|---------|-------|
+| `camera.postFX.addColorMatrix()` | `Phaser.FX.ColorMatrix` | Apply brightness and blue-shift to entire rendered scene | WebGL only. Applied to `cameras.main`. Affects everything the camera renders in one GPU pass — zero per-tile CPU cost. |
+| `colorMatrix.brightness(value)` | `Phaser.Display.ColorMatrix` | Set scene brightness (0.0 = black, 1.0 = full). Drive day/night | Confirmed method signature: `brightness(value: number, multiply?: boolean)`. Default `multiply = false` (replace, not blend). |
+| `colorMatrix.night(intensity)` | `Phaser.Display.ColorMatrix` | Apply night vision / blue shift tone | Confirmed method signature: `night(intensity?: number, multiply?: boolean)`. Default `intensity = 0.1`. At `intensity = 0.3-0.5` produces convincing blue night tone. |
+| `scene.tweens.add({ targets: colorMatrix, ... })` | `Phaser.Tweens.TweenManager` | Animate ColorMatrix numeric properties over time | Tween any numeric property exposed on the ColorMatrix FX instance for smooth transitions. Official docs confirm "it is up to you to set the progress value via a Tween." |
+| `scene.add.rectangle(0, 0, w, h, 0x000033, 0)` | `Phaser.GameObjects.Rectangle` | Full-screen night overlay for Canvas mode fallback | Set `setScrollFactor(0)`, high depth, tween alpha from 0→0.5 as night falls. Only used when `this.renderer.type !== Phaser.WEBGL`. |
+
+**WebGL detection:** `if (this.renderer.type === Phaser.WEBGL)` — use ColorMatrix. Otherwise fall back to Rectangle overlay.
+
+### Biome Atmospheric Effects
+
+| API | Phaser Namespace | Purpose | Notes |
+|-----|-----------------|---------|-------|
+| `camera.postFX.addVignette(x, y, radius, strength)` | `Phaser.FX.Vignette` | Darken viewport edges for underground, void, trench biomes | Applied to `cameras.main`. WebGL only. Parameters: x/y = center (0-1 normalized), radius (0-1), strength (0-1). |
+| `camera.postFX.addBloom(color, offsetX, offsetY, blurStrength, strength, steps)` | `Phaser.FX.Bloom` | Glow/bloom for bioluminescent, void_rift, crystalline biomes | Applied to `cameras.main` for whole-scene bloom. WebGL only. Cheaper than per-sprite glow at scale. |
+| `camera.postFX.addColorMatrix()` (second use) | `Phaser.FX.ColorMatrix` | Biome-specific color grading: desaturate (ice), contrast boost (volcanic), hue shift (toxic) | Same API as day/night ColorMatrix. Note: each `addColorMatrix()` call adds a new FX instance — stack carefully or use a single shared instance. |
+| `cameras.main.postFX.clear()` | `Phaser.FX.Controller` | Remove ALL postFX from camera before applying new biome effects | MANDATORY on biome transition. Phaser does NOT auto-clear effects on zone change. Missing this causes FX stacking and corrupted appearance. |
+| `sprite.postFX.addGlow(color, outerStrength, innerStrength, knockout, quality, distance)` | `Phaser.FX.Glow` | Per-entity glow for rare nodes (already in use) | Already implemented in `RareNodeFX.ts`. Same API available for selected atmospheric entities. |
+
+---
+
+## New System Classes (no packages, just new files)
+
+Four new files in `apps/web/src/game/rendering/`:
+
+### 1. `ProceduralTileRenderer.ts`
+
+Replaces both the PNG-load path and the `createFallbackCube()` fallback in `TileRenderer.createCubeSprite()`. Makes procedural cubes the permanent primary path.
+
+**How it works:**
+- `initTextures(scene)`: called once in `WorldScene.create()`. For each of the 28 TileIds, creates a Graphics object, draws top diamond + south face + east face with biome color, calls `generateTexture(key, 256, 256)`, destroys Graphics. Result: ~28 named textures in `scene.textures`.
+- `getTextureKey(tileId): string`: returns the cached texture key. Falls back to existing color-only diamond if generation failed.
+- Day/night shading is NOT baked into textures. Textures use full daytime colors. DayNightSystem handles brightness via `camera.postFX.addColorMatrix()` globally — zero per-tile redraw.
+- Accent details: small pixel-dot patterns can be added during `generateTexture` for biome texture variation (optional for v1.26 MVP).
+
+**Integration into TileRenderer:** Replace `createCubeSprite()` body. Return `scene.add.image(0, 0, proceduralTextureKey)` with correct origin. The container structure, elevation logic, depth sorting, and tint-based shadow system all remain unchanged.
+
+### 2. `WeatherSystem.ts`
+
+Manages per-biome particle weather. One active emitter at a time.
+
+**How it works:**
+- `setWeather(biome: BiomeType | null)`: destroys current emitter; creates new one from `WEATHER_CONFIG[biome]` if biome has weather.
+- All emitters: `setScrollFactor(0)`, depth above tiles but below React HUD (e.g., depth 5000).
+- Emitter position: fixed to `(0, 0)` in screen space with `scrollFactor = 0`. No update() tracking needed.
+- `setIntensity(0-1)`: for gradual start/stop on zone entry, tween `emitter.quantity` between 0 and max.
+
+**WEATHER_CONFIG per biome (no weather = omit from map):**
+
+| Biome | Type | speedY | angle | scaleX | scaleY | quantity | alpha | tint |
+|-------|------|--------|-------|--------|--------|----------|-------|------|
+| tidal, kelp, shore | rain | 700-950 | 85-95° | 0.25 | 1.0 | 14 | 0.5 | 0xaaddff |
+| ice | snow | 90-130 | 78-102° | 1.0 | 1.0 | 7 | 0.8 | 0xffffff |
+| volcanic, crater | ash | 50-90 | 65-115° | 0.8 | 0.8 | 5 | 0.55 | 0x888888 |
+| fungal, bioluminescent | spores | 25-50 | 60-120° | 1.0 | 1.0 | 4 | 0.6 | 0x88ff44 |
+
+**Texture:** `'weather_rain'` (2×8 white rect), `'weather_dot'` (4×4 white circle). Generated in `WeatherSystem.init()` via `generateTexture`. Rain/ash use rain texture; snow/spores use dot texture.
+
+**Integration:** `WorldScene.commitZoneTransition()` and `WorldScene.fullZoneReset()` — both already track `currentBiome`. Add `this.weatherSystem.setWeather(biome)` at those call sites.
+
+### 3. `DayNightSystem.ts`
+
+Manages continuous time-of-day cycle.
+
+**How it works:**
+- `dayProgress` float, 0.0 = midnight → 0.5 = noon → 1.0 = midnight again. Advances via `scene.time.now`.
+- Configurable `dayDurationMs` (e.g., 20 minutes = 1,200,000ms per full day).
+- `update(time: number)`: advances `dayProgress = (time % dayDurationMs) / dayDurationMs`.
+- `brightness = 0.55 + Math.sin(dayProgress * Math.PI) * 0.45` → range 0.55 (midnight) to 1.0 (noon).
+- WebGL path: `camera.postFX.addColorMatrix()` at scene init, store reference. Each update: `colorMatrix.brightness(brightness)`. At brightness < 0.75: also call `colorMatrix.night((1 - (brightness - 0.55) / 0.2) * 0.35)` for blue shift.
+- Canvas fallback: `scene.add.rectangle(0, 0, w, h, 0x000033, 0)`, `setScrollFactor(0)`, depth 9998. Each update: `rect.setAlpha(1 - brightness)`.
+- Exposes `getDayBrightness(): number` for use by `WeatherSystem` (modulate particle alpha at night).
+- Exposes `getDayProgress(): number` (0-1) for HUD display if needed.
+
+**Integration:** Instantiated in `WorldScene.create()`, updated in `WorldScene.update(time, delta)`.
+
+### 4. `AtmosphereSystem.ts`
+
+Manages per-biome camera post-processing. Pure WebGL effects, no-op on Canvas.
+
+**How it works:**
+- `setAtmosphere(biome: BiomeType)`: clears ALL camera postFX, then applies effects from `ATMOSPHERE_CONFIG[biome]`.
+- `ATMOSPHERE_CONFIG` (selected biomes; others = no atmosphere effects):
+
+| Biome | Effects |
+|-------|---------|
+| `void_plains` | `addVignette(0.5, 0.5, 0.9, 0.4)` |
+| `void_rift` | `addVignette(0.5, 0.5, 0.7, 0.6)` + `addBloom(0x6600ff, 0, 0, 1.2, 0.8, 1)` |
+| `bioluminescent_depths` | `addBloom(0x00ff88, 0, 0, 1.0, 1.0, 1)` |
+| `crystalline_wastes` | `addBloom(0x88ffff, 0, 0, 0.5, 0.6, 1)` + `addVignette(0.5, 0.5, 0.85, 0.3)` |
+| `volcanic` / `crater` | `addColorMatrix().contrast(0.2)` |
+| `abyssal_trench` | `addVignette(0.5, 0.5, 0.55, 0.85)` |
+| `ice` | `addColorMatrix().saturate(-0.3)` |
+| `toxic` | `addColorMatrix().hue(20)` |
+| `fungal` | no camera FX (spore particles handle atmosphere) |
+| Hub zones, ruins, all others | no atmosphere FX |
+
+- **Always call `cameras.main.postFX.clear()` before applying new effects.** Missing this causes atmospheric FX to stack across zones.
+- DayNight ColorMatrix is on a separate FX channel. After `clear()`, re-add it before atmosphere FX.
+
+**Integration:** Same call sites as `WeatherSystem` — `commitZoneTransition()` and `fullZoneReset()`.
+
+---
+
+## Supporting Libraries
+
+No new npm packages needed. All capabilities are built into Phaser 3.90.0.
+
+| Why Not Add | Reason |
+|-------------|--------|
+| Custom GLSL PostFXPipeline subclass | Requires raw GLSL, fragile against Phaser internal changes, unnecessary when built-in ColorMatrix + Bloom + Vignette cover all required effects |
+| Three.js or PixiJS | Entirely separate renderers — would conflict with Phaser's WebGL context |
+| phaser3-rex-notes plugins | Third-party; Phaser built-ins are sufficient and avoid external dependency drift |
+| External particle libraries (PixiParticles, etc.) | Phaser's ParticleEmitter handles the required weather effects at the required particle counts |
+
+---
+
+## Development Tools
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| `satisfies RecipeDefinition` | Validate recipe shape at definition-author time in `packages/recipes/src/definitions/` | Same pattern as item definitions in `packages/items`; compile errors surface when a definition is malformed |
-| `nx affected --target=test` | Run only tests for changed packages | After touching `packages/recipes` or `packages/game-logic`, run `nx affected` to confirm no regressions in dependent packages |
-| `pnpm db:generate` + `pnpm db:migrate` | Generate and run Drizzle migrations for the two new tables | Pattern already established; new tables follow `pgTable()` + `$inferSelect` convention |
-
----
-
-## New Package: `packages/recipes`
-
-Create this package following the exact `packages/quests` structure:
-
-```
-packages/recipes/
-  package.json          # name: @into-the-void/recipes
-  src/
-    index.ts            # re-exports types, registry, definitions
-    types.ts            # RecipeDefinition, RecipeCategory, QualityTier, RecipeIngredient
-    registry.ts         # RecipeRegistry singleton (mirrors ItemRegistry / QuestRegistry)
-    definitions/
-      equipment.ts      # Suits, tools, modules
-      consumables.ts    # Healing vials, boosters
-      reagents.ts       # Refined materials, fuel cells
-      structures.ts     # Deployable automation items
-      faction/
-        verdant.ts      # Verdant-specific higher-tier recipes
-        helix.ts        # Helix-specific higher-tier recipes
-        nexus.ts        # Nexus-specific higher-tier recipes
-```
-
-**`RecipeDefinition` type (goes in `packages/recipes/src/types.ts`):**
-
-```typescript
-export type RecipeCategory =
-  | 'equipment'    // suits, tools, modules
-  | 'consumable'   // healing vials, boosters
-  | 'reagent'      // refined materials, fuel cells
-  | 'structure';   // deployable automation items
-
-export type QualityTier = 'standard' | 'refined' | 'superior' | 'masterwork';
-
-export interface RecipeIngredient {
-  readonly itemId: string;
-  readonly quantity: number;
-}
-
-export interface RecipeDefinition {
-  readonly id: string;
-  readonly displayName: string;
-  readonly description: string;
-  readonly category: RecipeCategory;
-  /** Output item ID from packages/items */
-  readonly outputItemId: string;
-  readonly outputQuantity: number;
-  readonly ingredients: readonly RecipeIngredient[];
-  /** Crafting duration in milliseconds (5_000 – 30_000 range) */
-  readonly craftTimeMs: number;
-  /** Minimum crafting proficiency level in this category to attempt */
-  readonly requiredProficiencyLevel: number;
-  /** Minimum character level to unlock */
-  readonly requiredLevel?: number;
-  /** If set, only this faction's players can craft this recipe */
-  readonly factionGate?: FactionId;
-  /** Quest ID that must be completed to unlock this recipe */
-  readonly questUnlock?: string;
-  /** If set, recipe is found by exploring this biome (discovery unlock) */
-  readonly explorationUnlock?: string;
-  /** Base quality ranges per tier: proficiency thresholds that unlock higher tiers */
-  readonly qualityThresholds?: {
-    refined: number;    // proficiency level for 'refined' to become possible
-    superior: number;   // proficiency level for 'superior' to become possible
-    masterwork: number; // proficiency level for 'masterwork' to become possible
-  };
-}
-```
-
-**`RecipeRegistry` (mirrors `ItemRegistry` in `packages/items/src/registry.ts`):**
-
-```typescript
-class RecipeRegistryImpl {
-  private readonly recipes: Map<string, RecipeDefinition> = new Map();
-  register(recipe: RecipeDefinition): void { ... }
-  registerAll(recipes: readonly RecipeDefinition[]): void { ... }
-  get(id: string): RecipeDefinition | undefined { ... }
-  getByCategory(category: RecipeCategory): RecipeDefinition[] { ... }
-  getForFaction(factionId: FactionId | 'neutral'): RecipeDefinition[] { ... } // returns universal + faction-specific
-}
-export const RecipeRegistry = new RecipeRegistryImpl();
-```
-
----
-
-## New DB Tables
-
-### `crafting_proficiency` Table
-
-Mirrors `gathering_proficiency` exactly. One row per character, JSONB for all categories.
-
-```typescript
-// packages/database/src/schema/crafting-proficiency.ts
-
-export interface CraftingProficiencyJson {
-  equipment:  { xp: number; level: number };
-  consumable: { xp: number; level: number };
-  reagent:    { xp: number; level: number };
-  structure:  { xp: number; level: number };
-}
-
-export const DEFAULT_CRAFTING_PROFICIENCY: CraftingProficiencyJson = {
-  equipment:  { xp: 0, level: 1 },
-  consumable: { xp: 0, level: 1 },
-  reagent:    { xp: 0, level: 1 },
-  structure:  { xp: 0, level: 1 },
-};
-
-export const craftingProficiency = pgTable('crafting_proficiency', {
-  id:           uuid('id').primaryKey().defaultRandom(),
-  characterId:  uuid('character_id').notNull().references(() => characters.id, { onDelete: 'cascade' }).unique(),
-  proficiency:  jsonb('proficiency').$type<CraftingProficiencyJson>().notNull().default(DEFAULT_CRAFTING_PROFICIENCY),
-  unlockedRecipeIds: jsonb('unlocked_recipe_ids').$type<string[]>().notNull().default([]),
-  updatedAt:    timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-});
-```
-
-**Why `unlockedRecipeIds` on this table rather than a separate table:** Recipe unlocks are character-scoped data queried together with proficiency on every craft attempt. Storing as JSONB on the same row avoids a JOIN on the hot path. At the scale of hundreds of unlocked recipes per character, a JSONB array query is fast. If query complexity grows (filtering by category, sorting by unlock order), migrate to a dedicated `recipe_unlocks` table — that is a v1.26+ concern.
-
-### `crafting_progress` Table
-
-Persists in-progress crafts across server restarts. Follows `quest_progress` pattern.
-
-```typescript
-// packages/database/src/schema/crafting-progress.ts
-
-export const craftingProgress = pgTable('crafting_progress', {
-  id:            uuid('id').primaryKey().defaultRandom(),
-  characterId:   uuid('character_id').notNull().references(() => characters.id, { onDelete: 'cascade' }),
-  recipeId:      varchar('recipe_id', { length: 100 }).notNull(),
-  startedAt:     timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
-  completesAt:   timestamp('completes_at', { withTimezone: true }).notNull(),
-  ingredientsConsumed: boolean('ingredients_consumed').notNull().default(false),
-  status:        varchar('status', { length: 20 }).notNull().default('in_progress'), // 'in_progress' | 'completed' | 'cancelled'
-}, (table) => ({
-  // A character can only have one craft in progress at a time
-  uniqueCharacterCraft: unique('unique_character_craft').on(table.characterId),
-}));
-```
-
-**Why a dedicated `crafting_progress` table rather than `properties: jsonb` on characters:** Active craft state has a well-defined row lifecycle (insert on start, delete on complete/cancel), a timestamp that needs querying on server restart, and a UNIQUE constraint. These needs fit a proper table better than a side-car JSONB blob.
-
----
-
-## New Game Logic: `packages/game-logic/src/crafting/`
-
-All crafting math lives here as pure functions. No NestJS dependencies, fully unit-testable.
-
-```
-packages/game-logic/src/crafting/
-  quality.ts       # calculateQualityTier(), qualityToOutputMultiplier()
-  proficiency.ts   # calculateCraftingLevelFromXP() — reuse gathering XP curve
-  validation.ts    # validateRecipeIngredients(), canCraft()
-```
-
-**Quality calculation (in `packages/game-logic/src/crafting/quality.ts`):**
-
-```typescript
-/**
- * Calculate output quality tier based on proficiency level and dice roll.
- *
- * Roll mechanic: proficiency level sets the probability of higher tiers.
- * At level 1: 100% standard.
- * At threshold level for 'refined': 50% standard, 50% refined.
- * Each 5 levels above threshold adds ~10% chance of the higher tier.
- *
- * This is pure math — no RNG dependency needed in callee; caller passes a [0,1) random.
- */
-export function calculateQualityTier(
-  proficiencyLevel: number,
-  thresholds: { refined: number; superior: number; masterwork: number },
-  random: number // [0, 1) — caller provides for testability
-): QualityTier {
-  // Implementation: compare random against tier probability brackets
-  // ...
-}
-
-/**
- * Output quantity multiplier per quality tier.
- * Standard: 1.0, Refined: 1.1, Superior: 1.25, Masterwork: 1.5
- */
-export function qualityToOutputMultiplier(tier: QualityTier): number {
-  const multipliers: Record<QualityTier, number> = {
-    standard:   1.0,
-    refined:    1.1,
-    superior:   1.25,
-    masterwork: 1.5,
-  };
-  return multipliers[tier];
-}
-```
-
-**Why pure random injection:** `CraftingService` calls `calculateQualityTier(level, thresholds, Math.random())`. Tests call `calculateQualityTier(level, thresholds, 0.0)` or `(level, thresholds, 0.99)` to assert boundary behavior deterministically. This is the standard approach for testable randomness — no mocking library needed.
-
-**XP curve:** Reuse `calculateLevelFromXP()` from `packages/game-logic/src/gathering/proficiency.ts` directly. The crafting level formula is identical (level 1→2 = 100 XP, each subsequent level +50 more). Do NOT duplicate the function — import it. If crafting needs a different curve later, add a `craftingLevelFromXP()` variant then.
-
----
-
-## `CraftingService` (Server)
-
-New file: `apps/game-server/src/game/crafting.service.ts`
-
-**Responsibilities:**
-1. Load crafting proficiency on player join (from DB, then cache in `Map<characterId, CraftingProficiencyJson>`)
-2. Handle `crafting:start` event — validate ingredients, validate unlock, consume ingredients, insert `crafting_progress` row, start `setTimeout`
-3. Handle `crafting:cancel` event — restore ingredients if `ingredientsConsumed = true`, delete `crafting_progress` row
-4. On `setTimeout` fire — roll quality tier, award output items, award proficiency XP, delete `crafting_progress` row, emit `crafting:completed` to client
-5. On server restart — query `crafting_progress` table for any in-progress crafts, reschedule `setTimeout` for remaining `completesAt - Date.now()` ms
-
-**Timer pattern — use `setTimeout`, not `setInterval`:**
-
-```typescript
-// Same pattern as gathering.service.ts challenge timeout
-private startCraftTimer(characterId: string, recipeId: string, remainingMs: number): void {
-  const timer = setTimeout(async () => {
-    await this.completeCraft(characterId, recipeId);
-  }, remainingMs);
-  this.activeTimers.set(characterId, timer);
-}
-```
-
-One active craft per character at a time (enforced by UNIQUE constraint on `crafting_progress.characterId`). The `activeTimers: Map<string, ReturnType<typeof setTimeout>>` in-memory map mirrors the `activeChallenges` pattern in `GatheringService`.
-
-**Faction crafting modifier:** `factions` table already has `bonuses.craftingModifier` (e.g., Nexus: 1.2x). Apply it as a multiplier to `craftTimeMs`:
-
-```typescript
-const adjustedTime = Math.round(recipe.craftTimeMs / player.faction.bonuses.craftingModifier);
-```
-
-Nexus players craft 20% faster than base. Verdant 10% faster. Helix at base speed. The data is already seeded.
-
-**Quest integration:** After `completeCraft()` succeeds, emit `EventEmitter2.emit('item.crafted', { characterId, itemId, quantity })`. `QuestService` already subscribes to `resource.gathered` events — add a listener for `item.crafted` to support "craft X items" quest objectives (future-proofing even if v1.25 doesn't add such quests).
-
----
-
-## `craftingStore.ts` (Client)
-
-New file: `apps/web/src/store/craftingStore.ts`
-
-Pattern: mirrors `automationStore.ts` (socket event wiring) and `inventoryStore.ts` (immer middleware for nested state updates).
-
-```typescript
-interface CraftingState {
-  // Static data (loaded once on login from server)
-  availableRecipes: RecipeDefinition[];
-  proficiency: CraftingProficiencyJson | null;
-  unlockedRecipeIds: string[];
-
-  // Active craft progress (updated via socket events)
-  activeCraft: {
-    recipeId: string;
-    startedAt: number;
-    completesAt: number;
-  } | null;
-
-  // UI state
-  selectedCategory: RecipeCategory;
-  selectedRecipeId: string | null;
-  panelOpen: boolean;
-
-  // Actions
-  setRecipes: (recipes: RecipeDefinition[], proficiency: CraftingProficiencyJson, unlockedIds: string[]) => void;
-  setActiveCraft: (craft: CraftingState['activeCraft']) => void;
-  clearActiveCraft: () => void;
-  setSelectedCategory: (cat: RecipeCategory) => void;
-  setSelectedRecipe: (id: string | null) => void;
-}
-```
-
-Socket event wiring at module bottom (same side-effect import pattern as `automationStore.ts`):
-
-```typescript
-gameSocket.on('crafting:state', (data) => {
-  useCraftingStore.getState().setRecipes(data.recipes, data.proficiency, data.unlockedRecipeIds);
-});
-gameSocket.on('crafting:started', (data) => {
-  useCraftingStore.getState().setActiveCraft(data);
-});
-gameSocket.on('crafting:completed', () => {
-  useCraftingStore.getState().clearActiveCraft();
-  // inventory:update arrives separately via existing channel
-});
-gameSocket.on('crafting:cancelled', () => {
-  useCraftingStore.getState().clearActiveCraft();
-});
-```
-
----
-
-## `CraftingPanel.tsx` (Client UI)
-
-New file: `apps/web/src/ui/panels/CraftingPanel.tsx`
-
-**Structure:** Mirrors `QuestLogPanel.tsx` (tabbed by category) and `AutomationPanel.tsx` (draggable, `useDraggablePanel` hook).
-
-Layout (plain CSS Grid):
-- Left column: category tabs (Equipment / Consumables / Reagents / Structures)
-- Center column: recipe list with search/filter, ingredient preview
-- Right column: selected recipe detail — ingredient checklist (green/red per availability), quality range at current proficiency, craft button, active progress bar
-
-**Progress bar:** Client-side countdown. On `crafting:started` event, `completesAt` timestamp arrives. The panel renders `(completesAt - Date.now()) / totalCraftTime` as a CSS width percentage, updating via `requestAnimationFrame` or a `useInterval` hook. No server polling — the server manages truth, the client just counts down.
-
-**No new drag-and-drop:** Recipes auto-consume ingredients from inventory on `crafting:start`. The existing `@dnd-kit` is available but not needed unless a future feature requires manual slot-filling. Auto-consume is simpler and matches the gathering model.
-
-**Keyboard disable pattern:** Same as `QuestLogPanel.tsx` — disable Phaser keyboard on mount, re-enable on unmount.
-
----
-
-## Socket Events to Add
-
-Add to `ClientEventType` and `ServerEventType` unions in `packages/shared-types/src/network/events.ts`:
-
-```typescript
-// ClientEventType additions
-| 'crafting:start'      // { recipeId: string }
-| 'crafting:cancel'     // {}
-| 'crafting:request_state'  // {} — fetch current state on panel open
-
-// ServerEventType additions
-| 'crafting:state'      // full state on login and panel request
-| 'crafting:started'    // { recipeId, startedAt, completesAt }
-| 'crafting:completed'  // { recipeId, outputItemId, quantity, qualityTier, proficiencyXP, proficiencyLevel }
-| 'crafting:cancelled'  // { recipeId }
-| 'crafting:error'      // { code: string; message: string }
-| 'crafting:recipe_unlocked'  // { recipeId } — sent when a quest/exploration unlock fires
-```
-
-Add to `ClientEvents` and `ServerEvents` interface maps with typed payloads.
+| `console.log(this.renderer.type)` in Phaser | Detect WebGL vs Canvas at runtime | `0 = Canvas`, `1 = WebGL`. Add WebGL guard before all `postFX` calls. |
+| Phaser Debug Mode | Verify FX pipeline is active | If PostFX effects aren't visible, confirm `renderer.type === 1` and that `cameras.main.postFX` is not undefined |
+| Chrome Performance tab | Profile particle count vs frame time | Target < 1ms particle overhead. If over budget, reduce `quantity` per emitter. |
 
 ---
 
 ## Installation
 
-No new npm packages. All work is new files within the existing monorepo.
+No package changes required.
 
 ```bash
-# Zero new npm installs.
-
-# New files to create:
-# packages/recipes/                          (new NX lib package)
-# packages/game-logic/src/crafting/          (pure function modules)
-# packages/database/src/schema/crafting-proficiency.ts
-# packages/database/src/schema/crafting-progress.ts
-# apps/game-server/src/game/crafting.service.ts
-# apps/web/src/store/craftingStore.ts
-# apps/web/src/ui/panels/CraftingPanel.tsx
-# apps/web/src/ui/panels/CraftingPanel.css
-
-# Migrations:
-pnpm db:generate   # generates migration for crafting_proficiency + crafting_progress tables
-pnpm db:migrate    # runs migration against local PostgreSQL
-
-# Registrations:
-# apps/game-server/src/game/game.module.ts   (add CraftingService to providers)
-# packages/database/src/schema/index.ts      (export new schema tables)
-# apps/web/src/ui/hud/GameShortcuts.tsx      (add crafting shortcut button)
-# apps/web/src/store/gameStore.ts            (add craftingPanelOpen + toggleCrafting)
+# No new dependencies — Phaser 3.90.0 already installed.
+# Verify:
+node -e "console.log(require('./node_modules/phaser/package.json').version)"
+# Expected output: 3.90.0
 ```
 
 ---
@@ -441,12 +197,12 @@ pnpm db:migrate    # runs migration against local PostgreSQL
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| `packages/recipes` as new NX lib | Inline recipe definitions in `packages/items` | Items are for item definitions, not production rules; mixing them creates a circular dependency risk when game-logic imports both; separate package is the established pattern (quests, entities, npcs all separate) |
-| JSONB `unlockedRecipeIds` on `crafting_proficiency` row | Separate `recipe_unlocks` join table | Use the join table when you need SQL queries like "all characters who unlocked recipe X" (for analytics or server-side events); at v1.25 scope, per-character unlock reads are the only use case — JSONB array suffices |
-| Single in-progress craft per character | Queue of up to N concurrent crafts | Queue is significantly more complex (ordered processing, separate cancel semantics per slot); the gathering system similarly allows only one active challenge; start with one and expand in a later milestone if demand justifies it |
-| `setTimeout` per craft with DB persistence | `setInterval` batch processor | `setInterval` batch is appropriate when many items complete on roughly the same schedule (automation's 60s tick); crafts have individual completion times ranging 5–30s; per-craft `setTimeout` with DB-backed resume is correct and matches the gathering challenge pattern |
-| Pure function quality roll with injected `Math.random()` | `crypto.randomUUID()` or server-side RNG module | The quality roll is not a security-sensitive random (it's a gameplay UX value); testable pure function with injected random is simpler and fully covered by deterministic unit tests without mocking |
-| Client-side countdown from `completesAt` timestamp | Server polling for progress | Polling wastes bandwidth and adds server load; `completesAt` is a stable timestamp; client counts down locally; server is the authority on actual completion (fires the result event) |
+| `camera.postFX.addColorMatrix().brightness()` for day/night | `setTint()` on every tile container each frame | Per-tile tinting is O(n) where n = visible tiles (~500-2000 at any time). Camera ColorMatrix is O(1) GPU-side. Use per-tile tinting only if you need individual tile lighting rather than global time-of-day. |
+| `graphics.generateTexture()` once at init, then `Image` objects | Redraw `Graphics` objects per frame | Redrawing Graphics for hundreds of tiles per frame collapses framerate. generateTexture bakes to GPU memory; Image rendering is hardware-accelerated. Only redraw if tile appearance changes dynamically (it doesn't in this design). |
+| Screen-space particles with `setScrollFactor(0)` | World-space particles that follow camera | World-space weather requires spawning/despawning particles at world-coords as camera moves, adding complexity. Screen-space with scrollFactor=0 is simpler and produces correct "weather falls on everything" effect. |
+| Destroy + recreate emitter on biome change | Single emitter with config hot-swap | Phaser's ParticleEmitter does not support full config replacement without restart. Clean destroy + create is the documented approach and eliminates stale particle state. |
+| `cameras.main.postFX.clear()` then re-add all effects on biome change | Individually remove specific effects | Phaser has no "remove specific FX by type" API. `clear()` is the correct and documented way to reset camera effects. Always clear before applying new atmosphere. |
+| Four separate system classes (Procedural, Weather, DayNight, Atmosphere) | Monolithic `VisualSystem` class | Single responsibility makes each system independently testable and replaceable. WorldScene already organizes systems this way (FogManager, PoiRenderer, TargetHighlight are all separate). |
 
 ---
 
@@ -454,37 +210,69 @@ pnpm db:migrate    # runs migration against local PostgreSQL
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `@nestjs/schedule` `@Interval()` / `@Cron()` decorators | Not installed; `setTimeout`/`setInterval` is the established project pattern for all tick-based work (AI, buffs, hazards, automation); adding a dependency for decorator syntax is not warranted | `setTimeout` in `CraftingService`, same pattern as `GatheringService` challenge expiry |
-| BullMQ or Redis queues for crafting jobs | Not needed at this scale; crafting is per-character (one active job), not a shared distributed queue; ioredis is installed only for session management | `setTimeout` per craft with DB-backed resume on server restart |
-| Separate `recipe_unlocks` table at v1.25 | Premature normalization; JSONB array on `crafting_proficiency` is readable and fast for per-character reads | `unlockedRecipeIds: jsonb` on `crafting_proficiency` row |
-| Storing recipe definitions in PostgreSQL | Recipe data is static code, not dynamic player data; DB storage adds schema complexity and requires a migration for every new recipe; 100+ recipes load fine from code registry at startup | `RecipeRegistry` singleton in `packages/recipes`, mirroring `ItemRegistry` and `QuestRegistry` |
-| Phaser scene for crafting UI | All HUD panels are React + CSS; mixing Phaser and React for UI is an established anti-pattern in this codebase (CLAUDE.md: "The UI is divided in two parts — game canvas and HUD"); React panels already handle all non-game-canvas interactions | React `CraftingPanel.tsx` registered in `GameUI.tsx`, same as all other panels |
-| `Math.random()` called inside the quality pure function | Makes the function non-deterministic and therefore untestable without mocking | Pass `random: number` parameter — caller provides `Math.random()` in production, `0.0` or `0.99` in tests |
+| `ParticleEmitterManager` (old API) | Removed in Phaser v3.60. Would throw `undefined is not a function` at runtime on v3.90.0 | `scene.add.particles(x, y, key, config)` — direct ParticleEmitter creation (v3.60+ API) |
+| `setTint()` on `Phaser.GameObjects.Graphics` | Graphics does NOT expose the Tint mixin. Confirmed in Phaser docs — `setTint` is only available on Image, Sprite, TileSprite, and similar texture-based objects. | Bake color into `fillStyle()` during texture generation. For runtime tinting, generate texture first, then use `scene.add.image()` which supports `setTint()`. |
+| Per-frame `graphics.clear()` + redraw for tile rendering | O(tiles × faces) per frame — would drop framerate to < 10 FPS for a viewport of 500+ tiles | `generateTexture()` at scene init, then render as `Image` objects |
+| Custom WebGL shader pipeline (`PostFXPipeline` subclass) | Requires writing GLSL shader code, deep Phaser internals knowledge, and breaks with renderer changes. Completely unnecessary: ColorMatrix handles brightness/night, Bloom handles glow, Vignette handles dark edges. | `camera.postFX.addColorMatrix()`, `addBloom()`, `addVignette()` |
+| Stacking `camera.postFX.addColorMatrix()` calls without `clear()` | Each `add*()` call stacks a NEW effect — on the third biome transition you have 3 ColorMatrix effects fighting each other, producing unpredictable colors | Always `cameras.main.postFX.clear()` on biome transition before adding new effects |
+| `Phaser.Tilemaps` API for tile tinting | Project does not use Phaser Tilemaps — it uses custom isometric Graphics/Image tiles. Tilemap tinting APIs (`DynamicTilemapLayer.setTint()`) are irrelevant and would require migrating the entire tile architecture. | Camera ColorMatrix for global tinting; `image.setTint()` for per-tile tinting |
 
 ---
 
 ## Stack Patterns by Variant
 
-**If a recipe requires a crafting station (future milestone scope):**
-- Add `requiredStationId?: string` to `RecipeDefinition`
-- `CraftingService.validateRecipe()` checks player proximity to the station entity
-- Station entities are `DeployableEntity` instances — already in the entity system
-- Do NOT add this for v1.25; all recipes are craftable anywhere per PROJECT.md scope
+**If WebGL is available (expected case — all modern browsers):**
+- Use `camera.postFX.addColorMatrix()` for day/night brightness + night blue shift
+- Use `camera.postFX.addBloom()` / `addVignette()` for atmosphere
+- Detect: `this.renderer.type === Phaser.WEBGL`
 
-**If crafting proficiency needs separate XP curves per category:**
-- Add a `category` parameter to the level calculation function
-- Keep gathering and crafting on the same curve by default (levels feel comparable across skills)
-- Only diverge curves if playtesting shows one category progresses trivially fast
+**If Canvas fallback (old device, no WebGL):**
+- Use `scene.add.rectangle(0, 0, w, h, 0x000033, 0).setScrollFactor(0)` at depth 9998 for night overlay
+- Skip all `camera.postFX.*` calls entirely — they silently fail on Canvas but waste CPU checking
+- ParticleEmitter still works on Canvas — weather effects are available
+- AtmosphereSystem becomes a no-op on Canvas
 
-**If recipe unlocks need to fire on quest completion (cross-system integration):**
-- Add an `onQuestCompleted(questId: string, characterId: string)` method to `CraftingService`
-- `QuestService` calls it after awarding quest rewards
-- `CraftingService` checks all recipes with `questUnlock === questId`, adds to `unlockedRecipeIds`, emits `crafting:recipe_unlocked` event to client
+**If biome has no weather:**
+- Call `weatherSystem.setWeather(null)` — destroys active emitter, no particles
+- Biomes without weather: void_plains, void_rift, crystalline_wastes, ruins, all hub zones, toxic, crystal
 
-**If faction-gated recipes need a grace period (player changed faction — hypothetical):**
-- Faction-gated recipes are checked at craft-start, not at unlock time
-- A player who changes faction loses access to faction recipes immediately
-- Faction switching is out of scope per PROJECT.md; no defensive coding needed
+**If biome has no atmosphere:**
+- `AtmosphereSystem` still calls `cameras.main.postFX.clear()` to remove previous biome's effects
+- Then adds nothing. This is correct behavior — clear is always called.
+
+**If DayNightSystem and AtmosphereSystem both use ColorMatrix:**
+- DayNight adds its ColorMatrix first (in `create()`), stores reference
+- AtmosphereSystem `clear()` removes ALL effects including DayNight's ColorMatrix
+- After `clear()`, AtmosphereSystem must re-add the DayNight ColorMatrix from the stored reference
+- OR: DayNight and Atmosphere share a single ColorMatrix instance on the camera, and both write to it. Simpler — recommended for v1.26.
+
+---
+
+## Integration Points in Existing Code
+
+| Existing Code | How New Code Hooks In |
+|---------------|----------------------|
+| `TileRenderer.createCubeSprite()` | Replace the PNG-load path AND the `createFallbackCube()` fallback with `ProceduralTileRenderer.getTextureKey(tileId)`. Return `scene.add.image(0, 0, key)`. Same return type. Zero change to `createTileWithElevationWorld()` callers. |
+| `TileRenderer.isValidCubeTexture()` | Remove — no longer needed once procedural textures are always present |
+| `WorldScene.create()` | Add: `this.proceduralTileRenderer = new ProceduralTileRenderer(); this.proceduralTileRenderer.initTextures(this)`. Add `DayNightSystem`, `WeatherSystem`, `AtmosphereSystem` instantiation. |
+| `WorldScene.update(time, delta)` | Add: `this.dayNightSystem.update(time)` |
+| `WorldScene.commitZoneTransition()` | Add: `this.weatherSystem.setWeather(biome)` and `this.atmosphereSystem.setAtmosphere(biome)` |
+| `WorldScene.fullZoneReset()` | Add same weather + atmosphere calls as `commitZoneTransition()` |
+| `PreloadScene.ts` | No changes needed — procedural textures are generated at `WorldScene.create()` time, not during preload |
+| `RareNodeFX.ts` | No changes — already uses `postFX.addGlow()`. Compatible with new camera FX stacked on top. |
+| `TILE_TEXTURE_MAP` in `TileRenderer.ts` | Becomes unused once PNG path is removed. Keep as reference map for the `textureKey` property in TileDefinition, but stop using it for actual rendering. |
+
+---
+
+## Performance Notes
+
+| Concern | Impact | Mitigation |
+|---------|--------|------------|
+| `generateTexture()` at scene init | ~28 calls × ~0.5ms each = ~14ms one-time cost at WorldScene boot | Acceptable; boot already loads many assets. No ongoing cost. |
+| ParticleEmitter (screen-space weather) | 50-100 active particles per emitter, ~0.3-0.5ms per frame | Single emitter at a time. Stay under 200 max particles total. |
+| Camera `postFX.addColorMatrix()` per frame | GPU-side shader pass — negligible CPU cost | No per-frame allocation; update only the float value on the stored ColorMatrix reference |
+| `cameras.main.postFX.clear()` on zone transition | One-time operation, infrequent | Acceptable; zone transitions are already expensive (chunk load/unload) |
+| `DayNightSystem.update()` | One trig function (Math.sin) + two float assignments per frame | Effectively zero overhead |
 
 ---
 
@@ -492,40 +280,26 @@ pnpm db:migrate    # runs migration against local PostgreSQL
 
 | Package | Compatible With | Notes |
 |---------|-----------------|-------|
-| drizzle-orm@0.30.10 | JSONB array columns (`$type<string[]>`) | JSONB array pattern already used in `deployables.accumulatedResources`; no upgrade needed |
-| drizzle-orm@0.30.10 | `unique()` constraint helper in table definition | Already used in `quest_progress` table for UNIQUE (characterId, questId); identical pattern for UNIQUE(characterId) on `crafting_progress` |
-| @nestjs/event-emitter@3.0.1 | NestJS 10.3.x | Already installed and working; `CraftingService` uses `eventEmitter.emit('item.crafted', ...)` same as `GatheringService` uses `resource.gathered` |
-| zustand@4.5.0 + immer@11.1.4 | React 18.2.0 | Already working in `inventoryStore.ts`; `craftingStore.ts` uses same immer middleware pattern |
-
----
-
-## Key Integration Facts for Roadmap Authors
-
-1. **`packages/recipes` is a prerequisite for everything.** `CraftingService`, `CraftingPanel`, and `craftingStore` all import from it. Create the package and register it in the NX workspace before writing service or UI code.
-
-2. **Two DB migrations land in a single phase.** `crafting_proficiency` and `crafting_progress` are always needed together (service loads proficiency on join, progress on restart). Create both tables in one migration file.
-
-3. **Proficiency load pattern is identical to gathering.** `CraftingService.loadProficiency(characterId)` queries `crafting_proficiency`, caches in `Map<characterId, CraftingProficiencyJson>`, unloads on disconnect. Copy `GatheringService.loadProficiency()` as the template — the read-modify-write XP update pattern is already proven.
-
-4. **Faction bonus is already in the DB.** `factions.bonuses.craftingModifier` is seeded: Nexus=1.2, Verdant=1.1, Helix=1.0, neutral=1.0. `CraftingService` reads it from `PlayerService.getPlayerById(characterId).faction` — no new DB query needed.
-
-5. **Quality tier output is a multiplier on item quantity, not a separate item ID.** The output item stays the same ID; quantity scales by `qualityToOutputMultiplier(tier)`. This avoids needing separate "refined sword" vs "standard sword" item IDs and the associated inventory complexity.
-
-6. **`crafting:state` event on panel open mirrors `automation:panel_request`.** Client emits `crafting:request_state`, server responds with `crafting:state` containing available recipes, current proficiency, unlocked IDs, and any active in-progress craft. This lazy-load approach avoids sending crafting data to clients who never open the panel.
-
-7. **Crafting panel is a draggable React panel, not a Phaser scene.** Register it in `GameUI.tsx` behind `gameStore.craftingPanelOpen`, add a shortcut button in `GameShortcuts.tsx`. Follow the identical mount/unmount keyboard-disable pattern from `QuestLogPanel.tsx`.
+| phaser@3.90.0 | All PostFX, ColorMatrix, ParticleEmitter APIs described above | PostFX added in v3.60; project has 3.90 — fully forward-compatible |
+| phaser semver `^3.80.0` | Safe lower bound for all described APIs | All APIs stable since 3.60; no breakage risk within ^3.80 range |
+| TypeScript@5.4 | No issues | Phaser ships its own type declarations; no @types/phaser needed |
 
 ---
 
 ## Sources
 
-- Codebase direct inspection: `packages/database/src/schema/gathering-proficiency.ts`, `packages/database/src/schema/quest-progress.ts`, `packages/database/src/schema/deployables.ts`, `packages/database/src/schema/factions.ts`, `packages/database/src/schema/characters.ts`, `packages/game-logic/src/gathering/proficiency.ts`, `apps/game-server/src/game/gathering.service.ts`, `apps/game-server/src/game/automation.service.ts`, `packages/items/src/types.ts`, `packages/items/src/registry.ts`, `packages/quests/src/types.ts`, `packages/quests/src/registry.ts`, `packages/shared-types/src/network/events.ts`, `packages/shared-types/src/game/faction.ts`, `packages/shared-types/src/core/player.ts`, `apps/web/src/store/automationStore.ts`, `apps/web/src/store/inventoryStore.ts`, `apps/web/src/ui/panels/AutomationPanel.tsx`, `apps/web/src/ui/panels/QuestLogPanel.tsx` — HIGH confidence
-- Installed version verification: `package.json` root + pnpm-lock.yaml: drizzle-orm@0.30.10, zustand@4.5.0, immer@11.1.4, @dnd-kit/core@6.3.1, @nestjs/event-emitter@3.0.1 — HIGH confidence
-- `.planning/PROJECT.md` — v1.25 milestone scope (crafting panel, proficiency, quality tiers, faction gating, recipe unlock progression) — HIGH confidence
-- `.planning/research/STACK.md` (v1.24) — confirms automation pattern (setInterval, in-memory + DB persistence, no BullMQ, no @nestjs/schedule) — HIGH confidence
-- `lore/world-bible.md` — faction identities and crafting modifier design intent; confirms factions: verdant/helix/nexus/neutral — HIGH confidence (authoritative per CLAUDE.md)
+- Phaser 3 official docs — `https://docs.phaser.io/api-documentation/class/gameobjects-particles-particleemitter` — ParticleEmitter v3.60+ API: `setScrollFactor()`, emitZone config, confirmed `ParticleEmitterManager` removed at v3.60 (HIGH confidence — official docs)
+- Phaser 3 official docs — `https://docs.phaser.io/phaser/concepts/fx` — Built-in FX: ColorMatrix, Bloom, Vignette, Glow, camera.postFX support confirmed (HIGH confidence — official docs)
+- Phaser 3 official docs — `https://photonstorm.github.io/phaser3-docs/Phaser.Display.ColorMatrix.html` — Method signatures: `brightness(value, multiply?)`, `night(intensity?, multiply?)`, `contrast(value, multiply?)`, `hue(rotation, multiply?)` all confirmed (HIGH confidence — official API reference)
+- Phaser 3 official docs — `https://newdocs.phaser.io/docs/3.80.0/focus/Phaser.GameObjects.Graphics-generateTexture` — generateTexture caching pattern confirmed; performance advice ("use for static shapes") confirmed (HIGH confidence — official docs)
+- Phaser 3 official docs — `https://docs.phaser.io/api-documentation/class/gameobjects-graphics#fillStyle` — Graphics postFX support confirmed (inherits PostPipeline); setTint NOT available on Graphics confirmed (HIGH confidence — official docs)
+- Installed package — `node_modules/phaser/package.json` — Confirmed version 3.90.0 (HIGH confidence — direct file inspection)
+- `apps/web/src/game/rendering/TileRenderer.ts` — Confirmed: `createFallbackCube()` exists and draws procedural cubes; `applyElevationTint()` correctly guards `instanceof Phaser.GameObjects.Image` before calling `setTint()`; integration points identified (HIGH confidence — direct code inspection)
+- `apps/web/src/game/rendering/RareNodeFX.ts` — Confirmed: `postFX.addGlow()` pattern works in this codebase on WebGL; Canvas fallback `setTint()` also used (HIGH confidence — existing working code)
+- `apps/web/src/game/scenes/WorldScene.ts` — Confirmed: `commitZoneTransition()` and `fullZoneReset()` are correct integration hooks; `currentBiome` tracked; `create()` and `update()` structure confirmed (HIGH confidence — direct code inspection)
+- `package.json` (root) — Confirmed phaser `^3.80.0` semver and all installed dependencies (HIGH confidence — direct file inspection)
 
 ---
 
-*Stack research for: crafting system — recipe definitions, per-category proficiency, quality tier calculation, crafting timer/progress, recipe unlock progression, faction-specific recipe gating (v1.25)*
-*Researched: 2026-03-05*
+*Stack research for: Phaser 3 visual overhaul — procedural light-aware terrain cubes, particle weather, day/night cycle, biome atmospheric effects (v1.26)*
+*Researched: 2026-03-17*
