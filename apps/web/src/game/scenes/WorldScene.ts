@@ -29,6 +29,7 @@ import { FogRenderer } from '../fog/FogRenderer';
 import { PoiRenderer } from '../pois/PoiRenderer';
 import { WeatherSystem } from '../systems/WeatherSystem';
 import { DayNightCycle } from '../systems/DayNightCycle';
+import { AtmosphereSystem } from '../systems/AtmosphereSystem';
 // GatheringMiniGame removed - gathering now auto-completes on server
 import { createRareNodeMarker } from '../rendering/RareNodeFX';
 import type { DiscoveredResource } from '../../store/gameStore';
@@ -130,6 +131,7 @@ export class WorldScene extends Phaser.Scene {
   private rareNodeMarkers: Map<string, Phaser.GameObjects.Container> = new Map();
   private weatherSystem: WeatherSystem | null = null;
   private dayNightCycle: DayNightCycle | null = null;
+  private atmosphereSystem: AtmosphereSystem | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -201,6 +203,10 @@ export class WorldScene extends Phaser.Scene {
     // Initialize Day/Night Cycle on main camera only (DNTC-03, DNTC-05)
     this.dayNightCycle = new DayNightCycle();
     this.dayNightCycle.create(this.cameras.main);
+
+    // Initialize AtmosphereSystem and register with DayNightCycle (ATMO-04)
+    this.atmosphereSystem = new AtmosphereSystem(this);
+    this.dayNightCycle.setAtmosphereSystem(this.atmosphereSystem);
 
     // Initialize MovementController
     this.movementController = new MovementController();
@@ -1063,6 +1069,8 @@ export class WorldScene extends Phaser.Scene {
 
         // Crossfade weather to new biome
         this.weatherSystem?.setBiome(chunk.biome, false);
+        // Crossfade atmosphere to new biome (ATMO-02, ATMO-03)
+        this.atmosphereSystem?.setBiome(chunk.biome, false);
         this.updateMinimapWeatherIgnore();
 
         // Update collision map for movement validation in new zone
@@ -1222,6 +1230,8 @@ export class WorldScene extends Phaser.Scene {
 
     // Instant-swap weather for teleport
     this.weatherSystem?.setBiome(biome, true);
+    // Instant-swap atmosphere for teleport (ATMO-03)
+    this.atmosphereSystem?.setBiome(biome, true);
     this.updateMinimapWeatherIgnore();
 
     // Update HUD
@@ -1425,6 +1435,7 @@ export class WorldScene extends Phaser.Scene {
       // Start weather on first chunk render for current zone
       if (this.weatherSystem && !this.weatherSystem.hasActiveWeather()) {
         this.weatherSystem.setBiome(biome, true);
+        this.atmosphereSystem?.setBiome(biome, true);
         this.updateMinimapWeatherIgnore();
       }
     }
@@ -2318,6 +2329,10 @@ export class WorldScene extends Phaser.Scene {
     if (this.dayNightCycle) {
       this.dayNightCycle.destroy();
       this.dayNightCycle = null;
+    }
+    if (this.atmosphereSystem) {
+      this.atmosphereSystem.destroy();
+      this.atmosphereSystem = null;
     }
     if (this.zoneHUD) {
       this.zoneHUD.destroy();
