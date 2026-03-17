@@ -97,7 +97,7 @@
   2. Moving between two biomes produces a gradual atmospheric cross-fade with no hard seam at the chunk boundary
   3. Using hub recall or a portal into a zone results in the correct atmosphere for that biome — no bleed-through from the previous location
   4. Day/night brightness and biome atmosphere are additive without conflict — brighter at noon means brighter atmosphere, not a doubled or cancelled effect
-**Plans**: TBD
+**Plans**: 2 (129-01 AtmosphereSystem + DayNightCycle integration, 129-02 WorldScene wiring)
 
 ### Phase 130: Rendering Cleanup & Verification
 **Goal**: PNG tile sprite loading is removed from the runtime load path, dead code paths are deleted from TileRenderer, and the complete visual system passes a performance and correctness verification against the v1.25 baseline
@@ -120,7 +120,7 @@ Phases execute in numeric order: 126 → 127 → 128 → 129 → 130
 | 126. Procedural Terrain Cubes | v1.26 | 3/3 | Complete | 2026-03-17 |
 | 127. Particle Weather System | 3/3 | Complete    | 2026-03-17 | - |
 | 128. Day/Night Cycle | v1.26 | Complete    | 2026-03-17 | - |
-| 129. Biome Atmospheric Effects | v1.26 | 0/TBD | Not started | - |
+| 129. Biome Atmospheric Effects | v1.26 | 0/2 | Not started | - |
 | 130. Rendering Cleanup & Verification | v1.26 | 0/TBD | Not started | - |
 
 ---
