@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Pixel Movement Rewrite
 status: unknown
-last_updated: "2026-03-17T22:50:14.821Z"
+last_updated: "2026-03-18T00:00:00.000Z"
 progress:
-  total_phases: 125
+  total_phases: 126
   completed_phases: 125
-  total_plans: 326
-  completed_plans: 326
+  total_plans: 330
+  completed_plans: 327
 ---
 
 # Project State
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 132 — Server Movement Handler
+**Current focus:** Phase 133 — Distance System Migration
 
 ## Current Position
 
-Phase: 132 of 135 (Server Movement Handler)
-Plan: 3 of 3 in current phase complete
-Status: Phase 132 complete — all 3 plans done, ready for Phase 133
-Last activity: 2026-03-17 — Completed 132-03 (MovementService 20Hz tick loop, gateway handler, rate limiter removal)
+Phase: 133 of 135 (Distance System Migration)
+Plan: 1 of 4 in current phase complete
+Status: Phase 133 in progress — 133-01 done (PlayerPublic px/py, FLEE_RADIUS_PX, canInteractPixel contracts)
+Last activity: 2026-03-18 — Completed 133-01 (pixel-distance interaction contracts)
 
 Progress: [████░░░░░░] 40%
 
@@ -47,6 +47,7 @@ Progress: [████░░░░░░] 40%
 | Phase 132 P02 | 2 | 2 tasks | 2 files |
 | Phase 132-01 P01 | 9 | 2 tasks | 3 files |
 | Phase 132-03 P03 | 2 | 2 tasks | 4 files |
+| Phase 133 P01 | 1 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,9 @@ Recent decisions affecting current work:
 - [Phase 132-03]: TICK_MS=50 (20Hz) for MovementService tick loop; MAX_DT=0.2s cap; BROADCAST_RADIUS_PX=1536 (12 tiles) for positionBatch
 - [Phase 132-03]: queueInput overwrites previous unprocessed input — only latest key state per tick, no backlog
 - [Phase 132-03]: Old 140ms rate limiter fully removed — lastMoveTimes, getLastMoveTime(), setLastMoveTime() deleted from PlayerService
+- [Phase 133]: canInteractPixel does not check zone equality — callers pre-validate zone match before calling
+- [Phase 133]: FLEE_RADIUS_PX = 5.0 * TILE_SIZE_PX (640px) mirrors old tile-based FLEE_RADIUS = 5
+- [Phase 133]: px/py added as required fields on PlayerPublic so downstream AI/combat plans always have pixel coords
 
 ### Pending Todos
 
@@ -90,10 +94,10 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-17
-Stopped at: Completed 132-03-PLAN.md (MovementService tick loop, gateway handler, rate limiter removal)
+Last session: 2026-03-18
+Stopped at: Completed 133-01-PLAN.md (PlayerPublic px/py fields, FLEE_RADIUS_PX, canInteractPixel function)
 Resume file: None
-Next action: Execute Phase 133 (client-side prediction)
+Next action: Execute Phase 133-02 (combat system pixel distance migration)
 
 ---
-*Last updated: 2026-03-17 — Completed 132-03 MovementService 20Hz tick loop with positionBatch broadcast and rate limiter removal*
+*Last updated: 2026-03-18 — Completed 133-01 pixel-distance interaction contracts (PlayerPublic px/py, FLEE_RADIUS_PX, canInteractPixel)*

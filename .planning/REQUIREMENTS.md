@@ -24,10 +24,10 @@ Requirements for pixel movement rewrite. Each maps to roadmap phases.
 
 ### Distance Systems
 
-- [ ] **DIST-01**: Combat range checks use pixel Euclidean distance instead of tile distance
-- [ ] **DIST-02**: Gathering interaction range uses pixel distance
-- [ ] **DIST-03**: NPC interaction range uses pixel distance
-- [ ] **DIST-04**: Creature AI aggro and leash ranges use pixel distance
+- [x] **DIST-01**: Combat range checks use pixel Euclidean distance instead of tile distance
+- [x] **DIST-02**: Gathering interaction range uses pixel distance
+- [x] **DIST-03**: NPC interaction range uses pixel distance
+- [x] **DIST-04**: Creature AI aggro and leash ranges use pixel distance
 - [ ] **DIST-05**: Fog of war reveal radius uses pixel distance
 - [ ] **DIST-06**: Zone boundary detection works at pixel granularity
 
@@ -77,10 +77,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SYNC-02 | Phase 132 | Complete |
 | SYNC-03 | Phase 134 | Pending |
 | SYNC-04 | Phase 134 | Pending |
-| DIST-01 | Phase 133 | Pending |
-| DIST-02 | Phase 133 | Pending |
-| DIST-03 | Phase 133 | Pending |
-| DIST-04 | Phase 133 | Pending |
+| DIST-01 | Phase 133 | Complete |
+| DIST-02 | Phase 133 | Complete |
+| DIST-03 | Phase 133 | Complete |
+| DIST-04 | Phase 133 | Complete |
 | DIST-05 | Phase 133 | Pending |
 | DIST-06 | Phase 133 | Pending |
 | CLEAN-01 | Phase 135 | Pending |
