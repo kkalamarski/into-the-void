@@ -68,30 +68,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MOVE-01 | — | Pending |
-| MOVE-02 | — | Pending |
-| MOVE-03 | — | Pending |
-| MOVE-04 | — | Pending |
-| MOVE-05 | — | Pending |
-| SYNC-01 | — | Pending |
-| SYNC-02 | — | Pending |
-| SYNC-03 | — | Pending |
-| SYNC-04 | — | Pending |
-| DIST-01 | — | Pending |
-| DIST-02 | — | Pending |
-| DIST-03 | — | Pending |
-| DIST-04 | — | Pending |
-| DIST-05 | — | Pending |
-| DIST-06 | — | Pending |
-| CLEAN-01 | — | Pending |
-| CLEAN-02 | — | Pending |
-| CLEAN-03 | — | Pending |
+| MOVE-01 | Phase 134 | Pending |
+| MOVE-02 | Phase 131 | Pending |
+| MOVE-03 | Phase 134 | Pending |
+| MOVE-04 | Phase 134 | Pending |
+| MOVE-05 | Phase 134 | Pending |
+| SYNC-01 | Phase 132 | Pending |
+| SYNC-02 | Phase 132 | Pending |
+| SYNC-03 | Phase 134 | Pending |
+| SYNC-04 | Phase 134 | Pending |
+| DIST-01 | Phase 133 | Pending |
+| DIST-02 | Phase 133 | Pending |
+| DIST-03 | Phase 133 | Pending |
+| DIST-04 | Phase 133 | Pending |
+| DIST-05 | Phase 133 | Pending |
+| DIST-06 | Phase 133 | Pending |
+| CLEAN-01 | Phase 135 | Pending |
+| CLEAN-02 | Phase 135 | Pending |
+| CLEAN-03 | Phase 135 | Pending |
 
 **Coverage:**
 - v1.27 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 ⚠️
+- Mapped to phases: 18
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-17*
-*Last updated: 2026-03-17 after initial definition*
+*Last updated: 2026-03-17 — traceability updated after roadmap creation*
