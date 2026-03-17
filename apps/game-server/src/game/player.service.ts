@@ -6,13 +6,17 @@ import { DatabaseService } from '../database/database.service';
 import { findCharacterById, isCharacterOwnedByAccount, updateLastPlayed, saveLastWorldPosition, getLastWorldPosition, updateCharacterPosition, updateCharacterHealth, updateCharacterProgression } from '@into-the-void/database';
 import { isHubZone } from '@into-the-void/shared-types';
 import { InventoryService } from './inventory.service';
-import { getFactionRespawnPosition } from '@into-the-void/game-logic';
+import { getFactionRespawnPosition, tileToPixelCenter, pixelToTile } from '@into-the-void/game-logic';
 
 const RESPAWN_DELAY_MS = 3000; // 3 seconds
 
 interface ConnectedPlayer extends Player {
   socketId: string;
   lastWorldPosition?: Position;
+  // Phase 132: pixel movement state (server-authoritative, in-memory only)
+  px: number;          // current pixel X in zone
+  py: number;          // current pixel Y in zone
+  lastPxInputTime: number;  // ms timestamp of last processed pixel input
 }
 
 interface AuthResult {
@@ -72,6 +76,7 @@ export class PlayerService {
       // Create connected player from character data
       // Player position is restored from database - supports both open-world and hub zones
       // Position persistence is handled by handleDisconnect saving to DB
+      const { px: initPx, py: initPy } = tileToPixelCenter(character.position.x, character.position.y);
       const player: ConnectedPlayer = {
         id: character.id,
         accountId: character.accountId,
@@ -89,6 +94,9 @@ export class PlayerService {
         online: true,
         credits: character.credits,
         socketId,
+        px: initPx,
+        py: initPy,
+        lastPxInputTime: Date.now(),
       };
 
       // Restore last open-world position if character has one
@@ -127,6 +135,9 @@ export class PlayerService {
       // Save current position, health, and progression to database
       const player = this.players.get(playerId);
       if (player) {
+        // Convert pixel position back to tile coordinates before persisting
+        const { tileX, tileY } = pixelToTile(player.px, player.py);
+        player.position = { ...player.position, x: tileX, y: tileY };
         const db = this.databaseService.getClient();
         await updateCharacterPosition(db, playerId, player.position);
         await updateCharacterHealth(db, playerId, player.health, player.maxHealth);
@@ -176,6 +187,10 @@ export class PlayerService {
     player.health = player.maxHealth;
     player.isDead = false;
     player.position = respawnPos;
+    const respawnPixelCenter = tileToPixelCenter(respawnPos.x, respawnPos.y);
+    player.px = respawnPixelCenter.px;
+    player.py = respawnPixelCenter.py;
+    player.lastPxInputTime = Date.now();
 
     // Emit player:respawn to player socket
     if (this.server) {
@@ -283,6 +298,10 @@ export class PlayerService {
 
     // Teleport to hub
     player.position = hubPosition;
+    const hubPixelCenter = tileToPixelCenter(hubPosition.x, hubPosition.y);
+    player.px = hubPixelCenter.px;
+    player.py = hubPixelCenter.py;
+    player.lastPxInputTime = Date.now();
 
     return {
       success: true,
@@ -334,6 +353,10 @@ export class PlayerService {
 
     // Teleport to open world
     player.position = { ...returnPosition };
+    const worldPixelCenter = tileToPixelCenter(returnPosition.x, returnPosition.y);
+    player.px = worldPixelCenter.px;
+    player.py = worldPixelCenter.py;
+    player.lastPxInputTime = Date.now();
 
     return {
       success: true,
