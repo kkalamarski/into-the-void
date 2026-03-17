@@ -46,7 +46,7 @@
 **Milestone Goal:** Replace PNG tile sprites with procedural light-aware colored cubes, add biome weather particles, a day/night cycle, biome atmospheric effects, and clean up the rendering pipeline.
 
 - [x] **Phase 126: Procedural Terrain Cubes** - Bake 3-shade isometric cubes to GPU textures; all biomes get distinct color palettes and accent details (completed 2026-03-17)
-- [ ] **Phase 127: Particle Weather System** - Viewport-fixed weather particles per biome with chunk-lifecycle cleanup
+- [x] **Phase 127: Particle Weather System** - Viewport-fixed weather particles per biome with chunk-lifecycle cleanup (completed 2026-03-17)
 - [ ] **Phase 128: Day/Night Cycle** - Camera-level brightness and color-temperature shift using postFX ColorMatrix
 - [ ] **Phase 129: Biome Atmospheric Effects** - Per-biome fog, glow, haze and murk via camera postFX coordinated with day/night
 - [ ] **Phase 130: Rendering Cleanup & Verification** - Disable PNG tile loading paths, remove dead code, verify FPS baseline
@@ -118,7 +118,7 @@ Phases execute in numeric order: 126 → 127 → 128 → 129 → 130
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 126. Procedural Terrain Cubes | v1.26 | 3/3 | Complete | 2026-03-17 |
-| 127. Particle Weather System | 2/3 | In Progress|  | - |
+| 127. Particle Weather System | 3/3 | Complete   | 2026-03-17 | - |
 | 128. Day/Night Cycle | v1.26 | 0/TBD | Not started | - |
 | 129. Biome Atmospheric Effects | v1.26 | 0/TBD | Not started | - |
 | 130. Rendering Cleanup & Verification | v1.26 | 0/TBD | Not started | - |
