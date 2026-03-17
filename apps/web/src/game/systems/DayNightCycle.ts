@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { DayNightPhase, CYCLE_DURATION_MS, PHASE_BOUNDARIES } from '@into-the-void/shared-types';
+import type { AtmosphereSystem } from './AtmosphereSystem';
 
 // ── Visual Presets ───────────────────────────────────────────────────────────
 
@@ -70,6 +71,15 @@ export class DayNightCycle {
   private colorMatrix: Phaser.FX.ColorMatrix | null = null;
   private serverOffset: number = 0;
   private currentPhase: DayNightPhase = 'Day';
+  private atmosphereSystem: AtmosphereSystem | null = null;
+
+  /**
+   * Register the AtmosphereSystem for cooperative ColorMatrix sharing.
+   * Called once during WorldScene.create() after both systems are instantiated.
+   */
+  setAtmosphereSystem(system: AtmosphereSystem): void {
+    this.atmosphereSystem = system;
+  }
 
   /**
    * Attach ColorMatrix postFX to the given camera.
@@ -166,6 +176,11 @@ export class DayNightCycle {
       // Reduce blue
       m[12] -= visuals.warmShift * 0.1;
     }
+
+    // Step 2: Atmosphere writes color offsets on top of day/night (ATMO-04)
+    if (this.atmosphereSystem) {
+      this.atmosphereSystem.applyToMatrix(this.colorMatrix, progress);
+    }
   }
 
   /**
@@ -213,6 +228,7 @@ export class DayNightCycle {
    * Cleanup — ColorMatrix is cleaned up when camera is destroyed.
    */
   destroy(): void {
+    this.atmosphereSystem = null;
     this.colorMatrix = null;
   }
 }
