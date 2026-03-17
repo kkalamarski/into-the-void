@@ -4,7 +4,7 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, expedition travel, and a dual action bar system for ability management.
 
-## Current State (v1.24 shipped)
+## Current State (v1.25 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
@@ -30,6 +30,7 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Chat: 5-channel system (local/zone/faction/global/whisper), moderation (mute/block), persistence
 - Biome Hazards: HP drain, stat debuffs, tiered severity, protection gear counters, grace period, HUD indicator
 - Automation: T2-T5 deployable structures (extractors, beacons, planetary extractors, refineries), AutomationService with tick loop, maintenance costs, automation panel HUD
+- Crafting: 39 recipes across 4 disciplines (Equipment/Consumables/Reagents/Automation), quality tiers (Standard/Refined/Masterwork), per-discipline proficiency with XP decay, faction specialty recipes, crafting panel UI with C keybind, mini HUD indicator
 
 **Tech stack:**
 - Frontend: React 18, Phaser 3, Zustand, React Router v7
@@ -38,7 +39,7 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Monorepo: NX with 3 apps + 5 shared packages
 - Deployment: Docker Swarm, Traefik reverse proxy, GitHub Actions CI/CD
 
-**Codebase:** ~69,131 LOC TypeScript/CSS
+**Codebase:** ~72,709 LOC TypeScript/CSS
 
 ## Core Value
 
@@ -216,21 +217,36 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Automation tech tree: T2 extractors through T5 refineries — v1.24
 - ✓ AutomationService with 60s tick, maintenance costs, DB persistence — v1.24
 - ✓ Automation panel HUD for deploy/collect/refuel — v1.24
+- ✓ Recipe definitions as static data in shared package — v1.25
+- ✓ Recipe browsing organized by crafting discipline — v1.25
+- ✓ Ingredient requirements with have/need counts — v1.25
+- ✓ Locked recipe display with unlock conditions — v1.25
+- ✓ Progressive recipe unlocks via level, quests, POI discovery — v1.25
+- ✓ Faction-specific specialty recipes — v1.25
+- ✓ Craft execution with ingredient consumption and progress timer — v1.25
+- ✓ Server-side crafting validation (ingredients, unlocks, faction) — v1.25
+- ✓ Atomic ingredient consumption (all-or-nothing) — v1.25
+- ✓ Server-managed crafting timer (prevents client exploits) — v1.25
+- ✓ One active craft at a time enforcement — v1.25
+- ✓ Disconnect cancels active craft — v1.25
+- ✓ Per-discipline crafting proficiency with XP — v1.25
+- ✓ Quality tiers (Standard/Refined/Masterwork) influenced by proficiency — v1.25
+- ✓ Proficiency persistence in database — v1.25
+- ✓ Crafting panel accessible from HUD at any location (C keybind) — v1.25
+- ✓ Discipline tabs for recipe categories — v1.25
+- ✓ Craft button enabled only when ingredients available and recipe unlocked — v1.25
+- ✓ Active craft progress bar with remaining time — v1.25
+- ✓ Proficiency level and XP display per discipline — v1.25
+- ✓ Equipment, consumable, reagent, and automation recipes — v1.25
+- ✓ 9 faction-exclusive specialty recipes (3 per faction) — v1.25
 
-### Active
+### Active — v1.26 Visual Overhaul & Atmosphere
 
-## Current Milestone: v1.25 Crafting
-
-**Goal:** Add a manual crafting system with recipe progression, per-category skill proficiency, faction specialties, and quality tiers.
-
-**Target features:**
-- Recipe-based crafting panel accessible from HUD anywhere
-- Full production chain (equipment, consumables, automation structures, reagents)
-- Progression-unlocked recipes (level, quests, exploration, faction standing)
-- Core recipes universal, faction-specific specialties for higher tiers
-- Per-category crafting proficiency (separate skills per discipline)
-- Quality tiers influenced by proficiency level
-- Short crafting timer with progress bar
+- [ ] Procedural light-aware terrain cubes with 3-shade biome colors and accent details
+- [ ] Biome-specific particle weather (rain, snow, ash, spores)
+- [ ] Day/night cycle with time-based lighting changes
+- [ ] Biome atmospheric effects (fog, glow, haze, murk)
+- [ ] Rendering code cleanup (disable PNG tiles, remove dead paths, optimize loading)
 
 ### Out of Scope
 
@@ -244,7 +260,8 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - Faction reputation system — future milestone
 - Branching dialogue — simple linear sufficient for now
 - Third action bar — two bars sufficient, reassess if needed
-- Crafting recipes — automation is gathering-focused, crafting is a separate milestone
+- Crafting mini-game — quality influenced by proficiency, not dexterity
+- Bulk crafting / queue — single craft at a time sufficient for now
 - New abilities — rebalance existing 21, don't add new ones yet
 
 ## Constraints
@@ -281,6 +298,10 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 | AutomationService sync processTick() | No async calls for tick-budget safety | ✓ Good |
 | PvP deployable looting (no owner check) | Any player can collect from any deployable | ⚠️ Revisit |
 | Maintenance cost >= 60% of output | Prevents runaway credit inflation from automation | ✓ Good |
+| Quality as runtime modifier, not separate items | Prevents item registry bloat; Standard/Refined/Masterwork on same item ID | ✓ Good |
+| No crafting failure/material loss | Quality tiers provide variation without punishment; most-hated mechanic avoided | ✓ Good |
+| XP decay for proficiency | Prevents grinding low-tier recipes for infinite XP; encourages tier progression | ✓ Good |
+| Crafting anywhere (no stations) | Player requested anywhere-access; stations add complexity without value | ✓ Good |
 
 ## Known Issues
 
@@ -288,4 +309,16 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-03-05 after v1.25 milestone started*
+## Current Milestone: v1.26 Visual Overhaul & Atmosphere
+
+**Goal:** Replace PNG tile sprites with procedural light-aware colored cubes, add weather particles, day/night cycle, and biome-specific atmospheric effects, and clean up rendering code.
+
+**Target features:**
+- Procedural terrain cubes with 3-shade lighting (top, lit side, shadow side) and biome accents
+- Particle weather system (rain, snow, ash, spores per biome)
+- Day/night cycle affecting tile shading and entity visibility
+- Biome atmosphere (fog, glow, haze, murk per biome type)
+- Rendering pipeline cleanup and optimization
+
+---
+*Last updated: 2026-03-17 after v1.26 milestone started*
