@@ -970,10 +970,10 @@ export class AbilityService {
             e.type === 'creature' &&
             (e as Creature).active &&
             (e as Creature).behavior === 'predator' &&
-            Math.max(
-              Math.abs(e.position.x - player.position.x),
-              Math.abs(e.position.y - player.position.y),
-            ) <= effect.radiusTiles,
+            (() => {
+              const { px: ePx, py: ePy } = tileToPixelCenter(e.position.x, e.position.y);
+              return pixelDistanceTo(ePx, ePy, player.px, player.py) <= effect.radiusTiles * TILE_SIZE_PX;
+            })(),
         );
         for (const pred of predatorsInRange) {
           await this.zonesService.updateEntity(player.position.zoneId, pred.id, {

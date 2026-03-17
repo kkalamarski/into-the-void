@@ -13,10 +13,12 @@ import {
 } from '@into-the-void/shared-types';
 import {
   canInteract,
+  canInteractPixel,
   canInteractLevel,
   rollLootTable,
   getCreatureLoot,
   DEFAULT_INTERACTION_RANGE,
+  GATHER_RANGE_PX,
 } from '@into-the-void/game-logic';
 import { EntityRegistry } from '@into-the-void/entities';
 import type { MineralDefinition, PlantDefinition, CreatureDefinition } from '@into-the-void/entities';
@@ -73,8 +75,8 @@ export class EntityService {
     const entity = await this.zonesService.getEntity(player.position.zoneId, targetEntityId);
     if (!entity) return { success: false, error: 'Entity not found' };
 
-    // Validate range
-    const check = canInteract(player, entity, toolRange);
+    // Validate range (pixel distance, DIST-02)
+    const check = canInteractPixel(player.px, player.py, entity, GATHER_RANGE_PX);
     if (!check.canInteract) {
       return { success: false, error: check.reason };
     }
