@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Pixel Movement Rewrite
 status: unknown
-last_updated: "2026-03-17T23:26:14.009Z"
+last_updated: "2026-03-17T23:41:06.144Z"
 progress:
   total_phases: 126
   completed_phases: 126
-  total_plans: 330
-  completed_plans: 330
+  total_plans: 331
+  completed_plans: 331
 ---
 
 # Project State
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-03-17)
 ## Current Position
 
 Phase: 133 of 135 (Distance System Migration)
-Plan: 4 of 4 in current phase complete
-Status: Phase 133 complete — all 4 plans done (pixel contracts, server migration, AI service, client WorldScene/TargetHighlight)
-Last activity: 2026-03-18 — Completed 133-04 (pixel zone boundary detection, TargetHighlight range indicator, NPC proximity)
+Plan: 5 of 5 in current phase complete
+Status: Phase 133 complete — all 5 plans done (pixel contracts, server migration, AI service, client WorldScene/TargetHighlight, gap closure for artifact/Precision Shot/Pack Call)
+Last activity: 2026-03-18 — Completed 133-05 (gap closure: pixel distance for artifact collection, Precision Shot reveal, Pack Call)
 
 Progress: [████░░░░░░] 40%
 
@@ -51,6 +51,7 @@ Progress: [████░░░░░░] 40%
 | Phase 133 P02 | 5 | 2 tasks | 5 files |
 | Phase 133 P04 | 8 | 2 tasks | 3 files |
 | Phase 133 P03 | 4 | 2 tasks | 2 files |
+| Phase 133 P05 | 5 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,8 @@ Recent decisions affecting current work:
 - [Phase 133]: Target ring alpha-dimming (OUT_OF_RANGE_ALPHA=0.3) preserves behavior-tier color while conveying out-of-range state
 - [Phase 133]: nearestNpcInRange field gates npc:interact proximity check; full prompt UI deferred to Phase 134/135
 - [Phase 133]: 0.5s aggro delay with creature:aggro_detected '\!' emission; full HP heal on leash prevents kiting; pendingAggro stores zoneId for targeted cleanup; immediate aggro (zone join) bypasses delay for responsiveness
+- [Phase 133]: canInteractPixel uses GATHER_RANGE_PX (192px) instead of toolRange for uniform artifact/gather interaction radius
+- [Phase 133]: PACK_CALL_RANGE_PX = 10 * TILE_SIZE_PX (1280px) preserves 10-tile radius semantically in pixel space
 
 ### Pending Todos
 
@@ -105,9 +108,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 133-04-PLAN.md (pixel zone boundary detection, TargetHighlight range indicator, NPC proximity)
+Stopped at: Completed 133-05-PLAN.md (gap closure: pixel distance for artifact collection, Precision Shot reveal, Pack Call)
 Resume file: None
 Next action: Execute Phase 134 (client movement rewrite)
 
 ---
-*Last updated: 2026-03-18 — Completed 133-04 client pixel distance migration (WorldScene zone boundary + range indicators)*
+*Last updated: 2026-03-18 — Completed 133-05 gap closure (entity.service canInteractPixel, ability.service Precision Shot, combat.service Pack Call)*
