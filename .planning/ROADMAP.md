@@ -49,7 +49,7 @@
 ## Phase Details
 
 - [x] **Phase 131: Shared Foundation** - Coordinate contract, pixel math modules, and shared constants that every downstream phase depends on (completed 2026-03-17)
-- [ ] **Phase 132: Server Movement Handler** - Server-authoritative position validation and 20Hz broadcast loop
+- [x] **Phase 132: Server Movement Handler** - Server-authoritative position validation and 20Hz broadcast loop (completed 2026-03-17)
 - [ ] **Phase 133: Distance System Migration** - All six game systems migrated from tile distance to pixel Euclidean distance
 - [ ] **Phase 134: Client Movement Rewrite** - Velocity-based WASD movement, pixel collision, client prediction, and remote player interpolation
 - [ ] **Phase 135: Cleanup and Collision Audit** - Remove all legacy movement code and audit flat blocking tiles
@@ -124,7 +124,7 @@
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 131. Shared Foundation | 2/2 | Complete    | 2026-03-17 | - |
-| 132. Server Movement Handler | 2/3 | In Progress|  | - |
+| 132. Server Movement Handler | 3/3 | Complete   | 2026-03-17 | - |
 | 133. Distance System Migration | v1.27 | 0/TBD | Not started | - |
 | 134. Client Movement Rewrite | v1.27 | 0/TBD | Not started | - |
 | 135. Cleanup and Collision Audit | v1.27 | 0/TBD | Not started | - |

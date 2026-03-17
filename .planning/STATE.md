@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Pixel Movement Rewrite
 status: unknown
-last_updated: "2026-03-17T22:41:15.298Z"
+last_updated: "2026-03-17T22:46:12.588Z"
 progress:
   total_phases: 125
-  completed_phases: 124
+  completed_phases: 125
   total_plans: 326
-  completed_plans: 325
+  completed_plans: 326
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-03-17)
 ## Current Position
 
 Phase: 132 of 135 (Server Movement Handler)
-Plan: 1 of 3 in current phase complete
-Status: In progress — 132-01 complete, ready for 132-02
-Last activity: 2026-03-17 — Completed 132-01 (pixel movement wire types: player:pixelMove, positionBatch, positionCorrection, bitmaskToKeyState)
+Plan: 3 of 3 in current phase complete
+Status: Phase 132 complete — all 3 plans done, ready for Phase 133
+Last activity: 2026-03-17 — Completed 132-03 (MovementService 20Hz tick loop, gateway handler, rate limiter removal)
 
-Progress: [██░░░░░░░░] 20%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Progress: [██░░░░░░░░] 20%
 *Updated after each plan completion*
 | Phase 132 P02 | 2 | 2 tasks | 2 files |
 | Phase 132-01 P01 | 9 | 2 tasks | 3 files |
+| Phase 132-03 P03 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,9 @@ Recent decisions affecting current work:
 - [Phase 132-01]: bitmask W=1/A=2/S=4/D=8 convention matches client-side for consistent wire format
 - [Phase 132-01]: bitmaskToKeyState placed in pixel-validation.ts — bridges wire bitmask to KeyState used by velocityFromKeys
 - [Phase 132-01]: Old player:move event kept alongside player:pixelMove until Phase 135 cleanup
+- [Phase 132-03]: TICK_MS=50 (20Hz) for MovementService tick loop; MAX_DT=0.2s cap; BROADCAST_RADIUS_PX=1536 (12 tiles) for positionBatch
+- [Phase 132-03]: queueInput overwrites previous unprocessed input — only latest key state per tick, no backlog
+- [Phase 132-03]: Old 140ms rate limiter fully removed — lastMoveTimes, getLastMoveTime(), setLastMoveTime() deleted from PlayerService
 
 ### Pending Todos
 
@@ -81,15 +85,15 @@ None.
 
 ### Blockers/Concerns
 
-- Rate limiter: existing 140ms gate must be replaced before any 20Hz movement testing (Phase 132)
+- Rate limiter: RESOLVED — 140ms gate removed in Phase 132-03; MovementService 20Hz loop is live
 - Coordinate unit ambiguity: RESOLVED — verified no integer-coercion of px/py floats in pixel-distance.ts (only Math.floor in pixelToTile, which is intentional)
 
 ## Session Continuity
 
 Last session: 2026-03-17
-Stopped at: Completed 132-01-PLAN.md (pixel movement wire types and bitmaskToKeyState adapter)
+Stopped at: Completed 132-03-PLAN.md (MovementService tick loop, gateway handler, rate limiter removal)
 Resume file: None
-Next action: Execute Phase 132-02
+Next action: Execute Phase 133 (client-side prediction)
 
 ---
-*Last updated: 2026-03-17 — Completed 132-01 pixel movement wire types (player:pixelMove, positionBatch, positionCorrection, bitmaskToKeyState)*
+*Last updated: 2026-03-17 — Completed 132-03 MovementService 20Hz tick loop with positionBatch broadcast and rate limiter removal*
