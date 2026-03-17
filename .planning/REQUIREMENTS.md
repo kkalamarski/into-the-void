@@ -26,11 +26,11 @@ Requirements for milestone v1.26 Visual Overhaul & Atmosphere. Each maps to road
 
 ### Day/Night Cycle
 
-- [ ] **DNTC-01**: Gradual brightness change over time simulating day/night progression
-- [ ] **DNTC-02**: Color temperature shifts (warm during day, cool at night)
-- [ ] **DNTC-03**: Day/night uses camera postFX ColorMatrix (not per-tile setTint)
-- [ ] **DNTC-04**: Time-of-day indicator visible in HUD
-- [ ] **DNTC-05**: Day/night cycle does not affect minimap camera
+- [x] **DNTC-01**: Gradual brightness change over time simulating day/night progression
+- [x] **DNTC-02**: Color temperature shifts (warm during day, cool at night)
+- [x] **DNTC-03**: Day/night uses camera postFX ColorMatrix (not per-tile setTint)
+- [x] **DNTC-04**: Time-of-day indicator visible in HUD
+- [x] **DNTC-05**: Day/night cycle does not affect minimap camera
 
 ### Biome Atmosphere
 
@@ -86,11 +86,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WTHR-03 | Phase 127 | Complete |
 | WTHR-04 | Phase 127 | Complete |
 | WTHR-05 | Phase 127 | Complete |
-| DNTC-01 | Phase 128 | Pending |
-| DNTC-02 | Phase 128 | Pending |
-| DNTC-03 | Phase 128 | Pending |
-| DNTC-04 | Phase 128 | Pending |
-| DNTC-05 | Phase 128 | Pending |
+| DNTC-01 | Phase 128 | Complete |
+| DNTC-02 | Phase 128 | Complete |
+| DNTC-03 | Phase 128 | Complete |
+| DNTC-04 | Phase 128 | Complete |
+| DNTC-05 | Phase 128 | Complete |
 | ATMO-01 | Phase 129 | Complete |
 | ATMO-02 | Phase 129 | Complete |
 | ATMO-03 | Phase 129 | Complete |
