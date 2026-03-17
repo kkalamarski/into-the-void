@@ -44,7 +44,7 @@ import {
   Plant,
   BiomeType,
 } from '@into-the-void/shared-types';
-import { computeCharStats } from '@into-the-void/game-logic';
+import { computeCharStats, pixelDistanceTo, tileToPixelCenter, NPC_INTERACT_RANGE_PX } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
 import { NpcRegistry } from '@into-the-void/npcs';
 import { EquipmentJson } from '@into-the-void/database';
@@ -288,6 +288,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const player = this.playerService.getPlayerBySocket(client.id);
     if (!player) return;
     this.movementService.queueInput(player.id, data);
+    // Phase 133: cancel gather if player moved out of range (uses client-predicted position for responsiveness)
+    this.gatheringService.cancelIfOutOfRange(player.id, data.predictedPx, data.predictedPy);
   }
 
   @SubscribeMessage('player:move')
@@ -1165,6 +1167,14 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     // Find entity in zone to get npcId
     const entity = await this.zonesService.getEntity(player.position.zoneId, data.entityId);
     if (!entity || entity.type !== 'npc') return;
+
+    // Phase 133: NPC interaction range check (DIST-03)
+    const { px: npcPx, py: npcPy } = tileToPixelCenter(entity.position.x, entity.position.y);
+    const npcDist = pixelDistanceTo(player.px, player.py, npcPx, npcPy);
+    if (npcDist > NPC_INTERACT_RANGE_PX) {
+      client.emit('error', { code: 'OUT_OF_RANGE', message: 'Too far away' });
+      return;
+    }
 
     // Get NPC definition from registry
     const npcDef = NpcRegistry.get((entity as Npc).npcId);

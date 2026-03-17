@@ -24,6 +24,10 @@ import {
   calculateBaseYieldBonus,
   getResourceCategory,
   canInteract,
+  canInteractPixel,
+  pixelDistanceTo,
+  tileToPixelCenter,
+  GATHER_RANGE_PX,
   rollLootTable,
   DEFAULT_INTERACTION_RANGE,
 } from '@into-the-void/game-logic';
@@ -169,8 +173,8 @@ export class GatheringService {
       return { error: result.error || 'Collection failed' };
     }
 
-    // Validate range
-    const check = canInteract(player, entity, toolRange);
+    // Validate range (pixel distance, Phase 133)
+    const check = canInteractPixel(player.px, player.py, entity, GATHER_RANGE_PX);
     if (!check.canInteract) {
       return { error: check.reason || 'Out of range' };
     }
@@ -357,6 +361,25 @@ export class GatheringService {
     if (active && active.entityId === entityId) {
       this.entityLocks.delete(entityId);
       this.activeChallenges.delete(playerId);
+    }
+  }
+
+  /**
+   * Cancel active gather if player moved beyond GATHER_RANGE_PX.
+   * Called from the pixel movement handler path (Phase 133).
+   * Per user decision: immediate cancel, full progress reset, no toast.
+   */
+  cancelIfOutOfRange(playerId: string, playerPx: number, playerPy: number): void {
+    const active = this.activeChallenges.get(playerId);
+    if (!active) return;
+
+    const { px: ex, py: ey } = tileToPixelCenter(active.entity.position.x, active.entity.position.y);
+    const dist = pixelDistanceTo(playerPx, playerPy, ex, ey);
+
+    if (dist > GATHER_RANGE_PX) {
+      this.entityLocks.delete(active.entityId);
+      this.activeChallenges.delete(playerId);
+      // No toast or "Too far away" message — progress bar simply disappears (per user decision)
     }
   }
 
