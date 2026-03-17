@@ -120,3 +120,31 @@
 
 ---
 
+
+## v1.25 Crafting (Shipped: 2026-03-06)
+
+**Phases completed:** 4 phases (122-125), 11 plans
+
+**Delivered:** Manual crafting system with recipe progression, per-category skill proficiency, faction specialties, quality tiers, and automation structure crafting — accessible from the HUD anywhere via a three-column panel.
+
+**Key accomplishments:**
+- Crafting Foundation: Server-side CraftingService with atomic ingredient consumption, timer enforcement, faction gating, one-active-craft limit, and disconnect cleanup
+- Recipe Content: 39 recipes across 4 disciplines (Equipment, Consumables, Reagents, Automation) with 5 processed reagent intermediates
+- Quality System: Proficiency-based quality rolls (Standard/Refined/Masterwork) with XP decay for diminishing returns
+- Faction Specialties: 9 faction-exclusive recipes (3 per faction) for higher-tier gear
+- Automation Integration: 4 deployable structure recipes bridging crafting and automation systems
+- Crafting Panel UI: Three-column HUD panel with discipline tabs, ingredient availability display, progress bar, C keybind, and mini HUD indicator
+
+**Stats:**
+- Timeline: 1 day (2026-03-05)
+- Files modified: 74
+- Lines added: ~10,783
+- Total codebase: ~72,709 LOC TypeScript/CSS
+- Git range: feat(122-01) → fix(125)
+
+**Archives:**
+- `.planning/milestones/v1.25-ROADMAP.md`
+- `.planning/milestones/v1.25-REQUIREMENTS.md`
+
+---
+

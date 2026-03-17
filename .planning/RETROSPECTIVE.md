@@ -2,6 +2,48 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Milestone: v1.25 — Crafting
+
+**Shipped:** 2026-03-06
+**Phases:** 4 | **Plans:** 11 | **Commits:** ~25
+
+### What Was Built
+- CraftingService with atomic ingredient consumption, timer enforcement, faction gating, one-active-craft limit, disconnect cleanup
+- 39 recipes across 4 disciplines (Equipment, Consumables, Reagents, Automation) with 5 processed reagent intermediates
+- Quality tier system (Standard/Refined/Masterwork) with proficiency-based probability rolls and XP decay
+- 9 faction-exclusive specialty recipes (3 per Verdant/Helix/Nexus)
+- 4 automation deployable structure recipes bridging crafting and automation systems
+- Crafting panel UI with three-column layout, discipline tabs, ingredient availability, progress bar
+- Mini HUD crafting indicator for active craft visibility when panel closed
+
+### What Worked
+- Phase decomposition was clean: foundation → content → integration → UI mapped naturally to the domain
+- Quality as runtime modifier (not separate item IDs) kept the item registry simple
+- XP decay function (power curve with grace zone and floor) prevented trivial grinding while keeping progression rewarding
+- Reusing the automation discipline as a 4th crafting discipline cleanly bridged the two systems
+
+### What Was Inefficient
+- REQUIREMENTS.md traceability table again not updated during execution — all 31 requirements showed "Pending" at completion
+- Phase 123 marked as "Not started" in ROADMAP progress table despite having 4/4 plans complete — same tracking inconsistency as v1.24
+- Milestone audit skipped (no v1.25-MILESTONE-AUDIT.md) — yolo mode bypassed but should be considered for larger milestones
+
+### Patterns Established
+- Crafting discipline pattern: recipes organized by discipline with independent proficiency tracking per category
+- Recipe definition as static data in shared package: both server validation and client display use same definitions
+- Quality as inventory slot modifier: no item ID proliferation, stat multiplier applied at runtime
+
+### Key Lessons
+1. Traceability table updates should be automated or done per-phase — two consecutive milestones had this gap
+2. The "anywhere crafting" decision (no stations) simplified both implementation and UX significantly
+3. Small milestones (4 phases, 1 day) ship faster with less coordination overhead — good for focused feature additions
+
+### Cost Observations
+- Model mix: ~90% sonnet (executor), ~10% inherit (planner/research)
+- Profile: balanced
+- Notable: 4 phases completed in a single day with auto_advance pipeline
+
+---
+
 ## Milestone: v1.24 — Balance & Automation
 
 **Shipped:** 2026-03-05
@@ -48,9 +90,12 @@
 
 | Milestone | Phases | Plans | Key Change |
 |-----------|--------|-------|------------|
+| v1.25 | 4 | 11 | Crafting discipline pattern, quality as runtime modifier |
 | v1.24 | 7 | 20 | Sync tick pattern for game services, design artifact gates |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. Design artifact gates before implementation prevent rework and ensure consistent vision
 2. Sync-first tick processing with async DB flush is the correct pattern for game server services
+3. Requirements traceability tables need per-phase updates — manual end-of-milestone catch-up has failed twice consecutively
+4. Small focused milestones (3-4 phases) complete in a single day and ship cleaner than large sprawling milestones
