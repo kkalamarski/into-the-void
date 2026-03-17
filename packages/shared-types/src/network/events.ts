@@ -70,7 +70,8 @@ export type ClientEventType =
   | 'automation:panel_request'
   | 'crafting:start'
   | 'crafting:collect'
-  | 'crafting:recipes';
+  | 'crafting:recipes'
+  | 'player:pixelMove';
 
 /**
  * Server-to-client event types
@@ -137,7 +138,9 @@ export type ServerEventType =
   | 'crafting:completed'
   | 'crafting:error'
   | 'crafting:nearby'
-  | 'crafting:recipe-list';
+  | 'crafting:recipe-list'
+  | 'positionBatch'
+  | 'positionCorrection';
 
 /**
  * Socket.io event map for type safety
@@ -188,6 +191,12 @@ export interface ClientEvents {
   'crafting:start': { recipeId: string };
   'crafting:collect': Record<string, never>;
   'crafting:recipes': Record<string, never>;
+  'player:pixelMove': {
+    keys: number;           // bitmask: W=1, A=2, S=4, D=8
+    predictedPx: number;    // client-predicted X after applying input
+    predictedPy: number;    // client-predicted Y after applying input
+    sequence: number;       // monotonically increasing counter per client
+  };
 }
 
 /**
@@ -535,6 +544,16 @@ export interface ServerEvents {
       unlockReasons: string[];
     }>;
     proficiency: import('../game/crafting').CraftingProficiencyData;
+  };
+  /** Phase 132: Batch position update for all players in zone (server → client, 20 Hz) */
+  'positionBatch': {
+    updates: Array<{ playerId: string; px: number; py: number }>;
+  };
+  /** Phase 132: Server-authoritative position correction for reconciliation */
+  'positionCorrection': {
+    px: number;
+    py: number;
+    sequence: number;  // echoes the client's sequence for reconciliation
   };
 }
 
