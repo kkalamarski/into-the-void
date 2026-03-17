@@ -18,11 +18,11 @@ Requirements for milestone v1.26 Visual Overhaul & Atmosphere. Each maps to road
 
 ### Weather System
 
-- [ ] **WTHR-01**: Weather particles render viewport-relative (fixed to screen, not world)
-- [ ] **WTHR-02**: Each biome has appropriate weather type (rain, snow, ash, spores, mist, or none)
-- [ ] **WTHR-03**: Weather transitions smoothly when player moves between biomes
-- [ ] **WTHR-04**: Weather particles respect depth budget (above terrain, below UI)
-- [ ] **WTHR-05**: Particle emitters are cleaned up on chunk unload (no memory leaks)
+- [x] **WTHR-01**: Weather particles render viewport-relative (fixed to screen, not world)
+- [x] **WTHR-02**: Each biome has appropriate weather type (rain, snow, ash, spores, mist, or none)
+- [x] **WTHR-03**: Weather transitions smoothly when player moves between biomes
+- [x] **WTHR-04**: Weather particles respect depth budget (above terrain, below UI)
+- [x] **WTHR-05**: Particle emitters are cleaned up on chunk unload (no memory leaks)
 
 ### Day/Night Cycle
 
@@ -81,11 +81,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TERR-04 | Phase 126 | Complete |
 | TERR-05 | Phase 126 | Complete |
 | TERR-06 | Phase 126 | Complete |
-| WTHR-01 | Phase 127 | Pending |
-| WTHR-02 | Phase 127 | Pending |
-| WTHR-03 | Phase 127 | Pending |
-| WTHR-04 | Phase 127 | Pending |
-| WTHR-05 | Phase 127 | Pending |
+| WTHR-01 | Phase 127 | Complete |
+| WTHR-02 | Phase 127 | Complete |
+| WTHR-03 | Phase 127 | Complete |
+| WTHR-04 | Phase 127 | Complete |
+| WTHR-05 | Phase 127 | Complete |
 | DNTC-01 | Phase 128 | Pending |
 | DNTC-02 | Phase 128 | Pending |
 | DNTC-03 | Phase 128 | Pending |
