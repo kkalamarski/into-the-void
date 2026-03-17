@@ -124,7 +124,7 @@
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 131. Shared Foundation | 2/2 | Complete    | 2026-03-17 | - |
-| 132. Server Movement Handler | 3/3 | Complete   | 2026-03-17 | - |
+| 132. Server Movement Handler | 3/3 | Complete    | 2026-03-17 | - |
 | 133. Distance System Migration | v1.27 | 0/TBD | Not started | - |
 | 134. Client Movement Rewrite | v1.27 | 0/TBD | Not started | - |
 | 135. Cleanup and Collision Audit | v1.27 | 0/TBD | Not started | - |
