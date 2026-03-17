@@ -9,12 +9,12 @@ Requirements for milestone v1.26 Visual Overhaul & Atmosphere. Each maps to road
 
 ### Terrain Rendering
 
-- [ ] **TERR-01**: All terrain tiles render as procedural 3-shade isometric cubes (top, lit side, shadow side)
-- [ ] **TERR-02**: Each biome tile type has a distinct color palette defining its 3 shades
-- [ ] **TERR-03**: Tile cubes include biome-specific procedural accent details (grass tufts, sand grains, ice cracks, etc.)
-- [ ] **TERR-04**: Tile variant randomization produces visual variety at same tile type (deterministic per position)
-- [ ] **TERR-05**: Elevation tinting is preserved (higher = brighter, shadows from adjacent higher tiles)
-- [ ] **TERR-06**: Procedural cubes are baked to GPU textures via generateTexture(), not rendered as live Graphics
+- [x] **TERR-01**: All terrain tiles render as procedural 3-shade isometric cubes (top, lit side, shadow side)
+- [x] **TERR-02**: Each biome tile type has a distinct color palette defining its 3 shades
+- [x] **TERR-03**: Tile cubes include biome-specific procedural accent details (grass tufts, sand grains, ice cracks, etc.)
+- [x] **TERR-04**: Tile variant randomization produces visual variety at same tile type (deterministic per position)
+- [x] **TERR-05**: Elevation tinting is preserved (higher = brighter, shadows from adjacent higher tiles)
+- [x] **TERR-06**: Procedural cubes are baked to GPU textures via generateTexture(), not rendered as live Graphics
 
 ### Weather System
 
@@ -75,12 +75,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TERR-01 | Phase 126 | Pending |
-| TERR-02 | Phase 126 | Pending |
-| TERR-03 | Phase 126 | Pending |
-| TERR-04 | Phase 126 | Pending |
-| TERR-05 | Phase 126 | Pending |
-| TERR-06 | Phase 126 | Pending |
+| TERR-01 | Phase 126 | Complete |
+| TERR-02 | Phase 126 | Complete |
+| TERR-03 | Phase 126 | Complete |
+| TERR-04 | Phase 126 | Complete |
+| TERR-05 | Phase 126 | Complete |
+| TERR-06 | Phase 126 | Complete |
 | WTHR-01 | Phase 127 | Pending |
 | WTHR-02 | Phase 127 | Pending |
 | WTHR-03 | Phase 127 | Pending |

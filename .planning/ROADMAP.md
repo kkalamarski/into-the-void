@@ -45,7 +45,7 @@
 
 **Milestone Goal:** Replace PNG tile sprites with procedural light-aware colored cubes, add biome weather particles, a day/night cycle, biome atmospheric effects, and clean up the rendering pipeline.
 
-- [ ] **Phase 126: Procedural Terrain Cubes** - Bake 3-shade isometric cubes to GPU textures; all biomes get distinct color palettes and accent details
+- [x] **Phase 126: Procedural Terrain Cubes** - Bake 3-shade isometric cubes to GPU textures; all biomes get distinct color palettes and accent details (completed 2026-03-17)
 - [ ] **Phase 127: Particle Weather System** - Viewport-fixed weather particles per biome with chunk-lifecycle cleanup
 - [ ] **Phase 128: Day/Night Cycle** - Camera-level brightness and color-temperature shift using postFX ColorMatrix
 - [ ] **Phase 129: Biome Atmospheric Effects** - Per-biome fog, glow, haze and murk via camera postFX coordinated with day/night
@@ -63,7 +63,7 @@
   3. Same tile position always produces the same accent detail variant across sessions (deterministic per world coordinate)
   4. Elevation tinting is visible — high-elevation tiles appear brighter, shadowed tiles appear darker, independent of biome color
   5. Frame rate in a dense open biome is not measurably worse than v1.25 (cubes baked to GPU textures, not live Graphics draws)
-**Plans**: TBD
+**Plans**: 3 (126-01 ProceduralTileGenerator, 126-02 Wire into pipeline, 126-03 Build verification)
 
 ### Phase 127: Particle Weather System
 **Goal**: Each biome has viewport-fixed weather particles (rain, snow, ash, spores, mist, or none) that transition smoothly on biome change and are fully cleaned up when chunks unload
@@ -117,11 +117,11 @@ Phases execute in numeric order: 126 → 127 → 128 → 129 → 130
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 126. Procedural Terrain Cubes | v1.26 | 0/TBD | Not started | - |
+| 126. Procedural Terrain Cubes | v1.26 | 3/3 | Complete | 2026-03-17 |
 | 127. Particle Weather System | v1.26 | 0/TBD | Not started | - |
 | 128. Day/Night Cycle | v1.26 | 0/TBD | Not started | - |
 | 129. Biome Atmospheric Effects | v1.26 | 0/TBD | Not started | - |
 | 130. Rendering Cleanup & Verification | v1.26 | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-03-17 — v1.26 roadmap created*
+*Last updated: 2026-03-17 — Phase 126 complete*
