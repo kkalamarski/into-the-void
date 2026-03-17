@@ -77,7 +77,10 @@
   2. The server's old 140ms rate limiter is replaced — positions are validated by velocity/distance, not move-count throttle
   3. The server broadcasts `{playerId, px, py, sequence}` to the zone room at approximately 20Hz (50ms tick)
   4. Player pixel position is stored in memory as floats and converted to tile integers on disconnect (no DB schema change)
-**Plans**: TBD
+**Plans**: 3 plans
+  - [ ] 132-01-PLAN.md — Wire-format type contracts (PixelMovePayload, positionBatch, positionCorrection events) + bitmaskToKeyState adapter with tests
+  - [ ] 132-02-PLAN.md — ConnectedPlayer pixel state (px/py/lastPxInputTime), connect/disconnect lifecycle, ZonesService.getChunkSync()
+  - [ ] 132-03-PLAN.md — MovementService 20Hz tick loop, GameGateway handler, old rate limiter removal
 
 ### Phase 133: Distance System Migration
 **Goal**: Every game system that performs a range check uses pixel Euclidean distance via `pixelDistanceTo()` — no tile-integer distances remain in active gameplay code
