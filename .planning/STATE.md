@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Pixel Movement Rewrite
 status: unknown
-last_updated: "2026-03-17T22:09:51.932Z"
+last_updated: "2026-03-17T22:33:36.560Z"
 progress:
-  total_phases: 124
+  total_phases: 125
   completed_phases: 124
-  total_plans: 323
-  completed_plans: 323
+  total_plans: 326
+  completed_plans: 324
 ---
 
 # Project State
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 131 — Shared Foundation
+**Current focus:** Phase 132 — Server Movement Handler
 
 ## Current Position
 
-Phase: 131 of 135 (Shared Foundation)
-Plan: 2 of TBD in current phase
-Status: In progress — 131-02 complete, ready for 132
-Last activity: 2026-03-17 — Completed 131-02 (PixelPosition + pixel-distance module, 27 tests passing)
+Phase: 132 of 135 (Server Movement Handler)
+Plan: 2 of 3 in current phase
+Status: In progress — 132-02 complete, ready for 132-03
+Last activity: 2026-03-17 — Completed 132-02 (pixel state infrastructure: ConnectedPlayer px/py/lastPxInputTime, ZonesService.getChunkSync)
 
 Progress: [██░░░░░░░░] 20%
 
@@ -44,6 +44,7 @@ Progress: [██░░░░░░░░] 20%
 | 131-02 | 2 | 3 min | 3 min |
 
 *Updated after each plan completion*
+| Phase 132 P02 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,9 @@ Recent decisions affecting current work:
 - [Phase 131-02]: tileToPixelCenter uses (tileIndex + 0.5) * TILE_SIZE_PX — tile (0,0) center at (64,64)
 - [Phase 131-02]: Range constants defined as TILE_SIZE_PX multiples so they auto-scale if tile size changes
 - [Phase 131-02]: NPC_INTERACT_RANGE_PX aliased to GATHER_RANGE_PX (192px) — consistent interaction distance across gathering and dialogue
+- [Phase 132]: Pixel state (px/py/lastPxInputTime) stored in-memory only on ConnectedPlayer; no DB schema change needed
+- [Phase 132]: handleDisconnect converts px/py via pixelToTile before updateCharacterPosition DB write
+- [Phase 132]: getChunkSync returns undefined if zone not cached; callers skip validation that tick rather than blocking
 
 ### Pending Todos
 
@@ -79,9 +83,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-17
-Stopped at: Completed 131-02-PLAN.md (PixelPosition + pixel-distance module, 27 tests passing)
+Stopped at: Completed 132-02-PLAN.md (pixel state infrastructure)
 Resume file: None
-Next action: Execute Phase 132 (client movement)
+Next action: Execute Phase 132-03 (MovementService tick loop)
 
 ---
-*Last updated: 2026-03-17 — Completed 131-02 PixelPosition and pixel-distance module*
+*Last updated: 2026-03-17 — Completed 132-02 pixel state infrastructure (ConnectedPlayer px/py, getChunkSync)*
