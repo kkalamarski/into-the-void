@@ -1,198 +1,191 @@
 # Project Research Summary
 
-**Project:** Into the Void — v1.26 Visual Overhaul & Atmosphere
-**Domain:** Phaser 3 isometric 2D game rendering — procedural terrain, particle weather, day/night cycle, biome atmospheric effects
+**Project:** Into the Void — v1.27 Pixel Movement Rewrite
+**Domain:** Multiplayer 2D isometric MMO — tile-step to continuous pixel movement migration
 **Researched:** 2026-03-17
 **Confidence:** HIGH
 
 ## Executive Summary
 
-v1.26 is a pure rendering milestone requiring zero new npm packages and zero server-side changes. Every required capability — procedural cube textures, particle weather, day/night ColorMatrix tinting, and biome atmosphere effects — is built into the already-installed Phaser 3.90.0. The entire milestone is four new system classes (`ProceduralTileRenderer`, `WeatherSystem`, `DayNightSystem`, `AtmosphereSystem`) plus targeted modifications to `TileRenderer`, `WorldScene`, and `PreloadScene`. The work is additive and self-contained within the client game layer.
+The v1.27 milestone is a surgical architectural rewrite, not a feature addition. The existing stack (Phaser 3 Arcade Physics, Socket.IO, NestJS, shared-types) is fully capable of continuous pixel movement — no new packages are required. The work replaces discrete tile-step mechanics with velocity-based movement: the client predicts position each frame via `setVelocity()`, sends key-bitmask input at 20Hz, and the server validates speed + collision then broadcasts authoritative positions at the same rate. Remote players are interpolated between server snapshots using a 2-snapshot linear lerp. The entire milestone is a controlled replacement of existing systems with zero external dependency additions.
 
-The recommended approach is to build in strict dependency order: procedural cube rendering as the foundation, then day/night cycle, then biome atmosphere (which reuses the day/night ColorMatrix infrastructure), then particle weather (which is independent of the other two but needs the visual base in place). The highest-value, lowest-risk path is to bake all procedural cube geometry into named GPU textures once at scene init using `graphics.generateTexture()`, then render tiles as `Image` objects — this preserves the existing elevation tinting, batching, and depth-sort pipeline with no structural changes to callers.
+The recommended approach is bottom-up, dependency-ordered: establish the coordinate contract in shared-types first (pixel floats as tile-unit floats, not arbitrary raw pixels), then build the server movement handler around that contract, then migrate all distance-dependent game systems (combat, gathering, AI, fog, zone boundaries, portals) to pixel Euclidean distance, and finally rewrite the client movement loop and remote player interpolation. This ordering ensures every build gate is testable in isolation and eliminates the most catastrophic class of failure: coordinate-unit mismatches that cascade silently through the codebase.
 
-The critical risk cluster is around Phaser object lifecycle and depth layering. Three patterns have been confirmed to cause hard regressions in this specific codebase: per-tile `Graphics` objects (draw call explosion to sub-10 FPS), per-tile `setTint()` for day/night (overwrites elevation shading), and missing biome hook in `fullZoneReset()` (atmosphere breaks on teleport). All three are preventable with upfront design decisions before any implementation begins.
-
----
+The three highest risks are: (1) coordinate-unit ambiguity causing integer-coercion in existing validation and range checks (silent failures, wrong distances, broken combat), (2) client-server prediction divergence from different timestep integration producing constant rubber-banding, and (3) the existing rate-limiter tuned for 2 moves/second being completely incompatible with the required 20Hz position stream. All three have well-understood mitigations: an explicit `PixelPosition` interface with documented float semantics, a soft-authority server design (speed-cap + one collision sweep per update, not full physics simulation), and replacing the move-interval gate with a velocity/distance validator.
 
 ## Key Findings
 
 ### Recommended Stack
 
-No dependency changes are required. All APIs are native to Phaser 3.90.0 (installed; semver `^3.80.0`). PostFX pipelines, the v3.60+ `ParticleEmitter` API, `graphics.generateTexture()`, and `camera.postFX.addColorMatrix()` are all built-in and verified against official docs and the installed package.
-
-The old `ParticleEmitterManager` API was removed in Phaser v3.60 and must not be used. All particle creation goes through `scene.add.particles(x, y, key, config)` which returns a `ParticleEmitter` directly. All camera postFX are WebGL-only; a Canvas fallback (full-screen `Rectangle` overlay) is required but straightforward.
+No new package installations are required. Phaser 3's built-in Arcade Physics provides `setVelocity`, `setBodySize`, AABB body collision, and `StaticGroup` tile blockers — everything needed for client-side continuous movement and pixel-accurate collision. Socket.IO v4 handles the 20Hz position stream without configuration changes. NestJS `setInterval` in `PlayerService.onModuleInit()` runs the server broadcast loop, consistent with the pattern already used by `AutomationService`. The only structural change is adding float pixel fields to the `Position` type in `shared-types` and providing a new `PixelPosition` interface for network events. No version bumps, no new dependencies, no infrastructure changes.
 
 **See:** `.planning/research/STACK.md`
 
 **Core technologies:**
-- **Phaser 3.90.0**: All rendering, FX pipelines, particles — no capability gaps; all required features present
-- **TypeScript 5.4**: Four new typed system classes following existing conventions in `TileRenderer.ts`, `FogManager`, `RareNodeFX`
-- **`graphics.generateTexture()`**: Bakes procedural cube geometry to named GPU textures at scene init; ~14ms one-time cost enables hardware-accelerated `Image` rendering for all tiles
-- **`camera.postFX.addColorMatrix()`**: Single GPU pass for day/night brightness and biome color grading — O(1) cost, not O(tiles)
-- **`scene.add.particles()`**: v3.60+ direct emitter API for screen-space weather particles with `setScrollFactor(0)` viewport anchoring
+- **Phaser 3 Arcade Physics (built-in, existing):** velocity-based local player movement + AABB tile collision via `StaticGroup` — no upgrade or new engine required; `setVelocity`, `setBodySize`, `physics.add.existing` all present in current 3.80+
+- **Socket.IO v4 (existing):** 20Hz bi-directional position stream — same infrastructure, new event shape (`player:input` with key-bitmask replaces `player:move` with direction enum)
+- **NestJS + `setInterval` (existing):** server-side 50ms broadcast loop for zone-room position snapshots — consistent with existing automation pattern in `AutomationService`
+- **`@into-the-void/shared-types` (internal):** add `PixelPosition {px, py, zoneId}` alongside `Position`; update `ClientEvents`/`ServerEvents` payloads; `PLAYER_SPEED_PX` and `PLAYER_HITBOX` constants
+- **`@into-the-void/game-logic` (internal):** new `pixel-validation.ts` and `pixel-distance.ts` modules; existing `collisionMap: boolean[][]` reused as AABB collision data source
 
 ### Expected Features
 
-**See:** `.planning/research/FEATURES.md`
+This milestone is a full rewrite. Every item below is required for the game to function correctly after the rewrite. There are no optional features at MVP.
 
-**Must have (table stakes — v1.26 launch):**
-- 3-shade procedural cube rendering (top + lit south face + shadow east face) as primary tile renderer
-- Per-biome 3-shade color palettes derived from existing `BIOME_COLORS` entries in `biome.ts`
-- Biome weather particles: rain (tidal/kelp/shore), snow (ice/frozen expanse), ash (volcanic/crater), spores (fungal/bioluminescent/toxic)
-- Gradual day/night cycle (visual-only, no gameplay effect) using camera postFX ColorMatrix brightness tween
-- Biome atmosphere overlay: vignette for deep/trench biomes, bloom for void_rift/bioluminescent/crystal, color grading for ice/volcanic/toxic
-- Rendering code cleanup: remove or guard dead PNG load paths in `PreloadScene.ts`
+**See:** `.planning/research/FEATURES-PIXEL-MOVEMENT.md`
 
-**Should have (add within milestone if time allows):**
-- Dawn/dusk color temperature shift (warm orange bias at dawn, cool blue at dusk)
-- Configurable weather and atmosphere toggles in existing `uiSettingsStore` settings menu
+**Must have (table stakes — game is broken without these):**
+- Continuous pixel position type (`{px, py, zoneId}` tile-unit floats) with derived tile x/y for legacy consumers
+- Velocity-based WASD movement in Phaser update loop via `body.setVelocity()` — no move delay, no direction queue
+- Pixel AABB hitbox collision against `StaticGroup` of blocked tiles built from `collisionMap`
+- Diagonal normalization (multiply by `1/√2` when both axes active to prevent 41% diagonal speed bonus)
+- Server-authoritative position sync at 20Hz with sequence-numbered reconciliation
+- Client-side prediction + server reconciliation for local player pixel position
+- Entity interpolation (2-snapshot linear lerp) for remote players
+- Pixel Euclidean distance for all range checks (combat melee/ranged, gathering, NPC, AI aggro/leash)
+- Tile speed modifiers applied as continuous velocity multipliers per frame from `getMovementSpeedModifier()`
+- Remove `PathfindingController` and A* click-to-move entirely
+- Fix flat blocking tiles — audit `world-gen` collision map against `TileRegistry.walkable`
+- DB position columns verified to accept float values (convert pixel to tile on disconnect, tile-center to pixel on connect — no schema migration required)
 
-**Defer (v2+):**
-- Night visibility reduction via fog-of-war integration (requires fixing the disabled `FogRenderer`)
-- Per-tile dynamic shadow recalculation at sun angle (too expensive: 7,000+ re-tint calls per update)
-- Weather gameplay effects (requires server-side behavioral changes)
-- Weather-reactive ambient audio (no audio assets exist yet)
+**Should have (post-ship refinement):**
+- Smooth zone boundary crossing at pixel granularity (requires world-coordinate system — deferred P2)
+- Inertia / drag on key release (50–100ms fade-out — low complexity, nice feel)
+- Collision sliding polish for corner edge cases
 
-**Anti-features confirmed — never implement:**
-- World-relative weather particles (appear to scroll with terrain; use `setScrollFactor(0)` instead)
-- Instant day/night transitions (jarring; minimum 60-second real-time tween)
-- Per-tile `setTint()` for ambient day/night (overwrites elevation shading; use camera ColorMatrix)
-- Shader-based fog-of-war replacement (risks breaking existing `FogRenderer` persistence logic)
+**Defer (v1.28+):**
+- Click-to-move return (requires pixel-space navmesh)
+- Full server-side physics simulation (only warranted if cheating becomes a real problem at scale)
 
 ### Architecture Approach
 
-All four new systems operate entirely within `WorldScene` as standalone classes with single-responsibility interfaces. `DayNightSystem` lives in `apps/web/src/game/systems/` (simulated state, not rendering). `WeatherSystem` and `AtmosphereSystem` live in `apps/web/src/game/rendering/`. The data layer is a static `BIOME_ATMOSPHERE_CONFIG` lookup (BiomeType → weather type + atmosphere FX params) derived from `lore/world-bible.md`. `WorldScene` owns instantiation, drives `.update()` calls, and fires `.setBiome()` at both zone transition paths.
+The architecture follows a "client predicts, server validates with soft authority" pattern — the industry standard for MMOs at this scale. The client runs continuous movement every frame via `PixelMovementController` (new), emits key-bitmask + predicted position at 20Hz, and reconciles against server-confirmed positions using sequence replay. The server receives input packets, checks a speed cap (`PLAYER_SPEED_PX * dt * 1.2`), runs one `resolvePixelCollision()` sweep using the authoritative `collisionMap`, updates `ConnectedPlayer.px/py` in memory, and broadcasts position to the zone room. DB persistence is unchanged: pixel-to-tile conversion on disconnect, tile-to-pixel-center initialization on connect. No DB schema migration is required.
 
 **See:** `.planning/research/ARCHITECTURE.md`
 
 **Major components:**
-1. **`ProceduralTileRenderer`** — bakes 3-shade cube geometry to GPU textures once at scene init; `TileRenderer.createCubeSprite()` uses these textures as primary path; PNG sprites remain as optional override
-2. **`DayNightSystem`** — advances `dayProgress` float (0–1) each frame via `Math.sin`; exposes `getBrightness()` consumed by `AtmosphereSystem`; drives ColorMatrix (WebGL) or Canvas Rectangle overlay fallback
-3. **`WeatherSystem`** — one active `ParticleEmitter` at a time; destroy + recreate on biome change; `setScrollFactor(0)` for viewport-fixed weather; emitters registered per `zoneId` for cleanup on chunk unload
-4. **`AtmosphereSystem`** — calls `cameras.main.postFX.clear()` on every biome transition, then re-adds DayNight ColorMatrix, then applies fresh vignette/bloom/color-matrix per `BIOME_ATMOSPHERE_CONFIG`
 
-**Key integration points (both must be updated — confirmed from codebase):**
-- `WorldScene.commitZoneTransition()` — walking between zones
-- `WorldScene.fullZoneReset()` — teleport, hub recall, portal use
+1. **`PixelMovementController` (NEW — `apps/web/src/game/systems/`):** Client prediction: velocity from key bitmask, per-frame AABB collision against local collision map, 20Hz emit throttle, reconciliation with server-confirmed position + sequence replay. Replaces `MovementController.ts` entirely.
+2. **`pixel-validation.ts` (NEW — `packages/game-logic/src/movement/`):** Shared `resolvePixelCollision()`, `velocityFromKeys()`, `validatePixelSpeed()`, `PLAYER_SPEED_PX`, `PLAYER_HITBOX` constants — runs identically on client and server. Key bitmask prevents velocity-manipulation exploits.
+3. **`pixel-distance.ts` (NEW — `packages/game-logic/src/movement/`):** `pixelDistanceTo()`, `tileToPixelCenter()`, `pixelToTile()`, all pixel range constants (`MELEE_RANGE_PX = 144`, `GATHER_RANGE_PX = 192`, `AGGRO_RADIUS_PX = 480`, `LEASH_RADIUS_PX = 960`, etc.)
+4. **`PixelPosition` + `PixelMovePayload` (NEW — `packages/shared-types/`):** Float pixel coordinate interface for network protocol and in-memory server state; `{keys, px, py, sequence, timestamp}` client payload
+5. **`GameGateway.handleMove()` (MODIFY):** Accept `PixelMovePayload`, enforce speed cap, call `resolvePixelCollision`, broadcast `{playerId, px, py, sequence}` to zone room at 20Hz
+6. **`WorldScene` (MODIFY):** Remove delay gate, chord detection, pathfinding init, click-to-move handler, tween-based sprite movement; drive sprite directly from `px/py` floats; add remote player lerp loop
+7. **`MovementController.ts` + `PathfindingController.ts` (DELETE)**
 
 ### Critical Pitfalls
 
 **See:** `.planning/research/PITFALLS.md`
 
-1. **Per-tile `Graphics` objects cause draw call explosion** — at 7,000+ visible tiles each Graphics object is a separate WebGL batch flush; sub-10 FPS in open biomes. Prevention: bake all cube geometry to named textures via `graphics.generateTexture()` at scene init, render as `Image` objects. Must be addressed in Phase 1 before any day/night or atmosphere system is built on top.
+1. **Position type integer-coercion** — JavaScript silently floors float array indices; existing `validateMovement` checks `dx > 1` assuming tile integers. Without an explicit `PixelPosition` type, callers will round before writing to store, causing tile-snapping jitter and broken range checks. Prevention: declare coordinate unit as tile-unit floats at the start with JSDoc annotation; remove all integer-distance guards in `validateMovement` before any movement code touches them. Must be the first commit. (Phase 1)
 
-2. **Per-tile `setTint()` for day/night overwrites elevation tinting** — `applyElevationTint()` already sets per-tile tint state; any day/night system that calls `setTint()` per tile destroys the elevation depth cue and costs ~7,000 calls per transition. Prevention: use `camera.postFX.addColorMatrix()` (single GPU pass) — confirmed correct approach in both STACK.md and PITFALLS.md.
+2. **Client-server prediction divergence** — client integrates `velocity * deltaTime` at 60fps; server processes on receipt at irregular intervals. Different timesteps produce different float accumulations, causing constant reconciliation corrections and visible rubber-banding even on LAN. Prevention: server is soft-authority — it performs one speed-cap check and one collision sweep per update, not a full physics simulation. Accept the client's claimed position if plausible; correct only when it diverges beyond threshold. (Phase 2)
 
-3. **Missing `fullZoneReset()` biome hook breaks atmosphere on teleport** — systems updated only in `commitZoneTransition()` will be correct when walking but wrong after portal/hub recall. Prevention: always call `setBiome()` and `setWeather()` in both transition methods. Exact line numbers confirmed in codebase (commit ~1033, fullReset ~1187).
+3. **Rate limiter incompatible with 20Hz stream** — existing `lastMoveTimes` enforces 140ms intervals (7Hz max). Pixel movement requires 20Hz (50ms). Prevention: replace per-move time gate with a speed/distance validator: reject updates implying `distance > PLAYER_SPEED_PX * dt * 1.5`. (Phase 2)
 
-4. **`cameras.main.postFX.clear()` not called on biome transition causes FX stacking** — each `add*()` call stacks a new effect; after 3 biome transitions you have 3 conflicting ColorMatrix effects. Prevention: `AtmosphereSystem.setAtmosphere()` always calls `postFX.clear()` first, then re-adds DayNight ColorMatrix reference, then adds biome FX.
+4. **Cascade of tile-unit range checks** — `CombatService.creatureAttackTick` (`dist > 1` Chebyshev), `GatheringService.canInteract` (Manhattan tiles), `AiService` aggro/leash radius, `FogManager.revealTiles`, zone boundary detection (`ZONE_SIZE` vs pixel), and portal deduplication (keyed on integer tile position) all assume tile-integer coordinates. Any one silently missed will either break gameplay or create an exploit. Prevention: migrate all in a single coordinated Phase 3 pass with per-system verification tests. (Phase 3)
 
-5. **Particle emitters not destroyed on chunk unload cause memory leak and FPS degradation** — emitters are top-level `GameObjects` not part of the chunk container; they do not auto-destroy on `unloadChunkContainer()`. Prevention: register all emitters in a `Map<zoneId, ParticleEmitter[]>` and hook into `onChunkUnloaded()`.
-
----
+5. **Gathering exploit via single range check** — `GatheringService` validates `canInteract` at start but not at completion. With continuous movement, a player can walk away mid-gather. Prevention: validate range again at `completeGathering` using the pixel distance threshold. (Phase 3)
 
 ## Implications for Roadmap
 
-All four research files independently converged on the same 5-phase dependency order. The phase sequence is determined by hard compile-time and render-time dependencies.
+Based on research, the dependency chain is clear and unambiguous. All four research files converged on the same bottom-up build order. Six phases are suggested.
 
-### Phase 1: Procedural Terrain Cubes
-**Rationale:** Foundation for everything else. Day/night and atmosphere both rely on all tiles being `Image` objects (not `Graphics`) so that camera-level postFX applies uniformly. The Graphics fallback path in `createFallbackCube()` silently defeats both systems. This phase eliminates the fallback path and makes procedural cubes the permanent primary renderer.
-**Delivers:** `ProceduralTileRenderer` class; all tiles baked to named GPU textures at scene init; `TileRenderer.createCubeSprite()` returns `Image` objects using procedural textures; PNG sprites remain as optional per-tile override; dead PNG load paths cleaned from `PreloadScene.ts`
-**Addresses:** 3-shade procedural cube rendering (P1), biome color palettes (P1), rendering cleanup (P1)
-**Avoids:** Draw call explosion (Pitfall 1), Graphics fallback breaking uniform tinting (Pitfall 6)
+### Phase 1: Shared Foundation — Position Type + Pixel Math
+**Rationale:** Everything downstream depends on a settled coordinate contract. Adding `PixelPosition`, `PixelMovePayload`, and both game-logic modules alongside existing code causes zero breakage — nothing existing is modified. This phase is the compile-time prerequisite for all other phases and must land first to eliminate coordinate-unit ambiguity before any movement code is written.
+**Delivers:** `PixelPosition` interface, `PixelMovePayload` type, `PLAYER_SPEED_PX`/`PLAYER_HITBOX` constants, `pixel-validation.ts` (`resolvePixelCollision`, `velocityFromKeys`, `validatePixelSpeed`), `pixel-distance.ts` (all range constants + conversion helpers `tileToPixelCenter`, `pixelToTile`), unit tests for pixel collision and pixel distance functions.
+**Addresses:** Enables all downstream phases; pitfall: position type ambiguity and integer-coercion cascade.
+**Avoids:** The situation where every subsequent phase discovers coordinate-unit mismatch bugs independently.
 
-### Phase 2: Particle Weather System
-**Rationale:** Independent of day/night and atmosphere after Phase 1 — can be built in parallel once tile rendering is stable. Establishing the weather particle depth budget (depth 950) before atmosphere claims depth 900 and day/night overlay claims depth 500 prevents depth conflicts at design time. Chunk lifecycle hooks are simpler to design before the other two systems add more scene objects.
-**Delivers:** `WeatherSystem` class; 4 weather types (rain/snow/ash/spores); viewport-fixed emitters via `setScrollFactor(0)`; fade in/out alpha tween on biome transition (3 seconds); `Map<zoneId, emitter[]>` cleanup on chunk unload; weather textures generated via `generateTexture` (no external assets)
-**Addresses:** Biome weather particles (P1 feature)
-**Avoids:** Particle emitter memory leak (Pitfall 7), particle depth breaks isometric sorting (Pitfall 3)
+### Phase 2: Server Movement Handler
+**Rationale:** Server is authoritative; the client-side prediction written in Phase 4 must target the actual server API, not a speculative one. Building server before client reduces round-trip iteration. The rate-limiter redesign and soft-authority pattern must be locked in here — they directly influence how the client sends input and handles reconciliation.
+**Delivers:** `ConnectedPlayer.px/py/lastPixelMoveTime` in-memory state, `handleMove()` accepting `PixelMovePayload` with speed-cap + `resolvePixelCollision` validation, 20Hz position broadcast to zone room, pixel-to-tile conversion on disconnect, tile-to-pixel-center init on connect (no DB schema change), rate limiter replaced with velocity/distance validator.
+**Uses:** `pixel-validation.ts` from Phase 1; `resolvePixelCollision` shared between client and server.
+**Implements:** "Server as Soft Authority" architecture pattern (speed cap 1.2x, one collision sweep, broadcast dirty positions at 50ms tick).
+**Avoids:** Rate-limiter incompatibility pitfall; prediction-divergence pitfall (server design drives client contract).
 
-### Phase 3: Day/Night Cycle
-**Rationale:** Requires Phase 1 (all tiles Image-backed for uniform camera postFX). Provides `DayNightSystem` that `AtmosphereSystem` (Phase 4) receives via constructor injection. WebGL `ColorMatrix` approach is confirmed; Canvas `Rectangle` fallback is documented and simple. Documents the depth layer table in `WorldScene.ts` before Phase 4 adds more layers.
-**Delivers:** `DayNightSystem` class; camera brightness tween (0.55–1.0 range); blue-shift night tone via `colorMatrix.night()`; configurable game-day duration (default 20 minutes real-time); Canvas fallback `Rectangle` overlay at depth 500; `getDayBrightness()` accessor for `AtmosphereSystem`
-**Addresses:** Day/night cycle (P1 feature)
-**Avoids:** Per-tile setTint overwriting elevation tinting (Pitfall 2), fog-of-war + overlay depth conflict (Pitfall 5)
+### Phase 3: Distance System Migration
+**Rationale:** All game systems that check range must be migrated before any gameplay QA. These are independent of the client physics rewrite and can be validated in isolation. A single coordinated phase is safer than incremental migration — all range constants change together, minimizing the window for mixed-unit bugs producing exploits or broken gameplay.
+**Delivers:** `CombatService` melee + pack-call range using `pixelDistanceTo()`, `GatheringService` interaction range in pixels with re-validation at completion, `AiService` aggro and leash radius using pixel constants, `FogManager` tile-conversion at call site (`pixelToTile()` before fog reveal), zone boundary detection using `ZONE_SIZE_PX = ZONE_SIZE * TILE_SIZE`, portal deduplication keyed on tile-snapped position (not raw float), NPC interaction range in pixels, `AutomationService` deployable range in pixels.
+**Addresses:** Table-stakes "Pixel-distance interaction checks"; PITFALLS.md pitfalls 3, 4, 5, 6, 8.
+**Avoids:** Gameplay exploits from range checks using wrong coordinate units; "looks done but isn't" failures that only surface during QA.
 
-### Phase 4: Biome Atmospheric Effects
-**Rationale:** Depends on Phase 3 — `AtmosphereSystem` shares the camera postFX channel with `DayNightSystem` and must re-add the DayNight ColorMatrix instance after each `postFX.clear()`. The `BIOME_ATMOSPHERE_CONFIG` covers all 16 biomes from `lore/world-bible.md`. Position-based density blending prevents hard seams at chunk boundaries.
-**Delivers:** `AtmosphereSystem` class; `BIOME_ATMOSPHERE_CONFIG` covering all 16 biomes; vignette (deep/trench/void), bloom (bioluminescent/void_rift/crystal), color grading (ice/volcanic/toxic); 2-second cross-fade on biome transition; biome hook wired in both `commitZoneTransition()` and `fullZoneReset()`
-**Addresses:** Biome atmosphere overlay (P1 feature), biome visual identity reinforcement
-**Avoids:** FX stacking on biome transition (Pitfall 4), atmosphere hard lines at chunk boundaries (Pitfall 4 corollary), missing fullZoneReset hook (Pitfall — confirmed integration gotcha)
+### Phase 4: Client Movement Rewrite
+**Rationale:** Client rewrite comes after server and game-logic are stable, so `PixelMovementController` is written to target the confirmed API. `MovementController` and `PathfindingController` are deleted in this phase — not deprecated, deleted — to eliminate dead code confusion. The `WorldScene` update loop changes from tween-based tile movement to direct sprite positioning from `px/py` floats.
+**Delivers:** `PixelMovementController.ts` (velocity from keys via `velocityFromKeys()`, per-frame AABB collision, 20Hz emit, sequence-based reconciliation), `WorldScene` rewritten (no delay gate, no chord detection, no tweens, Arcade Physics `StaticGroup` tile blockers built from `collisionMap`, direct pixel sprite positioning via `isoTransform`), `MovementController.ts` and `PathfindingController.ts` deleted, click-to-move `pointerup` handler removed.
+**Uses:** Phaser 3 Arcade Physics `setVelocity`, `StaticGroup` for tile blockers, `physics.add.existing()` on player sprite, hitbox `setBodySize(48, 24)` / `setOffset(24, 72)` for isometric footprint.
+**Implements:** `PixelMovementController` architecture; Arcade Physics AABB collision via `StaticGroup` (not Tilemap — project uses procedural rendering).
+**Avoids:** Tween anti-pattern (root cause of current unresponsive feel); keeping dead click-to-move code; using Matter.js (overkill) or server-side physics simulation.
 
-### Phase 5: Rendering Cleanup and Verification
-**Rationale:** Deferred until all systems are stable. Removing dead PNG load paths early risks breaking PNG sprite overrides for biomes that still have valid sprites. Cleanup is only safe when Phases 1–4 are verified working. Performance baseline comparison requires a stable build.
-**Delivers:** All dead PNG tile load paths removed from `PreloadScene.ts`; depth layer table documented as a comment block in `WorldScene.ts`; `FogRenderer` confirmed disabled (not accidentally re-enabled during refactor); FPS baseline check in high-density tile zone (target: 5% or less regression vs v1.25)
-**Addresses:** Rendering cleanup (P1 feature), technical debt documentation, performance gate
-**Avoids:** Accidental `FogRenderer` re-enable (Pitfall 5), accumulated stale load paths
+### Phase 5: Remote Player Interpolation
+**Rationale:** Multiplayer correctness requires smooth remote player rendering. This is architecturally separate from local player movement — prediction for local, interpolation for remote. Separated into its own phase so it can be validated with multiple connected clients in the same zone, distinct from single-player movement testing.
+**Delivers:** 2-snapshot linear lerp for remote player sprites from `player:moved` events (`{playerId, px, py, sequence}`), snap-on-large-delta logic (>192px / ~2 tiles to handle teleports), remote player facing direction inferred from position delta, lerp factor tunable (start at ~10x/sec smoothing speed).
+**Implements:** Gabriel Gambetta entity interpolation pattern — render at `now - bufferDelay`, interpolate between two most-recent snapshots, never extrapolate past last known position.
+**Avoids:** Conflating local prediction and remote interpolation code paths; teleport smear (long-distance lerp over 100ms of lag).
+
+### Phase 6: Flat Blocking Tile Fix + Collision Audit
+**Rationale:** Known issue from the project backlog — elevated tiles appear walkable but block movement. With pixel AABB collision now in place via `StaticGroup`, the `world-gen` collision map generation can be audited against `TileRegistry.walkable` per biome. This phase validates the complete collision system against the full game world, not just the test zone.
+**Delivers:** Corrected `world-gen` collision map for all affected elevated tile types, collision debug overlay validation across all 16 biomes, no invisible walls in normal play anywhere, `StaticGroup` rebuild verified on chunk load/unload cycle.
+**Addresses:** Table-stakes "Flat tile visual fix" from FEATURES.md; known player-reported movement issue.
+**Avoids:** Shipping improved physics infrastructure on top of incorrect walkability data.
 
 ### Phase Ordering Rationale
 
-- Phase 1 must come first: `Image`-backed tiles are a prerequisite for correct camera-level tinting; any remaining `Graphics` objects silently defeat both day/night (Pitfall 2) and atmosphere systems
-- Phase 2 is independent of Phases 3 and 4 after Phase 1 — weather and atmosphere have no shared state; building them in parallel is possible; weather comes second to establish depth budget first
-- Phase 3 before Phase 4: `AtmosphereSystem` constructor receives `DayNightSystem` reference; the clear/restore cycle for camera postFX requires the DayNight ColorMatrix instance to exist first
-- Phase 5 last: cleanup is safest when the visual baseline is locked and no system is still in flux
+- **Types-first:** `PixelPosition` and pixel math modules in Phase 1 are the compile-time dependency for all other phases. Everything else imports from them.
+- **Server before client:** Phase 2 (server) before Phase 4 (client) ensures `PixelMovementController` is written to target the actual validated API shape, not a speculative contract. Eliminates round-trips where client assumptions diverge from server implementation.
+- **Game systems before integration QA:** Phase 3 (distance migration) before Phase 5 (remote interpolation) ensures that when full-system multiplayer testing begins in Phase 5, combat and gathering are already pixel-correct. Prevents false-positive QA failures from mixed-unit bugs.
+- **Collision audit last:** Phase 6 requires Phase 4's `StaticGroup` collision to be in place. Auditing collision data against a working physics system produces meaningful results; auditing against the old tile-step system does not.
+- **No DB schema migration required:** ARCHITECTURE.md Pattern 4 (pixel-to-tile bridging on disconnect) keeps tile integers in the DB, avoiding migration risk entirely. Sub-tile precision is not meaningful across sessions.
 
 ### Research Flags
 
 Phases with well-documented patterns (skip `/gsd:research-phase`):
-- **Phase 1** — `graphics.generateTexture()` pattern fully documented in Phaser official docs; integration points confirmed by direct code inspection of `TileRenderer.ts` at exact line numbers; no unknowns remain
-- **Phase 2** — Phaser v3.60+ `ParticleEmitter` API fully documented; `setScrollFactor(0)` viewport-anchor pattern confirmed; chunk lifecycle hook (`onChunkUnloaded`) identified in `ChunkManager.ts`
-- **Phase 5** — pure cleanup; no new APIs; verification checklist is in PITFALLS.md
+- **Phase 1:** Shared type additions are standard TypeScript; all pixel math is pre-specified in ARCHITECTURE.md with working code examples. No unknowns.
+- **Phase 3:** Range constant migration is mechanical; all target pixel values pre-calculated in ARCHITECTURE.md range constants section.
+- **Phase 5:** Gabriel Gambetta entity interpolation is the canonical reference; 2-snapshot lerp is ~10 lines of well-understood math.
+- **Phase 6:** Collision audit is an inspection task, not a research task; methodology is defined (compare `TileRegistry.walkable` vs `collisionMap` output per biome).
 
-Phases that may benefit from targeted investigation during planning:
-- **Phase 3** — confirm `this.renderer.type === Phaser.WEBGL` detection works as expected in the production Vite build (minification may affect Phaser constant access); verify Canvas fallback path in a non-WebGL browser before committing to the architecture
-- **Phase 4** — the position-based density field for atmosphere blending at chunk boundaries is the highest architectural complexity in this milestone; the 5-tile interpolation radius suggestion is unvalidated against actual chunk grid dimensions; confirm the blend produces smooth transitions before implementation
-
----
+Phases that warrant a detailed implementation plan before coding:
+- **Phase 2:** The velocity/distance validator threshold (`1.2x` speed tolerance) and soft-authority correction threshold (currently suggested at `16px`) need empirical tuning. Start with conservative values and tighten after observing real network conditions. Design the server game loop structure before writing — `setInterval` in `onModuleInit` vs a dedicated `GameLoopService`.
+- **Phase 4:** `PixelMovementController` reconciliation logic is the most complex single component in the milestone. The decision logic (snap vs smooth interpolate reconciliation correction, pending inputs buffer ring-buffer vs array, when to trim stale inputs) warrants a written plan before any code is written. Rubber-banding risk is highest here.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All Phaser APIs verified against 3.90.0 installed; official docs cited for every method signature; no new packages required; direct `node_modules` inspection |
-| Features | HIGH | Feature landscape drawn from codebase analysis + official Phaser docs + industry tutorials; biome mapping from `lore/world-bible.md` (authoritative per CLAUDE.md) |
-| Architecture | HIGH | Integration points confirmed by direct code inspection of `TileRenderer.ts`, `WorldScene.ts`, `RareNodeFX.ts`; exact line numbers cited for zone transition hooks |
-| Pitfalls | HIGH (analysis) / MEDIUM (performance estimates) | Draw call explosion and setTint override confirmed via Phaser source and codebase; particle count thresholds (200 max, 7,000 tile count) are estimates from community benchmarks |
+| Stack | HIGH | No new packages; all Phaser Arcade Physics APIs verified against official 3.80+ docs; existing codebase confirmed to use Socket.IO v4 and NestJS v10 at the required versions; direct codebase inspection of all callsites |
+| Features | HIGH | Feature list derived from direct codebase analysis of every affected system (`MovementController.ts`, `WorldScene.ts`, `combat.service.ts`, `gathering.service.ts`, `ai.service.ts`, `interaction.ts`). No speculative features. |
+| Architecture | HIGH | Patterns verified against Gabriel Gambetta (canonical netcode reference), Valve Source Networking docs, and direct codebase inspection. Soft-authority server pattern is industry standard for this scale (0-1000 players per zone). |
+| Pitfalls | HIGH | All 10 pitfalls identified from direct codebase reading — specific function names and line references cited. Not speculative warnings. Each pitfall has a specific phase assignment and a concrete prevention strategy. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Atmosphere chunk-boundary blending radius**: The 5-tile blend radius is a design suggestion, not a measured value. Validate during Phase 4 planning by mapping actual chunk grid dimensions (3×3 grid at ZONE_SIZE tiles) against tile screen size to confirm the radius produces visually smooth transitions.
-
-- **ColorMatrix + Bloom render order**: When `DayNightSystem` and `AtmosphereSystem` both write to the camera's postFX chain after `clear()`, the order of ColorMatrix (brightness) vs Bloom may affect the final output. Verify the combined visual result during Phase 4 — brightness before bloom is the expected order.
-
-- **Canvas fallback coverage**: The game uses `Phaser.AUTO` which prefers WebGL. The Canvas fallback path for day/night (Rectangle overlay) is architecturally defined but untested. Verify in a Canvas-forced browser environment before marking Phase 3 complete.
-
-- **`FogRenderer` re-enable path**: The fog-of-war RenderTexture is disabled with a known camera-tracking bug (`WorldScene.ts` line 142). v1.26 must not re-enable it. The camera-tracking bug is not scoped to this milestone but should be tracked as follow-on work separate from the visual overhaul.
-
----
+- **`PLAYER_SPEED_PX` tuning:** Research recommends 192px/s (2 tiles/sec at 96px/tile). Actual feel depends on the isometric transform applied before rendering. Expect 1–2 tuning iterations after Phase 4 ships. Make it a runtime-accessible constant so it can be adjusted without a deploy.
+- **Reconciliation snap threshold:** 16px suggested in ARCHITECTURE.md, but this may need adjustment based on observed network conditions during testing. Start conservative (larger threshold = fewer visible snaps) and tighten only if speed-hack tolerance becomes visible.
+- **Creature AI pixel movement:** Research explicitly defers true pixel-granularity creature movement to a later milestone (v1.28+). Creature tile-step movement remains in v1.27; client interpolation between AI ticks is the mitigation for visual teleporting. This is a deliberate scope decision, not an oversight.
+- **Zone boundary seam crossing:** Smooth pixel-granularity zone crossing is deferred to post-ship (P2). The v1.27 target is functional zone transitions derived from pixel position (derive tile, check against `ZONE_SIZE`) — not seamless seam crossing, which requires a world-coordinate system.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Phaser 3 official docs — `https://docs.phaser.io/api-documentation/class/gameobjects-particles-particleemitter` — ParticleEmitter v3.60+ API, `setScrollFactor()`, `ParticleEmitterManager` removal confirmed
-- Phaser 3 official docs — `https://docs.phaser.io/phaser/concepts/fx` — camera postFX: ColorMatrix, Bloom, Vignette, Glow
-- Phaser 3 official docs — `https://photonstorm.github.io/phaser3-docs/Phaser.Display.ColorMatrix.html` — `brightness()`, `night()`, `contrast()`, `hue()` method signatures
-- Phaser 3 official docs — `https://newdocs.phaser.io/docs/3.80.0/focus/Phaser.GameObjects.Graphics-generateTexture` — generateTexture caching pattern; performance advice
-- `node_modules/phaser/package.json` — confirmed Phaser 3.90.0 installed
-- `apps/web/src/game/rendering/TileRenderer.ts` — `createFallbackCube()`, `applyElevationTint()`, integration hooks
-- `apps/web/src/game/rendering/RareNodeFX.ts` — `postFX.addGlow()` pattern working in this codebase
-- `apps/web/src/game/scenes/WorldScene.ts` — `commitZoneTransition()`, `fullZoneReset()`, `currentBiome`, line 142 fog-of-war disabled comment
-- `lore/world-bible.md` — biome atmosphere descriptions (source of truth per CLAUDE.md)
+- Phaser 3 official docs — Arcade Physics `setVelocity`, `setBodySize`, `setOffset`, `StaticGroup`, `physics.add.existing`, Arcade Body velocity API
+- Codebase direct inspection — `MovementController.ts`, `WorldScene.ts`, `game.gateway.ts`, `player.service.ts`, `position.ts`, `constants.ts`, `combat.service.ts`, `gathering.service.ts`, `ai.service.ts`, `FogManager.ts`, `validation.ts`, `interaction.ts`, `range.ts`, `speed.ts`, `characters.ts` (DB schema)
+- [Gabriel Gambetta: Client-Side Prediction and Server Reconciliation](https://www.gabrielgambetta.com/client-side-prediction-server-reconciliation.html) — prediction/reconciliation pattern, sequence number design
+- [Gabriel Gambetta: Entity Interpolation](https://www.gabrielgambetta.com/entity-interpolation.html) — 2-snapshot lerp, render-at-delay principle, no-extrapolation rule
 
 ### Secondary (MEDIUM confidence)
-- Josh Morony — `https://www.joshmorony.com/how-to-add-weather-effects-in-phaser-games/` — screen-relative weather particle pattern
-- Josh Morony — `https://www.joshmorony.com/how-to-create-a-day-night-cycle-in-phaser/` — tween-based tinting for day/night
-- Phaser discourse — `https://phaser.discourse.group/t/webgl-performance-issue/12500` — Graphics objects cause WebGL batch flushes
-- Phaser discourse — `https://phaser.discourse.group/t/setdepth-to-particles-emitter/4232` — v3.60+ emitter depth API change
-- Phaser GitHub issue #5456 — particle memory management; explicit `destroy()` required; no auto-cleanup from manager
+- [Valve Developer Community: Source Multiplayer Networking](https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking) — 20Hz update rate, interpolation period, delta compression patterns
+- [Valve Developer Community: Latency Compensating Methods](https://developer.valvesoftware.com/wiki/Latency_Compensating_Methods_in_Client/Server_In-game_Protocol_Design_and_Optimization) — server-authoritative movement design
+- [GameDev.net: Swept AABB Collision Detection](https://www.gamedev.net/tutorials/programming/general-and-gameplay-programming/swept-aabb-collision-detection-and-response-r3084/) — multi-tile hitbox sampling requirement, axis-separated resolution
+- [GameDev.net: Server Authoritative Movement](https://gamedev.net/forums/topic/706590-server-authoritative-movement-questions/) — speed cap threshold and soft authority pattern
+- Phaser GitHub discussion #6312 — manual StaticGroup confirmed as community standard for non-Tilemap collision in procedurally-rendered scenes
 
-### Tertiary (context and validation)
-- Springer — isometric lighting for procedurally generated 2D terrain — academic reference for 3-shade face lighting model
-- Kvachev blog — depth-layered fog mesh for top-down games — validated depth-layer separation approach
-- Mazebert forum — isometric depth sorting with elevation z-axis offset — depth formula context
+### Tertiary (LOW confidence — context only)
+- [Gaffer On Games: Floating Point Determinism](https://gafferongames.com/post/floating_point_determinism/) — float determinism in multiplayer; noted but not critical given soft-authority design
+- [Jonathan Whiting: 2D Tilemap Collision](https://jonathanwhiting.com/tutorial/collision/) — AABB sweep axis-separated resolution background reference
+- [Clint Bellanger: Isometric Tiles Math](https://clintbellanger.net/articles/isometric_math/) — pixel-to-tile coordinate conversion in isometric grids
 
 ---
 *Research completed: 2026-03-17*
