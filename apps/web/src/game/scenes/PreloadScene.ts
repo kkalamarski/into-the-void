@@ -51,9 +51,7 @@ export class PreloadScene extends Phaser.Scene {
   private loadAssets(): void {
     this.load.setPath('assets/');
 
-    // Floor tile sprites replaced by procedural generation in create()
-    // PNG loading disabled — procedural cubes replace all tile PNGs
-    // this.loadFloorTileSprites();
+    // Tile textures baked procedurally in create() via ProceduralTileGenerator
 
     // Load directional character sprites
     this.loadCharacterSprites();
@@ -70,7 +68,11 @@ export class PreloadScene extends Phaser.Scene {
     // Load item spritesheets (for ground items in game world)
     this.loadItemSpritesheets();
 
-    // Generate procedural textures for walls, formations, and entities
+    // Quest marker sprites (UI elements, not tile PNGs)
+    this.load.image('ui_quest_marker_available', 'sprites/ui_quest_marker_available.png');
+    this.load.image('ui_quest_marker_ready', 'sprites/ui_quest_marker_ready.png');
+
+    // Generate procedural textures for entities and fallbacks
     this.generateTileTextures();
   }
 
@@ -306,65 +308,11 @@ export class PreloadScene extends Phaser.Scene {
     }
   }
 
-  private loadFloorTileSprites(): void {
-    // Floor tile bases (non-void biomes — void loaded from spritesheet below)
-    const floorTiles = [
-      'tile_toxic_floor',
-      'tile_ruins_floor',
-      'tile_ice_floor',
-      'tile_volcanic_floor',
-      'tile_fungal_floor',
-      'tile_crater_floor',
-    ];
-
-    // Feature tiles (non-void — void wall loaded from spritesheet below)
-    const featureTiles = [
-      'tile_toxic_pool',
-      'tile_ruins_wall',
-      'tile_ice_wall',
-      'tile_lava',
-      'tile_fungal_growth',
-      'tile_crater_debris',
-    ];
-
-    // Load void tiles from spritesheet (2 frames: floor, wall)
-    this.load.spritesheet('void-tiles-sheet', 'sprites/void-tiles.png', {
-      frameWidth: 256,
-      frameHeight: 256,
-    });
-
-    // Load crystal tiles from spritesheet (4 frames: floor, floor v2, formation, formation v2)
-    this.load.spritesheet('crystal-tiles-sheet', 'sprites/crystal-tiles.png', {
-      frameWidth: 256,
-      frameHeight: 256,
-    });
-
-    // Load base floor tiles and their variants (_v2, _v3)
-    for (const key of floorTiles) {
-      this.load.image(key, `sprites/${key}.png`);
-      this.load.image(`${key}_v2`, `sprites/${key}_v2.png`);
-      this.load.image(`${key}_v3`, `sprites/${key}_v3.png`);
-    }
-
-    // Load void floor variants (v2, v3 still separate files for now)
-    this.load.image('tile_void_floor_v2', 'sprites/tile_void_floor_v2.png');
-    this.load.image('tile_void_floor_v3', 'sprites/tile_void_floor_v3.png');
-
-    // Load feature tiles (no variants for now)
-    for (const key of featureTiles) {
-      this.load.image(key, `sprites/${key}.png`);
-    }
-
-    // Quest markers (will use procedural fallback if sprites don't exist)
-    this.load.image('ui_quest_marker_available', 'sprites/ui_quest_marker_available.png');
-    this.load.image('ui_quest_marker_ready', 'sprites/ui_quest_marker_ready.png');
-  }
-
   private generateTileTextures(): void {
     const ENTITY_SIZE = 256; // Entity sprite size (matches 256x256 tiles)
     const graphics = this.make.graphics({ x: 0, y: 0 });
 
-    // All tile textures now loaded from PNG - only generate entity textures
+    // Procedural tile textures baked in create() — this generates entity fallback textures
 
     // Player sphere fallback - used if character sprites fail to load
     const PLAYER_SIZE = 256;
@@ -549,22 +497,6 @@ export class PreloadScene extends Phaser.Scene {
    * Renders each frame to a canvas and registers it as a standalone texture.
    */
   private extractSpritesheetFrames(): void {
-    // Void tile spritesheet: frame 0 = floor, frame 1 = wall
-    const voidTileMap: Array<{ frame: number; key: string }> = [
-      { frame: 0, key: 'tile_void_floor' },
-      { frame: 1, key: 'tile_void_wall' },
-    ];
-    this.extractFrames('void-tiles-sheet', voidTileMap, 256, 256);
-
-    // Crystal tile spritesheet: frame 0 = floor, 1 = floor v2, 2 = formation, 3 = formation v2
-    const crystalTileMap: Array<{ frame: number; key: string }> = [
-      { frame: 0, key: 'tile_crystal_floor' },
-      { frame: 1, key: 'tile_crystal_floor_v2' },
-      { frame: 2, key: 'tile_crystal_formation' },
-      { frame: 3, key: 'tile_crystal_formation_v2' },
-    ];
-    this.extractFrames('crystal-tiles-sheet', crystalTileMap, 256, 256);
-
     // Void biome features spritesheet: 5 frames
     const voidFeatureMap: Array<{ frame: number; key: string }> = [
       { frame: 0, key: 'plant_void_tree-v1' },
