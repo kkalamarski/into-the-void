@@ -1,78 +1,73 @@
 # Requirements: Into the Void
 
-**Defined:** 2026-03-05
+**Defined:** 2026-03-17
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.25 Requirements
+## v1.26 Requirements
 
-Requirements for the Crafting milestone. Each maps to roadmap phases.
+Requirements for milestone v1.26 Visual Overhaul & Atmosphere. Each maps to roadmap phases.
 
-### Recipe System
+### Terrain Rendering
 
-- [ ] **RCPE-01**: Player can browse recipes organized by crafting discipline (category tabs)
-- [ ] **RCPE-02**: Player can see ingredient requirements for each recipe with have/need counts
-- [ ] **RCPE-03**: Player can see which recipes are locked and what unlocks them (level, quest, exploration)
-- [ ] **RCPE-04**: Player can filter recipes by craftable-now (has all ingredients) vs all
-- [ ] **RCPE-05**: Recipes unlock progressively via character level, quest completion, or POI discovery
-- [ ] **RCPE-06**: Faction-specific specialty recipes are available only to members of that faction
-- [ ] **RCPE-07**: Recipe definitions exist as static data in a shared package usable by server and client
+- [ ] **TERR-01**: All terrain tiles render as procedural 3-shade isometric cubes (top, lit side, shadow side)
+- [ ] **TERR-02**: Each biome tile type has a distinct color palette defining its 3 shades
+- [ ] **TERR-03**: Tile cubes include biome-specific procedural accent details (grass tufts, sand grains, ice cracks, etc.)
+- [ ] **TERR-04**: Tile variant randomization produces visual variety at same tile type (deterministic per position)
+- [ ] **TERR-05**: Elevation tinting is preserved (higher = brighter, shadows from adjacent higher tiles)
+- [ ] **TERR-06**: Procedural cubes are baked to GPU textures via generateTexture(), not rendered as live Graphics
 
-### Crafting Execution
+### Weather System
 
-- [ ] **CRFT-01**: Player can craft an item by selecting a recipe and confirming, consuming required ingredients
-- [ ] **CRFT-02**: Crafting shows a progress timer (few seconds) before producing the output item
-- [ ] **CRFT-03**: Server validates crafting requests (ingredient ownership, recipe unlock, faction eligibility)
-- [ ] **CRFT-04**: Ingredient consumption is atomic (all-or-nothing, no partial consumption on failure)
-- [ ] **CRFT-05**: Server tracks crafting timer independently (prevents client-side timer skip exploits)
-- [ ] **CRFT-06**: Player can only have one active craft at a time
-- [ ] **CRFT-07**: Active craft is cancelled on disconnect (no orphaned timers)
+- [ ] **WTHR-01**: Weather particles render viewport-relative (fixed to screen, not world)
+- [ ] **WTHR-02**: Each biome has appropriate weather type (rain, snow, ash, spores, mist, or none)
+- [ ] **WTHR-03**: Weather transitions smoothly when player moves between biomes
+- [ ] **WTHR-04**: Weather particles respect depth budget (above terrain, below UI)
+- [ ] **WTHR-05**: Particle emitters are cleaned up on chunk unload (no memory leaks)
 
-### Proficiency
+### Day/Night Cycle
 
-- [ ] **PROF-01**: Player earns crafting XP in the relevant discipline when completing a craft
-- [ ] **PROF-02**: Each crafting discipline has an independent proficiency level
-- [ ] **PROF-03**: Higher proficiency increases chance of producing higher quality tier output
-- [ ] **PROF-04**: Quality tiers provide stat bonuses on crafted items (e.g., Standard/Refined/Masterwork)
-- [ ] **PROF-05**: Proficiency data persists in the database across sessions
+- [ ] **DNTC-01**: Gradual brightness change over time simulating day/night progression
+- [ ] **DNTC-02**: Color temperature shifts (warm during day, cool at night)
+- [ ] **DNTC-03**: Day/night uses camera postFX ColorMatrix (not per-tile setTint)
+- [ ] **DNTC-04**: Time-of-day indicator visible in HUD
+- [ ] **DNTC-05**: Day/night cycle does not affect minimap camera
 
-### Crafting UI
+### Biome Atmosphere
 
-- [ ] **CRUI-01**: Player can open a crafting panel from the HUD at any location
-- [ ] **CRUI-02**: Crafting panel shows discipline tabs to switch between recipe categories
-- [ ] **CRUI-03**: Each recipe shows name, ingredients (with inventory counts), output item, and quality chance
-- [ ] **CRUI-04**: Craft button is enabled only when player has all ingredients and recipe is unlocked
-- [ ] **CRUI-05**: Active craft shows a progress bar with remaining time
-- [ ] **CRUI-06**: Locked recipes appear greyed out with unlock requirement tooltip
-- [ ] **CRUI-07**: Crafting panel shows current proficiency level and XP progress per discipline
+- [ ] **ATMO-01**: Each biome has a distinct atmospheric visual effect (fog, glow, haze, murk, etc.)
+- [ ] **ATMO-02**: Atmosphere transitions smoothly between biomes (no hard seams)
+- [ ] **ATMO-03**: Atmosphere effects apply to both zone-walk and teleport transitions
+- [ ] **ATMO-04**: Atmosphere uses camera postFX shared with day/night (coordinated, not conflicting)
 
-### Recipe Content
+### Rendering Cleanup
 
-- [ ] **CONT-01**: Equipment recipes exist for suits, tools, and modules across tiers
-- [ ] **CONT-02**: Consumable recipes exist for health items, buffs, and hazard protection
-- [ ] **CONT-03**: Automation structure recipes exist for deployable extractors, beacons, and refineries
-- [ ] **CONT-04**: Reagent/material processing recipes exist for intermediate crafting materials
-- [ ] **CONT-05**: Each faction has at least 3 exclusive specialty recipes for higher-tier faction gear
+- [ ] **CLNP-01**: PNG tile sprite loading is disabled (procedural cubes are primary)
+- [ ] **CLNP-02**: Dead tile sprite code paths are removed from TileRenderer
+- [ ] **CLNP-03**: PreloadScene no longer loads tile PNG assets (reduced load time)
+- [ ] **CLNP-04**: Old tile PNG files kept in repo but not loaded at runtime
 
-## v2 Requirements
+## Future Requirements
 
-Deferred to future release. Tracked but not in current roadmap.
+### Sprite Coverage
+- **SPRT-01**: All 83+ creatures have unique sprite assets (not shared/reused)
+- **SPRT-02**: All biome features (plants, minerals, artifacts) have sprites
+- **SPRT-03**: Creature animation states (idle, walk, attack, death)
 
-### Crafting Expansion
-
-- **CREX-01**: Crafting mini-game (skill-based quality influence, like gathering timing)
-- **CREX-02**: Bulk crafting (craft multiple of same recipe in queue)
-- **CREX-03**: Crafting quest objectives (craft X items for quest progress)
-- **CREX-04**: Recipe trading between players
+### Advanced Visual
+- **ADVS-01**: Dynamic lighting/shadows
+- **ADVS-02**: Particle effects for combat (hit sparks, ability VFX)
+- **ADVS-03**: Particle effects for gathering interactions
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Crafting failure/material loss | Research identifies this as most-hated mechanic; quality tiers provide variation without punishment |
-| Crafting stations in world | Player requested anywhere-access; stations add complexity without clear value for v1 |
-| Junk-craft XP grinding | Anti-feature; XP should scale with item tier, not recipe count |
-| Automation-crafting integration | Explicitly separate systems per user direction |
-| New item IDs per quality tier | Quality is a runtime modifier on inventory slots, not separate items (prevents registry bloat) |
+| Custom WebGL shaders | Phaser built-in postFX sufficient for all effects |
+| Fog of war re-enable | Known camera tracking bug; separate milestone |
+| Entity sprite generation | Deferred to future milestone; coverage gaps not blocking |
+| Weather gameplay effects | Visual only this milestone; weather affecting stats/combat is future |
+| Animated weather (lightning, storms) | Basic particle weather first; complex weather later |
+| Server-side time sync | Client-side day/night sufficient for single-server deployment |
 
 ## Traceability
 
@@ -80,43 +75,36 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RCPE-01 | Phase 123 | Pending |
-| RCPE-02 | Phase 123 | Pending |
-| RCPE-03 | Phase 123 | Pending |
-| RCPE-04 | Phase 123 | Pending |
-| RCPE-05 | Phase 123 | Pending |
-| RCPE-06 | Phase 123 | Pending |
-| RCPE-07 | Phase 122 | Pending |
-| CRFT-01 | Phase 125 | Pending |
-| CRFT-02 | Phase 125 | Pending |
-| CRFT-03 | Phase 122 | Pending |
-| CRFT-04 | Phase 122 | Pending |
-| CRFT-05 | Phase 122 | Pending |
-| CRFT-06 | Phase 122 | Pending |
-| CRFT-07 | Phase 122 | Pending |
-| PROF-01 | Phase 123 | Pending |
-| PROF-02 | Phase 123 | Pending |
-| PROF-03 | Phase 123 | Pending |
-| PROF-04 | Phase 123 | Pending |
-| PROF-05 | Phase 122 | Pending |
-| CRUI-01 | Phase 125 | Pending |
-| CRUI-02 | Phase 125 | Pending |
-| CRUI-03 | Phase 125 | Pending |
-| CRUI-04 | Phase 125 | Pending |
-| CRUI-05 | Phase 125 | Pending |
-| CRUI-06 | Phase 125 | Pending |
-| CRUI-07 | Phase 125 | Pending |
-| CONT-01 | Phase 123 | Pending |
-| CONT-02 | Phase 123 | Pending |
-| CONT-03 | Phase 124 | Pending |
-| CONT-04 | Phase 123 | Pending |
-| CONT-05 | Phase 123 | Pending |
+| TERR-01 | — | Pending |
+| TERR-02 | — | Pending |
+| TERR-03 | — | Pending |
+| TERR-04 | — | Pending |
+| TERR-05 | — | Pending |
+| TERR-06 | — | Pending |
+| WTHR-01 | — | Pending |
+| WTHR-02 | — | Pending |
+| WTHR-03 | — | Pending |
+| WTHR-04 | — | Pending |
+| WTHR-05 | — | Pending |
+| DNTC-01 | — | Pending |
+| DNTC-02 | — | Pending |
+| DNTC-03 | — | Pending |
+| DNTC-04 | — | Pending |
+| DNTC-05 | — | Pending |
+| ATMO-01 | — | Pending |
+| ATMO-02 | — | Pending |
+| ATMO-03 | — | Pending |
+| ATMO-04 | — | Pending |
+| CLNP-01 | — | Pending |
+| CLNP-02 | — | Pending |
+| CLNP-03 | — | Pending |
+| CLNP-04 | — | Pending |
 
 **Coverage:**
-- v1.25 requirements: 31 total
-- Mapped to phases: 31
-- Unmapped: 0 ✓
+- v1.26 requirements: 20 total
+- Mapped to phases: 0
+- Unmapped: 20 ⚠️
 
 ---
-*Requirements defined: 2026-03-05*
-*Last updated: 2026-03-05 — traceability updated after roadmap creation*
+*Requirements defined: 2026-03-17*
+*Last updated: 2026-03-17 after initial definition*
