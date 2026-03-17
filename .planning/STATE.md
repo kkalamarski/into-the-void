@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Pixel Movement Rewrite
 status: unknown
-last_updated: "2026-03-18T00:00:00.000Z"
+last_updated: "2026-03-17T23:26:14.009Z"
 progress:
   total_phases: 126
-  completed_phases: 125
+  completed_phases: 126
   total_plans: 330
-  completed_plans: 327
+  completed_plans: 330
 ---
 
 # Project State
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-03-17)
 ## Current Position
 
 Phase: 133 of 135 (Distance System Migration)
-Plan: 1 of 4 in current phase complete
-Status: Phase 133 in progress — 133-01 done (PlayerPublic px/py, FLEE_RADIUS_PX, canInteractPixel contracts)
-Last activity: 2026-03-18 — Completed 133-01 (pixel-distance interaction contracts)
+Plan: 3 of 4 in current phase complete
+Status: Phase 133 in progress — 133-03 done (creature AI pixel distance, aggro delay, leash heal)
+Last activity: 2026-03-18 — Completed 133-03 (creature-ai.ts + ai.service.ts pixel distance migration)
 
 Progress: [████░░░░░░] 40%
 
@@ -48,6 +48,9 @@ Progress: [████░░░░░░] 40%
 | Phase 132-01 P01 | 9 | 2 tasks | 3 files |
 | Phase 132-03 P03 | 2 | 2 tasks | 4 files |
 | Phase 133 P01 | 1 | 2 tasks | 4 files |
+| Phase 133 P02 | 5 | 2 tasks | 5 files |
+| Phase 133 P04 | 8 | 2 tasks | 3 files |
+| Phase 133 P03 | 4 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -82,6 +85,13 @@ Recent decisions affecting current work:
 - [Phase 133]: canInteractPixel does not check zone equality — callers pre-validate zone match before calling
 - [Phase 133]: FLEE_RADIUS_PX = 5.0 * TILE_SIZE_PX (640px) mirrors old tile-based FLEE_RADIUS = 5
 - [Phase 133]: px/py added as required fields on PlayerPublic so downstream AI/combat plans always have pixel coords
+- [Phase 133]: Ability tile range converted to pixels at callsite (ability.range * TILE_SIZE_PX) to preserve AbilityDefinition schema compatibility
+- [Phase 133]: cancelIfOutOfRange uses client-predicted position for immediate responsiveness in gather cancel
+- [Phase 133]: getZoneBoundaryDepth (tile-based) kept alongside getZoneBoundaryDepthPx — Phase 135 cleanup will remove old method
+- [Phase 133]: HYSTERESIS_PX = HYSTERESIS_TILES * TILE_SIZE_PX = 384px replaces tile integer threshold for zone transitions
+- [Phase 133]: Target ring alpha-dimming (OUT_OF_RANGE_ALPHA=0.3) preserves behavior-tier color while conveying out-of-range state
+- [Phase 133]: nearestNpcInRange field gates npc:interact proximity check; full prompt UI deferred to Phase 134/135
+- [Phase 133]: 0.5s aggro delay with creature:aggro_detected '\!' emission; full HP heal on leash prevents kiting; pendingAggro stores zoneId for targeted cleanup; immediate aggro (zone join) bypasses delay for responsiveness
 
 ### Pending Todos
 
@@ -95,9 +105,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 133-01-PLAN.md (PlayerPublic px/py fields, FLEE_RADIUS_PX, canInteractPixel function)
+Stopped at: Completed 133-02-PLAN.md (combat, gathering, NPC pixel distance migration)
 Resume file: None
-Next action: Execute Phase 133-02 (combat system pixel distance migration)
+Next action: Execute Phase 133-03 (AI/creature flee radius and visibility pixel migration)
 
 ---
-*Last updated: 2026-03-18 — Completed 133-01 pixel-distance interaction contracts (PlayerPublic px/py, FLEE_RADIUS_PX, canInteractPixel)*
+*Last updated: 2026-03-18 — Completed 133-02 pixel-distance migration (ability, combat, gathering, gateway)*
