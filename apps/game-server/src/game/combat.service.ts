@@ -14,6 +14,9 @@ import {
   computeCharStats,
   rollLootTable,
   getCreatureLoot,
+  pixelDistanceTo,
+  tileToPixelCenter,
+  MELEE_RANGE_PX,
 } from '@into-the-void/game-logic';
 import { EntityRegistry } from '@into-the-void/entities';
 import type { CreatureDefinition } from '@into-the-void/entities';
@@ -215,13 +218,11 @@ export class CombatService {
       return null;
     }
 
-    // Check if player is still in range (adjacent)
-    const dist = Math.max(
-      Math.abs(creature.position.x - player.position.x),
-      Math.abs(creature.position.y - player.position.y),
-    );
-    if (dist > 1) {
-      // Player moved away — don't attack but don't stop combat (will chase)
+    // Check if player is still in melee range (pixel distance, Phase 133)
+    const { px: cpx, py: cpy } = tileToPixelCenter(creature.position.x, creature.position.y);
+    const dist = pixelDistanceTo(cpx, cpy, player.px, player.py);
+    if (dist > MELEE_RANGE_PX) {
+      // Player moved out of melee range — don't attack but don't stop combat (will chase)
       return null;
     }
 

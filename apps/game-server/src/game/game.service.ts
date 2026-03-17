@@ -231,6 +231,8 @@ export class GameService {
           level: player.level,
           inCombat: player.inCombat,
           credits: player.credits,
+          px: player.px,
+          py: player.py,
         },
       };
     }

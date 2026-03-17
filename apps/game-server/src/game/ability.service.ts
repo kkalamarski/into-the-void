@@ -10,7 +10,7 @@ import { CombatService } from './combat.service';
 import { DatabaseService } from '../database/database.service';
 import { Creature, ItemEntity, isHubZone } from '@into-the-void/shared-types';
 import type { DamageType } from '@into-the-void/shared-types';
-import { AbilityRegistry, canInteract, calculateDamage, computeCharStats, rollLootTable, getCreatureLoot } from '@into-the-void/game-logic';
+import { AbilityRegistry, canInteract, canInteractPixel, pixelDistanceTo, tileToPixelCenter, MELEE_RANGE_PX, GATHER_RANGE_PX, TILE_SIZE_PX, calculateDamage, computeCharStats, rollLootTable, getCreatureLoot } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
 import { EntityRegistry } from '@into-the-void/entities';
 import { saveCooldown, loadCooldowns } from '@into-the-void/database';
@@ -337,8 +337,8 @@ export class AbilityService {
           console.log('[useAbility] Invalid target type for gathering:', entity.type);
           return { success: false, error: 'Invalid target for gathering' };
         }
-        // Range check for gathering
-        const rangeCheck = canInteract(player, entity, ability.range);
+        // Range check for gathering (pixel distance, Phase 133)
+        const rangeCheck = canInteractPixel(player.px, player.py, entity, GATHER_RANGE_PX);
         if (!rangeCheck.canInteract) {
           return { success: false, error: rangeCheck.reason };
         }
@@ -352,10 +352,11 @@ export class AbilityService {
           return { success: false, error: 'Target is dead' };
         }
 
-        // Range check
-        const rangeCheck = canInteract(player, target, ability.range);
+        // Range check (pixel distance, Phase 133): convert tile range to pixels
+        const rangePx = ability.range * TILE_SIZE_PX;
+        const rangeCheck = canInteractPixel(player.px, player.py, target, rangePx);
         if (!rangeCheck.canInteract) {
-          return { success: false, error: rangeCheck.reason };
+          return { success: false, error: 'Out of range' };
         }
       }
     }
@@ -1265,8 +1266,9 @@ export class AbilityService {
   }
 
   /**
-   * Find active creatures within a given Chebyshev distance radius.
+   * Find active creatures within a given radius (in tiles).
    * Used for Electrocute DoT spread and Overload Pulse AoE.
+   * Phase 133: migrated from Chebyshev tile distance to pixel Euclidean distance.
    */
   private async getNearbyCreatures(
     zoneId: string,
@@ -1276,16 +1278,21 @@ export class AbilityService {
     excludeId?: string,
   ): Promise<Creature[]> {
     const entities = await this.zonesService.getZoneEntities(zoneId);
+    const { px: cPx, py: cPy } = tileToPixelCenter(centerX, centerY);
+    const radiusPx = radius * TILE_SIZE_PX;
     return entities.filter(
-      (e): e is Creature =>
-        e.type === 'creature' &&
-        (e as Creature).active &&
-        (e as Creature).health > 0 &&
-        e.id !== excludeId &&
-        Math.max(
-          Math.abs(e.position.x - centerX),
-          Math.abs(e.position.y - centerY),
-        ) <= radius,
+      (e): e is Creature => {
+        if (
+          e.type !== 'creature' ||
+          !(e as Creature).active ||
+          (e as Creature).health <= 0 ||
+          e.id === excludeId
+        ) {
+          return false;
+        }
+        const { px: ePx, py: ePy } = tileToPixelCenter(e.position.x, e.position.y);
+        return pixelDistanceTo(cPx, cPy, ePx, ePy) <= radiusPx;
+      },
     );
   }
 
