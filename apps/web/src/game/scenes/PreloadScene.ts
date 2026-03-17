@@ -425,6 +425,12 @@ export class PreloadScene extends Phaser.Scene {
     graphics.generateTexture('plant', ENTITY_SIZE, ENTITY_SIZE);
     graphics.clear();
 
+    // Weather particle texture (4x4 white pixel, tinted per-biome at emitter level)
+    graphics.fillStyle(0xffffff, 1);
+    graphics.fillRect(0, 0, 4, 4);
+    graphics.generateTexture('weather-pixel', 4, 4);
+    graphics.clear();
+
     // Quest markers (fallback if PNG files don't exist)
     // These will be used if sprite loading fails
     const MARKER_SIZE = 64;
