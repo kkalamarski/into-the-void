@@ -176,6 +176,32 @@ export function resolvePixelCollision(
 }
 
 // ============================================================
+// bitmaskToKeyState
+// ============================================================
+
+/** Key bitmask constants matching the wire-format convention: W=1, A=2, S=4, D=8. */
+export const KEY_BIT_W = 1;
+export const KEY_BIT_A = 2;
+export const KEY_BIT_S = 4;
+export const KEY_BIT_D = 8;
+
+/**
+ * Converts a wire-format key bitmask to a KeyState struct.
+ * Bitmask convention: W=1 (up), A=2 (left), S=4 (down), D=8 (right).
+ *
+ * @param keys  Bitmask of currently pressed WASD keys.
+ * @returns     KeyState struct consumable by velocityFromKeys.
+ */
+export function bitmaskToKeyState(keys: number): KeyState {
+  return {
+    up:    !!(keys & KEY_BIT_W),
+    left:  !!(keys & KEY_BIT_A),
+    down:  !!(keys & KEY_BIT_S),
+    right: !!(keys & KEY_BIT_D),
+  };
+}
+
+// ============================================================
 // validatePixelSpeed
 // ============================================================
 

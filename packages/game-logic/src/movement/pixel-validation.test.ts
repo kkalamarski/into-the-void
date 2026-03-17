@@ -6,6 +6,11 @@ import {
   velocityFromKeys,
   resolvePixelCollision,
   validatePixelSpeed,
+  bitmaskToKeyState,
+  KEY_BIT_W,
+  KEY_BIT_A,
+  KEY_BIT_S,
+  KEY_BIT_D,
 } from './pixel-validation';
 
 const DT = 1.0;
@@ -240,5 +245,63 @@ describe('validatePixelSpeed', () => {
     const multiplier = 2.0;
     const valid = validatePixelSpeed(0, 0, PLAYER_SPEED_PX * DT * 3.0, 0, DT, multiplier);
     expect(valid).toBe(false);
+  });
+});
+
+// ============================================================
+// bitmaskToKeyState
+// ============================================================
+describe('bitmaskToKeyState', () => {
+  it('bitmask constants are exported with correct values', () => {
+    expect(KEY_BIT_W).toBe(1);
+    expect(KEY_BIT_A).toBe(2);
+    expect(KEY_BIT_S).toBe(4);
+    expect(KEY_BIT_D).toBe(8);
+  });
+
+  it('keys=0 produces all false (no keys pressed)', () => {
+    const state = bitmaskToKeyState(0);
+    expect(state).toEqual({ up: false, down: false, left: false, right: false });
+  });
+
+  it('keys=1 (W only) produces up=true, others false', () => {
+    const state = bitmaskToKeyState(1);
+    expect(state).toEqual({ up: true, down: false, left: false, right: false });
+  });
+
+  it('keys=2 (A only) produces left=true, others false', () => {
+    const state = bitmaskToKeyState(2);
+    expect(state).toEqual({ up: false, down: false, left: true, right: false });
+  });
+
+  it('keys=4 (S only) produces down=true, others false', () => {
+    const state = bitmaskToKeyState(4);
+    expect(state).toEqual({ up: false, down: true, left: false, right: false });
+  });
+
+  it('keys=8 (D only) produces right=true, others false', () => {
+    const state = bitmaskToKeyState(8);
+    expect(state).toEqual({ up: false, down: false, left: false, right: true });
+  });
+
+  it('keys=9 (W+D) produces up=true, right=true — diagonal', () => {
+    const state = bitmaskToKeyState(9);
+    expect(state).toEqual({ up: true, down: false, left: false, right: true });
+  });
+
+  it('keys=6 (A+S) produces left=true, down=true — diagonal', () => {
+    const state = bitmaskToKeyState(6);
+    expect(state).toEqual({ up: false, down: true, left: true, right: false });
+  });
+
+  it('keys=15 (all keys) produces all true', () => {
+    const state = bitmaskToKeyState(15);
+    expect(state).toEqual({ up: true, down: true, left: true, right: true });
+  });
+
+  it('keys=5 (W+S) produces up=true, down=true — opposing keys both true', () => {
+    // velocityFromKeys will cancel them out; bitmaskToKeyState faithfully reflects both
+    const state = bitmaskToKeyState(5);
+    expect(state).toEqual({ up: true, down: true, left: false, right: false });
   });
 });
