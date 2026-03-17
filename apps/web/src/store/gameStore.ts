@@ -83,6 +83,10 @@ interface GameState {
   showCrafting: boolean;
   toggleCrafting: () => void;
 
+  // Day/night cycle
+  dayNightPhase: string;
+  setDayNightPhase: (phase: string) => void;
+
   // Discovered resources (rare nodes)
   discoveredResources: DiscoveredResource[];
   setDiscoveredResources: (resources: DiscoveredResource[]) => void;
@@ -154,6 +158,10 @@ export const useGameStore = create<GameState>((set) => ({
   // Crafting panel
   showCrafting: false,
   toggleCrafting: () => set((state) => ({ showCrafting: !state.showCrafting })),
+
+  // Day/night cycle
+  dayNightPhase: 'Day',
+  setDayNightPhase: (phase) => set({ dayNightPhase: phase }),
 
   // Discovered resources
   discoveredResources: [],

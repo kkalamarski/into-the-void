@@ -15,6 +15,7 @@ import { CombatLog } from './CombatLog';
 import { BuffBar } from './BuffBar';
 import { HazardIndicator } from './HazardIndicator';
 import { CraftingIndicator } from './CraftingIndicator';
+import { TimeIndicator } from './TimeIndicator';
 import './HUD.css';
 
 export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
@@ -226,6 +227,7 @@ export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
       <HazardIndicator />
       <CraftingIndicator />
       <TargetFrame />
+      <TimeIndicator />
       <div className="hud-minimap" aria-label="Minimap" />
     </div>
   );

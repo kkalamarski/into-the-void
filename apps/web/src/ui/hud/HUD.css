@@ -157,10 +157,10 @@
   pointer-events: none;
 }
 
-/* Biome Indicator - positioned above minimap */
+/* Biome Indicator - positioned above time indicator and minimap */
 .biome-indicator {
   position: absolute;
-  bottom: 210px; /* 20px minimap bottom + 180px minimap height + 10px gap */
+  bottom: 240px; /* 204px time indicator + ~32px height + 4px gap */
   right: 20px;
   display: flex;
   align-items: center;
