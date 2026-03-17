@@ -75,36 +75,36 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TERR-01 | — | Pending |
-| TERR-02 | — | Pending |
-| TERR-03 | — | Pending |
-| TERR-04 | — | Pending |
-| TERR-05 | — | Pending |
-| TERR-06 | — | Pending |
-| WTHR-01 | — | Pending |
-| WTHR-02 | — | Pending |
-| WTHR-03 | — | Pending |
-| WTHR-04 | — | Pending |
-| WTHR-05 | — | Pending |
-| DNTC-01 | — | Pending |
-| DNTC-02 | — | Pending |
-| DNTC-03 | — | Pending |
-| DNTC-04 | — | Pending |
-| DNTC-05 | — | Pending |
-| ATMO-01 | — | Pending |
-| ATMO-02 | — | Pending |
-| ATMO-03 | — | Pending |
-| ATMO-04 | — | Pending |
-| CLNP-01 | — | Pending |
-| CLNP-02 | — | Pending |
-| CLNP-03 | — | Pending |
-| CLNP-04 | — | Pending |
+| TERR-01 | Phase 126 | Pending |
+| TERR-02 | Phase 126 | Pending |
+| TERR-03 | Phase 126 | Pending |
+| TERR-04 | Phase 126 | Pending |
+| TERR-05 | Phase 126 | Pending |
+| TERR-06 | Phase 126 | Pending |
+| WTHR-01 | Phase 127 | Pending |
+| WTHR-02 | Phase 127 | Pending |
+| WTHR-03 | Phase 127 | Pending |
+| WTHR-04 | Phase 127 | Pending |
+| WTHR-05 | Phase 127 | Pending |
+| DNTC-01 | Phase 128 | Pending |
+| DNTC-02 | Phase 128 | Pending |
+| DNTC-03 | Phase 128 | Pending |
+| DNTC-04 | Phase 128 | Pending |
+| DNTC-05 | Phase 128 | Pending |
+| ATMO-01 | Phase 129 | Pending |
+| ATMO-02 | Phase 129 | Pending |
+| ATMO-03 | Phase 129 | Pending |
+| ATMO-04 | Phase 129 | Pending |
+| CLNP-01 | Phase 130 | Pending |
+| CLNP-02 | Phase 130 | Pending |
+| CLNP-03 | Phase 130 | Pending |
+| CLNP-04 | Phase 130 | Pending |
 
 **Coverage:**
 - v1.26 requirements: 20 total
-- Mapped to phases: 0
-- Unmapped: 20 ⚠️
+- Mapped to phases: 20
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-17*
-*Last updated: 2026-03-17 after initial definition*
+*Last updated: 2026-03-17 — traceability filled after roadmap creation*
