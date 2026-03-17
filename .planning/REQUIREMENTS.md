@@ -10,7 +10,7 @@ Requirements for pixel movement rewrite. Each maps to roadmap phases.
 ### Movement Core
 
 - [ ] **MOVE-01**: Player moves freely at sub-tile pixel positions using WASD keys (not locked to tile grid)
-- [ ] **MOVE-02**: Player velocity is normalized on diagonal input (no 41% speed boost)
+- [x] **MOVE-02**: Player velocity is normalized on diagonal input (no 41% speed boost)
 - [ ] **MOVE-03**: Player collides with solid tiles via pixel hitbox (AABB against tile rectangles)
 - [ ] **MOVE-04**: Camera follows player pixel position smoothly each frame
 - [ ] **MOVE-05**: Walking animation plays while moving, idle when stopped, with 8-directional facing
@@ -69,7 +69,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | MOVE-01 | Phase 134 | Pending |
-| MOVE-02 | Phase 131 | Pending |
+| MOVE-02 | Phase 131 | Complete |
 | MOVE-03 | Phase 134 | Pending |
 | MOVE-04 | Phase 134 | Pending |
 | MOVE-05 | Phase 134 | Pending |
