@@ -28,6 +28,7 @@ import { FogManager } from '../fog/FogManager';
 import { FogRenderer } from '../fog/FogRenderer';
 import { PoiRenderer } from '../pois/PoiRenderer';
 import { WeatherSystem } from '../systems/WeatherSystem';
+import { DayNightCycle } from '../systems/DayNightCycle';
 // GatheringMiniGame removed - gathering now auto-completes on server
 import { createRareNodeMarker } from '../rendering/RareNodeFX';
 import type { DiscoveredResource } from '../../store/gameStore';
@@ -128,6 +129,7 @@ export class WorldScene extends Phaser.Scene {
   // Rare node markers
   private rareNodeMarkers: Map<string, Phaser.GameObjects.Container> = new Map();
   private weatherSystem: WeatherSystem | null = null;
+  private dayNightCycle: DayNightCycle | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -195,6 +197,10 @@ export class WorldScene extends Phaser.Scene {
 
     // Initialize WeatherSystem for biome particle effects
     this.weatherSystem = new WeatherSystem(this);
+
+    // Initialize Day/Night Cycle on main camera only (DNTC-03, DNTC-05)
+    this.dayNightCycle = new DayNightCycle();
+    this.dayNightCycle.create(this.cameras.main);
 
     // Initialize MovementController
     this.movementController = new MovementController();
@@ -337,6 +343,19 @@ export class WorldScene extends Phaser.Scene {
     gameSocket.on('rare-node:new-discovery', (data: any) => {
       useGameStore.getState().addDiscoveredResource(data);
       this.addRareNodeMarker(data);
+    });
+
+    // Sync server time for day/night cycle (DNTC-01)
+    gameSocket.on('zone:state', (data: any) => {
+      if (data.serverTime && this.dayNightCycle) {
+        this.dayNightCycle.setServerTime(data.serverTime);
+      }
+    });
+
+    gameSocket.on('auth:success', (data: any) => {
+      if (data.serverTime && this.dayNightCycle) {
+        this.dayNightCycle.setServerTime(data.serverTime);
+      }
     });
 
     // Set fixed zoom to show ~20x15 tiles viewport (for 256x256 sprites)
@@ -854,6 +873,17 @@ export class WorldScene extends Phaser.Scene {
     if (time - this.lastOcclusionTime >= this.occlusionInterval) {
       this.lastOcclusionTime = time;
       this.updateEntityOcclusion();
+    }
+
+    // Update day/night cycle visuals (DNTC-01, DNTC-02, DNTC-03)
+    if (this.dayNightCycle) {
+      this.dayNightCycle.update();
+      // Sync current phase to HUD store (only on change to avoid re-renders)
+      const phase = this.dayNightCycle.getCurrentPhase();
+      const store = useGameStore.getState();
+      if (store.dayNightPhase !== phase) {
+        store.setDayNightPhase(phase);
+      }
     }
   }
 
@@ -2290,6 +2320,10 @@ export class WorldScene extends Phaser.Scene {
     if (this.weatherSystem) {
       this.weatherSystem.destroy();
       this.weatherSystem = null;
+    }
+    if (this.dayNightCycle) {
+      this.dayNightCycle.destroy();
+      this.dayNightCycle = null;
     }
     if (this.zoneHUD) {
       this.zoneHUD.destroy();
