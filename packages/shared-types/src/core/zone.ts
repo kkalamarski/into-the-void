@@ -140,6 +140,8 @@ export interface ZoneState {
   fertilityType: FertilityType;
   /** Zone type discriminator — 'hub' for faction stations, 'open_world' for procedural zones */
   zoneType?: ZoneType;
+  /** Server epoch (ms) for day/night cycle synchronization */
+  serverTime?: number;
 }
 
 /**

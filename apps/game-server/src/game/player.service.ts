@@ -189,7 +189,7 @@ export class PlayerService {
       // Emit zone:state to player if zone changed (mirrors handleAuth pattern)
       if (oldZoneId !== respawnPos.zoneId && this.zoneStateProvider) {
         const zoneState = await this.zoneStateProvider(respawnPos.zoneId);
-        this.server.to(player.socketId).emit('zone:state', zoneState);
+        this.server.to(player.socketId).emit('zone:state', { ...zoneState, serverTime: Date.now() });
       }
 
       // Notify old zone that player left (if different from new zone)

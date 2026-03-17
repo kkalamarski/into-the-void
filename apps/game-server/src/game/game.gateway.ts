@@ -222,8 +222,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         const discoveredResources = await this.discoveryService.getDiscoveredResources(result.player.id);
         client.emit('rare-nodes:discovered', { discoveries: discoveredResources });
 
-        client.emit('auth:success', { player: result.player });
-        client.emit('zone:state', zoneState);
+        client.emit('auth:success', { player: result.player, serverTime: Date.now() });
+        client.emit('zone:state', { ...zoneState, serverTime: Date.now() });
         // Send NPC quest markers (! and ? above NPCs)
         this.emitNpcQuestMarkers(
           client,
@@ -350,7 +350,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
           // Send new zone state to player
           const zoneState = await this.gameService.getZoneState(result.newZoneId);
-          client.emit('zone:state', zoneState);
+          client.emit('zone:state', { ...zoneState, serverTime: Date.now() });
           // Send NPC quest markers for the new zone
           this.emitNpcQuestMarkers(
             client,
@@ -949,7 +949,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
         // Send new zone state to player
         const newZoneState = await this.gameService.getZoneState(result.newZoneId);
-        client.emit('zone:state', newZoneState);
+        client.emit('zone:state', { ...newZoneState, serverTime: Date.now() });
         // Send NPC quest markers for the hub zone
         this.emitNpcQuestMarkers(
           client,
@@ -1025,7 +1025,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
         // Send new zone state to player
         const newZoneState = await this.gameService.getZoneState(result.newZoneId);
-        client.emit('zone:state', newZoneState);
+        client.emit('zone:state', { ...newZoneState, serverTime: Date.now() });
         // Send NPC quest markers for the hub zone
         this.emitNpcQuestMarkers(
           client,
@@ -1077,7 +1077,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.aiService.activateZone(data.newZoneId);
 
     const newZoneState = await this.gameService.getZoneState(data.newZoneId);
-    client.emit('zone:state', newZoneState);
+    client.emit('zone:state', { ...newZoneState, serverTime: Date.now() });
 
     // Send NPC quest markers for the new zone
     this.emitNpcQuestMarkers(
@@ -1123,7 +1123,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
         // Send new zone state to player
         const newZoneState = await this.gameService.getZoneState(result.newZoneId);
-        client.emit('zone:state', newZoneState);
+        client.emit('zone:state', { ...newZoneState, serverTime: Date.now() });
         // Send NPC quest markers for the new zone
         this.emitNpcQuestMarkers(
           client,
@@ -1638,7 +1638,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
         // Send new zone state to player
         const newZoneState = await this.gameService.getZoneState(result.newZoneId);
-        client.emit('zone:state', newZoneState);
+        client.emit('zone:state', { ...newZoneState, serverTime: Date.now() });
 
         // Send NPC quest markers for the new zone
         this.emitNpcQuestMarkers(
