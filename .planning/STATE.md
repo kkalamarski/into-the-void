@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Visual Overhaul & Atmosphere
 status: unknown
-last_updated: "2026-03-17T12:59:08.132Z"
+last_updated: "2026-03-17T14:21:11.551Z"
 progress:
-  total_phases: 121
+  total_phases: 122
   completed_phases: 121
-  total_plans: 317
-  completed_plans: 317
+  total_plans: 319
+  completed_plans: 318
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 127 — Particle Weather System
+**Current focus:** Phase 129 — Biome Atmospheric Effects
 
 ## Current Position
 
-Phase: 127 of 130 (Particle Weather System)
-Plan: — of — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-03-17 — Phase 126 completed (Procedural Terrain Cubes)
+Phase: 129 of 130 (Biome Atmospheric Effects)
+Plan: 1 of 2 complete
+Status: In Progress
+Last activity: 2026-03-17 — Phase 129 Plan 01 completed (AtmosphereSystem + DayNightCycle integration)
 
-Progress: [##░░░░░░░░] 20%
+Progress: [##########] 99%
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ Progress: [##░░░░░░░░] 20%
 | 126 | 3 | ~30 min | ~10 min |
 
 *Updated after each plan completion*
+| Phase 129-biome-atmospheric-effects P01 | 4 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,8 @@ Recent decisions affecting current work:
 - Phase 126: 30 biome palettes with Hyper Light Drifter aesthetic; natural=surreal, exotic=alien
 - Phase 126: 3 variants for floor tiles, 1 for wall/feature tiles (~75 textures total)
 - Phase 126: Accent details on all 3 faces using Phaser Graphics primitives only
+- [Phase 129-biome-atmospheric-effects]: AtmosphereSystem uses cooperative ColorMatrix sharing — additive getData() writes after DayNightCycle's reset+write cycle, no separate postFX stage
+- [Phase 129-biome-atmospheric-effects]: import type used for AtmosphereSystem in DayNightCycle to prevent circular dependency
 
 ### Pending Todos
 
@@ -73,9 +76,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-17
-Stopped at: Phase 126 complete — ready to plan Phase 127
+Stopped at: Completed 129-biome-atmospheric-effects Plan 01 (AtmosphereSystem + DayNightCycle integration)
 Resume file: None
-Next action: /gsd:plan-phase 127
+Next action: Execute 129-02-PLAN.md (WorldScene wiring + visual verification)
 
 ---
-*Last updated: 2026-03-17 — Phase 126 complete, advancing to Phase 127*
+*Last updated: 2026-03-17 — Phase 129 Plan 01 complete*

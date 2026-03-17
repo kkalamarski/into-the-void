@@ -34,10 +34,10 @@ Requirements for milestone v1.26 Visual Overhaul & Atmosphere. Each maps to road
 
 ### Biome Atmosphere
 
-- [ ] **ATMO-01**: Each biome has a distinct atmospheric visual effect (fog, glow, haze, murk, etc.)
-- [ ] **ATMO-02**: Atmosphere transitions smoothly between biomes (no hard seams)
+- [x] **ATMO-01**: Each biome has a distinct atmospheric visual effect (fog, glow, haze, murk, etc.)
+- [x] **ATMO-02**: Atmosphere transitions smoothly between biomes (no hard seams)
 - [ ] **ATMO-03**: Atmosphere effects apply to both zone-walk and teleport transitions
-- [ ] **ATMO-04**: Atmosphere uses camera postFX shared with day/night (coordinated, not conflicting)
+- [x] **ATMO-04**: Atmosphere uses camera postFX shared with day/night (coordinated, not conflicting)
 
 ### Rendering Cleanup
 
@@ -91,10 +91,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DNTC-03 | Phase 128 | Pending |
 | DNTC-04 | Phase 128 | Pending |
 | DNTC-05 | Phase 128 | Pending |
-| ATMO-01 | Phase 129 | Pending |
-| ATMO-02 | Phase 129 | Pending |
+| ATMO-01 | Phase 129 | Complete |
+| ATMO-02 | Phase 129 | Complete |
 | ATMO-03 | Phase 129 | Pending |
-| ATMO-04 | Phase 129 | Pending |
+| ATMO-04 | Phase 129 | Complete |
 | CLNP-01 | Phase 130 | Pending |
 | CLNP-02 | Phase 130 | Pending |
 | CLNP-03 | Phase 130 | Pending |
