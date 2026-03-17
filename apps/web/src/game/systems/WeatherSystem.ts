@@ -185,10 +185,11 @@ export class WeatherSystem {
     this.resizeHandler = (gameSize: Phaser.Structs.Size) => {
       const { width, height } = gameSize;
       if (this.activeEmitter) {
-        this.activeEmitter.setEmitZone({
-          type: 'random',
-          source: new Phaser.Geom.Rectangle(0, -(height * 0.15), width, height * 0.15),
-        });
+        this.activeEmitter.setEmitZone(
+          new Phaser.GameObjects.Particles.Zones.RandomZone(
+            new Phaser.Geom.Rectangle(0, -(height * 0.15), width, height * 0.15) as unknown as Phaser.Types.GameObjects.Particles.RandomZoneSource
+          )
+        );
       }
     };
     this.scene.scale.on('resize', this.resizeHandler);
@@ -307,10 +308,9 @@ export class WeatherSystem {
     const quantityIndex = this.intensityTier;
 
     const emitter = this.scene.add.particles(0, 0, 'weather-pixel', {
-      emitZone: {
-        type: 'random',
-        source: new Phaser.Geom.Rectangle(0, -(height * 0.15), width, height * 0.15),
-      },
+      emitZone: new Phaser.GameObjects.Particles.Zones.RandomZone(
+        new Phaser.Geom.Rectangle(0, -(height * 0.15), width, height * 0.15) as unknown as Phaser.Types.GameObjects.Particles.RandomZoneSource
+      ),
       speedY: config.speedY,
       speedX: config.speedX,
       lifespan: config.lifespan,
@@ -366,7 +366,7 @@ export class WeatherSystem {
         onUpdate: () => {
           // Only update if emitter is still the active one
           if (this.activeEmitter === emitter) {
-            emitter.quantity.onChange(Math.round(this.intensityProxy.value));
+            emitter.setQuantity(Math.round(this.intensityProxy.value));
           }
         },
       });

@@ -352,12 +352,6 @@ export class WorldScene extends Phaser.Scene {
       }
     });
 
-    gameSocket.on('auth:success', (data: any) => {
-      if (data.serverTime && this.dayNightCycle) {
-        this.dayNightCycle.setServerTime(data.serverTime);
-      }
-    });
-
     // Set fixed zoom to show ~20x15 tiles viewport (for 256x256 sprites)
     this.cameras.main.setZoom(0.5);
 
