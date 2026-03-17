@@ -64,7 +64,9 @@
   3. `pixel-distance.ts` exports `pixelDistanceTo`, `tileToPixelCenter`, `pixelToTile`, and all range constants (`MELEE_RANGE_PX`, `GATHER_RANGE_PX`, `AGGRO_RADIUS_PX`, etc.)
   4. Diagonal movement uses `1/sqrt(2)` normalization — the constant is defined and unit-tested in `pixel-validation.ts`
   5. The TypeScript build passes with no errors after adding the new types and modules
-**Plans**: TBD
+**Plans**: 2 plans
+  - [ ] 131-01-PLAN.md — TDD: pixel-validation module (constants, velocityFromKeys, resolvePixelCollision, validatePixelSpeed)
+  - [ ] 131-02-PLAN.md — PixelPosition interface, pixel-distance module, barrel exports, build verification
 
 ### Phase 132: Server Movement Handler
 **Goal**: The server accepts pixel movement input at 20Hz, validates it with a speed cap and collision check, and broadcasts authoritative positions to the zone room
@@ -118,7 +120,7 @@
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 131. Shared Foundation | v1.27 | 0/TBD | Not started | - |
+| 131. Shared Foundation | v1.27 | 0/2 | Planned | - |
 | 132. Server Movement Handler | v1.27 | 0/TBD | Not started | - |
 | 133. Distance System Migration | v1.27 | 0/TBD | Not started | - |
 | 134. Client Movement Rewrite | v1.27 | 0/TBD | Not started | - |
