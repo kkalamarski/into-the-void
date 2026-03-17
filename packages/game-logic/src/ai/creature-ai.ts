@@ -1,11 +1,21 @@
 import { Creature, PlayerPublic, Position, ZONE_SIZE } from '@into-the-void/shared-types';
 import { DIRECTION_VECTORS } from '../movement/validation';
-import { chebyshevDistance } from '../movement/pathfinding';
+import {
+  pixelDistanceTo,
+  tileToPixelCenter,
+  AGGRO_RADIUS_PX,
+  LEASH_RADIUS_PX,
+  FLEE_RADIUS_PX,
+  MELEE_RANGE_PX,
+} from '../movement/pixel-distance';
 
-const FLEE_RADIUS = 5;
 const WANDER_CHANCE = 0.25;
-const AGGRO_RADIUS = 5;     // Tiles within which predator/maniac aggro
-const LEASH_DISTANCE = 10;  // Max tiles from spawn before returning
+
+/** Compute pixel distance from a creature's tile position to a player's pixel position. */
+function creatureToPlayerDist(creature: Creature, player: PlayerPublic): number {
+  const { px: cpx, py: cpy } = tileToPixelCenter(creature.position.x, creature.position.y);
+  return pixelDistanceTo(cpx, cpy, player.px, player.py);
+}
 
 /**
  * Result of a creature AI tick — pure data, no side effects
@@ -69,18 +79,10 @@ function tickHerbivore(
     }
   }
 
-  // Otherwise flee from any nearby players
+  // Otherwise flee from any nearby players (pixel distance detection)
   const nearbyPlayers = players
-    .map((p) => ({
-      player: p,
-      dist: chebyshevDistance(
-        creature.position.x,
-        creature.position.y,
-        p.position.x,
-        p.position.y,
-      ),
-    }))
-    .filter(({ dist }) => dist <= FLEE_RADIUS)
+    .map((p) => ({ player: p, dist: creatureToPlayerDist(creature, p) }))
+    .filter(({ dist }) => dist <= FLEE_RADIUS_PX)
     .sort((a, b) => a.dist - b.dist);
 
   if (nearbyPlayers.length > 0) {
@@ -136,26 +138,23 @@ function tickPredator(
 
   // Check leash distance first
   if (creature.spawnPosition) {
-    const distFromSpawn = chebyshevDistance(
-      creature.position.x,
-      creature.position.y,
-      creature.spawnPosition.x,
-      creature.spawnPosition.y,
-    );
+    const { px: cpx, py: cpy } = tileToPixelCenter(creature.position.x, creature.position.y);
+    const { px: spx, py: spy } = tileToPixelCenter(creature.spawnPosition.x, creature.spawnPosition.y);
+    const distFromSpawn = pixelDistanceTo(cpx, cpy, spx, spy);
 
     // If at spawn and no target, just wander
-    if (distFromSpawn <= 1 && !creature.combatTarget) {
+    if (distFromSpawn <= MELEE_RANGE_PX && !creature.combatTarget) {
       return withFrenzy(tickWander(creature, collisionMap));
     }
 
     // If has target, check leash
-    if (creature.combatTarget && distFromSpawn >= LEASH_DISTANCE) {
+    if (creature.combatTarget && distFromSpawn >= LEASH_RADIUS_PX) {
       // Too far from spawn - return (combat will be stopped by AiService)
       return withFrenzy(moveToward(creature, creature.spawnPosition, collisionMap, true));
     }
 
     // If no target but far from spawn (was returning), continue returning
-    if (!creature.combatTarget && distFromSpawn > 1) {
+    if (!creature.combatTarget && distFromSpawn > MELEE_RANGE_PX) {
       return withFrenzy(moveToward(creature, creature.spawnPosition, collisionMap, true));
     }
   }
@@ -164,38 +163,25 @@ function tickPredator(
   if (creature.combatTarget) {
     const target = players.find(p => p.id === creature.combatTarget);
     if (target) {
-      const distToTarget = chebyshevDistance(
-        creature.position.x,
-        creature.position.y,
-        target.position.x,
-        target.position.y,
-      );
+      const distToTarget = creatureToPlayerDist(creature, target);
 
-      // Adjacent = attack
-      if (distToTarget <= 1) {
+      // Adjacent = attack (within melee range)
+      if (distToTarget <= MELEE_RANGE_PX) {
         return withFrenzy({ newPosition: null, shouldAttack: true });
       }
 
-      // Chase
-      return withFrenzy(moveToward(creature, target.position, collisionMap, false));
+      // Chase — move toward player's pixel position
+      return withFrenzy(moveToward(creature, target, collisionMap, false));
     } else {
       // Target left zone - signal to clear target and return
       return withFrenzy({ newPosition: null, shouldReturn: true });
     }
   }
 
-  // No target - scan for players to aggro
+  // No target - scan for players to aggro (pixel distance detection)
   const nearbyPlayers = players
-    .map((p) => ({
-      player: p,
-      dist: chebyshevDistance(
-        creature.position.x,
-        creature.position.y,
-        p.position.x,
-        p.position.y,
-      ),
-    }))
-    .filter(({ dist }) => dist <= AGGRO_RADIUS)
+    .map((p) => ({ player: p, dist: creatureToPlayerDist(creature, p) }))
+    .filter(({ dist }) => dist <= AGGRO_RADIUS_PX)
     .sort((a, b) => a.dist - b.dist);
 
   if (nearbyPlayers.length > 0) {
@@ -209,16 +195,29 @@ function tickPredator(
 
 /**
  * Move one step toward a target position.
+ * Accepts either a tile-based Position object or a PlayerPublic (with px/py pixel coords).
+ * Uses pixel coordinates for direction calculation so movement is accurate when player
+ * is between tiles, but still moves one tile step per tick (creatures stay tile-snapped).
  * Returns shouldReturn: true if this is a return-to-spawn movement.
  */
 function moveToward(
   creature: Creature,
-  target: { x: number; y: number },
+  target: { x: number; y: number } | PlayerPublic,
   collisionMap: boolean[][],
   isReturning: boolean,
 ): AiTickResult {
-  const rawDx = target.x - creature.position.x;
-  const rawDy = target.y - creature.position.y;
+  const { px: cpx, py: cpy } = tileToPixelCenter(creature.position.x, creature.position.y);
+  let targetPx: number, targetPy: number;
+  if ('px' in target && 'py' in target) {
+    targetPx = (target as PlayerPublic).px;
+    targetPy = (target as PlayerPublic).py;
+  } else {
+    const tc = tileToPixelCenter((target as { x: number; y: number }).x, (target as { x: number; y: number }).y);
+    targetPx = tc.px;
+    targetPy = tc.py;
+  }
+  const rawDx = targetPx - cpx;
+  const rawDy = targetPy - cpy;
   const dx = rawDx === 0 ? 0 : rawDx > 0 ? 1 : -1;
   const dy = rawDy === 0 ? 0 : rawDy > 0 ? 1 : -1;
 
@@ -245,15 +244,18 @@ function moveToward(
 }
 
 /**
- * Flee directly away from a player, trying fallback directions if blocked
+ * Flee directly away from a player, trying fallback directions if blocked.
+ * Uses pixel coordinates for direction calculation for sub-tile accuracy.
+ * Creature still moves one tile step per tick (tile-snapped movement).
  */
 function flee(
   creature: Creature,
   player: PlayerPublic,
   collisionMap: boolean[][],
 ): AiTickResult {
-  const rawDx = creature.position.x - player.position.x;
-  const rawDy = creature.position.y - player.position.y;
+  const { px: cpx, py: cpy } = tileToPixelCenter(creature.position.x, creature.position.y);
+  const rawDx = cpx - player.px;
+  const rawDy = cpy - player.py;
   const dx = rawDx === 0 ? 0 : rawDx > 0 ? 1 : -1;
   const dy = rawDy === 0 ? 0 : rawDy > 0 ? 1 : -1;
 
