@@ -27,6 +27,7 @@ import { TargetHighlight } from '../rendering/TargetHighlight';
 import { FogManager } from '../fog/FogManager';
 import { FogRenderer } from '../fog/FogRenderer';
 import { PoiRenderer } from '../pois/PoiRenderer';
+import { WeatherSystem } from '../systems/WeatherSystem';
 // GatheringMiniGame removed - gathering now auto-completes on server
 import { createRareNodeMarker } from '../rendering/RareNodeFX';
 import type { DiscoveredResource } from '../../store/gameStore';
@@ -126,6 +127,7 @@ export class WorldScene extends Phaser.Scene {
   // Gathering - now auto-completes on server, no mini-game needed
   // Rare node markers
   private rareNodeMarkers: Map<string, Phaser.GameObjects.Container> = new Map();
+  private weatherSystem: WeatherSystem | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -190,6 +192,9 @@ export class WorldScene extends Phaser.Scene {
     if (this.zoneHUD) {
       this.minimapCamera.ignore(this.zoneHUD.getGameObjects());
     }
+
+    // Initialize WeatherSystem for biome particle effects
+    this.weatherSystem = new WeatherSystem(this);
 
     // Initialize MovementController
     this.movementController = new MovementController();
@@ -1032,6 +1037,10 @@ export class WorldScene extends Phaser.Scene {
         this.currentStructures = chunk.data.structures;
         this.currentBiome = chunk.biome;
 
+        // Crossfade weather to new biome
+        this.weatherSystem?.setBiome(chunk.biome, false);
+        this.updateMinimapWeatherIgnore();
+
         // Update collision map for movement validation in new zone
         if (chunk.data.collisions) {
           this.setCollisionMap(chunk.data.collisions);
@@ -1187,6 +1196,10 @@ export class WorldScene extends Phaser.Scene {
     this.currentZoneId = newZoneId;
     this.currentBiome = biome;
 
+    // Instant-swap weather for teleport
+    this.weatherSystem?.setBiome(biome, true);
+    this.updateMinimapWeatherIgnore();
+
     // Update HUD
     if (this.zoneHUD) {
       this.zoneHUD.updateZone(newZoneId, biome);
@@ -1208,6 +1221,19 @@ export class WorldScene extends Phaser.Scene {
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
+  }
+
+  /**
+   * Update minimap camera to ignore current weather emitters.
+   * Called after each weather transition to ensure new emitters are excluded.
+   */
+  private updateMinimapWeatherIgnore(): void {
+    if (this.minimapCamera && this.weatherSystem) {
+      const emitters = this.weatherSystem.getActiveEmitters();
+      if (emitters.length > 0) {
+        this.minimapCamera.ignore(emitters);
+      }
+    }
   }
 
   private parseZoneCoords(zoneId: string): { x: number; y: number } {
@@ -1371,6 +1397,11 @@ export class WorldScene extends Phaser.Scene {
       this.currentStructures = structures;
       if (this.zoneHUD) {
         this.zoneHUD.updateZone(zoneId, biome);
+      }
+      // Start weather on first chunk render for current zone
+      if (this.weatherSystem && !this.weatherSystem.hasActiveWeather()) {
+        this.weatherSystem.setBiome(biome, true);
+        this.updateMinimapWeatherIgnore();
       }
     }
   }
@@ -2255,6 +2286,10 @@ export class WorldScene extends Phaser.Scene {
     if (this.entityRenderer) {
       this.entityRenderer.destroyStampedeListener(); // CRAI-06: cleanup stampede listener
       this.entityRenderer = null;
+    }
+    if (this.weatherSystem) {
+      this.weatherSystem.destroy();
+      this.weatherSystem = null;
     }
     if (this.zoneHUD) {
       this.zoneHUD.destroy();
