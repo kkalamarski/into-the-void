@@ -8,6 +8,7 @@ import {
   ItemEntity,
 } from '@into-the-void/shared-types';
 import { manhattanDistance } from '../movement/pathfinding';
+import { pixelDistanceTo, tileToPixelCenter } from '../movement/pixel-distance';
 
 /**
  * Interaction types
@@ -67,6 +68,33 @@ export function canInteract(
     return { canInteract: false, reason: 'Entity is not active' };
   }
 
+  return { canInteract: true };
+}
+
+/**
+ * Pixel-distance range check for player-to-entity interaction.
+ * Replaces tile-based canInteract() for pixel movement (Phase 133).
+ *
+ * @param playerPx  Player pixel X position (float).
+ * @param playerPy  Player pixel Y position (float).
+ * @param entity    Target entity (uses entity.position.x/y tile coords, converted internally).
+ * @param rangePx   Maximum interaction range in pixels (e.g., MELEE_RANGE_PX, GATHER_RANGE_PX).
+ * @returns         { canInteract: true } or { canInteract: false, reason: string }.
+ */
+export function canInteractPixel(
+  playerPx: number,
+  playerPy: number,
+  entity: Entity,
+  rangePx: number,
+): { canInteract: boolean; reason?: string } {
+  if (!entity.active) {
+    return { canInteract: false, reason: 'Entity is not active' };
+  }
+  const { px: ex, py: ey } = tileToPixelCenter(entity.position.x, entity.position.y);
+  const dist = pixelDistanceTo(playerPx, playerPy, ex, ey);
+  if (dist > rangePx) {
+    return { canInteract: false, reason: 'Out of range' };
+  }
   return { canInteract: true };
 }
 
