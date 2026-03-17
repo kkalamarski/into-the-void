@@ -248,7 +248,17 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 ### Active
 
-(No active milestone — next milestone TBD)
+## Current Milestone: v1.27 Pixel Movement Rewrite
+
+**Goal:** Replace tile-to-tile movement with free sub-tile pixel movement for a smoother, more immersive feel.
+
+**Target features:**
+- Free sub-tile WASD movement (not tile-locked)
+- Continuous position sync between client and server
+- Pixel/hitbox collision replacing tile-based collision map
+- Drop click-to-move and pathfinding (WASD only)
+- Convert distance-based systems (combat, gathering, NPCs) to pixel distance
+- Fix flat blocking tiles (tiles that appear walkable but block movement)
 
 ### Out of Scope
 
@@ -315,4 +325,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-03-17 after v1.26 milestone completed*
+*Last updated: 2026-03-17 after v1.27 milestone started*
