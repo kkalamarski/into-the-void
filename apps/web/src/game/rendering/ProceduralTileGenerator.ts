@@ -143,12 +143,12 @@ const FLOOR_TILE_IDS = new Set([
 
 // ─── Isometric Cube Geometry (256x256 canvas) ───────────────────
 // Top diamond: (128,0) → (256,64) → (128,128) → (0,64)
-// South face:  (0,64) → (128,128) → (128,192) → (0,128)
-// East face:   (128,128) → (256,64) → (256,128) → (128,192)
+// South face:  (0,64) → (128,128) → (128,256) → (0,192)
+// East face:   (128,128) → (256,64) → (256,192) → (128,256)
 
 const HW = 128; // half width
 const HH = 64;  // half height
-const SH = 64;  // side height
+const SH = 128; // side height (matches ELEVATION_HEIGHT_STEP for seamless stacking)
 
 // ─── ProceduralTileGenerator ─────────────────────────────────────
 
@@ -839,7 +839,7 @@ export class ProceduralTileGenerator {
     if (this.isFloorTile(tileId)) {
       g.lineStyle(1, southAccent, 0.2);
       for (let i = 0; i < 3; i++) {
-        const y = HH + 8 + i * 20 + detailRandom(seed, i + 500) * 8;
+        const y = HH + 12 + i * 36 + detailRandom(seed, i + 500) * 10;
         const x1 = 10 + detailRandom(seed, i + 505) * 20;
         const x2 = 90 + detailRandom(seed, i + 510) * 30;
         g.beginPath();
@@ -876,7 +876,7 @@ export class ProceduralTileGenerator {
     if (this.isFloorTile(tileId)) {
       g.lineStyle(1, eastAccent, 0.15);
       for (let i = 0; i < 2; i++) {
-        const y = HH + 10 + i * 25 + detailRandom(seed, i + 600) * 8;
+        const y = HH + 15 + i * 50 + detailRandom(seed, i + 600) * 10;
         const x1 = 140 + detailRandom(seed, i + 605) * 20;
         const x2 = 230 + detailRandom(seed, i + 610) * 20;
         g.beginPath();
