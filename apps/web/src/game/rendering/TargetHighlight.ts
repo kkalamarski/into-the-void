@@ -16,6 +16,10 @@ export class TargetHighlight {
   private tween: Phaser.Tweens.Tween | null = null;
   private targetEntityId: string | null = null;
   private currentColor: number = 0;
+  private inRange: boolean = false;
+
+  /** Alpha multiplier applied to ring when target is out of interaction range */
+  private static readonly OUT_OF_RANGE_ALPHA = 0.3;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -121,7 +125,18 @@ export class TargetHighlight {
   }
 
   /**
+   * Update range indicator state.
+   * When in range: ring pulses at full brightness.
+   * When out of range: ring is dimmed (lower alpha) to indicate the player is too far.
+   * Per user decision: combat targets and gather nodes use consistent visual language.
+   */
+  setInRange(inRange: boolean): void {
+    this.inRange = inRange;
+  }
+
+  /**
    * Draw isometric ellipse ring at current graphics position.
+   * Alpha is dimmed when target is out of interaction range.
    */
   private drawRing(color: number, alpha: number, scale = 1.0): void {
     if (!this.graphics) return;
@@ -130,7 +145,8 @@ export class TargetHighlight {
     const radiusX = 50 * scale;
     const radiusY = 25 * scale;
 
-    this.graphics.lineStyle(4, color, alpha);
+    const effectiveAlpha = this.inRange ? alpha : alpha * TargetHighlight.OUT_OF_RANGE_ALPHA;
+    this.graphics.lineStyle(4, color, effectiveAlpha);
     this.graphics.strokeEllipse(0, 0, radiusX * 2, radiusY * 2);
   }
 

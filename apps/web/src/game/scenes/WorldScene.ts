@@ -113,6 +113,8 @@ export class WorldScene extends Phaser.Scene {
   private rightMouseDown = false;
   private lastClickedEntity: string | null = null;
   private targetHighlight: TargetHighlight | null = null;
+  // Phase 133: nearest NPC within NPC_INTERACT_RANGE_PX — gates npc:interact emissions
+  private nearestNpcInRange: Entity | null = null;
   // Portal tile detection: track last position where portal:use was emitted to prevent duplicates
   private lastPortalEmitKey: string | null = null;
   // Local player facing direction for sprite selection
@@ -1315,6 +1317,57 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /**
+   * Update target highlight based on pixel distance to targeted entity.
+   * Called from the position update path after each player position change.
+   * Phase 134 will switch from tile→pixel conversion to real-time pixel positions.
+   */
+  private updateRangeIndicator(playerPx: number, playerPy: number): void {
+    if (!this.targetHighlight) return;
+    const targetId = this.targetHighlight.getTargetEntityId();
+    if (!targetId) return;
+
+    // Find entity in entity store
+    const entity = useEntityStore.getState().entities.get(targetId);
+    if (!entity) return;
+
+    const { px: ex, py: ey } = tileToPixelCenter(entity.position.x, entity.position.y);
+    const dist = pixelDistanceTo(playerPx, playerPy, ex, ey);
+
+    // Determine appropriate range based on entity type
+    const isCreature = entity.type === 'creature';
+    const rangePx = isCreature ? MELEE_RANGE_PX : GATHER_RANGE_PX;
+    const inRange = dist <= rangePx;
+
+    this.targetHighlight.setInRange(inRange);
+  }
+
+  /**
+   * Check NPC proximity and update nearestNpcInRange field.
+   * Called from the position update path.
+   * Per user decision: instant appear/disappear at range boundary (no fade).
+   * nearestNpcInRange gates npc:interact emissions to prevent interaction while too far.
+   */
+  private updateNpcProximity(playerPx: number, playerPy: number): void {
+    const entities = useEntityStore.getState().entities;
+    if (!entities) return;
+
+    let closestNpcInRange: Entity | null = null;
+    let closestDist = Infinity;
+
+    for (const entity of entities.values()) {
+      if (entity.type !== 'npc' || !entity.active) continue;
+      const { px: ex, py: ey } = tileToPixelCenter(entity.position.x, entity.position.y);
+      const dist = pixelDistanceTo(playerPx, playerPy, ex, ey);
+      if (dist <= NPC_INTERACT_RANGE_PX && dist < closestDist) {
+        closestDist = dist;
+        closestNpcInRange = entity;
+      }
+    }
+
+    this.nearestNpcInRange = closestNpcInRange;
+  }
+
+  /**
    * Convert a Position (local coords + zoneId) to world coordinates.
    * World coords = zoneCoords * ZONE_SIZE + localCoords
    */
@@ -2029,6 +2082,12 @@ export class WorldScene extends Phaser.Scene {
 
     // Check if a pending zone transition should commit now that position has updated
     this.checkPendingZoneTransition(position);
+
+    // Phase 133: update range indicator and NPC proximity based on new position
+    // Using tileToPixelCenter until Phase 134 provides real-time pixel positions from client prediction
+    const { px: playerPx, py: playerPy } = tileToPixelCenter(position.x, position.y);
+    this.updateRangeIndicator(playerPx, playerPy);
+    this.updateNpcProximity(playerPx, playerPy);
 
     // Check if player landed on a portal tile (TileId.PORTAL = 16) — emit portal:use if so.
     // Only check on new movement predictions (not server reconciliation) to avoid spam.
