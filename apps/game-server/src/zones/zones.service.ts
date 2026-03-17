@@ -409,6 +409,17 @@ export class ZonesService implements OnModuleInit {
   }
 
   /**
+   * Returns the cached chunk synchronously, or undefined if not loaded.
+   * Used by MovementService tick loop to avoid async I/O in the hot path.
+   * If the zone is not yet cached, the caller should skip validation for that tick —
+   * the zone will be loaded by the normal flow (zone enter event) before the next tick.
+   */
+  getChunkSync(zoneId: string): ChunkData | undefined {
+    const zoneState = this.zones.get(zoneId);
+    return zoneState?.chunk;
+  }
+
+  /**
    * Attempt to claim an entity for pickup.
    * Returns true if claim was successful (entity was unclaimed).
    * Returns false if entity is already claimed by another player.
