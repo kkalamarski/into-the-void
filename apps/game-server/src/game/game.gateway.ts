@@ -30,6 +30,7 @@ import { ChatService } from './chat.service';
 import { HazardService } from './hazard.service';
 import { AutomationService } from './automation.service';
 import { CraftingService } from './crafting.service';
+import { MovementService } from './movement.service';
 import {
   ClientEvents,
   Direction,
@@ -101,6 +102,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly hazardService: HazardService,
     private readonly automationService: AutomationService,
     private readonly craftingService: CraftingService,
+    private readonly movementService: MovementService,
   ) {}
 
   afterInit(server: Server) {
@@ -116,6 +118,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.chatService.setServer(server);
     this.hazardService.setServer(server);
     this.automationService.setServer(server);
+    this.movementService.setServer(server);
     this.playerService.setZoneStateProvider((zoneId) => this.gameService.getZoneState(zoneId));
     // Wire aggro checker to ZonesService for immediate aggro on creature respawn
     this.zonesService.setAggroChecker(this.aiService);
@@ -277,6 +280,16 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
   }
 
+  @SubscribeMessage('player:pixelMove')
+  handlePixelMove(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { keys: number; predictedPx: number; predictedPy: number; sequence: number }
+  ) {
+    const player = this.playerService.getPlayerBySocket(client.id);
+    if (!player) return;
+    this.movementService.queueInput(player.id, data);
+  }
+
   @SubscribeMessage('player:move')
   async handleMove(
     @ConnectedSocket() client: Socket,
@@ -290,29 +303,6 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       if (this.abilityService.isPlayerCasting(player.id)) {
         this.abilityService.interruptCast(player.id, 'moved');
       }
-
-      const now = Date.now();
-      const lastMoveTime = this.playerService.getLastMoveTime(player.id);
-
-      // Calculate destination position to determine tile-based movement delay
-      const { calculateNewPosition } = await import('@into-the-void/game-logic');
-      const destPosition = calculateNewPosition(player.position, data.direction);
-
-      // Get tile-based movement delay (accounts for water tiles, biomes, etc)
-      const movementDelay = await this.gameService.getMovementDelay(destPosition);
-      const minDelay = movementDelay - 50; // 50ms tolerance for network latency
-
-      // Dynamic rate limiting based on destination tile
-      if (now - lastMoveTime < minDelay) {
-        client.emit('error', {
-          code: 'E-0006',
-          message: 'Movement too fast',
-          lastProcessedInput: data.sequence,
-        });
-        return;
-      }
-
-      this.playerService.setLastMoveTime(player.id, now);
 
       const result = await this.gameService.movePlayer(client.id, data.direction);
 

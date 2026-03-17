@@ -29,7 +29,6 @@ interface AuthResult {
 export class PlayerService {
   private players: Map<string, ConnectedPlayer> = new Map(); // playerId -> player
   private socketToPlayer: Map<string, string> = new Map(); // socketId -> playerId
-  private lastMoveTimes: Map<string, number> = new Map(); // playerId -> timestamp
   private respawnTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
   private server: Server | null = null;
   private zoneStateProvider: ((zoneId: string) => Promise<ZoneState>) | null = null;
@@ -146,7 +145,6 @@ export class PlayerService {
       }
       this.players.delete(playerId);
       this.socketToPlayer.delete(socketId);
-      this.lastMoveTimes.delete(playerId);
     }
   }
 
@@ -523,11 +521,4 @@ export class PlayerService {
     return this.getAllOnlinePlayers().length;
   }
 
-  getLastMoveTime(playerId: string): number {
-    return this.lastMoveTimes.get(playerId) || 0;
-  }
-
-  setLastMoveTime(playerId: string, timestamp: number): void {
-    this.lastMoveTimes.set(playerId, timestamp);
-  }
 }
