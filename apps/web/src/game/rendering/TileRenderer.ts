@@ -40,39 +40,40 @@ function seededRandom(x: number, y: number): number {
 }
 
 /**
- * Mapping from TileId enum to Phaser texture keys
+ * Mapping from TileId enum to procedural texture keys
+ * All tiles now use proc_tile_* keys baked by ProceduralTileGenerator
  */
 export const TILE_TEXTURE_MAP: Record<TileId, string> = {
-  [TileId.VOID_FLOOR]: 'tile_void_floor',
-  [TileId.VOID_WALL]: 'tile_void_wall',
-  [TileId.CRYSTAL_FLOOR]: 'tile_crystal_floor',
-  [TileId.CRYSTAL_FORMATION]: 'tile_crystal_formation',
-  [TileId.TOXIC_FLOOR]: 'tile_toxic_floor',
-  [TileId.TOXIC_POOL]: 'tile_toxic_pool',
-  [TileId.RUINS_FLOOR]: 'tile_ruins_floor',
-  [TileId.RUINS_WALL]: 'tile_ruins_wall',
-  [TileId.ICE_FLOOR]: 'tile_ice_floor',
-  [TileId.ICE_WALL]: 'tile_ice_wall',
-  [TileId.VOLCANIC_FLOOR]: 'tile_volcanic_floor',
-  [TileId.LAVA]: 'tile_lava',
-  [TileId.FUNGAL_FLOOR]: 'tile_fungal_floor',
-  [TileId.FUNGAL_GROWTH]: 'tile_fungal_growth',
-  [TileId.CRATER_FLOOR]: 'tile_crater_floor',
-  [TileId.CRATER_DEBRIS]: 'tile_crater_debris',
-  [TileId.PORTAL]: 'tile_portal',
-  [TileId.TIDAL_FLOOR]: 'tile_tidal_floor',
-  [TileId.TIDAL_SHALLOW]: 'tile_tidal_shallow',
-  [TileId.KELP_FLOOR]: 'tile_kelp_floor',
-  [TileId.KELP_WALL]: 'tile_kelp_wall',
-  [TileId.TRENCH_FLOOR]: 'tile_trench_floor',
-  [TileId.TRENCH_DEEP]: 'tile_trench_deep',
-  [TileId.SHORE_TRANSITION]: 'tile_shore',
-  [TileId.VOID_RIFT_FLOOR]: 'tile_void_rift_floor',
-  [TileId.VOID_RIFT_DISTORTION]: 'tile_void_rift_distortion',
-  [TileId.CRYSTALLINE_FLOOR]: 'tile_crystalline_floor',
-  [TileId.CRYSTAL_FORMATION_LARGE]: 'tile_crystal_formation_large',
-  [TileId.BIOLUMINESCENT_FLOOR]: 'tile_bioluminescent_floor',
-  [TileId.BIOLUMINESCENT_FLORA]: 'tile_bioluminescent_flora',
+  [TileId.VOID_FLOOR]: 'proc_tile_void_floor',
+  [TileId.VOID_WALL]: 'proc_tile_void_wall',
+  [TileId.CRYSTAL_FLOOR]: 'proc_tile_crystal_floor',
+  [TileId.CRYSTAL_FORMATION]: 'proc_tile_crystal_formation',
+  [TileId.TOXIC_FLOOR]: 'proc_tile_toxic_floor',
+  [TileId.TOXIC_POOL]: 'proc_tile_toxic_pool',
+  [TileId.RUINS_FLOOR]: 'proc_tile_ruins_floor',
+  [TileId.RUINS_WALL]: 'proc_tile_ruins_wall',
+  [TileId.ICE_FLOOR]: 'proc_tile_ice_floor',
+  [TileId.ICE_WALL]: 'proc_tile_ice_wall',
+  [TileId.VOLCANIC_FLOOR]: 'proc_tile_volcanic_floor',
+  [TileId.LAVA]: 'proc_tile_lava',
+  [TileId.FUNGAL_FLOOR]: 'proc_tile_fungal_floor',
+  [TileId.FUNGAL_GROWTH]: 'proc_tile_fungal_growth',
+  [TileId.CRATER_FLOOR]: 'proc_tile_crater_floor',
+  [TileId.CRATER_DEBRIS]: 'proc_tile_crater_debris',
+  [TileId.PORTAL]: 'proc_tile_portal',
+  [TileId.TIDAL_FLOOR]: 'proc_tile_tidal_floor',
+  [TileId.TIDAL_SHALLOW]: 'proc_tile_tidal_shallow',
+  [TileId.KELP_FLOOR]: 'proc_tile_kelp_floor',
+  [TileId.KELP_WALL]: 'proc_tile_kelp_wall',
+  [TileId.TRENCH_FLOOR]: 'proc_tile_trench_floor',
+  [TileId.TRENCH_DEEP]: 'proc_tile_trench_deep',
+  [TileId.SHORE_TRANSITION]: 'proc_tile_shore_transition',
+  [TileId.VOID_RIFT_FLOOR]: 'proc_tile_void_rift_floor',
+  [TileId.VOID_RIFT_DISTORTION]: 'proc_tile_void_rift_distortion',
+  [TileId.CRYSTALLINE_FLOOR]: 'proc_tile_crystalline_floor',
+  [TileId.CRYSTAL_FORMATION_LARGE]: 'proc_tile_crystal_formation_large',
+  [TileId.BIOLUMINESCENT_FLOOR]: 'proc_tile_bioluminescent_floor',
+  [TileId.BIOLUMINESCENT_FLORA]: 'proc_tile_bioluminescent_flora',
 };
 
 /**
@@ -383,11 +384,12 @@ export class TileRenderer {
    * Includes top face + south/east side faces all in one sprite.
    * Floor tiles have variants (_v2, _v3) selected deterministically by position seed.
    * Probability: base 70%, v2 20%, v3 10%
+   * Uses procedural textures (proc_tile_*) baked by ProceduralTileGenerator.
    */
   private createCubeSprite(tileId: TileId, x: number, y: number): Phaser.GameObjects.GameObject {
     const baseTextureKey = this.getTextureKey(tileId);
-    const hasVariants = baseTextureKey.endsWith('_floor')
-      || baseTextureKey === 'tile_crystal_formation';
+    // Procedural floor tiles have _v2/_v3 variants
+    const hasVariants = baseTextureKey.endsWith('_floor');
 
     // Select variant for tiles with variants based on position
     let textureKey = baseTextureKey;
@@ -402,13 +404,13 @@ export class TileRenderer {
       }
       // else 70% chance for base (no suffix)
 
-      // Fallback to base if variant doesn't exist or isn't 256x256 cube format
-      if (!this.isValidCubeTexture(textureKey)) {
+      // Fallback to base if variant doesn't exist
+      if (!this.scene.textures.exists(textureKey)) {
         textureKey = baseTextureKey;
       }
     }
 
-    // Use cube sprite at native 256x256 size
+    // Use procedural cube texture at native 256x256 size
     if (this.scene.textures.exists(textureKey)) {
       const sprite = this.scene.add.image(0, 0, textureKey);
       // Set origin to align top diamond center with container position
@@ -419,7 +421,7 @@ export class TileRenderer {
       return sprite;
     }
 
-    // Fallback: draw colored isometric cube if texture missing
+    // Fallback: draw colored isometric cube if procedural texture missing (should not happen)
     return this.createFallbackCube(tileId);
   }
 
