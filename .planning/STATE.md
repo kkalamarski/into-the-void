@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Visual Overhaul & Atmosphere
-status: unknown
-last_updated: "2026-03-17T14:21:11.551Z"
+status: complete
+last_updated: "2026-03-17T14:26:09.304Z"
 progress:
   total_phases: 122
-  completed_phases: 121
+  completed_phases: 122
   total_plans: 319
-  completed_plans: 318
+  completed_plans: 319
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 129 — Biome Atmospheric Effects
+**Current focus:** Phase 130 — Cleanup (next)
 
 ## Current Position
 
 Phase: 129 of 130 (Biome Atmospheric Effects)
-Plan: 1 of 2 complete
-Status: In Progress
-Last activity: 2026-03-17 — Phase 129 Plan 01 completed (AtmosphereSystem + DayNightCycle integration)
+Plan: 2 of 2 complete
+Status: Complete
+Last activity: 2026-03-17 — Phase 129 Plan 02 completed (AtmosphereSystem wired into WorldScene)
 
 Progress: [##########] 99%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: ~10 min
-- Total execution time: ~30 min
+- Total plans completed: 4
+- Average duration: ~8 min
+- Total execution time: ~32 min
 
 **By Phase:**
 
@@ -44,6 +44,7 @@ Progress: [##########] 99%
 
 *Updated after each plan completion*
 | Phase 129-biome-atmospheric-effects P01 | 4 | 2 tasks | 2 files |
+| Phase 129-biome-atmospheric-effects P02 | 2 | 1 task | 1 file |
 
 ## Accumulated Context
 
@@ -63,6 +64,8 @@ Recent decisions affecting current work:
 - Phase 126: Accent details on all 3 faces using Phaser Graphics primitives only
 - [Phase 129-biome-atmospheric-effects]: AtmosphereSystem uses cooperative ColorMatrix sharing — additive getData() writes after DayNightCycle's reset+write cycle, no separate postFX stage
 - [Phase 129-biome-atmospheric-effects]: import type used for AtmosphereSystem in DayNightCycle to prevent circular dependency
+- [Phase 129-biome-atmospheric-effects P02]: Atmosphere placed inside same weather conditional in renderChunk() for consistent first-chunk init
+- [Phase 129-biome-atmospheric-effects P02]: AtmosphereSystem destroyed after DayNightCycle in shutdown() to maintain logical dependency order
 
 ### Pending Todos
 
@@ -71,14 +74,13 @@ None.
 ### Blockers/Concerns
 
 - Phase 128: Verify `this.renderer.type === Phaser.WEBGL` detection works in Vite production build before committing
-- Phase 129: The 5-tile atmosphere blend radius at chunk boundaries is unvalidated — confirm during planning
 
 ## Session Continuity
 
 Last session: 2026-03-17
-Stopped at: Completed 129-biome-atmospheric-effects Plan 01 (AtmosphereSystem + DayNightCycle integration)
+Stopped at: Completed 129-biome-atmospheric-effects Plan 02 (AtmosphereSystem wired into WorldScene)
 Resume file: None
-Next action: Execute 129-02-PLAN.md (WorldScene wiring + visual verification)
+Next action: Phase 130 — Cleanup
 
 ---
-*Last updated: 2026-03-17 — Phase 129 Plan 01 complete*
+*Last updated: 2026-03-17 — Phase 129 Plan 02 complete*
