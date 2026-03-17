@@ -71,7 +71,6 @@ export class WorldScene extends Phaser.Scene {
   private tileLayer: Phaser.GameObjects.Container | null = null;
   private tileRenderer: TileRenderer | null = null;
   private entityRenderer: EntityRenderer | null = null;
-  private tileSprites: Phaser.GameObjects.GameObject[][] = [];
   private entitySprites: Map<string, Phaser.GameObjects.Container> = new Map();
   private entityZoneMap: Map<string, Set<string>> = new Map(); // zoneId -> Set<entityId>
   private playerSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
@@ -1459,25 +1458,6 @@ export class WorldScene extends Phaser.Scene {
     this.despawnEntitiesForZone(zoneId);
   }
 
-  loadZone(tiles: number[][], collisions: boolean[][]): void {
-    if (!this.tileLayer || !this.tileRenderer) return;
-
-    // Clear existing tiles
-    this.tileLayer.removeAll(true);
-    this.tileSprites = [];
-
-    // Create new tiles
-    for (let y = 0; y < tiles.length; y++) {
-      this.tileSprites[y] = [];
-      for (let x = 0; x < tiles[y].length; x++) {
-        const tileId = tiles[y][x] as TileId;
-        const tile = this.tileRenderer.createTile(x, y, tileId);
-        this.tileLayer.add(tile);
-        this.tileSprites[y][x] = tile;
-      }
-    }
-  }
-
   spawnEntity(entity: Entity, zoneId?: string): void {
     if (this.entitySprites.has(entity.id) || !this.entityRenderer) return;
 
@@ -2348,7 +2328,6 @@ export class WorldScene extends Phaser.Scene {
     }
     this.chunkTiles.forEach(tiles => tiles.forEach(tile => tile.destroy(true)));
     this.chunkTiles.clear();
-    this.tileSprites = [];
     this.lastCullBounds = null;
 
     // Cleanup fog system

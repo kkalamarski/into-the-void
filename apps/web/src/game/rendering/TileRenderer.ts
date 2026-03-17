@@ -94,59 +94,7 @@ export class TileRenderer {
    * Get texture key for a tile ID
    */
   getTextureKey(tileId: TileId): string {
-    return TILE_TEXTURE_MAP[tileId] ?? 'tile_void_floor';
-  }
-
-  /**
-   * Check if a texture exists and is the correct 256x256 cube format.
-   * Returns false for missing textures or old small-format sprites.
-   */
-  private isValidCubeTexture(textureKey: string): boolean {
-    if (!this.scene.textures.exists(textureKey)) {
-      return false;
-    }
-    const texture = this.scene.textures.get(textureKey);
-    const source = texture.getSourceImage();
-    // Valid cube sprites are 256x256
-    return source.width === SPRITE_SIZE && source.height === SPRITE_SIZE;
-  }
-
-  /**
-   * Create a tile at grid position.
-   * Returns a diamond-shaped polygon graphic (placeholder until isometric sprites are available).
-   */
-  createTile(x: number, y: number, tileId: TileId): Phaser.GameObjects.GameObject {
-    const screenPos = this.isoTransform.gridToScreen(x, y);
-    const color = this.getTileColor(tileId);
-
-    // Create isometric diamond polygon
-    // Diamond points: top, right, bottom, left (relative to center)
-    const halfWidth = this.isoTransform.tileWidth / 2;
-    const halfHeight = this.isoTransform.tileHeight / 2;
-
-    const graphics = this.scene.add.graphics();
-    graphics.fillStyle(color, 1);
-    graphics.beginPath();
-    graphics.moveTo(screenPos.x, screenPos.y - halfHeight);      // Top
-    graphics.lineTo(screenPos.x + halfWidth, screenPos.y);       // Right
-    graphics.lineTo(screenPos.x, screenPos.y + halfHeight);      // Bottom
-    graphics.lineTo(screenPos.x - halfWidth, screenPos.y);       // Left
-    graphics.closePath();
-    graphics.fillPath();
-
-    // Add subtle border for visibility
-    graphics.lineStyle(1, 0x000000, 0.2);
-    graphics.beginPath();
-    graphics.moveTo(screenPos.x, screenPos.y - halfHeight);
-    graphics.lineTo(screenPos.x + halfWidth, screenPos.y);
-    graphics.lineTo(screenPos.x, screenPos.y + halfHeight);
-    graphics.lineTo(screenPos.x - halfWidth, screenPos.y);
-    graphics.closePath();
-    graphics.strokePath();
-
-    graphics.setDepth(screenPos.y);
-
-    return graphics;
+    return TILE_TEXTURE_MAP[tileId] ?? 'proc_tile_void_floor';
   }
 
   /**
@@ -170,56 +118,6 @@ export class TileRenderer {
    */
   getTransform(): IsometricTransform {
     return this.isoTransform;
-  }
-
-  /**
-   * Create a tile with elevation support.
-   * New 256x256 sprites include all 3 faces (top + sides) pre-rendered.
-   * Returns a container with proper depth and elevation offset.
-   */
-  createTileWithElevation(
-    x: number,
-    y: number,
-    tileId: TileId,
-    elevation: number,
-    heights: number[][]
-  ): Phaser.GameObjects.Container {
-    const screenPos = this.isoTransform.gridToScreen(x, y);
-    const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
-
-    // Create container at elevated position
-    const container = this.scene.add.container(screenPos.x, screenPos.y - elevationOffset);
-    container.setData('gridX', x);
-    container.setData('gridY', y);
-    container.setData('elevation', elevation);
-
-    // Add the cube sprite (includes top + side faces pre-rendered)
-    const cubeSprite = this.createCubeSprite(tileId, x, y);
-    container.add(cubeSprite);
-
-    // Apply height-based tinting for visual depth
-    this.applyElevationTint(cubeSprite, elevation);
-
-    // Apply additional shadow darkening if adjacent to higher elevation
-    if (cubeSprite instanceof Phaser.GameObjects.Image && heights) {
-      if (this.isAdjacentToHigherElevation(x, y, elevation, heights)) {
-        const currentTint = cubeSprite.tintTopLeft;
-        const r = ((currentTint >> 16) & 0xff) * SHADOW_TINT_FACTOR;
-        const g = ((currentTint >> 8) & 0xff) * SHADOW_TINT_FACTOR;
-        const b = (currentTint & 0xff) * SHADOW_TINT_FACTOR;
-        const shadowTint = (Math.floor(r) << 16) | (Math.floor(g) << 8) | Math.floor(b);
-        cubeSprite.setTint(shadowTint);
-      }
-    }
-
-    // Add edge highlight at elevation transitions (cliffs only)
-    this.drawElevationEdge(container, elevation, x, y, heights);
-
-    // Set depth using composite depth calculation
-    const depth = this.isoTransform.calculateDepth(x, y, elevation);
-    container.setDepth(depth);
-
-    return container;
   }
 
   /**
@@ -380,11 +278,10 @@ export class TileRenderer {
   }
 
   /**
-   * Create cube sprite using 256x256 pre-rendered isometric cube texture.
+   * Create cube sprite using procedural isometric cube texture (proc_tile_*).
    * Includes top face + south/east side faces all in one sprite.
-   * Floor tiles have variants (_v2, _v3) selected deterministically by position seed.
-   * Probability: base 70%, v2 20%, v3 10%
-   * Uses procedural textures (proc_tile_*) baked by ProceduralTileGenerator.
+   * Tiles with _floor suffix have variants (_v2, _v3) selected deterministically
+   * by position seed. Probability: base 70%, v2 20%, v3 10%.
    */
   private createCubeSprite(tileId: TileId, x: number, y: number): Phaser.GameObjects.GameObject {
     const baseTextureKey = this.getTextureKey(tileId);
