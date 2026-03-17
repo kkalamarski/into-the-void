@@ -48,7 +48,7 @@
 
 ## Phase Details
 
-- [ ] **Phase 131: Shared Foundation** - Coordinate contract, pixel math modules, and shared constants that every downstream phase depends on
+- [x] **Phase 131: Shared Foundation** - Coordinate contract, pixel math modules, and shared constants that every downstream phase depends on (completed 2026-03-17)
 - [ ] **Phase 132: Server Movement Handler** - Server-authoritative position validation and 20Hz broadcast loop
 - [ ] **Phase 133: Distance System Migration** - All six game systems migrated from tile distance to pixel Euclidean distance
 - [ ] **Phase 134: Client Movement Rewrite** - Velocity-based WASD movement, pixel collision, client prediction, and remote player interpolation
@@ -120,7 +120,7 @@
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 131. Shared Foundation | 1/2 | In Progress|  | - |
+| 131. Shared Foundation | 2/2 | Complete   | 2026-03-17 | - |
 | 132. Server Movement Handler | v1.27 | 0/TBD | Not started | - |
 | 133. Distance System Migration | v1.27 | 0/TBD | Not started | - |
 | 134. Client Movement Rewrite | v1.27 | 0/TBD | Not started | - |

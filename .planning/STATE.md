@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.27
+milestone: v1.0
 milestone_name: Pixel Movement Rewrite
-status: in_progress
-last_updated: "2026-03-17T21:59:01Z"
+status: unknown
+last_updated: "2026-03-17T22:06:30.840Z"
 progress:
-  total_phases: 5
-  completed_phases: 0
-  total_plans: 1
-  completed_plans: 1
+  total_phases: 124
+  completed_phases: 124
+  total_plans: 323
+  completed_plans: 323
 ---
 
 # Project State
@@ -23,24 +23,25 @@ See: .planning/PROJECT.md (updated 2026-03-17)
 ## Current Position
 
 Phase: 131 of 135 (Shared Foundation)
-Plan: 1 of TBD in current phase
-Status: In progress — 131-01 complete, ready for 131-02
-Last activity: 2026-03-17 — Completed 131-01 (pixel-validation module)
+Plan: 2 of TBD in current phase
+Status: In progress — 131-02 complete, ready for 132
+Last activity: 2026-03-17 — Completed 131-02 (PixelPosition + pixel-distance module, 27 tests passing)
 
-Progress: [█░░░░░░░░░] 10%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: ~2 min
-- Total execution time: ~2 min
+- Total plans completed: 2
+- Average duration: ~2.5 min
+- Total execution time: ~5 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 131-01 | 1 | 2 min | 2 min |
+| 131-02 | 2 | 3 min | 3 min |
 
 *Updated after each plan completion*
 
@@ -61,6 +62,10 @@ Recent decisions affecting current work:
 - 131-01: PLAYER_HITBOX 64x64 (0.5 * TILE_SIZE_PX) anchored at feet (bottom-center)
 - 131-01: Wall sliding via separate X/Y collision passes (not dead-stop on diagonal)
 - 131-01: validatePixelSpeed uses 10% jitter tolerance without enabling speed hacks
+- [Phase 131-02]: PixelPosition uses px/py field names to prevent type confusion with tile-based Position interface
+- [Phase 131-02]: tileToPixelCenter uses (tileIndex + 0.5) * TILE_SIZE_PX — tile (0,0) center at (64,64)
+- [Phase 131-02]: Range constants defined as TILE_SIZE_PX multiples so they auto-scale if tile size changes
+- [Phase 131-02]: NPC_INTERACT_RANGE_PX aliased to GATHER_RANGE_PX (192px) — consistent interaction distance across gathering and dialogue
 
 ### Pending Todos
 
@@ -69,14 +74,14 @@ None.
 ### Blockers/Concerns
 
 - Rate limiter: existing 140ms gate must be replaced before any 20Hz movement testing (Phase 132)
-- Coordinate unit ambiguity: ensure no integer-coercion of px/py floats in existing validation code (Phase 131)
+- Coordinate unit ambiguity: RESOLVED — verified no integer-coercion of px/py floats in pixel-distance.ts (only Math.floor in pixelToTile, which is intentional)
 
 ## Session Continuity
 
 Last session: 2026-03-17
-Stopped at: Completed 131-01-PLAN.md (pixel-validation module, 30 tests passing)
+Stopped at: Completed 131-02-PLAN.md (PixelPosition + pixel-distance module, 27 tests passing)
 Resume file: None
-Next action: Execute 131-02
+Next action: Execute Phase 132 (client movement)
 
 ---
-*Last updated: 2026-03-17 — Completed 131-01 pixel-validation TDD module*
+*Last updated: 2026-03-17 — Completed 131-02 PixelPosition and pixel-distance module*
