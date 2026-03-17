@@ -472,6 +472,9 @@ gameSocket.on('player:respawn', ({ playerId, position, health, maxHealth }: { pl
       name: 'Player', // Will be updated by zone:state
       faction: 'neutral',
       position,
+      // Derive pixel position from tile center until full PlayerPublic arrives via player:joined
+      px: (position.x + 0.5) * 128,
+      py: (position.y + 0.5) * 128,
       level: 1,
       inCombat: false,
       credits: 0,

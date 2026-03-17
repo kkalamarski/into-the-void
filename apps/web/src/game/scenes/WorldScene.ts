@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { ZONE_SIZE, MOVE_DELAY_MS, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure, isHubZone, Npc, TimingChallenge } from '@into-the-void/shared-types';
+import { TILE_SIZE_PX, MELEE_RANGE_PX, GATHER_RANGE_PX, NPC_INTERACT_RANGE_PX, pixelDistanceTo, tileToPixelCenter } from '@into-the-void/game-logic';
 import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
 import { ItemRegistry } from '@into-the-void/items';
@@ -38,6 +39,8 @@ export const ISO_TILE_WIDTH = 256;
 export const ISO_TILE_HEIGHT = 128;
 // Visibility radius in tiles (~1.5 chunks allows seeing into adjacent chunks)
 const VISIBILITY_RADIUS = 48;
+// Pixel-space hysteresis threshold: commit zone transition once player is this many px deep
+const HYSTERESIS_PX = HYSTERESIS_TILES * TILE_SIZE_PX; // 3 * 128 = 384 px
 
 type WASDKeys = { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key };
 
@@ -1131,10 +1134,11 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
 
-    // Player still in pending zone - check tile depth
+    // Player still in pending zone - check pixel depth
     if (position.zoneId === this.pendingZoneId) {
-      const depth = this.getZoneBoundaryDepth(position);
-      if (depth >= HYSTERESIS_TILES) {
+      const { px: posPx, py: posPy } = tileToPixelCenter(position.x, position.y);
+      const depth = this.getZoneBoundaryDepthPx(posPx, posPy);
+      if (depth >= HYSTERESIS_PX) {
         this.commitZoneTransition(this.pendingZoneId, this.pendingBiome!);
         this.pendingZoneId = null;
         this.pendingBiome = null;
@@ -1164,9 +1168,10 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
 
-    const depth = this.getZoneBoundaryDepth(position);
+    const { px: posPx, py: posPy } = tileToPixelCenter(position.x, position.y);
+    const depth = this.getZoneBoundaryDepthPx(posPx, posPy);
 
-    if (depth >= HYSTERESIS_TILES) {
+    if (depth >= HYSTERESIS_PX) {
       // Deep enough - commit immediately (e.g., teleport or fast movement)
       this.commitZoneTransition(newZoneId, biome);
     } else {
@@ -1175,7 +1180,7 @@ export class WorldScene extends Phaser.Scene {
       // already includes this adjacent zone. Calling it would trigger load/unload thrashing.
       this.pendingZoneId = newZoneId;
       this.pendingBiome = biome;
-      console.log('[WorldScene] Zone transition pending at depth', depth, '- awaiting', HYSTERESIS_TILES, 'tiles');
+      console.log('[WorldScene] Zone transition pending at depth', depth, 'px - awaiting', HYSTERESIS_PX, 'px');
     }
   }
 
@@ -1292,6 +1297,20 @@ export class WorldScene extends Phaser.Scene {
     const fromRight = ZONE_SIZE - 1 - position.x;
     const fromTop = position.y;
     const fromBottom = ZONE_SIZE - 1 - position.y;
+    return Math.min(fromLeft, fromRight, fromTop, fromBottom);
+  }
+
+  /**
+   * Calculate how many pixels deep into a zone the pixel position is.
+   * Returns 0 at zone edge, up to (ZONE_SIZE * TILE_SIZE_PX / 2) at center.
+   * Used for hysteresis: commit zone transition when depth >= HYSTERESIS_PX (384px).
+   */
+  private getZoneBoundaryDepthPx(px: number, py: number): number {
+    const zonePxSize = ZONE_SIZE * TILE_SIZE_PX;
+    const fromLeft = px;
+    const fromRight = zonePxSize - px;
+    const fromTop = py;
+    const fromBottom = zonePxSize - py;
     return Math.min(fromLeft, fromRight, fromTop, fromBottom);
   }
 
