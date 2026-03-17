@@ -93,7 +93,11 @@
   4. Creature aggro triggers at `AGGRO_RADIUS_PX` (480px) and the creature leashes back at `LEASH_RADIUS_PX` (960px)
   5. Fog of war tiles reveal in a circular radius around the player's pixel position
   6. Zone boundary transitions trigger at the correct pixel-granularity border, not at tile-snapped positions
-**Plans**: TBD
+**Plans**: 4 plans
+  - [ ] 133-01-PLAN.md — Shared contracts: px/py on PlayerPublic, canInteractPixel function, FLEE_RADIUS_PX constant
+  - [ ] 133-02-PLAN.md — Combat, gathering, NPC server migration: ability.service, combat.service, gathering.service, game.gateway pixel distance
+  - [ ] 133-03-PLAN.md — Creature AI pixel distance: creature-ai.ts FSM + ai.service.ts aggro delay, "!" emission, leash HP heal
+  - [ ] 133-04-PLAN.md — Client-side distance: zone boundary pixel granularity, target range highlights, NPC proximity
 
 ### Phase 134: Client Movement Rewrite
 **Goal**: The player moves freely at sub-tile positions via WASD with real-time physics collision, client-side prediction, server reconciliation, and smooth remote player rendering
