@@ -51,6 +51,31 @@ export class PreloadScene extends Phaser.Scene {
   private loadAssets(): void {
     this.load.setPath('assets/');
 
+    // Dev-mode guard: warn if any code path tries to load tile PNGs at runtime
+    if (import.meta.env.DEV) {
+      const originalLoadImage = this.load.image.bind(this.load);
+      const originalLoadSpritesheet = this.load.spritesheet.bind(this.load);
+      const tilePattern = /^tile_|^sprites\/tile_|void-tiles|crystal-tiles/;
+
+      this.load.image = ((...args: Parameters<typeof this.load.image>) => {
+        const key = typeof args[0] === 'string' ? args[0] : '';
+        const url = typeof args[1] === 'string' ? args[1] : '';
+        if (tilePattern.test(key) || tilePattern.test(url)) {
+          console.warn(`[PreloadScene] Unexpected tile PNG load detected: key="${key}" url="${url}"`);
+        }
+        return originalLoadImage(...args);
+      }) as typeof this.load.image;
+
+      this.load.spritesheet = ((...args: Parameters<typeof this.load.spritesheet>) => {
+        const key = typeof args[0] === 'string' ? args[0] : '';
+        const url = typeof args[1] === 'string' ? args[1] : '';
+        if (tilePattern.test(key) || tilePattern.test(url)) {
+          console.warn(`[PreloadScene] Unexpected tile PNG spritesheet load detected: key="${key}" url="${url}"`);
+        }
+        return originalLoadSpritesheet(...args);
+      }) as typeof this.load.spritesheet;
+    }
+
     // Tile textures baked procedurally in create() via ProceduralTileGenerator
 
     // Load directional character sprites
