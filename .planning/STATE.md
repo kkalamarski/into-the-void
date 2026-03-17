@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Pixel Movement Rewrite
 status: unknown
-last_updated: "2026-03-17T22:33:36.560Z"
+last_updated: "2026-03-17T22:41:15.298Z"
 progress:
   total_phases: 125
   completed_phases: 124
   total_plans: 326
-  completed_plans: 324
+  completed_plans: 325
 ---
 
 # Project State
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-03-17)
 ## Current Position
 
 Phase: 132 of 135 (Server Movement Handler)
-Plan: 2 of 3 in current phase
-Status: In progress — 132-02 complete, ready for 132-03
-Last activity: 2026-03-17 — Completed 132-02 (pixel state infrastructure: ConnectedPlayer px/py/lastPxInputTime, ZonesService.getChunkSync)
+Plan: 1 of 3 in current phase complete
+Status: In progress — 132-01 complete, ready for 132-02
+Last activity: 2026-03-17 — Completed 132-01 (pixel movement wire types: player:pixelMove, positionBatch, positionCorrection, bitmaskToKeyState)
 
 Progress: [██░░░░░░░░] 20%
 
@@ -45,6 +45,7 @@ Progress: [██░░░░░░░░] 20%
 
 *Updated after each plan completion*
 | Phase 132 P02 | 2 | 2 tasks | 2 files |
+| Phase 132-01 P01 | 9 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,9 @@ Recent decisions affecting current work:
 - [Phase 132]: Pixel state (px/py/lastPxInputTime) stored in-memory only on ConnectedPlayer; no DB schema change needed
 - [Phase 132]: handleDisconnect converts px/py via pixelToTile before updateCharacterPosition DB write
 - [Phase 132]: getChunkSync returns undefined if zone not cached; callers skip validation that tick rather than blocking
+- [Phase 132-01]: bitmask W=1/A=2/S=4/D=8 convention matches client-side for consistent wire format
+- [Phase 132-01]: bitmaskToKeyState placed in pixel-validation.ts — bridges wire bitmask to KeyState used by velocityFromKeys
+- [Phase 132-01]: Old player:move event kept alongside player:pixelMove until Phase 135 cleanup
 
 ### Pending Todos
 
@@ -83,9 +87,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-17
-Stopped at: Completed 132-02-PLAN.md (pixel state infrastructure)
+Stopped at: Completed 132-01-PLAN.md (pixel movement wire types and bitmaskToKeyState adapter)
 Resume file: None
-Next action: Execute Phase 132-03 (MovementService tick loop)
+Next action: Execute Phase 132-02
 
 ---
-*Last updated: 2026-03-17 — Completed 132-02 pixel state infrastructure (ConnectedPlayer px/py, getChunkSync)*
+*Last updated: 2026-03-17 — Completed 132-01 pixel movement wire types (player:pixelMove, positionBatch, positionCorrection, bitmaskToKeyState)*

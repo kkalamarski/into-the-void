@@ -17,8 +17,8 @@ Requirements for pixel movement rewrite. Each maps to roadmap phases.
 
 ### Multiplayer Sync
 
-- [ ] **SYNC-01**: Server validates player position at tick rate (speed-cap + collision check, rejects teleportation)
-- [ ] **SYNC-02**: Server broadcasts player positions at ~20Hz to nearby players
+- [x] **SYNC-01**: Server validates player position at tick rate (speed-cap + collision check, rejects teleportation)
+- [x] **SYNC-02**: Server broadcasts player positions at ~20Hz to nearby players
 - [ ] **SYNC-03**: Client predicts local movement and reconciles with server corrections
 - [ ] **SYNC-04**: Remote players interpolate smoothly between received positions (no snapping)
 
@@ -73,8 +73,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MOVE-03 | Phase 134 | Pending |
 | MOVE-04 | Phase 134 | Pending |
 | MOVE-05 | Phase 134 | Pending |
-| SYNC-01 | Phase 132 | Pending |
-| SYNC-02 | Phase 132 | Pending |
+| SYNC-01 | Phase 132 | Complete |
+| SYNC-02 | Phase 132 | Complete |
 | SYNC-03 | Phase 134 | Pending |
 | SYNC-04 | Phase 134 | Pending |
 | DIST-01 | Phase 133 | Pending |
