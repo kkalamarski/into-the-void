@@ -148,3 +148,31 @@
 
 ---
 
+
+## v1.26 Visual Overhaul & Atmosphere (Shipped: 2026-03-17)
+
+**Phases completed:** 5 phases (126-130), 13 plans
+
+**Delivered:** Replaced PNG tile sprites with procedural light-aware colored cubes, added biome weather particles, a day/night cycle with HUD indicator, per-biome atmospheric effects coordinated with day/night, and cleaned up the rendering pipeline.
+
+**Key accomplishments:**
+- ProceduralTileGenerator: 30 biome tile types as 3-shade isometric cubes with accent details, baked to GPU textures via generateTexture()
+- WeatherSystem: viewport-fixed biome weather particles (rain, snow, ash, spores, mist, void energy) with 3-second cross-fade transitions
+- DayNightCycle: camera postFX ColorMatrix with brightness/color-temperature shifts (cool nights, warm dusk/dawn) and HUD time indicator
+- AtmosphereSystem: 16-biome atmospheric overlays (fog, glow, haze, murk, shimmer) with cooperative ColorMatrix sharing — no postFX stacking
+- PNG rendering cleanup: all dead tile loading code removed, 12 tile PNGs archived, dev-mode runtime guard for regression detection
+
+**Stats:**
+- Timeline: 1 day (2026-03-17)
+- Commits: 16 feat commits
+- Files modified: 65
+- Lines: +7,545 / -312
+- Git range: feat(126-01) → feat(130-02)
+
+**Archives:**
+- `.planning/milestones/v1.26-ROADMAP.md`
+- `.planning/milestones/v1.26-REQUIREMENTS.md`
+- `.planning/milestones/v1.26-MILESTONE-AUDIT.md`
+
+---
+

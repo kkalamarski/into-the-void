@@ -4,7 +4,7 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, expedition travel, and a dual action bar system for ability management.
 
-## Current State (v1.25 shipped)
+## Current State (v1.26 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
@@ -31,6 +31,7 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Biome Hazards: HP drain, stat debuffs, tiered severity, protection gear counters, grace period, HUD indicator
 - Automation: T2-T5 deployable structures (extractors, beacons, planetary extractors, refineries), AutomationService with tick loop, maintenance costs, automation panel HUD
 - Crafting: 39 recipes across 4 disciplines (Equipment/Consumables/Reagents/Automation), quality tiers (Standard/Refined/Masterwork), per-discipline proficiency with XP decay, faction specialty recipes, crafting panel UI with C keybind, mini HUD indicator
+- Visual: Procedural 3-shade isometric terrain cubes (30 biome palettes, GPU-baked textures), viewport-fixed weather particles per biome, day/night cycle with camera postFX ColorMatrix, 16-biome atmospheric overlays (fog/glow/haze/murk/shimmer), HUD time indicator
 
 **Tech stack:**
 - Frontend: React 18, Phaser 3, Zustand, React Router v7
@@ -39,7 +40,7 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Monorepo: NX with 3 apps + 5 shared packages
 - Deployment: Docker Swarm, Traefik reverse proxy, GitHub Actions CI/CD
 
-**Codebase:** ~72,709 LOC TypeScript/CSS
+**Codebase:** ~74,741 LOC TypeScript/CSS
 
 ## Core Value
 
@@ -239,19 +240,20 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Proficiency level and XP display per discipline — v1.25
 - ✓ Equipment, consumable, reagent, and automation recipes — v1.25
 - ✓ 9 faction-exclusive specialty recipes (3 per faction) — v1.25
+- ✓ Procedural light-aware terrain cubes with 3-shade biome colors and accent details — v1.26
+- ✓ Biome-specific particle weather (rain, snow, ash, spores, mist, void energy) — v1.26
+- ✓ Day/night cycle with camera postFX ColorMatrix and HUD time indicator — v1.26
+- ✓ Biome atmospheric effects (fog, glow, haze, murk, shimmer) coordinated with day/night — v1.26
+- ✓ Rendering code cleanup (PNG tiles archived, dead code removed, dev-mode guard added) — v1.26
 
-### Active — v1.26 Visual Overhaul & Atmosphere
+### Active
 
-- [ ] Procedural light-aware terrain cubes with 3-shade biome colors and accent details
-- [ ] Biome-specific particle weather (rain, snow, ash, spores)
-- [ ] Day/night cycle with time-based lighting changes
-- [ ] Biome atmospheric effects (fog, glow, haze, murk)
-- [ ] Rendering code cleanup (disable PNG tiles, remove dead paths, optimize loading)
+(No active milestone — next milestone TBD)
 
 ### Out of Scope
 
 - OAuth/social login — email/password sufficient
-- Sprite-based rendering — color tiles only until art pipeline ready
+- Sprite-based rendering — procedural cubes approach working well, sprites when art pipeline ready
 - PvP combat — PvE first, PvP in future milestone
 - Chat speech bubbles above characters — panel-only for now
 - Mobile controls — web-first
@@ -302,6 +304,10 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 | No crafting failure/material loss | Quality tiers provide variation without punishment; most-hated mechanic avoided | ✓ Good |
 | XP decay for proficiency | Prevents grinding low-tier recipes for infinite XP; encourages tier progression | ✓ Good |
 | Crafting anywhere (no stations) | Player requested anywhere-access; stations add complexity without value | ✓ Good |
+| Procedural cubes over PNG sprites | GPU-baked textures via generateTexture(); consistent art without asset pipeline | ✓ Good |
+| Camera postFX ColorMatrix for day/night | Full-screen effect without per-tile tint; minimap unaffected | ✓ Good |
+| Cooperative ColorMatrix sharing | Atmosphere additively writes to DayNightCycle's matrix; no stacking | ✓ Good |
+| Clean break from PNG tiles | No fallback/debug flag; forward-only to procedural rendering | ✓ Good |
 
 ## Known Issues
 
@@ -309,16 +315,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-## Current Milestone: v1.26 Visual Overhaul & Atmosphere
-
-**Goal:** Replace PNG tile sprites with procedural light-aware colored cubes, add weather particles, day/night cycle, and biome-specific atmospheric effects, and clean up rendering code.
-
-**Target features:**
-- Procedural terrain cubes with 3-shade lighting (top, lit side, shadow side) and biome accents
-- Particle weather system (rain, snow, ash, spores per biome)
-- Day/night cycle affecting tile shading and entity visibility
-- Biome atmosphere (fog, glow, haze, murk per biome type)
-- Rendering pipeline cleanup and optimization
-
----
-*Last updated: 2026-03-17 after v1.26 milestone started*
+*Last updated: 2026-03-17 after v1.26 milestone completed*
