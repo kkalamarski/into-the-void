@@ -41,10 +41,10 @@ Requirements for milestone v1.26 Visual Overhaul & Atmosphere. Each maps to road
 
 ### Rendering Cleanup
 
-- [ ] **CLNP-01**: PNG tile sprite loading is disabled (procedural cubes are primary)
-- [ ] **CLNP-02**: Dead tile sprite code paths are removed from TileRenderer
-- [ ] **CLNP-03**: PreloadScene no longer loads tile PNG assets (reduced load time)
-- [ ] **CLNP-04**: Old tile PNG files kept in repo but not loaded at runtime
+- [x] **CLNP-01**: PNG tile sprite loading is disabled (procedural cubes are primary)
+- [x] **CLNP-02**: Dead tile sprite code paths are removed from TileRenderer
+- [x] **CLNP-03**: PreloadScene no longer loads tile PNG assets (reduced load time)
+- [x] **CLNP-04**: Old tile PNG files kept in repo but not loaded at runtime
 
 ## Future Requirements
 
@@ -95,10 +95,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ATMO-02 | Phase 129 | Complete |
 | ATMO-03 | Phase 129 | Complete |
 | ATMO-04 | Phase 129 | Complete |
-| CLNP-01 | Phase 130 | Pending |
-| CLNP-02 | Phase 130 | Pending |
-| CLNP-03 | Phase 130 | Pending |
-| CLNP-04 | Phase 130 | Pending |
+| CLNP-01 | Phase 130 | Complete |
+| CLNP-02 | Phase 130 | Complete |
+| CLNP-03 | Phase 130 | Complete |
+| CLNP-04 | Phase 130 | Complete |
 
 **Coverage:**
 - v1.26 requirements: 20 total
