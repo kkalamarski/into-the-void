@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-03-17)
 ## Current Position
 
 Phase: 133 of 135 (Distance System Migration)
-Plan: 3 of 4 in current phase complete
-Status: Phase 133 in progress — 133-03 done (creature AI pixel distance, aggro delay, leash heal)
-Last activity: 2026-03-18 — Completed 133-03 (creature-ai.ts + ai.service.ts pixel distance migration)
+Plan: 4 of 4 in current phase complete
+Status: Phase 133 complete — all 4 plans done (pixel contracts, server migration, AI service, client WorldScene/TargetHighlight)
+Last activity: 2026-03-18 — Completed 133-04 (pixel zone boundary detection, TargetHighlight range indicator, NPC proximity)
 
 Progress: [████░░░░░░] 40%
 
@@ -105,9 +105,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 133-03-PLAN.md (creature AI pixel distance migration, aggro delay, leash heal)
+Stopped at: Completed 133-04-PLAN.md (pixel zone boundary detection, TargetHighlight range indicator, NPC proximity)
 Resume file: None
-Next action: Execute Phase 133-04 (remaining distance system cleanup)
+Next action: Execute Phase 134 (client movement rewrite)
 
 ---
-*Last updated: 2026-03-18 — Completed 133-03 creature AI pixel distance migration (FSM + aggro delay + leash heal)*
+*Last updated: 2026-03-18 — Completed 133-04 client pixel distance migration (WorldScene zone boundary + range indicators)*
