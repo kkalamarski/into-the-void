@@ -105,9 +105,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 133-02-PLAN.md (combat, gathering, NPC pixel distance migration)
+Stopped at: Completed 133-03-PLAN.md (creature AI pixel distance migration, aggro delay, leash heal)
 Resume file: None
-Next action: Execute Phase 133-03 (AI/creature flee radius and visibility pixel migration)
+Next action: Execute Phase 133-04 (remaining distance system cleanup)
 
 ---
-*Last updated: 2026-03-18 — Completed 133-02 pixel-distance migration (ability, combat, gathering, gateway)*
+*Last updated: 2026-03-18 — Completed 133-03 creature AI pixel distance migration (FSM + aggro delay + leash heal)*
