@@ -393,6 +393,8 @@ export class PlayerService {
           level: player.level,
           inCombat: player.inCombat,
           credits: player.credits,
+          px: player.px,    // Phase 133
+          py: player.py,    // Phase 133
         });
       }
     }

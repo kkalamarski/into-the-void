@@ -52,6 +52,10 @@ export interface PlayerPublic {
   level: number;
   inCombat: boolean;
   credits: number;
+  /** Pixel X position (Phase 133: pixel distance for AI) */
+  px: number;
+  /** Pixel Y position (Phase 133: pixel distance for AI) */
+  py: number;
 }
 
 /**

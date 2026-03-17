@@ -47,6 +47,12 @@ export const AGGRO_RADIUS_PX = 4.0 * TILE_SIZE_PX; // 512 px
  */
 export const LEASH_RADIUS_PX = 8.0 * TILE_SIZE_PX; // 1024 px
 
+/**
+ * Herbivore flee detection radius in pixels.
+ * 5.0 tiles = 640 px — same as the old FLEE_RADIUS = 5 tiles constant.
+ */
+export const FLEE_RADIUS_PX = 5.0 * TILE_SIZE_PX; // 640 px
+
 // ============================================================
 // Distance functions
 // ============================================================
