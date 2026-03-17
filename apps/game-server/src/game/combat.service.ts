@@ -17,6 +17,7 @@ import {
   pixelDistanceTo,
   tileToPixelCenter,
   MELEE_RANGE_PX,
+  TILE_SIZE_PX,
 } from '@into-the-void/game-logic';
 import { EntityRegistry } from '@into-the-void/entities';
 import type { CreatureDefinition } from '@into-the-void/entities';
@@ -418,8 +419,11 @@ export class CombatService {
     if (!provoker || !provoker.combatTarget) return;
 
     const targetPlayerId = provoker.combatTarget;
-    const PACK_CALL_RANGE = 10;
+    const PACK_CALL_RANGE_PX = 10 * TILE_SIZE_PX; // 1280px — same 10-tile radius in pixels
     const MAX_REINFORCEMENTS = 2;
+
+    // Pre-compute provoker pixel center for filter and sort (DIST-04)
+    const { px: provPx, py: provPy } = tileToPixelCenter(provoker.position.x, provoker.position.y);
 
     // Find eligible nearby omnivores: same zone, within range, not already in combat, not the provoker
     const nearbyOmnivores = entities.filter((e): e is Creature =>
@@ -430,18 +434,18 @@ export class CombatService {
       (e as Creature).behavior === 'omnivore' &&
       !this.isCreatureInCombat(e.id) &&
       !(e as Creature).combatTarget &&
-      Math.max(
-        Math.abs(e.position.x - provoker.position.x),
-        Math.abs(e.position.y - provoker.position.y),
-      ) <= PACK_CALL_RANGE,
+      (() => {
+        const { px: ePx, py: ePy } = tileToPixelCenter(e.position.x, e.position.y);
+        return pixelDistanceTo(ePx, ePy, provPx, provPy) <= PACK_CALL_RANGE_PX;
+      })(),
     );
 
     // Take up to MAX_REINFORCEMENTS, sorted by distance (closest first)
     const reinforcements = nearbyOmnivores
       .sort((a, b) => {
-        const distA = Math.max(Math.abs(a.position.x - provoker.position.x), Math.abs(a.position.y - provoker.position.y));
-        const distB = Math.max(Math.abs(b.position.x - provoker.position.x), Math.abs(b.position.y - provoker.position.y));
-        return distA - distB;
+        const { px: aPx, py: aPy } = tileToPixelCenter(a.position.x, a.position.y);
+        const { px: bPx, py: bPy } = tileToPixelCenter(b.position.x, b.position.y);
+        return pixelDistanceTo(aPx, aPy, provPx, provPy) - pixelDistanceTo(bPx, bPy, provPx, provPy);
       })
       .slice(0, MAX_REINFORCEMENTS);
 
