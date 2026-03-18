@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure, isHubZone, Npc, TimingChallenge } from '@into-the-void/shared-types';
+import { ZONE_SIZE, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, BiomeTier, Direction, Creature, TileStructure, isHubZone, Npc, TimingChallenge, BIOME_DISPLAY_NAMES, BIOME_TIERS } from '@into-the-void/shared-types';
 import { TILE_SIZE_PX, MELEE_RANGE_PX, GATHER_RANGE_PX, NPC_INTERACT_RANGE_PX, pixelDistanceTo, tileToPixelCenter } from '@into-the-void/game-logic';
 import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
@@ -19,7 +19,6 @@ import { audioManager } from '../../utils/audio';
 import { useGameStore } from '../../store/gameStore';
 import { useEntityStore } from '../../store/entityStore';
 import { useInventoryStore } from '../../store/inventoryStore';
-import { useAlertStore } from '../../store/alertStore';
 import { useAbilityStore, getEquippedAbilities } from '../../store/abilityStore';
 import { useCombatStore } from '../../store/combatStore';
 import { useQuestStore } from '../../store/questStore';
@@ -41,6 +40,15 @@ export const ISO_TILE_HEIGHT = 128;
 const VISIBILITY_RADIUS = 48;
 // Pixel-space hysteresis threshold: commit zone transition once player is this many px deep
 const HYSTERESIS_PX = HYSTERESIS_TILES * TILE_SIZE_PX; // 3 * 128 = 384 px
+
+// Phase 138: Zone cinematic tier label mapping and cooldown
+const TIER_LABELS: Record<BiomeTier, string> = {
+  1: 'Frontier',
+  2: 'Hazardous',
+  3: 'Hostile',
+  4: 'Extreme',
+};
+const ZONE_CINEMATIC_COOLDOWN_MS = 30_000; // 30 seconds per zone
 
 type WASDKeys = { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key };
 
@@ -135,6 +143,8 @@ export class WorldScene extends Phaser.Scene {
   // Phase 134: pixel movement controllers
   private pixelMovement: PixelMovementController | null = null;
   private remoteInterpolator: RemotePlayerInterpolator | null = null;
+  // Phase 138: cooldown tracking for zone cinematic (zoneId -> last shown timestamp)
+  private zoneCinematicCooldowns: Map<string, number> = new Map();
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -1026,6 +1036,14 @@ export class WorldScene extends Phaser.Scene {
     if (this.remoteInterpolator) {
       this.remoteInterpolator.clear();
     }
+
+    // Phase 138: show zone name cinematic on initial spawn
+    if (chunkData.zoneId) {
+      // Use delayedCall to let the scene fully initialize before showing
+      this.time.delayedCall(500, () => {
+        this.showZoneCinematic(biome);
+      });
+    }
   }
 
   receiveChunkData(chunkData: ChunkData, biome: BiomeType): void {
@@ -1068,14 +1086,8 @@ export class WorldScene extends Phaser.Scene {
           this.zoneHUD.updateZone(newZoneId, chunk.biome);
         }
 
-        // Show zone/biome transition alert
-        const biomeChanged = previousBiome !== chunk.biome;
-        const biomeName = this.formatBiomeName(chunk.biome);
-        if (biomeChanged) {
-          useAlertStore.getState().addAlert(`Entering ${biomeName}`, 'info');
-        } else {
-          useAlertStore.getState().addAlert(`Zone ${newZoneId}`, 'info');
-        }
+        // Show cinematic zone name notification (Dark Souls style) — Phase 138
+        this.showZoneCinematic(chunk.biome);
 
         // Refresh rare node markers for new zone
         this.refreshRareNodeMarkers();
@@ -1226,12 +1238,33 @@ export class WorldScene extends Phaser.Scene {
       this.zoneHUD.updateZone(newZoneId, biome);
     }
 
-    // Show transition alert
-    const biomeName = this.formatBiomeName(biome);
-    useAlertStore.getState().addAlert(`Entering ${biomeName}`, 'info');
+    // Show cinematic zone name notification for teleportation — Phase 138
+    this.showZoneCinematic(biome);
 
     // The new zone data will arrive via zone:state -> loadZoneFromState
     // which will call chunkManager.receiveChunk and updateChunks
+  }
+
+  /**
+   * Phase 138: Show zone name cinematic with 30-second per-zone cooldown.
+   * Calls triggerZoneCinematic on gameStore to display the Dark Souls-style overlay.
+   */
+  private showZoneCinematic(biome: BiomeType): void {
+    const zoneId = this.currentZoneId;
+    const now = Date.now();
+    const lastShown = this.zoneCinematicCooldowns.get(zoneId) ?? 0;
+
+    if (now - lastShown < ZONE_CINEMATIC_COOLDOWN_MS) {
+      return; // Cooldown active — suppress
+    }
+
+    this.zoneCinematicCooldowns.set(zoneId, now);
+
+    const zoneName = BIOME_DISPLAY_NAMES[biome] ?? this.formatBiomeName(biome);
+    const tier = BIOME_TIERS[biome] ?? 1;
+    const tierLabel = TIER_LABELS[tier];
+
+    useGameStore.getState().triggerZoneCinematic(zoneName, tierLabel, tier);
   }
 
   /**
@@ -2435,6 +2468,9 @@ export class WorldScene extends Phaser.Scene {
   }
 
   shutdown(): void {
+    // Phase 138: clear zone cinematic cooldown map
+    this.zoneCinematicCooldowns.clear();
+
     // Unregister quest event listeners to prevent memory leaks
     gameSocket.off('quest:progress', this.handleQuestProgress);
     gameSocket.off('quest:completed', this.handleQuestCompleted);

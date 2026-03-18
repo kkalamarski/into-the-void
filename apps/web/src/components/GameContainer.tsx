@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Game } from '../game/Game';
 import { GameUI } from '../ui/GameUI';
+import { ZoneNameCinematic } from '../ui/ZoneNameCinematic';
 import { useGameStore } from '../store/gameStore';
 import { useEntityStore } from '../store/entityStore';
 import { ConnectionIndicator } from './ConnectionIndicator';
@@ -233,6 +234,9 @@ const GameContainer: React.FC = () => {
     <div className="app">
       <div ref={gameContainerRef} className="game-container" />
       <GameUI />
+
+      {/* Phase 138: Dark Souls-style zone name cinematic overlay */}
+      <ZoneNameCinematic />
 
       {/* Always visible connection indicator */}
       <ConnectionIndicator />
