@@ -103,10 +103,72 @@ const VERDANT_SERVICE: ServiceDefinition = {
   serviceType: 'medical',
 };
 
+// Ambient NPCs — add life to the hub (Phase 142)
+const VERDANT_BOTANIST: AmbientDefinition = {
+  id: 'npc_verdant_botanist',
+  displayName: 'Canopy Botanist',
+  description: 'A Verdant researcher cataloguing the station\'s living architecture.',
+  npcType: 'ambient',
+  faction: 'verdant',
+  textureKey: 'npc_verdant_ambient',
+  color: 0x55aa55,
+  dialogue: [
+    { text: 'The atrium specimens are thriving today.', condition: 'greeting' },
+    { text: 'Fascinating symbiotic patterns...', condition: 'busy' },
+  ],
+  role: 'Botanist',
+};
+
+const VERDANT_GARDENER: AmbientDefinition = {
+  id: 'npc_verdant_gardener',
+  displayName: 'Growth Tender',
+  description: 'A worker who maintains the nursery\'s bio-engineered specimens.',
+  npcType: 'ambient',
+  faction: 'verdant',
+  textureKey: 'npc_verdant_ambient',
+  color: 0x66bb66,
+  dialogue: [
+    { text: 'These seedlings need constant attention. Verdant demands perfection.', condition: 'greeting' },
+  ],
+  role: 'Growth Tender',
+};
+
+const VERDANT_PATROL: GuardDefinition = {
+  id: 'npc_verdant_patrol',
+  displayName: 'Canopy Warden',
+  description: 'A Verdant security officer patrolling the inner corridors.',
+  npcType: 'guard',
+  faction: 'verdant',
+  textureKey: 'npc_verdant_guard',
+  color: 0x338833,
+  dialogue: [
+    { text: 'All clear in this sector.', condition: 'greeting' },
+    { text: 'On patrol. Move along.', condition: 'busy' },
+  ],
+};
+
+const VERDANT_WORKER: AmbientDefinition = {
+  id: 'npc_verdant_worker',
+  displayName: 'Root Worker',
+  description: 'A maintenance worker tending to the station\'s organic infrastructure.',
+  npcType: 'ambient',
+  faction: 'verdant',
+  textureKey: 'npc_verdant_ambient',
+  color: 0x77aa77,
+  dialogue: [
+    { text: 'The root networks need recalibrating. Always something to fix.', condition: 'greeting' },
+  ],
+  role: 'Root Worker',
+};
+
 export const VERDANT_NPCS: readonly NpcDefinition[] = [
   VERDANT_TRADER,
   VERDANT_GUARD,
   VERDANT_REP,
   VERDANT_AMBIENT,
   VERDANT_SERVICE,
+  VERDANT_BOTANIST,
+  VERDANT_GARDENER,
+  VERDANT_PATROL,
+  VERDANT_WORKER,
 ];

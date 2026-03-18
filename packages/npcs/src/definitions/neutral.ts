@@ -7,7 +7,7 @@ import type {
   NpcDefinition,
 } from '../types';
 
-// Neutral hub uses Meridian Station but has distinct NPCs for unaffiliated players
+// Neutral hub uses Salvage Station with distinct NPCs for unaffiliated players
 const NEUTRAL_TRADER: TraderDefinition = {
   id: 'npc_neutral_trader',
   displayName: 'Freelance Vendor',
@@ -289,6 +289,79 @@ const MODULE_VENDOR: TraderDefinition = {
   specialization: 'modules',
 };
 
+// Ambient NPCs — add life to Salvage Station (Phase 142)
+const NEUTRAL_SCRAPPER: AmbientDefinition = {
+  id: 'npc_neutral_scrapper',
+  displayName: 'Scrap Dealer',
+  description: 'A junk trader hawking salvaged components in the market.',
+  npcType: 'ambient',
+  faction: 'neutral',
+  textureKey: 'npc_neutral_ambient',
+  color: 0x776655,
+  dialogue: [
+    { text: 'Best scrap in the station. Fell off a Verdant transport. Honest.', condition: 'greeting' },
+    { text: 'Looking or buying? Looking is free. Touching costs extra.', condition: 'busy' },
+  ],
+  role: 'Scrap Dealer',
+};
+
+const NEUTRAL_MECHANIC: AmbientDefinition = {
+  id: 'npc_neutral_mechanic',
+  displayName: 'Patch Mechanic',
+  description: 'A self-taught engineer who keeps Salvage Station running with spit and wire.',
+  npcType: 'ambient',
+  faction: 'neutral',
+  textureKey: 'npc_neutral_ambient',
+  color: 0x887766,
+  dialogue: [
+    { text: 'Fixing the recycler again. Third time this week.', condition: 'greeting' },
+  ],
+  role: 'Patch Mechanic',
+};
+
+const NEUTRAL_DRIFTER2: AmbientDefinition = {
+  id: 'npc_neutral_drifter',
+  displayName: 'Void Drifter',
+  description: 'A spacer between jobs, killing time in the cargo bay.',
+  npcType: 'ambient',
+  faction: 'neutral',
+  textureKey: 'npc_neutral_ambient',
+  color: 0x998877,
+  dialogue: [
+    { text: 'Waiting on a ship. Or a job. Whichever comes first.', condition: 'greeting' },
+    { text: '*stares into middle distance*', condition: 'busy' },
+  ],
+  role: 'Void Drifter',
+};
+
+const NEUTRAL_LOOKOUT: GuardDefinition = {
+  id: 'npc_neutral_lookout',
+  displayName: 'Dock Lookout',
+  description: 'A hired lookout keeping watch at the docking entrance.',
+  npcType: 'guard',
+  faction: 'neutral',
+  textureKey: 'npc_neutral_guard',
+  color: 0x555544,
+  dialogue: [
+    { text: 'Eyes open, credits ready. That\'s how you survive here.', condition: 'greeting' },
+    { text: 'Watching the docks.', condition: 'busy' },
+  ],
+};
+
+const NEUTRAL_FIXER: AmbientDefinition = {
+  id: 'npc_neutral_fixer',
+  displayName: 'The Fixer',
+  description: 'A shadowy figure who knows everyone and everything on Salvage Station.',
+  npcType: 'ambient',
+  faction: 'neutral',
+  textureKey: 'npc_neutral_ambient',
+  color: 0x444444,
+  dialogue: [
+    { text: 'I don\'t sell goods. I sell solutions. Big difference.', condition: 'greeting' },
+  ],
+  role: 'The Fixer',
+};
+
 export const NEUTRAL_NPCS: readonly NpcDefinition[] = [
   NEUTRAL_TRADER,
   NEUTRAL_GUARD,
@@ -299,4 +372,9 @@ export const NEUTRAL_NPCS: readonly NpcDefinition[] = [
   TOOL_VENDOR,
   MODULE_VENDOR,
   EXPEDITION_MASTER,
+  NEUTRAL_SCRAPPER,
+  NEUTRAL_MECHANIC,
+  NEUTRAL_DRIFTER2,
+  NEUTRAL_LOOKOUT,
+  NEUTRAL_FIXER,
 ];

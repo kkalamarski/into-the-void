@@ -101,10 +101,72 @@ const HELIX_SERVICE: ServiceDefinition = {
   serviceType: 'repair',
 };
 
+// Ambient NPCs — add life to the hub (Phase 142)
+const HELIX_FORGEMASTER: AmbientDefinition = {
+  id: 'npc_helix_forgemaster',
+  displayName: 'Forge Technician',
+  description: 'A Helix specialist monitoring the forge\'s thermal output.',
+  npcType: 'ambient',
+  faction: 'helix',
+  textureKey: 'npc_helix_ambient',
+  color: 0xbb5555,
+  dialogue: [
+    { text: 'Temperatures are optimal. The forge never sleeps.', condition: 'greeting' },
+    { text: 'Stand back. Molten metal doesn\'t care about your safety briefing.', condition: 'busy' },
+  ],
+  role: 'Forge Technician',
+};
+
+const HELIX_ENGINEER: AmbientDefinition = {
+  id: 'npc_helix_engineer',
+  displayName: 'Station Engineer',
+  description: 'A Helix engineer maintaining the station\'s power systems.',
+  npcType: 'ambient',
+  faction: 'helix',
+  textureKey: 'npc_helix_ambient',
+  color: 0xaa7744,
+  dialogue: [
+    { text: 'Power grid is holding. For now.', condition: 'greeting' },
+  ],
+  role: 'Station Engineer',
+};
+
+const HELIX_PATROL: GuardDefinition = {
+  id: 'npc_helix_patrol',
+  displayName: 'Warren Enforcer',
+  description: 'An Ironhold enforcer keeping order in the warren corridors.',
+  npcType: 'guard',
+  faction: 'helix',
+  textureKey: 'npc_helix_guard',
+  color: 0x993333,
+  dialogue: [
+    { text: 'These warrens are Helix territory. Remember that.', condition: 'greeting' },
+    { text: 'Keep walking.', condition: 'busy' },
+  ],
+};
+
+const HELIX_MINER: AmbientDefinition = {
+  id: 'npc_helix_miner',
+  displayName: 'Off-Shift Miner',
+  description: 'A Helix extraction worker between shifts.',
+  npcType: 'ambient',
+  faction: 'helix',
+  textureKey: 'npc_helix_ambient',
+  color: 0xcc9966,
+  dialogue: [
+    { text: 'Eight hours down, eight to go. The ore won\'t mine itself.', condition: 'greeting' },
+  ],
+  role: 'Off-Shift Miner',
+};
+
 export const HELIX_NPCS: readonly NpcDefinition[] = [
   HELIX_TRADER,
   HELIX_GUARD,
   HELIX_REP,
   HELIX_AMBIENT,
   HELIX_SERVICE,
+  HELIX_FORGEMASTER,
+  HELIX_ENGINEER,
+  HELIX_PATROL,
+  HELIX_MINER,
 ];

@@ -102,10 +102,72 @@ const NEXUS_SERVICE: ServiceDefinition = {
   serviceType: 'storage',
 };
 
+// Ambient NPCs — add life to the hub (Phase 142)
+const NEXUS_ANALYST: AmbientDefinition = {
+  id: 'npc_nexus_analyst',
+  displayName: 'Market Analyst',
+  description: 'A Nexus analyst monitoring real-time trade flows on the exchange floor.',
+  npcType: 'ambient',
+  faction: 'nexus',
+  textureKey: 'npc_nexus_ambient',
+  color: 0x5599bb,
+  dialogue: [
+    { text: 'Commodity indices are shifting. Someone is making a play.', condition: 'greeting' },
+    { text: 'Can\'t talk. Market close in twenty minutes.', condition: 'busy' },
+  ],
+  role: 'Market Analyst',
+};
+
+const NEXUS_ARCHIVIST: AmbientDefinition = {
+  id: 'npc_nexus_archivist',
+  displayName: 'Data Archivist',
+  description: 'A Nexus records keeper cataloguing data in the archive.',
+  npcType: 'ambient',
+  faction: 'nexus',
+  textureKey: 'npc_nexus_ambient',
+  color: 0x7799aa,
+  dialogue: [
+    { text: 'Every transaction recorded. Every communication logged. Knowledge is power.', condition: 'greeting' },
+  ],
+  role: 'Data Archivist',
+};
+
+const NEXUS_PATROL: GuardDefinition = {
+  id: 'npc_nexus_patrol',
+  displayName: 'Meridian Security',
+  description: 'A plainclothes Nexus security agent patrolling the commons.',
+  npcType: 'guard',
+  faction: 'nexus',
+  textureKey: 'npc_nexus_guard',
+  color: 0x336688,
+  dialogue: [
+    { text: 'Everything is under control. As always.', condition: 'greeting' },
+    { text: 'Just observing.', condition: 'busy' },
+  ],
+};
+
+const NEXUS_CLERK: AmbientDefinition = {
+  id: 'npc_nexus_clerk',
+  displayName: 'Port Clerk',
+  description: 'A Nexus administrative clerk processing transit documents.',
+  npcType: 'ambient',
+  faction: 'nexus',
+  textureKey: 'npc_nexus_ambient',
+  color: 0x99bbcc,
+  dialogue: [
+    { text: 'Departure manifest, arrival forms, customs declarations... it never ends.', condition: 'greeting' },
+  ],
+  role: 'Port Clerk',
+};
+
 export const NEXUS_NPCS: readonly NpcDefinition[] = [
   NEXUS_TRADER,
   NEXUS_GUARD,
   NEXUS_REP,
   NEXUS_AMBIENT,
   NEXUS_SERVICE,
+  NEXUS_ANALYST,
+  NEXUS_ARCHIVIST,
+  NEXUS_PATROL,
+  NEXUS_CLERK,
 ];
