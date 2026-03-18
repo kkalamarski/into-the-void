@@ -30,6 +30,7 @@
 - ✅ **v1.25 Crafting** - Phases 122-125 (shipped 2026-03-06)
 - ✅ **v1.26 Visual Overhaul & Atmosphere** - Phases 126-130 (shipped 2026-03-17)
 - ✅ **v1.27 Pixel Movement Rewrite** - Phases 131-135 (shipped 2026-03-18)
+- 🚧 **v1.28 Post-Movement Polish** - Phases 136-139 (in progress)
 
 ## Phases
 
@@ -128,15 +129,70 @@
   - [x] 135-01-PLAN.md -- Client-side legacy movement removal (MovementController, PathfindingController, WorldScene, gameStore, socket cleanup)
   - [x] 135-02-PLAN.md -- Server-side legacy removal, shared-types cleanup, game-logic cleanup, collision audit
 
+---
+
+### 🚧 v1.28 Post-Movement Polish (In Progress)
+
+**Milestone Goal:** Restore combat, gathering, entity rendering, and movement to correct behavior after the v1.27 pixel movement rewrite introduced regressions. Four independent bug areas — interaction distance checks, entity anchor points, collision boundary walls, and day/night brightness — each fixed in its own phase.
+
+- [ ] **Phase 136: Combat & Gathering Fix** - Restore player ability to attack creatures and gather resources using correct pixel distance checks
+- [ ] **Phase 137: Entity Rendering Fix** - Eliminate floating sprites and misaligned hitboxes by correcting entity anchor points and trimming sprite transparent space
+- [ ] **Phase 138: Collision Boundary Fix** - Remove invisible collision walls at chunk and zone boundaries so movement is unobstructed across the world
+- [ ] **Phase 139: Day/Night Brightness Fix** - Correct the ColorMatrix brightness curve so dusk and dawn are visibly brighter than night
+
+### Phase 136: Combat & Gathering Fix
+**Goal**: Players can attack creatures and gather from resource nodes using pixel Euclidean distance for all range checks
+**Depends on**: Nothing (independent bug area)
+**Requirements**: INTERACT-01, INTERACT-02, INTERACT-03
+**Success Criteria** (what must be TRUE):
+  1. Player can click a creature within melee range and the auto-attack loop starts, dealing damage on each tick
+  2. Player can click a resource node within gather range and the gathering mini-game starts
+  3. Standing outside melee range of a creature and attacking produces no damage — no out-of-range hits land
+  4. Both combat and gathering use the same pixel coordinate source for the player position that the movement system uses — no stale tile-integer fallbacks
+**Plans**: TBD
+
+### Phase 137: Entity Rendering Fix
+**Goal**: All entity sprites are visually grounded on their tile surfaces with hitboxes that match what the player sees
+**Depends on**: Nothing (independent bug area)
+**Requirements**: RENDER-01, RENDER-02, RENDER-03, RENDER-04
+**Success Criteria** (what must be TRUE):
+  1. Player character and creature sprites touch the tile surface — no visible gap between sprite base and tile top face
+  2. Plant and mineral sprites sit at ground level — the base of the sprite touches the tile, not the vertical center
+  3. Clicking a creature selects it at the position the sprite appears to occupy — the selection hitbox matches the visual sprite footprint
+  4. Entity sprites have no large transparent padding regions that shift the visible art away from the anchor point
+**Plans**: TBD
+
+### Phase 138: Collision Boundary Fix
+**Goal**: Players can move freely across chunk and zone boundaries with no invisible walls interrupting movement
+**Depends on**: Nothing (independent bug area)
+**Requirements**: COLLIDE-01, COLLIDE-02
+**Success Criteria** (what must be TRUE):
+  1. Walking continuously in any cardinal direction across a chunk boundary produces no stutter, wall, or position correction
+  2. Walking into a zone transition area triggers the zone change without the player being stopped by an invisible barrier before the boundary
+**Plans**: TBD
+
+### Phase 139: Day/Night Brightness Fix
+**Goal**: The day/night ColorMatrix produces a brightness curve where night is the darkest period and dusk/dawn are noticeably brighter than night
+**Depends on**: Nothing (independent bug area)
+**Requirements**: VISUAL-01
+**Success Criteria** (what must be TRUE):
+  1. At dawn (06:00) and dusk (18:00) the game world is visibly brighter than it is at midnight (00:00)
+  2. The day/night brightness transitions smoothly — no abrupt jumps in brightness between cycle phases
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 131. Shared Foundation | 2/2 | Complete    | 2026-03-17 | - |
-| 132. Server Movement Handler | 3/3 | Complete    | 2026-03-17 | - |
-| 133. Distance System Migration | 5/5 | Complete    | 2026-03-17 | - |
+| 131. Shared Foundation | v1.27 | 2/2 | Complete | 2026-03-17 |
+| 132. Server Movement Handler | v1.27 | 3/3 | Complete | 2026-03-17 |
+| 133. Distance System Migration | v1.27 | 5/5 | Complete | 2026-03-17 |
 | 134. Client Movement Rewrite | v1.27 | 3/3 | Complete | 2026-03-18 |
 | 135. Cleanup and Collision Audit | v1.27 | 2/2 | Complete | 2026-03-18 |
+| 136. Combat & Gathering Fix | v1.28 | 0/TBD | Not started | - |
+| 137. Entity Rendering Fix | v1.28 | 0/TBD | Not started | - |
+| 138. Collision Boundary Fix | v1.28 | 0/TBD | Not started | - |
+| 139. Day/Night Brightness Fix | v1.28 | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-03-18 — Phase 135 complete, milestone v1.27 complete*
+*Last updated: 2026-03-18 — v1.28 roadmap created*

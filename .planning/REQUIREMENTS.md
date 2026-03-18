@@ -89,22 +89,22 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INTERACT-01 | — | Pending |
-| INTERACT-02 | — | Pending |
-| INTERACT-03 | — | Pending |
-| RENDER-01 | — | Pending |
-| RENDER-02 | — | Pending |
-| RENDER-03 | — | Pending |
-| RENDER-04 | — | Pending |
-| COLLIDE-01 | — | Pending |
-| COLLIDE-02 | — | Pending |
-| VISUAL-01 | — | Pending |
+| INTERACT-01 | Phase 136 | Pending |
+| INTERACT-02 | Phase 136 | Pending |
+| INTERACT-03 | Phase 136 | Pending |
+| RENDER-01 | Phase 137 | Pending |
+| RENDER-02 | Phase 137 | Pending |
+| RENDER-03 | Phase 137 | Pending |
+| RENDER-04 | Phase 137 | Pending |
+| COLLIDE-01 | Phase 138 | Pending |
+| COLLIDE-02 | Phase 138 | Pending |
+| VISUAL-01 | Phase 139 | Pending |
 
 **Coverage:**
 - v1.28 requirements: 10 total
-- Mapped to phases: 0
-- Unmapped: 10 ⚠️
+- Mapped to phases: 10
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 after initial definition*
+*Last updated: 2026-03-18 — traceability populated after roadmap creation*
