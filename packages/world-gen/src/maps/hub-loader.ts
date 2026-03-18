@@ -47,8 +47,8 @@ const TileStructureSchema = z.object({
  */
 const HubChunkSchema = z.object({
   zoneId: z.string().startsWith('hub_'),
-  width: z.number().int().positive().optional(),
-  height: z.number().int().positive().optional(),
+  width: z.number().int().min(128),
+  height: z.number().int().min(128),
   tiles: z.array(z.array(z.number().int())),
   heights: z.array(z.array(z.number().int())),
   collisions: z.array(z.array(z.boolean())),
