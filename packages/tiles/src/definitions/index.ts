@@ -27,6 +27,22 @@ import {
   BIOLUMINESCENT_FLOOR,
   BIOLUMINESCENT_FLORA,
 } from './exotic-tiles';
+import {
+  CANOPY_FLOOR, CANOPY_WALL, CANOPY_DOOR, CANOPY_CORRIDOR,
+  CANOPY_DECORATION, CANOPY_ACCENT, CANOPY_WINDOW, CANOPY_HAZARD,
+} from './hub-canopy-tiles';
+import {
+  IRONHOLD_FLOOR, IRONHOLD_WALL, IRONHOLD_DOOR, IRONHOLD_CORRIDOR,
+  IRONHOLD_DECORATION, IRONHOLD_ACCENT, IRONHOLD_WINDOW, IRONHOLD_HAZARD,
+} from './hub-ironhold-tiles';
+import {
+  MERIDIAN_FLOOR, MERIDIAN_WALL, MERIDIAN_DOOR, MERIDIAN_CORRIDOR,
+  MERIDIAN_DECORATION, MERIDIAN_ACCENT, MERIDIAN_WINDOW, MERIDIAN_HAZARD,
+} from './hub-meridian-tiles';
+import {
+  SALVAGE_FLOOR, SALVAGE_WALL, SALVAGE_DOOR, SALVAGE_CORRIDOR,
+  SALVAGE_DECORATION, SALVAGE_ACCENT, SALVAGE_WINDOW, SALVAGE_HAZARD,
+} from './hub-salvage-tiles';
 
 /**
  * All tile definitions - register these with TileRegistry
@@ -73,6 +89,18 @@ export const ALL_TILES: readonly TileDefinition[] = [
   CRYSTAL_FORMATION_LARGE,
   BIOLUMINESCENT_FLOOR,
   BIOLUMINESCENT_FLORA,
+  // Hub Stations — Canopy (Verdant)
+  CANOPY_FLOOR, CANOPY_WALL, CANOPY_DOOR, CANOPY_CORRIDOR,
+  CANOPY_DECORATION, CANOPY_ACCENT, CANOPY_WINDOW, CANOPY_HAZARD,
+  // Hub Stations — Ironhold (Helix)
+  IRONHOLD_FLOOR, IRONHOLD_WALL, IRONHOLD_DOOR, IRONHOLD_CORRIDOR,
+  IRONHOLD_DECORATION, IRONHOLD_ACCENT, IRONHOLD_WINDOW, IRONHOLD_HAZARD,
+  // Hub Stations — Meridian (Nexus)
+  MERIDIAN_FLOOR, MERIDIAN_WALL, MERIDIAN_DOOR, MERIDIAN_CORRIDOR,
+  MERIDIAN_DECORATION, MERIDIAN_ACCENT, MERIDIAN_WINDOW, MERIDIAN_HAZARD,
+  // Hub Stations — Salvage (Unaffiliated)
+  SALVAGE_FLOOR, SALVAGE_WALL, SALVAGE_DOOR, SALVAGE_CORRIDOR,
+  SALVAGE_DECORATION, SALVAGE_ACCENT, SALVAGE_WINDOW, SALVAGE_HAZARD,
 ];
 
 /**
@@ -109,6 +137,42 @@ export const TILE_IDS = {
   CRYSTAL_FORMATION_LARGE: 'crystal_formation_large',
   BIOLUMINESCENT_FLOOR: 'bioluminescent_floor',
   BIOLUMINESCENT_FLORA: 'bioluminescent_flora',
+  // Hub Stations — Canopy
+  CANOPY_FLOOR: 'canopy_floor',
+  CANOPY_WALL: 'canopy_wall',
+  CANOPY_DOOR: 'canopy_door',
+  CANOPY_CORRIDOR: 'canopy_corridor',
+  CANOPY_DECORATION: 'canopy_decoration',
+  CANOPY_ACCENT: 'canopy_accent',
+  CANOPY_WINDOW: 'canopy_window',
+  CANOPY_HAZARD: 'canopy_hazard',
+  // Hub Stations — Ironhold
+  IRONHOLD_FLOOR: 'ironhold_floor',
+  IRONHOLD_WALL: 'ironhold_wall',
+  IRONHOLD_DOOR: 'ironhold_door',
+  IRONHOLD_CORRIDOR: 'ironhold_corridor',
+  IRONHOLD_DECORATION: 'ironhold_decoration',
+  IRONHOLD_ACCENT: 'ironhold_accent',
+  IRONHOLD_WINDOW: 'ironhold_window',
+  IRONHOLD_HAZARD: 'ironhold_hazard',
+  // Hub Stations — Meridian
+  MERIDIAN_FLOOR: 'meridian_floor',
+  MERIDIAN_WALL: 'meridian_wall',
+  MERIDIAN_DOOR: 'meridian_door',
+  MERIDIAN_CORRIDOR: 'meridian_corridor',
+  MERIDIAN_DECORATION: 'meridian_decoration',
+  MERIDIAN_ACCENT: 'meridian_accent',
+  MERIDIAN_WINDOW: 'meridian_window',
+  MERIDIAN_HAZARD: 'meridian_hazard',
+  // Hub Stations — Salvage
+  SALVAGE_FLOOR: 'salvage_floor',
+  SALVAGE_WALL: 'salvage_wall',
+  SALVAGE_DOOR: 'salvage_door',
+  SALVAGE_CORRIDOR: 'salvage_corridor',
+  SALVAGE_DECORATION: 'salvage_decoration',
+  SALVAGE_ACCENT: 'salvage_accent',
+  SALVAGE_WINDOW: 'salvage_window',
+  SALVAGE_HAZARD: 'salvage_hazard',
 } as const;
 
 // Re-export individual tiles for direct imports
@@ -143,4 +207,13 @@ export {
   CRYSTAL_FORMATION_LARGE,
   BIOLUMINESCENT_FLOOR,
   BIOLUMINESCENT_FLORA,
+  // Hub Stations
+  CANOPY_FLOOR, CANOPY_WALL, CANOPY_DOOR, CANOPY_CORRIDOR,
+  CANOPY_DECORATION, CANOPY_ACCENT, CANOPY_WINDOW, CANOPY_HAZARD,
+  IRONHOLD_FLOOR, IRONHOLD_WALL, IRONHOLD_DOOR, IRONHOLD_CORRIDOR,
+  IRONHOLD_DECORATION, IRONHOLD_ACCENT, IRONHOLD_WINDOW, IRONHOLD_HAZARD,
+  MERIDIAN_FLOOR, MERIDIAN_WALL, MERIDIAN_DOOR, MERIDIAN_CORRIDOR,
+  MERIDIAN_DECORATION, MERIDIAN_ACCENT, MERIDIAN_WINDOW, MERIDIAN_HAZARD,
+  SALVAGE_FLOOR, SALVAGE_WALL, SALVAGE_DOOR, SALVAGE_CORRIDOR,
+  SALVAGE_DECORATION, SALVAGE_ACCENT, SALVAGE_WINDOW, SALVAGE_HAZARD,
 };
