@@ -189,7 +189,7 @@
 
 **Milestone Goal:** Replace plain square hubs with immersive faction-themed space station interiors — unique tiles, biomes, and hand-crafted room layouts for all 4 hubs. Each faction gets a distinct visual identity through a custom biome type, 6-8 purpose-built tiles, and a 128x128 hand-designed map with rooms, corridors, and lore-appropriate NPC placements.
 
-- [ ] **Phase 140: Biome & Tile Foundation** - Define the 4 hub biome types, register them in the biome system, and define all 8 tile types per hub in the tile registry
+- [x] **Phase 140: Biome & Tile Foundation** - Define the 4 hub biome types, register them in the biome system, and define all 8 tile types per hub in the tile registry (completed 2026-03-18)
 - [ ] **Phase 141: Rendering & System Upgrade** - Implement procedural tile rendering for all new hub tiles, upgrade the hub zone system to 128x128, and add indoor ambient particles
 - [ ] **Phase 142: Hub Maps & Spawn Updates** - Build all 4 hand-designed 128x128 hub maps with NPC placements and portal tiles, and update spawn positions
 
@@ -245,7 +245,7 @@
 | 137. Entity Rendering Fix | v1.28 | 2/2 | Complete | 2026-03-18 |
 | 138. Collision Boundary Fix | v1.28 | 2/2 | Complete | 2026-03-18 |
 | 139. Day/Night Brightness Fix | v1.28 | 1/1 | Complete | 2026-03-18 |
-| 140. Biome & Tile Foundation | v1.29 | 0/? | Not started | - |
+| 140. Biome & Tile Foundation | v1.29 | Complete    | 2026-03-18 | - |
 | 141. Rendering & System Upgrade | v1.29 | 0/? | Not started | - |
 | 142. Hub Maps & Spawn Updates | v1.29 | 0/? | Not started | - |
 

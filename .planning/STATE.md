@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.29
-milestone_name: Hub Station Interiors
-status: ready_to_plan
-last_updated: "2026-03-18T12:30:00.000Z"
+milestone: v1.0
+milestone_name: Pixel Movement Rewrite
+status: unknown
+last_updated: "2026-03-18T14:22:31.261Z"
 progress:
-  total_phases: 142
-  completed_phases: 139
-  total_plans: 343
-  completed_plans: 343
+  total_phases: 133
+  completed_phases: 133
+  total_plans: 346
+  completed_plans: 346
 ---
 
 # Project State
