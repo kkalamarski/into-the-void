@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Pixel Movement Rewrite
 status: unknown
-last_updated: "2026-03-18T10:47:55.819Z"
+last_updated: "2026-03-18T10:53:29.536Z"
 progress:
   total_phases: 131
-  completed_phases: 130
+  completed_phases: 131
   total_plans: 342
-  completed_plans: 341
+  completed_plans: 342
 ---
 
 # Project State
@@ -47,6 +47,7 @@ Progress: [████████████░░░░░░░░] ~97% (1
 
 *Updated after each plan completion*
 | Phase 138-collision-boundary-fix P01 | 136 | 2 tasks | 3 files |
+| Phase 138-collision-boundary-fix P02 | 6 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,8 @@ Recent decisions affecting current work:
 - v1.27: Creatures stay tile-snapped; pixel creature movement deferred to v1.29+
 - v1.28: Four independent bug areas — each gets its own phase (no hard dependencies)
 - [Phase 138-collision-boundary-fix]: Route collision callbacks through isWorldTileBlocked with zone-local-to-world coordinate conversion on both client and server
+- [Phase 138-collision-boundary-fix]: Phase 138-02: ZoneNameCinematic placed in GameContainer (not GameScreen) — GameContainer is the correct HUD layer alongside other overlays
+- [Phase 138-collision-boundary-fix]: Phase 138-02: instanceId counter in zoneCinematic store state forces React remount to restart CSS animation on each trigger
 
 ### Pending Todos
 

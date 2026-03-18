@@ -137,7 +137,7 @@
 
 - [x] **Phase 136: Combat & Gathering Fix** - Restore player ability to attack creatures and gather resources using correct pixel distance checks (completed 2026-03-18)
 - [x] **Phase 137: Entity Rendering Fix** - Eliminate floating sprites and misaligned hitboxes by correcting entity anchor points and trimming sprite transparent space (completed 2026-03-18)
-- [ ] **Phase 138: Collision Boundary Fix** - Remove invisible collision walls at chunk and zone boundaries so movement is unobstructed across the world
+- [x] **Phase 138: Collision Boundary Fix** - Remove invisible collision walls at chunk and zone boundaries so movement is unobstructed across the world (completed 2026-03-18)
 - [ ] **Phase 139: Day/Night Brightness Fix** - Correct the ColorMatrix brightness curve so dusk and dawn are visibly brighter than night
 
 ### Phase 136: Combat & Gathering Fix
@@ -193,7 +193,7 @@
 | 135. Cleanup and Collision Audit | v1.27 | 2/2 | Complete | 2026-03-18 |
 | 136. Combat & Gathering Fix | 2/2 | Complete    | 2026-03-18 | - |
 | 137. Entity Rendering Fix | 2/2 | Complete    | 2026-03-18 | - |
-| 138. Collision Boundary Fix | 1/2 | In Progress|  | - |
+| 138. Collision Boundary Fix | 2/2 | Complete   | 2026-03-18 | - |
 | 139. Day/Night Brightness Fix | v1.28 | 0/TBD | Not started | - |
 
 ---
