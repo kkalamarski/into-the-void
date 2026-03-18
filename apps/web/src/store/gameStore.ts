@@ -96,6 +96,11 @@ interface GameState {
   // Phase 134: connection quality for movement indicator
   connectionQuality: 'good' | 'degraded' | 'poor';
   setConnectionQuality: (quality: 'good' | 'degraded' | 'poor') => void;
+
+  // Phase 138: zone name cinematic (Dark Souls-style)
+  zoneCinematic: { zoneName: string; tierLabel: string; tier: number; instanceId: number } | null;
+  triggerZoneCinematic: (zoneName: string, tierLabel: string, tier: number) => void;
+  clearZoneCinematic: () => void;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -180,6 +185,24 @@ export const useGameStore = create<GameState>((set) => ({
   // Phase 134: connection quality
   connectionQuality: 'good',
   setConnectionQuality: (quality) => set({ connectionQuality: quality }),
+
+  // Phase 138: zone name cinematic (Dark Souls-style)
+  zoneCinematic: null,
+  triggerZoneCinematic: (zoneName, tierLabel, tier) => {
+    set((state) => ({
+      zoneCinematic: {
+        zoneName,
+        tierLabel,
+        tier,
+        instanceId: (state.zoneCinematic?.instanceId ?? 0) + 1,
+      },
+    }));
+    // Auto-clear after 3500ms (fade in 500ms + hold 2500ms + buffer 500ms)
+    setTimeout(() => {
+      useGameStore.getState().clearZoneCinematic();
+    }, 3500);
+  },
+  clearZoneCinematic: () => set({ zoneCinematic: null }),
 }));
 
 // Phase 134: Connection quality monitor singleton — tracks positionCorrection frequency

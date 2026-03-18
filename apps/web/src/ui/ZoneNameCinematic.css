@@ -1,0 +1,57 @@
+.zone-cinematic-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 18vh;
+  animation: zone-cinematic-fade 3.5s ease-in-out forwards;
+}
+
+@keyframes zone-cinematic-fade {
+  0% { opacity: 0; }
+  14% { opacity: 1; }      /* 0.5s fade in */
+  71% { opacity: 1; }      /* Hold until 2.5s */
+  100% { opacity: 0; }     /* 0.5s fade out */
+}
+
+.zone-cinematic-name {
+  font-family: var(--font-display, 'Georgia', serif);
+  font-size: 2.4rem;
+  font-weight: 300;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #e8e0d0;
+  text-shadow:
+    0 0 20px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(0, 0, 0, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.9);
+  margin-bottom: 0.5rem;
+}
+
+.zone-cinematic-tier {
+  font-family: var(--font-display, 'Georgia', serif);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 10px rgba(0, 0, 0, 0.8),
+    0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.zone-cinematic-tier--1 { color: #8fbc8f; }  /* Frontier — calm green */
+.zone-cinematic-tier--2 { color: #daa520; }  /* Hazardous — warning gold */
+.zone-cinematic-tier--3 { color: #cd5c5c; }  /* Hostile — danger red */
+.zone-cinematic-tier--4 { color: #9b30ff; }  /* Extreme — void purple */
+
+.zone-cinematic-line {
+  width: 120px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232, 224, 208, 0.4), transparent);
+  margin-bottom: 0.6rem;
+}
