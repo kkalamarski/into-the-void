@@ -29,7 +29,7 @@
 - ✅ **v1.24 Balance & Automation** - Phases 115-121 (shipped 2026-03-05)
 - ✅ **v1.25 Crafting** - Phases 122-125 (shipped 2026-03-06)
 - ✅ **v1.26 Visual Overhaul & Atmosphere** - Phases 126-130 (shipped 2026-03-17)
-- 🚧 **v1.27 Pixel Movement Rewrite** - Phases 131-135 (in progress)
+- ✅ **v1.27 Pixel Movement Rewrite** - Phases 131-135 (shipped 2026-03-18)
 
 ## Phases
 
@@ -42,7 +42,7 @@
 
 ---
 
-### 🚧 v1.27 Pixel Movement Rewrite (In Progress)
+### ✅ v1.27 Pixel Movement Rewrite (Complete)
 
 **Milestone Goal:** Replace tile-to-tile movement with free sub-tile pixel movement for a smoother, more immersive feel. Players move continuously via WASD with pixel collision, the server validates positions at 20Hz, all game systems use pixel Euclidean distance, and all legacy tile-step movement code is removed.
 
@@ -52,7 +52,7 @@
 - [x] **Phase 132: Server Movement Handler** - Server-authoritative position validation and 20Hz broadcast loop (completed 2026-03-17)
 - [x] **Phase 133: Distance System Migration** - All six game systems migrated from tile distance to pixel Euclidean distance (completed 2026-03-17)
 - [x] **Phase 134: Client Movement Rewrite** - Velocity-based WASD movement, pixel collision, client prediction, and remote player interpolation (completed 2026-03-18)
-- [ ] **Phase 135: Cleanup and Collision Audit** - Remove all legacy movement code and audit flat blocking tiles
+- [x] **Phase 135: Cleanup and Collision Audit** - Remove all legacy movement code and audit flat blocking tiles (completed 2026-03-18)
 
 ### Phase 131: Shared Foundation
 **Goal**: The coordinate contract and pixel math infrastructure is established so all downstream phases compile against a single source of truth
@@ -124,7 +124,9 @@
   2. Clicking on the game world no longer triggers pathfinding or any movement (WASD only)
   3. All tiles that appear flat and at ground level are walkable — no invisible walls from elevated-tile collision flags applied to flat decorative tiles
   4. The TypeScript build passes with no unused imports or missing module errors after the deletions
-**Plans**: TBD
+**Plans**:
+  - [x] 135-01-PLAN.md -- Client-side legacy movement removal (MovementController, PathfindingController, WorldScene, gameStore, socket cleanup)
+  - [x] 135-02-PLAN.md -- Server-side legacy removal, shared-types cleanup, game-logic cleanup, collision audit
 
 ## Progress
 
@@ -134,7 +136,7 @@
 | 132. Server Movement Handler | 3/3 | Complete    | 2026-03-17 | - |
 | 133. Distance System Migration | 5/5 | Complete    | 2026-03-17 | - |
 | 134. Client Movement Rewrite | v1.27 | 3/3 | Complete | 2026-03-18 |
-| 135. Cleanup and Collision Audit | v1.27 | 0/TBD | Not started | - |
+| 135. Cleanup and Collision Audit | v1.27 | 2/2 | Complete | 2026-03-18 |
 
 ---
-*Last updated: 2026-03-18 — Phase 134 complete*
+*Last updated: 2026-03-18 — Phase 135 complete, milestone v1.27 complete*
