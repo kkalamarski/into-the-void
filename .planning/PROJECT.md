@@ -245,20 +245,27 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Day/night cycle with camera postFX ColorMatrix and HUD time indicator — v1.26
 - ✓ Biome atmospheric effects (fog, glow, haze, murk, shimmer) coordinated with day/night — v1.26
 - ✓ Rendering code cleanup (PNG tiles archived, dead code removed, dev-mode guard added) — v1.26
+- ✓ Free sub-tile WASD pixel movement (not tile-locked) — v1.27
+- ✓ 20Hz server position validation and broadcast — v1.27
+- ✓ Pixel hitbox collision replacing tile-based collision map — v1.27
+- ✓ Click-to-move and pathfinding removed (WASD only) — v1.27
+- ✓ Distance-based systems converted to pixel Euclidean distance — v1.27
+- ✓ Client-side prediction with server reconciliation (pixel) — v1.27
+- ✓ Remote player interpolation — v1.27
+- ✓ Legacy tile-step movement code removed — v1.27
 
 ### Active
 
-## Current Milestone: v1.27 Pixel Movement Rewrite
+## Current Milestone: v1.28 Post-Movement Polish
 
-**Goal:** Replace tile-to-tile movement with free sub-tile pixel movement for a smoother, more immersive feel.
+**Goal:** Fix combat, gathering, entity rendering, and collision issues introduced by the pixel movement rewrite.
 
 **Target features:**
-- Free sub-tile WASD movement (not tile-locked)
-- Continuous position sync between client and server
-- Pixel/hitbox collision replacing tile-based collision map
-- Drop click-to-move and pathfinding (WASD only)
-- Convert distance-based systems (combat, gathering, NPCs) to pixel distance
-- Fix flat blocking tiles (tiles that appear walkable but block movement)
+- Fix combat system (distance checks not working after pixel migration)
+- Fix gathering system (same distance issue)
+- Fix entity anchoring (creatures/player float above tiles, wrong anchor points)
+- Fix plant/mineral sprite excess transparent space causing misalignment
+- Fix invisible collision walls at chunk/zone boundaries
 
 ### Out of Scope
 
@@ -325,4 +332,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-03-17 after v1.27 milestone started*
+*Last updated: 2026-03-18 after v1.28 milestone started*
