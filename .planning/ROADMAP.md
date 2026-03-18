@@ -202,7 +202,10 @@
   2. Eight tile type IDs exist per hub (main floor, wall, door, corridor floor, decoration, accent floor, window wall, hazard/special) — all four biome sets defined, 32 tile definitions total
   3. The biome system correctly maps each hub biome to its tile set — querying a hub biome returns its specific tile types, not world biome tiles
   4. The TypeScript build passes with all new biome and tile definitions in place — no type errors or missing exports
-**Plans**: TBD
+**Plans**: 3 plans
+  - [ ] 140-01-PLAN.md -- Register 4 hub biome types in shared-types and world-gen BiomeType records
+  - [ ] 140-02-PLAN.md -- Define 32 hub tile types (8 per hub x 4 hubs) in tiles package
+  - [ ] 140-03-PLAN.md -- Wire hub biomes to hub tile sets and update HUB_CONFIGS
 
 ### Phase 141: Rendering & System Upgrade
 **Goal**: The procedural tile generator renders all new hub tiles with correct faction palettes and accents, hub zones support 128x128 maps, and hub biomes display their indoor ambient particle effects
