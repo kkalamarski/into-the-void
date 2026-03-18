@@ -374,8 +374,8 @@ export class EntityRenderer {
       scaleX = scale;
       scaleY = scale;
     }
-    // Blob shadow at ground level - skip for plants and minerals (performance optimization)
-    if (!this.isPlant(entity) && !this.isMineral(entity)) {
+    // Elliptical drop shadow at ground level for all entity types
+    {
       let shadowWidth = 60 * scale;
       let shadowHeight = 30 * scale;
       // Creatures get larger shadow to touch feet
@@ -388,6 +388,16 @@ export class EntityRenderer {
           shadowWidth = shadowOverride.width;
           shadowHeight = shadowOverride.height;
         }
+      }
+      // Plants get proportional shadow
+      if (this.isPlant(entity)) {
+        shadowWidth = 50 * scale;
+        shadowHeight = 25 * scale;
+      }
+      // Minerals get proportional shadow
+      if (this.isMineral(entity)) {
+        shadowWidth = 45 * scale;
+        shadowHeight = 22 * scale;
       }
       // NPCs get same shadow as player character
       if (this.isNpc(entity)) {
@@ -406,25 +416,14 @@ export class EntityRenderer {
       spriteYOffset = ANIMATED_CREATURE_Y_OFFSET[entity.speciesId];
     }
 
-    // Feature sprites (plants/minerals) use tile-matching origin (0.5, 0.25) but need
-    // a Y offset to compensate for scaling. At scale > 1x, the sprite extends further
-    // below the origin, pushing visual content below the collision tile. The offset
-    // corrects by the extra distance: 64 * (scale - 1) where 64 = originY * spriteSize.
+    // Track feature entities for UI hover behavior
     const isFeature = this.isPlant(entity) || this.isMineral(entity);
-    if (isFeature) {
-      spriteYOffset = -64 * (scale - 1);
-    }
 
     const { key: textureKey, frame: textureFrame } = this.getEntityTexture(entity);
     const sprite = this.scene.add.sprite(0, spriteYOffset, textureKey, textureFrame);
 
-    // Feature sprites use diamond-center origin matching tile sprites.
-    // Characters, creatures, and NPCs use bottom-center for standing alignment.
-    if (isFeature) {
-      sprite.setOrigin(0.5, 0.25);
-    } else {
-      sprite.setOrigin(0.5, 1.0);
-    }
+    // All entity types use bottom-center origin: sprite base sits at the tile surface
+    sprite.setOrigin(0.5, 1.0);
     sprite.setScale(scaleX, scaleY);
 
     // Apply glow effect for rare/epic minerals and plants
@@ -484,9 +483,8 @@ export class EntityRenderer {
     }
 
     // UI positioning based on actual sprite height (not BASE_SPRITE_HEIGHT)
-    // Standing entities: origin(0.5, 1.0) → sprite top at y = -actualSpriteHeight
-    // Feature entities:  origin(0.5, 0.25) → sprite top at y = -0.25 * actualSpriteHeight
-    const spriteTopY = isFeature ? spriteYOffset - 0.25 * actualSpriteHeight : -actualSpriteHeight;
+    // All entities: origin(0.5, 1.0) → sprite top at y = spriteYOffset - actualSpriteHeight
+    const spriteTopY = spriteYOffset - actualSpriteHeight;
     const uiBaseY = spriteTopY - 20; // 20px padding above sprite top
     const { name: displayName, gated } = this.applyPerceptionGate(entity);
 

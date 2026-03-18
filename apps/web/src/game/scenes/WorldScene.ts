@@ -784,8 +784,8 @@ export class WorldScene extends Phaser.Scene {
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
-    // Blob shadow stretched to reach character's feet
-    const shadow = this.add.ellipse(0, -10, 120, 60, 0x000000, 0.3);
+    // Elliptical drop shadow at ground level (y=0 = tile surface)
+    const shadow = this.add.ellipse(0, 0, 120, 60, 0x000000, 0.3);
     container.add(shadow);
 
     // Player sprite with directional character texture (default facing south)
@@ -1843,8 +1843,8 @@ export class WorldScene extends Phaser.Scene {
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
-    // Blob shadow stretched to reach character's feet
-    const shadow = this.add.ellipse(0, -10, 120, 60, 0x000000, 0.3);
+    // Elliptical drop shadow at ground level (y=0 = tile surface)
+    const shadow = this.add.ellipse(0, 0, 120, 60, 0x000000, 0.3);
     container.add(shadow);
 
     // Player sprite with south-facing character texture (remote players always face south for now)
