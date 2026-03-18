@@ -85,7 +85,10 @@ export class IsometricTransform {
    */
   calculateDepth(gridX: number, gridY: number, elevation: number = 0, priorityBoost: number = 0, isEntity: boolean = false): number {
     const screen = this.gridToScreen(gridX, gridY);
-    return screen.y + (gridX * 0.0001) + (elevation * this.elevationWeight) + priorityBoost + (isEntity ? ENTITY_LAYER_OFFSET : 0);
+    // Elevated tiles (walls) must sort alongside entities for proper occlusion.
+    // Ground tiles (elevation 0) stay below entities as before.
+    const layerOffset = (isEntity || elevation > 0) ? ENTITY_LAYER_OFFSET : 0;
+    return screen.y + (gridX * 0.0001) + (elevation * this.elevationWeight) + priorityBoost + layerOffset;
   }
 
   /**

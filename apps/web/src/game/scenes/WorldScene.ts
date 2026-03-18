@@ -112,6 +112,7 @@ export class WorldScene extends Phaser.Scene {
   private currentStructures: TileStructure[] = [];
   private lastOcclusionTime = 0;
   private occlusionInterval = 100; // Only check occlusion every 100ms
+  private transparentTiles: Set<Phaser.GameObjects.Container> = new Set();
   private currentTiles: number[][] | null = null;
   private tileInfoPopup: Phaser.GameObjects.Container | null = null;
   private leftMouseDown = false;
@@ -862,6 +863,7 @@ export class WorldScene extends Phaser.Scene {
     if (time - this.lastOcclusionTime >= this.occlusionInterval) {
       this.lastOcclusionTime = time;
       this.updateEntityOcclusion();
+      this.updateTileTransparency();
     }
 
     // Update day/night cycle visuals (DNTC-01, DNTC-02, DNTC-03)
@@ -1000,6 +1002,59 @@ export class WorldScene extends Phaser.Scene {
       playerContainers.set(id, sprite as unknown as Phaser.GameObjects.Container);
     });
     this.entityRenderer.applyOcclusion(playerContainers, chunkTiles);
+  }
+
+  /**
+   * Make elevated tiles semi-transparent when they occlude the local player.
+   * In isometric view, tiles with higher depth (closer to camera) can block
+   * the player visually. We fade them so the player stays visible.
+   */
+  private updateTileTransparency(): void {
+    if (!this.localPlayer || !this.isoTransform) return;
+
+    const chunkTiles = this.chunkTiles.get(this.currentZoneId);
+    if (!chunkTiles) return;
+
+    const playerDepth = this.localPlayer.depth;
+    const playerGridX = this.localPlayer.getData('gridX') as number;
+    const playerGridY = this.localPlayer.getData('gridY') as number;
+
+    const newTransparent = new Set<Phaser.GameObjects.Container>();
+
+    for (const tile of chunkTiles) {
+      const elevation = tile.getData('elevation') as number ?? 0;
+      if (elevation === 0) continue;
+
+      // Only check tiles near the player (within a few tiles)
+      const tileGridX = tile.getData('gridX') as number;
+      const tileGridY = tile.getData('gridY') as number;
+      const dx = tileGridX - playerGridX;
+      const dy = tileGridY - playerGridY;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) continue;
+
+      // Tile must be in front of player (higher depth = renders in front)
+      if (tile.depth <= playerDepth) continue;
+
+      // Limit range: higher walls occlude further behind.
+      // Each row is ~tileHeightHalf (64) depth units.
+      const depthDiff = tile.depth - playerDepth;
+      const maxRange = elevation * 64;
+      if (depthDiff > maxRange) continue;
+
+      newTransparent.add(tile);
+      if (tile.alpha !== 0.35) {
+        tile.setAlpha(0.35);
+      }
+    }
+
+    // Restore tiles that are no longer occluding
+    for (const tile of this.transparentTiles) {
+      if (!newTransparent.has(tile)) {
+        tile.setAlpha(1.0);
+      }
+    }
+
+    this.transparentTiles = newTransparent;
   }
 
   // Methods to be called from network layer
@@ -1207,6 +1262,7 @@ export class WorldScene extends Phaser.Scene {
       });
     });
     this.chunkTiles.clear();
+    this.transparentTiles.clear();
 
     // Clear all entities
     this.clearEntities();
@@ -2554,6 +2610,7 @@ export class WorldScene extends Phaser.Scene {
     }
     this.chunkTiles.forEach(tiles => tiles.forEach(tile => tile.destroy(true)));
     this.chunkTiles.clear();
+    this.transparentTiles.clear();
     this.lastCullBounds = null;
 
     // Cleanup fog system
