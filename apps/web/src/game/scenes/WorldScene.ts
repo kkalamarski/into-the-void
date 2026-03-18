@@ -2442,7 +2442,24 @@ export class WorldScene extends Phaser.Scene {
   isWorldTileBlocked(worldX: number, worldY: number): boolean {
     if (!this.chunkManager) return true; // No chunk manager = blocked
 
-    // Calculate which chunk this tile belongs to
+    // Hub zones: use local collision data directly (no cross-chunk reconstruction)
+    if (isHubZone(this.currentZoneId)) {
+      const chunk = this.chunkManager.getChunk(this.currentZoneId);
+      if (!chunk?.data.collisions) return true;
+
+      const terrainBlocked = chunk.data.collisions[worldY]?.[worldX] ?? true;
+      if (terrainBlocked) return true;
+
+      const entityAtTile = useEntityStore.getState().getEntityAtPosition(worldX, worldY, this.currentZoneId);
+      if (entityAtTile) {
+        const blocksMovement = entityAtTile.type === 'mineral' || entityAtTile.type === 'plant';
+        if (blocksMovement) return true;
+      }
+
+      return false;
+    }
+
+    // Open-world zones: calculate which chunk this tile belongs to
     const chunkX = Math.floor(worldX / ZONE_SIZE);
     const chunkY = Math.floor(worldY / ZONE_SIZE);
     const zoneId = `z_${chunkX}_${chunkY}`;

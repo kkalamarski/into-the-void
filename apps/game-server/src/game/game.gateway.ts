@@ -43,7 +43,7 @@ import {
   Plant,
   BiomeType,
 } from '@into-the-void/shared-types';
-import { computeCharStats, pixelDistanceTo, tileToPixelCenter, NPC_INTERACT_RANGE_PX } from '@into-the-void/game-logic';
+import { computeCharStats, pixelDistanceTo, tileToPixelCenter, pixelToTile, NPC_INTERACT_RANGE_PX } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
 import { NpcRegistry } from '@into-the-void/npcs';
 import { EquipmentJson } from '@into-the-void/database';
@@ -822,7 +822,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
       // Validate player is standing on a portal tile (TileId.PORTAL = 16)
       const zoneState = await this.gameService.getZoneState(player.position.zoneId);
-      const tileId = zoneState.chunk.tiles[player.position.y]?.[player.position.x];
+      const { tileX, tileY } = pixelToTile(player.px, player.py);
+      const tileId = zoneState.chunk.tiles[tileY]?.[tileX];
 
       if (tileId !== 16) {
         client.emit('error', {
