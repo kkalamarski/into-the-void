@@ -20,7 +20,7 @@ import { useGameStore } from '../../store/gameStore';
 import { useEntityStore } from '../../store/entityStore';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { useAlertStore } from '../../store/alertStore';
-import { useAbilityStore } from '../../store/abilityStore';
+import { useAbilityStore, getEquippedAbilities } from '../../store/abilityStore';
 import { useCombatStore } from '../../store/combatStore';
 import { useQuestStore } from '../../store/questStore';
 import { gameSocket } from '../../network/socket';
@@ -373,6 +373,7 @@ export class WorldScene extends Phaser.Scene {
 
       // Clear target highlight when clicking ground (empty tile)
       this.targetHighlight?.hide();
+      useCombatStore.getState().stopAutoAttack();
       useCombatStore.getState().setInCombat(useCombatStore.getState().inCombat, null);
     });
 
@@ -430,9 +431,8 @@ export class WorldScene extends Phaser.Scene {
         return;
       }
 
-      // Gathering: minerals and plants are selected as targets for gathering abilities
+      // Gathering: minerals and plants trigger gathering abilities on click (INTERACT-02)
       if (entityType === 'mineral' || entityType === 'plant') {
-        // Select as target for gathering abilities
         this.lastClickedEntity = entityId;
 
         // Show target highlight (use 'herbivore' style for plants, 'mineral' for minerals)
@@ -441,8 +441,29 @@ export class WorldScene extends Phaser.Scene {
           this.targetHighlight?.show(entityId, targetContainer, 'herbivore');
         }
 
-        // Set as combat target so abilities can target it
+        // Set as target
         useCombatStore.getState().selectTarget(entityId);
+
+        // Auto-trigger gathering ability (INTERACT-02)
+        const abilities = getEquippedAbilities();
+        let gatherAbilityId: string | undefined;
+        if (entityType === 'plant') {
+          gatherAbilityId = abilities.find(a => a.id === 'harvest')?.id
+            ?? abilities.find(a => a.id === 'basic_harvest')?.id
+            ?? abilities.find(a => a.id === 'gather')?.id;
+        } else {
+          gatherAbilityId = abilities.find(a => a.id === 'mine')?.id
+            ?? abilities.find(a => a.id === 'basic_mine')?.id
+            ?? abilities.find(a => a.id === 'gather')?.id;
+        }
+        if (gatherAbilityId) {
+          const player = useGameStore.getState().player;
+          const abilityDef = abilities.find(a => a.id === gatherAbilityId);
+          const { isCasting, isOnCooldown } = useAbilityStore.getState();
+          if (player && abilityDef && !isCasting() && !isOnCooldown(gatherAbilityId) && player.energy >= abilityDef.energyCost) {
+            gameSocket.emit('ability:use', { abilityId: gatherAbilityId, targetEntityId: entityId });
+          }
+        }
         return;
       }
 
@@ -453,13 +474,15 @@ export class WorldScene extends Phaser.Scene {
         return;
       }
 
-      // Creatures: combat flow
+      // Creatures: combat flow (INTERACT-01)
       if (entityType === 'creature') {
         // Track that we clicked an entity to suppress ground-click handler
         this.lastClickedEntity = entityId;
 
-        // Attempt to start combat with this creature
+        // Show target highlight and select target
         this.handleEntityClick(entityId);
+        // Start auto-attack loop (INTERACT-01)
+        useCombatStore.getState().startAutoAttack(entityId);
         return;
       }
     });
@@ -1281,8 +1304,9 @@ export class WorldScene extends Phaser.Scene {
     const dist = pixelDistanceTo(playerPx, playerPy, ex, ey);
 
     // Determine appropriate range based on entity type
+    // Use basic_strike range (1 tile = TILE_SIZE_PX = 128px) for creatures, GATHER_RANGE_PX for resources
     const isCreature = entity.type === 'creature';
-    const rangePx = isCreature ? MELEE_RANGE_PX : GATHER_RANGE_PX;
+    const rangePx = isCreature ? 1 * TILE_SIZE_PX : GATHER_RANGE_PX;
     const inRange = dist <= rangePx;
 
     this.targetHighlight.setInRange(inRange);
