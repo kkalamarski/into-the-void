@@ -213,6 +213,16 @@
   opacity: 0.9;
 }
 
+/* Phase 134: Pulse animation for degraded/poor connection quality */
+.connection-dot--pulse {
+  animation: pulse-connection 2s ease-in-out infinite;
+}
+
+@keyframes pulse-connection {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 /* Chunk Loading Indicator */
 .chunk-loading-indicator {
   position: fixed;

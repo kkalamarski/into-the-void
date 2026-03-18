@@ -6,6 +6,7 @@ import { useEntityStore } from './entityStore';
 import { useAlertStore } from './alertStore';
 import { audioManager } from '../utils/audio';
 import { useChatStore } from './chatStore';
+import { ConnectionQualityMonitor } from '../game/systems/ConnectionQualityMonitor';
 
 export interface DiscoveredResource {
   entityId: string;
@@ -181,6 +182,12 @@ export const useGameStore = create<GameState>((set) => ({
   setConnectionQuality: (quality) => set({ connectionQuality: quality }),
 }));
 
+// Phase 134: Connection quality monitor singleton — tracks positionCorrection frequency
+const connectionMonitor = new ConnectionQualityMonitor();
+connectionMonitor.setOnQualityChange((quality) => {
+  useGameStore.getState().setConnectionQuality(quality);
+});
+
 // Listen for initial game state from server
 gameSocket.on('zone:state', (data: ZoneState) => {
   const { zoneId, entities, players, chunk } = data;
@@ -189,6 +196,9 @@ gameSocket.on('zone:state', (data: ZoneState) => {
 
   // Detect zone transition
   const isZoneTransition = currentZoneId !== null && currentZoneId !== zoneId;
+
+  // Reset connection quality monitor on zone load/transition
+  connectionMonitor.reset();
 
   // Store zone data and entities
   useGameStore.getState().setZoneState(data);
@@ -339,6 +349,8 @@ gameSocket.on('positionCorrection', (data: { px: number; py: number; sequence: n
   if (!worldScene) return;
 
   worldScene.handlePositionCorrection(data.px, data.py, data.sequence);
+  // Track correction frequency for connection quality indicator
+  connectionMonitor.recordCorrection();
 });
 
 // Handle entity spawn

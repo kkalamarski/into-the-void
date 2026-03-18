@@ -40,19 +40,38 @@ const getStatusText = (state: ConnectionState): string | null => {
   }
 };
 
+/** Return a color override when movement quality is degraded/poor (Phase 134). */
+const getMovementQualityColor = (quality: 'good' | 'degraded' | 'poor'): string | null => {
+  if (quality === 'poor') return '#ff4444';
+  if (quality === 'degraded') return '#ffaa00';
+  return null; // good — use latency-based color
+};
+
 export const ConnectionIndicator: React.FC = () => {
   const connectionState = useGameStore((state) => state.connectionState);
   const latency = useGameStore((state) => state.latency);
+  const connectionQuality = useGameStore((state) => state.connectionQuality);
 
-  const statusColor = getStatusColor(connectionState, latency);
+  const latencyColor = getStatusColor(connectionState, latency);
+  const movementColor = getMovementQualityColor(connectionQuality);
+  // Movement quality override takes priority when degraded
+  const statusColor = movementColor ?? latencyColor;
   const statusText = getStatusText(connectionState);
   const isAuthenticated = connectionState === 'authenticated';
   const filledBars = getLatencyBars(latency);
 
+  // Build quality label for tooltip
+  const qualityLabel =
+    connectionQuality === 'poor'
+      ? 'Poor connection'
+      : connectionQuality === 'degraded'
+        ? 'Unstable connection'
+        : undefined;
+
   return (
-    <div className="connection-indicator">
+    <div className="connection-indicator" title={qualityLabel}>
       <div
-        className="connection-dot"
+        className={`connection-dot${connectionQuality !== 'good' ? ' connection-dot--pulse' : ''}`}
         style={{ backgroundColor: statusColor }}
       />
 
