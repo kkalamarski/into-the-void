@@ -91,6 +91,10 @@ interface GameState {
   discoveredResources: DiscoveredResource[];
   setDiscoveredResources: (resources: DiscoveredResource[]) => void;
   addDiscoveredResource: (resource: DiscoveredResource) => void;
+
+  // Phase 134: connection quality for movement indicator
+  connectionQuality: 'good' | 'degraded' | 'poor';
+  setConnectionQuality: (quality: 'good' | 'degraded' | 'poor') => void;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -171,6 +175,10 @@ export const useGameStore = create<GameState>((set) => ({
     set((state) => ({
       discoveredResources: [...state.discoveredResources, resource],
     })),
+
+  // Phase 134: connection quality
+  connectionQuality: 'good',
+  setConnectionQuality: (quality) => set({ connectionQuality: quality }),
 }));
 
 // Listen for initial game state from server
@@ -276,7 +284,7 @@ gameSocket.on('zone:state', (data: ZoneState) => {
   useGameStore.getState().setLoadingProgress(80);
 });
 
-// Handle movement updates from server
+// Handle movement updates from server (tile-based — legacy, kept as fallback)
 gameSocket.on('player:moved', (data: { playerId: string; position: Position; lastProcessedInput?: number }) => {
   const currentPlayer = useGameStore.getState().player;
   const game = useGameStore.getState().game;
@@ -287,22 +295,50 @@ gameSocket.on('player:moved', (data: { playerId: string; position: Position; las
   if (!worldScene) return;
 
   if (data.playerId === currentPlayer.id) {
-    // Local player moved - reconcile with server
-    const movementController = worldScene.getMovementController();
-    if (movementController && data.lastProcessedInput !== undefined) {
-      movementController.reconcile(data.position, data.lastProcessedInput);
-    } else {
-      // No sequence number (legacy) - just update position
-      useGameStore.getState().setPlayer({
-        ...currentPlayer,
-        position: data.position,
-      });
-      worldScene.updateLocalPlayer(data.position);
+    // Update tile position in store (for UI display, minimap, etc.)
+    useGameStore.getState().setPlayer({
+      ...currentPlayer,
+      position: data.position,
+    });
+    // Phase 134: pixel movement reconciliation is handled by positionCorrection event
+    // Only use old reconciliation if pixel movement controller is NOT active
+    const pixelCtrl = worldScene.getPixelMovementController();
+    if (!pixelCtrl) {
+      const movementController = worldScene.getMovementController();
+      if (movementController && data.lastProcessedInput !== undefined) {
+        movementController.reconcile(data.position, data.lastProcessedInput);
+      } else {
+        worldScene.updateLocalPlayer(data.position);
+      }
     }
   } else {
-    // Other player moved - tween their sprite
+    // Other player moved — fallback tile-based update
+    // Primary updates come from positionBatch via RemotePlayerInterpolator
     worldScene.movePlayer(data.playerId, data.position);
   }
+});
+
+// Phase 134: Handle pixel position batch updates from server (20Hz)
+gameSocket.on('positionBatch', (data: { updates: Array<{ playerId: string; px: number; py: number }> }) => {
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+  if (!worldScene) return;
+
+  const interpolator = worldScene.getRemoteInterpolator();
+  if (!interpolator) return;
+
+  for (const update of data.updates) {
+    interpolator.pushPosition(update.playerId, update.px, update.py);
+  }
+});
+
+// Phase 134: Handle server-authoritative position correction for local player reconciliation
+gameSocket.on('positionCorrection', (data: { px: number; py: number; sequence: number }) => {
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+  if (!worldScene) return;
+
+  worldScene.handlePositionCorrection(data.px, data.py, data.sequence);
 });
 
 // Handle entity spawn
@@ -392,6 +428,11 @@ gameSocket.on('player:left', ({ playerId }: { playerId: string }) => {
   const worldScene = game?.getWorldScene();
   if (worldScene) {
     worldScene.removePlayer(playerId);
+    // Phase 134: clean up interpolation buffer
+    const interpolator = worldScene.getRemoteInterpolator();
+    if (interpolator) {
+      interpolator.removePlayer(playerId);
+    }
   }
 });
 

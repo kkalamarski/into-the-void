@@ -13,6 +13,8 @@ import { ZoneHUD } from '../ui/ZoneHUD';
 import { MinimapCamera } from '../rendering/MinimapCamera';
 import { MovementController } from '../systems/MovementController';
 import { PathfindingController } from '../systems/PathfindingController';
+import { PixelMovementController } from '../systems/PixelMovementController';
+import { RemotePlayerInterpolator } from '../systems/RemotePlayerInterpolator';
 import { IsometricTransform } from '../utils/IsometricTransform';
 import { DepthSorter } from '../rendering/DepthSorter';
 import { audioManager } from '../../utils/audio';
@@ -136,6 +138,9 @@ export class WorldScene extends Phaser.Scene {
   private weatherSystem: WeatherSystem | null = null;
   private dayNightCycle: DayNightCycle | null = null;
   private atmosphereSystem: AtmosphereSystem | null = null;
+  // Phase 134: pixel movement controllers
+  private pixelMovement: PixelMovementController | null = null;
+  private remoteInterpolator: RemotePlayerInterpolator | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -212,11 +217,15 @@ export class WorldScene extends Phaser.Scene {
     this.atmosphereSystem = new AtmosphereSystem(this);
     this.dayNightCycle.setAtmosphereSystem(this.atmosphereSystem);
 
-    // Initialize MovementController
+    // Initialize MovementController (legacy — kept for Phase 135 cleanup)
     this.movementController = new MovementController();
     this.movementController.setPositionUpdateHandler((position, reconciling) => {
       this.updateLocalPlayerSprite(position, reconciling);
     });
+
+    // Phase 134: pixel movement controllers
+    this.pixelMovement = new PixelMovementController();
+    this.remoteInterpolator = new RemotePlayerInterpolator();
 
     // Initialize PathfindingController with scene and isoTransform for path visualization
     this.pathfindingController = new PathfindingController(
@@ -830,19 +839,8 @@ export class WorldScene extends Phaser.Scene {
   private lastCullTime = 0;
   private cullInterval = 100; // Only check viewport culling every 100ms
 
-  update(time: number): void {
-    this.handleInput(time);
-
-    // Check for idle state to stop running animation
-    // Don't stop if pathfinding is active (it handles its own animation lifecycle)
-    // Don't stop until movement tween has completed (prevents "sliding" without animation)
-    const isMoving = this.localPlayer?.getData('isMoving') as boolean;
-    const isPathfinding = this.pathfindingController?.isPathActive() ?? false;
-    const tweenComplete = time > this.movementTweenEndTime;
-    const keysReleased = time - this.lastMovementTime > WorldScene.IDLE_THRESHOLD_MS;
-    if (isMoving && !isPathfinding && tweenComplete && keysReleased) {
-      this.stopPlayerAnimation();
-    }
+  update(time: number, delta: number): void {
+    this.handleInput(time, delta);
 
     // Throttled viewport culling
     if (time - this.lastCullTime >= this.cullInterval) {
@@ -873,6 +871,9 @@ export class WorldScene extends Phaser.Scene {
       this.depthSorter.update(time, allContainers, this.isoTransform);
     }
 
+    // Phase 134: remote player interpolation
+    this.updateRemotePlayerInterpolation();
+
     // Throttled occlusion check
     if (time - this.lastOcclusionTime >= this.occlusionInterval) {
       this.lastOcclusionTime = time;
@@ -891,88 +892,82 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  private handleInput(time: number): void {
-    if (!this.localPlayer || !this.movementController) return;
+  private handleInput(time: number, delta: number): void {
+    if (!this.localPlayer || !this.pixelMovement) return;
 
     // Can't move while dead
     const player = useGameStore.getState().player;
     if (player?.isDead) return;
 
-    // Check if any movement key is pressed
-    const anyWasdDown = this.wasd && (
-      this.wasd.W.isDown || this.wasd.A.isDown || this.wasd.S.isDown || this.wasd.D.isDown
-    );
-    const anyCursorDown = this.cursors && (
-      this.cursors.up.isDown || this.cursors.right.isDown ||
-      this.cursors.down.isDown || this.cursors.left.isDown
-    );
+    // Read WASD key state
+    const keys = {
+      W: this.wasd?.W.isDown ?? false,
+      A: this.wasd?.A.isDown ?? false,
+      S: this.wasd?.S.isDown ?? false,
+      D: this.wasd?.D.isDown ?? false,
+    };
 
-    // Reset chord when no keys are pressed
-    if (!anyWasdDown && !anyCursorDown) {
-      this.chordStartTime = 0;
-      return;
+    // Also support arrow keys mapped to same axes
+    if (this.cursors) {
+      if (this.cursors.up.isDown) keys.W = true;
+      if (this.cursors.down.isDown) keys.S = true;
+      if (this.cursors.left.isDown) keys.A = true;
+      if (this.cursors.right.isDown) keys.D = true;
     }
 
-    // Track movement time whenever keys are held (for animation idle detection)
-    this.lastMovementTime = time;
+    const anyKeyDown = keys.W || keys.A || keys.S || keys.D;
 
-    // Start/maintain running animation while keys are held
-    const isMoving = this.localPlayer.getData('isMoving') as boolean;
-    if (!isMoving) {
-      this.startPlayerAnimation(this.localPlayerFacing);
+    // Cancel cast on movement
+    if (anyKeyDown && useAbilityStore.getState().isCasting()) {
+      gameSocket.emit('cast:cancel', {});
+      useAbilityStore.getState().clearCast();
     }
 
-    // Check if we can actually move (respecting move delay)
-    if (time - this.lastMoveTime < this.moveDelay) {
-      return;
+    // Cancel pathfinding on keyboard input
+    if (anyKeyDown && this.pathfindingController?.isPathActive()) {
+      this.pathfindingController.cancelPath();
     }
 
-    // Start chord window on first key press
-    if (this.chordStartTime === 0) {
-      this.chordStartTime = time;
-    }
+    // dt in seconds for velocity calculation
+    const dt = delta / 1000;
 
-    // Wait for chord window to allow additional keys to be pressed
-    // This prevents W+A being interpreted as just W if A is pressed slightly later
-    if (time - this.chordStartTime < WorldScene.CHORD_WINDOW_MS) {
-      return;
-    }
+    // Run pixel movement update
+    const result = this.pixelMovement.update(dt, keys, time);
 
-    let direction: Direction | null = null;
+    if (result.moved) {
+      this.lastMovementTime = time;
 
-    // WASD: 8-directional with dual-key detection
-    if (this.wasd) {
-      direction = resolveDirection(this.wasd);
-    }
-
-    // Arrow keys: 4-directional fallback using isometric visual mapping (only if no WASD direction)
-    if (!direction && this.cursors) {
-      if (this.cursors.up.isDown) direction = 'nw';
-      else if (this.cursors.right.isDown) direction = 'ne';
-      else if (this.cursors.down.isDown) direction = 'se';
-      else if (this.cursors.left.isDown) direction = 'sw';
-    }
-
-    if (direction) {
-      // Cancel any active cast when moving
-      if (useAbilityStore.getState().isCasting()) {
-        gameSocket.emit('cast:cancel', {});
-        useAbilityStore.getState().clearCast();
+      // Update facing direction for sprite
+      if (result.direction) {
+        this.localPlayerFacing = result.direction;
       }
 
-      // Cancel any active pathfinding when keyboard is used
-      if (this.pathfindingController?.isPathActive()) {
-        this.pathfindingController.cancelPath();
+      // Start/maintain walk animation
+      const isMoving = this.localPlayer.getData('isMoving') as boolean;
+      if (!isMoving) {
+        this.startPlayerAnimation(this.localPlayerFacing);
+      } else if (result.direction) {
+        // Update animation direction if it changed
+        const sprite = this.localPlayer.getData('characterSprite') as Phaser.GameObjects.Sprite | undefined;
+        if (sprite) {
+          const animKey = `character-run-${this.localPlayerFacing}`;
+          if (sprite.anims.currentAnim?.key !== animKey) {
+            sprite.play(animKey);
+          }
+        }
       }
 
-      // Update facing direction immediately for responsive sprite change
-      this.updateLocalPlayerDirection(direction);
+      // Update sprite position from pixel coords
+      this.updateLocalPlayerFromPixels(result.px, result.py);
+    }
 
-      this.lastMoveTime = time;
-      // Reset chord for next input sequence
-      this.chordStartTime = 0;
-      // processInput triggers updateLocalPlayerSprite which handles moveDelay update
-      this.movementController.processInput(direction);
+    // Handle idle detection: keys released
+    if (!anyKeyDown) {
+      const isMoving = this.localPlayer.getData('isMoving') as boolean;
+      const isPathfinding = this.pathfindingController?.isPathActive() ?? false;
+      if (isMoving && !isPathfinding) {
+        this.stopPlayerAnimation();
+      }
     }
   }
 
@@ -1044,6 +1039,27 @@ export class WorldScene extends Phaser.Scene {
       this.chunkManager.receiveChunk(chunkData, biome);
       // Load adjacent chunks
       this.chunkManager.updateChunks(this.currentZoneId);
+    }
+
+    // Phase 134: initialize pixel movement controller with player's pixel position
+    if (this.pixelMovement) {
+      const player = useGameStore.getState().player;
+      if (player) {
+        const startPx = (player.position.x + 0.5) * TILE_SIZE_PX;
+        const startPy = (player.position.y + 0.5) * TILE_SIZE_PX;
+        this.pixelMovement.init(startPx, startPy, chunkData.zoneId);
+      }
+      // Set collision callback if collision map is available
+      if (chunkData.collisions) {
+        this.pixelMovement.setCollisionCallback((tx, ty) => {
+          return chunkData.collisions[ty]?.[tx] ?? true;
+        });
+      }
+    }
+
+    // Phase 134: clear remote player interpolation buffers on zone transition
+    if (this.remoteInterpolator) {
+      this.remoteInterpolator.clear();
     }
   }
 
@@ -2129,8 +2145,8 @@ export class WorldScene extends Phaser.Scene {
     if (!this.localPlayer) {
       this.createLocalPlayer(position);
       // Set up camera to follow player
-      // Camera smoothly follows player with lerp (0.1, 0.1), creating a polished glide effect
-      this.cameras.main.startFollow(this.localPlayer!, true, 0.1, 0.1);
+      // Phase 134: center-locked camera — no lerp delay (per CONTEXT decision)
+      this.cameras.main.startFollow(this.localPlayer!, true, 1.0, 1.0);
       // Also set minimap to follow player
       if (this.minimapCamera) {
         this.minimapCamera.startFollow(this.localPlayer!);
@@ -2139,6 +2155,217 @@ export class WorldScene extends Phaser.Scene {
       this.updateLocalPlayerSprite(position, false);
     }
   }
+
+  // ── Phase 134: Pixel movement rendering ──────────────────────────────────
+
+  /**
+   * Update local player sprite from pixel-space position.
+   * Called every frame by handleInput when the pixel movement controller reports movement.
+   * Uses setPosition (no tweens) for instant, smooth rendering.
+   */
+  private updateLocalPlayerFromPixels(px: number, py: number): void {
+    if (!this.localPlayer || !this.isoTransform) return;
+
+    // Convert pixel position to fractional tile coordinates
+    const gridX = px / TILE_SIZE_PX;
+    const gridY = py / TILE_SIZE_PX;
+
+    // Get zone offset for world coordinates
+    const zoneCoords = this.parseZoneCoords(this.currentZoneId);
+    const worldX = zoneCoords.x * ZONE_SIZE + gridX;
+    const worldY = zoneCoords.y * ZONE_SIZE + gridY;
+
+    // Get elevation at current tile (integer tile coords)
+    const tileX = Math.floor(gridX);
+    const tileY = Math.floor(gridY);
+    const elevation = this.getTileElevation(tileX, tileY);
+    const elevationOffset = elevation * 128;
+
+    // Convert to isometric screen position
+    const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
+
+    // Set sprite position directly (no tween — instant for pixel movement)
+    this.localPlayer.setPosition(screenPos.x, screenPos.y - elevationOffset);
+
+    // Update grid data for depth sorting
+    this.localPlayer.setData('gridX', worldX);
+    this.localPlayer.setData('gridY', worldY);
+    this.localPlayer.setData('elevation', elevation);
+
+    // Update depth
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 10, true);
+    this.localPlayer.setDepth(depth);
+
+    // Mark dirty for depth sorter
+    if (this.depthSorter) {
+      this.depthSorter.markDirty('local');
+    }
+
+    // Update range indicator and NPC proximity using real pixel positions
+    this.updateRangeIndicator(px, py);
+    this.updateNpcProximity(px, py);
+
+    // Check zone transition at pixel granularity
+    this.checkPixelZoneTransition(px, py);
+
+    // Fog reveal at tile position
+    const intWorldX = Math.floor(worldX);
+    const intWorldY = Math.floor(worldY);
+    if (this.fogManager && this.fogRenderer) {
+      let tileId: string | undefined;
+      if (this.currentTiles && tileY < this.currentTiles.length && tileX < (this.currentTiles[0]?.length ?? 0)) {
+        const tileNumericId = this.currentTiles[tileY]?.[tileX];
+        if (tileNumericId !== undefined) {
+          tileId = tileIdToString(tileNumericId as TileId);
+        }
+      }
+      const newlyRevealed = this.fogManager.revealAtPosition(intWorldX, intWorldY, this.currentBiome, tileId);
+      if (newlyRevealed.size > 0) {
+        this.fogRenderer.revealTiles(newlyRevealed);
+      }
+    }
+
+    // POI discovery
+    if (this.poiRenderer && this.fogManager?.isRevealed(intWorldX, intWorldY)) {
+      const poiId = this.poiRenderer.checkPlayerOnPoi(intWorldX, intWorldY);
+      if (poiId && !this.discoveredPoiIds.has(poiId)) {
+        gameSocket.emit('poi:discover', { poiId, worldX: intWorldX, worldY: intWorldY });
+      }
+    }
+
+    // Portal tile check
+    this.checkPortalTileAtPixels(tileX, tileY);
+  }
+
+  /**
+   * Check zone transition at pixel granularity.
+   */
+  private checkPixelZoneTransition(px: number, py: number): void {
+    const zoneSizePx = ZONE_SIZE * TILE_SIZE_PX;
+    let newZoneOffsetX = 0;
+    let newZoneOffsetY = 0;
+    if (px < -HYSTERESIS_PX) newZoneOffsetX = -1;
+    if (px >= zoneSizePx + HYSTERESIS_PX) newZoneOffsetX = 1;
+    if (py < -HYSTERESIS_PX) newZoneOffsetY = -1;
+    if (py >= zoneSizePx + HYSTERESIS_PX) newZoneOffsetY = 1;
+
+    if (newZoneOffsetX !== 0 || newZoneOffsetY !== 0) {
+      const zoneCoords = this.parseZoneCoords(this.currentZoneId);
+      const newZoneId = `z_${zoneCoords.x + newZoneOffsetX}_${zoneCoords.y + newZoneOffsetY}`;
+      gameSocket.emit('zone:request', { zoneId: newZoneId });
+    }
+  }
+
+  /**
+   * Check for portal tile at given tile coordinates (pixel-movement version).
+   */
+  private checkPortalTileAtPixels(tileX: number, tileY: number): void {
+    if (!this.currentTiles) return;
+    const tileNumericId = this.currentTiles[tileY]?.[tileX];
+    if (tileNumericId === 16) { // TileId.PORTAL
+      const key = `${tileX},${tileY}`;
+      if (this.lastPortalEmitKey !== key) {
+        this.lastPortalEmitKey = key;
+        gameSocket.emit('portal:use', {});
+      }
+    } else {
+      this.lastPortalEmitKey = null;
+    }
+  }
+
+  /**
+   * Handle server-authoritative position correction.
+   * Called from gameStore when positionCorrection event arrives.
+   */
+  handlePositionCorrection(serverPx: number, serverPy: number, sequence: number): void {
+    if (!this.pixelMovement) return;
+    const result = this.pixelMovement.reconcile(serverPx, serverPy, sequence);
+    if (result.corrected) {
+      // Smooth snap-back: update sprite position to corrected position
+      this.updateLocalPlayerFromPixels(result.px, result.py);
+    }
+  }
+
+  /**
+   * Update remote players from interpolation buffer each frame.
+   */
+  private updateRemotePlayerInterpolation(): void {
+    if (!this.remoteInterpolator || !this.isoTransform) return;
+
+    const now = Date.now();
+
+    this.playerSprites.forEach((container, playerId) => {
+      const interp = this.remoteInterpolator!.getInterpolatedPosition(playerId, now);
+      if (!interp) return;
+
+      // Convert pixel position to fractional tile coordinates
+      const gridX = interp.px / TILE_SIZE_PX;
+      const gridY = interp.py / TILE_SIZE_PX;
+
+      // Add zone offset for world coordinates
+      const zoneCoords = this.parseZoneCoords(this.currentZoneId);
+      const worldX = zoneCoords.x * ZONE_SIZE + gridX;
+      const worldY = zoneCoords.y * ZONE_SIZE + gridY;
+
+      // Get elevation
+      const tileX = Math.floor(gridX);
+      const tileY = Math.floor(gridY);
+      const elevation = this.getTileElevation(tileX, tileY);
+      const elevationOffset = elevation * 128;
+
+      const screenPos = this.isoTransform!.gridToScreen(worldX, worldY);
+
+      // Set position directly (no tween — interpolation IS the smoothing)
+      (container as unknown as Phaser.GameObjects.Container).setPosition(screenPos.x, screenPos.y - elevationOffset);
+
+      // Update grid data for depth sorting
+      container.setData('gridX', worldX);
+      container.setData('gridY', worldY);
+      container.setData('elevation', elevation);
+
+      const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevation, 0, true);
+      (container as unknown as Phaser.GameObjects.Container).setDepth(depth);
+
+      // Update animation based on interpolation state
+      const characterSprite = container.getData('characterSprite') as Phaser.GameObjects.Sprite | undefined;
+      if (characterSprite) {
+        if (interp.moving && interp.direction) {
+          const currentFacing = container.getData('facing') as Direction || 's';
+          const isMoving = container.getData('isMoving') as boolean;
+          if (!isMoving || interp.direction !== currentFacing) {
+            container.setData('facing', interp.direction);
+            characterSprite.play(`character-run-${interp.direction}`);
+            container.setData('isMoving', true);
+          }
+        } else {
+          const wasMoving = container.getData('isMoving') as boolean;
+          if (wasMoving) {
+            const facing = container.getData('facing') as Direction || 's';
+            characterSprite.stop();
+            characterSprite.setTexture(`character-idle-${facing}`);
+            container.setData('isMoving', false);
+          }
+        }
+      }
+
+      // Mark dirty for depth sorter
+      if (this.depthSorter) {
+        this.depthSorter.markDirty(playerId);
+      }
+    });
+  }
+
+  /** Get the pixel movement controller (for gameStore integration). */
+  getPixelMovementController(): PixelMovementController | null {
+    return this.pixelMovement;
+  }
+
+  /** Get the remote player interpolator (for gameStore integration). */
+  getRemoteInterpolator(): RemotePlayerInterpolator | null {
+    return this.remoteInterpolator;
+  }
+
+  // ── End Phase 134 additions ─────────────────────────────────────────────
 
   private getEntityTexture(type: string): string {
     switch (type) {
@@ -2330,6 +2557,12 @@ export class WorldScene extends Phaser.Scene {
     this.collisionMap = collisionMap;
     if (this.movementController) {
       this.movementController.setCollisionMap(collisionMap);
+    }
+    // Phase 134: set collision callback for pixel movement
+    if (this.pixelMovement) {
+      this.pixelMovement.setCollisionCallback((tx, ty) => {
+        return collisionMap[ty]?.[tx] ?? true; // out of bounds = solid
+      });
     }
   }
 
