@@ -256,16 +256,17 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 ### Active
 
-## Current Milestone: v1.28 Post-Movement Polish
+## Current Milestone: v1.29 Hub Station Interiors
 
-**Goal:** Fix combat, gathering, entity rendering, and collision issues introduced by the pixel movement rewrite.
+**Goal:** Replace plain square hubs with immersive faction-themed space station interiors — unique tiles, biomes, and hand-crafted room layouts for all 4 hubs.
 
 **Target features:**
-- Fix combat system (distance checks not working after pixel migration)
-- Fix gathering system (same distance issue)
-- Fix entity anchoring (creatures/player float above tiles, wrong anchor points)
-- Fix plant/mineral sprite excess transparent space causing misalignment
-- Fix invisible collision walls at chunk/zone boundaries
+- 4 new hub biome types (canopy_station, ironhold_station, meridian_station, salvage_station)
+- 6-8 unique tiles per hub with faction-specific palettes and accent details
+- Procedural tile rendering for all new hub tiles
+- 4 hand-designed 128x128 JSON maps with rooms, corridors, NPC placements
+- Hub system updates (128x128 support, new biome/tile mappings)
+- Dedicated salvage station hub for Unaffiliated players
 
 ### Out of Scope
 
@@ -332,4 +333,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-03-18 after v1.28 milestone started*
+*Last updated: 2026-03-18 after v1.29 milestone started*
