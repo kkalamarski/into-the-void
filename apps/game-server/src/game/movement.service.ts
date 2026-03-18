@@ -147,12 +147,21 @@ export class MovementService implements OnModuleInit {
         continue;
       }
 
-      // Convert zone-local tile coords to world tile coords for cross-zone lookup
-      const zoneCoords = this.parseZoneCoords(player.position.zoneId);
-      const offsetX = zoneCoords.x * ZONE_SIZE;
-      const offsetY = zoneCoords.y * ZONE_SIZE;
-      const isSolid = (tx: number, ty: number): boolean =>
-        this.zonesService.isWorldTileBlocked(offsetX + tx, offsetY + ty);
+      // Build collision callback — hub zones use local chunk data directly,
+      // open-world zones use cross-zone world-tile lookup for boundary handling
+      let isSolid: (tx: number, ty: number) => boolean;
+      if (player.position.zoneId.startsWith('z_')) {
+        const zoneCoords = this.parseZoneCoords(player.position.zoneId);
+        const offsetX = zoneCoords.x * ZONE_SIZE;
+        const offsetY = zoneCoords.y * ZONE_SIZE;
+        isSolid = (tx: number, ty: number): boolean =>
+          this.zonesService.isWorldTileBlocked(offsetX + tx, offsetY + ty);
+      } else {
+        // Hub/special zones: single-chunk, use local collision data directly
+        const collisions = chunk.collisions;
+        isSolid = (tx: number, ty: number): boolean =>
+          collisions?.[ty]?.[tx] ?? true;
+      }
 
       const resolved = resolvePixelCollision(player.px, player.py, vx, vy, isSolid);
 
@@ -169,9 +178,14 @@ export class MovementService implements OnModuleInit {
   }
 
   /**
-   * Parse zone coordinates (x, y) from a zoneId string (e.g., "z_3_-2" -> {x:3, y:-2}).
+   * Parse zone coordinates (x, y) from a zoneId string.
+   * Open-world zones follow "z_X_Y" format (e.g., "z_3_-2" -> {x:3, y:-2}).
+   * Hub zones (e.g., "hub_verdant") are single-chunk spaces with no world offset.
    */
   private parseZoneCoords(zoneId: string): { x: number; y: number } {
+    if (!zoneId.startsWith('z_')) {
+      return { x: 0, y: 0 };
+    }
     const parts = zoneId.split('_');
     return { x: parseInt(parts[1], 10), y: parseInt(parts[2], 10) };
   }

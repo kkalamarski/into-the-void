@@ -26,9 +26,6 @@ const SPRITE_SIZE = 256;
 const SPRITE_ORIGIN_X = 0.5;
 const SPRITE_ORIGIN_Y = 0.25;
 
-// Variant weights: base (70%), v2 (20%), v3 (10%)
-const VARIANT_WEIGHTS = [0.7, 0.2, 0.1];
-
 /**
  * Simple seeded random number generator based on position.
  * Returns deterministic value 0-1 for any (x, y) coordinate.
@@ -38,6 +35,35 @@ function seededRandom(x: number, y: number): number {
   const hash = (seed ^ (seed >> 13)) * 1274126177;
   return ((hash ^ (hash >> 16)) & 0x7fffffff) / 0x7fffffff;
 }
+
+/**
+ * Smoothed value noise for organic clustering of tile variants.
+ * Uses bilinear interpolation of seeded random values at grid points
+ * scaled by `scale` to create smooth patches of similar values.
+ * @param offsetSeed separates independent noise channels
+ */
+function valueNoise(x: number, y: number, scale: number, offsetSeed: number): number {
+  const sx = x / scale;
+  const sy = y / scale;
+  const gx = Math.floor(sx);
+  const gy = Math.floor(sy);
+  const fx = sx - gx;
+  const fy = sy - gy;
+  // Smoothstep for organic transitions
+  const u = fx * fx * (3 - 2 * fx);
+  const v = fy * fy * (3 - 2 * fy);
+  // Sample grid corners with offset to separate channels
+  const ox = offsetSeed * 137;
+  const oy = offsetSeed * 251;
+  const n00 = seededRandom(gx + ox, gy + oy);
+  const n10 = seededRandom(gx + 1 + ox, gy + oy);
+  const n01 = seededRandom(gx + ox, gy + 1 + oy);
+  const n11 = seededRandom(gx + 1 + ox, gy + 1 + oy);
+  return n00 * (1 - u) * (1 - v) + n10 * u * (1 - v) + n01 * (1 - u) * v + n11 * u * v;
+}
+
+// Decoration zone threshold — tiles above this noise value get decoration variants
+const DECO_NOISE_THRESHOLD = 0.62;
 
 /**
  * Mapping from TileId enum to procedural texture keys
@@ -280,26 +306,39 @@ export class TileRenderer {
   /**
    * Create cube sprite using procedural isometric cube texture (proc_tile_*).
    * Includes top face + south/east side faces all in one sprite.
-   * Tiles with _floor suffix have variants (_v2, _v3) selected deterministically
-   * by position seed. Probability: base 70%, v2 20%, v3 10%.
+   * Tiles with _floor suffix have 6 variants (v1-v6) selected via noise-based
+   * clustering for organic patches of base (v1-v3) and decoration (v4-v6) tiles.
    */
   private createCubeSprite(tileId: TileId, x: number, y: number): Phaser.GameObjects.GameObject {
     const baseTextureKey = this.getTextureKey(tileId);
     // Procedural floor tiles have _v2/_v3 variants
     const hasVariants = baseTextureKey.endsWith('_floor');
 
-    // Select variant for tiles with variants based on position
+    // Select variant using noise-based clustering for organic placement.
+    // Low-frequency noise creates patches: base zones (~62%) vs decoration zones (~38%).
+    // Within each zone, variants are picked by secondary noise/random for sub-patches.
     let textureKey = baseTextureKey;
     if (hasVariants) {
-      const rand = seededRandom(x, y);
-      if (rand > VARIANT_WEIGHTS[0] + VARIANT_WEIGHTS[1]) {
-        // 10% chance for v3
-        textureKey = `${baseTextureKey}_v3`;
-      } else if (rand > VARIANT_WEIGHTS[0]) {
-        // 20% chance for v2
-        textureKey = `${baseTextureKey}_v2`;
+      const decoNoise = valueNoise(x, y, 5, 0);  // medium patches
+      const detail = seededRandom(x, y);           // fine per-tile variation
+
+      let variant: number;
+      if (decoNoise > DECO_NOISE_THRESHOLD) {
+        // Decoration zone — pick from v4/v5/v6 using separate noise channel
+        const subNoise = valueNoise(x, y, 3, 1);
+        if (subNoise > 0.66) variant = 5;      // v6 — rarest deco
+        else if (subNoise > 0.33) variant = 4; // v5
+        else variant = 3;                       // v4 — most common deco
+      } else {
+        // Base zone — pick from v1/v2/v3
+        if (detail > 0.85) variant = 2;      // v3 — 15% of base area
+        else if (detail > 0.60) variant = 1; // v2 — 25% of base area
+        else variant = 0;                    // base — 60% of base area
       }
-      // else 70% chance for base (no suffix)
+
+      if (variant > 0) {
+        textureKey = `${baseTextureKey}_v${variant + 1}`;
+      }
 
       // Fallback to base if variant doesn't exist
       if (!this.scene.textures.exists(textureKey)) {
