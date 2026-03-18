@@ -23,7 +23,6 @@ import {
   calculateLevelFromXP,
   calculateBaseYieldBonus,
   getResourceCategory,
-  canInteract,
   canInteractPixel,
   pixelDistanceTo,
   tileToPixelCenter,

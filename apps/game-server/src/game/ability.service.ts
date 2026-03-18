@@ -10,7 +10,7 @@ import { CombatService } from './combat.service';
 import { DatabaseService } from '../database/database.service';
 import { Creature, ItemEntity, isHubZone } from '@into-the-void/shared-types';
 import type { DamageType } from '@into-the-void/shared-types';
-import { AbilityRegistry, canInteract, canInteractPixel, pixelDistanceTo, tileToPixelCenter, MELEE_RANGE_PX, GATHER_RANGE_PX, TILE_SIZE_PX, calculateDamage, computeCharStats, rollLootTable, getCreatureLoot } from '@into-the-void/game-logic';
+import { AbilityRegistry, canInteractPixel, pixelDistanceTo, tileToPixelCenter, MELEE_RANGE_PX, GATHER_RANGE_PX, TILE_SIZE_PX, calculateDamage, computeCharStats, rollLootTable, getCreatureLoot } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
 import { EntityRegistry } from '@into-the-void/entities';
 import { saveCooldown, loadCooldowns } from '@into-the-void/database';

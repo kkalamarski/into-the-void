@@ -12,7 +12,6 @@ import {
   Creature,
 } from '@into-the-void/shared-types';
 import {
-  canInteract,
   canInteractPixel,
   canInteractLevel,
   rollLootTable,
