@@ -100,6 +100,42 @@ export const TILE_TEXTURE_MAP: Record<TileId, string> = {
   [TileId.CRYSTAL_FORMATION_LARGE]: 'proc_tile_crystal_formation_large',
   [TileId.BIOLUMINESCENT_FLOOR]: 'proc_tile_bioluminescent_floor',
   [TileId.BIOLUMINESCENT_FLORA]: 'proc_tile_bioluminescent_flora',
+  // Hub Stations — Canopy (Verdant)
+  [TileId.CANOPY_FLOOR]: 'proc_tile_canopy_floor',
+  [TileId.CANOPY_WALL]: 'proc_tile_canopy_wall',
+  [TileId.CANOPY_DOOR]: 'proc_tile_canopy_door',
+  [TileId.CANOPY_CORRIDOR]: 'proc_tile_canopy_corridor',
+  [TileId.CANOPY_DECORATION]: 'proc_tile_canopy_decoration',
+  [TileId.CANOPY_ACCENT]: 'proc_tile_canopy_accent',
+  [TileId.CANOPY_WINDOW]: 'proc_tile_canopy_window',
+  [TileId.CANOPY_HAZARD]: 'proc_tile_canopy_hazard',
+  // Hub Stations — Ironhold (Helix)
+  [TileId.IRONHOLD_FLOOR]: 'proc_tile_ironhold_floor',
+  [TileId.IRONHOLD_WALL]: 'proc_tile_ironhold_wall',
+  [TileId.IRONHOLD_DOOR]: 'proc_tile_ironhold_door',
+  [TileId.IRONHOLD_CORRIDOR]: 'proc_tile_ironhold_corridor',
+  [TileId.IRONHOLD_DECORATION]: 'proc_tile_ironhold_decoration',
+  [TileId.IRONHOLD_ACCENT]: 'proc_tile_ironhold_accent',
+  [TileId.IRONHOLD_WINDOW]: 'proc_tile_ironhold_window',
+  [TileId.IRONHOLD_HAZARD]: 'proc_tile_ironhold_hazard',
+  // Hub Stations — Meridian (Nexus)
+  [TileId.MERIDIAN_FLOOR]: 'proc_tile_meridian_floor',
+  [TileId.MERIDIAN_WALL]: 'proc_tile_meridian_wall',
+  [TileId.MERIDIAN_DOOR]: 'proc_tile_meridian_door',
+  [TileId.MERIDIAN_CORRIDOR]: 'proc_tile_meridian_corridor',
+  [TileId.MERIDIAN_DECORATION]: 'proc_tile_meridian_decoration',
+  [TileId.MERIDIAN_ACCENT]: 'proc_tile_meridian_accent',
+  [TileId.MERIDIAN_WINDOW]: 'proc_tile_meridian_window',
+  [TileId.MERIDIAN_HAZARD]: 'proc_tile_meridian_hazard',
+  // Hub Stations — Salvage (Unaffiliated)
+  [TileId.SALVAGE_FLOOR]: 'proc_tile_salvage_floor',
+  [TileId.SALVAGE_WALL]: 'proc_tile_salvage_wall',
+  [TileId.SALVAGE_DOOR]: 'proc_tile_salvage_door',
+  [TileId.SALVAGE_CORRIDOR]: 'proc_tile_salvage_corridor',
+  [TileId.SALVAGE_DECORATION]: 'proc_tile_salvage_decoration',
+  [TileId.SALVAGE_ACCENT]: 'proc_tile_salvage_accent',
+  [TileId.SALVAGE_WINDOW]: 'proc_tile_salvage_window',
+  [TileId.SALVAGE_HAZARD]: 'proc_tile_salvage_hazard',
 };
 
 /**

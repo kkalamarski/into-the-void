@@ -39,6 +39,42 @@ export enum TileId {
   CRYSTAL_FORMATION_LARGE = 27,
   BIOLUMINESCENT_FLOOR = 28,
   BIOLUMINESCENT_FLORA = 29,
+  // Hub Stations — Canopy (Verdant)
+  CANOPY_FLOOR = 30,
+  CANOPY_WALL = 31,
+  CANOPY_DOOR = 32,
+  CANOPY_CORRIDOR = 33,
+  CANOPY_DECORATION = 34,
+  CANOPY_ACCENT = 35,
+  CANOPY_WINDOW = 36,
+  CANOPY_HAZARD = 37,
+  // Hub Stations — Ironhold (Helix)
+  IRONHOLD_FLOOR = 38,
+  IRONHOLD_WALL = 39,
+  IRONHOLD_DOOR = 40,
+  IRONHOLD_CORRIDOR = 41,
+  IRONHOLD_DECORATION = 42,
+  IRONHOLD_ACCENT = 43,
+  IRONHOLD_WINDOW = 44,
+  IRONHOLD_HAZARD = 45,
+  // Hub Stations — Meridian (Nexus)
+  MERIDIAN_FLOOR = 46,
+  MERIDIAN_WALL = 47,
+  MERIDIAN_DOOR = 48,
+  MERIDIAN_CORRIDOR = 49,
+  MERIDIAN_DECORATION = 50,
+  MERIDIAN_ACCENT = 51,
+  MERIDIAN_WINDOW = 52,
+  MERIDIAN_HAZARD = 53,
+  // Hub Stations — Salvage (Unaffiliated)
+  SALVAGE_FLOOR = 54,
+  SALVAGE_WALL = 55,
+  SALVAGE_DOOR = 56,
+  SALVAGE_CORRIDOR = 57,
+  SALVAGE_DECORATION = 58,
+  SALVAGE_ACCENT = 59,
+  SALVAGE_WINDOW = 60,
+  SALVAGE_HAZARD = 61,
 }
 
 /**
@@ -77,6 +113,42 @@ export function tileIdToString(id: TileId): string {
     [TileId.CRYSTAL_FORMATION_LARGE]: TILE_IDS.CRYSTAL_FORMATION_LARGE,
     [TileId.BIOLUMINESCENT_FLOOR]: TILE_IDS.BIOLUMINESCENT_FLOOR,
     [TileId.BIOLUMINESCENT_FLORA]: TILE_IDS.BIOLUMINESCENT_FLORA,
+    // Hub Stations — Canopy (Verdant)
+    [TileId.CANOPY_FLOOR]: TILE_IDS.CANOPY_FLOOR,
+    [TileId.CANOPY_WALL]: TILE_IDS.CANOPY_WALL,
+    [TileId.CANOPY_DOOR]: TILE_IDS.CANOPY_DOOR,
+    [TileId.CANOPY_CORRIDOR]: TILE_IDS.CANOPY_CORRIDOR,
+    [TileId.CANOPY_DECORATION]: TILE_IDS.CANOPY_DECORATION,
+    [TileId.CANOPY_ACCENT]: TILE_IDS.CANOPY_ACCENT,
+    [TileId.CANOPY_WINDOW]: TILE_IDS.CANOPY_WINDOW,
+    [TileId.CANOPY_HAZARD]: TILE_IDS.CANOPY_HAZARD,
+    // Hub Stations — Ironhold (Helix)
+    [TileId.IRONHOLD_FLOOR]: TILE_IDS.IRONHOLD_FLOOR,
+    [TileId.IRONHOLD_WALL]: TILE_IDS.IRONHOLD_WALL,
+    [TileId.IRONHOLD_DOOR]: TILE_IDS.IRONHOLD_DOOR,
+    [TileId.IRONHOLD_CORRIDOR]: TILE_IDS.IRONHOLD_CORRIDOR,
+    [TileId.IRONHOLD_DECORATION]: TILE_IDS.IRONHOLD_DECORATION,
+    [TileId.IRONHOLD_ACCENT]: TILE_IDS.IRONHOLD_ACCENT,
+    [TileId.IRONHOLD_WINDOW]: TILE_IDS.IRONHOLD_WINDOW,
+    [TileId.IRONHOLD_HAZARD]: TILE_IDS.IRONHOLD_HAZARD,
+    // Hub Stations — Meridian (Nexus)
+    [TileId.MERIDIAN_FLOOR]: TILE_IDS.MERIDIAN_FLOOR,
+    [TileId.MERIDIAN_WALL]: TILE_IDS.MERIDIAN_WALL,
+    [TileId.MERIDIAN_DOOR]: TILE_IDS.MERIDIAN_DOOR,
+    [TileId.MERIDIAN_CORRIDOR]: TILE_IDS.MERIDIAN_CORRIDOR,
+    [TileId.MERIDIAN_DECORATION]: TILE_IDS.MERIDIAN_DECORATION,
+    [TileId.MERIDIAN_ACCENT]: TILE_IDS.MERIDIAN_ACCENT,
+    [TileId.MERIDIAN_WINDOW]: TILE_IDS.MERIDIAN_WINDOW,
+    [TileId.MERIDIAN_HAZARD]: TILE_IDS.MERIDIAN_HAZARD,
+    // Hub Stations — Salvage (Unaffiliated)
+    [TileId.SALVAGE_FLOOR]: TILE_IDS.SALVAGE_FLOOR,
+    [TileId.SALVAGE_WALL]: TILE_IDS.SALVAGE_WALL,
+    [TileId.SALVAGE_DOOR]: TILE_IDS.SALVAGE_DOOR,
+    [TileId.SALVAGE_CORRIDOR]: TILE_IDS.SALVAGE_CORRIDOR,
+    [TileId.SALVAGE_DECORATION]: TILE_IDS.SALVAGE_DECORATION,
+    [TileId.SALVAGE_ACCENT]: TILE_IDS.SALVAGE_ACCENT,
+    [TileId.SALVAGE_WINDOW]: TILE_IDS.SALVAGE_WINDOW,
+    [TileId.SALVAGE_HAZARD]: TILE_IDS.SALVAGE_HAZARD,
   };
   return mapping[id] ?? TILE_IDS.VOID_FLOOR;
 }
@@ -113,11 +185,11 @@ const BIOME_TILES: Record<BiomeType, { floor: TileId; wall: TileId; feature: Til
   void_rift: { floor: TileId.VOID_RIFT_FLOOR, wall: TileId.VOID_RIFT_DISTORTION, feature: TileId.VOID_RIFT_DISTORTION },
   crystalline_wastes: { floor: TileId.CRYSTALLINE_FLOOR, wall: TileId.CRYSTAL_FORMATION_LARGE, feature: TileId.CRYSTAL_FORMATION_LARGE },
   bioluminescent_depths: { floor: TileId.BIOLUMINESCENT_FLOOR, wall: TileId.BIOLUMINESCENT_FLORA, feature: TileId.BIOLUMINESCENT_FLORA },
-  // Hub stations — numeric IDs unused (hubs load from JSON maps, string-based BIOME_TILE_IDS is authoritative)
-  canopy_station: { floor: TileId.VOID_FLOOR, wall: TileId.VOID_WALL, feature: TileId.VOID_WALL },
-  ironhold_station: { floor: TileId.VOID_FLOOR, wall: TileId.VOID_WALL, feature: TileId.VOID_WALL },
-  meridian_station: { floor: TileId.VOID_FLOOR, wall: TileId.VOID_WALL, feature: TileId.VOID_WALL },
-  salvage_station: { floor: TileId.VOID_FLOOR, wall: TileId.VOID_WALL, feature: TileId.VOID_WALL },
+  // Hub Station Biomes — faction-specific tile types
+  canopy_station: { floor: TileId.CANOPY_FLOOR, wall: TileId.CANOPY_WALL, feature: TileId.CANOPY_DECORATION },
+  ironhold_station: { floor: TileId.IRONHOLD_FLOOR, wall: TileId.IRONHOLD_WALL, feature: TileId.IRONHOLD_DECORATION },
+  meridian_station: { floor: TileId.MERIDIAN_FLOOR, wall: TileId.MERIDIAN_WALL, feature: TileId.MERIDIAN_DECORATION },
+  salvage_station: { floor: TileId.SALVAGE_FLOOR, wall: TileId.SALVAGE_WALL, feature: TileId.SALVAGE_DECORATION },
 };
 
 /**

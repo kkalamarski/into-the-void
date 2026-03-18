@@ -131,6 +131,46 @@ const BIOME_PALETTES: Record<string, TilePalette> = {
   // ── Exotic: Bioluminescent Depths (Tier II) ──
   bioluminescent_floor:  buildPalette(0x00ee78, 0x00aaff, 0x22ff88),
   bioluminescent_flora:  buildPalette(0x00bb55, 0xaaff44),
+
+  // ── Hub Station: Canopy (Verdant) — bioluminescent green/blue ──
+  canopy_floor:       buildPalette(0x1a5a3a, 0x44cc88, 0x2a7a4a),
+  canopy_wall:        buildPalette(0x0a2a1a, 0x22aa55),
+  canopy_door:        buildPalette(0x1a4a3a, 0x44ddaa, 0x2a6a4a),
+  canopy_corridor:    buildPalette(0x1a4530, 0x33bb77, 0x2a5540),
+  canopy_decoration:  buildPalette(0x2a8a5a, 0x66eebb),
+  canopy_accent:      buildPalette(0x2a6a4a, 0x55ddaa, 0x3a7a5a),
+  canopy_window:      buildPalette(0x0a3a2a, 0x44ffbb),
+  canopy_hazard:      buildPalette(0x1a5a3a, 0x88ff44, 0x44bb66),
+
+  // ── Hub Station: Ironhold (Helix) — industrial gray/rust/orange ──
+  ironhold_floor:       buildPalette(0x4a4a52, 0xaa6633, 0x5a5a62),
+  ironhold_wall:        buildPalette(0x2a2a30, 0x884422),
+  ironhold_door:        buildPalette(0x3a3a44, 0xcc8844, 0x4a4a54),
+  ironhold_corridor:    buildPalette(0x3a3a42, 0x996633, 0x4a4a52),
+  ironhold_decoration:  buildPalette(0x5a5a62, 0xdd8833),
+  ironhold_accent:      buildPalette(0x4a4038, 0xbb7733, 0x5a5048),
+  ironhold_window:      buildPalette(0x2a2a30, 0xff8844),
+  ironhold_hazard:      buildPalette(0x4a4a52, 0xff4422, 0xffaa22),
+
+  // ── Hub Station: Meridian (Nexus) — corporate silver/white/blue ──
+  meridian_floor:       buildPalette(0xc0c8d0, 0x4488cc, 0xd0d8e0),
+  meridian_wall:        buildPalette(0xa0a8b0, 0x3366aa),
+  meridian_door:        buildPalette(0xb0b8c0, 0x55aaee, 0xc0c8d0),
+  meridian_corridor:    buildPalette(0xb0b8c0, 0x4488cc, 0xc0c8d0),
+  meridian_decoration:  buildPalette(0xd0d8e0, 0x66bbff),
+  meridian_accent:      buildPalette(0xb8c0c8, 0x5599dd, 0xc8d0d8),
+  meridian_window:      buildPalette(0xa0a8b0, 0x66ccff),
+  meridian_hazard:      buildPalette(0xc0c8d0, 0x2266ff, 0x88bbff),
+
+  // ── Hub Station: Salvage (Unaffiliated) — patchwork/mixed ──
+  salvage_floor:       buildPalette(0x5a5040, 0xaa8855, 0x6a6050),
+  salvage_wall:        buildPalette(0x3a3430, 0x886644),
+  salvage_door:        buildPalette(0x4a4438, 0xbbaa66, 0x5a5448),
+  salvage_corridor:    buildPalette(0x4a4438, 0x997744, 0x5a5448),
+  salvage_decoration:  buildPalette(0x6a6050, 0xccaa55),
+  salvage_accent:      buildPalette(0x5a5848, 0xaa9955, 0x6a6858),
+  salvage_window:      buildPalette(0x3a3430, 0xddbb66),
+  salvage_hazard:      buildPalette(0x5a5040, 0xff6622, 0xffaa44),
 };
 
 // Floor tiles get 6 variants (3 base + 3 decoration); wall/feature tiles get 1
@@ -139,6 +179,11 @@ const FLOOR_TILE_IDS = new Set([
   'ice_floor', 'volcanic_floor', 'fungal_floor', 'crater_floor',
   'tidal_floor', 'kelp_floor', 'trench_floor', 'shore_transition',
   'void_rift_floor', 'crystalline_floor', 'bioluminescent_floor',
+  // Hub station floor tiles (get 6 variants for visual variety)
+  'canopy_floor', 'canopy_corridor', 'canopy_accent',
+  'ironhold_floor', 'ironhold_corridor', 'ironhold_accent',
+  'meridian_floor', 'meridian_corridor', 'meridian_accent',
+  'salvage_floor', 'salvage_corridor', 'salvage_accent',
 ]);
 
 // ─── Isometric Cube Geometry (256x256 canvas) ───────────────────
@@ -824,8 +869,139 @@ export class ProceduralTileGenerator {
         break;
       }
 
-      default:
+      // ── Hub tile accents: pattern by tile type suffix ──
+      // Faction identity comes from palette colors; patterns are consistent across hubs
+
+      default: {
+        // Hub tile type accent patterns (matched by suffix)
+        if (tileId.endsWith('_wall') && this.isHubTile(tileId)) {
+          // Wall tiles: heavy vertical panel lines — imposing, tall feel
+          g.lineStyle(2, accentColor, 0.3);
+          for (let i = 0; i < 4; i++) {
+            const x = 60 + i * 40 + detailRandom(seed, i + 1500) * 10;
+            g.beginPath();
+            g.moveTo(x, 20);
+            g.lineTo(x + 2, 108);
+            g.strokePath();
+          }
+          // Thick border lines at top edges
+          g.lineStyle(2, darkenColor(accentColor, 0.7), 0.25);
+          g.beginPath();
+          g.moveTo(HW, 4);
+          g.lineTo(HW * 2 - 10, HH);
+          g.strokePath();
+          g.beginPath();
+          g.moveTo(HW, 4);
+          g.lineTo(10, HH);
+          g.strokePath();
+        } else if (tileId.endsWith('_door') && this.isHubTile(tileId)) {
+          // Door tiles: thin frame outline around top face edges, directional marks
+          g.lineStyle(1, accentColor, 0.4);
+          // Frame outline (inset from diamond edges)
+          const inset = 20;
+          g.beginPath();
+          g.moveTo(HW, inset);
+          g.lineTo(HW * 2 - inset * 2, HH);
+          g.lineTo(HW, HH * 2 - inset);
+          g.lineTo(inset * 2, HH);
+          g.closePath();
+          g.strokePath();
+          // Small directional arrow marks
+          g.fillStyle(accentColor, 0.3);
+          g.fillTriangle(HW, 30, HW - 6, 42, HW + 6, 42);
+          g.fillTriangle(HW, HH * 2 - 30, HW - 6, HH * 2 - 42, HW + 6, HH * 2 - 42);
+        } else if (tileId.endsWith('_corridor') && this.isHubTile(tileId)) {
+          // Corridor tiles: grating lines across top face (parallel diagonal lines)
+          g.lineStyle(1, accentColor, 0.2);
+          for (let i = 0; i < 6; i++) {
+            const offset = 25 + i * 18;
+            const p1 = { x: HW + (0.3 - i * 0.1) * HW, y: i * 12 + 10 };
+            const p2 = { x: HW - (0.3 - i * 0.1) * HW, y: i * 12 + 10 + HH * 0.6 };
+            g.beginPath();
+            g.moveTo(p1.x, p1.y);
+            g.lineTo(p2.x, p2.y);
+            g.strokePath();
+          }
+          // Subtle edge detail on sides
+          g.lineStyle(1, altColor, 0.15);
+          g.beginPath();
+          g.moveTo(30, HH - 5);
+          g.lineTo(50, HH + 10);
+          g.strokePath();
+        } else if (tileId.endsWith('_decoration') && this.isHubTile(tileId)) {
+          // Decoration tiles: small raised rectangular console/machinery bump
+          g.fillStyle(accentColor, 0.35);
+          // Main console rectangle (slightly offset for 3D feel)
+          const cx = HW, cy = HH - 5;
+          g.fillRect(cx - 18, cy - 10, 36, 20);
+          // Shadow below for depth
+          g.fillStyle(darkenColor(accentColor, 0.5), 0.2);
+          g.fillRect(cx - 16, cy + 10, 32, 4);
+          // Button/light dots
+          g.fillStyle(brightenColor(accentColor, 40), 0.5);
+          for (let i = 0; i < 4; i++) {
+            g.fillCircle(cx - 12 + i * 8, cy - 3, 1.5);
+          }
+        } else if (tileId.endsWith('_accent') && this.isHubTile(tileId)) {
+          // Accent tiles: scattered accent color dots/patches
+          g.fillStyle(accentColor, 0.3);
+          for (let i = 0; i < 10; i++) {
+            const pos = this.topDiamondPoint(seed, i + 1550);
+            const r = 2 + detailRandom(seed, i + 1555) * 3;
+            g.fillCircle(pos.x, pos.y, r);
+          }
+          if (altColor) {
+            g.fillStyle(altColor, 0.2);
+            for (let i = 0; i < 4; i++) {
+              const pos = this.topDiamondPoint(seed, i + 1560);
+              g.fillCircle(pos.x, pos.y, 4 + detailRandom(seed, i + 1565) * 3);
+            }
+          }
+        } else if (tileId.endsWith('_window') && this.isHubTile(tileId)) {
+          // Window tiles: top face has subtle frame marks (main glass is on side faces)
+          g.lineStyle(1, accentColor, 0.3);
+          // Frame border marks
+          g.beginPath();
+          g.moveTo(HW - 20, HH - 15);
+          g.lineTo(HW + 20, HH - 15);
+          g.lineTo(HW + 20, HH + 15);
+          g.lineTo(HW - 20, HH + 15);
+          g.closePath();
+          g.strokePath();
+          // Subtle glow inside
+          g.fillStyle(accentColor, 0.1);
+          g.fillRect(HW - 18, HH - 13, 36, 26);
+        } else if (tileId.endsWith('_hazard') && this.isHubTile(tileId)) {
+          // Hazard tiles: diagonal caution stripes + glowing edge dots
+          g.lineStyle(2, accentColor, 0.4);
+          for (let i = 0; i < 6; i++) {
+            const offset = i * 22 - 10;
+            g.beginPath();
+            g.moveTo(50 + offset, 15);
+            g.lineTo(80 + offset, 115);
+            g.strokePath();
+          }
+          if (altColor) {
+            g.lineStyle(2, altColor, 0.3);
+            for (let i = 0; i < 5; i++) {
+              const offset = i * 22 + 1;
+              g.beginPath();
+              g.moveTo(50 + offset, 15);
+              g.lineTo(80 + offset, 115);
+              g.strokePath();
+            }
+          }
+          // Glowing edge dots around perimeter
+          g.fillStyle(accentColor, 0.5);
+          for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            const px = HW + Math.cos(angle) * 45;
+            const py = HH + Math.sin(angle) * 25;
+            g.fillCircle(px, py, 2);
+          }
+        }
         break;
+      }
     }
   }
 
@@ -1483,6 +1659,61 @@ export class ProceduralTileGenerator {
   ): void {
     const southAccent = darkenColor(palette.accent, 0.75);
 
+    // Hub-specific south face accents
+    if (this.isHubTile(tileId)) {
+      if (tileId.endsWith('_wall')) {
+        // Wall: heavy bolted panel lines
+        g.lineStyle(2, southAccent, 0.3);
+        for (let i = 0; i < 4; i++) {
+          const x = 10 + i * 30 + detailRandom(seed, i + 1600) * 8;
+          g.beginPath();
+          g.moveTo(x, HH + 8);
+          g.lineTo(x + 3, HH + SH - 8);
+          g.strokePath();
+        }
+        // Rivet dots
+        g.fillStyle(southAccent, 0.35);
+        for (let i = 0; i < 3; i++) {
+          g.fillCircle(20 + i * 35, HH + 20 + detailRandom(seed, i + 1610) * 10, 2);
+          g.fillCircle(20 + i * 35, HH + SH - 25 + detailRandom(seed, i + 1615) * 10, 2);
+        }
+      } else if (tileId.endsWith('_window')) {
+        // Window: semi-transparent panel glow on south face
+        g.fillStyle(palette.accent, 0.2);
+        // Glass panel area
+        const panelX = 15, panelY = HH + 15;
+        const panelW = 90, panelH = SH - 30;
+        g.fillRect(panelX, panelY, panelW, panelH);
+        // Glow line at panel edges
+        g.lineStyle(1, palette.accent, 0.5);
+        g.strokeRect(panelX, panelY, panelW, panelH);
+        // Inner highlight
+        g.fillStyle(brightenColor(palette.accent, 30), 0.1);
+        g.fillRect(panelX + 5, panelY + 5, panelW - 10, panelH - 10);
+      } else if (tileId.endsWith('_hazard')) {
+        // Hazard: vertical caution marks on side face
+        g.lineStyle(1, southAccent, 0.35);
+        for (let i = 0; i < 3; i++) {
+          const x = 20 + i * 30;
+          g.beginPath();
+          g.moveTo(x, HH + 10);
+          g.lineTo(x + 5, HH + SH - 10);
+          g.strokePath();
+        }
+      } else {
+        // Default hub south face: subtle horizontal strata
+        g.lineStyle(1, southAccent, 0.15);
+        for (let i = 0; i < 2; i++) {
+          const y = HH + 20 + i * 40 + detailRandom(seed, i + 1620) * 10;
+          g.beginPath();
+          g.moveTo(10, y);
+          g.lineTo(80, y + 5);
+          g.strokePath();
+        }
+      }
+      return;
+    }
+
     // Sparser details than top face — horizontal strata lines
     if (this.isFloorTile(tileId)) {
       g.lineStyle(1, southAccent, 0.2);
@@ -1519,6 +1750,44 @@ export class ProceduralTileGenerator {
     seed: number
   ): void {
     const eastAccent = darkenColor(palette.accent, 0.5); // Dimmer on shadow side
+
+    // Hub-specific east face accents
+    if (this.isHubTile(tileId)) {
+      if (tileId.endsWith('_wall')) {
+        // Wall: vertical panel lines (dimmer on shadow side)
+        g.lineStyle(1, eastAccent, 0.2);
+        for (let i = 0; i < 3; i++) {
+          const x = 150 + i * 35 + detailRandom(seed, i + 1650) * 8;
+          g.beginPath();
+          g.moveTo(x, HH + 8);
+          g.lineTo(x - 2, HH + SH - 8);
+          g.strokePath();
+        }
+      } else if (tileId.endsWith('_window')) {
+        // Window: semi-transparent panel glow on east face
+        g.fillStyle(palette.accent, 0.15);
+        const panelX = 145, panelY = HH + 15;
+        const panelW = 90, panelH = SH - 30;
+        g.fillRect(panelX, panelY, panelW, panelH);
+        // Glow line at panel edges
+        g.lineStyle(1, palette.accent, 0.4);
+        g.strokeRect(panelX, panelY, panelW, panelH);
+        // Inner highlight (dimmer on shadow side)
+        g.fillStyle(brightenColor(palette.accent, 20), 0.08);
+        g.fillRect(panelX + 5, panelY + 5, panelW - 10, panelH - 10);
+      } else {
+        // Default hub east face: minimal strata
+        g.lineStyle(1, eastAccent, 0.1);
+        for (let i = 0; i < 2; i++) {
+          const y = HH + 25 + i * 45 + detailRandom(seed, i + 1660) * 10;
+          g.beginPath();
+          g.moveTo(145, y);
+          g.lineTo(235, y - 5);
+          g.strokePath();
+        }
+      }
+      return;
+    }
 
     // Sparser details — horizontal strata
     if (this.isFloorTile(tileId)) {
@@ -1563,5 +1832,11 @@ export class ProceduralTileGenerator {
   /** Check if a tileId is a floor tile (gets 3 variants) */
   private isFloorTile(tileId: string): boolean {
     return FLOOR_TILE_IDS.has(tileId);
+  }
+
+  /** Check if a tileId is a hub station tile */
+  private isHubTile(tileId: string): boolean {
+    return tileId.startsWith('canopy_') || tileId.startsWith('ironhold_') ||
+           tileId.startsWith('meridian_') || tileId.startsWith('salvage_');
   }
 }
