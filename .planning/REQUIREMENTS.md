@@ -3,22 +3,63 @@
 **Defined:** 2026-03-18
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.28 Requirements
+## v1.29 Requirements
 
-Requirements for post-movement polish. Each maps to roadmap phases.
+Requirements for hub station interiors. Each maps to roadmap phases.
+
+### Hub Biomes
+
+- [ ] **BIOME-01**: Canopy Station has a unique `canopy_station` biome type with bioluminescent green/blue palette
+- [ ] **BIOME-02**: Ironhold Station has a unique `ironhold_station` biome type with industrial gray/rust/orange palette
+- [ ] **BIOME-03**: Meridian Station has a unique `meridian_station` biome type with corporate silver/white/blue palette
+- [ ] **BIOME-04**: Salvage Station has a unique `salvage_station` biome type with patchwork/mixed palette
+- [ ] **BIOME-05**: Each hub biome has subtle indoor ambient particles (spores, steam, holo-dust, smoke wisps)
+
+### Hub Tiles
+
+- [ ] **TILE-01**: Each hub has a main floor tile with faction-themed colors and accent details
+- [ ] **TILE-02**: Each hub has a solid wall tile (blocking, elevated) matching faction architecture
+- [ ] **TILE-03**: Each hub has a door/doorway tile (traversable transition between rooms)
+- [ ] **TILE-04**: Each hub has a corridor floor tile visually distinct from the main room floor
+- [ ] **TILE-05**: Each hub has a decoration feature tile (consoles/machinery/vegetation/cargo)
+- [ ] **TILE-06**: Each hub has an accent floor tile (grating/moss/glass panel/patched metal)
+- [ ] **TILE-07**: Each hub has a window/viewport wall tile (semi-transparent, non-blocking or blocking)
+- [ ] **TILE-08**: Each hub has a hazard/special tile (steam vent/growth pod/data stream/exposed wiring)
+
+### Hub Maps
+
+- [ ] **MAP-01**: Canopy Station has a 128x128 hand-designed map with organic rooms, vine corridors, and atrium
+- [ ] **MAP-02**: Ironhold Station has a 128x128 hand-designed map with forge halls, metal corridors, and warrens
+- [ ] **MAP-03**: Meridian Station has a 128x128 hand-designed map with trading floor, glass corridors, and archive
+- [ ] **MAP-04**: Salvage Station has a 128x128 hand-designed map with cargo bay, patched corridors, and market
+- [ ] **MAP-05**: Each hub map has NPCs placed in lore-appropriate rooms (traders in trading area, guards at entrance, etc.)
+- [ ] **MAP-06**: Each hub map has a portal tile in the docking bay / entry area
+
+### Hub System
+
+- [ ] **SYS-01**: Hub zone system supports 128x128 tile maps (up from 64x64)
+- [ ] **SYS-02**: Hub biome types are registered in the biome system with correct tile mappings
+- [ ] **SYS-03**: Procedural tile generator renders all new hub tiles with faction palettes and accents
+- [ ] **SYS-04**: Unaffiliated players spawn at Salvage Station instead of Meridian
+- [ ] **SYS-05**: Hub spawn positions updated for new 128x128 layouts (portal location, NPC positions)
+
+## v1.28 Requirements (Shipped)
+
+<details>
+<summary>All 10 requirements completed — click to expand</summary>
 
 ### Combat & Gathering
 
-- [ ] **INTERACT-01**: Player can attack a creature within melee/ranged range and deal damage
-- [ ] **INTERACT-02**: Player can gather from resource nodes (plants, minerals, artifacts) within gather range
-- [ ] **INTERACT-03**: Distance checks for combat and gathering use correct pixel coordinates for both player and entity positions
+- [x] **INTERACT-01**: Player can attack a creature within melee/ranged range and deal damage
+- [x] **INTERACT-02**: Player can gather from resource nodes (plants, minerals, artifacts) within gather range
+- [x] **INTERACT-03**: Distance checks for combat and gathering use correct pixel coordinates for both player and entity positions
 
 ### Entity Rendering
 
-- [ ] **RENDER-01**: Player character and creatures are visually grounded on the tile surface (no floating)
-- [ ] **RENDER-02**: Plants and minerals have their anchor point at their ground contact point, not sprite center
-- [ ] **RENDER-03**: Entity sprites have minimal excess transparent space — trimmed to fit actual art
-- [ ] **RENDER-04**: Entity collision/selection hitbox aligns with the visible sprite's ground position
+- [x] **RENDER-01**: Player character and creatures are visually grounded on the tile surface (no floating)
+- [x] **RENDER-02**: Plants and minerals have their anchor point at their ground contact point, not sprite center
+- [x] **RENDER-03**: Entity sprites have minimal excess transparent space — trimmed to fit actual art
+- [x] **RENDER-04**: Entity collision/selection hitbox aligns with the visible sprite's ground position
 
 ### Collision
 
@@ -27,7 +68,9 @@ Requirements for post-movement polish. Each maps to roadmap phases.
 
 ### Visual
 
-- [ ] **VISUAL-01**: Day/night cycle brightness is correct — dusk and dawn are brighter than night, not darker
+- [x] **VISUAL-01**: Day/night cycle brightness is correct — dusk and dawn are brighter than night, not darker
+
+</details>
 
 ## v1.27 Requirements (Shipped)
 
@@ -68,7 +111,7 @@ Requirements for post-movement polish. Each maps to roadmap phases.
 
 ## Future Requirements
 
-### Tile Variety (v1.29+)
+### Tile Variety (v1.30+)
 
 - **TVAR-01**: 3-4 new floor tile variants per biome (visual variety)
 - **TVAR-02**: 1-2 gameplay-distinct tiles per biome (speed modifiers, visual hooks)
@@ -78,10 +121,12 @@ Requirements for post-movement polish. Each maps to roadmap phases.
 
 | Feature | Reason |
 |---------|--------|
-| Pixel creature movement | Deferred to v1.29+; creatures stay tile-snapped |
+| Pixel creature movement | Deferred to v1.30+; creatures stay tile-snapped |
 | New abilities or combat mechanics | Fix existing, don't add new |
-| New entity sprites/art | Fix anchoring of existing sprites |
-| Click-to-move restoration | Removed intentionally in v1.27 |
+| Hub procedural generation | Hand-designed maps only for v1.29 |
+| Hub NPC dialogue changes | Existing dialogue system sufficient |
+| Hub music/SFX | Audio is separate milestone concern |
+| Exterior station views | Interior-only for v1.29 |
 
 ## Traceability
 
@@ -89,22 +134,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INTERACT-01 | Phase 136 | Pending |
-| INTERACT-02 | Phase 136 | Pending |
-| INTERACT-03 | Phase 136 | Pending |
-| RENDER-01 | Phase 137 | Pending |
-| RENDER-02 | Phase 137 | Pending |
-| RENDER-03 | Phase 137 | Pending |
-| RENDER-04 | Phase 137 | Pending |
-| COLLIDE-01 | Phase 138 | Complete |
-| COLLIDE-02 | Phase 138 | Complete |
-| VISUAL-01 | Phase 139 | Pending |
+| (populated during roadmap creation) | | |
 
 **Coverage:**
-- v1.28 requirements: 10 total
-- Mapped to phases: 10
-- Unmapped: 0 ✓
+- v1.29 requirements: 21 total
+- Mapped to phases: 0
+- Unmapped: 21 ⚠️
 
 ---
 *Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 — traceability populated after roadmap creation*
+*Last updated: 2026-03-18 after initial definition*
