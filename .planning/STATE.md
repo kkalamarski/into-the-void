@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-17)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 133 — Distance System Migration
+**Current focus:** Phase 135 — Cleanup and Collision Audit
 
 ## Current Position
 
-Phase: 133 of 135 (Distance System Migration)
-Plan: 5 of 5 in current phase complete
-Status: Phase 133 complete — all 5 plans done (pixel contracts, server migration, AI service, client WorldScene/TargetHighlight, gap closure for artifact/Precision Shot/Pack Call)
-Last activity: 2026-03-18 — Completed 133-05 (gap closure: pixel distance for artifact collection, Precision Shot reveal, Pack Call)
+Phase: 134 of 135 (Client Movement Rewrite — COMPLETE)
+Plan: 3 of 3 in current phase complete
+Status: Phase 134 complete — all 3 plans done (PixelMovementController + RemotePlayerInterpolator, WorldScene/gameStore integration, ConnectionQualityMonitor + HUD)
+Last activity: 2026-03-18 — Completed 134-03 (ConnectionQualityMonitor wired into positionCorrection handler, ConnectionIndicator enhanced)
 
-Progress: [████░░░░░░] 40%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -108,9 +108,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Completed 133-05-PLAN.md (gap closure: pixel distance for artifact collection, Precision Shot reveal, Pack Call)
+Stopped at: Completed Phase 134 (all 3 plans)
 Resume file: None
-Next action: Execute Phase 134 (client movement rewrite)
+Next action: Execute Phase 135 (cleanup and collision audit)
 
 ---
-*Last updated: 2026-03-18 — Completed 133-05 gap closure (entity.service canInteractPixel, ability.service Precision Shot, combat.service Pack Call)*
+*Last updated: 2026-03-18 — Phase 134 complete (client movement rewrite: PixelMovementController, RemotePlayerInterpolator, WorldScene/gameStore integration, ConnectionQualityMonitor)*

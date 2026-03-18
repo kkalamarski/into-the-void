@@ -51,7 +51,7 @@
 - [x] **Phase 131: Shared Foundation** - Coordinate contract, pixel math modules, and shared constants that every downstream phase depends on (completed 2026-03-17)
 - [x] **Phase 132: Server Movement Handler** - Server-authoritative position validation and 20Hz broadcast loop (completed 2026-03-17)
 - [x] **Phase 133: Distance System Migration** - All six game systems migrated from tile distance to pixel Euclidean distance (completed 2026-03-17)
-- [ ] **Phase 134: Client Movement Rewrite** - Velocity-based WASD movement, pixel collision, client prediction, and remote player interpolation
+- [x] **Phase 134: Client Movement Rewrite** - Velocity-based WASD movement, pixel collision, client prediction, and remote player interpolation (completed 2026-03-18)
 - [ ] **Phase 135: Cleanup and Collision Audit** - Remove all legacy movement code and audit flat blocking tiles
 
 ### Phase 131: Shared Foundation
@@ -110,7 +110,10 @@
   4. The player sprite displays a walking animation while keys are held and switches to idle immediately on release, with the correct facing direction for all 8 WASD directions
   5. Local movement feels responsive with no rubber-banding from the player's own position corrections
   6. Other players in the same zone move smoothly between received positions with no teleporting snapshots
-**Plans**: TBD
+**Plans**:
+  - [x] 134-01-PLAN.md — PixelMovementController + RemotePlayerInterpolator standalone classes
+  - [x] 134-02-PLAN.md — WorldScene + gameStore integration (camera, input, reconciliation, interpolation)
+  - [x] 134-03-PLAN.md — ConnectionQualityMonitor + ConnectionIndicator HUD enhancement
 
 ### Phase 135: Cleanup and Collision Audit
 **Goal**: All tile-step movement code is removed and the collision map accurately reflects walkable tiles so no invisible walls or phantom blockers remain
@@ -130,8 +133,8 @@
 | 131. Shared Foundation | 2/2 | Complete    | 2026-03-17 | - |
 | 132. Server Movement Handler | 3/3 | Complete    | 2026-03-17 | - |
 | 133. Distance System Migration | 5/5 | Complete    | 2026-03-17 | - |
-| 134. Client Movement Rewrite | v1.27 | 0/TBD | Not started | - |
+| 134. Client Movement Rewrite | v1.27 | 3/3 | Complete | 2026-03-18 |
 | 135. Cleanup and Collision Audit | v1.27 | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-03-17 — v1.27 roadmap created*
+*Last updated: 2026-03-18 — Phase 134 complete*
