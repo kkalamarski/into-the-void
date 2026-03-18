@@ -23,9 +23,9 @@ describe('pixel-validation constants', () => {
     expect(TILE_SIZE_PX).toBe(128);
   });
 
-  it('PLAYER_SPEED_PX equals TILE_SIZE_PX (128 px/s)', () => {
-    expect(PLAYER_SPEED_PX).toBe(TILE_SIZE_PX);
-    expect(PLAYER_SPEED_PX).toBe(128);
+  it('PLAYER_SPEED_PX equals TILE_SIZE_PX * 2 (256 px/s)', () => {
+    expect(PLAYER_SPEED_PX).toBe(TILE_SIZE_PX * 2);
+    expect(PLAYER_SPEED_PX).toBe(256);
   });
 
   it('DIAGONAL_NORMALIZATION is approximately 1/sqrt(2)', () => {
@@ -42,55 +42,90 @@ describe('pixel-validation constants', () => {
 });
 
 // ============================================================
-// velocityFromKeys
+// velocityFromKeys — isometric grid-aligned
 // ============================================================
 describe('velocityFromKeys', () => {
-  it('cardinal up produces vx=0, vy=-PLAYER_SPEED_PX with dt=1.0', () => {
+  // With isometric mapping, single keys produce diagonal grid vectors:
+  //   W (up)    → grid (-1,-1) normalized = (-0.707, -0.707)
+  //   S (down)  → grid (+1,+1) normalized = (+0.707, +0.707)
+  //   A (left)  → grid (-1,+1) normalized = (-0.707, +0.707)
+  //   D (right) → grid (+1,-1) normalized = (+0.707, -0.707)
+  const NORM = 1 / Math.sqrt(2);
+
+  it('W (visual up) produces grid (-1,-1) normalized velocity', () => {
     const { vx, vy } = velocityFromKeys({ up: true, down: false, left: false, right: false }, DT);
+    expect(vx).toBeCloseTo(-NORM * PLAYER_SPEED_PX);
+    expect(vy).toBeCloseTo(-NORM * PLAYER_SPEED_PX);
+  });
+
+  it('S (visual down) produces grid (+1,+1) normalized velocity', () => {
+    const { vx, vy } = velocityFromKeys({ up: false, down: true, left: false, right: false }, DT);
+    expect(vx).toBeCloseTo(NORM * PLAYER_SPEED_PX);
+    expect(vy).toBeCloseTo(NORM * PLAYER_SPEED_PX);
+  });
+
+  it('A (visual left) produces grid (-1,+1) normalized velocity', () => {
+    const { vx, vy } = velocityFromKeys({ up: false, down: false, left: true, right: false }, DT);
+    expect(vx).toBeCloseTo(-NORM * PLAYER_SPEED_PX);
+    expect(vy).toBeCloseTo(NORM * PLAYER_SPEED_PX);
+  });
+
+  it('D (visual right) produces grid (+1,-1) normalized velocity', () => {
+    const { vx, vy } = velocityFromKeys({ up: false, down: false, left: false, right: true }, DT);
+    expect(vx).toBeCloseTo(NORM * PLAYER_SPEED_PX);
+    expect(vy).toBeCloseTo(-NORM * PLAYER_SPEED_PX);
+  });
+
+  it('W+D (visual NE) produces grid (0,-1) velocity — along grid Y axis', () => {
+    const { vx, vy } = velocityFromKeys({ up: true, down: false, left: false, right: true }, DT);
     expect(vx).toBeCloseTo(0);
     expect(vy).toBeCloseTo(-PLAYER_SPEED_PX);
   });
 
-  it('cardinal right produces vx=PLAYER_SPEED_PX, vy=0 with dt=1.0', () => {
-    const { vx, vy } = velocityFromKeys({ up: false, down: false, left: false, right: true }, DT);
-    expect(vx).toBeCloseTo(PLAYER_SPEED_PX);
-    expect(vy).toBeCloseTo(0);
-  });
-
-  it('cardinal down produces vx=0, vy=PLAYER_SPEED_PX with dt=1.0', () => {
-    const { vx, vy } = velocityFromKeys({ up: false, down: true, left: false, right: false }, DT);
-    expect(vx).toBeCloseTo(0);
-    expect(vy).toBeCloseTo(PLAYER_SPEED_PX);
-  });
-
-  it('cardinal left produces vx=-PLAYER_SPEED_PX, vy=0 with dt=1.0', () => {
-    const { vx, vy } = velocityFromKeys({ up: false, down: false, left: true, right: false }, DT);
+  it('W+A (visual NW) produces grid (-1,0) velocity — along grid X axis', () => {
+    const { vx, vy } = velocityFromKeys({ up: true, down: false, left: true, right: false }, DT);
     expect(vx).toBeCloseTo(-PLAYER_SPEED_PX);
     expect(vy).toBeCloseTo(0);
   });
 
-  it('diagonal up+right speed magnitude equals PLAYER_SPEED_PX (MOVE-02)', () => {
-    const { vx, vy } = velocityFromKeys({ up: true, down: false, left: false, right: true }, DT);
-    const magnitude = Math.sqrt(vx * vx + vy * vy);
-    expect(magnitude).toBeCloseTo(PLAYER_SPEED_PX, 5);
-  });
-
-  it('diagonal down+left speed magnitude equals PLAYER_SPEED_PX (MOVE-02)', () => {
-    const { vx, vy } = velocityFromKeys({ up: false, down: true, left: true, right: false }, DT);
-    const magnitude = Math.sqrt(vx * vx + vy * vy);
-    expect(magnitude).toBeCloseTo(PLAYER_SPEED_PX, 5);
-  });
-
-  it('diagonal up+left speed magnitude equals PLAYER_SPEED_PX', () => {
-    const { vx, vy } = velocityFromKeys({ up: true, down: false, left: true, right: false }, DT);
-    const magnitude = Math.sqrt(vx * vx + vy * vy);
-    expect(magnitude).toBeCloseTo(PLAYER_SPEED_PX, 5);
-  });
-
-  it('diagonal down+right speed magnitude equals PLAYER_SPEED_PX', () => {
+  it('S+D (visual SE) produces grid (+1,0) velocity — along grid X axis', () => {
     const { vx, vy } = velocityFromKeys({ up: false, down: true, left: false, right: true }, DT);
-    const magnitude = Math.sqrt(vx * vx + vy * vy);
-    expect(magnitude).toBeCloseTo(PLAYER_SPEED_PX, 5);
+    expect(vx).toBeCloseTo(PLAYER_SPEED_PX);
+    expect(vy).toBeCloseTo(0);
+  });
+
+  it('S+A (visual SW) produces grid (0,+1) velocity — along grid Y axis', () => {
+    const { vx, vy } = velocityFromKeys({ up: false, down: true, left: true, right: false }, DT);
+    expect(vx).toBeCloseTo(0);
+    expect(vy).toBeCloseTo(PLAYER_SPEED_PX);
+  });
+
+  it('all single-key speed magnitudes equal PLAYER_SPEED_PX (MOVE-02)', () => {
+    const keys = [
+      { up: true, down: false, left: false, right: false },
+      { up: false, down: true, left: false, right: false },
+      { up: false, down: false, left: true, right: false },
+      { up: false, down: false, left: false, right: true },
+    ];
+    for (const k of keys) {
+      const { vx, vy } = velocityFromKeys(k, DT);
+      const mag = Math.sqrt(vx * vx + vy * vy);
+      expect(mag).toBeCloseTo(PLAYER_SPEED_PX, 5);
+    }
+  });
+
+  it('all two-key combo speed magnitudes equal PLAYER_SPEED_PX (MOVE-02)', () => {
+    const keys = [
+      { up: true, down: false, left: false, right: true },  // W+D
+      { up: true, down: false, left: true, right: false },  // W+A
+      { up: false, down: true, left: false, right: true },  // S+D
+      { up: false, down: true, left: true, right: false },  // S+A
+    ];
+    for (const k of keys) {
+      const { vx, vy } = velocityFromKeys(k, DT);
+      const mag = Math.sqrt(vx * vx + vy * vy);
+      expect(mag).toBeCloseTo(PLAYER_SPEED_PX, 5);
+    }
   });
 
   it('no keys pressed produces vx=0, vy=0', () => {
@@ -122,8 +157,9 @@ describe('velocityFromKeys', () => {
   it('dt=0.5 halves displacement vs dt=1.0', () => {
     const { vx: vx1, vy: vy1 } = velocityFromKeys({ up: true, down: false, left: false, right: false }, 1.0);
     const { vx: vx2, vy: vy2 } = velocityFromKeys({ up: true, down: false, left: false, right: false }, 0.5);
-    expect(Math.abs(vx2)).toBeCloseTo(Math.abs(vx1) * 0.5, 5);
-    expect(Math.abs(vy2)).toBeCloseTo(Math.abs(vy1) * 0.5, 5);
+    const mag1 = Math.sqrt(vx1 * vx1 + vy1 * vy1);
+    const mag2 = Math.sqrt(vx2 * vx2 + vy2 * vy2);
+    expect(mag2).toBeCloseTo(mag1 * 0.5, 5);
   });
 });
 
@@ -145,21 +181,15 @@ describe('resolvePixelCollision', () => {
     (tx === 1 && ty === 0) || (tx === 0 && ty === 1);
 
   it('movement into open space returns position with full velocity applied', () => {
-    // Start at center of tile (0,0): px=64, py=64 (using hitbox anchor at feet = bottom-center)
-    // With no solid tiles, move freely
     const result = resolvePixelCollision(64, 64, 10, 10, noSolid);
     expect(result.px).toBeCloseTo(74);
     expect(result.py).toBeCloseTo(74);
   });
 
   it('X-blocked movement zeroes X component, preserves Y (wall slide)', () => {
-    // Player near left edge of tile boundary, moving right into solid tile (1,0)
-    // px=96 (center), py=64. Moving vx=+40 would push hitbox corner into tile 1
-    // Hitbox: width=64, so right edge = px+32. At px=96+40=136, right edge=168 → tile 1 (solid)
     const result = resolvePixelCollision(96, 64, 40, 10, rightWallSolid);
-    // X should be blocked (stays <= 96 due to wall), Y should move
     expect(result.py).toBeCloseTo(74);
-    expect(result.px).toBeLessThanOrEqual(96 + 40); // might be blocked
+    expect(result.px).toBeLessThanOrEqual(96 + 40);
   });
 
   it('isSolid callback receives tile coordinates computed from pixel via Math.floor(px / TILE_SIZE_PX)', () => {
@@ -168,11 +198,8 @@ describe('resolvePixelCollision', () => {
       seenTiles.push({ tx, ty });
       return false;
     };
-    // px=64, py=64 with tiny movement
     resolvePixelCollision(64, 64, 5, 5, trackingSolid);
-    // Should have checked tiles derived from pixel positions
     expect(seenTiles.length).toBeGreaterThan(0);
-    // All tile coords should be non-negative integers
     for (const { tx, ty } of seenTiles) {
       expect(Number.isInteger(tx)).toBe(true);
       expect(Number.isInteger(ty)).toBe(true);
@@ -180,31 +207,21 @@ describe('resolvePixelCollision', () => {
   });
 
   it('diagonal movement into wall slides along the unblocked axis', () => {
-    // Moving right (+vx) and down (+vy), right wall is solid
-    // Should zero X but preserve Y movement
     const result = resolvePixelCollision(96, 64, 40, 20, rightWallSolid);
-    expect(result.py).toBeCloseTo(84); // Y moves
-    // X should be at most the original position (blocked by wall)
-    expect(result.px).toBeLessThanOrEqual(136); // some blocking
+    expect(result.py).toBeCloseTo(84);
+    expect(result.px).toBeLessThanOrEqual(136);
   });
 
   it('diagonal into corner (both X and Y blocked) stops player', () => {
-    // Place player so both X and Y moves go into solid tiles
-    // px=96, py=64, corner solid at (1,0) and (0,1)
-    // Move +vx=40 → hits (1,0), move +vy=70 → hits (0,1)
     const result = resolvePixelCollision(96, 64, 40, 70, cornerSolid);
-    // Both axes blocked → player doesn't move (or barely)
     expect(result.px).toBeLessThanOrEqual(96 + 40);
     expect(result.py).toBeLessThanOrEqual(64 + 70);
   });
 
   it('Y-blocked movement preserves X, zeroes Y', () => {
-    // Player moving down into solid tile (0,1) at y=128
-    // px=64, py=96, moving vy=+40 → bottom edge = py + 40 - 1 + 32 at feet...
-    // Hitbox anchored at feet: bottom-right corner y = py-1 → with vy=40 → (py+40-1)
     const result = resolvePixelCollision(64, 96, 10, 40, bottomWallSolid);
-    expect(result.px).toBeCloseTo(74); // X moves
-    expect(result.py).toBeLessThanOrEqual(96 + 40); // Y might be blocked
+    expect(result.px).toBeCloseTo(74);
+    expect(result.py).toBeLessThanOrEqual(96 + 40);
   });
 });
 
@@ -213,13 +230,11 @@ describe('resolvePixelCollision', () => {
 // ============================================================
 describe('validatePixelSpeed', () => {
   it('movement at exactly PLAYER_SPEED_PX * dt is valid', () => {
-    // Move exactly 128 px in 1 second
     const valid = validatePixelSpeed(0, 0, PLAYER_SPEED_PX * DT, 0, DT);
     expect(valid).toBe(true);
   });
 
   it('movement within 10% tolerance (1.05x max) is valid', () => {
-    // 10% above base speed should still pass (within tolerance)
     const valid = validatePixelSpeed(0, 0, PLAYER_SPEED_PX * DT * 1.05, 0, DT);
     expect(valid).toBe(true);
   });
@@ -236,7 +251,6 @@ describe('validatePixelSpeed', () => {
 
   it('speedMultiplier increases allowed speed proportionally', () => {
     const multiplier = 2.0;
-    // 2x speed multiplier: movement at 1.9x base should be valid
     const valid = validatePixelSpeed(0, 0, PLAYER_SPEED_PX * DT * 1.9, 0, DT, multiplier);
     expect(valid).toBe(true);
   });
@@ -300,7 +314,6 @@ describe('bitmaskToKeyState', () => {
   });
 
   it('keys=5 (W+S) produces up=true, down=true — opposing keys both true', () => {
-    // velocityFromKeys will cancel them out; bitmaskToKeyState faithfully reflects both
     const state = bitmaskToKeyState(5);
     expect(state).toEqual({ up: true, down: true, left: false, right: false });
   });

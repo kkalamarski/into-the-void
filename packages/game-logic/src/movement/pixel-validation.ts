@@ -26,7 +26,7 @@ export const TILE_SIZE_PX = 128;
  * At 128 px/s the player crosses one tile in exactly 1.0 second — within the
  * 1–1.2 s deliberate-pace requirement for a survival MMO.
  */
-export const PLAYER_SPEED_PX = TILE_SIZE_PX; // 128 px/s
+export const PLAYER_SPEED_PX = TILE_SIZE_PX * 2; // 256 px/s
 
 /**
  * Diagonal normalization factor: 1/√2 ≈ 0.7071.
@@ -77,28 +77,43 @@ export interface PixelPos {
 /**
  * Computes the frame velocity vector from the current key state.
  *
- * Implements MOVE-02: diagonal input is normalized by DIAGONAL_NORMALIZATION
- * (1/√2) so speed magnitude never exceeds PLAYER_SPEED_PX regardless of
- * how many axes are active.
+ * WASD maps to **visual screen directions** in the isometric view:
+ *   W = up, S = down, A = left, D = right on screen.
+ *
+ * Because the isometric projection rotates grid axes 45° from screen axes,
+ * each key contributes to both grid axes:
+ *   W (up)    → grid (-1, -1)    S (down)  → grid (+1, +1)
+ *   A (left)  → grid (-1, +1)    D (right) → grid (+1, -1)
+ *
+ * The direction vector is normalized to unit length so speed magnitude
+ * never exceeds PLAYER_SPEED_PX regardless of input combination (MOVE-02).
  *
  * @param keys         Current pressed-key snapshot.
  * @param dt           Delta-time in seconds (frame-independent scaling).
  * @param speedMultiplier  Optional speed multiplier for equipment/debuff effects (default 1.0).
- * @returns  Velocity vector { vx, vy } in pixels for this frame.
+ * @returns  Velocity vector { vx, vy } in grid-space pixels for this frame.
  */
 export function velocityFromKeys(
   keys: KeyState,
   dt: number,
   speedMultiplier = 1.0,
 ): Velocity {
-  // Raw directional intent on each axis (cancel opposing keys)
-  let dirX = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
-  let dirY = (keys.down  ? 1 : 0) - (keys.up   ? 1 : 0);
+  // Map WASD to isometric grid directions.
+  // Each key pushes along a 45°-rotated axis so the visual result
+  // matches screen up/down/left/right.
+  let dirX = 0;
+  let dirY = 0;
 
-  // Apply diagonal normalization when both axes are active (MOVE-02)
-  if (dirX !== 0 && dirY !== 0) {
-    dirX *= DIAGONAL_NORMALIZATION;
-    dirY *= DIAGONAL_NORMALIZATION;
+  if (keys.up)    { dirX -= 1; dirY -= 1; } // visual up   → grid NW
+  if (keys.down)  { dirX += 1; dirY += 1; } // visual down → grid SE
+  if (keys.left)  { dirX -= 1; dirY += 1; } // visual left → grid SW
+  if (keys.right) { dirX += 1; dirY -= 1; } // visual right→ grid NE
+
+  // Normalize to unit length (handles single-key √2 and two-key magnitude 2)
+  const mag = Math.sqrt(dirX * dirX + dirY * dirY);
+  if (mag > 0) {
+    dirX /= mag;
+    dirY /= mag;
   }
 
   const speed = PLAYER_SPEED_PX * dt * speedMultiplier;
