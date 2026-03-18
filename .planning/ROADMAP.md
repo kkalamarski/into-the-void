@@ -250,7 +250,7 @@
 | 139. Day/Night Brightness Fix | v1.28 | 1/1 | Complete | 2026-03-18 |
 | 140. Biome & Tile Foundation | v1.29 | Complete    | 2026-03-18 | - |
 | 141. Rendering & System Upgrade | v1.29 | Complete    | 2026-03-18 | - |
-| 142. Hub Maps & Spawn Updates | v1.29 | 0/? | Not started | - |
+| 142. Hub Maps & Spawn Updates | v1.29 | 3/3 | Complete | 2026-03-18 |
 
 ---
 *Last updated: 2026-03-18 — v1.29 roadmap created*

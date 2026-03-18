@@ -28,20 +28,20 @@ Requirements for hub station interiors. Each maps to roadmap phases.
 
 ### Hub Maps
 
-- [ ] **MAP-01**: Canopy Station has a 128x128 hand-designed map with organic rooms, vine corridors, and atrium
-- [ ] **MAP-02**: Ironhold Station has a 128x128 hand-designed map with forge halls, metal corridors, and warrens
-- [ ] **MAP-03**: Meridian Station has a 128x128 hand-designed map with trading floor, glass corridors, and archive
-- [ ] **MAP-04**: Salvage Station has a 128x128 hand-designed map with cargo bay, patched corridors, and market
-- [ ] **MAP-05**: Each hub map has NPCs placed in lore-appropriate rooms (traders in trading area, guards at entrance, etc.)
-- [ ] **MAP-06**: Each hub map has a portal tile in the docking bay / entry area
+- [x] **MAP-01**: Canopy Station has a 128x128 hand-designed map with organic rooms, vine corridors, and atrium
+- [x] **MAP-02**: Ironhold Station has a 128x128 hand-designed map with forge halls, metal corridors, and warrens
+- [x] **MAP-03**: Meridian Station has a 128x128 hand-designed map with trading floor, glass corridors, and archive
+- [x] **MAP-04**: Salvage Station has a 128x128 hand-designed map with cargo bay, patched corridors, and market
+- [x] **MAP-05**: Each hub map has NPCs placed in lore-appropriate rooms (traders in trading area, guards at entrance, etc.)
+- [x] **MAP-06**: Each hub map has a portal tile in the docking bay / entry area
 
 ### Hub System
 
 - [ ] **SYS-01**: Hub zone system supports 128x128 tile maps (up from 64x64)
 - [ ] **SYS-02**: Hub biome types are registered in the biome system with correct tile mappings
 - [ ] **SYS-03**: Procedural tile generator renders all new hub tiles with faction palettes and accents
-- [ ] **SYS-04**: Unaffiliated players spawn at Salvage Station instead of Meridian
-- [ ] **SYS-05**: Hub spawn positions updated for new 128x128 layouts (portal location, NPC positions)
+- [x] **SYS-04**: Unaffiliated players spawn at Salvage Station instead of Meridian
+- [x] **SYS-05**: Hub spawn positions updated for new 128x128 layouts (portal location, NPC positions)
 
 ## v1.28 Requirements (Shipped)
 
@@ -150,14 +150,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SYS-01 | Phase 141 | Pending |
 | SYS-03 | Phase 141 | Pending |
 | BIOME-05 | Phase 141 | Pending |
-| MAP-01 | Phase 142 | Pending |
-| MAP-02 | Phase 142 | Pending |
-| MAP-03 | Phase 142 | Pending |
-| MAP-04 | Phase 142 | Pending |
-| MAP-05 | Phase 142 | Pending |
-| MAP-06 | Phase 142 | Pending |
-| SYS-04 | Phase 142 | Pending |
-| SYS-05 | Phase 142 | Pending |
+| MAP-01 | Phase 142 | Complete |
+| MAP-02 | Phase 142 | Complete |
+| MAP-03 | Phase 142 | Complete |
+| MAP-04 | Phase 142 | Complete |
+| MAP-05 | Phase 142 | Complete |
+| MAP-06 | Phase 142 | Complete |
+| SYS-04 | Phase 142 | Complete |
+| SYS-05 | Phase 142 | Complete |
 
 **Coverage:**
 - v1.29 requirements: 21 total
