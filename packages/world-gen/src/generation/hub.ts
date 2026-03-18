@@ -24,8 +24,9 @@ export interface HubConfig {
 }
 
 const HUB_CONFIGS: Record<string, HubConfig> = {
+  // Canopy Station — bioluminescent organic architecture
   hub_verdant: {
-    biome: 'fungal_forest',       // Canopy Station - living architecture, forest biome
+    biome: 'canopy_station',
     floorTile: 2,                 // CRYSTAL_FLOOR (has 256x256 sprite)
     wallTile: 3,                  // CRYSTAL_FORMATION (has 256x256 sprite)
     displayName: 'Canopy Station',
@@ -43,8 +44,9 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_expedition_master', x: 32, y: 25 }, // N of portal - expedition coordinator
     ],
   },
+  // Ironhold Station — industrial forges and metal corridors
   hub_helix: {
-    biome: 'volcanic_ridge',      // Ironhold Station - industrial, volcanic mountain
+    biome: 'ironhold_station',
     floorTile: 8,                 // ICE_FLOOR (has 256x256 sprite - repurpose for industrial)
     wallTile: 1,                  // VOID_WALL (has 256x256 sprite)
     displayName: 'Ironhold Station',
@@ -62,8 +64,9 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_expedition_master', x: 32, y: 25 }, // N of portal - expedition coordinator
     ],
   },
+  // Meridian Station — corporate trade hub
   hub_nexus: {
-    biome: 'void_plains',         // Meridian Station - neutral, transactional
+    biome: 'meridian_station',
     floorTile: 0,                 // VOID_FLOOR (has 256x256 sprite)
     wallTile: 1,                  // VOID_WALL (has 256x256 sprite)
     displayName: 'Meridian Station',
@@ -81,11 +84,12 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_expedition_master', x: 32, y: 25 }, // N of portal - expedition coordinator
     ],
   },
+  // Salvage Station — patchwork scavenger hub
   hub_neutral: {
-    biome: 'void_plains',         // Unaffiliated go to Meridian (neutral welcome)
-    floorTile: 0,                 // VOID_FLOOR
-    wallTile: 1,                  // VOID_WALL
-    displayName: 'Meridian Station',
+    biome: 'salvage_station',
+    floorTile: 0,                 // VOID_FLOOR (numeric placeholder — Phase 142 reworks)
+    wallTile: 1,                  // VOID_WALL (numeric placeholder — Phase 142 reworks)
+    displayName: 'Salvage Station',
     fertilityType: 'Normal',
     npcSpawns: [
       { npcId: 'npc_neutral_trader', x: 20, y: 20 },
