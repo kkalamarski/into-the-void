@@ -79,7 +79,7 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_helix_miner', x: 102, y: 40 },
       // Engineering (SW: 10,52 24x20) — service + engineer
       { npcId: 'npc_helix_service', x: 18, y: 58 },
-      { npcId: 'npc_helix_engineer', x: 26, y: 64 },
+      { npcId: 'npc_helix_engineer', x: 26, y: 65 },
     ],
   },
   // Meridian Station — corporate trade hub (128x128 map)
