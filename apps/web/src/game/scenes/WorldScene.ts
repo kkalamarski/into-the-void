@@ -1018,9 +1018,7 @@ export class WorldScene extends Phaser.Scene {
       }
       // Set collision callback if collision map is available
       if (chunkData.collisions) {
-        this.pixelMovement.setCollisionCallback((tx, ty) => {
-          return chunkData.collisions[ty]?.[tx] ?? true;
-        });
+        this.setCollisionMap(chunkData.collisions);
       }
     }
 
@@ -2424,10 +2422,14 @@ export class WorldScene extends Phaser.Scene {
 
   setCollisionMap(collisionMap: boolean[][]): void {
     this.collisionMap = collisionMap;
-    // Set collision callback for pixel movement
+    // Set collision callback for pixel movement — uses cross-chunk lookup
     if (this.pixelMovement) {
+      // Capture current zone offset for converting zone-local → world coordinates
+      const zoneCoords = this.parseZoneCoords(this.currentZoneId);
+      const offsetX = zoneCoords.x * ZONE_SIZE;
+      const offsetY = zoneCoords.y * ZONE_SIZE;
       this.pixelMovement.setCollisionCallback((tx, ty) => {
-        return collisionMap[ty]?.[tx] ?? true; // out of bounds = solid
+        return this.isWorldTileBlocked(offsetX + tx, offsetY + ty);
       });
     }
   }
