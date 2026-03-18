@@ -73,6 +73,8 @@ export class DayNightCycle {
   private serverOffset: number = 0;
   private currentPhase: DayNightPhase = 'Day';
   private atmosphereSystem: AtmosphereSystem | null = null;
+  /** When true, cycle is paused at full brightness (hub zones) */
+  private paused: boolean = false;
 
   /**
    * Register the AtmosphereSystem for cooperative ColorMatrix sharing.
@@ -103,10 +105,37 @@ export class DayNightCycle {
   }
 
   /**
+   * Pause the cycle — locks to full-brightness Day visuals.
+   * Used for hub zones (controlled indoor environment).
+   */
+  pause(): void {
+    this.paused = true;
+    this.currentPhase = 'Day';
+    // Apply full brightness immediately
+    if (this.colorMatrix) {
+      this.colorMatrix.reset();
+      // Identity = full brightness (Day)
+    }
+    if (this.vignette) {
+      this.vignette.strength = 0;
+    }
+  }
+
+  /**
+   * Resume the cycle from current server time.
+   * Called when leaving a hub zone.
+   */
+  resume(): void {
+    this.paused = false;
+  }
+
+  /**
    * Update visuals. Call every frame from WorldScene.update().
    */
   update(): void {
     if (!this.colorMatrix) return;
+    // Hub zones: paused at full brightness, skip cycle processing
+    if (this.paused) return;
 
     const progress = this.getCycleProgress();
     this.currentPhase = this.getPhase(progress);

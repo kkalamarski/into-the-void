@@ -1,6 +1,12 @@
 import Phaser from 'phaser';
 import { BiomeType, BIOME_TIERS } from '@into-the-void/shared-types';
 
+/** Hub biomes have constant indoor particles — no weather cycling */
+function isHubBiome(biome: BiomeType): boolean {
+  return biome === 'canopy_station' || biome === 'ironhold_station' ||
+         biome === 'meridian_station' || biome === 'salvage_station';
+}
+
 // ── Weather Types ──────────────────────────────────────────────────────────
 
 export type WeatherType = 'rain' | 'snow' | 'ash' | 'spores' | 'mist' | 'void_energy';
@@ -149,11 +155,59 @@ const WEATHER_CONFIGS: Record<BiomeType, WeatherConfig> = {
   deep_trenches: makeConfig('deep_trenches', 'mist', 0x191970, MIST_BASE),
   starfall_crater: makeConfig('starfall_crater', 'ash', 0x191970, ASH_BASE),
   void_rift: makeConfig('void_rift', 'void_energy', 0x4a0080, VOID_ENERGY_BASE),
-  // Hub Station Biomes — indoor, minimal weather (light mist)
-  canopy_station: makeConfig('canopy_station', 'spores', 0x22cc88, SPORES_BASE),
-  ironhold_station: makeConfig('ironhold_station', 'mist', 0x3a3a3a, MIST_BASE),
-  meridian_station: makeConfig('meridian_station', 'mist', 0xc0d0e0, MIST_BASE),
-  salvage_station: makeConfig('salvage_station', 'mist', 0x8a7a5a, MIST_BASE),
+  // Hub Station Biomes — unique indoor ambient particles (constant, no cycling)
+  // Canopy: spores float lazily — very slow, meandering drift, green glow
+  canopy_station: {
+    type: 'spores',
+    tint: 0x44ddaa,
+    quantity: [2, 2, 2],    // Constant (no cycling), very sparse
+    speedY: { min: -10, max: 15 },   // Lazy float upward and down
+    speedX: { min: -12, max: 12 },   // Gentle lateral drift
+    lifespan: 8000,                   // Long-lived, slow fade
+    scaleX: 0.4,
+    scaleY: 0.4,
+    alpha: { start: 0.25, end: 0.05 },  // Very subtle
+    frequency: 200,                   // Low spawn rate
+  },
+  // Ironhold: steam rises in bursts — fast upward, periodic clusters
+  ironhold_station: {
+    type: 'mist',
+    tint: 0x8a8a8a,
+    quantity: [3, 3, 3],    // Constant
+    speedY: { min: -60, max: -20 },  // Rises upward (negative Y = up)
+    speedX: { min: -8, max: 8 },     // Minimal lateral
+    lifespan: 3000,                   // Short-lived bursts
+    scaleX: 0.6,
+    scaleY: 0.8,
+    alpha: { start: 0.2, end: 0.02 },  // Very subtle, fades quickly
+    frequency: 300,                   // Burst-like: spawn infrequently
+  },
+  // Meridian: holo-dust drifts linearly — consistent horizontal flow, blue shimmer
+  meridian_station: {
+    type: 'snow',
+    tint: 0x88ccff,
+    quantity: [2, 2, 2],    // Constant
+    speedY: { min: 5, max: 15 },     // Very slight downward drift
+    speedX: { min: 20, max: 40 },    // Consistent rightward linear drift
+    lifespan: 6000,                   // Medium duration
+    scaleX: 0.3,
+    scaleY: 0.3,
+    alpha: { start: 0.2, end: 0.05 },  // Very subtle
+    frequency: 250,                   // Low, steady rate
+  },
+  // Salvage: smoke wisps curl — chaotic drift, warm amber
+  salvage_station: {
+    type: 'ash',
+    tint: 0xbbaa77,
+    quantity: [2, 2, 2],    // Constant
+    speedY: { min: -25, max: 10 },   // Mostly rises, some curls down
+    speedX: { min: -30, max: 30 },   // Wide lateral range for curling effect
+    lifespan: 5000,                   // Medium duration
+    scaleX: 0.5,
+    scaleY: 0.5,
+    alpha: { start: 0.18, end: 0.03 }, // Very subtle
+    frequency: 220,                   // Sparse
+  },
 };
 
 // ── Crossfade duration ─────────────────────────────────────────────────────
@@ -214,12 +268,24 @@ export class WeatherSystem {
     this.currentBiome = biome;
     const config = WEATHER_CONFIGS[biome];
 
+    // Hub biomes: stop any existing intensity cycle (constant particles)
+    if (isHubBiome(biome)) {
+      if (this.intensityCycleTimer) {
+        this.intensityCycleTimer.destroy();
+        this.intensityCycleTimer = null;
+      }
+      this.scene.tweens.killTweensOf(this.intensityProxy);
+    }
+
     if (instant) {
       this.destroyOutgoing();
       this.destroyActive();
       this.activeEmitter = this.createEmitter(config);
       this.activeEmitter.setAlpha(config.alpha.start);
-      this.startIntensityCycle(biome);
+      // Hub biomes: constant particles, no intensity cycling
+      if (!isHubBiome(biome)) {
+        this.startIntensityCycle(biome);
+      }
       return;
     }
 
@@ -260,7 +326,10 @@ export class WeatherSystem {
       duration: CROSSFADE_MS,
     });
 
-    this.startIntensityCycle(biome);
+    // Hub biomes: constant particles, no intensity cycling
+    if (!isHubBiome(biome)) {
+      this.startIntensityCycle(biome);
+    }
   }
 
   /**

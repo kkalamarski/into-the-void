@@ -1038,6 +1038,11 @@ export class WorldScene extends Phaser.Scene {
       this.remoteInterpolator.clear();
     }
 
+    // Hub zones: disable day/night cycle on initial load
+    if (isHubZone(chunkData.zoneId)) {
+      this.dayNightCycle?.pause();
+    }
+
     // Phase 138: show zone name cinematic on initial spawn
     if (chunkData.zoneId) {
       // Use delayedCall to let the scene fully initialize before showing
@@ -1233,6 +1238,13 @@ export class WorldScene extends Phaser.Scene {
     // Instant-swap atmosphere for teleport (ATMO-03)
     this.atmosphereSystem?.setBiome(biome, true);
     this.updateMinimapWeatherIgnore();
+
+    // Hub zones: disable day/night cycle (controlled indoor environment)
+    if (isHubZone(newZoneId)) {
+      this.dayNightCycle?.pause();
+    } else {
+      this.dayNightCycle?.resume();
+    }
 
     // Update HUD
     if (this.zoneHUD) {
