@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Pixel Movement Rewrite
 status: unknown
-last_updated: "2026-03-18T10:27:07.012Z"
+last_updated: "2026-03-18T10:47:55.819Z"
 progress:
-  total_phases: 130
+  total_phases: 131
   completed_phases: 130
-  total_plans: 340
-  completed_plans: 340
+  total_plans: 342
+  completed_plans: 341
 ---
 
 # Project State
@@ -46,6 +46,7 @@ Progress: [████████████░░░░░░░░] ~97% (1
 - Stable
 
 *Updated after each plan completion*
+| Phase 138-collision-boundary-fix P01 | 136 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -58,6 +59,7 @@ Recent decisions affecting current work:
 - v1.27: Soft-authority server — speed cap + one collision sweep, not full physics simulation
 - v1.27: Creatures stay tile-snapped; pixel creature movement deferred to v1.29+
 - v1.28: Four independent bug areas — each gets its own phase (no hard dependencies)
+- [Phase 138-collision-boundary-fix]: Route collision callbacks through isWorldTileBlocked with zone-local-to-world coordinate conversion on both client and server
 
 ### Pending Todos
 

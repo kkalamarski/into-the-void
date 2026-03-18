@@ -22,8 +22,8 @@ Requirements for post-movement polish. Each maps to roadmap phases.
 
 ### Collision
 
-- [ ] **COLLIDE-01**: No invisible collision walls exist at chunk boundaries — player moves freely across chunks
-- [ ] **COLLIDE-02**: No invisible collision walls exist at zone boundaries — player transitions smoothly between zones
+- [x] **COLLIDE-01**: No invisible collision walls exist at chunk boundaries — player moves freely across chunks
+- [x] **COLLIDE-02**: No invisible collision walls exist at zone boundaries — player transitions smoothly between zones
 
 ### Visual
 
@@ -96,8 +96,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RENDER-02 | Phase 137 | Pending |
 | RENDER-03 | Phase 137 | Pending |
 | RENDER-04 | Phase 137 | Pending |
-| COLLIDE-01 | Phase 138 | Pending |
-| COLLIDE-02 | Phase 138 | Pending |
+| COLLIDE-01 | Phase 138 | Complete |
+| COLLIDE-02 | Phase 138 | Complete |
 | VISUAL-01 | Phase 139 | Pending |
 
 **Coverage:**
