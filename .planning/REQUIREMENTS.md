@@ -1,26 +1,53 @@
 # Requirements: Into the Void
 
-**Defined:** 2026-03-17
+**Defined:** 2026-03-18
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.27 Requirements
+## v1.28 Requirements
 
-Requirements for pixel movement rewrite. Each maps to roadmap phases.
+Requirements for post-movement polish. Each maps to roadmap phases.
+
+### Combat & Gathering
+
+- [ ] **INTERACT-01**: Player can attack a creature within melee/ranged range and deal damage
+- [ ] **INTERACT-02**: Player can gather from resource nodes (plants, minerals, artifacts) within gather range
+- [ ] **INTERACT-03**: Distance checks for combat and gathering use correct pixel coordinates for both player and entity positions
+
+### Entity Rendering
+
+- [ ] **RENDER-01**: Player character and creatures are visually grounded on the tile surface (no floating)
+- [ ] **RENDER-02**: Plants and minerals have their anchor point at their ground contact point, not sprite center
+- [ ] **RENDER-03**: Entity sprites have minimal excess transparent space — trimmed to fit actual art
+- [ ] **RENDER-04**: Entity collision/selection hitbox aligns with the visible sprite's ground position
+
+### Collision
+
+- [ ] **COLLIDE-01**: No invisible collision walls exist at chunk boundaries — player moves freely across chunks
+- [ ] **COLLIDE-02**: No invisible collision walls exist at zone boundaries — player transitions smoothly between zones
+
+### Visual
+
+- [ ] **VISUAL-01**: Day/night cycle brightness is correct — dusk and dawn are brighter than night, not darker
+
+## v1.27 Requirements (Shipped)
+
+<details>
+<summary>All 18 requirements completed — click to expand</summary>
 
 ### Movement Core
 
-- [ ] **MOVE-01**: Player moves freely at sub-tile pixel positions using WASD keys (not locked to tile grid)
+- [x] **MOVE-01**: Player moves freely at sub-tile pixel positions using WASD keys (not locked to tile grid)
 - [x] **MOVE-02**: Player velocity is normalized on diagonal input (no 41% speed boost)
-- [ ] **MOVE-03**: Player collides with solid tiles via pixel hitbox (AABB against tile rectangles)
-- [ ] **MOVE-04**: Camera follows player pixel position smoothly each frame
-- [ ] **MOVE-05**: Walking animation plays while moving, idle when stopped, with 8-directional facing
+- [x] **MOVE-03**: Player collides with solid tiles via pixel hitbox (AABB against tile rectangles)
+- [x] **MOVE-04**: Camera follows player pixel position smoothly each frame
+- [x] **MOVE-05**: Walking animation plays while moving, idle when stopped, with 8-directional facing
 
 ### Multiplayer Sync
 
 - [x] **SYNC-01**: Server validates player position at tick rate (speed-cap + collision check, rejects teleportation)
 - [x] **SYNC-02**: Server broadcasts player positions at ~20Hz to nearby players
-- [ ] **SYNC-03**: Client predicts local movement and reconciles with server corrections
-- [ ] **SYNC-04**: Remote players interpolate smoothly between received positions (no snapping)
+- [x] **SYNC-03**: Client predicts local movement and reconciles with server corrections
+- [x] **SYNC-04**: Remote players interpolate smoothly between received positions (no snapping)
 
 ### Distance Systems
 
@@ -33,34 +60,28 @@ Requirements for pixel movement rewrite. Each maps to roadmap phases.
 
 ### Cleanup
 
-- [ ] **CLEAN-01**: Click-to-move and A* pathfinding code removed entirely
-- [ ] **CLEAN-02**: Flat blocking tiles audited — either made visually elevated or made walkable
-- [ ] **CLEAN-03**: Old tile-to-tile movement code removed (MovementController, tween system)
+- [x] **CLEAN-01**: Click-to-move and A* pathfinding code removed entirely
+- [x] **CLEAN-02**: Flat blocking tiles audited — either made visually elevated or made walkable
+- [x] **CLEAN-03**: Old tile-to-tile movement code removed (MovementController, tween system)
+
+</details>
 
 ## Future Requirements
 
-### Tile Variety (v1.28)
+### Tile Variety (v1.29+)
 
 - **TVAR-01**: 3-4 new floor tile variants per biome (visual variety)
 - **TVAR-02**: 1-2 gameplay-distinct tiles per biome (speed modifiers, visual hooks)
 - **TVAR-03**: Tile speed modifiers applied as continuous velocity multipliers
 
-### Movement Polish (v1.28+)
-
-- **MPOL-01**: Collision sliding (wall slide instead of dead stop on shallow angles)
-- **MPOL-02**: Inertia/momentum feel (brief deceleration on key release)
-- **MPOL-03**: Smooth zone boundary crossing at pixel granularity (no stutter at chunk seams)
-
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Click-to-move / pathfinding | Explicitly removed — WASD only. Pathfinding in pixel space requires navmesh. |
-| Server-side physics simulation | Running Phaser physics in NestJS is impractical. Server validates positions, not simulates. |
-| Per-pixel collision map | 24K×24K pixel grid per zone is impractical. Per-tile solid flag with AABB hitbox is sufficient. |
-| Matter.js physics | Overkill for top-down with no jumping. Arcade Physics AABB is sufficient and lightweight. |
-| Creature pixel movement | Creatures stay tile-snapped on server. Only player gets pixel movement in v1.27. |
-| New abilities or combat changes | Movement rewrite only — combat mechanics unchanged except range units. |
+| Pixel creature movement | Deferred to v1.29+; creatures stay tile-snapped |
+| New abilities or combat mechanics | Fix existing, don't add new |
+| New entity sprites/art | Fix anchoring of existing sprites |
+| Click-to-move restoration | Removed intentionally in v1.27 |
 
 ## Traceability
 
@@ -68,30 +89,22 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MOVE-01 | Phase 134 | Pending |
-| MOVE-02 | Phase 131 | Complete |
-| MOVE-03 | Phase 134 | Pending |
-| MOVE-04 | Phase 134 | Pending |
-| MOVE-05 | Phase 134 | Pending |
-| SYNC-01 | Phase 132 | Complete |
-| SYNC-02 | Phase 132 | Complete |
-| SYNC-03 | Phase 134 | Pending |
-| SYNC-04 | Phase 134 | Pending |
-| DIST-01 | Phase 133 | Complete |
-| DIST-02 | Phase 133 | Complete |
-| DIST-03 | Phase 133 | Complete |
-| DIST-04 | Phase 133 | Complete |
-| DIST-05 | Phase 133 | Complete |
-| DIST-06 | Phase 133 | Complete |
-| CLEAN-01 | Phase 135 | Pending |
-| CLEAN-02 | Phase 135 | Pending |
-| CLEAN-03 | Phase 135 | Pending |
+| INTERACT-01 | — | Pending |
+| INTERACT-02 | — | Pending |
+| INTERACT-03 | — | Pending |
+| RENDER-01 | — | Pending |
+| RENDER-02 | — | Pending |
+| RENDER-03 | — | Pending |
+| RENDER-04 | — | Pending |
+| COLLIDE-01 | — | Pending |
+| COLLIDE-02 | — | Pending |
+| VISUAL-01 | — | Pending |
 
 **Coverage:**
-- v1.27 requirements: 18 total
-- Mapped to phases: 18
-- Unmapped: 0
+- v1.28 requirements: 10 total
+- Mapped to phases: 0
+- Unmapped: 10 ⚠️
 
 ---
-*Requirements defined: 2026-03-17*
-*Last updated: 2026-03-17 — traceability updated after roadmap creation*
+*Requirements defined: 2026-03-18*
+*Last updated: 2026-03-18 after initial definition*
