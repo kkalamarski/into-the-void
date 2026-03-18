@@ -78,7 +78,6 @@ class GameSocket {
       'entity:batch',
       'player:joined',
       'player:left',
-      'player:moved',
       'player:xp',
       'player:level',
       'player:health',

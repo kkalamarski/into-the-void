@@ -154,7 +154,7 @@ const GameContainer: React.FC = () => {
       }
     }
 
-    // CRITICAL: Set collision map for pathfinding and movement validation
+    // Set collision map for pixel movement collision detection
     if (chunk && chunk.collisions) {
       worldScene.setCollisionMap(chunk.collisions);
     }
@@ -216,7 +216,7 @@ const GameContainer: React.FC = () => {
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
-  // Initial player spawn only - position updates handled by MovementController
+  // Initial player spawn only - position updates handled by PixelMovementController
   const playerSpawnedRef = useRef(false);
   useEffect(() => {
     if (!worldSceneReady || !gameRef.current || !player?.position) return;

@@ -72,15 +72,7 @@ export const GameUI: React.FC = () => {
         return;
       }
 
-      // 2b. Cancel active pathfinding
-      const game = useGameStore.getState().game;
-      const pathfindingController = game?.getWorldScene()?.getPathfindingController();
-      if (pathfindingController?.isPathActive()) {
-        pathfindingController.cancelPath();
-        return;
-      }
-
-      // 2c. Clear selected combat target
+      // 2b. Clear selected combat target
       if (useCombatStore.getState().selectedTarget !== null) {
         useCombatStore.getState().selectTarget(null);
         return;

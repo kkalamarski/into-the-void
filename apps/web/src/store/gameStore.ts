@@ -216,21 +216,6 @@ gameSocket.on('zone:state', (data: ZoneState) => {
     }
   }
 
-  // On zone transition, reset prediction state
-  if (isZoneTransition && game) {
-    const worldScene = game.getWorldScene();
-    if (worldScene) {
-      const movementController = worldScene.getMovementController();
-      if (movementController) {
-        movementController.clearPendingInputs();
-      }
-      const pathfindingController = worldScene.getPathfindingController();
-      if (pathfindingController) {
-        pathfindingController.cancelPath();
-      }
-    }
-  }
-
   // Find current player in the players list and update position if provided
   const currentPlayer = useGameStore.getState().player;
   if (currentPlayer) {
@@ -278,8 +263,7 @@ gameSocket.on('zone:state', (data: ZoneState) => {
       }
 
       // Update entity collision positions for movement prediction
-      worldScene.updateEntityCollisionPositions();
-
+  
       // Spawn other players (not ourselves)
       const currentPlayerId = currentPlayer?.id;
       for (const player of players) {
@@ -292,40 +276,6 @@ gameSocket.on('zone:state', (data: ZoneState) => {
 
   // Update loading progress (zone data received)
   useGameStore.getState().setLoadingProgress(80);
-});
-
-// Handle movement updates from server (tile-based — legacy, kept as fallback)
-gameSocket.on('player:moved', (data: { playerId: string; position: Position; lastProcessedInput?: number }) => {
-  const currentPlayer = useGameStore.getState().player;
-  const game = useGameStore.getState().game;
-
-  if (!currentPlayer || !game) return;
-
-  const worldScene = game.getWorldScene();
-  if (!worldScene) return;
-
-  if (data.playerId === currentPlayer.id) {
-    // Update tile position in store (for UI display, minimap, etc.)
-    useGameStore.getState().setPlayer({
-      ...currentPlayer,
-      position: data.position,
-    });
-    // Phase 134: pixel movement reconciliation is handled by positionCorrection event
-    // Only use old reconciliation if pixel movement controller is NOT active
-    const pixelCtrl = worldScene.getPixelMovementController();
-    if (!pixelCtrl) {
-      const movementController = worldScene.getMovementController();
-      if (movementController && data.lastProcessedInput !== undefined) {
-        movementController.reconcile(data.position, data.lastProcessedInput);
-      } else {
-        worldScene.updateLocalPlayer(data.position);
-      }
-    }
-  } else {
-    // Other player moved — fallback tile-based update
-    // Primary updates come from positionBatch via RemotePlayerInterpolator
-    worldScene.movePlayer(data.playerId, data.position);
-  }
 });
 
 // Phase 134: Handle pixel position batch updates from server (20Hz)
@@ -359,7 +309,6 @@ gameSocket.on('entity:spawn', (entity: Entity) => {
   const worldScene = game?.getWorldScene();
   if (worldScene) {
     worldScene.spawnEntity(entity);
-    worldScene.updateEntityCollisionPositions();
   }
   // Also add to entities array in store
   const entities = useGameStore.getState().entities;
@@ -372,7 +321,6 @@ gameSocket.on('entity:despawn', ({ entityId }: { entityId: string }) => {
   const worldScene = game?.getWorldScene();
   if (worldScene) {
     worldScene.despawnEntity(entityId);
-    worldScene.updateEntityCollisionPositions();
   }
   // Remove from entities array
   const entities = useGameStore.getState().entities;
@@ -387,8 +335,7 @@ gameSocket.on('entity:update', ({ entityId, changes }: { entityId: string; chang
     worldScene.updateEntity(entityId, changes);
     // Update collision positions if entity moved
     if ('position' in changes) {
-      worldScene.updateEntityCollisionPositions();
-    }
+      }
   }
   // Update entity in store
   const entities = useGameStore.getState().entities;
@@ -407,7 +354,6 @@ gameSocket.on('entity:batch', ({ updates }: { updates: Array<{ entityId: string;
       worldScene.updateEntity(entityId, changes);
     }
     // Batch updates often contain position changes (creature movement)
-    worldScene.updateEntityCollisionPositions();
   }
 });
 

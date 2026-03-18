@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, MOVE_DELAY_MS, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure, isHubZone, Npc, TimingChallenge } from '@into-the-void/shared-types';
+import { ZONE_SIZE, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, Direction, Creature, TileStructure, isHubZone, Npc, TimingChallenge } from '@into-the-void/shared-types';
 import { TILE_SIZE_PX, MELEE_RANGE_PX, GATHER_RANGE_PX, NPC_INTERACT_RANGE_PX, pixelDistanceTo, tileToPixelCenter } from '@into-the-void/game-logic';
 import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
@@ -11,8 +11,6 @@ import { ChunkManager } from '../rendering/ChunkManager';
 import { ViewportCuller } from '../rendering/ViewportCuller';
 import { ZoneHUD } from '../ui/ZoneHUD';
 import { MinimapCamera } from '../rendering/MinimapCamera';
-import { MovementController } from '../systems/MovementController';
-import { PathfindingController } from '../systems/PathfindingController';
 import { PixelMovementController } from '../systems/PixelMovementController';
 import { RemotePlayerInterpolator } from '../systems/RemotePlayerInterpolator';
 import { IsometricTransform } from '../utils/IsometricTransform';
@@ -82,7 +80,6 @@ export class WorldScene extends Phaser.Scene {
   private localPlayer: Phaser.GameObjects.Sprite | null = null;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
   private wasd: WASDKeys | null = null;
-  private moveDelay = MOVE_DELAY_MS; // ms between moves
   private lastMoveTime = 0;
   private chordStartTime = 0; // When first movement key was pressed
   private static readonly CHORD_WINDOW_MS = 2; // Time to wait for additional keys
@@ -99,8 +96,6 @@ export class WorldScene extends Phaser.Scene {
   private zoneHUD: ZoneHUD | null = null;
   private currentBiome: BiomeType = 'void_plains';
   private lastCullBounds: { minTileX: number; maxTileX: number; minTileY: number; maxTileY: number } | null = null;
-  private movementController: MovementController | null = null;
-  private pathfindingController: PathfindingController | null = null;
   private collisionMap: boolean[][] | null = null;
   private minimapCamera: MinimapCamera | null = null;
   private isoTransform: IsometricTransform | null = null;
@@ -123,7 +118,6 @@ export class WorldScene extends Phaser.Scene {
   private localPlayerFacing: Direction = 's';
   // Movement animation state tracking
   private lastMovementTime = 0;
-  private movementTweenEndTime = 0; // When current movement tween will complete
   private static readonly IDLE_THRESHOLD_MS = 50; // Time after tween completes before stopping animation
   // Fog of war system
   private fogManager: FogManager | null = null;
@@ -217,23 +211,9 @@ export class WorldScene extends Phaser.Scene {
     this.atmosphereSystem = new AtmosphereSystem(this);
     this.dayNightCycle.setAtmosphereSystem(this.atmosphereSystem);
 
-    // Initialize MovementController (legacy — kept for Phase 135 cleanup)
-    this.movementController = new MovementController();
-    this.movementController.setPositionUpdateHandler((position, reconciling) => {
-      this.updateLocalPlayerSprite(position, reconciling);
-    });
-
     // Phase 134: pixel movement controllers
     this.pixelMovement = new PixelMovementController();
     this.remoteInterpolator = new RemotePlayerInterpolator();
-
-    // Initialize PathfindingController with scene and isoTransform for path visualization
-    this.pathfindingController = new PathfindingController(
-      this.movementController,
-      this.moveDelay,
-      this,
-      this.isoTransform!
-    );
 
     // Initialize ChunkManager
     this.chunkManager = new ChunkManager(
@@ -315,13 +295,6 @@ export class WorldScene extends Phaser.Scene {
 
     // Tiles and player will be loaded via loadZoneFromState() when zone:state event arrives
 
-    // Cancel pathfinding when game loses focus (prevents timer issues)
-    this.game.events.on('blur', () => {
-      if (this.pathfindingController?.isPathActive()) {
-        this.pathfindingController.cancelPath();
-      }
-    });
-
     // Listen for npc:interact:response to update quest markers after interaction
     gameSocket.on('npc:interact:response', (data) => {
       this.updateNpcQuestMarker(data);
@@ -387,43 +360,20 @@ export class WorldScene extends Phaser.Scene {
     //   this.cameras.main.setZoom(newZoom);
     // });
 
-    // Click-to-move handler
+    // Ground click handler: clear target highlight when clicking empty ground
     this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
-      // Skip pathfinding if we clicked an entity (handled by gameobjectdown)
+      // Skip if we clicked an entity (handled by gameobjectdown)
       if (this.lastClickedEntity) {
         this.lastClickedEntity = null;
         return;
       }
 
-      // Only handle left click for movement
+      // Only handle left click
       if (pointer.rightButtonDown()) return;
-
 
       // Clear target highlight when clicking ground (empty tile)
       this.targetHighlight?.hide();
       useCombatStore.getState().setInCombat(useCombatStore.getState().inCombat, null);
-
-      if (!this.isoTransform) return;
-
-      // Convert screen position to world position
-      const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-
-      // Convert to tile coordinates using elevation-aware transform
-      const gridPos = this.isoTransform.screenToTileWithElevation(
-        worldPoint.x,
-        worldPoint.y,
-        (x, y) => this.getWorldTileElevation(x, y)
-      );
-
-      // Start pathfinding with world-coordinate collision and elevation accessors
-      if (this.pathfindingController && this.chunkManager) {
-        this.pathfindingController.startPath(
-          gridPos.x,
-          gridPos.y,
-          (x, y) => this.isWorldTileBlocked(x, y),
-          (x, y) => this.getWorldTileElevation(x, y)
-        );
-      }
     });
 
     // Track mouse buttons for tile inspection (both buttons = look at tile, like Tibia)
@@ -505,7 +455,7 @@ export class WorldScene extends Phaser.Scene {
 
       // Creatures: combat flow
       if (entityType === 'creature') {
-        // Track that we clicked an entity to suppress pathfinding
+        // Track that we clicked an entity to suppress ground-click handler
         this.lastClickedEntity = entityId;
 
         // Attempt to start combat with this creature
@@ -923,11 +873,6 @@ export class WorldScene extends Phaser.Scene {
       useAbilityStore.getState().clearCast();
     }
 
-    // Cancel pathfinding on keyboard input
-    if (anyKeyDown && this.pathfindingController?.isPathActive()) {
-      this.pathfindingController.cancelPath();
-    }
-
     // dt in seconds for velocity calculation
     const dt = delta / 1000;
 
@@ -964,8 +909,7 @@ export class WorldScene extends Phaser.Scene {
     // Handle idle detection: keys released
     if (!anyKeyDown) {
       const isMoving = this.localPlayer.getData('isMoving') as boolean;
-      const isPathfinding = this.pathfindingController?.isPathActive() ?? false;
-      if (isMoving && !isPathfinding) {
+      if (isMoving) {
         this.stopPlayerAnimation();
       }
     }
@@ -1303,19 +1247,6 @@ export class WorldScene extends Phaser.Scene {
       x: parseInt(parts[1], 10),
       y: parseInt(parts[2], 10),
     };
-  }
-
-  /**
-   * Calculate how many tiles deep into a zone the position is.
-   * Returns 0 when on the zone edge, up to (ZONE_SIZE/2 - 1) at the center.
-   * Used for hysteresis: only commit zone transition when depth >= HYSTERESIS_TILES.
-   */
-  private getZoneBoundaryDepth(position: Position): number {
-    const fromLeft = position.x;
-    const fromRight = ZONE_SIZE - 1 - position.x;
-    const fromTop = position.y;
-    const fromBottom = ZONE_SIZE - 1 - position.y;
-    return Math.min(fromLeft, fromRight, fromTop, fromBottom);
   }
 
   /**
@@ -1999,121 +1930,47 @@ export class WorldScene extends Phaser.Scene {
     return null;
   }
 
-  updateLocalPlayerSprite(position: Position, reconciling = false): void {
+  /**
+   * Snap local player sprite to a tile position (used for initial spawn and respawn).
+   * Movement rendering is handled by updateLocalPlayerFromPixels via pixel movement.
+   */
+  updateLocalPlayerSprite(position: Position): void {
     if (!this.localPlayer || !this.isoTransform) return;
 
-    // For pathfinding (click-to-move), start animation if not already moving
-    // Keyboard movement handles animation in handleInput() instead
-    if (!reconciling && this.pathfindingController?.isPathActive()) {
-      this.lastMovementTime = this.time.now;
-      const isMoving = this.localPlayer.getData('isMoving') as boolean;
-      if (!isMoving) {
-        this.startPlayerAnimation(this.localPlayerFacing);
-      }
-    }
-
-    // Get elevation for the correct zone (handles race condition when zone:state arrives after position update)
+    // Get elevation for the correct zone
     const elevation = this.getTileElevation(position.x, position.y, position.zoneId);
-    const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 × diamond height)
+    const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 x diamond height)
     // Use world coordinates for screen position so player aligns with chunk positions
     const { worldX, worldY } = this.positionToWorldCoords(position);
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
     const targetY = screenPos.y - elevationOffset;
 
-    // Depth calculation closure: use current sprite Y during animation for correct sorting
-    // sprite.y is visual position (elevated up by elevationOffset). Add it back to get
-    // logical screen Y matching gridToScreen output for proper depth sorting.
-    const updateDepthFromSpriteY = () => {
-      const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevation, 10, true);
-      this.localPlayer!.setDepth(depth);
-    };
+    // Snap position (no tween — pixel movement handles smooth rendering)
+    this.localPlayer.setPosition(screenPos.x, targetY);
 
-    // Calculate tween duration and moveDelay based on destination tile's movementSpeed
-    // This is the single source of truth - both keyboard and pathfinding use this
-    let tweenDuration = MOVE_DELAY_MS - 20;
-    let effectiveMoveDelay = MOVE_DELAY_MS;
-    if (this.chunkManager) {
-      const chunkX = Math.floor(worldX / ZONE_SIZE);
-      const chunkY = Math.floor(worldY / ZONE_SIZE);
-      const zoneId = `z_${chunkX}_${chunkY}`;
-      const chunk = this.chunkManager.getChunk(zoneId);
-      if (chunk?.data.tiles) {
-        const localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
-        const localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
-        const tileNumericId = chunk.data.tiles[localY]?.[localX];
-        if (tileNumericId !== undefined) {
-          const tileId = tileIdToString(tileNumericId as TileId);
-          const tileDef = TileRegistry.get(tileId);
-          if (tileDef.movementSpeed > 0) {
-            // Both tween and delay scale with tile speed
-            effectiveMoveDelay = Math.round(MOVE_DELAY_MS / tileDef.movementSpeed);
-            tweenDuration = effectiveMoveDelay - 20;
-          }
-        }
-      }
-    }
-    // Update moveDelay for rate limiting (keyboard) and pathfinding timer
-    this.moveDelay = effectiveMoveDelay;
-
-    // Track when this movement tween will complete (for animation idle detection)
-    if (!reconciling) {
-      this.movementTweenEndTime = this.time.now + tweenDuration;
-    }
-    this.pathfindingController?.setMoveDelay(effectiveMoveDelay);
-
-    if (reconciling) {
-      // Reconciliation: only tween if server position differs from current visual position
-      // If positions match, let the existing prediction tween continue uninterrupted
-      if (this.localPlayer.x !== screenPos.x || this.localPlayer.y !== targetY) {
-        this.tweens.killTweensOf(this.localPlayer);
-        this.tweens.add({
-          targets: this.localPlayer,
-          x: screenPos.x,
-          y: targetY,
-          duration: 80,
-          ease: 'Cubic.easeOut',
-          onUpdate: updateDepthFromSpriteY,
-        });
-      }
-      // If positions match, do nothing - prediction was correct
-    } else {
-      // Prediction: start tween to new position
-      this.tweens.killTweensOf(this.localPlayer);
-      this.tweens.add({
-        targets: this.localPlayer,
-        x: screenPos.x,
-        y: targetY,
-        duration: tweenDuration,
-        ease: 'Linear',
-        onUpdate: updateDepthFromSpriteY,
-      });
-    }
-
-    // Update grid data (immediate - these are logical position, not visual)
+    // Update grid data
     this.localPlayer.setData('gridX', worldX);
     this.localPlayer.setData('gridY', worldY);
     this.localPlayer.setData('elevation', elevation);
-    // Set initial depth based on current visual position (onUpdate handles animation)
-    updateDepthFromSpriteY();
 
-    // Check if a pending zone transition should commit now that position has updated
+    // Update depth
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 10, true);
+    this.localPlayer.setDepth(depth);
+
+    // Check if a pending zone transition should commit
     this.checkPendingZoneTransition(position);
 
-    // Phase 133: update range indicator and NPC proximity based on new position
-    // Using tileToPixelCenter until Phase 134 provides real-time pixel positions from client prediction
+    // Update range indicator and NPC proximity
     const { px: playerPx, py: playerPy } = tileToPixelCenter(position.x, position.y);
     this.updateRangeIndicator(playerPx, playerPy);
     this.updateNpcProximity(playerPx, playerPy);
 
     // Check if player landed on a portal tile (TileId.PORTAL = 16) — emit portal:use if so.
-    // Only check on new movement predictions (not server reconciliation) to avoid spam.
     // checkPortalTile is debounced by position key so duplicate calls are safe.
-    if (!reconciling) {
-      this.checkPortalTile(position);
-    }
+    this.checkPortalTile(position);
 
-    // Reveal fog at new position (skip during reconciliation to avoid double-reveal)
-    if (!reconciling && this.fogManager && this.fogRenderer) {
+    // Reveal fog at new position
+    if (this.fogManager && this.fogRenderer) {
       // Get tile ID at player position for visibility modifier
       let tileId: string | undefined;
       if (this.currentTiles && position.y < this.currentTiles.length && position.x < this.currentTiles[0]?.length) {
@@ -2130,8 +1987,8 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    // Check for POI discovery (only on prediction, not reconciliation)
-    if (!reconciling && this.poiRenderer && this.fogManager?.isRevealed(worldX, worldY)) {
+    // Check for POI discovery
+    if (this.poiRenderer && this.fogManager?.isRevealed(worldX, worldY)) {
       const poiId = this.poiRenderer.checkPlayerOnPoi(worldX, worldY);
       if (poiId && !this.discoveredPoiIds.has(poiId)) {
         // Request discovery from server
@@ -2152,7 +2009,7 @@ export class WorldScene extends Phaser.Scene {
         this.minimapCamera.startFollow(this.localPlayer!);
       }
     } else {
-      this.updateLocalPlayerSprite(position, false);
+      this.updateLocalPlayerSprite(position);
     }
   }
 
@@ -2456,9 +2313,7 @@ export class WorldScene extends Phaser.Scene {
    * Handle local player death - disable movement controls.
    */
   handlePlayerDeath(): void {
-    // Cancel any active movement
-    this.movementController?.clearPendingInputs();
-    this.pathfindingController?.cancelPath();
+    // Pixel movement stops naturally when keys are released
     // Could add visual feedback here (grayscale, overlay, etc.) in future
   }
 
@@ -2470,14 +2325,6 @@ export class WorldScene extends Phaser.Scene {
     this.updateLocalPlayer(position);
     // Trigger zone load if zone changed (zone:state will follow from server)
     // The zone:state handler will load the new zone data
-  }
-
-  getMovementController(): MovementController | null {
-    return this.movementController;
-  }
-
-  getPathfindingController(): PathfindingController | null {
-    return this.pathfindingController;
   }
 
   getChunkManager(): ChunkManager | null {
@@ -2513,8 +2360,6 @@ export class WorldScene extends Phaser.Scene {
       this.cursors.left.reset();
       this.cursors.right.reset();
     }
-    // Clear any pending movement inputs
-    this.movementController?.clearPendingInputs();
   }
 
   /**
@@ -2555,31 +2400,12 @@ export class WorldScene extends Phaser.Scene {
 
   setCollisionMap(collisionMap: boolean[][]): void {
     this.collisionMap = collisionMap;
-    if (this.movementController) {
-      this.movementController.setCollisionMap(collisionMap);
-    }
-    // Phase 134: set collision callback for pixel movement
+    // Set collision callback for pixel movement
     if (this.pixelMovement) {
       this.pixelMovement.setCollisionCallback((tx, ty) => {
         return collisionMap[ty]?.[tx] ?? true; // out of bounds = solid
       });
     }
-  }
-
-  /**
-   * Rebuild entity position set from entityStore and push to MovementController.
-   * Called after entity spawn/despawn/batch events to keep collision prediction in sync.
-   */
-  updateEntityCollisionPositions(): void {
-    if (!this.movementController) return;
-    const positions = new Set<string>();
-    const entities = useEntityStore.getState().entities;
-    for (const entity of entities.values()) {
-      if (entity.active) {
-        positions.add(`${entity.position.zoneId}:${entity.position.x},${entity.position.y}`);
-      }
-    }
-    this.movementController.setEntityPositions(positions);
   }
 
   shutdown(): void {
@@ -2595,14 +2421,6 @@ export class WorldScene extends Phaser.Scene {
     if (this.targetHighlight) {
       this.targetHighlight.destroy();
       this.targetHighlight = null;
-    }
-    if (this.pathfindingController) {
-      this.pathfindingController.destroy();
-      this.pathfindingController = null;
-    }
-    if (this.movementController) {
-      this.movementController.clearPendingInputs();
-      this.movementController = null;
     }
     if (this.depthSorter) {
       this.depthSorter.clear();

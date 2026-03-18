@@ -55,7 +55,7 @@ export const useEntityStore = create<EntityState>()(
 // Wire socket events at module level
 // Note: GameSocket supports multiple handlers per event — both gameStore and entityStore
 // handlers fire. gameStore drives Phaser rendering; entityStore drives React components
-// and pathfinding queries.
+// and UI queries.
 gameSocket.on('entity:spawn', (entity: Entity) => {
   useEntityStore.getState().spawnEntity(entity);
 });
