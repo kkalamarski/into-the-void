@@ -1015,9 +1015,10 @@ export class WorldScene extends Phaser.Scene {
     const chunkTiles = this.chunkTiles.get(this.currentZoneId);
     if (!chunkTiles) return;
 
-    const playerDepth = this.localPlayer.depth;
     const playerGridX = this.localPlayer.getData('gridX') as number;
     const playerGridY = this.localPlayer.getData('gridY') as number;
+    // Isometric row: higher value = closer to camera = visually in front
+    const playerRow = playerGridX + playerGridY;
 
     const newTransparent = new Set<Phaser.GameObjects.Container>();
 
@@ -1025,21 +1026,19 @@ export class WorldScene extends Phaser.Scene {
       const elevation = tile.getData('elevation') as number ?? 0;
       if (elevation === 0) continue;
 
-      // Only check tiles near the player (within a few tiles)
       const tileGridX = tile.getData('gridX') as number;
       const tileGridY = tile.getData('gridY') as number;
-      const dx = tileGridX - playerGridX;
-      const dy = tileGridY - playerGridY;
-      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) continue;
 
-      // Tile must be in front of player (higher depth = renders in front)
-      if (tile.depth <= playerDepth) continue;
+      // Only check tiles near the player
+      if (Math.abs(tileGridX - playerGridX) > 4 || Math.abs(tileGridY - playerGridY) > 4) continue;
 
-      // Limit range: higher walls occlude further behind.
-      // Each row is ~tileHeightHalf (64) depth units.
-      const depthDiff = tile.depth - playerDepth;
-      const maxRange = elevation * 64;
-      if (depthDiff > maxRange) continue;
+      // Tile must be in front of player in isometric space (higher row = closer to camera)
+      const tileRow = tileGridX + tileGridY;
+      if (tileRow <= playerRow) continue;
+
+      // Higher walls occlude further behind — limit range
+      const rowDiff = tileRow - playerRow;
+      if (rowDiff > elevation + 1) continue;
 
       newTransparent.add(tile);
       if (tile.alpha !== 0.35) {
