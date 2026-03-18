@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.29
 milestone_name: Hub Station Interiors
-status: defining_requirements
-last_updated: "2026-03-18T12:00:00.000Z"
+status: ready_to_plan
+last_updated: "2026-03-18T12:30:00.000Z"
 progress:
-  total_phases: 139
+  total_phases: 142
   completed_phases: 139
   total_plans: 343
   completed_plans: 343
@@ -18,14 +18,31 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Milestone v1.29 — Hub Station Interiors
+**Current focus:** Phase 140 — Biome & Tile Foundation (v1.29)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-18 — Milestone v1.29 started
+Phase: 140 of 142 (Biome & Tile Foundation)
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-03-18 — v1.29 roadmap created (3 phases, 21 requirements mapped)
+
+Progress: [████████████████████░░] 97%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 343
+- Average duration: — min
+- Total execution time: — hours
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| - | - | - | - |
+
+*Updated after each plan completion*
 
 ## Accumulated Context
 
@@ -35,12 +52,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
 - v1.27: Pixel movement (free sub-tile) replaces tile-to-tile movement
-- v1.27: Soft-authority server — speed cap + one collision sweep, not full physics simulation
 - v1.28: Four independent bug areas fixed (combat, rendering, collision, day/night)
 - v1.29: Hub maps expand from 64x64 to 128x128
 - v1.29: Hand-designed JSON maps for all 4 hubs (no procedural generation)
-- v1.29: 6-8 unique tiles per hub with faction-specific aesthetics
-- v1.29: Unaffiliated gets own salvage station hub (not sharing Nexus)
+- v1.29: 8 tile types per hub (32 total definitions)
+- v1.29: Unaffiliated gets Salvage Station hub (not sharing with Nexus/Meridian)
+- v1.29: Procedural cube rendering extended to all 32 new hub tile types
 
 ### Pending Todos
 
@@ -53,9 +70,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: Defining requirements for v1.29
+Stopped at: Roadmap created for v1.29 — 3 phases (140-142), 21 requirements mapped
 Resume file: None
-Next action: Define requirements → create roadmap
+Next action: /gsd:plan-phase 140
 
 ---
-*Last updated: 2026-03-18 — Milestone v1.29 started*
+*Last updated: 2026-03-18 — v1.29 roadmap created*

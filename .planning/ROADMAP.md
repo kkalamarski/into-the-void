@@ -30,7 +30,8 @@
 - ✅ **v1.25 Crafting** - Phases 122-125 (shipped 2026-03-06)
 - ✅ **v1.26 Visual Overhaul & Atmosphere** - Phases 126-130 (shipped 2026-03-17)
 - ✅ **v1.27 Pixel Movement Rewrite** - Phases 131-135 (shipped 2026-03-18)
-- 🚧 **v1.28 Post-Movement Polish** - Phases 136-139 (in progress)
+- ✅ **v1.28 Post-Movement Polish** - Phases 136-139 (shipped 2026-03-18)
+- 🚧 **v1.29 Hub Station Interiors** - Phases 140-142 (in progress)
 
 ## Phases
 
@@ -131,7 +132,7 @@
 
 ---
 
-### 🚧 v1.28 Post-Movement Polish (In Progress)
+### ✅ v1.28 Post-Movement Polish (Complete)
 
 **Milestone Goal:** Restore combat, gathering, entity rendering, and movement to correct behavior after the v1.27 pixel movement rewrite introduced regressions. Four independent bug areas — interaction distance checks, entity anchor points, collision boundary walls, and day/night brightness — each fixed in its own phase.
 
@@ -182,6 +183,52 @@
   2. The day/night brightness transitions smoothly — no abrupt jumps in brightness between cycle phases
 **Plans**: TBD
 
+---
+
+### 🚧 v1.29 Hub Station Interiors (In Progress)
+
+**Milestone Goal:** Replace plain square hubs with immersive faction-themed space station interiors — unique tiles, biomes, and hand-crafted room layouts for all 4 hubs. Each faction gets a distinct visual identity through a custom biome type, 6-8 purpose-built tiles, and a 128x128 hand-designed map with rooms, corridors, and lore-appropriate NPC placements.
+
+- [ ] **Phase 140: Biome & Tile Foundation** - Define the 4 hub biome types, register them in the biome system, and define all 8 tile types per hub in the tile registry
+- [ ] **Phase 141: Rendering & System Upgrade** - Implement procedural tile rendering for all new hub tiles, upgrade the hub zone system to 128x128, and add indoor ambient particles
+- [ ] **Phase 142: Hub Maps & Spawn Updates** - Build all 4 hand-designed 128x128 hub maps with NPC placements and portal tiles, and update spawn positions
+
+### Phase 140: Biome & Tile Foundation
+**Goal**: All four hub biome types exist in the biome registry with faction-correct palettes, and all hub tile types are defined with their properties so downstream phases can reference them
+**Depends on**: Nothing (first phase of milestone)
+**Requirements**: BIOME-01, BIOME-02, BIOME-03, BIOME-04, TILE-01, TILE-02, TILE-03, TILE-04, TILE-05, TILE-06, TILE-07, TILE-08, SYS-02
+**Success Criteria** (what must be TRUE):
+  1. Four biome IDs (`canopy_station`, `ironhold_station`, `meridian_station`, `salvage_station`) exist in the biome registry with distinct faction palettes — Canopy is bioluminescent green/blue, Ironhold is industrial gray/rust/orange, Meridian is silver/white/blue, Salvage is patchwork/mixed
+  2. Eight tile type IDs exist per hub (main floor, wall, door, corridor floor, decoration, accent floor, window wall, hazard/special) — all four biome sets defined, 32 tile definitions total
+  3. The biome system correctly maps each hub biome to its tile set — querying a hub biome returns its specific tile types, not world biome tiles
+  4. The TypeScript build passes with all new biome and tile definitions in place — no type errors or missing exports
+**Plans**: TBD
+
+### Phase 141: Rendering & System Upgrade
+**Goal**: The procedural tile generator renders all new hub tiles with correct faction palettes and accents, hub zones support 128x128 maps, and hub biomes display their indoor ambient particle effects
+**Depends on**: Phase 140
+**Requirements**: SYS-01, SYS-03, BIOME-05
+**Success Criteria** (what must be TRUE):
+  1. All 32 new hub tile types render as procedural isometric cubes — each hub's tiles visually match their faction palette with distinguishable accent details between tile types within the same hub
+  2. Hub zones load and stream 128x128 tile maps without errors — the system does not truncate or reject maps larger than 64x64
+  3. Entering any hub biome zone triggers its ambient particle effect (Canopy: spores, Ironhold: steam, Meridian: holo-dust, Salvage: smoke wisps) — particles appear and cross-fade correctly with the weather system
+**Plans**: TBD
+
+### Phase 142: Hub Maps & Spawn Updates
+**Goal**: All four faction hubs display their hand-designed 128x128 interiors with NPCs in lore-correct rooms and portal tiles in docking areas, and all player spawn positions reflect the new layouts
+**Depends on**: Phase 141
+**Requirements**: MAP-01, MAP-02, MAP-03, MAP-04, MAP-05, MAP-06, SYS-04, SYS-05
+**Success Criteria** (what must be TRUE):
+  1. Entering Canopy Station loads a 128x128 map with organic room shapes, vine-themed corridors, and a central atrium area — rooms are navigable and walls block movement correctly
+  2. Entering Ironhold Station loads a 128x128 map with forge halls, metal corridors, and warren-style sub-rooms — rooms are navigable and walls block movement correctly
+  3. Entering Meridian Station loads a 128x128 map with a trading floor, glass-style corridors, and an archive area — rooms are navigable and walls block movement correctly
+  4. Entering Salvage Station loads a 128x128 map with a cargo bay, patched corridors, and a market area — rooms are navigable and walls block movement correctly
+  5. Each hub map has NPCs visible in lore-appropriate locations — traders appear in trading areas, guards at entrances, service NPCs in their designated rooms
+  6. Each hub map has a portal tile in the docking/entry area — interacting with it triggers zone travel
+  7. Unaffiliated players who die or recall home spawn at Salvage Station, not Meridian Station
+  8. Player spawn positions in all four hubs land inside the new layouts — no spawning inside walls or outside the map boundary
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -191,10 +238,13 @@
 | 133. Distance System Migration | v1.27 | 5/5 | Complete | 2026-03-17 |
 | 134. Client Movement Rewrite | v1.27 | 3/3 | Complete | 2026-03-18 |
 | 135. Cleanup and Collision Audit | v1.27 | 2/2 | Complete | 2026-03-18 |
-| 136. Combat & Gathering Fix | 2/2 | Complete    | 2026-03-18 | - |
-| 137. Entity Rendering Fix | 2/2 | Complete    | 2026-03-18 | - |
-| 138. Collision Boundary Fix | 2/2 | Complete    | 2026-03-18 | - |
-| 139. Day/Night Brightness Fix | 1/1 | Complete    | 2026-03-18 | - |
+| 136. Combat & Gathering Fix | v1.28 | 2/2 | Complete | 2026-03-18 |
+| 137. Entity Rendering Fix | v1.28 | 2/2 | Complete | 2026-03-18 |
+| 138. Collision Boundary Fix | v1.28 | 2/2 | Complete | 2026-03-18 |
+| 139. Day/Night Brightness Fix | v1.28 | 1/1 | Complete | 2026-03-18 |
+| 140. Biome & Tile Foundation | v1.29 | 0/? | Not started | - |
+| 141. Rendering & System Upgrade | v1.29 | 0/? | Not started | - |
+| 142. Hub Maps & Spawn Updates | v1.29 | 0/? | Not started | - |
 
 ---
-*Last updated: 2026-03-18 — v1.28 roadmap created*
+*Last updated: 2026-03-18 — v1.29 roadmap created*

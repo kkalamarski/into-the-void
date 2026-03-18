@@ -134,13 +134,36 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated during roadmap creation) | | |
+| BIOME-01 | Phase 140 | Pending |
+| BIOME-02 | Phase 140 | Pending |
+| BIOME-03 | Phase 140 | Pending |
+| BIOME-04 | Phase 140 | Pending |
+| TILE-01 | Phase 140 | Pending |
+| TILE-02 | Phase 140 | Pending |
+| TILE-03 | Phase 140 | Pending |
+| TILE-04 | Phase 140 | Pending |
+| TILE-05 | Phase 140 | Pending |
+| TILE-06 | Phase 140 | Pending |
+| TILE-07 | Phase 140 | Pending |
+| TILE-08 | Phase 140 | Pending |
+| SYS-02 | Phase 140 | Pending |
+| SYS-01 | Phase 141 | Pending |
+| SYS-03 | Phase 141 | Pending |
+| BIOME-05 | Phase 141 | Pending |
+| MAP-01 | Phase 142 | Pending |
+| MAP-02 | Phase 142 | Pending |
+| MAP-03 | Phase 142 | Pending |
+| MAP-04 | Phase 142 | Pending |
+| MAP-05 | Phase 142 | Pending |
+| MAP-06 | Phase 142 | Pending |
+| SYS-04 | Phase 142 | Pending |
+| SYS-05 | Phase 142 | Pending |
 
 **Coverage:**
 - v1.29 requirements: 21 total
-- Mapped to phases: 0
-- Unmapped: 21 ⚠️
+- Mapped to phases: 21
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 after initial definition*
+*Last updated: 2026-03-18 after roadmap creation*
