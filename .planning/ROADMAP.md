@@ -136,7 +136,7 @@
 **Milestone Goal:** Restore combat, gathering, entity rendering, and movement to correct behavior after the v1.27 pixel movement rewrite introduced regressions. Four independent bug areas — interaction distance checks, entity anchor points, collision boundary walls, and day/night brightness — each fixed in its own phase.
 
 - [x] **Phase 136: Combat & Gathering Fix** - Restore player ability to attack creatures and gather resources using correct pixel distance checks (completed 2026-03-18)
-- [ ] **Phase 137: Entity Rendering Fix** - Eliminate floating sprites and misaligned hitboxes by correcting entity anchor points and trimming sprite transparent space
+- [x] **Phase 137: Entity Rendering Fix** - Eliminate floating sprites and misaligned hitboxes by correcting entity anchor points and trimming sprite transparent space (completed 2026-03-18)
 - [ ] **Phase 138: Collision Boundary Fix** - Remove invisible collision walls at chunk and zone boundaries so movement is unobstructed across the world
 - [ ] **Phase 139: Day/Night Brightness Fix** - Correct the ColorMatrix brightness curve so dusk and dawn are visibly brighter than night
 
@@ -192,7 +192,7 @@
 | 134. Client Movement Rewrite | v1.27 | 3/3 | Complete | 2026-03-18 |
 | 135. Cleanup and Collision Audit | v1.27 | 2/2 | Complete | 2026-03-18 |
 | 136. Combat & Gathering Fix | 2/2 | Complete    | 2026-03-18 | - |
-| 137. Entity Rendering Fix | v1.28 | 0/TBD | Not started | - |
+| 137. Entity Rendering Fix | 2/2 | Complete    | 2026-03-18 | - |
 | 138. Collision Boundary Fix | v1.28 | 0/TBD | Not started | - |
 | 139. Day/Night Brightness Fix | v1.28 | 0/TBD | Not started | - |
 
