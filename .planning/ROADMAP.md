@@ -215,7 +215,10 @@
   1. All 32 new hub tile types render as procedural isometric cubes — each hub's tiles visually match their faction palette with distinguishable accent details between tile types within the same hub
   2. Hub zones load and stream 128x128 tile maps without errors — the system does not truncate or reject maps larger than 64x64
   3. Entering any hub biome zone triggers its ambient particle effect (Canopy: spores, Ironhold: steam, Meridian: holo-dust, Salvage: smoke wisps) — particles appear and cross-fade correctly with the weather system
-**Plans**: TBD
+**Plans**: 3 plans
+  - [ ] 141-01-PLAN.md — Procedural tile rendering for all 32 hub tiles (palettes, accents, TileId enum, TILE_TEXTURE_MAP)
+  - [ ] 141-02-PLAN.md — Hub zone 128x128 map support (HUB_ZONE_SIZE, dynamic renderChunk, hub generation fallback)
+  - [ ] 141-03-PLAN.md — Indoor ambient particle effects per hub biome (unique particles, constant density, no day/night)
 
 ### Phase 142: Hub Maps & Spawn Updates
 **Goal**: All four faction hubs display their hand-designed 128x128 interiors with NPCs in lore-correct rooms and portal tiles in docking areas, and all player spawn positions reflect the new layouts
