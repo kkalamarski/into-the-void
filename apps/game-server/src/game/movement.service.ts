@@ -8,6 +8,7 @@ import {
   resolvePixelCollision,
   validatePixelSpeed,
 } from '@into-the-void/game-logic';
+import { ZONE_SIZE } from '@into-the-void/shared-types';
 
 interface PixelMoveInput {
   keys: number;
@@ -146,9 +147,12 @@ export class MovementService implements OnModuleInit {
         continue;
       }
 
-      // isSolid callback: out-of-bounds defaults to solid (impassable border)
+      // Convert zone-local tile coords to world tile coords for cross-zone lookup
+      const zoneCoords = this.parseZoneCoords(player.position.zoneId);
+      const offsetX = zoneCoords.x * ZONE_SIZE;
+      const offsetY = zoneCoords.y * ZONE_SIZE;
       const isSolid = (tx: number, ty: number): boolean =>
-        chunk.collisions[ty]?.[tx] ?? true;
+        this.zonesService.isWorldTileBlocked(offsetX + tx, offsetY + ty);
 
       const resolved = resolvePixelCollision(player.px, player.py, vx, vy, isSolid);
 
@@ -162,6 +166,14 @@ export class MovementService implements OnModuleInit {
     if (dirty.length === 0) return;
 
     this.broadcastBatch(dirty);
+  }
+
+  /**
+   * Parse zone coordinates (x, y) from a zoneId string (e.g., "z_3_-2" -> {x:3, y:-2}).
+   */
+  private parseZoneCoords(zoneId: string): { x: number; y: number } {
+    const parts = zoneId.split('_');
+    return { x: parseInt(parts[1], 10), y: parseInt(parts[2], 10) };
   }
 
   /**

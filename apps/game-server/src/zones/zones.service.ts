@@ -10,6 +10,7 @@ import {
   Npc,
   Plant,
   SpawnPoint,
+  ZONE_SIZE,
 } from '@into-the-void/shared-types';
 import { generateChunk, generateHubChunk, isKnownHub, getHubConfig } from '@into-the-void/world-gen';
 import { isHubZone } from '@into-the-void/shared-types';
@@ -417,6 +418,26 @@ export class ZonesService implements OnModuleInit {
   getChunkSync(zoneId: string): ChunkData | undefined {
     const zoneState = this.zones.get(zoneId);
     return zoneState?.chunk;
+  }
+
+  /**
+   * Check if a world tile coordinate is blocked.
+   * Resolves the correct zone from world tile coordinates and looks up local collision data.
+   * Returns true (blocked) if the zone is not loaded (conservative fallback).
+   * Used by MovementService for cross-zone collision resolution.
+   */
+  isWorldTileBlocked(worldX: number, worldY: number): boolean {
+    const zoneX = Math.floor(worldX / ZONE_SIZE);
+    const zoneY = Math.floor(worldY / ZONE_SIZE);
+    const zoneId = `z_${zoneX}_${zoneY}`;
+
+    const chunk = this.getChunkSync(zoneId);
+    if (!chunk?.collisions) return true; // Zone not loaded = blocked (conservative)
+
+    const localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+    const localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+
+    return chunk.collisions[localY]?.[localX] ?? true;
   }
 
   /**
