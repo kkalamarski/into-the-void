@@ -437,24 +437,66 @@ export class EntityRenderer {
       }
     }
 
-    // Make sprites interactive - use hand cursor for clickable entities
+    // Make sprites interactive with tight hitArea matching visible art (RENDER-04)
     const isClickable = entity.type === 'creature' || entity.type === 'plant' || entity.type === 'mineral';
-    sprite.setInteractive({ useHandCursor: isClickable });
+    if (isClickable) {
+      // Custom hitArea in sprite's local coordinate space (unscaled).
+      // For bottom-center origin (0.5, 1.0), the sprite's (0,0) is top-left of texture.
+      // Trim transparent padding: center ~70% width, bottom ~80% height.
+      const texW = sprite.width;
+      const texH = sprite.height;
+      const isAnimated = this.isCreature(entity) && entity.speciesId && EntityRenderer.ANIMATED_CREATURES.has(entity.speciesId);
+      // Animated creatures have tighter sprite sheets (less padding)
+      const hitPadX = texW * (isAnimated ? 0.10 : 0.15);
+      const hitPadTop = texH * (isAnimated ? 0.15 : 0.2);
+      const hitRect = new Phaser.Geom.Rectangle(
+        hitPadX,
+        hitPadTop,
+        texW - hitPadX * 2,
+        texH - hitPadTop
+      );
+      sprite.setInteractive(hitRect, Phaser.Geom.Rectangle.Contains);
+      sprite.input!.cursor = 'pointer';
 
-    // Plants and minerals: show UI on hover for performance (UI hidden by default)
-    if (this.isPlant(entity) || this.isMineral(entity)) {
+      // Hover outline glow for clickable entities (CONTEXT.md: outline glow on hover)
+      const hoverGlow = this.scene.add.graphics();
+      hoverGlow.setVisible(false);
+      container.add(hoverGlow);
+      container.setData('hoverGlow', hoverGlow);
+
       sprite.on('pointerover', () => {
-        const nameplate = container.getData('nameplate') as Phaser.GameObjects.Text | undefined;
-        const yieldBar = container.getData('yieldBar') as Phaser.GameObjects.Graphics | undefined;
-        if (nameplate) nameplate.setVisible(true);
-        if (yieldBar) yieldBar.setVisible(true);
+        // Draw white outline glow around sprite visible bounds
+        hoverGlow.clear();
+        const halfW = (sprite.width * sprite.scaleX) / 2;
+        const h = sprite.height * sprite.scaleY;
+        const yOff = spriteYOffset;
+        hoverGlow.lineStyle(3, 0xffffff, 0.6);
+        hoverGlow.strokeRoundedRect(-halfW, yOff - h, halfW * 2, h, 4);
+        hoverGlow.setVisible(true);
+
+        // Plants/minerals: also show nameplate and yield bar on hover
+        if (isFeature) {
+          const nameplate = container.getData('nameplate') as Phaser.GameObjects.Text | undefined;
+          const yieldBar = container.getData('yieldBar') as Phaser.GameObjects.Graphics | undefined;
+          if (nameplate) nameplate.setVisible(true);
+          if (yieldBar) yieldBar.setVisible(true);
+        }
       });
+
       sprite.on('pointerout', () => {
-        const nameplate = container.getData('nameplate') as Phaser.GameObjects.Text | undefined;
-        const yieldBar = container.getData('yieldBar') as Phaser.GameObjects.Graphics | undefined;
-        if (nameplate) nameplate.setVisible(false);
-        if (yieldBar) yieldBar.setVisible(false);
+        hoverGlow.setVisible(false);
+        hoverGlow.clear();
+
+        // Plants/minerals: hide nameplate and yield bar
+        if (isFeature) {
+          const nameplate = container.getData('nameplate') as Phaser.GameObjects.Text | undefined;
+          const yieldBar = container.getData('yieldBar') as Phaser.GameObjects.Graphics | undefined;
+          if (nameplate) nameplate.setVisible(false);
+          if (yieldBar) yieldBar.setVisible(false);
+        }
       });
+    } else {
+      sprite.setInteractive();
     }
 
     container.add(sprite);
