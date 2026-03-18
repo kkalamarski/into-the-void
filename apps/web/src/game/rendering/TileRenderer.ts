@@ -207,30 +207,40 @@ export class TileRenderer {
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
     const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
 
-    // Create container at world screen position
+    // Create container at world screen position (top cube position)
     const container = this.scene.add.container(screenPos.x, screenPos.y - elevationOffset);
     container.setData('gridX', worldX);
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
-    // Add the cube sprite (includes top + side faces pre-rendered)
-    const cubeSprite = this.createCubeSprite(tileId, worldX, worldY);
-    container.add(cubeSprite);
+    // Stack cubes from ground level up to elevation to fill the wall
+    // Each lower cube is offset downward by ELEVATION_HEIGHT_STEP relative to the top
+    for (let level = 0; level <= elevation; level++) {
+      const cubeSprite = this.createCubeSprite(tileId, worldX, worldY);
+      // Offset relative to container: level 0 is at the bottom, elevation is at top (y=0)
+      const yOffset = (elevation - level) * ELEVATION_HEIGHT_STEP;
+      if (cubeSprite instanceof Phaser.GameObjects.Image) {
+        cubeSprite.setY(yOffset);
+      }
+      container.add(cubeSprite);
 
-    // Apply height-based tinting for visual depth
-    // Lower elevations appear darker, higher elevations appear normal/brighter
-    this.applyElevationTint(cubeSprite, elevation);
+      // Apply height-based tinting — lower levels appear darker
+      this.applyElevationTint(cubeSprite, level);
+    }
+
+    // Get the top cube for shadow calculations
+    const topCube = container.list[container.list.length - 1];
 
     // Apply additional shadow darkening if adjacent to higher elevation
-    if (cubeSprite instanceof Phaser.GameObjects.Image) {
+    if (topCube instanceof Phaser.GameObjects.Image) {
       if (this.isAdjacentToHigherElevation(localX, localY, elevation, heights)) {
         // Further darken the tile to simulate shadow from adjacent cliff
-        const currentTint = cubeSprite.tintTopLeft;
+        const currentTint = topCube.tintTopLeft;
         const r = ((currentTint >> 16) & 0xff) * SHADOW_TINT_FACTOR;
         const g = ((currentTint >> 8) & 0xff) * SHADOW_TINT_FACTOR;
         const b = (currentTint & 0xff) * SHADOW_TINT_FACTOR;
         const shadowTint = (Math.floor(r) << 16) | (Math.floor(g) << 8) | Math.floor(b);
-        cubeSprite.setTint(shadowTint);
+        topCube.setTint(shadowTint);
       }
     }
 
