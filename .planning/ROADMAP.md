@@ -193,7 +193,7 @@
 | 135. Cleanup and Collision Audit | v1.27 | 2/2 | Complete | 2026-03-18 |
 | 136. Combat & Gathering Fix | 2/2 | Complete    | 2026-03-18 | - |
 | 137. Entity Rendering Fix | 2/2 | Complete    | 2026-03-18 | - |
-| 138. Collision Boundary Fix | 2/2 | Complete   | 2026-03-18 | - |
+| 138. Collision Boundary Fix | 2/2 | Complete    | 2026-03-18 | - |
 | 139. Day/Night Brightness Fix | v1.28 | 0/TBD | Not started | - |
 
 ---
