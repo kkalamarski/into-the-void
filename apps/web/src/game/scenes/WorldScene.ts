@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, BiomeTier, Direction, Creature, TileStructure, isHubZone, Npc, TimingChallenge, BIOME_DISPLAY_NAMES, BIOME_TIERS } from '@into-the-void/shared-types';
+import { ZONE_SIZE, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, BiomeTier, Direction, Creature, TileStructure, isHubZone, Npc, TimingChallenge, BIOME_DISPLAY_NAMES, BIOME_TIERS, getZoneSize } from '@into-the-void/shared-types';
 import { TILE_SIZE_PX, MELEE_RANGE_PX, GATHER_RANGE_PX, NPC_INTERACT_RANGE_PX, pixelDistanceTo, tileToPixelCenter } from '@into-the-void/game-logic';
 import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
@@ -519,7 +519,8 @@ export class WorldScene extends Phaser.Scene {
     );
 
     // Check bounds
-    if (gridPos.x < 0 || gridPos.x >= ZONE_SIZE || gridPos.y < 0 || gridPos.y >= ZONE_SIZE) {
+    const currentZoneSize = getZoneSize(this.currentZoneId);
+    if (gridPos.x < 0 || gridPos.x >= currentZoneSize || gridPos.y < 0 || gridPos.y >= currentZoneSize) {
       return;
     }
 
@@ -1309,7 +1310,7 @@ export class WorldScene extends Phaser.Scene {
    * Used for hysteresis: commit zone transition when depth >= HYSTERESIS_PX (384px).
    */
   private getZoneBoundaryDepthPx(px: number, py: number): number {
-    const zonePxSize = ZONE_SIZE * TILE_SIZE_PX;
+    const zonePxSize = getZoneSize(this.currentZoneId) * TILE_SIZE_PX;
     const fromLeft = px;
     const fromRight = zonePxSize - px;
     const fromTop = py;
@@ -1472,10 +1473,14 @@ export class WorldScene extends Phaser.Scene {
     // Store tiles in array for cleanup (NOT in container - need global depth sorting)
     const chunkTileArray: Phaser.GameObjects.Container[] = [];
 
+    // Use actual array dimensions — hub zones may be 128x128
+    const mapHeight = tiles.length;
+    const mapWidth = tiles[0]?.length ?? 0;
+
     // Create tiles using WORLD coordinates for proper global depth sorting
     // Tiles are added directly to scene so their depth participates in global sorting
-    for (let y = 0; y < ZONE_SIZE; y++) {
-      for (let x = 0; x < ZONE_SIZE; x++) {
+    for (let y = 0; y < mapHeight; y++) {
+      for (let x = 0; x < mapWidth; x++) {
         const tileId = tiles[y][x] as TileId;
         const elevation = heights[y][x];
         // Use world coordinates (chunk offset + local position)
@@ -2153,7 +2158,7 @@ export class WorldScene extends Phaser.Scene {
    * Check zone transition at pixel granularity.
    */
   private checkPixelZoneTransition(px: number, py: number): void {
-    const zoneSizePx = ZONE_SIZE * TILE_SIZE_PX;
+    const zoneSizePx = getZoneSize(this.currentZoneId) * TILE_SIZE_PX;
     let newZoneOffsetX = 0;
     let newZoneOffsetY = 0;
     if (px < -HYSTERESIS_PX) newZoneOffsetX = -1;
@@ -2459,8 +2464,9 @@ export class WorldScene extends Phaser.Scene {
     if (this.pixelMovement) {
       // Capture current zone offset for converting zone-local → world coordinates
       const zoneCoords = this.parseZoneCoords(this.currentZoneId);
-      const offsetX = zoneCoords.x * ZONE_SIZE;
-      const offsetY = zoneCoords.y * ZONE_SIZE;
+      const currentSize = getZoneSize(this.currentZoneId);
+      const offsetX = zoneCoords.x * currentSize;
+      const offsetY = zoneCoords.y * currentSize;
       this.pixelMovement.setCollisionCallback((tx, ty) => {
         return this.isWorldTileBlocked(offsetX + tx, offsetY + ty);
       });

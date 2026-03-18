@@ -27,9 +27,20 @@ export function isHubZone(zoneId: string): boolean {
 }
 
 /**
- * Zone size in tiles
+ * Zone size in tiles (open world)
  */
 export const ZONE_SIZE = 64;
+
+/** Hub zone size in tiles (128x128 for interior maps) */
+export const HUB_ZONE_SIZE = 128;
+
+/**
+ * Get the zone size in tiles for a given zoneId.
+ * Hub zones are 128x128, open world zones are 64x64.
+ */
+export function getZoneSize(zoneId: string): number {
+  return isHubZone(zoneId) ? HUB_ZONE_SIZE : ZONE_SIZE;
+}
 
 /**
  * Zone data

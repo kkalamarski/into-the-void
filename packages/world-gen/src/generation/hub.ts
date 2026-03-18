@@ -1,4 +1,4 @@
-import { ChunkData, BiomeType, FertilityType, ZONE_SIZE } from '@into-the-void/shared-types';
+import { ChunkData, BiomeType, FertilityType, ZONE_SIZE, HUB_ZONE_SIZE } from '@into-the-void/shared-types';
 import { getHubMap } from '../maps/hub-loader';
 
 const PORTAL_TILE_ID = 16; // TileId.PORTAL from terrain.ts
@@ -118,8 +118,8 @@ export function getHubConfig(zoneId: string): HubConfig | undefined {
  * Generate a hub zone chunk.
  * Loads from pre-defined JSON map if available, otherwise falls back to procedural generation.
  *
- * Hubs are 64x64 tile areas with:
- * - Walkable floor in the center (roughly 48x48)
+ * Hubs are 128x128 tile areas (fallback procedural) with:
+ * - Walkable floor in the center (roughly 112x112)
  * - Wall/boundary tiles around the perimeter (8 tiles thick)
  * - No spawn points (NPCs added separately in Phase 48)
  * - No entity spawns (safe zone)
@@ -138,6 +138,7 @@ export function generateHubChunk(hubZoneId: string): ChunkData {
 
 /**
  * Generate a hub chunk procedurally (fallback for hubs without JSON maps).
+ * Generates a 128x128 tile map with walkable interior and wall perimeter.
  */
 function generateProceduralHubChunk(hubZoneId: string): ChunkData {
   const config = HUB_CONFIGS[hubZoneId];
@@ -145,19 +146,20 @@ function generateProceduralHubChunk(hubZoneId: string): ChunkData {
     throw new Error(`Unknown hub zone: ${hubZoneId}`);
   }
 
+  const size = HUB_ZONE_SIZE;
   const tiles: number[][] = [];
   const heights: number[][] = [];
   const collisions: boolean[][] = [];
 
-  for (let y = 0; y < ZONE_SIZE; y++) {
+  for (let y = 0; y < size; y++) {
     const tileRow: number[] = [];
     const heightRow: number[] = [];
     const collisionRow: boolean[] = [];
 
-    for (let x = 0; x < ZONE_SIZE; x++) {
+    for (let x = 0; x < size; x++) {
       // Perimeter (8 tiles thick) is wall/blocked
       const isPerimeter =
-        x < 8 || x >= ZONE_SIZE - 8 || y < 8 || y >= ZONE_SIZE - 8;
+        x < 8 || x >= size - 8 || y < 8 || y >= size - 8;
 
       if (isPerimeter) {
         tileRow.push(config.wallTile);
@@ -175,14 +177,16 @@ function generateProceduralHubChunk(hubZoneId: string): ChunkData {
     collisions.push(collisionRow);
   }
 
-  // Place portal tile at hub center for exit
-  const portalX = 32;
-  const portalY = 32;
+  // Place portal tile at hub center for exit (center of 128x128 = 64,64)
+  const portalX = Math.floor(size / 2);
+  const portalY = Math.floor(size / 2);
   tiles[portalY][portalX] = PORTAL_TILE_ID;
   // Portal is walkable (collision already false from floor tile generation)
 
   return {
     zoneId: hubZoneId,
+    width: size,
+    height: size,
     tiles,
     heights,
     structures: [],      // No procedural structures in hubs
