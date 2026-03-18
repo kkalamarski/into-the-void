@@ -17,7 +17,12 @@ export type BiomeType =
   | 'deep_trenches'      // Tier III - high-pressure deep ocean
   | 'void_rift'          // Tier IV - reality distortion biome
   | 'crystalline_wastes' // Tier III - high-elevation crystal formations
-  | 'bioluminescent_depths'; // Tier II - glowing flora caverns
+  | 'bioluminescent_depths' // Tier II - glowing flora caverns
+  // Hub Station Biomes
+  | 'canopy_station'         // Verdant Dynamics hub — bioluminescent green/blue
+  | 'ironhold_station'       // Helix Extraction hub — industrial gray/rust/orange
+  | 'meridian_station'       // Nexus Frontiers hub — corporate silver/white/blue
+  | 'salvage_station';       // Unaffiliated hub — patchwork/mixed
 
 /**
  * Biome data
@@ -99,6 +104,11 @@ export const BIOME_DISPLAY_NAMES: Record<BiomeType, string> = {
   void_rift: 'Void Rift',
   crystalline_wastes: 'Crystalline Wastes',
   bioluminescent_depths: 'Bioluminescent Depths',
+  // Hub Station Biomes
+  canopy_station: 'Canopy Station',
+  ironhold_station: 'Ironhold Station',
+  meridian_station: 'Meridian Station',
+  salvage_station: 'Salvage Station',
 };
 
 /**
@@ -121,6 +131,11 @@ export const BIOME_COLORS: Record<BiomeType, string> = {
   void_rift: '#4a0080',           // Deep purple (void/anomaly theme)
   crystalline_wastes: '#b0e0e6',  // Pale cyan (crystal reflections)
   bioluminescent_depths: '#00ff88', // Bright cyan-green (bioluminescence)
+  // Hub Station Biomes
+  canopy_station: '#22cc88',       // Bioluminescent green
+  ironhold_station: '#aa5522',     // Rust/industrial orange
+  meridian_station: '#c0d0e0',     // Corporate silver-blue
+  salvage_station: '#8a7a5a',      // Patchwork tan/mixed
 };
 
 /** Biome survival tiers from lore (I-IV) */
@@ -157,6 +172,12 @@ export const BIOME_TIERS: Record<BiomeType, BiomeTier> = {
 
   // Tier IV - Extreme
   void_rift: 4,          // Anomaly Zones
+
+  // Hub Station Biomes (safe zones)
+  canopy_station: 1,
+  ironhold_station: 1,
+  meridian_station: 1,
+  salvage_station: 1,
 };
 
 /**
