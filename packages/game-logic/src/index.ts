@@ -1,11 +1,8 @@
 // Movement
 export * from './movement/validation';
 export * from './movement/pathfinding';
-export * from './movement/speed';
 export * from './movement/pixel-validation';
 export * from './movement/pixel-distance';
-export { validateMovementWithElevation } from './movement/validation';
-export { findPathWithElevation } from './movement/pathfinding';
 
 // Combat
 export * from './combat/damage';

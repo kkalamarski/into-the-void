@@ -4,41 +4,23 @@ import { ZonesService } from '../zones/zones.service';
 import { InventoryService } from './inventory.service';
 import { EntityService } from './entity.service';
 import {
-  Direction,
   Position,
   ZoneState,
-  PlayerPublic,
   Entity,
   ItemEntity,
 } from '@into-the-void/shared-types';
 import {
-  calculateNewPosition,
-  validateMovement,
-  isZoneTransition,
   validateItemUse,
   resolveEffectsForTrigger,
   validateEquip,
   validateUnequip,
   effectiveStats,
   type ComputedStats,
-  getMovementSpeedModifier,
-  calculateMovementDelay,
 } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
 import type { Inventory, InventoryItemJson, EquipmentJson } from '@into-the-void/database';
-import { getBiome, BiomeGenerator, getHubConfig, tileIdToString } from '@into-the-void/world-gen';
+import { getBiome, BiomeGenerator, getHubConfig } from '@into-the-void/world-gen';
 import { isHubZone } from '@into-the-void/shared-types';
-
-interface MoveResult {
-  success: boolean;
-  error?: string;
-  playerId?: string;
-  position?: Position;
-  zoneId?: string;
-  oldZoneId?: string;
-  newZoneId?: string;
-  playerPublic?: PlayerPublic;
-}
 
 interface InteractionResult {
   success: boolean;
@@ -132,116 +114,6 @@ export class GameService {
       chunk,
       biome,
       fertilityType,
-    };
-  }
-
-  /**
-   * Calculate movement delay for a specific position based on tile and biome
-   * @param position - Target position
-   * @returns Movement delay in milliseconds
-   */
-  async getMovementDelay(position: Position): Promise<number> {
-    const BASE_MOVEMENT_TICK = 500; // Base 500ms movement rate
-
-    try {
-      // Get chunk to access tile data
-      const chunk = await this.zonesService.getChunk(position.zoneId);
-
-      // Get tile ID at position
-      const tileIdEnum = chunk.tiles[position.y]?.[position.x];
-      if (tileIdEnum === undefined) {
-        return BASE_MOVEMENT_TICK; // Default if position invalid
-      }
-
-      // Convert numeric tile ID to string tile ID
-      const tileId = tileIdToString(tileIdEnum);
-
-      // Get biome for the zone
-      let biome: string | undefined;
-      if (!isHubZone(position.zoneId)) {
-        const parts = position.zoneId.split('_');
-        const x = parseInt(parts[1], 10);
-        const y = parseInt(parts[2], 10);
-        biome = getBiome(this.zonesService.getWorldSeed(), x, y);
-      }
-
-      // Calculate speed modifier and delay
-      const speedModifier = getMovementSpeedModifier(tileId, biome);
-      const delay = calculateMovementDelay(BASE_MOVEMENT_TICK, speedModifier);
-
-      return delay;
-    } catch (error) {
-      // Fallback to base rate on error
-      return BASE_MOVEMENT_TICK;
-    }
-  }
-
-  async movePlayer(socketId: string, direction: Direction): Promise<MoveResult> {
-    const player = this.playerService.getPlayerBySocket(socketId);
-    if (!player) {
-      return { success: false, error: 'Player not found' };
-    }
-
-    // Calculate new position
-    const newPosition = calculateNewPosition(player.position, direction);
-
-    // Get collision map for zone
-    const chunk = await this.zonesService.getChunk(newPosition.zoneId);
-
-    // Validate movement
-    const validation = validateMovement(
-      player.position,
-      newPosition,
-      chunk.collisions
-    );
-
-    if (!validation.valid) {
-      return { success: false, error: validation.reason };
-    }
-
-    // Entity blocking check (EBLK-01)
-    const entitiesAtDest = await this.zonesService.getEntitiesAtPosition(
-      newPosition.zoneId,
-      newPosition.x,
-      newPosition.y
-    );
-    if (entitiesAtDest.length > 0) {
-      return { success: false, error: 'Path blocked by entity' };
-    }
-
-    // Check for zone transition
-    const zoneChanged = isZoneTransition(player.position, newPosition);
-
-    // Update player position
-    const oldZoneId = player.position.zoneId;
-    this.playerService.updatePosition(player.id, newPosition);
-
-    if (zoneChanged) {
-      return {
-        success: true,
-        playerId: player.id,
-        position: newPosition,
-        oldZoneId,
-        newZoneId: newPosition.zoneId,
-        playerPublic: {
-          id: player.id,
-          name: player.name,
-          faction: player.faction,
-          position: newPosition,
-          level: player.level,
-          inCombat: player.inCombat,
-          credits: player.credits,
-          px: player.px,
-          py: player.py,
-        },
-      };
-    }
-
-    return {
-      success: true,
-      playerId: player.id,
-      position: newPosition,
-      zoneId: newPosition.zoneId,
     };
   }
 

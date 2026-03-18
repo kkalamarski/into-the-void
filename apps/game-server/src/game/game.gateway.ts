@@ -33,7 +33,6 @@ import { CraftingService } from './crafting.service';
 import { MovementService } from './movement.service';
 import {
   ClientEvents,
-  Direction,
   AuthRequest,
   getErrorInfo,
   CharStatsPayload,
@@ -287,103 +286,15 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   ) {
     const player = this.playerService.getPlayerBySocket(client.id);
     if (!player) return;
+
+    // Interrupt cast on movement (migrated from legacy player:move handler)
+    if (this.abilityService.isPlayerCasting(player.id)) {
+      this.abilityService.interruptCast(player.id, 'moved');
+    }
+
     this.movementService.queueInput(player.id, data);
     // Phase 133: cancel gather if player moved out of range (uses client-predicted position for responsiveness)
     this.gatheringService.cancelIfOutOfRange(player.id, data.predictedPx, data.predictedPy);
-  }
-
-  @SubscribeMessage('player:move')
-  async handleMove(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: { direction: Direction; sequence?: number }
-  ) {
-    try {
-      const player = this.playerService.getPlayerBySocket(client.id);
-      if (!player) return;
-
-      // Interrupt cast on movement
-      if (this.abilityService.isPlayerCasting(player.id)) {
-        this.abilityService.interruptCast(player.id, 'moved');
-      }
-
-      const result = await this.gameService.movePlayer(client.id, data.direction);
-
-      if (result.success && result.position) {
-        // Check for rare node discoveries after movement
-        await this.checkRareNodeDiscovery(
-          player.id,
-          result.position.x,
-          result.position.y,
-          result.position.zoneId,
-          client
-        );
-
-        // Notify players in old and new zone
-        if (result.oldZoneId && result.newZoneId) {
-          // Zone transition - update 3x3 room subscriptions
-          this.updatePlayerRooms(client, result.newZoneId);
-
-          // Notify old zone (broadcast to all rooms player just left)
-          this.server.to(result.oldZoneId).emit('player:left', {
-            playerId: result.playerId,
-          });
-
-          // Deactivate old zone if no players remain; activate new zone
-          if (this.playerService.getPlayersInZone(result.oldZoneId).length === 0) {
-            this.aiService.deactivateZone(result.oldZoneId);
-          }
-          const newZoneAlreadyActive = this.aiService.isZoneActive(result.newZoneId);
-          this.aiService.activateZone(result.newZoneId);
-
-          // If zone was already active, trigger immediate aggro for this player
-          if (newZoneAlreadyActive && result.playerId) {
-            this.aiService.checkImmediateAggroForPlayer(result.newZoneId, result.playerId);
-          }
-
-          // Send new zone state to player
-          const zoneState = await this.gameService.getZoneState(result.newZoneId);
-          client.emit('zone:state', { ...zoneState, serverTime: Date.now() });
-          // Send NPC quest markers for the new zone
-          this.emitNpcQuestMarkers(
-            client,
-            player.id,
-            player.faction,
-            zoneState.entities as Array<{ type: string; npcId?: string }>
-          );
-
-          // Emit zone entry event for quest tracking on zone transition
-          if (result.playerId) {
-            const biome = this.resolveZoneBiome(result.newZoneId);
-            this.eventEmitter.emit('zone.entered', {
-              characterId: result.playerId,
-              zoneId: result.newZoneId,
-              biome,
-            });
-          }
-
-          // Notify new zone
-          client.to(result.newZoneId).emit('player:joined', result.playerPublic);
-        } else {
-          // Same zone movement
-          this.server.to(result.zoneId!).emit('player:moved', {
-            playerId: result.playerId,
-            position: result.position,
-            lastProcessedInput: data.sequence,
-          });
-        }
-      } else {
-        client.emit('error', {
-          code: 'MOVEMENT_BLOCKED',
-          message: result.error || 'Movement blocked',
-          lastProcessedInput: data.sequence,
-        });
-      }
-    } catch (error) {
-      client.emit('error', {
-        code: 'SERVER_ERROR',
-        message: 'Failed to process movement',
-      });
-    }
   }
 
   @SubscribeMessage('player:interact')

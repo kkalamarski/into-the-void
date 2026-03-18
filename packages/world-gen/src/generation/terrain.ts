@@ -274,31 +274,6 @@ function getWallThreshold(biome: BiomeType): number {
 }
 
 /**
- * Check if biome features block movement
- */
-function isFeatureBlocking(biome: BiomeType): boolean {
-  const blocking: Record<BiomeType, boolean> = {
-    void_plains: false,
-    crystal_caves: true,
-    toxic_wastes: false, // Toxic pools damage but don't block
-    ancient_ruins: true,
-    frozen_expanse: false,
-    volcanic_ridge: true, // Lava blocks
-    fungal_forest: false,
-    starfall_crater: true,
-    miasma_marshes: false,     // Toxic pools damage but don't block
-    petrified_expanse: true,   // Stone formations block
-    tidal_pools: false,        // Shallow water doesn't block
-    kelp_forests: false,       // Kelp floor doesn't block
-    deep_trenches: false,      // Deep water doesn't block
-    void_rift: true,               // Distortion blocks
-    crystalline_wastes: true,      // Crystal formations block
-    bioluminescent_depths: false,  // Flora slows but doesn't block
-  };
-  return blocking[biome];
-}
-
-/**
  * Ensure zone edges have pathways for transitions
  */
 function ensureZoneConnectivity(
@@ -344,24 +319,4 @@ function ensureZoneConnectivity(
       collisions[pos + i][size - 1] = false;
     }
   }
-}
-
-/**
- * Check if a tile is walkable
- * @deprecated Use TileRegistry.get(tileId).isBlocking instead
- */
-export function isWalkable(tileId: TileId): boolean {
-  const stringId = tileIdToString(tileId);
-  const tileDef = TileRegistry.get(stringId);
-  return !tileDef.isBlocking;
-}
-
-/**
- * Get tile movement speed modifier
- * @deprecated Use TileRegistry.get(tileId).movementSpeed instead
- */
-export function getTileSpeedModifier(tileId: TileId): number {
-  const stringId = tileIdToString(tileId);
-  const tileDef = TileRegistry.get(stringId);
-  return tileDef.movementSpeed;
 }

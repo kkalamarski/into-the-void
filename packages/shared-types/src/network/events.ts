@@ -33,7 +33,6 @@ export interface GameEvent<T = unknown> {
  * Client-to-server event types
  */
 export type ClientEventType =
-  | 'player:move'
   | 'player:interact'
   | 'player:action'
   | 'combat:action'
@@ -86,7 +85,6 @@ export type ServerEventType =
   | 'entity:batch'
   | 'player:joined'
   | 'player:left'
-  | 'player:moved'
   | 'player:xp'
   | 'player:level'
   | 'player:health'
@@ -147,7 +145,6 @@ export type ServerEventType =
  */
 export interface ClientEvents {
   'auth': import('./messages').AuthRequest;
-  'player:move': { direction: import('../core/position').Direction; sequence?: number };
   'player:interact': { targetId: string };
   'player:action': { action: string; data?: unknown };
   'combat:action': import('../game/combat').CombatActionRequest;
@@ -212,7 +209,6 @@ export interface ServerEvents {
   'entity:batch': { updates: Array<{ entityId: string; changes: Partial<import('../core/entity').Entity> }> };
   'player:joined': import('../core/player').PlayerPublic;
   'player:left': { playerId: string };
-  'player:moved': { playerId: string; position: import('../core/position').Position; lastProcessedInput?: number };
   'combat:start': import('../game/combat').CombatState;
   'combat:damage': {
     attackerId: string;
