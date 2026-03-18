@@ -42,21 +42,16 @@ const KEY_D = 8;
  * Maps a grid-space velocity vector (vx, vy) to one of 8 Direction strings.
  * Returns null if velocity is essentially zero.
  *
- * Converts grid velocity to screen-visual velocity before computing direction,
- * so sprite animations face the visual movement direction on screen:
- *   screenVx = vx - vy   (from isometric projection: screenX ∝ gridX − gridY)
- *   screenVy = vx + vy   (from isometric projection: screenY ∝ gridX + gridY)
+ * Sprite directions are grid-aligned (e.g. the 'n' sprite faces grid-north,
+ * which appears as visual up-right in the isometric view). Using grid-space
+ * velocity directly produces the correct sprite facing.
  *
  * Exported so RemotePlayerInterpolator can reuse the same mapping.
  */
 export function velocityToDirection(vx: number, vy: number): Direction | null {
   if (Math.abs(vx) < 0.01 && Math.abs(vy) < 0.01) return null;
 
-  // Convert grid-space velocity to screen-space for visual direction
-  const screenVx = vx - vy;
-  const screenVy = vx + vy;
-
-  const angle = Math.atan2(screenVy, screenVx) * (180 / Math.PI);
+  const angle = Math.atan2(vy, vx) * (180 / Math.PI);
 
   if (angle >= -22.5 && angle < 22.5) return 'e';
   if (angle >= 22.5 && angle < 67.5) return 'se';
