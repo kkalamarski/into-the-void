@@ -113,6 +113,11 @@ const BIOME_TILES: Record<BiomeType, { floor: TileId; wall: TileId; feature: Til
   void_rift: { floor: TileId.VOID_RIFT_FLOOR, wall: TileId.VOID_RIFT_DISTORTION, feature: TileId.VOID_RIFT_DISTORTION },
   crystalline_wastes: { floor: TileId.CRYSTALLINE_FLOOR, wall: TileId.CRYSTAL_FORMATION_LARGE, feature: TileId.CRYSTAL_FORMATION_LARGE },
   bioluminescent_depths: { floor: TileId.BIOLUMINESCENT_FLOOR, wall: TileId.BIOLUMINESCENT_FLORA, feature: TileId.BIOLUMINESCENT_FLORA },
+  // Hub stations — numeric IDs unused (hubs load from JSON maps, string-based BIOME_TILE_IDS is authoritative)
+  canopy_station: { floor: TileId.VOID_FLOOR, wall: TileId.VOID_WALL, feature: TileId.VOID_WALL },
+  ironhold_station: { floor: TileId.VOID_FLOOR, wall: TileId.VOID_WALL, feature: TileId.VOID_WALL },
+  meridian_station: { floor: TileId.VOID_FLOOR, wall: TileId.VOID_WALL, feature: TileId.VOID_WALL },
+  salvage_station: { floor: TileId.VOID_FLOOR, wall: TileId.VOID_WALL, feature: TileId.VOID_WALL },
 };
 
 /**
@@ -135,6 +140,11 @@ const BIOME_TILE_IDS: Record<BiomeType, { floor: string; wall: string; feature: 
   void_rift: { floor: TILE_IDS.VOID_RIFT_FLOOR, wall: TILE_IDS.VOID_RIFT_DISTORTION, feature: TILE_IDS.VOID_RIFT_DISTORTION },
   crystalline_wastes: { floor: TILE_IDS.CRYSTALLINE_FLOOR, wall: TILE_IDS.CRYSTAL_FORMATION_LARGE, feature: TILE_IDS.CRYSTAL_FORMATION_LARGE },
   bioluminescent_depths: { floor: TILE_IDS.BIOLUMINESCENT_FLOOR, wall: TILE_IDS.BIOLUMINESCENT_FLORA, feature: TILE_IDS.BIOLUMINESCENT_FLORA },
+  // Hub Station Biomes
+  canopy_station: { floor: TILE_IDS.CANOPY_FLOOR, wall: TILE_IDS.CANOPY_WALL, feature: TILE_IDS.CANOPY_DECORATION },
+  ironhold_station: { floor: TILE_IDS.IRONHOLD_FLOOR, wall: TILE_IDS.IRONHOLD_WALL, feature: TILE_IDS.IRONHOLD_DECORATION },
+  meridian_station: { floor: TILE_IDS.MERIDIAN_FLOOR, wall: TILE_IDS.MERIDIAN_WALL, feature: TILE_IDS.MERIDIAN_DECORATION },
+  salvage_station: { floor: TILE_IDS.SALVAGE_FLOOR, wall: TILE_IDS.SALVAGE_WALL, feature: TILE_IDS.SALVAGE_DECORATION },
 };
 
 /**
@@ -158,6 +168,11 @@ const BIOME_ELEVATION_RANGES: Record<BiomeType, { min: number; max: number }> = 
   void_rift: { min: 1, max: 3 },          // Moderate variation, eerie flatness
   crystalline_wastes: { min: 2, max: 5 }, // High elevation, tall formations
   bioluminescent_depths: { min: 0, max: 2 }, // Low, cave-like
+  // Hub Station Biomes (flat interiors)
+  canopy_station: { min: 0, max: 1 },
+  ironhold_station: { min: 0, max: 1 },
+  meridian_station: { min: 0, max: 1 },
+  salvage_station: { min: 0, max: 1 },
 };
 
 /**
@@ -269,6 +284,11 @@ function getWallThreshold(biome: BiomeType): number {
     void_rift: 0.55,              // Moderate wall density (distortion pockets)
     crystalline_wastes: 0.4,       // Dense crystal formations
     bioluminescent_depths: 0.45,   // Moderate undergrowth (traversable flora)
+    // Hub Station Biomes (no procedural wall generation — hand-designed maps)
+    canopy_station: 1.0,
+    ironhold_station: 1.0,
+    meridian_station: 1.0,
+    salvage_station: 1.0,
   };
   return thresholds[biome];
 }

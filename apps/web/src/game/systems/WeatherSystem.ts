@@ -149,6 +149,11 @@ const WEATHER_CONFIGS: Record<BiomeType, WeatherConfig> = {
   deep_trenches: makeConfig('deep_trenches', 'mist', 0x191970, MIST_BASE),
   starfall_crater: makeConfig('starfall_crater', 'ash', 0x191970, ASH_BASE),
   void_rift: makeConfig('void_rift', 'void_energy', 0x4a0080, VOID_ENERGY_BASE),
+  // Hub Station Biomes — indoor, minimal weather (light mist)
+  canopy_station: makeConfig('canopy_station', 'spores', 0x22cc88, SPORES_BASE),
+  ironhold_station: makeConfig('ironhold_station', 'mist', 0x3a3a3a, MIST_BASE),
+  meridian_station: makeConfig('meridian_station', 'mist', 0xc0d0e0, MIST_BASE),
+  salvage_station: makeConfig('salvage_station', 'mist', 0x8a7a5a, MIST_BASE),
 };
 
 // ── Crossfade duration ─────────────────────────────────────────────────────

@@ -251,6 +251,11 @@ export function getBiomeDangerLevel(biome: BiomeType): number {
     void_rift: 9,              // Tier IV - extreme
     crystalline_wastes: 7,     // Tier III - hostile
     bioluminescent_depths: 4,  // Tier II - hazardous
+    // Hub Station Biomes (safe zones)
+    canopy_station: 0,
+    ironhold_station: 0,
+    meridian_station: 0,
+    salvage_station: 0,
   };
   return dangerLevels[biome];
 }
@@ -276,6 +281,11 @@ export function getBiomeColor(biome: BiomeType): number {
     void_rift: 0x4a0080,           // Deep purple
     crystalline_wastes: 0xb0e0e6,  // Pale cyan
     bioluminescent_depths: 0x00ff88, // Bright cyan-green
+    // Hub Station Biomes
+    canopy_station: 0x22cc88,
+    ironhold_station: 0xaa5522,
+    meridian_station: 0xc0d0e0,
+    salvage_station: 0x8a7a5a,
   };
   return colors[biome];
 }

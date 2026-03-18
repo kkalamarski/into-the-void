@@ -34,4 +34,10 @@ export const BIOME_RESISTANCE_PROFILES: Record<BiomeType, DamageResistances> = {
 
   // Tier IV - Extreme
   void_rift: { thermal: 0, cryo: 0, bio: 0, kinetic: -30 },            // Reality-distorted
+
+  // Hub Station Biomes (safe zones — no creatures spawn, neutral resistances)
+  canopy_station: { thermal: 0, cryo: 0, bio: 0, kinetic: 0 },
+  ironhold_station: { thermal: 0, cryo: 0, bio: 0, kinetic: 0 },
+  meridian_station: { thermal: 0, cryo: 0, bio: 0, kinetic: 0 },
+  salvage_station: { thermal: 0, cryo: 0, bio: 0, kinetic: 0 },
 };

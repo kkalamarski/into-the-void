@@ -473,6 +473,23 @@ export const BIOME_SPAWN_CONFIGS: Record<BiomeType, BiomeSpawnConfig> = {
     plantDensity: 8,      // HIGH plant density (bioluminescent flora theme)
     artifactDensity: 1,
   },
+  // Hub Station Biomes (safe zones — no entity spawns)
+  canopy_station: {
+    creatures: [], minerals: [], plants: [], artifacts: [],
+    creatureDensity: 0, mineralDensity: 0, plantDensity: 0, artifactDensity: 0,
+  },
+  ironhold_station: {
+    creatures: [], minerals: [], plants: [], artifacts: [],
+    creatureDensity: 0, mineralDensity: 0, plantDensity: 0, artifactDensity: 0,
+  },
+  meridian_station: {
+    creatures: [], minerals: [], plants: [], artifacts: [],
+    creatureDensity: 0, mineralDensity: 0, plantDensity: 0, artifactDensity: 0,
+  },
+  salvage_station: {
+    creatures: [], minerals: [], plants: [], artifacts: [],
+    creatureDensity: 0, mineralDensity: 0, plantDensity: 0, artifactDensity: 0,
+  },
 };
 
 /**

@@ -168,6 +168,36 @@ const ATMOSPHERE_CONFIGS: Record<BiomeType, BiomeAtmosphereConfig> = {
     bOffset: 0.025,
     brightnessBoost: 0,
   },
+
+  // Hub Station Biomes — indoor, clean atmosphere (clear)
+  canopy_station: {
+    effectType: 'glow',
+    rOffset: 0.0,
+    gOffset: 0.015,
+    bOffset: 0.01,
+    brightnessBoost: 0,
+  },
+  ironhold_station: {
+    effectType: 'haze',
+    rOffset: 0.01,
+    gOffset: 0.005,
+    bOffset: 0.0,
+    brightnessBoost: 0,
+  },
+  meridian_station: {
+    effectType: 'clear',
+    rOffset: 0.002,
+    gOffset: 0.003,
+    bOffset: 0.005,
+    brightnessBoost: 0,
+  },
+  salvage_station: {
+    effectType: 'haze',
+    rOffset: 0.008,
+    gOffset: 0.006,
+    bOffset: 0.003,
+    brightnessBoost: 0,
+  },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────

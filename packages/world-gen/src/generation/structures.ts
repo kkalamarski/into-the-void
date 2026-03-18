@@ -31,6 +31,11 @@ const BIOME_FEATURE_TILE_IDS: Record<BiomeType, TileId> = {
   void_rift: TileId.VOID_RIFT_DISTORTION,
   crystalline_wastes: TileId.CRYSTAL_FORMATION_LARGE,
   bioluminescent_depths: TileId.BIOLUMINESCENT_FLORA,
+  // Hub Station Biomes (no procedural structures — hand-designed maps)
+  canopy_station: TileId.VOID_WALL,
+  ironhold_station: TileId.VOID_WALL,
+  meridian_station: TileId.VOID_WALL,
+  salvage_station: TileId.VOID_WALL,
 };
 
 /**
@@ -187,6 +192,11 @@ function getFeatureTileIdForBiome(biome: BiomeType): string {
     void_rift: TILE_IDS.VOID_RIFT_DISTORTION,
     crystalline_wastes: TILE_IDS.CRYSTAL_FORMATION_LARGE,
     bioluminescent_depths: TILE_IDS.BIOLUMINESCENT_FLORA,
+    // Hub Station Biomes (no procedural structures — hand-designed maps)
+    canopy_station: TILE_IDS.CANOPY_DECORATION,
+    ironhold_station: TILE_IDS.IRONHOLD_DECORATION,
+    meridian_station: TILE_IDS.MERIDIAN_DECORATION,
+    salvage_station: TILE_IDS.SALVAGE_DECORATION,
   };
   return featureTiles[biome];
 }

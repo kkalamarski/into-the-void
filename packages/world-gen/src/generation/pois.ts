@@ -26,6 +26,11 @@ const BIOME_POI_WEIGHTS: Record<BiomeType, Record<PoiType, number>> = {
   void_rift: { anomaly: 10, cache: 2, landmark: 3 },        // High anomaly (reality distortion)
   crystalline_wastes: { anomaly: 6, cache: 8, landmark: 7 }, // High cache/landmark (crystal formations)
   bioluminescent_depths: { anomaly: 5, cache: 6, landmark: 5 }, // Balanced
+  // Hub Station Biomes (no POIs in hub stations)
+  canopy_station: { anomaly: 0, cache: 0, landmark: 0 },
+  ironhold_station: { anomaly: 0, cache: 0, landmark: 0 },
+  meridian_station: { anomaly: 0, cache: 0, landmark: 0 },
+  salvage_station: { anomaly: 0, cache: 0, landmark: 0 },
 };
 
 /**
