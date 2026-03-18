@@ -210,10 +210,114 @@ export class EntityRenderer {
   private elevationOffset = 0; // Pixels entities hover above ground (set to 0: sprites anchor at tile surface)
   private questMarkers: Map<string, Phaser.GameObjects.Container> = new Map();
 
+  /** Cache of visible (non-transparent) bounds per texture key+frame, as fractions of texture dimensions */
+  private static visibleBoundsCache: Map<string, { topFrac: number; bottomFrac: number; leftFrac: number; rightFrac: number }> = new Map();
+
   constructor(scene: Phaser.Scene, tileWidth: number = 256, tileHeight: number = 128) {
     this.scene = scene;
     this.tileSize = tileWidth; // Keep for backwards compat
     this.isoTransform = new IsometricTransform(tileWidth, tileHeight);
+  }
+
+  /**
+   * Compute the fractional padding (transparent border) of a texture by scanning its alpha channel.
+   * Results are cached per texture key+frame combo.
+   * Handles both canvas-based textures (from spritesheet extraction) and image-based textures.
+   */
+  private getVisibleBounds(textureKey: string, frame?: string | number): { topFrac: number; bottomFrac: number; leftFrac: number; rightFrac: number } {
+    const cacheKey = frame != null ? `${textureKey}:${frame}` : textureKey;
+    const cached = EntityRenderer.visibleBoundsCache.get(cacheKey);
+    if (cached) return cached;
+
+    // Default: no padding (full texture is visible)
+    const defaultBounds = { topFrac: 0, bottomFrac: 0, leftFrac: 0, rightFrac: 0 };
+
+    try {
+      const texture = this.scene.textures.get(textureKey);
+      if (!texture || texture.key === '__MISSING') {
+        EntityRenderer.visibleBoundsCache.set(cacheKey, defaultBounds);
+        return defaultBounds;
+      }
+
+      const phaserFrame = frame != null ? texture.get(frame) : texture.get();
+      if (!phaserFrame) {
+        EntityRenderer.visibleBoundsCache.set(cacheKey, defaultBounds);
+        return defaultBounds;
+      }
+
+      const fw = phaserFrame.cutWidth;
+      const fh = phaserFrame.cutHeight;
+      if (fw <= 0 || fh <= 0) {
+        EntityRenderer.visibleBoundsCache.set(cacheKey, defaultBounds);
+        return defaultBounds;
+      }
+
+      // Get pixel data — handle canvas textures (from spritesheet extraction) and image textures
+      let imageData: ImageData | null = null;
+
+      // Canvas textures: read pixels directly from the canvas source
+      const sourceCanvas = phaserFrame.source?.image;
+      if (sourceCanvas instanceof HTMLCanvasElement) {
+        const srcCtx = sourceCanvas.getContext('2d');
+        if (srcCtx) {
+          imageData = srcCtx.getImageData(phaserFrame.cutX, phaserFrame.cutY, fw, fh);
+        }
+      }
+
+      // Image textures: draw to temp canvas then read pixels
+      if (!imageData && sourceCanvas instanceof HTMLImageElement) {
+        const tmpCanvas = document.createElement('canvas');
+        tmpCanvas.width = fw;
+        tmpCanvas.height = fh;
+        const tmpCtx = tmpCanvas.getContext('2d');
+        if (tmpCtx) {
+          tmpCtx.drawImage(sourceCanvas, phaserFrame.cutX, phaserFrame.cutY, fw, fh, 0, 0, fw, fh);
+          imageData = tmpCtx.getImageData(0, 0, fw, fh);
+        }
+      }
+
+      if (!imageData) {
+        EntityRenderer.visibleBoundsCache.set(cacheKey, defaultBounds);
+        return defaultBounds;
+      }
+
+      const data = imageData.data;
+      let topRow = fh;
+      let bottomRow = -1;
+      let leftCol = fw;
+      let rightCol = -1;
+
+      for (let y = 0; y < fh; y++) {
+        for (let x = 0; x < fw; x++) {
+          const alpha = data[(y * fw + x) * 4 + 3];
+          if (alpha > 10) { // threshold to ignore near-invisible pixels
+            if (y < topRow) topRow = y;
+            if (y > bottomRow) bottomRow = y;
+            if (x < leftCol) leftCol = x;
+            if (x > rightCol) rightCol = x;
+          }
+        }
+      }
+
+      if (bottomRow < 0) {
+        // Fully transparent texture
+        EntityRenderer.visibleBoundsCache.set(cacheKey, defaultBounds);
+        return defaultBounds;
+      }
+
+      const bounds = {
+        topFrac: topRow / fh,
+        bottomFrac: (fh - 1 - bottomRow) / fh,
+        leftFrac: leftCol / fw,
+        rightFrac: (fw - 1 - rightCol) / fw,
+      };
+
+      EntityRenderer.visibleBoundsCache.set(cacheKey, bounds);
+      return bounds;
+    } catch {
+      EntityRenderer.visibleBoundsCache.set(cacheKey, defaultBounds);
+      return defaultBounds;
+    }
   }
 
   /**
@@ -426,6 +530,16 @@ export class EntityRenderer {
     sprite.setOrigin(0.5, 1.0);
     sprite.setScale(scaleX, scaleY);
 
+    // For features (plants/minerals), auto-detect visible bounds to fix floating/outline/hitArea
+    let featureBounds: { topFrac: number; bottomFrac: number; leftFrac: number; rightFrac: number } | null = null;
+    if (isFeature) {
+      featureBounds = this.getVisibleBounds(textureKey, textureFrame);
+      // Fix floating: shift sprite down by bottom padding so visible art sits on tile surface
+      const bottomPadPx = featureBounds.bottomFrac * sprite.height * scaleY;
+      spriteYOffset += bottomPadPx;
+      sprite.setY(spriteYOffset);
+    }
+
     // Apply glow effect for rare/epic minerals and plants
     if (this.isMineral(entity) || this.isPlant(entity)) {
       const rarity = (entity as { rarity?: NodeRarity }).rarity;
@@ -440,23 +554,37 @@ export class EntityRenderer {
     // Make sprites interactive with tight hitArea matching visible art (RENDER-04)
     const isClickable = entity.type === 'creature' || entity.type === 'plant' || entity.type === 'mineral';
     if (isClickable) {
-      // Custom hitArea in sprite's local coordinate space (unscaled).
-      // For bottom-center origin (0.5, 1.0), the sprite's (0,0) is top-left of texture.
-      // Trim transparent padding: center ~70% width, bottom ~80% height.
       const texW = sprite.width;
       const texH = sprite.height;
       const isAnimated = this.isCreature(entity) && entity.speciesId && EntityRenderer.ANIMATED_CREATURES.has(entity.speciesId);
-      // Animated creatures have tighter sprite sheets (less padding)
-      const hitPadX = texW * (isAnimated ? 0.10 : 0.15);
-      const hitPadTop = texH * (isAnimated ? 0.15 : 0.2);
-      const hitRect = new Phaser.Geom.Rectangle(
-        hitPadX,
-        hitPadTop,
-        texW - hitPadX * 2,
-        texH - hitPadTop
-      );
+
+      let hitRect: Phaser.Geom.Rectangle;
+      if (featureBounds) {
+        // Features: use auto-detected visible bounds for precise hit area
+        hitRect = new Phaser.Geom.Rectangle(
+          featureBounds.leftFrac * texW,
+          featureBounds.topFrac * texH,
+          (1 - featureBounds.leftFrac - featureBounds.rightFrac) * texW,
+          (1 - featureBounds.topFrac - featureBounds.bottomFrac) * texH
+        );
+      } else {
+        // Animated creatures: use fixed percentage padding (tighter sprite sheets)
+        const hitPadX = texW * (isAnimated ? 0.10 : 0.15);
+        const hitPadTop = texH * (isAnimated ? 0.15 : 0.2);
+        hitRect = new Phaser.Geom.Rectangle(
+          hitPadX,
+          hitPadTop,
+          texW - hitPadX * 2,
+          texH - hitPadTop
+        );
+      }
       sprite.setInteractive(hitRect, Phaser.Geom.Rectangle.Contains);
       sprite.input!.cursor = 'pointer';
+
+      // Store visible bounds on container for hover outline access
+      if (featureBounds) {
+        container.setData('visibleBounds', featureBounds);
+      }
 
       // Hover outline glow for clickable entities (CONTEXT.md: outline glow on hover)
       const hoverGlow = this.scene.add.graphics();
@@ -465,13 +593,26 @@ export class EntityRenderer {
       container.setData('hoverGlow', hoverGlow);
 
       sprite.on('pointerover', () => {
-        // Draw white outline glow around sprite visible bounds
         hoverGlow.clear();
-        const halfW = (sprite.width * sprite.scaleX) / 2;
-        const h = sprite.height * sprite.scaleY;
-        const yOff = spriteYOffset;
         hoverGlow.lineStyle(3, 0xffffff, 0.6);
-        hoverGlow.strokeRoundedRect(-halfW, yOff - h, halfW * 2, h, 4);
+
+        const bounds = container.getData('visibleBounds') as typeof featureBounds;
+        if (bounds) {
+          // Features: outline around visible art only, not transparent padding
+          const fullW = sprite.width * sprite.scaleX;
+          const fullH = sprite.height * sprite.scaleY;
+          const visW = (1 - bounds.leftFrac - bounds.rightFrac) * fullW;
+          const visH = (1 - bounds.topFrac - bounds.bottomFrac) * fullH;
+          const visLeft = -(fullW / 2) + bounds.leftFrac * fullW;
+          const visTop = spriteYOffset - fullH + bounds.topFrac * fullH;
+          hoverGlow.strokeRoundedRect(visLeft, visTop, visW, visH, 4);
+        } else {
+          // Creatures/other: outline around full sprite bounds
+          const halfW = (sprite.width * sprite.scaleX) / 2;
+          const h = sprite.height * sprite.scaleY;
+          const yOff = spriteYOffset;
+          hoverGlow.strokeRoundedRect(-halfW, yOff - h, halfW * 2, h, 4);
+        }
         hoverGlow.setVisible(true);
 
         // Plants/minerals: also show nameplate and yield bar on hover
@@ -504,8 +645,10 @@ export class EntityRenderer {
     container.setData('entitySprite', sprite); // Store sprite reference for animation
 
     // Compute actual visual sprite height for UI positioning
-    // sprite.height is the raw frame height; multiplied by scaleY gives screen pixels
-    const actualSpriteHeight = sprite.height * scaleY;
+    // For features, use visible height (excluding transparent padding) for accurate nameplate placement
+    const actualSpriteHeight = featureBounds
+      ? (1 - featureBounds.topFrac - featureBounds.bottomFrac) * sprite.height * scaleY
+      : sprite.height * scaleY;
     container.setData('actualSpriteHeight', actualSpriteHeight);
 
     // Store entity identity on container for click handling in WorldScene
@@ -593,7 +736,10 @@ export class EntityRenderer {
     container.setData('elevationOffset', this.elevationOffset);
 
     // Initial depth: Y-position with X-tiebreaker and elevation (use world coordinates)
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 0, true);
+    // Features (plants/minerals) get a depth boost proportional to their visual height so that
+    // nearby entities (e.g. player walking near trunk) render behind tall sprites
+    const featureDepthBoost = isFeature ? actualSpriteHeight * 0.15 : 0;
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, featureDepthBoost, true);
     container.setDepth(depth);
 
     // CRAI-06: Stealthed predators are invisible on spawn
