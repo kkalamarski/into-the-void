@@ -6,7 +6,7 @@ import type { AtmosphereSystem } from './AtmosphereSystem';
 
 /**
  * Per-phase visual parameters.
- * brightness: 0-1 multiplier (1 = identity)
+ * brightness: 0-1 diagonal multiplier applied directly to getData() (1 = full brightness)
  * saturation: -1 to 1 (negative = desaturate)
  * blueShift: 0-1 (blue channel boost for cool night)
  * warmShift: 0-1 (red/amber boost for dawn/dusk)
@@ -19,10 +19,10 @@ interface PhaseVisuals {
 }
 
 const PHASE_VISUALS: Record<DayNightPhase, PhaseVisuals> = {
-  Dawn:  { brightness: 0.85, saturation: -0.05, blueShift: 0.0,  warmShift: 0.12 },
+  Dawn:  { brightness: 0.72, saturation: -0.05, blueShift: 0.0,  warmShift: 0.08 },
   Day:   { brightness: 1.0,  saturation: 0.0,   blueShift: 0.0,  warmShift: 0.0  },
-  Dusk:  { brightness: 0.80, saturation: -0.05, blueShift: 0.0,  warmShift: 0.15 },
-  Night: { brightness: 0.45, saturation: -0.25, blueShift: 0.15, warmShift: 0.0  },
+  Dusk:  { brightness: 0.70, saturation: -0.05, blueShift: 0.0,  warmShift: 0.10 },
+  Night: { brightness: 0.42, saturation: -0.20, blueShift: 0.12, warmShift: 0.0  },
 };
 
 // Transition zone: first/last 20% of each phase blends with neighbor
@@ -69,6 +69,7 @@ function lerpVisuals(a: PhaseVisuals, b: PhaseVisuals, t: number): PhaseVisuals 
  */
 export class DayNightCycle {
   private colorMatrix: Phaser.FX.ColorMatrix | null = null;
+  private vignette: Phaser.FX.Vignette | null = null;
   private serverOffset: number = 0;
   private currentPhase: DayNightPhase = 'Day';
   private atmosphereSystem: AtmosphereSystem | null = null;
@@ -88,6 +89,8 @@ export class DayNightCycle {
   create(camera: Phaser.Cameras.Scene2D.Camera): void {
     if (camera.postFX) {
       this.colorMatrix = camera.postFX.addColorMatrix();
+      // Vignette for night atmosphere — starts fully transparent (strength 0)
+      this.vignette = camera.postFX.addVignette(0.5, 0.5, 0.85, 0.0);
     }
   }
 
@@ -108,6 +111,9 @@ export class DayNightCycle {
     const progress = this.getCycleProgress();
     this.currentPhase = this.getPhase(progress);
     this.applyVisuals(progress);
+
+    // Update night vignette
+    this.updateVignette(progress);
   }
 
   /**
@@ -137,6 +143,8 @@ export class DayNightCycle {
 
   /**
    * Apply brightness + color temperature to the ColorMatrix.
+   * Uses direct getData() diagonal manipulation instead of the brightness() method
+   * to avoid additive quirks that caused the inverted brightness curve.
    * Uses interpolation at phase boundaries for smooth transitions.
    */
   private applyVisuals(progress: number): void {
@@ -147,40 +155,69 @@ export class DayNightCycle {
     // Reset matrix to identity before applying new values
     this.colorMatrix.reset();
 
-    // Apply brightness (DNTC-01)
-    this.colorMatrix.brightness(visuals.brightness, false);
+    // Get raw matrix data for direct manipulation
+    const m = this.colorMatrix.getData();
 
-    // Apply saturation adjustment
+    // Step 1: Apply base brightness as diagonal multiplier
+    // After reset(), m[0]=1, m[6]=1, m[12]=1 (identity)
+    // Multiply each channel by the brightness factor
+    m[0] = visuals.brightness;   // Red brightness
+    m[6] = visuals.brightness;   // Green brightness
+    m[12] = visuals.brightness;  // Blue brightness
+
+    // Step 2: Apply color temperature shifts RELATIVE to brightness
+    // Blue shift (night): reduce red+green more, keep blue closer to base brightness
+    if (visuals.blueShift > 0) {
+      m[0] -= visuals.blueShift * 0.25;   // Darken red more (cool tone)
+      m[6] -= visuals.blueShift * 0.12;   // Darken green slightly
+      m[12] += visuals.blueShift * 0.08;  // Brighten blue slightly (moonlight)
+    }
+
+    // Warm shift (dawn/dusk): boost red+green slightly, reduce blue
+    if (visuals.warmShift > 0) {
+      m[0] += visuals.warmShift * 0.12;   // Warmer red (amber)
+      m[6] += visuals.warmShift * 0.06;   // Slight green warmth
+      m[12] -= visuals.warmShift * 0.08;  // Reduce blue (warm feel)
+    }
+
+    // Step 3: Apply saturation adjustment via the named method
+    // saturate() multiplies onto existing matrix values when second arg is true
     if (visuals.saturation !== 0) {
       this.colorMatrix.saturate(visuals.saturation, true);
     }
 
-    // Apply blue shift for night — cool temperature (DNTC-02)
-    if (visuals.blueShift > 0) {
-      const m = this.colorMatrix.getData();
-      // Reduce red channel
-      m[0] -= visuals.blueShift * 0.3;
-      // Reduce green channel slightly less
-      m[6] -= visuals.blueShift * 0.1;
-      // Boost blue channel
-      m[12] += visuals.blueShift * 0.15;
-    }
-
-    // Apply warm shift for dawn/dusk — warm temperature (DNTC-02)
-    if (visuals.warmShift > 0) {
-      const m = this.colorMatrix.getData();
-      // Boost red
-      m[0] += visuals.warmShift * 0.15;
-      // Boost green slightly (warm amber, not pure red)
-      m[6] += visuals.warmShift * 0.05;
-      // Reduce blue
-      m[12] -= visuals.warmShift * 0.1;
-    }
-
-    // Step 2: Atmosphere writes color offsets on top of day/night (ATMO-04)
+    // Step 4: Atmosphere writes color offsets on top of day/night (ATMO-04)
     if (this.atmosphereSystem) {
       this.atmosphereSystem.applyToMatrix(this.colorMatrix, progress);
     }
+  }
+
+  /**
+   * Animate vignette intensity based on day/night cycle.
+   * Vignette is only visible during night phase, fading in/out smoothly.
+   * Max strength is subtle (~0.3) — just enough to darken screen edges.
+   */
+  private updateVignette(progress: number): void {
+    if (!this.vignette) return;
+
+    // Calculate night intensity: 0 during day/dawn/dusk, ramps to 1 deep in night
+    // Night phase is 0.6 - 1.0. Fade in during first 20% of night (0.6-0.68),
+    // full during middle, fade out during last 20% approaching dawn (0.92-1.0).
+    let nightIntensity = 0;
+
+    if (progress >= 0.6 && progress < 0.68) {
+      // Fade in at start of night
+      nightIntensity = smoothStep((progress - 0.6) / 0.08);
+    } else if (progress >= 0.68 && progress < 0.92) {
+      // Full night
+      nightIntensity = 1;
+    } else if (progress >= 0.92) {
+      // Fade out approaching dawn
+      nightIntensity = smoothStep(1 - (progress - 0.92) / 0.08);
+    }
+
+    // Max vignette strength 0.3 — subtle edge darkening
+    this.vignette.strength = nightIntensity * 0.3;
   }
 
   /**
@@ -230,5 +267,6 @@ export class DayNightCycle {
   destroy(): void {
     this.atmosphereSystem = null;
     this.colorMatrix = null;
+    this.vignette = null;
   }
 }
