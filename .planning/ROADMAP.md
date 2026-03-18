@@ -135,7 +135,7 @@
 
 **Milestone Goal:** Restore combat, gathering, entity rendering, and movement to correct behavior after the v1.27 pixel movement rewrite introduced regressions. Four independent bug areas — interaction distance checks, entity anchor points, collision boundary walls, and day/night brightness — each fixed in its own phase.
 
-- [ ] **Phase 136: Combat & Gathering Fix** - Restore player ability to attack creatures and gather resources using correct pixel distance checks
+- [x] **Phase 136: Combat & Gathering Fix** - Restore player ability to attack creatures and gather resources using correct pixel distance checks (completed 2026-03-18)
 - [ ] **Phase 137: Entity Rendering Fix** - Eliminate floating sprites and misaligned hitboxes by correcting entity anchor points and trimming sprite transparent space
 - [ ] **Phase 138: Collision Boundary Fix** - Remove invisible collision walls at chunk and zone boundaries so movement is unobstructed across the world
 - [ ] **Phase 139: Day/Night Brightness Fix** - Correct the ColorMatrix brightness curve so dusk and dawn are visibly brighter than night
@@ -149,7 +149,9 @@
   2. Player can click a resource node within gather range and the gathering mini-game starts
   3. Standing outside melee range of a creature and attacking produces no damage — no out-of-range hits land
   4. Both combat and gathering use the same pixel coordinate source for the player position that the movement system uses — no stale tile-integer fallbacks
-**Plans**: TBD
+**Plans**: 2 plans
+  - [ ] 136-01-PLAN.md — Server-side distance audit: remove stale tile-based canInteract imports, verify all range checks use pixel coordinates
+  - [ ] 136-02-PLAN.md — Client-side click-to-interact: auto-attack on creature click, auto-gather on resource click, fix range indicator
 
 ### Phase 137: Entity Rendering Fix
 **Goal**: All entity sprites are visually grounded on their tile surfaces with hitboxes that match what the player sees
@@ -189,7 +191,7 @@
 | 133. Distance System Migration | v1.27 | 5/5 | Complete | 2026-03-17 |
 | 134. Client Movement Rewrite | v1.27 | 3/3 | Complete | 2026-03-18 |
 | 135. Cleanup and Collision Audit | v1.27 | 2/2 | Complete | 2026-03-18 |
-| 136. Combat & Gathering Fix | v1.28 | 0/TBD | Not started | - |
+| 136. Combat & Gathering Fix | 2/2 | Complete    | 2026-03-18 | - |
 | 137. Entity Rendering Fix | v1.28 | 0/TBD | Not started | - |
 | 138. Collision Boundary Fix | v1.28 | 0/TBD | Not started | - |
 | 139. Day/Night Brightness Fix | v1.28 | 0/TBD | Not started | - |

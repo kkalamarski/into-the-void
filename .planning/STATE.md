@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.28
-milestone_name: Post-Movement Polish
-status: ready_to_plan
-last_updated: "2026-03-18"
+milestone: v1.0
+milestone_name: Pixel Movement Rewrite
+status: unknown
+last_updated: "2026-03-18T10:11:43.692Z"
 progress:
-  total_phases: 139
-  completed_phases: 135
-  total_plans: TBD
-  completed_plans: 331
+  total_phases: 129
+  completed_phases: 129
+  total_plans: 338
+  completed_plans: 338
 ---
 
 # Project State
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 136 of 139 (Combat & Gathering Fix)
-Plan: Not yet planned
-Status: Ready to plan
-Last activity: 2026-03-18 — v1.28 roadmap created (4 phases, 10 requirements)
+Plan: 2 plans (136-01, 136-02) — Wave 1 parallel
+Status: Planned — ready to execute
+Last activity: 2026-03-18 — Phase 136 planned (2 plans, Wave 1 parallel)
 
 Progress: [████████████░░░░░░░░] ~97% (135/139 phases complete)
 
@@ -73,9 +73,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-18
-Stopped at: v1.28 roadmap written, ready to plan Phase 136
+Stopped at: Phase 136 planned, ready to execute
 Resume file: None
-Next action: /gsd:plan-phase 136
+Next action: /gsd:execute-phase 136
 
 ---
-*Last updated: 2026-03-18 — v1.28 roadmap created*
+*Last updated: 2026-03-18 — Phase 136 planned*
