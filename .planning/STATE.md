@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 140 — Biome & Tile Foundation (v1.29)
+**Current focus:** v1.30 — World Rendering & Interaction Fix
 
 ## Current Position
 
-Phase: 140 of 142 (Biome & Tile Foundation)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-03-19 - Completed quick task 8: three bug fixes — tile transparency now accounts for player elevation, NPC click interaction restored with chat-bubble cursor, isometric collision Y-extension reduced from 2x to 1.5x
+Phase: Not started
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-19 — Milestone v1.30 started (bug-fix milestone)
 
-Progress: [████████████████████░░] 97%
+Progress: [░░░░░░░░░░░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -83,9 +83,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-19
-Stopped at: Completed quick task 9 — Sentry error tracking configured for both NestJS apps
+Stopped at: v1.30 milestone started — audit complete, defining requirements
 Resume file: None
-Next action: /gsd:plan-phase 140
+Next action: Define requirements and roadmap for v1.30
 
 ---
 *Last updated: 2026-03-19 — quick task 9 completed*

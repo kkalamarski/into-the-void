@@ -256,17 +256,16 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 ### Active
 
-## Current Milestone: v1.29 Hub Station Interiors
+## Current Milestone: v1.30 World Rendering & Interaction Fix
 
-**Goal:** Replace plain square hubs with immersive faction-themed space station interiors — unique tiles, biomes, and hand-crafted room layouts for all 4 hubs.
+**Goal:** Fix critical regressions in entity rendering, chunk loading, and ability targeting that prevent normal gameplay — entities sink below ground, adjacent chunks don't load (black void), and abilities don't fire on selected targets.
 
 **Target features:**
-- 4 new hub biome types (canopy_station, ironhold_station, meridian_station, salvage_station)
-- 6-8 unique tiles per hub with faction-specific palettes and accent details
-- Procedural tile rendering for all new hub tiles
-- 4 hand-designed 128x128 JSON maps with rooms, corridors, NPC placements
-- Hub system updates (128x128 support, new biome/tile mappings)
-- Dedicated salvage station hub for Unaffiliated players
+- Fix entity Y-positioning so sprites sit on tile surfaces (not 64px above ground)
+- Fix zone:chunk event listener cleanup so adjacent chunks load seamlessly
+- Fix ability targeting to use selectedTarget instead of auto-attack targetEntityId
+- Fix portal debounce key, depth sorting, NPC proximity, and other secondary rendering issues
+- Clean up debug console.log statements and correct misleading known-issues docs
 
 ### Out of Scope
 
@@ -329,8 +328,8 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 ## Known Issues
 
-- Adjacent chunk loading times out (server zone:request not implemented)
+- Adjacent chunk loading breaks on component remount (zone:chunk listener cleanup bug)
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-03-18 after v1.29 milestone started*
+*Last updated: 2026-03-19 after v1.30 milestone started*
