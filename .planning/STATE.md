@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 Phase: 140 of 142 (Biome & Tile Foundation)
 Plan: 0 of ? in current phase
 Status: Ready to plan
-Last activity: 2026-03-19 - Completed quick task 7: atmospheric effects viewport fix — WeatherSystem now uses per-weather-type emit zones so spores/mist/void_energy spawn across the full viewport instead of clustering at the top strip
+Last activity: 2026-03-19 - Completed quick task 8: three bug fixes — tile transparency now accounts for player elevation, NPC click interaction restored with chat-bubble cursor, isometric collision Y-extension reduced from 2x to 1.5x
 
 Progress: [████████████████████░░] 97%
 
@@ -77,13 +77,14 @@ None.
 | 5 | wall collision boxes too small — added createIsometricCollisionCheck wrapping isSolid with south-neighbor elevated-tile check on both client and server | 2026-03-19 | ee264e1 | [5-wall-collision-boxes-too-small-player-ca](./quick/5-wall-collision-boxes-too-small-player-ca/) |
 | 6 | collision-divergence correction — server emits positionCorrection when collision-resolved position differs from client prediction by more than 2px | 2026-03-19 | d512e21 | [6-client-server-collision-desync-client-pe](./quick/6-client-server-collision-desync-client-pe/) |
 | 7 | atmospheric effects not visible — added per-weather-type emit zones so spores/mist/void_energy spawn across full viewport instead of top strip | 2026-03-19 | 9789192 | [7-atmospheric-effects-are-not-visible-on-t](./quick/7-atmospheric-effects-are-not-visible-on-t/) |
+| 8 | fix three bugs: tile transparency at same elevation, NPC click interaction with chat-bubble cursor, isometric collision Y-extension reduced to 1.5x | 2026-03-19 | 4f2d747 | [8-fix-three-bugs-1-tiles-incorrectly-trans](./quick/8-fix-three-bugs-1-tiles-incorrectly-trans/) |
 
 ## Session Continuity
 
 Last session: 2026-03-19
-Stopped at: Completed quick task 7 — atmospheric effects viewport fix (WeatherSystem per-weather-type emit zones)
+Stopped at: Completed quick task 8 — three bug fixes (tile transparency elevation, NPC click interaction, 1.5x collision zone)
 Resume file: None
 Next action: /gsd:plan-phase 140
 
 ---
-*Last updated: 2026-03-19 — quick task 7 completed*
+*Last updated: 2026-03-19 — quick task 8 completed*
