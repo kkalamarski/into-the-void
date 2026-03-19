@@ -812,8 +812,9 @@ export class WorldScene extends Phaser.Scene {
     // Store reference (as container now, not sprite)
     this.localPlayer = container as unknown as Phaser.GameObjects.Sprite; // Type hack for compatibility
 
-    // Set depth with priority boost to ensure player renders above terrain
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 10, true);
+    // Set depth with small priority boost so local player sorts above peer entities at same position
+    // Boost must be << 64 (adjacent row diff) to avoid overriding wall tiles in front
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 0.1, true);
     container.setDepth(depth);
 
     if (this.depthSorter) {
@@ -2090,8 +2091,8 @@ export class WorldScene extends Phaser.Scene {
     this.localPlayer.setData('gridY', worldY);
     this.localPlayer.setData('elevation', elevation);
 
-    // Update depth
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 10, true);
+    // Update depth — boost 0.1 keeps player above same-position peers but below walls in front
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 0.1, true);
     this.localPlayer.setDepth(depth);
 
     // Check if a pending zone transition should commit
@@ -2186,8 +2187,8 @@ export class WorldScene extends Phaser.Scene {
     this.localPlayer.setData('gridY', worldY);
     this.localPlayer.setData('elevation', elevation);
 
-    // Update depth
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 10, true);
+    // Update depth — boost 0.1 keeps player above same-position peers but below walls in front
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 0.1, true);
     this.localPlayer.setDepth(depth);
 
     // Mark dirty for depth sorter
