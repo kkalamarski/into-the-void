@@ -78,13 +78,14 @@ None.
 | 6 | collision-divergence correction — server emits positionCorrection when collision-resolved position differs from client prediction by more than 2px | 2026-03-19 | d512e21 | [6-client-server-collision-desync-client-pe](./quick/6-client-server-collision-desync-client-pe/) |
 | 7 | atmospheric effects not visible — added per-weather-type emit zones so spores/mist/void_energy spawn across full viewport instead of top strip | 2026-03-19 | 9789192 | [7-atmospheric-effects-are-not-visible-on-t](./quick/7-atmospheric-effects-are-not-visible-on-t/) |
 | 8 | fix three bugs: tile transparency at same elevation, NPC click interaction with chat-bubble cursor, isometric collision Y-extension reduced to 1.5x | 2026-03-19 | 4f2d747 | [8-fix-three-bugs-1-tiles-incorrectly-trans](./quick/8-fix-three-bugs-1-tiles-incorrectly-trans/) |
+| 9 | configure Sentry error tracking for api and game-server — @sentry/nestjs with instrument.ts init, SentryModule.forRoot(), SentryGlobalFilter as APP_FILTER | 2026-03-19 | 09cb5b7 | [9-configure-sentry-error-tracking-for-api-](./quick/9-configure-sentry-error-tracking-for-api-/) |
 
 ## Session Continuity
 
 Last session: 2026-03-19
-Stopped at: Completed quick task 8 — three bug fixes (tile transparency elevation, NPC click interaction, 1.5x collision zone)
+Stopped at: Completed quick task 9 — Sentry error tracking configured for both NestJS apps
 Resume file: None
 Next action: /gsd:plan-phase 140
 
 ---
-*Last updated: 2026-03-19 — quick task 8 completed*
+*Last updated: 2026-03-19 — quick task 9 completed*
