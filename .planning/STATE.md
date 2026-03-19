@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 Phase: 140 of 142 (Biome & Tile Foundation)
 Plan: 0 of ? in current phase
 Status: Ready to plan
-Last activity: 2026-03-19 - Completed quick task 3: hub tile colors too intense — floors and walls rebalanced to metallic space-station palette
+Last activity: 2026-03-19 - Completed quick task 4: player depth sorting fixed — removed ENTITY_LAYER_OFFSET, entities share depth space with tiles
 
 Progress: [████████████████████░░] 97%
 
@@ -73,13 +73,14 @@ None.
 |---|-------------|------|--------|-----------|
 | 2 | in new hubs there is no corridor between all rooms, making them not reachable | 2026-03-19 | 21349c0 | [2-in-new-hubs-there-is-no-corridor-between](./quick/2-in-new-hubs-there-is-no-corridor-between/) |
 | 3 | hub tile colors too intense — floors and walls rebalanced to metallic space-station palette | 2026-03-19 | 90e83b9 | [3-hub-tile-colors-too-intense-floors-and-w](./quick/3-hub-tile-colors-too-intense-floors-and-w/) |
+| 4 | player renders on top of wall tiles — removed ENTITY_LAYER_OFFSET, entities now share depth space with tiles | 2026-03-19 | f5b4ab7 | [4-player-renders-on-top-of-wall-tiles-dept](./quick/4-player-renders-on-top-of-wall-tiles-dept/) |
 
 ## Session Continuity
 
 Last session: 2026-03-19
-Stopped at: Completed quick task 3 — hub tile colors rebalanced to metallic base palette
+Stopped at: Completed quick task 4 — player depth sorting fixed (removed ENTITY_LAYER_OFFSET)
 Resume file: None
 Next action: /gsd:plan-phase 140
 
 ---
-*Last updated: 2026-03-19 — quick task 3 completed*
+*Last updated: 2026-03-19 — quick task 4 completed*
