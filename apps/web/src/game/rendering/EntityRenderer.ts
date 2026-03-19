@@ -7,12 +7,7 @@ import { useStatsStore } from '../../store/statsStore';
 import { applyRareNodeFX } from './RareNodeFX';
 
 const ELEVATION_HEIGHT_STEP = 128; // Pixels per elevation level (1.0 × diamond height for 256x256 cubes)
-// In isometric cube-tile rendering, south-row tile sprites overlap upward to the current
-// diamond center.  Moving entities up by 32px (half of tileHeightHalf=64) positions their
-// base and shadow ABOVE that overlap zone so they appear to stand ON the tile surface
-// rather than sinking behind the south tile's diamond face.
-// Depth sorting is grid-based and unaffected by this visual offset.
-const ENTITY_GROUND_OFFSET = -32;
+const ENTITY_GROUND_OFFSET = 0; // No visual offset — depth sorting (entityOffset=65) handles south-tile wall occlusion
 const OCCLUSION_DEPTH_THRESHOLD = 10.0;  // Structures this far "in front" occlude entities
 const OCCLUSION_MIN_HEIGHT = 3;          // Only structures >= 3 elevation levels occlude
 const OCCLUDED_ALPHA = 0.3;              // Alpha for occluded entities (30% visible)

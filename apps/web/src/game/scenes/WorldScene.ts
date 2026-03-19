@@ -40,12 +40,7 @@ export const ISO_TILE_HEIGHT = 128;
 const VISIBILITY_RADIUS = 48;
 // Pixel-space hysteresis threshold: commit zone transition once player is this many px deep
 const HYSTERESIS_PX = HYSTERESIS_TILES * TILE_SIZE_PX; // 3 * 128 = 384 px
-// In isometric cube-tile rendering, south-row tile sprites overlap upward to the current
-// diamond center.  Moving entities up by 32px (half of tileHeightHalf=64) positions their
-// base and shadow ABOVE that overlap zone so they appear to stand ON the tile surface
-// rather than sinking behind the south tile's diamond face.
-// Depth sorting is grid-based and unaffected by this visual offset.
-const ENTITY_GROUND_OFFSET = -32;
+const ENTITY_GROUND_OFFSET = 0; // No visual offset — depth sorting (entityOffset=65) handles south-tile wall occlusion
 
 // Phase 138: Zone cinematic tier label mapping and cooldown
 const TIER_LABELS: Record<BiomeTier, string> = {

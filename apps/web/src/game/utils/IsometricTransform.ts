@@ -81,15 +81,20 @@ export class IsometricTransform {
    * Depth model (all values in same space, no layer separation):
    *   Primary sort:    screen.y = (gridX + gridY) * tileHeightHalf
    *                    Adjacent isometric rows differ by tileHeightHalf (64) depth units.
-   *   Entity offset:   +1 so entities render in front of their own tile but behind tiles
-   *                    one row south (which differ by 64 depth units).
+   *   Entity offset:   tileHeightHalf + 1 (65) so entities render in front of their own
+   *                    tile AND the south-row tile walls. In cube-tile rendering, south-row
+   *                    tile sprites extend upward into the current diamond, visually
+   *                    overlapping entities at the diamond center. An offset of 65 places
+   *                    entities just above the south tile depth (64), ensuring they render
+   *                    in front of walls (which go below the surface) but still behind
+   *                    tiles 2+ rows south (depth 128+).
    *   Elevation:       small weight (0.1) for slight correction on elevated terrain.
    *   Priority boost:  tiny tiebreaker to sort the local player above peer entities at
    *                    the exact same position; must stay << 64 to avoid skipping rows.
    */
   calculateDepth(gridX: number, gridY: number, elevation: number = 0, priorityBoost: number = 0, isEntity: boolean = false): number {
     const screen = this.gridToScreen(gridX, gridY);
-    const entityOffset = isEntity ? 1 : 0;
+    const entityOffset = isEntity ? (this.tileHeightHalf + 1) : 0;
     return screen.y + (gridX * 0.0001) + (elevation * this.elevationWeight) + priorityBoost + entityOffset;
   }
 
