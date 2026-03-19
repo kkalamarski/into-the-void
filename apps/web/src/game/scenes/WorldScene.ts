@@ -1017,28 +1017,38 @@ export class WorldScene extends Phaser.Scene {
 
     const playerGridX = this.localPlayer.getData('gridX') as number;
     const playerGridY = this.localPlayer.getData('gridY') as number;
-    // Isometric row: higher value = closer to camera = visually in front
+    // Guard: data not yet set (player hasn't moved since spawn)
+    if (playerGridX == null || playerGridY == null || isNaN(playerGridX)) return;
+
+    // Isometric axes: row = gridX+gridY (depth), col = gridX-gridY (lateral)
     const playerRow = playerGridX + playerGridY;
+    const playerCol = playerGridX - playerGridY;
 
     const newTransparent = new Set<Phaser.GameObjects.Container>();
 
     for (const tile of chunkTiles) {
-      const elevation = tile.getData('elevation') as number ?? 0;
-      if (elevation === 0) continue;
+      const elevation = tile.getData('elevation') as number;
+      if (!elevation || elevation === 0) continue;
 
       const tileGridX = tile.getData('gridX') as number;
       const tileGridY = tile.getData('gridY') as number;
 
-      // Only check tiles near the player
-      if (Math.abs(tileGridX - playerGridX) > 4 || Math.abs(tileGridY - playerGridY) > 4) continue;
+      // Quick bounding box check
+      if (Math.abs(tileGridX - playerGridX) > 5 || Math.abs(tileGridY - playerGridY) > 5) continue;
 
-      // Tile must be in front of player in isometric space (higher row = closer to camera)
+      // Tile must be in front of player (higher iso row = closer to camera)
       const tileRow = tileGridX + tileGridY;
       if (tileRow <= playerRow) continue;
 
-      // Higher walls occlude further behind — limit range
+      // Row distance: how far in front. Higher walls occlude further behind.
       const rowDiff = tileRow - playerRow;
-      if (rowDiff > elevation + 1) continue;
+      if (rowDiff > elevation + 2) continue;
+
+      // Column distance: only fade tiles that are directly in front (same iso column)
+      // This prevents the entire row from going transparent
+      const tileCol = tileGridX - tileGridY;
+      const colDiff = Math.abs(tileCol - playerCol);
+      if (colDiff > 2) continue;
 
       newTransparent.add(tile);
       if (tile.alpha !== 0.35) {
