@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 Phase: 140 of 142 (Biome & Tile Foundation)
 Plan: 0 of ? in current phase
 Status: Ready to plan
-Last activity: 2026-03-19 - Completed quick task 4: player depth sorting fixed — removed ENTITY_LAYER_OFFSET, entities share depth space with tiles
+Last activity: 2026-03-19 - Completed quick task 5: wall collision boxes fixed — isometric visual collision check prevents players from walking behind elevated wall cubes
 
 Progress: [████████████████████░░] 97%
 
@@ -74,13 +74,14 @@ None.
 | 2 | in new hubs there is no corridor between all rooms, making them not reachable | 2026-03-19 | 21349c0 | [2-in-new-hubs-there-is-no-corridor-between](./quick/2-in-new-hubs-there-is-no-corridor-between/) |
 | 3 | hub tile colors too intense — floors and walls rebalanced to metallic space-station palette | 2026-03-19 | 90e83b9 | [3-hub-tile-colors-too-intense-floors-and-w](./quick/3-hub-tile-colors-too-intense-floors-and-w/) |
 | 4 | player renders on top of wall tiles — removed ENTITY_LAYER_OFFSET, entities now share depth space with tiles | 2026-03-19 | f5b4ab7 | [4-player-renders-on-top-of-wall-tiles-dept](./quick/4-player-renders-on-top-of-wall-tiles-dept/) |
+| 5 | wall collision boxes too small — added createIsometricCollisionCheck wrapping isSolid with south-neighbor elevated-tile check on both client and server | 2026-03-19 | ee264e1 | [5-wall-collision-boxes-too-small-player-ca](./quick/5-wall-collision-boxes-too-small-player-ca/) |
 
 ## Session Continuity
 
 Last session: 2026-03-19
-Stopped at: Completed quick task 4 — player depth sorting fixed (removed ENTITY_LAYER_OFFSET)
+Stopped at: Completed quick task 5 — wall collision boxes fixed (isometric visual collision check)
 Resume file: None
 Next action: /gsd:plan-phase 140
 
 ---
-*Last updated: 2026-03-19 — quick task 4 completed*
+*Last updated: 2026-03-19 — quick task 5 completed*
