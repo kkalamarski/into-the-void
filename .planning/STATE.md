@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.30 — World Rendering & Interaction Fix (Phase 144)
+**Current focus:** v1.30 — World Rendering & Interaction Fix (Phase 146)
 
 ## Current Position
 
-Phase: 144 of 146 (Chunk Loading Fix)
-Plan: 1 of 1 in current phase (complete)
-Status: Phase 144 executed — all plans complete
-Last activity: 2026-03-19 — Phase 144 chunk loading fix executed (listener cleanup + failed retry)
+Phase: 146 of 146 (Secondary Fixes & Cleanup)
+Plan: 2 of 2 in current phase (complete)
+Status: Phase 146 executed — all plans complete
+Last activity: 2026-03-19 — Phase 146 secondary fixes executed (portal debounce, NPC proximity, debug log cleanup, PROJECT.md fix)
 
 Progress: [█████░░░░░░░░░░░░░░░] 25%
 
