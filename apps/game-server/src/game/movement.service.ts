@@ -33,6 +33,9 @@ const BROADCAST_RADIUS_PX = 1536;
  */
 const MAX_DT = 0.2;
 
+/** Collision divergence threshold — correct client if server position differs by more than this. */
+const COLLISION_CORRECTION_THRESHOLD_PX = 2.0;
+
 /**
  * MovementService — 20Hz authoritative pixel movement tick loop.
  *
@@ -180,6 +183,22 @@ export class MovementService implements OnModuleInit {
       // Update authoritative position
       player.px = resolved.px;
       player.py = resolved.py;
+
+      // Collision-divergence correction — if the server's collision-resolved position
+      // differs from the client's predicted position by more than the threshold, snap the
+      // client to the server's authoritative result immediately.  This prevents silent drift
+      // that accumulates between ticks and causes rubber-banding near walls.
+      const dxPred = resolved.px - input.predictedPx;
+      const dyPred = resolved.py - input.predictedPy;
+      const predDist = Math.sqrt(dxPred * dxPred + dyPred * dyPred);
+
+      if (predDist > COLLISION_CORRECTION_THRESHOLD_PX) {
+        this.server?.to(player.socketId).emit('positionCorrection', {
+          px: resolved.px,
+          py: resolved.py,
+          sequence: input.sequence,
+        });
+      }
 
       dirty.push({ playerId, px: resolved.px, py: resolved.py });
     }
