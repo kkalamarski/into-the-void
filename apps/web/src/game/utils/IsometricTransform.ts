@@ -1,3 +1,6 @@
+/** Matches the +64px visual shift applied to entity containers in EntityRenderer/WorldScene */
+const ENTITY_GROUND_OFFSET = 64;
+
 export class IsometricTransform {
   private tileWidthHalf: number;
   private tileHeightHalf: number;
@@ -81,18 +84,20 @@ export class IsometricTransform {
    * Depth model (all values in same space, no layer separation):
    *   Primary sort:    screen.y = (gridX + gridY) * tileHeightHalf
    *                    Adjacent isometric rows differ by tileHeightHalf (64) depth units.
-   *   Entity offset:   +0.5 so entities render above floor tiles at the same grid position
-   *                    but below tiles at a higher iso row (wall in front of player).
-   *                    0.5 << 64, so it never jumps to a different row's depth band.
+   *   Entity offset:   +ENTITY_GROUND_OFFSET (64) so depth sorting aligns with visual position.
+   *                    Entity containers are placed at screenPos.y + 64 to sit on the ground
+   *                    plane of isometric tiles, so depth must include the same +64 offset.
+   *                    This makes entities sort as if they are at their visual Y position,
+   *                    preventing them from being hidden behind tiles on their upper half.
    *   Elevation:       small weight (0.1) for slight correction on elevated terrain.
    *   Priority boost:  tiny tiebreaker to sort the local player above peer entities at
    *                    the exact same position; must stay << 64 to avoid skipping rows.
    */
   calculateDepth(gridX: number, gridY: number, elevation: number = 0, priorityBoost: number = 0, isEntity: boolean = false): number {
     const screen = this.gridToScreen(gridX, gridY);
-    // Entity offset: small bump so entities render above floor tiles at same position
-    // but stay below tiles at higher iso rows (adjacent row diff = 64 units)
-    const entityOffset = isEntity ? 0.5 : 0;
+    // Entity offset: matches the +64px visual shift applied to entity containers
+    // so depth sorting aligns with visual position
+    const entityOffset = isEntity ? ENTITY_GROUND_OFFSET : 0;
     return screen.y + (gridX * 0.0001) + (elevation * this.elevationWeight) + priorityBoost + entityOffset;
   }
 
