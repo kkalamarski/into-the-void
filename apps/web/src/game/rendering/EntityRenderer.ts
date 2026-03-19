@@ -7,6 +7,7 @@ import { useStatsStore } from '../../store/statsStore';
 import { applyRareNodeFX } from './RareNodeFX';
 
 const ELEVATION_HEIGHT_STEP = 128; // Pixels per elevation level (1.0 × diamond height for 256x256 cubes)
+const ENTITY_GROUND_OFFSET = 64; // Shift entities from diamond center to diamond bottom (visual ground)
 const OCCLUSION_DEPTH_THRESHOLD = 10.0;  // Structures this far "in front" occlude entities
 const OCCLUSION_MIN_HEIGHT = 3;          // Only structures >= 3 elevation levels occlude
 const OCCLUDED_ALPHA = 0.3;              // Alpha for occluded entities (30% visible)
@@ -444,7 +445,7 @@ export class EntityRenderer {
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
 
     const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
-    const container = this.scene.add.container(screenPos.x, screenPos.y - elevationOffset);
+    const container = this.scene.add.container(screenPos.x, screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET);
 
     // Store world coordinates for depth sorting
     container.setData('gridX', worldX);
@@ -1232,7 +1233,7 @@ export class EntityRenderer {
   ): void {
     const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
     const screenPos = this.isoTransform.gridToScreen(gridX, gridY);
-    container.setPosition(screenPos.x, screenPos.y - elevationOffset);
+    container.setPosition(screenPos.x, screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET);
 
     // Update stored grid position and elevation
     container.setData('gridX', gridX);

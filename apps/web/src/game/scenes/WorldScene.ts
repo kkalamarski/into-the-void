@@ -40,6 +40,7 @@ export const ISO_TILE_HEIGHT = 128;
 const VISIBILITY_RADIUS = 48;
 // Pixel-space hysteresis threshold: commit zone transition once player is this many px deep
 const HYSTERESIS_PX = HYSTERESIS_TILES * TILE_SIZE_PX; // 3 * 128 = 384 px
+const ENTITY_GROUND_OFFSET = 64; // Shift entities from diamond center to diamond bottom (visual ground)
 
 // Phase 138: Zone cinematic tier label mapping and cooldown
 const TIER_LABELS: Record<BiomeTier, string> = {
@@ -791,7 +792,7 @@ export class WorldScene extends Phaser.Scene {
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
 
     // Create container for player (same pattern as entities)
-    const container = this.add.container(screenPos.x, screenPos.y - elevationOffset);
+    const container = this.add.container(screenPos.x, screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET);
     container.setData('gridX', worldX);
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
@@ -1805,7 +1806,7 @@ export class WorldScene extends Phaser.Scene {
       // Calculate target screen position
       const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
       const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 × diamond height)
-      const targetY = screenPos.y - elevationOffset;
+      const targetY = screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET;
 
       // Calculate movement direction for animated creatures
       const oldX = container.getData('gridX') as number;
@@ -1957,7 +1958,7 @@ export class WorldScene extends Phaser.Scene {
     const { worldX, worldY } = this.positionToWorldCoords(player.position);
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
 
-    const container = this.add.container(screenPos.x, screenPos.y - elevationOffset);
+    const container = this.add.container(screenPos.x, screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET);
     container.setData('gridX', worldX);
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
@@ -2033,7 +2034,7 @@ export class WorldScene extends Phaser.Scene {
     this.tweens.add({
       targets: container,
       x: screenPos.x,
-      y: screenPos.y - elevationOffset,
+      y: screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET,
       duration: 100,
       ease: 'Linear',
       onComplete: () => {
@@ -2086,7 +2087,7 @@ export class WorldScene extends Phaser.Scene {
     // Use world coordinates for screen position so player aligns with chunk positions
     const { worldX, worldY } = this.positionToWorldCoords(position);
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
-    const targetY = screenPos.y - elevationOffset;
+    const targetY = screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET;
 
     // Snap position (no tween — pixel movement handles smooth rendering)
     this.localPlayer.setPosition(screenPos.x, targetY);
@@ -2185,7 +2186,7 @@ export class WorldScene extends Phaser.Scene {
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
 
     // Set sprite position directly (no tween — instant for pixel movement)
-    this.localPlayer.setPosition(screenPos.x, screenPos.y - elevationOffset);
+    this.localPlayer.setPosition(screenPos.x, screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET);
 
     // Update grid data for depth sorting
     this.localPlayer.setData('gridX', worldX);
@@ -2316,7 +2317,7 @@ export class WorldScene extends Phaser.Scene {
       const screenPos = this.isoTransform!.gridToScreen(worldX, worldY);
 
       // Set position directly (no tween — interpolation IS the smoothing)
-      (container as unknown as Phaser.GameObjects.Container).setPosition(screenPos.x, screenPos.y - elevationOffset);
+      (container as unknown as Phaser.GameObjects.Container).setPosition(screenPos.x, screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET);
 
       // Update grid data for depth sorting
       container.setData('gridX', worldX);
