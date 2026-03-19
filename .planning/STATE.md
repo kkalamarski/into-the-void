@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 Phase: 140 of 142 (Biome & Tile Foundation)
 Plan: 0 of ? in current phase
 Status: Ready to plan
-Last activity: 2026-03-18 — v1.29 roadmap created (3 phases, 21 requirements mapped)
+Last activity: 2026-03-19 - Completed quick task 2: in new hubs there is no corridor between all rooms, making them not reachable
 
 Progress: [████████████████████░░] 97%
 
@@ -66,6 +66,12 @@ None.
 ### Blockers/Concerns
 
 None.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 2 | in new hubs there is no corridor between all rooms, making them not reachable | 2026-03-19 | 21349c0 | [2-in-new-hubs-there-is-no-corridor-between](./quick/2-in-new-hubs-there-is-no-corridor-between/) |
 
 ## Session Continuity
 
