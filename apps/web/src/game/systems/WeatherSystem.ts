@@ -230,6 +230,7 @@ const CROSSFADE_MS = 3000;
 export class WeatherSystem {
   private scene: Phaser.Scene;
   private currentBiome: BiomeType | null = null;
+  private currentConfig: WeatherConfig | null = null;
   private activeEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
   private outgoingEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
   private intensityTier: 0 | 1 | 2 = 1; // 0=light, 1=moderate, 2=heavy
@@ -243,10 +244,10 @@ export class WeatherSystem {
     // Update emitter emit zones on viewport resize
     this.resizeHandler = (gameSize: Phaser.Structs.Size) => {
       const { width, height } = gameSize;
-      if (this.activeEmitter) {
+      if (this.activeEmitter && this.currentConfig) {
         this.activeEmitter.setEmitZone(
           new Phaser.GameObjects.Particles.Zones.RandomZone(
-            new Phaser.Geom.Rectangle(0, -(height * 0.15), width, height * 0.15) as unknown as Phaser.Types.GameObjects.Particles.RandomZoneSource
+            this.getEmitZone(this.currentConfig, width, height) as unknown as Phaser.Types.GameObjects.Particles.RandomZoneSource
           )
         );
       }
@@ -267,6 +268,7 @@ export class WeatherSystem {
 
     this.currentBiome = biome;
     const config = WEATHER_CONFIGS[biome];
+    this.currentConfig = config;
 
     // Hub biomes: stop any existing intensity cycle (constant particles)
     if (isHubBiome(biome)) {
@@ -370,6 +372,7 @@ export class WeatherSystem {
     }
 
     this.currentBiome = null;
+    this.currentConfig = null;
   }
 
   // ── Private ──────────────────────────────────────────────────────────────
@@ -383,7 +386,7 @@ export class WeatherSystem {
 
     const emitter = this.scene.add.particles(0, 0, 'weather-pixel', {
       emitZone: new Phaser.GameObjects.Particles.Zones.RandomZone(
-        new Phaser.Geom.Rectangle(0, -(height * 0.15), width, height * 0.15) as unknown as Phaser.Types.GameObjects.Particles.RandomZoneSource
+        this.getEmitZone(config, width, height) as unknown as Phaser.Types.GameObjects.Particles.RandomZoneSource
       ),
       speedY: config.speedY,
       speedX: config.speedX,
@@ -490,6 +493,33 @@ export class WeatherSystem {
     if (roll < weights[0]) return 2; // heavy
     if (roll < weights[0] + weights[1]) return 1; // moderate
     return 0; // light
+  }
+
+  /**
+   * Returns the emit zone rectangle for a given weather config.
+   *
+   * Falling types (rain, snow, ash) spawn from a thin strip above the viewport
+   * so particles travel through the full visible area.
+   *
+   * Floating, drifting, and chaotic types (spores, mist, void_energy) spawn
+   * across the full viewport because they have no dominant downward direction —
+   * they would immediately fly off-screen if only spawned from the top strip.
+   */
+  private getEmitZone(config: WeatherConfig, width: number, height: number): Phaser.Geom.Rectangle {
+    switch (config.type) {
+      case 'rain':
+      case 'snow':
+      case 'ash':
+        // Falling: spawn strip above viewport, particles fall through
+        return new Phaser.Geom.Rectangle(0, -(height * 0.15), width, height * 0.15);
+      case 'spores':
+      case 'mist':
+      case 'void_energy':
+        // Floating/drifting/chaotic: spawn across full viewport
+        return new Phaser.Geom.Rectangle(0, 0, width, height);
+      default:
+        return new Phaser.Geom.Rectangle(0, -(height * 0.15), width, height * 0.15);
+    }
   }
 
   private destroyActive(): void {
