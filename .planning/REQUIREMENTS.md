@@ -146,22 +146,22 @@ Requirements for bug-fix milestone. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RENDER-01 | TBD | Pending |
-| RENDER-02 | TBD | Pending |
-| CHUNK-01 | TBD | Pending |
-| CHUNK-02 | TBD | Pending |
-| TARGET-01 | TBD | Pending |
-| TARGET-02 | TBD | Pending |
-| MISC-01 | TBD | Pending |
-| MISC-02 | TBD | Pending |
-| MISC-03 | TBD | Pending |
-| MISC-04 | TBD | Pending |
+| RENDER-01 | Phase 143 | Pending |
+| RENDER-02 | Phase 143 | Pending |
+| CHUNK-01 | Phase 144 | Pending |
+| CHUNK-02 | Phase 144 | Pending |
+| TARGET-01 | Phase 145 | Pending |
+| TARGET-02 | Phase 145 | Pending |
+| MISC-01 | Phase 146 | Pending |
+| MISC-02 | Phase 146 | Pending |
+| MISC-03 | Phase 146 | Pending |
+| MISC-04 | Phase 146 | Pending |
 
 **Coverage:**
 - v1.30 requirements: 10 total
-- Mapped to phases: 0
-- Unmapped: 10
+- Mapped to phases: 10
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-19*
-*Last updated: 2026-03-19 after initial definition*
+*Last updated: 2026-03-19 after v1.30 roadmap creation*

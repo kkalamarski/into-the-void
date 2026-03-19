@@ -1,31 +1,31 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: Pixel Movement Rewrite
-status: unknown
-last_updated: "2026-03-18T14:55:59.289Z"
+milestone: v1.30
+milestone_name: World Rendering & Interaction Fix
+status: ready_to_plan
+last_updated: "2026-03-19"
 progress:
-  total_phases: 134
-  completed_phases: 134
-  total_plans: 349
-  completed_plans: 349
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-18)
+See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.30 — World Rendering & Interaction Fix
+**Current focus:** v1.30 — World Rendering & Interaction Fix (Phase 143)
 
 ## Current Position
 
-Phase: Not started
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-19 — Milestone v1.30 started (bug-fix milestone)
+Phase: 143 of 146 (Entity Rendering Fix)
+Plan: — of — in current phase
+Status: Ready to plan
+Last activity: 2026-03-19 — v1.30 roadmap created, 4 phases defined
 
 Progress: [░░░░░░░░░░░░░░░░░░░░] 0%
 
@@ -53,11 +53,10 @@ Recent decisions affecting current work:
 
 - v1.27: Pixel movement (free sub-tile) replaces tile-to-tile movement
 - v1.28: Four independent bug areas fixed (combat, rendering, collision, day/night)
-- v1.29: Hub maps expand from 64x64 to 128x128
-- v1.29: Hand-designed JSON maps for all 4 hubs (no procedural generation)
-- v1.29: 8 tile types per hub (32 total definitions)
-- v1.29: Unaffiliated gets Salvage Station hub (not sharing with Nexus/Meridian)
-- v1.29: Procedural cube rendering extended to all 32 new hub tile types
+- v1.29: Hub maps expand from 64x64 to 128x128; hand-designed JSON maps for all 4 hubs
+- v1.30: Entity Y-fix via +64px offset to container placement (EntityRenderer.ts + WorldScene.ts)
+- v1.30: Chunk listener cleanup fix — pass handler reference to gameSocket.off() (GameContainer.tsx)
+- v1.30: Ability targeting fix — ActionBar reads selectedTarget not targetEntityId (ActionBar.tsx)
 
 ### Pending Todos
 
@@ -83,9 +82,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-19
-Stopped at: v1.30 milestone started — audit complete, defining requirements
+Stopped at: v1.30 roadmap created — ready to plan Phase 143
 Resume file: None
-Next action: Define requirements and roadmap for v1.30
+Next action: /gsd:plan-phase 143
 
 ---
-*Last updated: 2026-03-19 — quick task 9 completed*
+*Last updated: 2026-03-19 — v1.30 roadmap created*
