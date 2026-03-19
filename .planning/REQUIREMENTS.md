@@ -14,8 +14,8 @@ Requirements for bug-fix milestone. Each maps to roadmap phases.
 
 ### Chunk Loading
 
-- [ ] **CHUNK-01**: Adjacent chunks load seamlessly when the player approaches zone boundaries — no black void areas, world appears infinite
-- [ ] **CHUNK-02**: Zone:chunk event listener persists across component remounts (HMR, reconnection) — listener cleanup passes handler reference
+- [x] **CHUNK-01**: Adjacent chunks load seamlessly when the player approaches zone boundaries — no black void areas, world appears infinite
+- [x] **CHUNK-02**: Zone:chunk event listener persists across component remounts (HMR, reconnection) — listener cleanup passes handler reference
 
 ### Ability Targeting
 
@@ -148,8 +148,8 @@ Requirements for bug-fix milestone. Each maps to roadmap phases.
 |-------------|-------|--------|
 | RENDER-01 | Phase 143 | Complete |
 | RENDER-02 | Phase 143 | Complete |
-| CHUNK-01 | Phase 144 | Pending |
-| CHUNK-02 | Phase 144 | Pending |
+| CHUNK-01 | Phase 144 | Complete |
+| CHUNK-02 | Phase 144 | Complete |
 | TARGET-01 | Phase 145 | Pending |
 | TARGET-02 | Phase 145 | Pending |
 | MISC-01 | Phase 146 | Pending |

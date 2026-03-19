@@ -235,7 +235,7 @@
 ## Phase Details
 
 - [x] **Phase 143: Entity Rendering Fix** - Correct entity Y-positioning so all sprites sit on tile surfaces, not below them (completed 2026-03-19)
-- [ ] **Phase 144: Chunk Loading Fix** - Fix zone:chunk listener cleanup so adjacent chunks load seamlessly with no black void
+- [x] **Phase 144: Chunk Loading Fix** - Fix zone:chunk listener cleanup so adjacent chunks load seamlessly with no black void (completed 2026-03-19)
 - [ ] **Phase 145: Ability Targeting Fix** - Fix action bar to read selectedTarget so abilities fire on clicked entities
 - [ ] **Phase 146: Secondary Fixes & Cleanup** - Portal debounce, NPC proximity, debug log removal, and known-issues doc correction
 
@@ -300,7 +300,7 @@
 | 141. Rendering & System Upgrade | v1.29 | 3/3 | Complete | 2026-03-18 |
 | 142. Hub Maps & Spawn Updates | v1.29 | 3/3 | Complete | 2026-03-19 |
 | 143. Entity Rendering Fix | v1.30 | Complete    | 2026-03-19 | 2026-03-19 |
-| 144. Chunk Loading Fix | v1.30 | 0/? | Not started | - |
+| 144. Chunk Loading Fix | v1.30 | Complete    | 2026-03-19 | - |
 | 145. Ability Targeting Fix | v1.30 | 0/? | Not started | - |
 | 146. Secondary Fixes & Cleanup | v1.30 | 0/? | Not started | - |
 
