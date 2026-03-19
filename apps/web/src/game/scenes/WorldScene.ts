@@ -1021,6 +1021,8 @@ export class WorldScene extends Phaser.Scene {
     // Guard: data not yet set (player hasn't moved since spawn)
     if (playerGridX == null || playerGridY == null || isNaN(playerGridX)) return;
 
+    const playerElevation = (this.localPlayer.getData('elevation') as number) ?? 0;
+
     // Isometric axes: row = gridX+gridY (depth), col = gridX-gridY (lateral)
     const playerRow = playerGridX + playerGridY;
     const playerCol = playerGridX - playerGridY;
@@ -1030,6 +1032,9 @@ export class WorldScene extends Phaser.Scene {
     for (const tile of chunkTiles) {
       const elevation = tile.getData('elevation') as number;
       if (!elevation || elevation === 0) continue;
+
+      // Skip tiles at same or lower elevation than player — they don't occlude
+      if (elevation <= playerElevation) continue;
 
       const tileGridX = tile.getData('gridX') as number;
       const tileGridY = tile.getData('gridY') as number;
