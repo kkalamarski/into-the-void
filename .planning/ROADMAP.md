@@ -248,7 +248,8 @@
   2. Creatures, plants, and minerals all rest on the tile surface they occupy — walking past an entity does not reveal it floating above or sunk into the ground
   3. Depth sorting places the local player at the correct Z-order relative to nearby tall sprites — player does not pop in front of or behind adjacent entities incorrectly
   4. The fix is consistent across all biomes and elevation levels — entities on elevated tiles also sit correctly on the elevated surface
-**Plans**: TBD
+**Plans**: 1 plan
+  - [ ] 143-01-PLAN.md — Entity Y-offset fix (+64px ground offset) and unified depth sorting boost
 
 ### Phase 144: Chunk Loading Fix
 **Goal**: Adjacent chunks load seamlessly as the player moves through the world — no black void areas appear at chunk boundaries
