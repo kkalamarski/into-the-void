@@ -508,8 +508,11 @@ export class PreloadScene extends Phaser.Scene {
     const tileGen = new ProceduralTileGenerator(this);
     tileGen.bakeAllTextures();
 
-    // Extract named textures from spritesheets
+    // Extract named textures from spritesheets (with vertical trim for features)
     this.extractSpritesheetFrames();
+
+    // Trim individually-loaded feature variant images
+    this.trimLoadedFeatureSprites();
 
     // Create animations after all sprites are loaded
     this.createCharacterAnimations();
@@ -530,7 +533,7 @@ export class PreloadScene extends Phaser.Scene {
       { frame: 3, key: 'mineral_void_crystal-v1' },
       { frame: 4, key: 'mineral_void_slate-v1' },
     ];
-    this.extractFrames('void-biome-features-sheet', voidFeatureMap, 256, 256);
+    this.extractFrames('void-biome-features-sheet', voidFeatureMap, 256, 256, true);
 
     // Crystal biome features spritesheet: 5 frames
     const crystalFeatureMap: Array<{ frame: number; key: string }> = [
@@ -540,7 +543,7 @@ export class PreloadScene extends Phaser.Scene {
       { frame: 3, key: 'mineral_cave_geode-v1' },
       { frame: 4, key: 'mineral_prismatic_crystal-v1' },
     ];
-    this.extractFrames('crystal-biome-features-sheet', crystalFeatureMap, 256, 256);
+    this.extractFrames('crystal-biome-features-sheet', crystalFeatureMap, 256, 256, true);
 
     // Acid/toxic biome features spritesheet: 5 frames
     const acidFeatureMap: Array<{ frame: number; key: string }> = [
@@ -550,17 +553,53 @@ export class PreloadScene extends Phaser.Scene {
       { frame: 3, key: 'mineral_corrosive_deposit-v1' },
       { frame: 4, key: 'mineral_acid_stone-v1' },
     ];
-    this.extractFrames('acid-biome-features-sheet', acidFeatureMap, 256, 256);
+    this.extractFrames('acid-biome-features-sheet', acidFeatureMap, 256, 256, true);
+  }
+
+  /**
+   * Vertically trim individually-loaded feature variant images.
+   * These are loaded via this.load.image() and need post-load trimming.
+   */
+  private trimLoadedFeatureSprites(): void {
+    const featureKeys = [
+      'plant_tendril_tree-v1',
+      'plant_rare_fungi-v1', 'plant_rare_fungi-v2', 'plant_rare_fungi-v3', 'plant_rare_fungi-v4',
+      'plant_magma_bloom-v1', 'plant_magma_bloom-v2', 'plant_magma_bloom-v3', 'plant_magma_bloom-v4',
+    ];
+
+    for (const key of featureKeys) {
+      const tex = this.textures.get(key);
+      if (!tex || tex.key === '__MISSING') continue;
+
+      const source = tex.getSourceImage() as HTMLImageElement;
+      if (!source || !source.width) continue;
+
+      // Draw source image to a temp canvas for pixel scanning
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = source.width;
+      tempCanvas.height = source.height;
+      const tempCtx = tempCanvas.getContext('2d')!;
+      tempCtx.drawImage(source, 0, 0);
+
+      const trimmed = PreloadScene.verticalTrimCanvas(tempCanvas);
+      if (trimmed.height < source.height) {
+        // Remove old texture and re-register trimmed version
+        this.textures.remove(key);
+        this.textures.addCanvas(key, trimmed);
+      }
+    }
   }
 
   /**
    * Extract frames from a spritesheet into individual named textures.
+   * When trim=true, vertically trims transparent padding (keeps full width for centering).
    */
   private extractFrames(
     sheetKey: string,
     frameMap: Array<{ frame: number; key: string }>,
     frameWidth: number,
     frameHeight: number,
+    trim: boolean = false,
   ): void {
     const sheet = this.textures.get(sheetKey);
     if (!sheet || sheet.key === '__MISSING') return;
@@ -577,8 +616,70 @@ export class PreloadScene extends Phaser.Scene {
         frame * frameWidth, 0, frameWidth, frameHeight,
         0, 0, frameWidth, frameHeight,
       );
-      this.textures.addCanvas(key, canvas);
+
+      if (trim) {
+        const trimmed = PreloadScene.verticalTrimCanvas(canvas);
+        this.textures.addCanvas(key, trimmed);
+      } else {
+        this.textures.addCanvas(key, canvas);
+      }
     }
+  }
+
+  /**
+   * Vertically trim transparent padding from a canvas.
+   * Scans rows top-down and bottom-up for first row with alpha > 10.
+   * Returns a new canvas: same width, height = (lastVisibleRow - firstVisibleRow + 1).
+   */
+  private static verticalTrimCanvas(source: HTMLCanvasElement): HTMLCanvasElement {
+    const w = source.width;
+    const h = source.height;
+    const ctx = source.getContext('2d')!;
+    const imageData = ctx.getImageData(0, 0, w, h);
+    const data = imageData.data;
+    const ALPHA_THRESHOLD = 10;
+
+    // Scan top-down for first visible row
+    let firstRow = 0;
+    for (let y = 0; y < h; y++) {
+      let hasVisible = false;
+      for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] > ALPHA_THRESHOLD) {
+          hasVisible = true;
+          break;
+        }
+      }
+      if (hasVisible) {
+        firstRow = y;
+        break;
+      }
+    }
+
+    // Scan bottom-up for last visible row
+    let lastRow = h - 1;
+    for (let y = h - 1; y >= firstRow; y--) {
+      let hasVisible = false;
+      for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] > ALPHA_THRESHOLD) {
+          hasVisible = true;
+          break;
+        }
+      }
+      if (hasVisible) {
+        lastRow = y;
+        break;
+      }
+    }
+
+    const trimmedHeight = lastRow - firstRow + 1;
+    if (trimmedHeight >= h) return source; // No trimming needed
+
+    const trimmed = document.createElement('canvas');
+    trimmed.width = w;
+    trimmed.height = trimmedHeight;
+    const tctx = trimmed.getContext('2d')!;
+    tctx.drawImage(source, 0, firstRow, w, trimmedHeight, 0, 0, w, trimmedHeight);
+    return trimmed;
   }
 
   private createCreatureAnimations(): void {

@@ -535,12 +535,6 @@ export class EntityRenderer {
     let featureBounds: { topFrac: number; bottomFrac: number; leftFrac: number; rightFrac: number } | null = null;
     if (isFeature) {
       featureBounds = this.getVisibleBounds(textureKey, textureFrame);
-      // Shift sprite down by its transparent bottom padding so the visible art base
-      // sits at the diamond center (Y=0). This prevents tile diamonds from showing
-      // through the transparent gap between the art and the ground.
-      const bottomPadPx = featureBounds.bottomFrac * sprite.height * scaleY;
-      spriteYOffset += bottomPadPx;
-      sprite.setY(spriteYOffset);
     }
 
     // Apply glow effect for rare/epic minerals and plants
@@ -743,11 +737,9 @@ export class EntityRenderer {
     container.setData('elevationOffset', this.elevationOffset);
 
     // Initial depth: Y-position with X-tiebreaker and elevation (use world coordinates)
-    // Features (plants/minerals) are static — give them a large depth boost so they render
-    // in front of tiles up to 4 rows south. This prevents tile diamonds from showing through
-    // transparent areas of the feature sprite. Players/NPCs/creatures keep entityOffset=65
-    // so walls can properly occlude them.
-    const featureDepthBoost = isFeature ? this.isoTransform.tileHeight * 2 : 0;
+    // Features are trimmed at load time (no transparent padding), so only a small depth boost
+    // is needed to handle the case where the player walks near a tall feature.
+    const featureDepthBoost = isFeature ? Math.min(actualSpriteHeight * 0.04, 30) : 0;
     container.setData('depthBoost', featureDepthBoost);
     const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, featureDepthBoost, true);
     container.setDepth(depth);

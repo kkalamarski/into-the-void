@@ -2167,6 +2167,17 @@ export class WorldScene extends Phaser.Scene {
     const elevation = this.getTileElevation(tileX, tileY);
     const elevationOffset = elevation * 128;
 
+    // DEBUG: log tile transitions to diagnose sinking bug
+    const prevTileX = this.localPlayer.getData('_dbgTileX') as number | undefined;
+    const prevTileY = this.localPlayer.getData('_dbgTileY') as number | undefined;
+    const prevElev = this.localPlayer.getData('_dbgElev') as number | undefined;
+    if (prevTileX !== tileX || prevTileY !== tileY) {
+      console.log(`[ELEV DEBUG] tile (${prevTileX},${prevTileY}) elev=${prevElev} → tile (${tileX},${tileY}) elev=${elevation} | grid=(${gridX.toFixed(2)},${gridY.toFixed(2)}) | heights row exists: ${!!this.currentHeights?.[tileY]}`);
+      this.localPlayer.setData('_dbgTileX', tileX);
+      this.localPlayer.setData('_dbgTileY', tileY);
+      this.localPlayer.setData('_dbgElev', elevation);
+    }
+
     // Convert to isometric screen position
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
 
