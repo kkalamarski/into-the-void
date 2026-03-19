@@ -88,7 +88,7 @@ interface SortableAbilitySlotProps {
 function SortableAbilitySlot({ index, ability, slotId, barIndex }: SortableAbilitySlotProps) {
   const { isOnCooldown } = useAbilityStore();
   const player = useGameStore((state) => state.player);
-  const targetEntityId = useCombatStore((state) => state.targetEntityId);
+  const selectedTarget = useCombatStore((state) => state.selectedTarget);
 
   const {
     attributes,
@@ -121,7 +121,7 @@ function SortableAbilitySlot({ index, ability, slotId, barIndex }: SortableAbili
 
     gameSocket.emit('ability:use', {
       abilityId: ability.id,
-      targetEntityId: ability.requiresTarget ? targetEntityId ?? undefined : undefined,
+      targetEntityId: ability.requiresTarget ? selectedTarget ?? undefined : undefined,
     });
   };
 
@@ -176,7 +176,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({ barIndex }) => {
   const setCurrentOrder = barIndex === 0 ? setAbilityOrder : setSecondaryAbilityOrder;
 
   const inventory = useInventoryStore((state) => state.inventory);
-  const targetEntityId = useCombatStore((state) => state.targetEntityId);
+  const selectedTarget = useCombatStore((state) => state.selectedTarget);
   const player = useGameStore((state) => state.player);
   const { isOnCooldown } = useAbilityStore();
 
@@ -257,13 +257,13 @@ export const ActionBar: React.FC<ActionBarProps> = ({ barIndex }) => {
 
       gameSocket.emit('ability:use', {
         abilityId: ability.id,
-        targetEntityId: ability.requiresTarget ? targetEntityId ?? undefined : undefined,
+        targetEntityId: ability.requiresTarget ? selectedTarget ?? undefined : undefined,
       });
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [slots, targetEntityId, player, isOnCooldown, barIndex]);
+  }, [slots, selectedTarget, player, isOnCooldown, barIndex]);
 
   return (
     <SortableContext items={slotIds} strategy={rectSwappingStrategy}>
