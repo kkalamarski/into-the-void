@@ -2088,9 +2088,9 @@ export class WorldScene extends Phaser.Scene {
     this.checkPendingZoneTransition(position);
 
     // Update range indicator and NPC proximity
-    const playerState = useGameStore.getState().player;
-    const playerPx = playerState?.px ?? tileToPixelCenter(position.x, position.y).px;
-    const playerPy = playerState?.py ?? tileToPixelCenter(position.x, position.y).py;
+    const pixelPos = this.pixelMovement?.getPosition();
+    const playerPx = pixelPos?.px ?? tileToPixelCenter(position.x, position.y).px;
+    const playerPy = pixelPos?.py ?? tileToPixelCenter(position.x, position.y).py;
     this.updateRangeIndicator(playerPx, playerPy);
     this.updateNpcProximity(playerPx, playerPy);
 
