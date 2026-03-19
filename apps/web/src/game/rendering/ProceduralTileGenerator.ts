@@ -132,45 +132,45 @@ const BIOME_PALETTES: Record<string, TilePalette> = {
   bioluminescent_floor:  buildPalette(0x00ee78, 0x00aaff, 0x22ff88),
   bioluminescent_flora:  buildPalette(0x00bb55, 0xaaff44),
 
-  // ── Hub Station: Canopy (Verdant) — bioluminescent green/blue ──
-  canopy_floor:       buildPalette(0x1a5a3a, 0x44cc88, 0x2a7a4a),
-  canopy_wall:        buildPalette(0x0a2a1a, 0x22aa55),
-  canopy_door:        buildPalette(0x1a4a3a, 0x44ddaa, 0x2a6a4a),
-  canopy_corridor:    buildPalette(0x1a4530, 0x33bb77, 0x2a5540),
-  canopy_decoration:  buildPalette(0x2a8a5a, 0x66eebb),
-  canopy_accent:      buildPalette(0x2a6a4a, 0x55ddaa, 0x3a7a5a),
-  canopy_window:      buildPalette(0x0a3a2a, 0x44ffbb),
-  canopy_hazard:      buildPalette(0x1a5a3a, 0x88ff44, 0x44bb66),
+  // ── Hub Station: Canopy (Verdant) — metallic steel + green accents ──
+  canopy_floor:       buildPalette(0x484e4a, 0x3a9966, 0x506058),
+  canopy_wall:        buildPalette(0x353a37, 0x2a7744),
+  canopy_door:        buildPalette(0x505854, 0x44aa77, 0x48604e),
+  canopy_corridor:    buildPalette(0x464c48, 0x338855, 0x4e5850),
+  canopy_decoration:  buildPalette(0x3a6a4a, 0x55cc88),
+  canopy_accent:      buildPalette(0x3e5a48, 0x44bb77, 0x4a6a52),
+  canopy_window:      buildPalette(0x3a403c, 0x44ddaa),
+  canopy_hazard:      buildPalette(0x484e4a, 0x88ff44, 0x44bb66),
 
-  // ── Hub Station: Ironhold (Helix) — industrial gray/rust/orange ──
-  ironhold_floor:       buildPalette(0x4a4a52, 0xaa6633, 0x5a5a62),
-  ironhold_wall:        buildPalette(0x2a2a30, 0x884422),
-  ironhold_door:        buildPalette(0x3a3a44, 0xcc8844, 0x4a4a54),
-  ironhold_corridor:    buildPalette(0x3a3a42, 0x996633, 0x4a4a52),
-  ironhold_decoration:  buildPalette(0x5a5a62, 0xdd8833),
-  ironhold_accent:      buildPalette(0x4a4038, 0xbb7733, 0x5a5048),
-  ironhold_window:      buildPalette(0x2a2a30, 0xff8844),
-  ironhold_hazard:      buildPalette(0x4a4a52, 0xff4422, 0xffaa22),
+  // ── Hub Station: Ironhold (Helix) — metallic steel + rust/amber accents ──
+  ironhold_floor:       buildPalette(0x4e4c48, 0x996633, 0x585650),
+  ironhold_wall:        buildPalette(0x3a3835, 0x774422),
+  ironhold_door:        buildPalette(0x585550, 0xbb7733, 0x504e48),
+  ironhold_corridor:    buildPalette(0x4c4a46, 0x885522, 0x56544e),
+  ironhold_decoration:  buildPalette(0x5a5a52, 0xcc7733),
+  ironhold_accent:      buildPalette(0x504a42, 0xaa6633, 0x5a5448),
+  ironhold_window:      buildPalette(0x403e3a, 0xee7733),
+  ironhold_hazard:      buildPalette(0x4e4c48, 0xff4422, 0xffaa22),
 
-  // ── Hub Station: Meridian (Nexus) — corporate silver/white/blue ──
-  meridian_floor:       buildPalette(0xc0c8d0, 0x4488cc, 0xd0d8e0),
-  meridian_wall:        buildPalette(0xa0a8b0, 0x3366aa),
-  meridian_door:        buildPalette(0xb0b8c0, 0x55aaee, 0xc0c8d0),
-  meridian_corridor:    buildPalette(0xb0b8c0, 0x4488cc, 0xc0c8d0),
-  meridian_decoration:  buildPalette(0xd0d8e0, 0x66bbff),
-  meridian_accent:      buildPalette(0xb8c0c8, 0x5599dd, 0xc8d0d8),
-  meridian_window:      buildPalette(0xa0a8b0, 0x66ccff),
-  meridian_hazard:      buildPalette(0xc0c8d0, 0x2266ff, 0x88bbff),
+  // ── Hub Station: Meridian (Nexus) — polished steel + blue accents ──
+  meridian_floor:       buildPalette(0xb0b4ba, 0x4488cc, 0xbcc0c8),
+  meridian_wall:        buildPalette(0x888c94, 0x3366aa),
+  meridian_door:        buildPalette(0xa0a4ac, 0x55aadd, 0xaeb2ba),
+  meridian_corridor:    buildPalette(0xaab0b6, 0x4488bb, 0xb4bac0),
+  meridian_decoration:  buildPalette(0xc0c4cc, 0x5599dd),
+  meridian_accent:      buildPalette(0xa8b0b8, 0x5599cc, 0xb0b8c0),
+  meridian_window:      buildPalette(0x90949c, 0x55bbee),
+  meridian_hazard:      buildPalette(0xb0b4ba, 0x2266ff, 0x88bbff),
 
-  // ── Hub Station: Salvage (Unaffiliated) — patchwork/mixed ──
-  salvage_floor:       buildPalette(0x5a5040, 0xaa8855, 0x6a6050),
-  salvage_wall:        buildPalette(0x3a3430, 0x886644),
-  salvage_door:        buildPalette(0x4a4438, 0xbbaa66, 0x5a5448),
-  salvage_corridor:    buildPalette(0x4a4438, 0x997744, 0x5a5448),
-  salvage_decoration:  buildPalette(0x6a6050, 0xccaa55),
-  salvage_accent:      buildPalette(0x5a5848, 0xaa9955, 0x6a6858),
-  salvage_window:      buildPalette(0x3a3430, 0xddbb66),
-  salvage_hazard:      buildPalette(0x5a5040, 0xff6622, 0xffaa44),
+  // ── Hub Station: Salvage (Unaffiliated) — worn steel + warm scrap accents ──
+  salvage_floor:       buildPalette(0x504e4a, 0x997744, 0x585650),
+  salvage_wall:        buildPalette(0x3e3c38, 0x776644),
+  salvage_door:        buildPalette(0x5a5854, 0xaa8855, 0x525048),
+  salvage_corridor:    buildPalette(0x4c4a46, 0x886644, 0x56544e),
+  salvage_decoration:  buildPalette(0x605a50, 0xbb9944),
+  salvage_accent:      buildPalette(0x545248, 0x998844, 0x5e5c52),
+  salvage_window:      buildPalette(0x44423e, 0xccaa55),
+  salvage_hazard:      buildPalette(0x504e4a, 0xff6622, 0xffaa44),
 };
 
 // Floor tiles get 6 variants (3 base + 3 decoration); wall/feature tiles get 1
