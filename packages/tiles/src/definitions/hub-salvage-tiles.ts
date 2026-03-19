@@ -1,6 +1,6 @@
 import { TileDefinition } from '../types';
 
-// Salvage Station (Unaffiliated) — patchwork/mixed/scrap
+// Salvage Station (Unaffiliated) — worn steel with warm scrap accents
 
 export const SALVAGE_FLOOR: TileDefinition = {
   id: 'salvage_floor',
@@ -9,8 +9,8 @@ export const SALVAGE_FLOOR: TileDefinition = {
   movementSpeed: 1.0,
   textureKey: 'tile_salvage_floor',
   defaultElevation: 0,
-  color: 0x5a5040,
-  description: 'Patched metal floor panels. Mismatched but functional.',
+  color: 0x504e4a,
+  description: 'Patched steel floor panels with a faint warm hue. Mismatched but functional.',
 };
 
 export const SALVAGE_WALL: TileDefinition = {
@@ -20,8 +20,8 @@ export const SALVAGE_WALL: TileDefinition = {
   movementSpeed: 0,
   textureKey: 'tile_salvage_wall',
   defaultElevation: 2,
-  color: 0x4a4030,
-  description: 'A scrap wall welded from hull fragments. Rough but solid.',
+  color: 0x3e3c38,
+  description: 'A scrap wall welded from warm-toned hull fragments. Rough but solid.',
 };
 
 export const SALVAGE_DOOR: TileDefinition = {
@@ -31,7 +31,7 @@ export const SALVAGE_DOOR: TileDefinition = {
   movementSpeed: 1.0,
   textureKey: 'tile_salvage_door',
   defaultElevation: 0,
-  color: 0x6a6050,
+  color: 0x5a5854,
   description: 'A door cobbled together from salvaged parts. Groans when opened.',
 };
 
@@ -42,8 +42,8 @@ export const SALVAGE_CORRIDOR: TileDefinition = {
   movementSpeed: 1.0,
   textureKey: 'tile_salvage_corridor',
   defaultElevation: 0,
-  color: 0x504838,
-  description: 'Duct-taped corridor floor. Cable bundles run along the edges.',
+  color: 0x4c4a46,
+  description: 'Duct-taped corridor floor. Cable bundles run along the warm-lit edges.',
 };
 
 export const SALVAGE_DECORATION: TileDefinition = {
@@ -75,7 +75,7 @@ export const SALVAGE_WINDOW: TileDefinition = {
   movementSpeed: 0,
   textureKey: 'tile_salvage_window',
   defaultElevation: 2,
-  color: 0x5a5a4a,
+  color: 0x44423e,
   description: 'A salvaged porthole. Scratched glass but still holds vacuum.',
 };
 

@@ -1,6 +1,6 @@
 import { TileDefinition } from '../types';
 
-// Canopy Station (Verdant Dynamics) — bioluminescent green/blue, organic architecture
+// Canopy Station (Verdant Dynamics) — metallic space station with green accents
 
 export const CANOPY_FLOOR: TileDefinition = {
   id: 'canopy_floor',
@@ -9,8 +9,8 @@ export const CANOPY_FLOOR: TileDefinition = {
   movementSpeed: 1.0,
   textureKey: 'tile_canopy_floor',
   defaultElevation: 0,
-  color: 0x1a3a2a,
-  description: 'Living floor panels grown from bio-engineered wood. Faintly warm underfoot.',
+  color: 0x484e4a,
+  description: 'Steel floor panels with a faint green tint from Verdant bio-coating.',
 };
 
 export const CANOPY_WALL: TileDefinition = {
@@ -20,8 +20,8 @@ export const CANOPY_WALL: TileDefinition = {
   movementSpeed: 0,
   textureKey: 'tile_canopy_wall',
   defaultElevation: 2,
-  color: 0x0a2a1a,
-  description: 'Dense wall of interwoven vines and hardened sap. Impassable.',
+  color: 0x353a37,
+  description: 'Steel wall plating with Verdant Dynamics bio-resin coating. Impassable.',
 };
 
 export const CANOPY_DOOR: TileDefinition = {
@@ -31,8 +31,8 @@ export const CANOPY_DOOR: TileDefinition = {
   movementSpeed: 1.0,
   textureKey: 'tile_canopy_door',
   defaultElevation: 0,
-  color: 0x2a6a4a,
-  description: 'A glowing archway of bioluminescent vines. Parts when approached.',
+  color: 0x505854,
+  description: 'A metallic door with green accent lighting. Opens on approach.',
 };
 
 export const CANOPY_CORRIDOR: TileDefinition = {
@@ -42,8 +42,8 @@ export const CANOPY_CORRIDOR: TileDefinition = {
   movementSpeed: 1.0,
   textureKey: 'tile_canopy_corridor',
   defaultElevation: 0,
-  color: 0x1a3528,
-  description: 'Mossy corridor floor with faint bioluminescent veins.',
+  color: 0x464c48,
+  description: 'Station corridor floor with embedded green guide-strip lighting.',
 };
 
 export const CANOPY_DECORATION: TileDefinition = {
@@ -53,19 +53,19 @@ export const CANOPY_DECORATION: TileDefinition = {
   movementSpeed: 0,
   textureKey: 'tile_canopy_decoration',
   defaultElevation: 1,
-  color: 0x3a8a5a,
-  description: 'A glowing bio-organic console intertwined with vegetation.',
+  color: 0x3a6a4a,
+  description: 'A bio-organic console with living green interface elements.',
 };
 
 export const CANOPY_ACCENT: TileDefinition = {
   id: 'canopy_accent',
-  displayName: 'Canopy Moss Floor',
+  displayName: 'Canopy Accent Panel',
   isBlocking: false,
   movementSpeed: 0.9,
   textureKey: 'tile_canopy_accent',
   defaultElevation: 0,
   color: 0x2a5a3a,
-  description: 'Floor covered in a thick layer of soft, luminescent moss. Slightly slower.',
+  description: 'Floor panel with Verdant green accent stripe. Slightly slower.',
 };
 
 export const CANOPY_WINDOW: TileDefinition = {
@@ -75,8 +75,8 @@ export const CANOPY_WINDOW: TileDefinition = {
   movementSpeed: 0,
   textureKey: 'tile_canopy_window',
   defaultElevation: 2,
-  color: 0x1a4a3a,
-  description: 'A vine-covered viewport revealing the canopy exterior.',
+  color: 0x3a403c,
+  description: 'A station viewport with green-tinted reinforced glass.',
 };
 
 export const CANOPY_HAZARD: TileDefinition = {

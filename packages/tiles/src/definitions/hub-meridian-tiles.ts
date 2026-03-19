@@ -1,6 +1,6 @@
 import { TileDefinition } from '../types';
 
-// Meridian Station (Nexus Frontiers) — corporate silver/white/blue
+// Meridian Station (Nexus Frontiers) — polished steel with blue accents
 
 export const MERIDIAN_FLOOR: TileDefinition = {
   id: 'meridian_floor',
@@ -9,8 +9,8 @@ export const MERIDIAN_FLOOR: TileDefinition = {
   movementSpeed: 1.0,
   textureKey: 'tile_meridian_floor',
   defaultElevation: 0,
-  color: 0xb0b8c0,
-  description: 'Polished silver floor tiles. Immaculately maintained.',
+  color: 0xb0b4ba,
+  description: 'Polished light steel floor tiles with a faint blue sheen. Immaculately maintained.',
 };
 
 export const MERIDIAN_WALL: TileDefinition = {
@@ -20,8 +20,8 @@ export const MERIDIAN_WALL: TileDefinition = {
   movementSpeed: 0,
   textureKey: 'tile_meridian_wall',
   defaultElevation: 2,
-  color: 0x8090a0,
-  description: 'Brushed steel wall panel. Clean and corporate.',
+  color: 0x888c94,
+  description: 'Brushed steel wall panel with subtle blue tint. Clean and corporate.',
 };
 
 export const MERIDIAN_DOOR: TileDefinition = {
@@ -31,8 +31,8 @@ export const MERIDIAN_DOOR: TileDefinition = {
   movementSpeed: 1.0,
   textureKey: 'tile_meridian_door',
   defaultElevation: 0,
-  color: 0xa0b0c8,
-  description: 'A translucent sliding door. Opens silently on approach.',
+  color: 0xa0a4ac,
+  description: 'A metallic sliding door with blue accent lighting. Opens silently on approach.',
 };
 
 export const MERIDIAN_CORRIDOR: TileDefinition = {
@@ -42,8 +42,8 @@ export const MERIDIAN_CORRIDOR: TileDefinition = {
   movementSpeed: 1.0,
   textureKey: 'tile_meridian_corridor',
   defaultElevation: 0,
-  color: 0xa0a8b0,
-  description: 'Spotless corridor floor with embedded guide lighting.',
+  color: 0xaab0b6,
+  description: 'Spotless corridor floor with embedded blue guide lighting.',
 };
 
 export const MERIDIAN_DECORATION: TileDefinition = {
@@ -75,8 +75,8 @@ export const MERIDIAN_WINDOW: TileDefinition = {
   movementSpeed: 0,
   textureKey: 'tile_meridian_window',
   defaultElevation: 2,
-  color: 0x90a8c0,
-  description: 'A panoramic viewport offering sweeping views of the void.',
+  color: 0x90949c,
+  description: 'A panoramic viewport with steel-blue reinforced frame.',
 };
 
 export const MERIDIAN_HAZARD: TileDefinition = {

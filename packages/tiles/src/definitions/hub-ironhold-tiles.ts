@@ -1,6 +1,6 @@
 import { TileDefinition } from '../types';
 
-// Ironhold Station (Helix Extraction) — industrial gray/rust/orange
+// Ironhold Station (Helix Extraction) — metallic space station with rust/amber accents
 
 export const IRONHOLD_FLOOR: TileDefinition = {
   id: 'ironhold_floor',
@@ -9,8 +9,8 @@ export const IRONHOLD_FLOOR: TileDefinition = {
   movementSpeed: 1.0,
   textureKey: 'tile_ironhold_floor',
   defaultElevation: 0,
-  color: 0x3a3a3a,
-  description: 'Heavy metal floor plates. Scarred from decades of heavy machinery.',
+  color: 0x4e4c48,
+  description: 'Heavy steel floor plates with warm amber wear marks. Scarred from machinery.',
 };
 
 export const IRONHOLD_WALL: TileDefinition = {
@@ -20,8 +20,8 @@ export const IRONHOLD_WALL: TileDefinition = {
   movementSpeed: 0,
   textureKey: 'tile_ironhold_wall',
   defaultElevation: 2,
-  color: 0x2a2a2a,
-  description: 'Thick steel wall plating. Riveted and reinforced.',
+  color: 0x3a3835,
+  description: 'Thick warm-steel wall plating. Riveted and reinforced.',
 };
 
 export const IRONHOLD_DOOR: TileDefinition = {
@@ -31,8 +31,8 @@ export const IRONHOLD_DOOR: TileDefinition = {
   movementSpeed: 1.0,
   textureKey: 'tile_ironhold_door',
   defaultElevation: 0,
-  color: 0x5a4a3a,
-  description: 'A heavy blast door. Opens with a hydraulic hiss.',
+  color: 0x585550,
+  description: 'A heavy blast door with amber warning stripe. Opens with a hydraulic hiss.',
 };
 
 export const IRONHOLD_CORRIDOR: TileDefinition = {
@@ -42,8 +42,8 @@ export const IRONHOLD_CORRIDOR: TileDefinition = {
   movementSpeed: 1.0,
   textureKey: 'tile_ironhold_corridor',
   defaultElevation: 0,
-  color: 0x353535,
-  description: 'Metal corridor floor with welded seams and cable conduits.',
+  color: 0x4c4a46,
+  description: 'Metal corridor floor with welded seams and amber hazard lighting.',
 };
 
 export const IRONHOLD_DECORATION: TileDefinition = {
@@ -54,7 +54,7 @@ export const IRONHOLD_DECORATION: TileDefinition = {
   textureKey: 'tile_ironhold_decoration',
   defaultElevation: 1,
   color: 0x6a5a3a,
-  description: 'Industrial machinery. Bolted to the floor and rumbling with power.',
+  description: 'Industrial machinery with rust patina. Bolted to the floor and rumbling with power.',
 };
 
 export const IRONHOLD_ACCENT: TileDefinition = {
@@ -75,8 +75,8 @@ export const IRONHOLD_WINDOW: TileDefinition = {
   movementSpeed: 0,
   textureKey: 'tile_ironhold_window',
   defaultElevation: 2,
-  color: 0x4a4a4a,
-  description: 'A reinforced viewport with thick blast glass.',
+  color: 0x403e3a,
+  description: 'A reinforced viewport with thick warm-tinted blast glass.',
 };
 
 export const IRONHOLD_HAZARD: TileDefinition = {
