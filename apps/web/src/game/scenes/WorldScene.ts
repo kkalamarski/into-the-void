@@ -40,7 +40,7 @@ export const ISO_TILE_HEIGHT = 128;
 const VISIBILITY_RADIUS = 48;
 // Pixel-space hysteresis threshold: commit zone transition once player is this many px deep
 const HYSTERESIS_PX = HYSTERESIS_TILES * TILE_SIZE_PX; // 3 * 128 = 384 px
-const ENTITY_GROUND_OFFSET = 64; // Shift entities from diamond center to diamond bottom (visual ground)
+const ENTITY_GROUND_OFFSET = 0; // Entities sit at diamond center (correct isometric position)
 
 // Phase 138: Zone cinematic tier label mapping and cooldown
 const TIER_LABELS: Record<BiomeTier, string> = {

@@ -7,7 +7,7 @@ import { useStatsStore } from '../../store/statsStore';
 import { applyRareNodeFX } from './RareNodeFX';
 
 const ELEVATION_HEIGHT_STEP = 128; // Pixels per elevation level (1.0 × diamond height for 256x256 cubes)
-const ENTITY_GROUND_OFFSET = 64; // Shift entities from diamond center to diamond bottom (visual ground)
+const ENTITY_GROUND_OFFSET = 0; // Entities sit at diamond center (correct isometric position)
 const OCCLUSION_DEPTH_THRESHOLD = 10.0;  // Structures this far "in front" occlude entities
 const OCCLUSION_MIN_HEIGHT = 3;          // Only structures >= 3 elevation levels occlude
 const OCCLUDED_ALPHA = 0.3;              // Alpha for occluded entities (30% visible)
@@ -743,7 +743,8 @@ export class EntityRenderer {
     // Initial depth: Y-position with X-tiebreaker and elevation (use world coordinates)
     // Features (plants/minerals) get a depth boost proportional to their visual height so that
     // nearby entities (e.g. player walking near trunk) render behind tall sprites
-    const featureDepthBoost = isFeature ? actualSpriteHeight * 0.15 : 0;
+    // Cap at 30 to stay well under one isometric row (64 depth units)
+    const featureDepthBoost = isFeature ? Math.min(actualSpriteHeight * 0.15, 30) : 0;
     const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, featureDepthBoost, true);
     container.setDepth(depth);
 
