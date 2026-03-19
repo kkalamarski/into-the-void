@@ -413,19 +413,15 @@ export class WorldScene extends Phaser.Scene {
 
     // Entity click handler for click-to-attack (CATK-01, CATK-02, CATK-04)
     this.input.on('gameobjectdown', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject) => {
-      console.log('[DEBUG] gameobjectdown fired', { gameObject: gameObject.constructor.name });
-
       // Only process left-click
       if (!pointer.leftButtonDown()) return;
 
       // Check if clicked object's parent container has entity data
       const container = gameObject.parentContainer;
-      console.log('[DEBUG] container:', container ? 'found' : 'null');
       if (!container) return;
 
       const entityId = container.getData('entityId') as string | undefined;
       const entityType = container.getData('entityType') as string | undefined;
-      console.log('[DEBUG] entity data:', { entityId, entityType });
 
       if (!entityId) return;
 
