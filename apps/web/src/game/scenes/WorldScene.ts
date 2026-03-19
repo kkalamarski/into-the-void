@@ -1137,6 +1137,7 @@ export class WorldScene extends Phaser.Scene {
     const previousBiome = this.currentBiome;
     console.log('[WorldScene] commitZoneTransition:', { from: this.currentZoneId, to: newZoneId });
     this.currentZoneId = newZoneId;
+    this.lastPortalEmitKey = null;
 
     // Update current zone data from already-loaded chunk (fast, sync)
     if (this.chunkManager) {
@@ -1267,6 +1268,7 @@ export class WorldScene extends Phaser.Scene {
     // Cancel any pending zone transition
     this.pendingZoneId = null;
     this.pendingBiome = null;
+    this.lastPortalEmitKey = null;
 
     // Clear all rendered tiles
     this.chunkTiles.forEach(tiles => {
@@ -2264,7 +2266,7 @@ export class WorldScene extends Phaser.Scene {
     if (!this.currentTiles) return;
     const tileNumericId = this.currentTiles[tileY]?.[tileX];
     if (tileNumericId === 16) { // TileId.PORTAL
-      const key = `${tileX},${tileY}`;
+      const key = `${this.currentZoneId}:${tileX},${tileY}`;
       if (this.lastPortalEmitKey !== key) {
         this.lastPortalEmitKey = key;
         gameSocket.emit('portal:use', {});
