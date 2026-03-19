@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.30
 milestone_name: World Rendering & Interaction Fix
-status: ready_to_plan
+status: executing
 last_updated: "2026-03-19"
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 1
+  completed_plans: 1
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 143 of 146 (Entity Rendering Fix)
-Plan: — of — in current phase
-Status: Ready to plan
-Last activity: 2026-03-19 — v1.30 roadmap created, 4 phases defined
+Plan: 1 of 1 in current phase (complete)
+Status: Phase 143 executed — all plans complete
+Last activity: 2026-03-19 — Phase 143 entity rendering fix executed (ENTITY_GROUND_OFFSET + unified depth boost)
 
-Progress: [░░░░░░░░░░░░░░░░░░░░] 0%
+Progress: [█████░░░░░░░░░░░░░░░] 25%
 
 ## Performance Metrics
 
@@ -40,7 +40,7 @@ Progress: [░░░░░░░░░░░░░░░░░░░░] 0%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 143 | 1 | 8min | 8min |
 
 *Updated after each plan completion*
 
@@ -82,9 +82,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-19
-Stopped at: v1.30 roadmap created — ready to plan Phase 143
+Stopped at: Phase 143 complete — entity rendering fix shipped
 Resume file: None
-Next action: /gsd:plan-phase 143
+Next action: Plan and execute Phase 144
 
 ---
-*Last updated: 2026-03-19 — v1.30 roadmap created*
+*Last updated: 2026-03-19 — Phase 143 entity rendering fix complete*
