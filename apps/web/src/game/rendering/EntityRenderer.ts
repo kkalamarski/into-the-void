@@ -737,9 +737,10 @@ export class EntityRenderer {
     container.setData('elevationOffset', this.elevationOffset);
 
     // Initial depth: Y-position with X-tiebreaker and elevation (use world coordinates)
-    // Features are trimmed at load time (no transparent padding), so only a small depth boost
-    // is needed to handle the case where the player walks near a tall feature.
-    const featureDepthBoost = isFeature ? Math.min(actualSpriteHeight * 0.04, 30) : 0;
+    // Features need a depth boost so they render in front of tiles their sprite overlaps.
+    // The boost equals the display height: each 64px of height covers ~1 isometric row south.
+    // entityOffset (65) already handles the immediate south tile; this covers rows 2+.
+    const featureDepthBoost = isFeature ? actualSpriteHeight : 0;
     container.setData('depthBoost', featureDepthBoost);
     const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, featureDepthBoost, true);
     container.setDepth(depth);

@@ -1488,8 +1488,13 @@ export class WorldScene extends Phaser.Scene {
         return chunk.data.heights[gridY]?.[gridX] ?? 0;
       }
     }
-    // Default to current zone's heights
-    return this.currentHeights?.[gridY]?.[gridX] ?? 0;
+    // Clamp to valid range — pixel movement can place the player fractionally
+    // out of bounds (e.g. gridX = -0.01 → tileX = -1), which would miss the
+    // heights array and fall back to 0, causing the player to sink.
+    const zoneSize = getZoneSize(this.currentZoneId);
+    const clampedX = Math.max(0, Math.min(gridX, zoneSize - 1));
+    const clampedY = Math.max(0, Math.min(gridY, zoneSize - 1));
+    return this.currentHeights?.[clampedY]?.[clampedX] ?? 0;
   }
 
   /**
@@ -2166,17 +2171,6 @@ export class WorldScene extends Phaser.Scene {
     const tileY = Math.floor(gridY);
     const elevation = this.getTileElevation(tileX, tileY);
     const elevationOffset = elevation * 128;
-
-    // DEBUG: log tile transitions to diagnose sinking bug
-    const prevTileX = this.localPlayer.getData('_dbgTileX') as number | undefined;
-    const prevTileY = this.localPlayer.getData('_dbgTileY') as number | undefined;
-    const prevElev = this.localPlayer.getData('_dbgElev') as number | undefined;
-    if (prevTileX !== tileX || prevTileY !== tileY) {
-      console.log(`[ELEV DEBUG] tile (${prevTileX},${prevTileY}) elev=${prevElev} → tile (${tileX},${tileY}) elev=${elevation} | grid=(${gridX.toFixed(2)},${gridY.toFixed(2)}) | heights row exists: ${!!this.currentHeights?.[tileY]}`);
-      this.localPlayer.setData('_dbgTileX', tileX);
-      this.localPlayer.setData('_dbgTileY', tileY);
-      this.localPlayer.setData('_dbgElev', elevation);
-    }
 
     // Convert to isometric screen position
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
