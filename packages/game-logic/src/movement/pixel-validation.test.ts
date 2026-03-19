@@ -332,8 +332,8 @@ describe('createIsometricCollisionCheck', () => {
     expect(check(5, 5)).toBe(false);
   });
 
-  it('tile directly north of an elevated wall (y+1 is blocking and height >= 1) IS blocked', () => {
-    // Tile (5, 6) is an elevated wall; player at (5, 5) should be blocked
+  it('tile directly north of an elevated wall — full-tile block when no pixelY (backward compat)', () => {
+    // Tile (5, 6) is an elevated wall; no pixelY provided → full-tile block
     const baseSolid = (tx: number, ty: number) => tx === 5 && ty === 6;
     const getHeight = (tx: number, ty: number) => (tx === 5 && ty === 6 ? 1 : 0);
     const check = createIsometricCollisionCheck(baseSolid, getHeight);
@@ -364,7 +364,7 @@ describe('createIsometricCollisionCheck', () => {
     expect(check(3, 3)).toBe(true);
   });
 
-  it('elevated wall at height 2 also blocks the tile to its north', () => {
+  it('elevated wall at height 2 also blocks the tile to its north (no pixelY)', () => {
     // Tile (2, 4) is an elevated wall with height = 2; tile (2, 3) should be blocked
     const baseSolid = (tx: number, ty: number) => tx === 2 && ty === 4;
     const getHeight = (tx: number, ty: number) => (tx === 2 && ty === 4 ? 2 : 0);
@@ -378,5 +378,39 @@ describe('createIsometricCollisionCheck', () => {
     const getHeight = (tx: number, ty: number) => (tx === 10 && ty === 10 ? 1 : 0);
     const check = createIsometricCollisionCheck(baseSolid, getHeight);
     expect(check(10, 8)).toBe(false);
+  });
+
+  // Sub-tile precision tests (1.5x collision zone via pixelY)
+  it('north tile IS blocked when pixelY is in the southern half of the tile (>= tileMidY)', () => {
+    // Wall at (5, 6); checking tile (5, 5) — tileY=5, tileMidY = 5*128 + 64 = 704
+    const baseSolid = (tx: number, ty: number) => tx === 5 && ty === 6;
+    const getHeight = (tx: number, ty: number) => (tx === 5 && ty === 6 ? 1 : 0);
+    const check = createIsometricCollisionCheck(baseSolid, getHeight);
+    // pixelY = 704 (exactly at midpoint) — should be blocked
+    expect(check(5, 5, 704)).toBe(true);
+    // pixelY = 800 (well into southern half) — should be blocked
+    expect(check(5, 5, 800)).toBe(true);
+    // pixelY = 767 (just before next tile boundary 768) — should be blocked
+    expect(check(5, 5, 767)).toBe(true);
+  });
+
+  it('north tile is NOT blocked when pixelY is in the northern half of the tile (< tileMidY)', () => {
+    // Wall at (5, 6); checking tile (5, 5) — tileY=5, tileMidY = 5*128 + 64 = 704
+    const baseSolid = (tx: number, ty: number) => tx === 5 && ty === 6;
+    const getHeight = (tx: number, ty: number) => (tx === 5 && ty === 6 ? 1 : 0);
+    const check = createIsometricCollisionCheck(baseSolid, getHeight);
+    // pixelY = 640 (start of tile) — northern half, NOT blocked
+    expect(check(5, 5, 640)).toBe(false);
+    // pixelY = 703 (just before midpoint) — NOT blocked
+    expect(check(5, 5, 703)).toBe(false);
+  });
+
+  it('backward compat: no pixelY provided still blocks entire north tile', () => {
+    // Wall at (5, 6); no pixelY → full tile block
+    const baseSolid = (tx: number, ty: number) => tx === 5 && ty === 6;
+    const getHeight = (tx: number, ty: number) => (tx === 5 && ty === 6 ? 1 : 0);
+    const check = createIsometricCollisionCheck(baseSolid, getHeight);
+    expect(check(5, 5)).toBe(true);
+    expect(check(5, 5, undefined)).toBe(true);
   });
 });

@@ -153,7 +153,7 @@ export function resolvePixelCollision(
   py: number,
   vx: number,
   vy: number,
-  isSolid: (tileX: number, tileY: number) => boolean,
+  isSolid: (tileX: number, tileY: number, pixelY?: number) => boolean,
 ): PixelPos {
   const hw = PLAYER_HITBOX.width  / 2; // 32
   const hh = PLAYER_HITBOX.height;     // 64 (full height from feet up)
@@ -164,6 +164,7 @@ export function resolvePixelCollision(
   /**
    * Check whether any of the four hitbox corners at position (cpx, cpy) overlap
    * a solid tile. The hitbox is anchored at bottom-center (feet).
+   * Passes the corner's pixel Y to isSolid for sub-tile isometric extension checks.
    */
   function hitsWall(cpx: number, cpy: number): boolean {
     const corners = [
@@ -172,7 +173,7 @@ export function resolvePixelCollision(
       { x: cpx - hw,     y: cpy - 1   },    // bottom-left
       { x: cpx + hw - 1, y: cpy - 1   },    // bottom-right
     ];
-    return corners.some(c => isSolid(toTile(c.x), toTile(c.y)));
+    return corners.some(c => isSolid(toTile(c.x), toTile(c.y), c.y));
   }
 
   // ── Pass 1: try X movement ──────────────────────────────────
@@ -202,15 +203,22 @@ export function resolvePixelCollision(
  * blocking tile — preventing the player from visually entering wall cubes
  * from behind.
  *
+ * The isometric extension is limited to the southern half of the north tile
+ * (0.5 tiles = 64px) rather than the full tile (128px). This gives a total
+ * collision zone of 1.5x (wall tile + 0.5 tile extension) instead of 2.0x.
+ * When pixelY is provided, sub-tile precision is used. When omitted, full-tile
+ * blocking applies for backward compatibility.
+ *
  * @param baseSolid  The original collision check (returns true if blocked).
  * @param getHeight  Returns the height/elevation of a tile (0 = floor, 1+ = elevated).
  * @returns Enhanced collision check accounting for isometric visual overlap.
+ *          The returned function accepts an optional pixelY for sub-tile checks.
  */
 export function createIsometricCollisionCheck(
   baseSolid: (tileX: number, tileY: number) => boolean,
   getHeight: (tileX: number, tileY: number) => number,
-): (tileX: number, tileY: number) => boolean {
-  return (tileX: number, tileY: number): boolean => {
+): (tileX: number, tileY: number, pixelY?: number) => boolean {
+  return (tileX: number, tileY: number, pixelY?: number): boolean => {
     // Standard collision check
     if (baseSolid(tileX, tileY)) return true;
 
@@ -218,6 +226,14 @@ export function createIsometricCollisionCheck(
     // Its isometric cube visual extends northward into this tile's screen space.
     const southY = tileY + 1;
     if (baseSolid(tileX, southY) && getHeight(tileX, southY) >= 1) {
+      // Sub-tile precision: only block the southern half of this tile (1.5x total).
+      // If pixelY is provided, only block when the pixel is in the bottom half of
+      // the current tile (y >= tileY * TILE_SIZE_PX + TILE_SIZE_PX * 0.5).
+      if (pixelY !== undefined) {
+        const tileMidY = tileY * TILE_SIZE_PX + TILE_SIZE_PX * 0.5;
+        return pixelY >= tileMidY;
+      }
+      // Fallback: full-tile block when no pixelY provided (backward compatibility)
       return true;
     }
 
