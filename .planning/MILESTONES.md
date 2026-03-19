@@ -176,3 +176,64 @@
 
 ---
 
+
+## v1.27 Pixel Movement Rewrite (Shipped: 2026-03-18)
+
+**Phases completed:** 5 phases (131-135), 15 plans
+
+**Delivered:** Replaced tile-to-tile movement with free sub-tile pixel movement. Players move continuously via WASD with pixel collision, server validates positions at 20Hz, all game systems use pixel Euclidean distance, and all legacy tile-step code removed.
+
+**Key accomplishments:**
+- PixelPosition coordinate contract and pixel-validation module with TDD
+- Server 20Hz movement tick with velocity/speed validation replacing 140ms rate limiter
+- All 6 distance-based systems migrated from tile integers to pixel Euclidean
+- Client velocity-based WASD movement with pixel hitbox collision
+- Client-side prediction with server reconciliation and remote player interpolation
+- Complete removal of MovementController, PathfindingController, and A* pathfinding
+
+**Stats:**
+- Timeline: 2 days (2026-03-17 → 2026-03-18)
+- Git range: feat(131-01) → docs(135)
+
+---
+
+
+## v1.28 Post-Movement Polish (Shipped: 2026-03-18)
+
+**Phases completed:** 4 phases (136-139), 7 plans
+
+**Delivered:** Fixed regressions from v1.27 pixel movement rewrite across four independent areas: combat/gathering distance checks, entity rendering anchor points, chunk/zone boundary collisions, and day/night brightness curve.
+
+**Key accomplishments:**
+- Combat and gathering restored with pixel Euclidean distance checks
+- Entity sprites grounded on tile surfaces with correct hitboxes
+- Invisible collision walls at chunk/zone boundaries removed
+- Day/night ColorMatrix brightness curve corrected (dawn/dusk brighter than night)
+
+**Stats:**
+- Timeline: 1 day (2026-03-18)
+- Git range: docs(136) → docs(139)
+
+---
+
+
+## v1.29 Hub Station Interiors (Shipped: 2026-03-19)
+
+**Phases completed:** 3 phases (140-142), 9 plans
+
+**Delivered:** Replaced plain square hubs with immersive faction-themed space station interiors. Each faction got a custom biome type, 6-8 purpose-built tiles, and a 128x128 hand-designed map with rooms, corridors, and NPC placements.
+
+**Key accomplishments:**
+- 4 new hub biome types (canopy_station, ironhold_station, meridian_station, salvage_station)
+- 32 hub tile types with procedural isometric cube rendering and faction palettes
+- 4 hand-designed 128x128 JSON station maps with rooms, corridors, NPC placements
+- Hub system upgraded to 128x128, dedicated Salvage Station for Unaffiliated
+- Indoor ambient particles per hub (spores, steam, holo-dust, smoke wisps)
+- Quick fixes: corridors, tile colors, depth sorting, collisions, NPC interaction, weather effects, Sentry
+
+**Stats:**
+- Timeline: 2 days (2026-03-18 → 2026-03-19)
+- Git range: docs(140) → docs(142)
+
+---
+
