@@ -11,7 +11,7 @@ export class DepthSorter {
   private updateInterval = 33; // ~30fps depth updates for smooth movement
   private dirtyEntities = new Set<string>();
   private localPlayerId: string | null = null;
-  private localPlayerPriority = 0.001; // Small boost to ensure local player visible
+  private localPlayerPriority = 0.1; // Match WorldScene.ts boost — safe tiebreaker (0.1 << 64 row diff)
 
   /**
    * Mark an entity as needing depth recalculation.
