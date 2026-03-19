@@ -94,7 +94,7 @@ export class IsometricTransform {
    */
   calculateDepth(gridX: number, gridY: number, elevation: number = 0, priorityBoost: number = 0, isEntity: boolean = false): number {
     const screen = this.gridToScreen(gridX, gridY);
-    const entityOffset = isEntity ? (this.tileHeightHalf + 1) : 0;
+    const entityOffset = isEntity ? 99999 : 0; // DEBUG: huge offset to test if depth sorting is the issue
     return screen.y + (gridX * 0.0001) + (elevation * this.elevationWeight) + priorityBoost + entityOffset;
   }
 
