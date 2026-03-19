@@ -231,7 +231,6 @@ export class WorldScene extends Phaser.Scene {
     this.chunkManager = new ChunkManager(
       // onChunkNeeded
       (zoneId: string) => {
-        console.log('[ChunkManager] onChunkNeeded:', zoneId, 'handler exists:', !!this.onChunkRequest);
         if (this.onChunkRequest) {
           this.onChunkRequest(zoneId);
         } else {
@@ -1071,12 +1070,10 @@ export class WorldScene extends Phaser.Scene {
 
   // Methods to be called from network layer
   setChunkRequestHandler(handler: (zoneId: string) => void): void {
-    console.log('[WorldScene] setChunkRequestHandler called');
     this.onChunkRequest = handler;
   }
 
   loadZoneFromState(chunkData: ChunkData, biome: BiomeType): void {
-    console.log('[WorldScene] loadZoneFromState called for', chunkData.zoneId, 'handler exists:', !!this.onChunkRequest);
     this.currentZoneId = chunkData.zoneId;
 
     // Receive initial chunk
@@ -1131,7 +1128,6 @@ export class WorldScene extends Phaser.Scene {
    */
   private commitZoneTransition(newZoneId: string, biome: BiomeType): void {
     const previousBiome = this.currentBiome;
-    console.log('[WorldScene] commitZoneTransition:', { from: this.currentZoneId, to: newZoneId });
     this.currentZoneId = newZoneId;
     this.lastPortalEmitKey = null;
 
@@ -1197,7 +1193,6 @@ export class WorldScene extends Phaser.Scene {
 
     // Player returned to committed zone - cancel pending transition
     if (position.zoneId === this.currentZoneId) {
-      console.log('[WorldScene] Pending zone transition cancelled - player returned to committed zone');
       this.pendingZoneId = null;
       this.pendingBiome = null;
       return;
@@ -1216,14 +1211,11 @@ export class WorldScene extends Phaser.Scene {
   }
 
   onPlayerZoneChanged(newZoneId: string, biome: BiomeType): void {
-    console.log('[WorldScene] onPlayerZoneChanged:', { from: this.currentZoneId, to: newZoneId });
-
     // Detect teleportation: hub transitions require full scene reset
     const wasHub = isHubZone(this.currentZoneId);
     const isHub = isHubZone(newZoneId);
     if (wasHub !== isHub || (wasHub && isHub && this.currentZoneId !== newZoneId)) {
       // Hub <-> world or hub <-> different hub: full reset required
-      console.log('[WorldScene] Teleportation detected, performing full zone reset');
       this.fullZoneReset(newZoneId, biome);
       return;
     }
@@ -1249,7 +1241,6 @@ export class WorldScene extends Phaser.Scene {
       // already includes this adjacent zone. Calling it would trigger load/unload thrashing.
       this.pendingZoneId = newZoneId;
       this.pendingBiome = biome;
-      console.log('[WorldScene] Zone transition pending at depth', depth, 'px - awaiting', HYSTERESIS_PX, 'px');
     }
   }
 
@@ -1259,8 +1250,6 @@ export class WorldScene extends Phaser.Scene {
    * the new zone's chunks from scratch.
    */
   fullZoneReset(newZoneId: string, biome: BiomeType): void {
-    console.log('[WorldScene] fullZoneReset:', { from: this.currentZoneId, to: newZoneId });
-
     // Cancel any pending zone transition
     this.pendingZoneId = null;
     this.pendingBiome = null;
@@ -1533,7 +1522,6 @@ export class WorldScene extends Phaser.Scene {
 
     // Guard: Don't recreate tiles if already exists (prevents memory leak)
     if (this.chunkTiles.has(zoneId)) {
-      console.log(`[WorldScene] Chunk ${zoneId} already rendered, skipping`);
       // Still update currentTiles for the look feature
       if (zoneId === this.currentZoneId) {
         this.currentTiles = tiles;
@@ -1543,8 +1531,6 @@ export class WorldScene extends Phaser.Scene {
       }
       return;
     }
-
-    console.log(`[WorldScene] Rendering chunk ${zoneId}, total chunks: ${this.chunkTiles.size + 1}`);
 
     const { x: chunkX, y: chunkY } = this.parseZoneCoords(zoneId);
 
@@ -1604,7 +1590,6 @@ export class WorldScene extends Phaser.Scene {
   private unloadChunkContainer(zoneId: string): void {
     const tiles = this.chunkTiles.get(zoneId);
     if (tiles) {
-      console.log(`[WorldScene] Unloading chunk ${zoneId} with ${tiles.length} tiles`);
       tiles.forEach(tile => {
         // Get all children as array first (avoid modifying while iterating)
         const children = tile.getAll();
