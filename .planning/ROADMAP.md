@@ -260,7 +260,7 @@
   2. After a component remount or WebSocket reconnection, chunk loading continues working — the zone:chunk listener is not silently removed by the cleanup path
   3. Returning to a previously visited area re-renders correctly — chunks are not permanently missing after the first navigation away
 **Plans**: 1 plan
-  - [ ] 144-01-PLAN.md — Fix zone:chunk listener cleanup and failed chunk retry logic
+  - [x] 144-01-PLAN.md — Fix zone:chunk listener cleanup and failed chunk retry logic
 
 ### Phase 145: Ability Targeting Fix
 **Goal**: Abilities fired from the action bar hit the entity the player clicked, and gathering starts when clicking a resource node

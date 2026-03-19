@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.30 — World Rendering & Interaction Fix (Phase 143)
+**Current focus:** v1.30 — World Rendering & Interaction Fix (Phase 144)
 
 ## Current Position
 
-Phase: 143 of 146 (Entity Rendering Fix)
+Phase: 144 of 146 (Chunk Loading Fix)
 Plan: 1 of 1 in current phase (complete)
-Status: Phase 143 executed — all plans complete
-Last activity: 2026-03-19 — Phase 143 entity rendering fix executed (ENTITY_GROUND_OFFSET + unified depth boost)
+Status: Phase 144 executed — all plans complete
+Last activity: 2026-03-19 — Phase 144 chunk loading fix executed (listener cleanup + failed retry)
 
 Progress: [█████░░░░░░░░░░░░░░░] 25%
 
@@ -82,9 +82,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-19
-Stopped at: Phase 143 complete — entity rendering fix shipped
+Stopped at: Phase 144 complete — chunk loading fix shipped
 Resume file: None
-Next action: Plan and execute Phase 144
+Next action: Plan and execute Phase 145
 
 ---
-*Last updated: 2026-03-19 — Phase 143 entity rendering fix complete*
+*Last updated: 2026-03-19 — Phase 144 chunk loading fix complete*
