@@ -531,14 +531,14 @@ export class EntityRenderer {
     sprite.setOrigin(0.5, 1.0);
     sprite.setScale(scaleX, scaleY);
 
-    // For features (plants/minerals), auto-detect visible bounds to fix floating/outline/hitArea
+    // For features (plants/minerals), auto-detect visible bounds for hit area and hover outline
     let featureBounds: { topFrac: number; bottomFrac: number; leftFrac: number; rightFrac: number } | null = null;
     if (isFeature) {
       featureBounds = this.getVisibleBounds(textureKey, textureFrame);
-      // Fix floating: shift sprite down by bottom padding so visible art sits on tile surface
-      const bottomPadPx = featureBounds.bottomFrac * sprite.height * scaleY;
-      spriteYOffset += bottomPadPx;
-      sprite.setY(spriteYOffset);
+      // No spriteYOffset adjustment: with origin (0.5, 1.0), the frame bottom sits at the
+      // diamond center (Y=0). Any transparent bottom padding naturally lifts the visible art
+      // above the diamond center, making features appear ON the tile surface rather than
+      // embedded in the cube wall area below the diamond center.
     }
 
     // Apply glow effect for rare/epic minerals and plants
