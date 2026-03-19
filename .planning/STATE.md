@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: World Rendering & Interaction Fix
 status: unknown
-last_updated: "2026-03-19T11:59:12.034Z"
+last_updated: "2026-03-19T12:28:49Z"
 progress:
   total_phases: 139
   completed_phases: 138
@@ -78,6 +78,7 @@ None.
 | 7 | atmospheric effects not visible — added per-weather-type emit zones so spores/mist/void_energy spawn across full viewport instead of top strip | 2026-03-19 | 9789192 | [7-atmospheric-effects-are-not-visible-on-t](./quick/7-atmospheric-effects-are-not-visible-on-t/) |
 | 8 | fix three bugs: tile transparency at same elevation, NPC click interaction with chat-bubble cursor, isometric collision Y-extension reduced to 1.5x | 2026-03-19 | 4f2d747 | [8-fix-three-bugs-1-tiles-incorrectly-trans](./quick/8-fix-three-bugs-1-tiles-incorrectly-trans/) |
 | 9 | configure Sentry error tracking for api and game-server — @sentry/nestjs with instrument.ts init, SentryModule.forRoot(), SentryGlobalFilter as APP_FILTER | 2026-03-19 | 09cb5b7 | [9-configure-sentry-error-tracking-for-api-](./quick/9-configure-sentry-error-tracking-for-api-/) |
+| 10 | fix entity depth sorting — add ENTITY_GROUND_OFFSET (64) to calculateDepth() so entities sort at visual Y position | 2026-03-19 | ee183c6 | [10-fix-entity-rendering-features-sinking-pl](./quick/10-fix-entity-rendering-features-sinking-pl/) |
 
 ## Session Continuity
 
@@ -87,4 +88,4 @@ Resume file: None
 Next action: Plan and execute Phase 145
 
 ---
-*Last updated: 2026-03-19 — Phase 144 chunk loading fix complete*
+*Last updated: 2026-03-19 — Quick task 10 entity depth fix complete*
