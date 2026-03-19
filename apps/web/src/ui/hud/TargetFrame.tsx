@@ -16,9 +16,9 @@ const BEHAVIOR_TO_COLOR: Record<string, string> = {
 };
 
 export const TargetFrame: React.FC = () => {
-  const { targetEntityId } = useCombatStore();
+  const selectedTarget = useCombatStore((state) => state.selectedTarget);
   const entity = useEntityStore((state) =>
-    targetEntityId ? state.entities.get(targetEntityId) : undefined
+    selectedTarget ? state.entities.get(selectedTarget) : undefined
   );
   const stats = useStatsStore((state) => state.stats);
   const [damageFlash, setDamageFlash] = useState(false);
@@ -26,7 +26,7 @@ export const TargetFrame: React.FC = () => {
   // Listen for damage to target for flash effect
   useEffect(() => {
     const handleDamage = (data: { defenderId: string; damage: number }) => {
-      if (data.defenderId === targetEntityId) {
+      if (data.defenderId === selectedTarget) {
         setDamageFlash(true);
         setTimeout(() => setDamageFlash(false), 200);
       }
@@ -36,10 +36,10 @@ export const TargetFrame: React.FC = () => {
     return () => {
       gameSocket.off('combat:damage', handleDamage);
     };
-  }, [targetEntityId]);
+  }, [selectedTarget]);
 
   // No target or not a creature
-  if (!targetEntityId || !entity || entity.type !== 'creature') {
+  if (!selectedTarget || !entity || entity.type !== 'creature') {
     return null;
   }
 
