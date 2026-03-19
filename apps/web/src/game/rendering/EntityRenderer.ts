@@ -743,10 +743,11 @@ export class EntityRenderer {
     container.setData('elevationOffset', this.elevationOffset);
 
     // Initial depth: Y-position with X-tiebreaker and elevation (use world coordinates)
-    // Features (plants/minerals) get a depth boost proportional to their visual height so that
-    // nearby entities (e.g. player walking near trunk) render behind tall sprites
-    // Cap at 30 to stay well under one isometric row (64 depth units)
-    const featureDepthBoost = isFeature ? Math.min(actualSpriteHeight * 0.15, 30) : 0;
+    // Features (plants/minerals) are static — give them a large depth boost so they render
+    // in front of tiles up to 4 rows south. This prevents tile diamonds from showing through
+    // transparent areas of the feature sprite. Players/NPCs/creatures keep entityOffset=65
+    // so walls can properly occlude them.
+    const featureDepthBoost = isFeature ? this.isoTransform.tileHeight * 2 : 0;
     container.setData('depthBoost', featureDepthBoost);
     const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, featureDepthBoost, true);
     container.setDepth(depth);
