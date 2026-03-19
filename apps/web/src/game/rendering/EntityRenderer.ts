@@ -552,7 +552,7 @@ export class EntityRenderer {
     }
 
     // Make sprites interactive with tight hitArea matching visible art (RENDER-04)
-    const isClickable = entity.type === 'creature' || entity.type === 'plant' || entity.type === 'mineral';
+    const isClickable = entity.type === 'creature' || entity.type === 'plant' || entity.type === 'mineral' || entity.type === 'npc' || entity.type === 'item' || entity.type === 'artifact';
     if (isClickable) {
       const texW = sprite.width;
       const texH = sprite.height;
@@ -580,6 +580,12 @@ export class EntityRenderer {
       }
       sprite.setInteractive(hitRect, Phaser.Geom.Rectangle.Contains);
       sprite.input!.cursor = 'pointer';
+
+      // NPCs get a chat-bubble cursor to indicate they are interactable
+      if (entity.type === 'npc') {
+        const chatSvg = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M6 4h20c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2H14l-6 6v-6H6c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z' fill='white' stroke='%23333' stroke-width='2'/></svg>`;
+        sprite.input!.cursor = `url("${chatSvg}") 16 16, pointer`;
+      }
 
       // Store visible bounds on container for hover outline access
       if (featureBounds) {
@@ -636,8 +642,6 @@ export class EntityRenderer {
           if (yieldBar) yieldBar.setVisible(false);
         }
       });
-    } else {
-      sprite.setInteractive();
     }
 
     container.add(sprite);
