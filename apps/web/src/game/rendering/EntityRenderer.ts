@@ -745,6 +745,7 @@ export class EntityRenderer {
     // nearby entities (e.g. player walking near trunk) render behind tall sprites
     // Cap at 30 to stay well under one isometric row (64 depth units)
     const featureDepthBoost = isFeature ? Math.min(actualSpriteHeight * 0.15, 30) : 0;
+    container.setData('depthBoost', featureDepthBoost);
     const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, featureDepthBoost, true);
     container.setDepth(depth);
 
