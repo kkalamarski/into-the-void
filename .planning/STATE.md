@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 Phase: 140 of 142 (Biome & Tile Foundation)
 Plan: 0 of ? in current phase
 Status: Ready to plan
-Last activity: 2026-03-19 - Completed quick task 5: wall collision boxes fixed — isometric visual collision check prevents players from walking behind elevated wall cubes
+Last activity: 2026-03-19 - Completed quick task 6: collision-divergence correction added — server now emits positionCorrection when its collision-resolved position differs from client prediction by more than 2px, eliminating wall rubber-banding
 
 Progress: [████████████████████░░] 97%
 
@@ -75,13 +75,14 @@ None.
 | 3 | hub tile colors too intense — floors and walls rebalanced to metallic space-station palette | 2026-03-19 | 90e83b9 | [3-hub-tile-colors-too-intense-floors-and-w](./quick/3-hub-tile-colors-too-intense-floors-and-w/) |
 | 4 | player renders on top of wall tiles — removed ENTITY_LAYER_OFFSET, entities now share depth space with tiles | 2026-03-19 | f5b4ab7 | [4-player-renders-on-top-of-wall-tiles-dept](./quick/4-player-renders-on-top-of-wall-tiles-dept/) |
 | 5 | wall collision boxes too small — added createIsometricCollisionCheck wrapping isSolid with south-neighbor elevated-tile check on both client and server | 2026-03-19 | ee264e1 | [5-wall-collision-boxes-too-small-player-ca](./quick/5-wall-collision-boxes-too-small-player-ca/) |
+| 6 | collision-divergence correction — server emits positionCorrection when collision-resolved position differs from client prediction by more than 2px | 2026-03-19 | d512e21 | [6-client-server-collision-desync-client-pe](./quick/6-client-server-collision-desync-client-pe/) |
 
 ## Session Continuity
 
 Last session: 2026-03-19
-Stopped at: Completed quick task 5 — wall collision boxes fixed (isometric visual collision check)
+Stopped at: Completed quick task 6 — collision-divergence correction (server emits positionCorrection on wall collision mismatch)
 Resume file: None
 Next action: /gsd:plan-phase 140
 
 ---
-*Last updated: 2026-03-19 — quick task 5 completed*
+*Last updated: 2026-03-19 — quick task 6 completed*
