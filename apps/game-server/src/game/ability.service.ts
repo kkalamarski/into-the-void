@@ -269,13 +269,10 @@ export class AbilityService {
     abilityId: string,
     targetEntityId?: string,
   ): Promise<UseAbilityResult> {
-    console.log('[useAbility] Start:', { socketId, abilityId, targetEntityId });
     const player = this.playerService.getPlayerBySocket(socketId);
     if (!player) {
-      console.log('[useAbility] Player not found for socket:', socketId);
       return { success: false, error: 'Player not found' };
     }
-    console.log('[useAbility] Player:', { id: player.id, zoneId: player.position.zoneId });
 
     // Block ability use while casting
     if (this.isPlayerCasting(player.id)) {
@@ -289,13 +286,10 @@ export class AbilityService {
 
     // Check player has ability (from equipped items)
     const abilities = this.getPlayerAbilities(player.id);
-    console.log('[useAbility] Available abilities:', abilities.map(a => a.id));
     const ability = abilities.find(a => a.id === abilityId);
     if (!ability) {
-      console.log('[useAbility] Ability not found:', abilityId);
       return { success: false, error: 'Ability not available' };
     }
-    console.log('[useAbility] Found ability:', { id: ability.id, requiresTarget: ability.requiresTarget });
 
     // Hub zones are safe - no offensive abilities (but gathering and utility are allowed)
     const isGatherAbility = ability.effects.some(e => e.type === 'gather');
@@ -319,22 +313,17 @@ export class AbilityService {
 
     if (ability.requiresTarget) {
       if (!targetEntityId) {
-        console.log('[useAbility] No targetEntityId provided');
         return { success: false, error: 'Ability requires a target' };
       }
 
-      console.log('[useAbility] Looking up entity:', { zoneId: player.position.zoneId, targetEntityId });
       const entity = await this.zonesService.getEntity(player.position.zoneId, targetEntityId);
       if (!entity) {
-        console.log('[useAbility] Entity not found in zone');
         return { success: false, error: 'Target not found' };
       }
-      console.log('[useAbility] Found entity:', { id: entity.id, type: entity.type });
 
       // Gather abilities can target plants/minerals/artifacts, combat abilities target creatures
       if (hasGatherEffect) {
         if (entity.type !== 'plant' && entity.type !== 'mineral' && entity.type !== 'artifact') {
-          console.log('[useAbility] Invalid target type for gathering:', entity.type);
           return { success: false, error: 'Invalid target for gathering' };
         }
         // Range check for gathering (pixel distance, Phase 133)
