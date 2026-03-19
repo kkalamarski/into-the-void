@@ -7,6 +7,7 @@ import {
   velocityFromKeys,
   resolvePixelCollision,
   validatePixelSpeed,
+  createIsometricCollisionCheck,
 } from '@into-the-void/game-logic';
 import { ZONE_SIZE } from '@into-the-void/shared-types';
 
@@ -150,18 +151,29 @@ export class MovementService implements OnModuleInit {
       // Build collision callback — hub zones use local chunk data directly,
       // open-world zones use cross-zone world-tile lookup for boundary handling
       let isSolid: (tx: number, ty: number) => boolean;
+      let getHeight: (tx: number, ty: number) => number;
       if (player.position.zoneId.startsWith('z_')) {
         const zoneCoords = this.parseZoneCoords(player.position.zoneId);
         const offsetX = zoneCoords.x * ZONE_SIZE;
         const offsetY = zoneCoords.y * ZONE_SIZE;
         isSolid = (tx: number, ty: number): boolean =>
           this.zonesService.isWorldTileBlocked(offsetX + tx, offsetY + ty);
+        getHeight = (tx: number, ty: number): number =>
+          this.zonesService.getWorldTileHeight(offsetX + tx, offsetY + ty);
       } else {
         // Hub/special zones: single-chunk, use local collision data directly
         const collisions = chunk.collisions;
+        const heights = chunk.heights;
         isSolid = (tx: number, ty: number): boolean =>
           collisions?.[ty]?.[tx] ?? true;
+        getHeight = (tx: number, ty: number): number =>
+          heights?.[ty]?.[tx] ?? 0;
       }
+
+      // Wrap isSolid with isometric visual height check:
+      // an elevated blocking tile at (x, y) visually occupies (x, y-1) in screen space,
+      // so we also block tiles whose south neighbor (y+1) is an elevated wall.
+      isSolid = createIsometricCollisionCheck(isSolid, getHeight);
 
       const resolved = resolvePixelCollision(player.px, player.py, vx, vy, isSolid);
 

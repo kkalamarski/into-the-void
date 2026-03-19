@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { ZONE_SIZE, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, BiomeTier, Direction, Creature, TileStructure, isHubZone, Npc, TimingChallenge, BIOME_DISPLAY_NAMES, BIOME_TIERS, getZoneSize } from '@into-the-void/shared-types';
-import { TILE_SIZE_PX, MELEE_RANGE_PX, GATHER_RANGE_PX, NPC_INTERACT_RANGE_PX, pixelDistanceTo, tileToPixelCenter } from '@into-the-void/game-logic';
+import { TILE_SIZE_PX, MELEE_RANGE_PX, GATHER_RANGE_PX, NPC_INTERACT_RANGE_PX, pixelDistanceTo, tileToPixelCenter, createIsometricCollisionCheck } from '@into-the-void/game-logic';
 import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
 import { ItemRegistry } from '@into-the-void/items';
@@ -2562,10 +2562,43 @@ export class WorldScene extends Phaser.Scene {
       const currentSize = getZoneSize(this.currentZoneId);
       const offsetX = zoneCoords.x * currentSize;
       const offsetY = zoneCoords.y * currentSize;
-      this.pixelMovement.setCollisionCallback((tx, ty) => {
-        return this.isWorldTileBlocked(offsetX + tx, offsetY + ty);
-      });
+      const baseIsSolid = (tx: number, ty: number) =>
+        this.isWorldTileBlocked(offsetX + tx, offsetY + ty);
+      const getHeight = (tx: number, ty: number): number =>
+        this.getWorldTileHeight(offsetX + tx, offsetY + ty);
+      // Wrap with isometric visual check: elevated wall at (x, y) visually occupies
+      // (x, y-1) on screen, so we also block tiles whose south neighbor (y+1) is an
+      // elevated blocking tile — preventing the player from walking behind wall cubes.
+      this.pixelMovement.setCollisionCallback(
+        createIsometricCollisionCheck(baseIsSolid, getHeight),
+      );
     }
+  }
+
+  /**
+   * Return the height/elevation of a world tile coordinate.
+   * Mirrors isWorldTileBlocked but reads heights[][] instead of collisions[][].
+   * Returns 0 (floor level) if the chunk is not loaded or height data is missing.
+   */
+  private getWorldTileHeight(worldX: number, worldY: number): number {
+    if (!this.chunkManager) return 0;
+
+    // Hub zones: use local height data directly
+    if (isHubZone(this.currentZoneId)) {
+      const chunk = this.chunkManager.getChunk(this.currentZoneId);
+      return chunk?.data.heights?.[worldY]?.[worldX] ?? 0;
+    }
+
+    // Open-world zones: calculate which chunk this tile belongs to
+    const chunkX = Math.floor(worldX / ZONE_SIZE);
+    const chunkY = Math.floor(worldY / ZONE_SIZE);
+    const zoneId = `z_${chunkX}_${chunkY}`;
+    const chunk = this.chunkManager.getChunk(zoneId);
+    if (!chunk?.data.heights) return 0;
+
+    const localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+    const localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+    return chunk.data.heights[localY]?.[localX] ?? 0;
   }
 
   shutdown(): void {

@@ -441,6 +441,26 @@ export class ZonesService implements OnModuleInit {
   }
 
   /**
+   * Return the height/elevation of a world tile coordinate.
+   * Resolves the correct zone from world tile coordinates and looks up local height data.
+   * Returns 0 (floor level) if the zone is not loaded or height data is missing.
+   * Used by MovementService for isometric visual collision checks.
+   */
+  getWorldTileHeight(worldX: number, worldY: number): number {
+    const zoneX = Math.floor(worldX / ZONE_SIZE);
+    const zoneY = Math.floor(worldY / ZONE_SIZE);
+    const zoneId = `z_${zoneX}_${zoneY}`;
+
+    const chunk = this.getChunkSync(zoneId);
+    if (!chunk?.heights) return 0; // Zone not loaded or no height data = floor level
+
+    const localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+    const localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+
+    return chunk.heights[localY]?.[localX] ?? 0;
+  }
+
+  /**
    * Attempt to claim an entity for pickup.
    * Returns true if claim was successful (entity was unclaimed).
    * Returns false if entity is already claimed by another player.

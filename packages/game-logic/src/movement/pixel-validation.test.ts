@@ -11,6 +11,7 @@ import {
   KEY_BIT_A,
   KEY_BIT_S,
   KEY_BIT_D,
+  createIsometricCollisionCheck,
 } from './pixel-validation';
 
 const DT = 1.0;
@@ -316,5 +317,66 @@ describe('bitmaskToKeyState', () => {
   it('keys=5 (W+S) produces up=true, down=true — opposing keys both true', () => {
     const state = bitmaskToKeyState(5);
     expect(state).toEqual({ up: true, down: true, left: false, right: false });
+  });
+});
+
+// ============================================================
+// createIsometricCollisionCheck
+// ============================================================
+describe('createIsometricCollisionCheck', () => {
+  it('tile with no elevated neighbor is not blocked when base says false', () => {
+    // Base: nothing is solid, all heights = 0
+    const baseSolid = (_tx: number, _ty: number) => false;
+    const getHeight = (_tx: number, _ty: number) => 0;
+    const check = createIsometricCollisionCheck(baseSolid, getHeight);
+    expect(check(5, 5)).toBe(false);
+  });
+
+  it('tile directly north of an elevated wall (y+1 is blocking and height >= 1) IS blocked', () => {
+    // Tile (5, 6) is an elevated wall; player at (5, 5) should be blocked
+    const baseSolid = (tx: number, ty: number) => tx === 5 && ty === 6;
+    const getHeight = (tx: number, ty: number) => (tx === 5 && ty === 6 ? 1 : 0);
+    const check = createIsometricCollisionCheck(baseSolid, getHeight);
+    expect(check(5, 5)).toBe(true);
+  });
+
+  it('tile north of a floor-level blocking tile (height = 0) is NOT additionally blocked', () => {
+    // Tile (5, 6) is solid but height = 0 (flat); no visual overlap into (5, 5)
+    const baseSolid = (tx: number, ty: number) => tx === 5 && ty === 6;
+    const getHeight = (_tx: number, _ty: number) => 0; // all floor level
+    const check = createIsometricCollisionCheck(baseSolid, getHeight);
+    expect(check(5, 5)).toBe(false);
+  });
+
+  it('tile north of a non-blocking elevated tile is NOT blocked', () => {
+    // Tile (5, 6) has height = 2 but is NOT solid (passable elevated)
+    const baseSolid = (_tx: number, _ty: number) => false;
+    const getHeight = (tx: number, ty: number) => (tx === 5 && ty === 6 ? 2 : 0);
+    const check = createIsometricCollisionCheck(baseSolid, getHeight);
+    expect(check(5, 5)).toBe(false);
+  });
+
+  it('base solid check still works through the wrapper (directly solid tile returns true)', () => {
+    // Tile (3, 3) is directly solid
+    const baseSolid = (tx: number, ty: number) => tx === 3 && ty === 3;
+    const getHeight = (_tx: number, _ty: number) => 0;
+    const check = createIsometricCollisionCheck(baseSolid, getHeight);
+    expect(check(3, 3)).toBe(true);
+  });
+
+  it('elevated wall at height 2 also blocks the tile to its north', () => {
+    // Tile (2, 4) is an elevated wall with height = 2; tile (2, 3) should be blocked
+    const baseSolid = (tx: number, ty: number) => tx === 2 && ty === 4;
+    const getHeight = (tx: number, ty: number) => (tx === 2 && ty === 4 ? 2 : 0);
+    const check = createIsometricCollisionCheck(baseSolid, getHeight);
+    expect(check(2, 3)).toBe(true);
+  });
+
+  it('tiles not adjacent to any wall remain unblocked', () => {
+    // Wall at (10, 10); tile (10, 8) is two rows north — should NOT be blocked
+    const baseSolid = (tx: number, ty: number) => tx === 10 && ty === 10;
+    const getHeight = (tx: number, ty: number) => (tx === 10 && ty === 10 ? 1 : 0);
+    const check = createIsometricCollisionCheck(baseSolid, getHeight);
+    expect(check(10, 8)).toBe(false);
   });
 });
