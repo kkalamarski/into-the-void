@@ -249,7 +249,7 @@
   3. Depth sorting places the local player at the correct Z-order relative to nearby tall sprites — player does not pop in front of or behind adjacent entities incorrectly
   4. The fix is consistent across all biomes and elevation levels — entities on elevated tiles also sit correctly on the elevated surface
 **Plans**: 1 plan
-  - [ ] 143-01-PLAN.md — Entity Y-offset fix (+64px ground offset) and unified depth sorting boost
+  - [x] 143-01-PLAN.md — Entity Y-offset fix (+64px ground offset) and unified depth sorting boost
 
 ### Phase 144: Chunk Loading Fix
 **Goal**: Adjacent chunks load seamlessly as the player moves through the world — no black void areas appear at chunk boundaries
@@ -298,7 +298,7 @@
 | 140. Biome & Tile Foundation | v1.29 | 3/3 | Complete | 2026-03-18 |
 | 141. Rendering & System Upgrade | v1.29 | 3/3 | Complete | 2026-03-18 |
 | 142. Hub Maps & Spawn Updates | v1.29 | 3/3 | Complete | 2026-03-19 |
-| 143. Entity Rendering Fix | 1/1 | Complete   | 2026-03-19 | - |
+| 143. Entity Rendering Fix | v1.30 | Complete    | 2026-03-19 | 2026-03-19 |
 | 144. Chunk Loading Fix | v1.30 | 0/? | Not started | - |
 | 145. Ability Targeting Fix | v1.30 | 0/? | Not started | - |
 | 146. Secondary Fixes & Cleanup | v1.30 | 0/? | Not started | - |

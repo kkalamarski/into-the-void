@@ -9,8 +9,8 @@ Requirements for bug-fix milestone. Each maps to roadmap phases.
 
 ### Entity Rendering
 
-- [ ] **RENDER-01**: Entity sprites sit on tile ground surfaces with no visible gap or sinking — player character and all entity types (creatures, plants, minerals, NPCs) visually rest on the tile they occupy
-- [ ] **RENDER-02**: Local player depth sorting uses consistent height-based boost matching other entities, preventing incorrect Z-order near tall sprites
+- [x] **RENDER-01**: Entity sprites sit on tile ground surfaces with no visible gap or sinking — player character and all entity types (creatures, plants, minerals, NPCs) visually rest on the tile they occupy
+- [x] **RENDER-02**: Local player depth sorting uses consistent height-based boost matching other entities, preventing incorrect Z-order near tall sprites
 
 ### Chunk Loading
 
@@ -146,8 +146,8 @@ Requirements for bug-fix milestone. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RENDER-01 | Phase 143 | Pending |
-| RENDER-02 | Phase 143 | Pending |
+| RENDER-01 | Phase 143 | Complete |
+| RENDER-02 | Phase 143 | Complete |
 | CHUNK-01 | Phase 144 | Pending |
 | CHUNK-02 | Phase 144 | Pending |
 | TARGET-01 | Phase 145 | Pending |
