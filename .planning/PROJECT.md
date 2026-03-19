@@ -328,7 +328,6 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 ## Known Issues
 
-- Adjacent chunk loading breaks on component remount (zone:chunk listener cleanup bug)
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
