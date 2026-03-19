@@ -535,10 +535,12 @@ export class EntityRenderer {
     let featureBounds: { topFrac: number; bottomFrac: number; leftFrac: number; rightFrac: number } | null = null;
     if (isFeature) {
       featureBounds = this.getVisibleBounds(textureKey, textureFrame);
-      // No spriteYOffset adjustment: with origin (0.5, 1.0), the frame bottom sits at the
-      // diamond center (Y=0). Any transparent bottom padding naturally lifts the visible art
-      // above the diamond center, making features appear ON the tile surface rather than
-      // embedded in the cube wall area below the diamond center.
+      // Shift sprite down by its transparent bottom padding so the visible art base
+      // sits at the diamond center (Y=0). This prevents tile diamonds from showing
+      // through the transparent gap between the art and the ground.
+      const bottomPadPx = featureBounds.bottomFrac * sprite.height * scaleY;
+      spriteYOffset += bottomPadPx;
+      sprite.setY(spriteYOffset);
     }
 
     // Apply glow effect for rare/epic minerals and plants
