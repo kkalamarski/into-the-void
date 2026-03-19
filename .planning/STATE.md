@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 Phase: 140 of 142 (Biome & Tile Foundation)
 Plan: 0 of ? in current phase
 Status: Ready to plan
-Last activity: 2026-03-19 - Completed quick task 6: collision-divergence correction added — server now emits positionCorrection when its collision-resolved position differs from client prediction by more than 2px, eliminating wall rubber-banding
+Last activity: 2026-03-19 - Completed quick task 7: atmospheric effects viewport fix — WeatherSystem now uses per-weather-type emit zones so spores/mist/void_energy spawn across the full viewport instead of clustering at the top strip
 
 Progress: [████████████████████░░] 97%
 
@@ -76,13 +76,14 @@ None.
 | 4 | player renders on top of wall tiles — removed ENTITY_LAYER_OFFSET, entities now share depth space with tiles | 2026-03-19 | f5b4ab7 | [4-player-renders-on-top-of-wall-tiles-dept](./quick/4-player-renders-on-top-of-wall-tiles-dept/) |
 | 5 | wall collision boxes too small — added createIsometricCollisionCheck wrapping isSolid with south-neighbor elevated-tile check on both client and server | 2026-03-19 | ee264e1 | [5-wall-collision-boxes-too-small-player-ca](./quick/5-wall-collision-boxes-too-small-player-ca/) |
 | 6 | collision-divergence correction — server emits positionCorrection when collision-resolved position differs from client prediction by more than 2px | 2026-03-19 | d512e21 | [6-client-server-collision-desync-client-pe](./quick/6-client-server-collision-desync-client-pe/) |
+| 7 | atmospheric effects not visible — added per-weather-type emit zones so spores/mist/void_energy spawn across full viewport instead of top strip | 2026-03-19 | 9789192 | [7-atmospheric-effects-are-not-visible-on-t](./quick/7-atmospheric-effects-are-not-visible-on-t/) |
 
 ## Session Continuity
 
 Last session: 2026-03-19
-Stopped at: Completed quick task 6 — collision-divergence correction (server emits positionCorrection on wall collision mismatch)
+Stopped at: Completed quick task 7 — atmospheric effects viewport fix (WeatherSystem per-weather-type emit zones)
 Resume file: None
 Next action: /gsd:plan-phase 140
 
 ---
-*Last updated: 2026-03-19 — quick task 6 completed*
+*Last updated: 2026-03-19 — quick task 7 completed*
