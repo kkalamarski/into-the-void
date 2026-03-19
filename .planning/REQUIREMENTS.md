@@ -1,47 +1,74 @@
 # Requirements: Into the Void
 
-**Defined:** 2026-03-18
+**Defined:** 2026-03-19
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.29 Requirements
+## v1.30 Requirements
 
-Requirements for hub station interiors. Each maps to roadmap phases.
+Requirements for bug-fix milestone. Each maps to roadmap phases.
+
+### Entity Rendering
+
+- [ ] **RENDER-01**: Entity sprites sit on tile ground surfaces with no visible gap or sinking — player character and all entity types (creatures, plants, minerals, NPCs) visually rest on the tile they occupy
+- [ ] **RENDER-02**: Local player depth sorting uses consistent height-based boost matching other entities, preventing incorrect Z-order near tall sprites
+
+### Chunk Loading
+
+- [ ] **CHUNK-01**: Adjacent chunks load seamlessly when the player approaches zone boundaries — no black void areas, world appears infinite
+- [ ] **CHUNK-02**: Zone:chunk event listener persists across component remounts (HMR, reconnection) — listener cleanup passes handler reference
+
+### Ability Targeting
+
+- [ ] **TARGET-01**: Clicking an entity then using an ability from the action bar fires the ability at the selected target — ActionBar reads selectedTarget, not auto-attack targetEntityId
+- [ ] **TARGET-02**: Gathering works when clicking a resource node — mini-game starts, range check uses correct pixel coordinates
+
+### Secondary Fixes
+
+- [ ] **MISC-01**: Portal debounce key includes zoneId to prevent re-triggering across zone boundaries
+- [ ] **MISC-02**: NPC proximity check uses consistent pixel positioning (not tile-center approximation)
+- [ ] **MISC-03**: Debug console.log statements removed from entity click handlers in WorldScene
+- [ ] **MISC-04**: PROJECT.md known-issues corrected — zone:request IS implemented, actual issue is listener cleanup
+
+## v1.29 Requirements (Shipped)
+
+<details>
+<summary>All 21 requirements completed — click to expand</summary>
 
 ### Hub Biomes
 
-- [ ] **BIOME-01**: Canopy Station has a unique `canopy_station` biome type with bioluminescent green/blue palette
-- [ ] **BIOME-02**: Ironhold Station has a unique `ironhold_station` biome type with industrial gray/rust/orange palette
-- [ ] **BIOME-03**: Meridian Station has a unique `meridian_station` biome type with corporate silver/white/blue palette
-- [ ] **BIOME-04**: Salvage Station has a unique `salvage_station` biome type with patchwork/mixed palette
-- [ ] **BIOME-05**: Each hub biome has subtle indoor ambient particles (spores, steam, holo-dust, smoke wisps)
+- [x] **BIOME-01**: Canopy Station has a unique `canopy_station` biome type with bioluminescent green/blue palette
+- [x] **BIOME-02**: Ironhold Station has a unique `ironhold_station` biome type with industrial gray/rust/orange palette
+- [x] **BIOME-03**: Meridian Station has a unique `meridian_station` biome type with corporate silver/white/blue palette
+- [x] **BIOME-04**: Salvage Station has a unique `salvage_station` biome type with patchwork/mixed palette
+- [x] **BIOME-05**: Each hub biome has subtle indoor ambient particles (spores, steam, holo-dust, smoke wisps)
 
 ### Hub Tiles
 
-- [ ] **TILE-01**: Each hub has a main floor tile with faction-themed colors and accent details
-- [ ] **TILE-02**: Each hub has a solid wall tile (blocking, elevated) matching faction architecture
-- [ ] **TILE-03**: Each hub has a door/doorway tile (traversable transition between rooms)
-- [ ] **TILE-04**: Each hub has a corridor floor tile visually distinct from the main room floor
-- [ ] **TILE-05**: Each hub has a decoration feature tile (consoles/machinery/vegetation/cargo)
-- [ ] **TILE-06**: Each hub has an accent floor tile (grating/moss/glass panel/patched metal)
-- [ ] **TILE-07**: Each hub has a window/viewport wall tile (semi-transparent, non-blocking or blocking)
-- [ ] **TILE-08**: Each hub has a hazard/special tile (steam vent/growth pod/data stream/exposed wiring)
+- [x] **TILE-01**: Each hub has a main floor tile with faction-themed colors and accent details
+- [x] **TILE-02**: Each hub has a solid wall tile (blocking, elevated) matching faction architecture
+- [x] **TILE-03**: Each hub has a door/doorway tile (traversable transition between rooms)
+- [x] **TILE-04**: Each hub has a corridor floor tile visually distinct from the main room floor
+- [x] **TILE-05**: Each hub has a decoration feature tile (consoles/machinery/vegetation/cargo)
+- [x] **TILE-06**: Each hub has an accent floor tile (grating/moss/glass panel/patched metal)
+- [x] **TILE-07**: Each hub has a window/viewport wall tile (semi-transparent, non-blocking or blocking)
+- [x] **TILE-08**: Each hub has a hazard/special tile (steam vent/growth pod/data stream/exposed wiring)
 
 ### Hub Maps
 
-- [x] **MAP-01**: Canopy Station has a 128x128 hand-designed map with organic rooms, vine corridors, and atrium
-- [x] **MAP-02**: Ironhold Station has a 128x128 hand-designed map with forge halls, metal corridors, and warrens
-- [x] **MAP-03**: Meridian Station has a 128x128 hand-designed map with trading floor, glass corridors, and archive
-- [x] **MAP-04**: Salvage Station has a 128x128 hand-designed map with cargo bay, patched corridors, and market
-- [x] **MAP-05**: Each hub map has NPCs placed in lore-appropriate rooms (traders in trading area, guards at entrance, etc.)
+- [x] **MAP-01**: Canopy Station has a 128x128 hand-designed map
+- [x] **MAP-02**: Ironhold Station has a 128x128 hand-designed map
+- [x] **MAP-03**: Meridian Station has a 128x128 hand-designed map
+- [x] **MAP-04**: Salvage Station has a 128x128 hand-designed map
+- [x] **MAP-05**: Each hub map has NPCs placed in lore-appropriate rooms
 - [x] **MAP-06**: Each hub map has a portal tile in the docking bay / entry area
 
 ### Hub System
 
-- [ ] **SYS-01**: Hub zone system supports 128x128 tile maps (up from 64x64)
-- [ ] **SYS-02**: Hub biome types are registered in the biome system with correct tile mappings
-- [ ] **SYS-03**: Procedural tile generator renders all new hub tiles with faction palettes and accents
-- [x] **SYS-04**: Unaffiliated players spawn at Salvage Station instead of Meridian
-- [x] **SYS-05**: Hub spawn positions updated for new 128x128 layouts (portal location, NPC positions)
+- [x] **SYS-01**: Hub zone system supports 128x128 tile maps
+- [x] **SYS-02**: Hub biome types registered in biome system with correct tile mappings
+- [x] **SYS-03**: Procedural tile generator renders all new hub tiles
+
+</details>
 
 ## v1.28 Requirements (Shipped)
 
@@ -51,24 +78,24 @@ Requirements for hub station interiors. Each maps to roadmap phases.
 ### Combat & Gathering
 
 - [x] **INTERACT-01**: Player can attack a creature within melee/ranged range and deal damage
-- [x] **INTERACT-02**: Player can gather from resource nodes (plants, minerals, artifacts) within gather range
-- [x] **INTERACT-03**: Distance checks for combat and gathering use correct pixel coordinates for both player and entity positions
+- [x] **INTERACT-02**: Player can gather from resource nodes within gather range
+- [x] **INTERACT-03**: Distance checks use correct pixel coordinates
 
 ### Entity Rendering
 
-- [x] **RENDER-01**: Player character and creatures are visually grounded on the tile surface (no floating)
-- [x] **RENDER-02**: Plants and minerals have their anchor point at their ground contact point, not sprite center
-- [x] **RENDER-03**: Entity sprites have minimal excess transparent space — trimmed to fit actual art
-- [x] **RENDER-04**: Entity collision/selection hitbox aligns with the visible sprite's ground position
+- [x] **RENDER-01**: Player character and creatures visually grounded on tile surface
+- [x] **RENDER-02**: Plants and minerals anchored at ground contact point
+- [x] **RENDER-03**: Entity sprites trimmed to fit actual art
+- [x] **RENDER-04**: Entity collision/selection hitbox aligns with visible sprite
 
 ### Collision
 
-- [x] **COLLIDE-01**: No invisible collision walls exist at chunk boundaries — player moves freely across chunks
-- [x] **COLLIDE-02**: No invisible collision walls exist at zone boundaries — player transitions smoothly between zones
+- [x] **COLLIDE-01**: No invisible collision walls at chunk boundaries
+- [x] **COLLIDE-02**: No invisible collision walls at zone boundaries
 
 ### Visual
 
-- [x] **VISUAL-01**: Day/night cycle brightness is correct — dusk and dawn are brighter than night, not darker
+- [x] **VISUAL-01**: Day/night brightness correct (dusk/dawn brighter than night)
 
 </details>
 
@@ -77,93 +104,64 @@ Requirements for hub station interiors. Each maps to roadmap phases.
 <details>
 <summary>All 18 requirements completed — click to expand</summary>
 
-### Movement Core
-
-- [x] **MOVE-01**: Player moves freely at sub-tile pixel positions using WASD keys (not locked to tile grid)
-- [x] **MOVE-02**: Player velocity is normalized on diagonal input (no 41% speed boost)
-- [x] **MOVE-03**: Player collides with solid tiles via pixel hitbox (AABB against tile rectangles)
-- [x] **MOVE-04**: Camera follows player pixel position smoothly each frame
-- [x] **MOVE-05**: Walking animation plays while moving, idle when stopped, with 8-directional facing
-
-### Multiplayer Sync
-
-- [x] **SYNC-01**: Server validates player position at tick rate (speed-cap + collision check, rejects teleportation)
-- [x] **SYNC-02**: Server broadcasts player positions at ~20Hz to nearby players
-- [x] **SYNC-03**: Client predicts local movement and reconciles with server corrections
-- [x] **SYNC-04**: Remote players interpolate smoothly between received positions (no snapping)
-
-### Distance Systems
-
-- [x] **DIST-01**: Combat range checks use pixel Euclidean distance instead of tile distance
-- [x] **DIST-02**: Gathering interaction range uses pixel distance
-- [x] **DIST-03**: NPC interaction range uses pixel distance
-- [x] **DIST-04**: Creature AI aggro and leash ranges use pixel distance
-- [x] **DIST-05**: Fog of war reveal radius uses pixel distance
-- [x] **DIST-06**: Zone boundary detection works at pixel granularity
-
-### Cleanup
-
-- [x] **CLEAN-01**: Click-to-move and A* pathfinding code removed entirely
-- [x] **CLEAN-02**: Flat blocking tiles audited — either made visually elevated or made walkable
-- [x] **CLEAN-03**: Old tile-to-tile movement code removed (MovementController, tween system)
+- [x] **MOVE-01**: Free sub-tile pixel WASD movement
+- [x] **MOVE-02**: Diagonal velocity normalization
+- [x] **MOVE-03**: Pixel hitbox collision
+- [x] **MOVE-04**: Smooth camera follow
+- [x] **MOVE-05**: Walking animation with 8-directional facing
+- [x] **SYNC-01**: Server position validation at tick rate
+- [x] **SYNC-02**: Server 20Hz position broadcast
+- [x] **SYNC-03**: Client prediction with server reconciliation
+- [x] **SYNC-04**: Remote player interpolation
+- [x] **DIST-01**: Combat pixel distance
+- [x] **DIST-02**: Gathering pixel distance
+- [x] **DIST-03**: NPC pixel distance
+- [x] **DIST-04**: Creature AI pixel distance
+- [x] **DIST-05**: Fog of war pixel distance
+- [x] **DIST-06**: Zone boundary pixel granularity
+- [x] **CLEAN-01**: Click-to-move removed
+- [x] **CLEAN-02**: Flat blocking tiles audited
+- [x] **CLEAN-03**: Legacy movement code removed
 
 </details>
 
 ## Future Requirements
 
-### Tile Variety (v1.30+)
+### Tile Variety (v1.31+)
 
-- **TVAR-01**: 3-4 new floor tile variants per biome (visual variety)
-- **TVAR-02**: 1-2 gameplay-distinct tiles per biome (speed modifiers, visual hooks)
-- **TVAR-03**: Tile speed modifiers applied as continuous velocity multipliers
+- **TVAR-01**: 3-4 new floor tile variants per biome
+- **TVAR-02**: 1-2 gameplay-distinct tiles per biome
+- **TVAR-03**: Tile speed modifiers as continuous velocity multipliers
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Pixel creature movement | Deferred to v1.30+; creatures stay tile-snapped |
-| New abilities or combat mechanics | Fix existing, don't add new |
-| Hub procedural generation | Hand-designed maps only for v1.29 |
-| Hub NPC dialogue changes | Existing dialogue system sufficient |
-| Hub music/SFX | Audio is separate milestone concern |
-| Exterior station views | Interior-only for v1.29 |
+| Collision system redesign | 1.5x extension from quick-8 is sufficient; full rework deferred |
+| Entity pixel position storage | Entities use tile coords server-side; conversion at interaction time is acceptable |
+| Unified target state refactor | Fix the immediate bug (wrong field); full combatStore redesign is future work |
+| Pixel creature movement | Deferred; creatures stay tile-snapped |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BIOME-01 | Phase 140 | Pending |
-| BIOME-02 | Phase 140 | Pending |
-| BIOME-03 | Phase 140 | Pending |
-| BIOME-04 | Phase 140 | Pending |
-| TILE-01 | Phase 140 | Pending |
-| TILE-02 | Phase 140 | Pending |
-| TILE-03 | Phase 140 | Pending |
-| TILE-04 | Phase 140 | Pending |
-| TILE-05 | Phase 140 | Pending |
-| TILE-06 | Phase 140 | Pending |
-| TILE-07 | Phase 140 | Pending |
-| TILE-08 | Phase 140 | Pending |
-| SYS-02 | Phase 140 | Pending |
-| SYS-01 | Phase 141 | Pending |
-| SYS-03 | Phase 141 | Pending |
-| BIOME-05 | Phase 141 | Pending |
-| MAP-01 | Phase 142 | Complete |
-| MAP-02 | Phase 142 | Complete |
-| MAP-03 | Phase 142 | Complete |
-| MAP-04 | Phase 142 | Complete |
-| MAP-05 | Phase 142 | Complete |
-| MAP-06 | Phase 142 | Complete |
-| SYS-04 | Phase 142 | Complete |
-| SYS-05 | Phase 142 | Complete |
+| RENDER-01 | TBD | Pending |
+| RENDER-02 | TBD | Pending |
+| CHUNK-01 | TBD | Pending |
+| CHUNK-02 | TBD | Pending |
+| TARGET-01 | TBD | Pending |
+| TARGET-02 | TBD | Pending |
+| MISC-01 | TBD | Pending |
+| MISC-02 | TBD | Pending |
+| MISC-03 | TBD | Pending |
+| MISC-04 | TBD | Pending |
 
 **Coverage:**
-- v1.29 requirements: 21 total
-- Mapped to phases: 21
-- Unmapped: 0 ✓
+- v1.30 requirements: 10 total
+- Mapped to phases: 0
+- Unmapped: 10
 
 ---
-*Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 after roadmap creation*
+*Requirements defined: 2026-03-19*
+*Last updated: 2026-03-19 after initial definition*
