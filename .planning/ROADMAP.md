@@ -302,7 +302,7 @@
 | 143. Entity Rendering Fix | v1.30 | Complete    | 2026-03-19 | 2026-03-19 |
 | 144. Chunk Loading Fix | v1.30 | Complete    | 2026-03-19 | - |
 | 145. Ability Targeting Fix | 1/1 | Complete    | 2026-03-19 | - |
-| 146. Secondary Fixes & Cleanup | 2/2 | Complete   | 2026-03-19 | - |
+| 146. Secondary Fixes & Cleanup | 2/2 | Complete    | 2026-03-19 | - |
 
 ---
 *Last updated: 2026-03-19 — v1.30 roadmap created*

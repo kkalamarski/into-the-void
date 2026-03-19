@@ -24,10 +24,10 @@ Requirements for bug-fix milestone. Each maps to roadmap phases.
 
 ### Secondary Fixes
 
-- [ ] **MISC-01**: Portal debounce key includes zoneId to prevent re-triggering across zone boundaries
-- [ ] **MISC-02**: NPC proximity check uses consistent pixel positioning (not tile-center approximation)
-- [ ] **MISC-03**: Debug console.log statements removed from entity click handlers in WorldScene
-- [ ] **MISC-04**: PROJECT.md known-issues corrected — zone:request IS implemented, actual issue is listener cleanup
+- [x] **MISC-01**: Portal debounce key includes zoneId to prevent re-triggering across zone boundaries
+- [x] **MISC-02**: NPC proximity check uses consistent pixel positioning (not tile-center approximation)
+- [x] **MISC-03**: Debug console.log statements removed from entity click handlers in WorldScene
+- [x] **MISC-04**: PROJECT.md known-issues corrected — zone:request IS implemented, actual issue is listener cleanup
 
 ## v1.29 Requirements (Shipped)
 
@@ -152,10 +152,10 @@ Requirements for bug-fix milestone. Each maps to roadmap phases.
 | CHUNK-02 | Phase 144 | Complete |
 | TARGET-01 | Phase 145 | Pending |
 | TARGET-02 | Phase 145 | Pending |
-| MISC-01 | Phase 146 | Pending |
-| MISC-02 | Phase 146 | Pending |
-| MISC-03 | Phase 146 | Pending |
-| MISC-04 | Phase 146 | Pending |
+| MISC-01 | Phase 146 | Complete |
+| MISC-02 | Phase 146 | Complete |
+| MISC-03 | Phase 146 | Complete |
+| MISC-04 | Phase 146 | Complete |
 
 **Coverage:**
 - v1.30 requirements: 10 total
