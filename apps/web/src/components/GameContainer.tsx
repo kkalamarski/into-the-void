@@ -79,7 +79,7 @@ const GameContainer: React.FC = () => {
     gameSocket.on('zone:chunk', handleChunkData);
 
     return () => {
-      gameSocket.off('zone:chunk');
+      gameSocket.off('zone:chunk', handleChunkData);
     };
   }, []); // No dependencies - set up immediately and persist
 

@@ -86,6 +86,12 @@ export class ChunkManager {
         this.queueChunkRequest(playerZoneId);
       }
 
+      // Retry failed hub chunk
+      if (this.chunkStates.get(playerZoneId) === 'failed') {
+        this.chunkStates.delete(playerZoneId);
+        this.queueChunkRequest(playerZoneId);
+      }
+
       // Unload any non-hub chunks (player teleported from open world)
       const chunksToUnload: string[] = [];
       this.loadedChunks.forEach((_, zoneId) => {
@@ -141,6 +147,14 @@ export class ChunkManager {
     if (cancelledCount > 0) {
       this.notifyLoadingStateChange();
     }
+
+    // Retry failed chunks that are still needed
+    requiredChunks.forEach(zoneId => {
+      if (this.chunkStates.get(zoneId) === 'failed') {
+        this.chunkStates.delete(zoneId);
+        this.queueChunkRequest(zoneId);
+      }
+    });
 
     // Process queued requests
     this.processNextRequest();
