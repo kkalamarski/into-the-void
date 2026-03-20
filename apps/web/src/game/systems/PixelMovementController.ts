@@ -99,7 +99,7 @@ export class PixelMovementController {
   private inputSequence = 0;
   private pendingInputs: PendingPixelInput[] = [];
   private lastEmitTime = 0;
-  private isSolid: ((tileX: number, tileY: number) => boolean) | null = null;
+  private isSolid: ((tileX: number, tileY: number, pixelY?: number) => boolean) | null = null;
 
   // ── Lifecycle ───────────────────────────────────────────────────────────
 
@@ -114,7 +114,7 @@ export class PixelMovementController {
   }
 
   /** Set the collision lookup callback. Called by WorldScene when chunk data is available. */
-  setCollisionCallback(isSolid: (tx: number, ty: number) => boolean): void {
+  setCollisionCallback(isSolid: (tx: number, ty: number, pixelY?: number) => boolean): void {
     this.isSolid = isSolid;
   }
 

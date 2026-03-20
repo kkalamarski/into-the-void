@@ -2551,9 +2551,17 @@ export class WorldScene extends Phaser.Scene {
       // Terrain-only solid check (for isometric wall extension — walls only, not features)
       const terrainSolid = (tx: number, ty: number) =>
         this.isTerrainBlocked(offsetX + tx, offsetY + ty);
-      // Entity-only solid check (features block their own tile only, no north extension)
-      const entitySolid = (tx: number, ty: number) =>
-        this.isEntityBlocked(offsetX + tx, offsetY + ty);
+      // Entity-only solid check (features block their own tile only, no north extension).
+      // Only trigger when pixelY is at feet level (bottom half of tile) to prevent the
+      // top of the player's hitbox (head) from colliding with a feature before the feet
+      // reach its visual base. When pixelY is undefined (legacy), fall back to full blocking.
+      const entitySolid = (tx: number, ty: number, pixelY?: number) => {
+        if (pixelY !== undefined) {
+          const tileMidY = ty * TILE_SIZE_PX + TILE_SIZE_PX * 0.5;
+          if (pixelY < tileMidY) return false;
+        }
+        return this.isEntityBlocked(offsetX + tx, offsetY + ty);
+      };
       const getHeight = (tx: number, ty: number): number =>
         this.getWorldTileHeight(offsetX + tx, offsetY + ty);
       // Isometric extension applies only to terrain walls (elevated cube tiles visually
@@ -2561,7 +2569,7 @@ export class WorldScene extends Phaser.Scene {
       const isoCheck = createIsometricCollisionCheck(terrainSolid, getHeight);
       this.pixelMovement.setCollisionCallback(
         (tx: number, ty: number, pixelY?: number) =>
-          entitySolid(tx, ty) || isoCheck(tx, ty, pixelY),
+          entitySolid(tx, ty, pixelY) || isoCheck(tx, ty, pixelY),
       );
     }
   }
