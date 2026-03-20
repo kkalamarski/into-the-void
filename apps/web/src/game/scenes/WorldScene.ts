@@ -463,13 +463,22 @@ export class WorldScene extends Phaser.Scene {
             ?? abilities.find(a => a.id === 'basic_mine')?.id
             ?? abilities.find(a => a.id === 'gather')?.id;
         }
+        // DEBUG: diagnose gathering issues
+        console.log(`[GATHER DEBUG] entityType=${entityType} entityId=${entityId} abilityId=${gatherAbilityId} equippedAbilities=[${abilities.map(a => a.id).join(',')}]`);
         if (gatherAbilityId) {
           const player = useGameStore.getState().player;
           const abilityDef = abilities.find(a => a.id === gatherAbilityId);
           const { isCasting, isOnCooldown } = useAbilityStore.getState();
-          if (player && abilityDef && !isCasting() && !isOnCooldown(gatherAbilityId) && player.energy >= abilityDef.energyCost) {
+          const casting = isCasting();
+          const onCd = isOnCooldown(gatherAbilityId);
+          const hasEnergy = player ? player.energy >= (abilityDef?.energyCost ?? 999) : false;
+          console.log(`[GATHER DEBUG] player=${!!player} abilityDef=${!!abilityDef} casting=${casting} onCd=${onCd} energy=${player?.energy}/${abilityDef?.energyCost} hasEnergy=${hasEnergy}`);
+          if (player && abilityDef && !casting && !onCd && hasEnergy) {
+            console.log(`[GATHER DEBUG] EMITTING ability:use abilityId=${gatherAbilityId} target=${entityId}`);
             gameSocket.emit('ability:use', { abilityId: gatherAbilityId, targetEntityId: entityId });
           }
+        } else {
+          console.log(`[GATHER DEBUG] No gather ability found! Available: [${abilities.map(a => a.id).join(',')}]`);
         }
         return;
       }
