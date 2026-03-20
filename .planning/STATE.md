@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 Phase: 146 of 146 (Secondary Fixes & Cleanup)
 Plan: 2 of 2 in current phase (complete)
 Status: Phase 146 executed — all plans complete
-Last activity: 2026-03-19 — Phase 146 secondary fixes executed (portal debounce, NPC proximity, debug log cleanup, PROJECT.md fix)
+Last activity: 2026-03-20 - Completed quick task 11: Fix feature collision position offset
 
 Progress: [█████░░░░░░░░░░░░░░░] 25%
 
@@ -68,18 +68,18 @@ None.
 
 ### Quick Tasks Completed
 
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 2 | in new hubs there is no corridor between all rooms, making them not reachable | 2026-03-19 | 21349c0 | [2-in-new-hubs-there-is-no-corridor-between](./quick/2-in-new-hubs-there-is-no-corridor-between/) |
-| 3 | hub tile colors too intense — floors and walls rebalanced to metallic space-station palette | 2026-03-19 | 90e83b9 | [3-hub-tile-colors-too-intense-floors-and-w](./quick/3-hub-tile-colors-too-intense-floors-and-w/) |
-| 4 | player renders on top of wall tiles — removed ENTITY_LAYER_OFFSET, entities now share depth space with tiles | 2026-03-19 | f5b4ab7 | [4-player-renders-on-top-of-wall-tiles-dept](./quick/4-player-renders-on-top-of-wall-tiles-dept/) |
-| 5 | wall collision boxes too small — added createIsometricCollisionCheck wrapping isSolid with south-neighbor elevated-tile check on both client and server | 2026-03-19 | ee264e1 | [5-wall-collision-boxes-too-small-player-ca](./quick/5-wall-collision-boxes-too-small-player-ca/) |
-| 6 | collision-divergence correction — server emits positionCorrection when collision-resolved position differs from client prediction by more than 2px | 2026-03-19 | d512e21 | [6-client-server-collision-desync-client-pe](./quick/6-client-server-collision-desync-client-pe/) |
-| 7 | atmospheric effects not visible — added per-weather-type emit zones so spores/mist/void_energy spawn across full viewport instead of top strip | 2026-03-19 | 9789192 | [7-atmospheric-effects-are-not-visible-on-t](./quick/7-atmospheric-effects-are-not-visible-on-t/) |
-| 8 | fix three bugs: tile transparency at same elevation, NPC click interaction with chat-bubble cursor, isometric collision Y-extension reduced to 1.5x | 2026-03-19 | 4f2d747 | [8-fix-three-bugs-1-tiles-incorrectly-trans](./quick/8-fix-three-bugs-1-tiles-incorrectly-trans/) |
-| 9 | configure Sentry error tracking for api and game-server — @sentry/nestjs with instrument.ts init, SentryModule.forRoot(), SentryGlobalFilter as APP_FILTER | 2026-03-19 | 09cb5b7 | [9-configure-sentry-error-tracking-for-api-](./quick/9-configure-sentry-error-tracking-for-api-/) |
-| 10 | fix entity depth sorting — add ENTITY_GROUND_OFFSET (64) to calculateDepth() so entities sort at visual Y position | 2026-03-19 | ee183c6 | [10-fix-entity-rendering-features-sinking-pl](./quick/10-fix-entity-rendering-features-sinking-pl/) |
-| 11 | fix feature collision position — pixelY threshold filter on entitySolid so collision triggers at visual base (feet-level) not trunk middle (head-level) | 2026-03-20 | e2adfe1 | [11-fix-feature-collision-position-offset-co](./quick/11-fix-feature-collision-position-offset-co/) |
+| # | Description | Date | Commit | Status | Directory |
+|---|-------------|------|--------|--------|-----------|
+| 2 | in new hubs there is no corridor between all rooms, making them not reachable | 2026-03-19 | 21349c0 | | [2-in-new-hubs-there-is-no-corridor-between](./quick/2-in-new-hubs-there-is-no-corridor-between/) |
+| 3 | hub tile colors too intense — floors and walls rebalanced to metallic space-station palette | 2026-03-19 | 90e83b9 | | [3-hub-tile-colors-too-intense-floors-and-w](./quick/3-hub-tile-colors-too-intense-floors-and-w/) |
+| 4 | player renders on top of wall tiles — removed ENTITY_LAYER_OFFSET, entities now share depth space with tiles | 2026-03-19 | f5b4ab7 | | [4-player-renders-on-top-of-wall-tiles-dept](./quick/4-player-renders-on-top-of-wall-tiles-dept/) |
+| 5 | wall collision boxes too small — added createIsometricCollisionCheck wrapping isSolid with south-neighbor elevated-tile check on both client and server | 2026-03-19 | ee264e1 | | [5-wall-collision-boxes-too-small-player-ca](./quick/5-wall-collision-boxes-too-small-player-ca/) |
+| 6 | collision-divergence correction — server emits positionCorrection when collision-resolved position differs from client prediction by more than 2px | 2026-03-19 | d512e21 | | [6-client-server-collision-desync-client-pe](./quick/6-client-server-collision-desync-client-pe/) |
+| 7 | atmospheric effects not visible — added per-weather-type emit zones so spores/mist/void_energy spawn across full viewport instead of top strip | 2026-03-19 | 9789192 | | [7-atmospheric-effects-are-not-visible-on-t](./quick/7-atmospheric-effects-are-not-visible-on-t/) |
+| 8 | fix three bugs: tile transparency at same elevation, NPC click interaction with chat-bubble cursor, isometric collision Y-extension reduced to 1.5x | 2026-03-19 | 4f2d747 | | [8-fix-three-bugs-1-tiles-incorrectly-trans](./quick/8-fix-three-bugs-1-tiles-incorrectly-trans/) |
+| 9 | configure Sentry error tracking for api and game-server — @sentry/nestjs with instrument.ts init, SentryModule.forRoot(), SentryGlobalFilter as APP_FILTER | 2026-03-19 | 09cb5b7 | | [9-configure-sentry-error-tracking-for-api-](./quick/9-configure-sentry-error-tracking-for-api-/) |
+| 10 | fix entity depth sorting — add ENTITY_GROUND_OFFSET (64) to calculateDepth() so entities sort at visual Y position | 2026-03-19 | ee183c6 | | [10-fix-entity-rendering-features-sinking-pl](./quick/10-fix-entity-rendering-features-sinking-pl/) |
+| 11 | fix feature collision position — pixelY threshold filter on entitySolid so collision triggers at visual base (feet-level) not trunk middle (head-level) | 2026-03-20 | e2adfe1 | Needs Review | [11-fix-feature-collision-position-offset-co](./quick/11-fix-feature-collision-position-offset-co/) |
 
 ## Session Continuity
 
