@@ -1477,6 +1477,34 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /**
+   * Get bilinearly interpolated elevation at fractional tile coordinates.
+   * Samples the 4 surrounding integer tiles and blends based on the player's
+   * fractional position within the tile.  This eliminates the sudden 128 px
+   * vertical jump that occurs when the integer tile coordinate changes at a
+   * tile boundary (player-sinking / popping artefact).
+   *
+   * @param gridX  Fractional tile X (px / TILE_SIZE_PX)
+   * @param gridY  Fractional tile Y (px / TILE_SIZE_PX)
+   * @param zoneId Optional zone override forwarded to getTileElevation
+   */
+  private getInterpolatedElevation(gridX: number, gridY: number, zoneId?: string): number {
+    const tileX = Math.floor(gridX);
+    const tileY = Math.floor(gridY);
+    const fracX = gridX - tileX;
+    const fracY = gridY - tileY;
+
+    const e00 = this.getTileElevation(tileX,     tileY,     zoneId);
+    const e10 = this.getTileElevation(tileX + 1, tileY,     zoneId);
+    const e01 = this.getTileElevation(tileX,     tileY + 1, zoneId);
+    const e11 = this.getTileElevation(tileX + 1, tileY + 1, zoneId);
+
+    return e00 * (1 - fracX) * (1 - fracY)
+         + e10 * fracX       * (1 - fracY)
+         + e01 * (1 - fracX) * fracY
+         + e11 * fracX       * fracY;
+  }
+
+  /**
    * Get tile elevation using world coordinates.
    * Looks up the correct chunk from ChunkManager.
    */
@@ -2145,10 +2173,13 @@ export class WorldScene extends Phaser.Scene {
     const worldX = zoneCoords.x * ZONE_SIZE + gridX;
     const worldY = zoneCoords.y * ZONE_SIZE + gridY;
 
-    // Get elevation at current tile (integer tile coords)
+    // Integer tile coords still needed for tile-local lookups (fog, portal, etc.)
     const tileX = Math.floor(gridX);
     const tileY = Math.floor(gridY);
-    const elevation = this.getTileElevation(tileX, tileY);
+
+    // Use bilinear elevation interpolation to avoid sudden 128 px jump at tile
+    // boundaries (the classic "player sinking" artefact).
+    const elevation = this.getInterpolatedElevation(gridX, gridY);
     const elevationOffset = elevation * 128;
 
     // Convert to isometric screen position
@@ -2157,13 +2188,15 @@ export class WorldScene extends Phaser.Scene {
     // Set sprite position directly (no tween — instant for pixel movement)
     this.localPlayer.setPosition(screenPos.x, screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET);
 
-    // Update grid data for depth sorting
+    // Update grid data for depth sorting — use rounded elevation so depth
+    // sorting still works on discrete tile levels.
+    const elevationRounded = Math.round(elevation);
     this.localPlayer.setData('gridX', worldX);
     this.localPlayer.setData('gridY', worldY);
-    this.localPlayer.setData('elevation', elevation);
+    this.localPlayer.setData('elevation', elevationRounded);
 
     // Update depth — boost 0.1 keeps player above same-position peers but below walls in front
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 0.1, true);
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevationRounded, 0.1, true);
     this.localPlayer.setDepth(depth);
 
     // Mark dirty for depth sorter
@@ -2277,10 +2310,9 @@ export class WorldScene extends Phaser.Scene {
       const worldX = zoneCoords.x * ZONE_SIZE + gridX;
       const worldY = zoneCoords.y * ZONE_SIZE + gridY;
 
-      // Get elevation
-      const tileX = Math.floor(gridX);
-      const tileY = Math.floor(gridY);
-      const elevation = this.getTileElevation(tileX, tileY);
+      // Use bilinear elevation interpolation to smooth the visual Y offset
+      // when the remote player crosses tile boundaries with differing elevation.
+      const elevation = this.getInterpolatedElevation(gridX, gridY);
       const elevationOffset = elevation * 128;
 
       const screenPos = this.isoTransform!.gridToScreen(worldX, worldY);
@@ -2288,12 +2320,14 @@ export class WorldScene extends Phaser.Scene {
       // Set position directly (no tween — interpolation IS the smoothing)
       (container as unknown as Phaser.GameObjects.Container).setPosition(screenPos.x, screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET);
 
-      // Update grid data for depth sorting
+      // Update grid data for depth sorting — use rounded elevation so depth
+      // sorting still works on discrete tile levels.
+      const elevationRounded = Math.round(elevation);
       container.setData('gridX', worldX);
       container.setData('gridY', worldY);
-      container.setData('elevation', elevation);
+      container.setData('elevation', elevationRounded);
 
-      const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevation, 0, true);
+      const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevationRounded, 0, true);
       (container as unknown as Phaser.GameObjects.Container).setDepth(depth);
 
       // Update animation based on interpolation state
