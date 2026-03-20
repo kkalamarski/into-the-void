@@ -80,13 +80,14 @@ None.
 | 9 | configure Sentry error tracking for api and game-server — @sentry/nestjs with instrument.ts init, SentryModule.forRoot(), SentryGlobalFilter as APP_FILTER | 2026-03-19 | 09cb5b7 | | [9-configure-sentry-error-tracking-for-api-](./quick/9-configure-sentry-error-tracking-for-api-/) |
 | 10 | fix entity depth sorting — add ENTITY_GROUND_OFFSET (64) to calculateDepth() so entities sort at visual Y position | 2026-03-19 | ee183c6 | | [10-fix-entity-rendering-features-sinking-pl](./quick/10-fix-entity-rendering-features-sinking-pl/) |
 | 11 | fix feature collision position — pixelY threshold filter on entitySolid so collision triggers at visual base (feet-level) not trunk middle (head-level) | 2026-03-20 | e2adfe1 | Needs Review | [11-fix-feature-collision-position-offset-co](./quick/11-fix-feature-collision-position-offset-co/) |
+| 12 | fix player sinking — bilinear elevation interpolation in updateLocalPlayerFromPixels and updateRemotePlayerInterpolation eliminates 128 px snap at tile boundaries | 2026-03-20 | b190848 | Done | [12-fix-player-sinking-issue-mismatch-betwee](./quick/12-fix-player-sinking-issue-mismatch-betwee/) |
 
 ## Session Continuity
 
-Last session: 2026-03-19
-Stopped at: Phase 144 complete — chunk loading fix shipped
+Last session: 2026-03-20
+Stopped at: Quick task 12 complete — player sinking fix shipped
 Resume file: None
 Next action: Plan and execute Phase 145
 
 ---
-*Last updated: 2026-03-20 — Quick task 11 feature collision position fix complete*
+*Last updated: 2026-03-20 — Quick task 12 player sinking fix complete*
