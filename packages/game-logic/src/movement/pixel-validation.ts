@@ -156,7 +156,7 @@ export function resolvePixelCollision(
   isSolid: (tileX: number, tileY: number, pixelY?: number) => boolean,
 ): PixelPos {
   const hw = PLAYER_HITBOX.width  / 2; // 32
-  const hh = PLAYER_HITBOX.height;     // 64 (full height from feet up)
+  const hh = PLAYER_HITBOX.height;     // 16 (thin foot-level hitbox)
 
   /** Convert a pixel coordinate to a tile index. */
   const toTile = (p: number) => Math.floor(p / TILE_SIZE_PX);

@@ -82,7 +82,7 @@ None.
 | 11 | fix feature collision position — pixelY threshold filter on entitySolid so collision triggers at visual base (feet-level) not trunk middle (head-level) | 2026-03-20 | e2adfe1 | Needs Review | [11-fix-feature-collision-position-offset-co](./quick/11-fix-feature-collision-position-offset-co/) |
 | 12 | fix player sinking — bilinear elevation interpolation in updateLocalPlayerFromPixels and updateRemotePlayerInterpolation eliminates 128 px snap at tile boundaries | 2026-03-20 | b190848 | Verified | [12-fix-player-sinking-issue-mismatch-betwee](./quick/12-fix-player-sinking-issue-mismatch-betwee/) |
 | 13 | fix expedition NPC interaction — modal closes immediately on tier select; 4 tier buttons replace 16 biome buttons; server picks random biome from chosen tier | 2026-03-20 | 12c250d | Verified | [13-fix-expedition-npc-close-interaction-win](./quick/13-fix-expedition-npc-close-interaction-win/) |
-| 15 | fix 7 bugs — px/py sync in updatePosition fixes NPC/combat/harvest, biome retry loop fixes expedition no destinations, docking bay vendors + hitbox height=16px | 2026-03-20 | 1069bfb | | [15-fix-7-bugs-expedition-no-destinations-np](./quick/15-fix-7-bugs-expedition-no-destinations-np/) |
+| 15 | fix 7 bugs — px/py sync in updatePosition fixes NPC/combat/harvest, biome retry loop fixes expedition no destinations, docking bay vendors + hitbox height=16px | 2026-03-20 | 1069bfb | Verified | [15-fix-7-bugs-expedition-no-destinations-np](./quick/15-fix-7-bugs-expedition-no-destinations-np/) |
 
 ## Session Continuity
 
