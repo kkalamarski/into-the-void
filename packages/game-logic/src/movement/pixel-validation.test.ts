@@ -37,8 +37,8 @@ describe('pixel-validation constants', () => {
     expect(PLAYER_HITBOX.width).toBe(64);
   });
 
-  it('PLAYER_HITBOX.height is 64 (0.5 * TILE_SIZE_PX)', () => {
-    expect(PLAYER_HITBOX.height).toBe(64);
+  it('PLAYER_HITBOX.height is 16 (0.125 * TILE_SIZE_PX — reduced for tight wall collision)', () => {
+    expect(PLAYER_HITBOX.height).toBe(16);
   });
 });
 

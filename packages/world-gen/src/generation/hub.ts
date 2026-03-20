@@ -43,6 +43,10 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_verdant_botanist', x: 56, y: 50 },
       { npcId: 'npc_verdant_ambient', x: 72, y: 38 },
       // Docking Bay / The Threshold (south: 44,95 40x22) — guards + expedition master
+      // Docking Bay vendors (near spawn for quick access)
+      { npcId: 'npc_suit_vendor', x: 50, y: 96 },
+      { npcId: 'npc_tool_vendor', x: 58, y: 96 },
+      { npcId: 'npc_module_vendor', x: 54, y: 97 },
       { npcId: 'npc_verdant_guard', x: 58, y: 98 },
       { npcId: 'npc_verdant_patrol', x: 70, y: 98 },
       { npcId: 'npc_expedition_master', x: 64, y: 100 },
@@ -72,6 +76,10 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_helix_forgemaster', x: 56, y: 30 },
       { npcId: 'npc_helix_ambient', x: 72, y: 26 },
       // Processing Bay 7 / Docking (south: 44,96 40x22) — guards + expedition
+      // Processing Bay vendors (near spawn for quick access)
+      { npcId: 'npc_suit_vendor', x: 50, y: 98 },
+      { npcId: 'npc_tool_vendor', x: 58, y: 98 },
+      { npcId: 'npc_module_vendor', x: 54, y: 98 },
       { npcId: 'npc_helix_guard', x: 58, y: 100 },
       { npcId: 'npc_helix_patrol', x: 70, y: 100 },
       { npcId: 'npc_expedition_master', x: 64, y: 102 },
@@ -98,6 +106,10 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_module_vendor', x: 44, y: 40 },
       { npcId: 'npc_nexus_analyst', x: 56, y: 32 },
       // Welcome Center Alpha / Docking (south: 40,94 48x24) — guards + expedition
+      // Welcome Center vendors (near spawn for quick access)
+      { npcId: 'npc_suit_vendor', x: 50, y: 96 },
+      { npcId: 'npc_tool_vendor', x: 58, y: 96 },
+      { npcId: 'npc_module_vendor', x: 54, y: 97 },
       { npcId: 'npc_nexus_guard', x: 58, y: 100 },
       { npcId: 'npc_nexus_patrol', x: 70, y: 100 },
       { npcId: 'npc_expedition_master', x: 64, y: 102 },
@@ -131,6 +143,10 @@ const HUB_CONFIGS: Record<string, HubConfig> = {
       { npcId: 'npc_neutral_drifter', x: 48, y: 58 },
       { npcId: 'npc_neutral_guard', x: 66, y: 48 },
       // The Docks / Docking (south: 38,96 36x22) — lookout + expedition
+      // Dock vendors (near spawn for quick access)
+      { npcId: 'npc_suit_vendor', x: 44, y: 98 },
+      { npcId: 'npc_tool_vendor', x: 52, y: 98 },
+      { npcId: 'npc_module_vendor', x: 48, y: 98 },
       { npcId: 'npc_neutral_lookout', x: 50, y: 100 },
       { npcId: 'npc_expedition_master', x: 56, y: 102 },
       // Workshop (NE: 86,14 26x20) — service + mechanic

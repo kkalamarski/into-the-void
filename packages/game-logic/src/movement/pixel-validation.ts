@@ -42,8 +42,8 @@ export const DIAGONAL_NORMALIZATION = 1 / Math.sqrt(2);
  * isometric view.
  */
 export const PLAYER_HITBOX = {
-  width: Math.round(TILE_SIZE_PX * 0.5),  // 64 px
-  height: Math.round(TILE_SIZE_PX * 0.5), // 64 px
+  width: Math.round(TILE_SIZE_PX * 0.5),    // 64 px (unchanged)
+  height: Math.round(TILE_SIZE_PX * 0.125), // 16 px (was 64 — too tall caused stop 1 tile before walls)
 } as const;
 
 // ============================================================
