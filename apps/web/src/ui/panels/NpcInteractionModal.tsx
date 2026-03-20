@@ -368,32 +368,49 @@ export const NpcInteractionModal: React.FC = () => {
   const renderExpeditionTab = () => {
     if (!hasExpeditions) return <p className="npc-empty-message">No expeditions available.</p>;
 
-    // Group destinations by tier
-    const tierNames = ['I', 'II', 'III', 'IV'];
+    const destinations = interactingNpc.expeditionDestinations ?? [];
+
+    // Build tier info by grouping destinations
+    const tierConfig = [
+      { tier: 1 as const, numeral: 'I', name: 'Frontier', description: 'Frontier zones - standard exploration' },
+      { tier: 2 as const, numeral: 'II', name: 'Hazardous', description: 'Hazardous zones - specialized equipment recommended' },
+      { tier: 3 as const, numeral: 'III', name: 'Hostile', description: 'Hostile zones - advanced gear required' },
+      { tier: 4 as const, numeral: 'IV', name: 'Extreme', description: 'Extreme zones - elite equipment essential' },
+    ];
 
     return (
       <div className="npc-expedition-tab">
         <p className="npc-expedition-info">
-          Select a biome to explore. Higher tier zones offer better rewards but require more experience.
+          Select a difficulty tier. You will be sent to a random biome of that difficulty.
         </p>
         <div className="npc-expedition-list">
-          {interactingNpc.expeditionDestinations?.map((dest) => (
-            <button
-              key={dest.biome}
-              className={`npc-expedition-destination tier-${dest.tier} ${dest.locked ? 'locked' : ''}`}
-              disabled={dest.locked || expeditionPending}
-              onClick={() => startExpedition(dest.biome)}
-            >
-              <span className="dest-name">{dest.displayName}</span>
-              <span className="dest-tier">Tier {tierNames[dest.tier - 1]}</span>
-              {dest.locked ? (
-                <span className="dest-locked">Requires Level {dest.requiredLevel}</span>
-              ) : (
-                <span className="dest-available">Available</span>
-              )}
-              {expeditionPending && <span className="spinner-small" />}
-            </button>
-          ))}
+          {tierConfig.map(({ tier, numeral, name, description }) => {
+            const tierDests = destinations.filter((d) => d.tier === tier);
+            if (tierDests.length === 0) return null;
+
+            // Tier is locked if ALL destinations in it are locked
+            const isLocked = tierDests.every((d) => d.locked);
+            const requiredLevel = tierDests[0]?.requiredLevel ?? 1;
+            const biomeCount = tierDests.length;
+
+            return (
+              <button
+                key={tier}
+                className={`npc-expedition-destination tier-${tier} ${isLocked ? 'locked' : ''}`}
+                disabled={isLocked || expeditionPending}
+                onClick={() => startExpedition(tier)}
+              >
+                <span className="dest-name">Tier {numeral} - {name}</span>
+                <span className="dest-tier">{biomeCount} biome{biomeCount !== 1 ? 's' : ''}</span>
+                {isLocked ? (
+                  <span className="dest-locked">Requires Level {requiredLevel}</span>
+                ) : (
+                  <span className="dest-available">{description}</span>
+                )}
+                {expeditionPending && <span className="spinner-small" />}
+              </button>
+            );
+          })}
         </div>
       </div>
     );

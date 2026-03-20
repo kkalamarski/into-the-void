@@ -68,7 +68,7 @@ interface NpcState {
   setExpeditionPending: (pending: boolean) => void;
   acceptQuest: (questId: string) => void;
   completeQuestAtNpc: (questId: string) => void;
-  startExpedition: (biome: string) => void;
+  startExpedition: (tier: number) => void;
 }
 
 export const useNpcStore = create<NpcState>((set) => ({
@@ -100,9 +100,11 @@ export const useNpcStore = create<NpcState>((set) => ({
     set({ questPending: true });
     gameSocket.emit('quest:complete', { questId });
   },
-  startExpedition: (biome: string) => {
+  startExpedition: (tier: number) => {
     set({ expeditionPending: true });
-    gameSocket.emit('expedition:start', { biome });
+    gameSocket.emit('expedition:start', { tier });
+    // Close the modal immediately without waiting for server response
+    useNpcStore.getState().closeInteraction();
   },
 }));
 
@@ -136,8 +138,16 @@ gameSocket.on('quest:error', (data: { message: string }) => {
   useNpcStore.getState().setQuestPending(false);
 });
 
-// Listen for expedition:complete - reset pending state and close modal on success
+// Listen for expedition:complete - reset pending state (modal is already closed immediately on tier select)
 gameSocket.on('expedition:complete', () => {
   useNpcStore.getState().setExpeditionPending(false);
+  // Safety fallback: close interaction if somehow still open
   useNpcStore.getState().closeInteraction();
+});
+
+// Listen for error events to reset expeditionPending if expedition fails
+gameSocket.on('error', (data: { code: string; message: string }) => {
+  if (data.code === 'EXPEDITION_FAILED' || data.code === 'NOT_IN_HUB') {
+    useNpcStore.getState().setExpeditionPending(false);
+  }
 });
