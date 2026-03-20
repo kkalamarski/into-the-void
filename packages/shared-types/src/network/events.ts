@@ -178,7 +178,7 @@ export interface ClientEvents {
   'cast:cancel': Record<string, never>;
   'lore:collect': { loreId: string; worldX: number; worldY: number };
   'mastery:query': { biome: string };
-  'expedition:start': { biome: string };
+  'expedition:start': { tier: number };
   'automation:deploy': { deployableItemId: string; position: { x: number; y: number; zoneId: string } };
   'automation:interact': { entityId: string };
   'automation:collect': { deployableId: string };

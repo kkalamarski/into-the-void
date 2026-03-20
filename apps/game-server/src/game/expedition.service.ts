@@ -75,6 +75,71 @@ export class ExpeditionService {
   }
 
   /**
+   * Start an expedition by selecting a random biome from the given tier.
+   * Validates player level meets tier requirement then delegates to startExpedition.
+   */
+  async startExpeditionByTier(
+    playerId: string,
+    tier: BiomeTier,
+  ): Promise<{
+    success: boolean;
+    error?: string;
+    position?: Position;
+    oldZoneId?: string;
+    newZoneId?: string;
+  }> {
+    const player = this.playerService.getPlayerById(playerId);
+    if (!player) {
+      return { success: false, error: 'Player not found' };
+    }
+
+    // Validate tier range
+    if (tier < 1 || tier > 4) {
+      return { success: false, error: 'Invalid tier' };
+    }
+
+    // Validate player level meets tier requirement
+    const requiredLevel = TIER_LEVEL_REQUIREMENTS[tier];
+    if (player.level < requiredLevel) {
+      return {
+        success: false,
+        error: `Level ${requiredLevel} required for Tier ${tier} expeditions`,
+      };
+    }
+
+    // Filter world biomes to those matching the requested tier
+    const worldBiomes: BiomeType[] = [
+      'void_plains',
+      'crystal_caves',
+      'toxic_wastes',
+      'ancient_ruins',
+      'frozen_expanse',
+      'volcanic_ridge',
+      'fungal_forest',
+      'starfall_crater',
+      'miasma_marshes',
+      'petrified_expanse',
+      'tidal_pools',
+      'kelp_forests',
+      'deep_trenches',
+      'void_rift',
+      'crystalline_wastes',
+      'bioluminescent_depths',
+    ];
+
+    const tierBiomes = worldBiomes.filter((biome) => BIOME_TIERS[biome] === tier);
+
+    if (tierBiomes.length === 0) {
+      return { success: false, error: 'No biomes available for this tier' };
+    }
+
+    // Pick a random biome from the filtered list
+    const randomBiome = tierBiomes[Math.floor(Math.random() * tierBiomes.length)];
+
+    return this.startExpedition(playerId, randomBiome);
+  }
+
+  /**
    * Start an expedition to a specific biome.
    * Returns the new position or error.
    */

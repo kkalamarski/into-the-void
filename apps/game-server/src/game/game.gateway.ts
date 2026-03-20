@@ -1503,7 +1503,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('expedition:start')
   async handleExpeditionStart(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { biome: string },
+    @MessageBody() data: { tier: number },
   ): Promise<void> {
     try {
       const player = this.playerService.getPlayerBySocket(client.id);
@@ -1518,9 +1518,19 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         return;
       }
 
-      const result = await this.expeditionService.startExpedition(
+      // Validate tier is a valid BiomeTier (1-4)
+      const tier = data.tier;
+      if (!tier || tier < 1 || tier > 4 || !Number.isInteger(tier)) {
+        client.emit('error', {
+          code: 'EXPEDITION_FAILED',
+          message: 'Invalid expedition tier',
+        });
+        return;
+      }
+
+      const result = await this.expeditionService.startExpeditionByTier(
         player.id,
-        data.biome as BiomeType,
+        tier as import('@into-the-void/shared-types').BiomeTier,
       );
 
       if (!result.success) {
@@ -1580,7 +1590,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
         // Confirm expedition success to player
         client.emit('expedition:complete', {
-          biome: data.biome,
+          biome,
           position: result.position,
         });
       }
