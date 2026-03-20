@@ -133,10 +133,18 @@ export class ExpeditionService {
       return { success: false, error: 'No biomes available for this tier' };
     }
 
-    // Pick a random biome from the filtered list
-    const randomBiome = tierBiomes[Math.floor(Math.random() * tierBiomes.length)];
+    // Shuffle tier biomes to randomize which biome we try first
+    const shuffled = [...tierBiomes].sort(() => Math.random() - 0.5);
 
-    return this.startExpedition(playerId, randomBiome);
+    for (const biome of shuffled) {
+      const result = await this.startExpedition(playerId, biome);
+      if (result.success) {
+        return result;
+      }
+      // This biome wasn't found in search radius, try next one in tier
+    }
+
+    return { success: false, error: 'Could not find suitable destination for this tier' };
   }
 
   /**
@@ -201,7 +209,7 @@ export class ExpeditionService {
 
     // Search in expanding rings from origin
     // Each zone is 64x64 tiles, check center points
-    const maxSearchRadius = 50; // Up to 50 zones away
+    const maxSearchRadius = 100; // Up to 100 zones away (was 50 — increased for rare tier-4 biomes)
     const candidates: Array<{ zoneX: number; zoneY: number }> = [];
 
     for (let radius = 1; radius <= maxSearchRadius; radius++) {
