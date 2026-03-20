@@ -327,13 +327,11 @@ export class EntityRenderer {
    * Hub zones are treated as being at origin (0, 0).
    */
   private positionToWorldCoords(position: Position): { worldX: number; worldY: number } {
-    // +0.5 offset places entities at the DIAMOND CENTER instead of the
-    // northwest vertex. Without this, sprites sit at the top of the tile
-    // diamond and collision appears ~2 iso rows too high.
+    // Hub zones (hub_*) are instanced at origin
     if (position.zoneId.startsWith('hub_')) {
       return {
-        worldX: position.x + 0.5,
-        worldY: position.y + 0.5,
+        worldX: position.x,
+        worldY: position.y,
       };
     }
     // Open-world zones use z_X_Y format
@@ -341,8 +339,8 @@ export class EntityRenderer {
     const zoneX = parseInt(parts[1], 10);
     const zoneY = parseInt(parts[2], 10);
     return {
-      worldX: zoneX * ZONE_SIZE + position.x + 0.5,
-      worldY: zoneY * ZONE_SIZE + position.y + 0.5,
+      worldX: zoneX * ZONE_SIZE + position.x,
+      worldY: zoneY * ZONE_SIZE + position.y,
     };
   }
 
@@ -511,16 +509,19 @@ export class EntityRenderer {
         shadowWidth = 120;
         shadowHeight = 60;
       }
-      const shadow = this.scene.add.ellipse(0, 0, shadowWidth, shadowHeight, 0x000000, 0.3);
+      // Shadow at diamond center (tileHeightHalf below container origin = north vertex)
+      const shadow = this.scene.add.ellipse(0, this.isoTransform.tileHeight / 2, shadowWidth, shadowHeight, 0x000000, 0.3);
       shadow.setOrigin(0.5, 0.5);
       container.add(shadow);
     }
 
     // Entity sprite - all entity types anchor at tile ground level (y=0 in container space)
-    let spriteYOffset = 0;
+    // Container sits at gridToScreen(x, y) = north vertex of diamond.
+    // Offset sprites by tileHeightHalf (64px) so their base sits at diamond center.
+    let spriteYOffset = this.isoTransform.tileHeight / 2;
     // Override Y offset for specific animated creatures if needed (all currently 0, reserved for future use)
     if (this.isCreature(entity) && entity.speciesId && entity.speciesId in ANIMATED_CREATURE_Y_OFFSET) {
-      spriteYOffset = ANIMATED_CREATURE_Y_OFFSET[entity.speciesId];
+      spriteYOffset += ANIMATED_CREATURE_Y_OFFSET[entity.speciesId];
     }
 
     // Track feature entities for UI hover behavior
