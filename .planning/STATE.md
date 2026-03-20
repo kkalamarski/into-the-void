@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 Phase: 146 of 146 (Secondary Fixes & Cleanup)
 Plan: 2 of 2 in current phase (complete)
 Status: Phase 146 executed — all plans complete
-Last activity: 2026-03-20 - Completed quick task 12: Fix player sinking issue - mismatch between tile rendering elevation and player movement elevation detection
+Last activity: 2026-03-20 - Completed quick task 13: Fix expedition NPC close interaction - tier-based expedition UI with immediate modal close
 
 Progress: [█████░░░░░░░░░░░░░░░] 25%
 
@@ -81,13 +81,14 @@ None.
 | 10 | fix entity depth sorting — add ENTITY_GROUND_OFFSET (64) to calculateDepth() so entities sort at visual Y position | 2026-03-19 | ee183c6 | | [10-fix-entity-rendering-features-sinking-pl](./quick/10-fix-entity-rendering-features-sinking-pl/) |
 | 11 | fix feature collision position — pixelY threshold filter on entitySolid so collision triggers at visual base (feet-level) not trunk middle (head-level) | 2026-03-20 | e2adfe1 | Needs Review | [11-fix-feature-collision-position-offset-co](./quick/11-fix-feature-collision-position-offset-co/) |
 | 12 | fix player sinking — bilinear elevation interpolation in updateLocalPlayerFromPixels and updateRemotePlayerInterpolation eliminates 128 px snap at tile boundaries | 2026-03-20 | b190848 | Verified | [12-fix-player-sinking-issue-mismatch-betwee](./quick/12-fix-player-sinking-issue-mismatch-betwee/) |
+| 13 | fix expedition NPC interaction — modal closes immediately on tier select; 4 tier buttons replace 16 biome buttons; server picks random biome from chosen tier | 2026-03-20 | 12c250d | | [13-fix-expedition-npc-close-interaction-win](./quick/13-fix-expedition-npc-close-interaction-win/) |
 
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Quick task 12 complete — player sinking fix shipped
+Stopped at: Quick task 13 complete — expedition NPC tier-based UI with immediate modal close
 Resume file: None
 Next action: Plan and execute Phase 145
 
 ---
-*Last updated: 2026-03-20 — Quick task 12 player sinking fix complete*
+*Last updated: 2026-03-20 — Quick task 13 expedition NPC tier-based UI complete*
