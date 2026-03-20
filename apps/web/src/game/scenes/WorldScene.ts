@@ -771,13 +771,16 @@ export class WorldScene extends Phaser.Scene {
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
-    // Elliptical drop shadow at ground level (y=0 = tile surface)
-    const shadow = this.add.ellipse(0, 0, 120, 60, 0x000000, 0.3);
+    // Elliptical drop shadow at diamond center (tileHeight/2 below north vertex)
+    // Matches entity shadow offset so player and features align visually
+    const tileHH = this.isoTransform.tileHeight / 2;
+    const shadow = this.add.ellipse(0, tileHH, 120, 60, 0x000000, 0.3);
     container.add(shadow);
 
-    // Player sprite with directional character texture (default facing south)
-    // 56px astronaut sprites scaled to ~336px visual (6x width, 4.5x height for isometric squash)
-    const sprite = this.add.sprite(0, 0, `character-idle-${this.localPlayerFacing}`);
+    // Player sprite offset to diamond center (tileHeight/2) to match entity rendering.
+    // Without this offset the player sits at the north vertex (64px above entities),
+    // causing collision to appear 1+ tiles before the visual base of features.
+    const sprite = this.add.sprite(0, tileHH, `character-idle-${this.localPlayerFacing}`);
     sprite.setOrigin(0.5, 1.0);
     sprite.setScale(6, 4.5);
     container.add(sprite);
@@ -1958,13 +1961,13 @@ export class WorldScene extends Phaser.Scene {
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
-    // Elliptical drop shadow at ground level (y=0 = tile surface)
-    const shadow = this.add.ellipse(0, 0, 120, 60, 0x000000, 0.3);
+    // Elliptical drop shadow at diamond center (tileHeight/2 below north vertex)
+    const tileHH = this.isoTransform!.tileHeight / 2;
+    const shadow = this.add.ellipse(0, tileHH, 120, 60, 0x000000, 0.3);
     container.add(shadow);
 
-    // Player sprite with south-facing character texture (remote players always face south for now)
-    // 56px astronaut sprites scaled to ~336px visual (6x width, 4.5x height for isometric squash)
-    const sprite = this.add.sprite(0, 0, 'character-idle-s');
+    // Player sprite offset to diamond center to match entity rendering
+    const sprite = this.add.sprite(0, tileHH, 'character-idle-s');
     sprite.setOrigin(0.5, 1.0);
     sprite.setScale(6, 4.5);
     sprite.setTint(this.getFactionColor(player.faction));
