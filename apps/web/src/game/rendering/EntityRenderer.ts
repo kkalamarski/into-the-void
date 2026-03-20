@@ -557,12 +557,17 @@ export class EntityRenderer {
 
       let hitRect: Phaser.Geom.Rectangle;
       if (featureBounds) {
-        // Features: use auto-detected visible bounds for precise hit area
+        // Features: hit area at the BASE of the sprite (bottom 40% of visible art)
+        // This matches where the trunk/roots touch the ground, not the canopy
+        const visibleTop = featureBounds.topFrac * texH;
+        const visibleBottom = (1 - featureBounds.bottomFrac) * texH;
+        const visibleHeight = visibleBottom - visibleTop;
+        const baseHeight = visibleHeight * 0.4; // bottom 40% of visible art
         hitRect = new Phaser.Geom.Rectangle(
           featureBounds.leftFrac * texW,
-          featureBounds.topFrac * texH,
+          visibleBottom - baseHeight,
           (1 - featureBounds.leftFrac - featureBounds.rightFrac) * texW,
-          (1 - featureBounds.topFrac - featureBounds.bottomFrac) * texH
+          baseHeight
         );
       } else {
         // Animated creatures: use fixed percentage padding (tighter sprite sheets)

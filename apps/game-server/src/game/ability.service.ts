@@ -402,15 +402,25 @@ export class AbilityService {
    */
   private async completeCast(playerId: string): Promise<void> {
     const cast = this.activeCasts.get(playerId);
-    if (!cast) return;
+    if (!cast) {
+      console.log(`[ABILITY] completeCast: no active cast for ${playerId}`);
+      return;
+    }
 
     this.activeCasts.delete(playerId);
+    console.log(`[ABILITY] completeCast: abilityId=${cast.abilityId} target=${cast.targetEntityId ?? 'none'} player=${playerId}`);
 
     const player = this.playerService.getPlayerById(playerId);
-    if (!player) return;
+    if (!player) {
+      console.log(`[ABILITY] completeCast: player not found ${playerId}`);
+      return;
+    }
 
     const ability = AbilityRegistry.get(cast.abilityId);
-    if (!ability) return;
+    if (!ability) {
+      console.log(`[ABILITY] completeCast: ability not found ${cast.abilityId}`);
+      return;
+    }
 
     // Re-validate energy
     if (player.energy < ability.energyCost) {
@@ -449,6 +459,7 @@ export class AbilityService {
 
     // Execute the ability effects
     const result = await this.executeAbilityEffects(cast.socketId, ability, cast.targetEntityId);
+    console.log(`[ABILITY] completeCast result: success=${result.success} error=${result.error ?? 'none'} abilityId=${cast.abilityId}`);
 
     // Emit result to client
     this.server?.to(cast.socketId).emit('ability:result', {
@@ -1345,11 +1356,13 @@ export class AbilityService {
     const finalYield = Math.max(1, Math.floor(effect.baseYield * yieldMultiplier));
 
     // 5. Call EntityService to process gathering
+    console.log(`[ABILITY] handleGatherEffect: target=${targetEntityId} yield=${finalYield} resolvedType=${resolvedType}`);
     const result = await this.entityService.handleToolUse(
       socketId,
       targetEntityId,
       finalYield
     );
+    console.log(`[ABILITY] handleGatherEffect result: success=${result.success} error=${result.error ?? 'none'}`);
 
     if (!result.success) {
       return { success: false, error: result.error };

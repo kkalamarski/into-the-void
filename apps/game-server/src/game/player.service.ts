@@ -76,6 +76,7 @@ export class PlayerService {
       // Player position is restored from database - supports both open-world and hub zones
       // Position persistence is handled by handleDisconnect saving to DB
       const { px: initPx, py: initPy } = tileToPixelCenter(character.position.x, character.position.y);
+      console.log(`[AUTH] Loading position for ${characterId}: tile=(${character.position.x},${character.position.y}) zone=${character.position.zoneId} → px=(${initPx},${initPy})`);
       const player: ConnectedPlayer = {
         id: character.id,
         accountId: character.accountId,
@@ -137,6 +138,7 @@ export class PlayerService {
         // Convert pixel position back to tile coordinates before persisting
         const { tileX, tileY } = pixelToTile(player.px, player.py);
         player.position = { ...player.position, x: tileX, y: tileY };
+        console.log(`[DISCONNECT] Saving position for ${playerId}: tile=(${tileX},${tileY}) zone=${player.position.zoneId} px=(${player.px},${player.py})`);
         const db = this.databaseService.getClient();
         await updateCharacterPosition(db, playerId, player.position);
         await updateCharacterHealth(db, playerId, player.health, player.maxHealth);

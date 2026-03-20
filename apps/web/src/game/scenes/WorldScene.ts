@@ -2511,50 +2511,61 @@ export class WorldScene extends Phaser.Scene {
    * Returns true if blocked or if chunk not loaded (conservative).
    */
   isWorldTileBlocked(worldX: number, worldY: number): boolean {
-    if (!this.chunkManager) return true; // No chunk manager = blocked
+    return this.isTerrainBlocked(worldX, worldY) || this.isEntityBlocked(worldX, worldY);
+  }
 
-    // Hub zones: use local collision data directly (no cross-chunk reconstruction)
+  /**
+   * Check if terrain (not entities) blocks a world tile.
+   * Used by isometric extension to only extend walls, not feature sprites.
+   */
+  private isTerrainBlocked(worldX: number, worldY: number): boolean {
+    if (!this.chunkManager) return true;
+
     if (isHubZone(this.currentZoneId)) {
       const chunk = this.chunkManager.getChunk(this.currentZoneId);
       if (!chunk?.data.collisions) return true;
-
-      const terrainBlocked = chunk.data.collisions[worldY]?.[worldX] ?? true;
-      if (terrainBlocked) return true;
-
-      const entityAtTile = useEntityStore.getState().getEntityAtPosition(worldX, worldY, this.currentZoneId);
-      if (entityAtTile) {
-        const blocksMovement = entityAtTile.type === 'mineral' || entityAtTile.type === 'plant';
-        if (blocksMovement) return true;
-      }
-
-      return false;
+      return chunk.data.collisions[worldY]?.[worldX] ?? true;
     }
 
-    // Open-world zones: calculate which chunk this tile belongs to
     const chunkX = Math.floor(worldX / ZONE_SIZE);
     const chunkY = Math.floor(worldY / ZONE_SIZE);
     const zoneId = `z_${chunkX}_${chunkY}`;
-
-    // Get chunk data
     const chunk = this.chunkManager.getChunk(zoneId);
-    if (!chunk?.data.collisions) return true; // Chunk not loaded = blocked (conservative)
+    if (!chunk?.data.collisions) return true;
 
-    // Convert to chunk-local coordinates
     const localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
     const localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+    return chunk.data.collisions[localY]?.[localX] ?? true;
+  }
 
-    // 1. Terrain collision (existing logic)
-    const terrainBlocked = chunk.data.collisions[localY]?.[localX] ?? true;
-    if (terrainBlocked) return true;
+  /**
+   * Check if a static entity (plant/mineral) blocks a world tile.
+   * Separate from terrain so isometric wall extension doesn't apply to features.
+   */
+  private isEntityBlocked(worldX: number, worldY: number): boolean {
+    if (!this.chunkManager) return false;
 
-    // 2. Entity blocking - only static gatherable entities block
+    let zoneId: string;
+    let localX: number;
+    let localY: number;
+
+    if (isHubZone(this.currentZoneId)) {
+      zoneId = this.currentZoneId;
+      localX = worldX;
+      localY = worldY;
+    } else {
+      const chunkX = Math.floor(worldX / ZONE_SIZE);
+      const chunkY = Math.floor(worldY / ZONE_SIZE);
+      zoneId = `z_${chunkX}_${chunkY}`;
+      localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+      localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
+    }
+
     const entityAtTile = useEntityStore.getState().getEntityAtPosition(localX, localY, zoneId);
     if (entityAtTile) {
-      // Only minerals and plants block movement
       const blocksMovement = entityAtTile.type === 'mineral' || entityAtTile.type === 'plant';
       if (blocksMovement) return true;
     }
-
     return false;
   }
 
@@ -2567,15 +2578,20 @@ export class WorldScene extends Phaser.Scene {
       const currentSize = getZoneSize(this.currentZoneId);
       const offsetX = zoneCoords.x * currentSize;
       const offsetY = zoneCoords.y * currentSize;
-      const baseIsSolid = (tx: number, ty: number) =>
-        this.isWorldTileBlocked(offsetX + tx, offsetY + ty);
+      // Terrain-only solid check (for isometric wall extension — walls only, not features)
+      const terrainSolid = (tx: number, ty: number) =>
+        this.isTerrainBlocked(offsetX + tx, offsetY + ty);
+      // Entity-only solid check (features block their own tile only, no north extension)
+      const entitySolid = (tx: number, ty: number) =>
+        this.isEntityBlocked(offsetX + tx, offsetY + ty);
       const getHeight = (tx: number, ty: number): number =>
         this.getWorldTileHeight(offsetX + tx, offsetY + ty);
-      // Wrap with isometric visual check: elevated wall at (x, y) visually occupies
-      // (x, y-1) on screen, so we also block tiles whose south neighbor (y+1) is an
-      // elevated blocking tile — preventing the player from walking behind wall cubes.
+      // Isometric extension applies only to terrain walls (elevated cube tiles visually
+      // extend northward). Feature sprites use bottom-center anchor and don't extend.
+      const isoCheck = createIsometricCollisionCheck(terrainSolid, getHeight);
       this.pixelMovement.setCollisionCallback(
-        createIsometricCollisionCheck(baseIsSolid, getHeight),
+        (tx: number, ty: number, pixelY?: number) =>
+          entitySolid(tx, ty) || isoCheck(tx, ty, pixelY),
       );
     }
   }

@@ -671,11 +671,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { abilityId: string; targetEntityId?: string },
   ): Promise<void> {
+    console.log(`[ABILITY] ability:use abilityId=${data.abilityId} target=${data.targetEntityId ?? 'none'} socket=${client.id}`);
     const result = await this.abilityService.useAbility(
       client.id,
       data.abilityId,
       data.targetEntityId,
     );
+    console.log(`[ABILITY] result: success=${result.success} casting=${result.casting ?? false} error=${result.error ?? 'none'}`);
     // If a cast started, don't emit ability:result yet — completeCast will emit it when done
     if (result.casting) return;
 

@@ -139,6 +139,10 @@ gameSocket.on('ability:result', (data) => {
   if (data.success) {
     useAbilityStore.getState().clearCast();
   }
+  // Log errors so ability failures are visible in console
+  if (!data.success && data.error) {
+    console.warn(`[ABILITY] ${data.abilityId} failed: ${data.error}`);
+  }
 });
 
 gameSocket.on('ability:cooldown', (data) => {
