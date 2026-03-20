@@ -404,13 +404,20 @@ export class PlayerService {
   }
 
   /**
-   * Update player position in memory (called during movement).
+   * Update player position in memory (called during movement and teleports).
    * Note: This is in-memory only. Persistence to DB happens on disconnect.
+   * Syncs px/py from tile coordinates so pixel-distance checks (NPC interact,
+   * combat range, harvest range) use the correct post-teleport position.
    */
   updatePosition(playerId: string, position: Position): void {
     const player = this.players.get(playerId);
     if (player) {
       player.position = position;
+      // Sync pixel coords so distance checks (NPC interact, combat, harvest) use correct position
+      const pixelCenter = tileToPixelCenter(position.x, position.y);
+      player.px = pixelCenter.px;
+      player.py = pixelCenter.py;
+      player.lastPxInputTime = Date.now();
     }
   }
 
