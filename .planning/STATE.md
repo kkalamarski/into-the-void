@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 Phase: 146 of 146 (Secondary Fixes & Cleanup)
 Plan: 2 of 2 in current phase (complete)
 Status: Phase 146 executed — all plans complete
-Last activity: 2026-03-20 - Completed quick task 13: Fix expedition NPC close interaction - tier-based expedition UI with immediate modal close
+Last activity: 2026-03-20 - Completed quick task 15: Fix 7 bugs — px/py desync after expedition teleport, no destinations for rare biomes, merchants too far from spawn, collision hitbox too large
 
 Progress: [█████░░░░░░░░░░░░░░░] 25%
 
@@ -82,13 +82,14 @@ None.
 | 11 | fix feature collision position — pixelY threshold filter on entitySolid so collision triggers at visual base (feet-level) not trunk middle (head-level) | 2026-03-20 | e2adfe1 | Needs Review | [11-fix-feature-collision-position-offset-co](./quick/11-fix-feature-collision-position-offset-co/) |
 | 12 | fix player sinking — bilinear elevation interpolation in updateLocalPlayerFromPixels and updateRemotePlayerInterpolation eliminates 128 px snap at tile boundaries | 2026-03-20 | b190848 | Verified | [12-fix-player-sinking-issue-mismatch-betwee](./quick/12-fix-player-sinking-issue-mismatch-betwee/) |
 | 13 | fix expedition NPC interaction — modal closes immediately on tier select; 4 tier buttons replace 16 biome buttons; server picks random biome from chosen tier | 2026-03-20 | 12c250d | Verified | [13-fix-expedition-npc-close-interaction-win](./quick/13-fix-expedition-npc-close-interaction-win/) |
+| 15 | fix 7 bugs — px/py sync in updatePosition fixes NPC/combat/harvest, biome retry loop fixes expedition no destinations, docking bay vendors + hitbox height=16px | 2026-03-20 | 1069bfb | | [15-fix-7-bugs-expedition-no-destinations-np](./quick/15-fix-7-bugs-expedition-no-destinations-np/) |
 
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Quick task 13 complete — expedition NPC tier-based UI with immediate modal close
+Stopped at: Quick task 15 complete — 7 gameplay bugs fixed (expedition px/py desync, no destinations, merchants near spawn, hitbox height)
 Resume file: None
 Next action: Plan and execute Phase 145
 
 ---
-*Last updated: 2026-03-20 — Quick task 13 expedition NPC tier-based UI complete*
+*Last updated: 2026-03-20 — Quick task 15 expedition 7 bugs fix complete*
