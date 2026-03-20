@@ -14,6 +14,14 @@ echo "Tag: $TAG"
 echo "Registry: $REGISTRY"
 echo "=========================================="
 
+# Step 0: Clean up old images and containers to free disk space
+echo ""
+echo "Step 0: Cleaning up old Docker resources..."
+docker container prune -f > /dev/null 2>&1 || true
+docker image prune -af --filter "until=48h" > /dev/null 2>&1 || true
+AVAIL=$(df -h / | awk 'NR==2 {print $4}')
+echo "✓ Cleanup complete (${AVAIL} available)"
+
 # Step 1: Pull new images
 echo ""
 echo "Step 1/3: Pulling new images..."
