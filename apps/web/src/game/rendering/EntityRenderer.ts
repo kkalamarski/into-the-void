@@ -327,11 +327,13 @@ export class EntityRenderer {
    * Hub zones are treated as being at origin (0, 0).
    */
   private positionToWorldCoords(position: Position): { worldX: number; worldY: number } {
-    // Hub zones (hub_*) are instanced at origin
+    // +0.5 offset places entities at the DIAMOND CENTER instead of the
+    // northwest vertex. Without this, sprites sit at the top of the tile
+    // diamond and collision appears ~2 iso rows too high.
     if (position.zoneId.startsWith('hub_')) {
       return {
-        worldX: position.x,
-        worldY: position.y,
+        worldX: position.x + 0.5,
+        worldY: position.y + 0.5,
       };
     }
     // Open-world zones use z_X_Y format
@@ -339,8 +341,8 @@ export class EntityRenderer {
     const zoneX = parseInt(parts[1], 10);
     const zoneY = parseInt(parts[2], 10);
     return {
-      worldX: zoneX * ZONE_SIZE + position.x,
-      worldY: zoneY * ZONE_SIZE + position.y,
+      worldX: zoneX * ZONE_SIZE + position.x + 0.5,
+      worldY: zoneY * ZONE_SIZE + position.y + 0.5,
     };
   }
 

@@ -140,9 +140,9 @@ describe('range constants', () => {
     expect(MELEE_RANGE_PX).toBe(64);
   });
 
-  it('GATHER_RANGE_PX equals 1.5 * TILE_SIZE_PX (192 px)', () => {
-    expect(GATHER_RANGE_PX).toBe(1.5 * TILE_SIZE_PX);
-    expect(GATHER_RANGE_PX).toBe(192);
+  it('GATHER_RANGE_PX equals 2.0 * TILE_SIZE_PX (256 px)', () => {
+    expect(GATHER_RANGE_PX).toBe(2.0 * TILE_SIZE_PX);
+    expect(GATHER_RANGE_PX).toBe(256);
   });
 
   it('NPC_INTERACT_RANGE_PX equals GATHER_RANGE_PX', () => {

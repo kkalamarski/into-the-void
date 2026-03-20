@@ -19,7 +19,7 @@ import { audioManager } from '../../utils/audio';
 import { useGameStore } from '../../store/gameStore';
 import { useEntityStore } from '../../store/entityStore';
 import { useInventoryStore } from '../../store/inventoryStore';
-import { useAbilityStore, getEquippedAbilities } from '../../store/abilityStore';
+import { useAbilityStore } from '../../store/abilityStore';
 import { useCombatStore } from '../../store/combatStore';
 import { useQuestStore } from '../../store/questStore';
 import { gameSocket } from '../../network/socket';
@@ -438,48 +438,18 @@ export class WorldScene extends Phaser.Scene {
         return;
       }
 
-      // Gathering: minerals and plants trigger gathering abilities on click (INTERACT-02)
+      // Resources: click selects target, user fires gather from action bar
       if (entityType === 'mineral' || entityType === 'plant') {
         this.lastClickedEntity = entityId;
 
-        // Show target highlight (use 'herbivore' style for plants, 'mineral' for minerals)
+        // Show target highlight
         const targetContainer = this.entitySprites.get(entityId);
         if (targetContainer) {
           this.targetHighlight?.show(entityId, targetContainer, 'herbivore');
         }
 
-        // Set as target
+        // Set as target — user triggers gather/mine from action bar
         useCombatStore.getState().selectTarget(entityId);
-
-        // Auto-trigger gathering ability (INTERACT-02)
-        const abilities = getEquippedAbilities();
-        let gatherAbilityId: string | undefined;
-        if (entityType === 'plant') {
-          gatherAbilityId = abilities.find(a => a.id === 'harvest')?.id
-            ?? abilities.find(a => a.id === 'basic_harvest')?.id
-            ?? abilities.find(a => a.id === 'gather')?.id;
-        } else {
-          gatherAbilityId = abilities.find(a => a.id === 'mine')?.id
-            ?? abilities.find(a => a.id === 'basic_mine')?.id
-            ?? abilities.find(a => a.id === 'gather')?.id;
-        }
-        // DEBUG: diagnose gathering issues
-        console.log(`[GATHER DEBUG] entityType=${entityType} entityId=${entityId} abilityId=${gatherAbilityId} equippedAbilities=[${abilities.map(a => a.id).join(',')}]`);
-        if (gatherAbilityId) {
-          const player = useGameStore.getState().player;
-          const abilityDef = abilities.find(a => a.id === gatherAbilityId);
-          const { isCasting, isOnCooldown } = useAbilityStore.getState();
-          const casting = isCasting();
-          const onCd = isOnCooldown(gatherAbilityId);
-          const hasEnergy = player ? player.energy >= (abilityDef?.energyCost ?? 999) : false;
-          console.log(`[GATHER DEBUG] player=${!!player} abilityDef=${!!abilityDef} casting=${casting} onCd=${onCd} energy=${player?.energy}/${abilityDef?.energyCost} hasEnergy=${hasEnergy}`);
-          if (player && abilityDef && !casting && !onCd && hasEnergy) {
-            console.log(`[GATHER DEBUG] EMITTING ability:use abilityId=${gatherAbilityId} target=${entityId}`);
-            gameSocket.emit('ability:use', { abilityId: gatherAbilityId, targetEntityId: entityId });
-          }
-        } else {
-          console.log(`[GATHER DEBUG] No gather ability found! Available: [${abilities.map(a => a.id).join(',')}]`);
-        }
         return;
       }
 

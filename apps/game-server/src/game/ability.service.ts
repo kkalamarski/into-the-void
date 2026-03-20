@@ -342,7 +342,8 @@ export class AbilityService {
         }
 
         // Range check (pixel distance, Phase 133): convert tile range to pixels
-        const rangePx = ability.range * TILE_SIZE_PX;
+        // +0.5 tile buffer accounts for player standing at adjacent tile edge
+        const rangePx = (ability.range + 0.5) * TILE_SIZE_PX;
         const rangeCheck = canInteractPixel(player.px, player.py, target, rangePx);
         if (!rangeCheck.canInteract) {
           return { success: false, error: 'Out of range' };

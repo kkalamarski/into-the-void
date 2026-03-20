@@ -25,9 +25,9 @@ export const MELEE_RANGE_PX = 0.5 * TILE_SIZE_PX; // 64 px
 
 /**
  * Gathering and interactive object reach in pixels.
- * 1.5 tiles = 192 px — allows interaction without exact overlap.
+ * 2.0 tiles = 256 px — allows interaction from adjacent tile including diagonals.
  */
-export const GATHER_RANGE_PX = 1.5 * TILE_SIZE_PX; // 192 px
+export const GATHER_RANGE_PX = 2.0 * TILE_SIZE_PX; // 256 px
 
 /**
  * NPC dialogue / interaction range in pixels.
