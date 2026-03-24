@@ -1,24 +1,9 @@
 import Phaser from 'phaser';
 import { BiomeType } from '@into-the-void/shared-types';
+import { getAtmosphereStrategy, initAtmosphereStrategies } from './atmosphere-strategies/index';
+import type { AtmosphereParams, BiomeAtmosphereConfig, AtmosphereEffectType, CycleFactors } from './atmosphere-strategies/index';
 
-// ── Atmosphere Types ───────────────────────────────────────────────────────
-
-export type AtmosphereEffectType = 'fog' | 'glow' | 'haze' | 'murk' | 'shimmer' | 'clear';
-
-interface BiomeAtmosphereConfig {
-  effectType: AtmosphereEffectType;
-  rOffset: number;    // Red channel additive offset (getData scale: 0.0-1.0)
-  gOffset: number;    // Green channel additive offset
-  bOffset: number;    // Blue channel additive offset
-  brightnessBoost: number; // Additive diagonal modifier (positive=lighter, negative=darker)
-}
-
-interface AtmosphereParams {
-  rOffset: number;
-  gOffset: number;
-  bOffset: number;
-  brightnessBoost: number;
-}
+export type { AtmosphereEffectType } from './atmosphere-strategies/index';
 
 // ── Transition Constants ───────────────────────────────────────────────────
 
@@ -236,6 +221,7 @@ export class AtmosphereSystem {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+    initAtmosphereStrategies();
   }
 
   // ── Public API ─────────────────────────────────────────────────────────
@@ -382,21 +368,16 @@ export class AtmosphereSystem {
   }
 
   /**
-   * Compute day/night-modulated atmosphere parameters per effect type.
+   * Compute day/night-modulated atmosphere parameters.
+   *
+   * Derives cycle factors from progress, then delegates to the per-effect-type
+   * strategy for modulation. No per-effect branching in this method.
    *
    * Cycle progress phase boundaries (from PHASE_BOUNDARIES):
    *   Dawn  = 0.0 - 0.1
    *   Day   = 0.1 - 0.5
    *   Dusk  = 0.5 - 0.6
    *   Night = 0.6 - 1.0
-   *
-   * Modulation directions (lore-driven per CONTEXT.md):
-   *   FOG:     thicker at night/dawn
-   *   GLOW:    brighter at night (bioluminescence partially compensates)
-   *   HAZE:    strongest at noon/day
-   *   MURK:    darker at night
-   *   SHIMMER: hue-shifts at dusk/dawn
-   *   CLEAR:   unchanged
    */
   private getModulatedParams(
     config: BiomeAtmosphereConfig,
@@ -426,52 +407,8 @@ export class AtmosphereSystem {
       : 0;
     const dawnDuskFactor = Math.max(dawnFactor, duskFactor);
 
-    let { rOffset, gOffset, bOffset, brightnessBoost } = config;
-
-    switch (config.effectType) {
-      case 'fog':
-        // Thicker at night/dawn: amplify blue channel more than red/green
-        rOffset *= (1 + nightFactor * 0.3);
-        gOffset *= (1 + nightFactor * 0.3);
-        bOffset *= (1 + nightFactor * 0.5);
-        brightnessBoost -= nightFactor * 0.05;
-        break;
-
-      case 'glow':
-        // Brighter at night — bioluminescence partially counters night dimming
-        // Only add boost during night half; preserve config value during day
-        if (cycleProgress >= 0.5) {
-          gOffset *= (1 + nightFactor * 0.4);
-          bOffset *= (1 + nightFactor * 0.4);
-          brightnessBoost += nightFactor * 0.1;
-        }
-        // During day half (cycleProgress < 0.5): return config values unchanged
-        break;
-
-      case 'haze':
-        // Strongest at noon — heat shimmer peaks at midday
-        rOffset *= (1 + dayFactor * 0.4);
-        gOffset *= (1 + dayFactor * 0.2);
-        brightnessBoost += dayFactor * 0.05;
-        break;
-
-      case 'murk':
-        // Darker at night — oppressive underground darkness intensifies
-        brightnessBoost -= nightFactor * 0.08;
-        break;
-
-      case 'shimmer':
-        // Hue shifts at dusk/dawn — otherworldly iridescence peaks at transitions
-        rOffset *= (1 + dawnDuskFactor * 0.3);
-        bOffset *= (1 - dawnDuskFactor * 0.2);
-        break;
-
-      case 'clear':
-      default:
-        // Unchanged — void_plains provides a faint neutral baseline
-        break;
-    }
-
-    return { rOffset, gOffset, bOffset, brightnessBoost };
+    const factors: CycleFactors = { nightFactor, dayFactor, dawnDuskFactor, cycleProgress };
+    const strategy = getAtmosphereStrategy(config.effectType);
+    return strategy.modulate(config, factors);
   }
 }
