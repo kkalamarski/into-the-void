@@ -430,7 +430,6 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
       tile.destroy();
     }));
     this.chunkTiles.clear();
-    this.transparentTiles.clear();
     this.entityManager?.clearEntities();
     this.entityManager?.clearOtherPlayers();
     this.chunkManager?.clear();
@@ -782,7 +781,6 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     this.chunkManager?.clear(); this.chunkManager = null;
     this.chunkTiles.forEach(tiles => tiles.forEach(tile => tile.destroy(true)));
     this.chunkTiles.clear();
-    this.transparentTiles.clear();
     this.lastCullBounds = null;
   }
 }
