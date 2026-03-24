@@ -681,13 +681,12 @@ export class EntityManager {
     const tileY = Math.floor(gridY);
 
     const elevation = this.worldAccessor.getInterpolatedElevation(gridX, gridY);
-    const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
+    const elevationRounded = Math.round(elevation);
+    const elevationOffset = elevationRounded * ELEVATION_HEIGHT_STEP;
 
     const screenPos = isoTransform.gridToScreen(worldX, worldY);
 
     this.localPlayer.setPosition(screenPos.x, screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET);
-
-    const elevationRounded = Math.round(elevation);
     this.localPlayer.setData('gridX', worldX);
     this.localPlayer.setData('gridY', worldY);
     this.localPlayer.setData('elevation', elevationRounded);
