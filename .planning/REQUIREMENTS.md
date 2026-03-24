@@ -19,8 +19,8 @@ Requirements for bug-fix milestone. Each maps to roadmap phases.
 
 ### Ability Targeting
 
-- [ ] **TARGET-01**: Clicking an entity then using an ability from the action bar fires the ability at the selected target — ActionBar reads selectedTarget, not auto-attack targetEntityId
-- [ ] **TARGET-02**: Gathering works when clicking a resource node — mini-game starts, range check uses correct pixel coordinates
+- [x] **TARGET-01**: Clicking an entity then using an ability from the action bar fires the ability at the selected target — ActionBar reads selectedTarget, not auto-attack targetEntityId
+- [x] **TARGET-02**: Gathering works when clicking a resource node — mini-game starts, range check uses correct pixel coordinates
 
 ### Secondary Fixes
 
