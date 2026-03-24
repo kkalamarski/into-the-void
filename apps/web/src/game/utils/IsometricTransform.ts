@@ -60,7 +60,7 @@ export class IsometricTransform {
     screenX: number,
     screenY: number,
     getElevation: (x: number, y: number) => number,
-    elevationHeightStep: number = 128
+    elevationHeightStep: number = 64
   ): { x: number; y: number } {
     // First pass: get initial tile guess
     let tile = this.screenToTile(screenX, screenY);

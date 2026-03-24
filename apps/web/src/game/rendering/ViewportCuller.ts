@@ -1,8 +1,7 @@
 import { IsometricTransform } from '../utils/IsometricTransform';
+import { ELEVATION_HEIGHT_STEP, MAX_ELEVATION } from '../constants/elevation';
 
-const MAX_ELEVATION = 5;
-const ELEVATION_HEIGHT_STEP = 128; // 1.0 × diamond height for 256x256 cubes
-const MAX_STRUCTURE_HEIGHT = MAX_ELEVATION * ELEVATION_HEIGHT_STEP; // 160 pixels
+const MAX_STRUCTURE_HEIGHT = MAX_ELEVATION * ELEVATION_HEIGHT_STEP;
 
 /**
  * Calculates which tiles are visible within camera viewport.

@@ -6,8 +6,7 @@ import { useStatsStore } from '../../store/statsStore';
 import { getStrategyForType, initStrategies } from './strategies';
 import type { VisibleBounds } from './strategies';
 import { ANIMATED_CREATURES } from './strategies/creature-render-data';
-
-const ELEVATION_HEIGHT_STEP = 128; // Pixels per elevation level (1.0 × diamond height for 256x256 cubes)
+import { ELEVATION_HEIGHT_STEP } from '../constants/elevation';
 const ENTITY_GROUND_OFFSET = 0; // No visual offset — depth sorting (entityOffset=65) handles south-tile wall occlusion
 const OCCLUSION_DEPTH_THRESHOLD = 10.0;  // Structures this far "in front" occlude entities
 const OCCLUSION_MIN_HEIGHT = 3;          // Only structures >= 3 elevation levels occlude
