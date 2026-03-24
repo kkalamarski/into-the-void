@@ -224,13 +224,9 @@ export function createIsometricCollisionCheck(
 
     // Check if the tile to the south (y+1) is an elevated blocking tile.
     // Its isometric cube visual extends northward into this tile's screen space.
+    // Block the entire tile — no sub-tile threshold.
     const southY = tileY + 1;
     if (baseSolid(tileX, southY) && getHeight(tileX, southY) >= 1) {
-      if (pixelY !== undefined) {
-        // Block the southern half of this tile (where the wall face is visible)
-        const tileMidY = tileY * TILE_SIZE_PX + TILE_SIZE_PX * 0.5;
-        return pixelY >= tileMidY;
-      }
       return true;
     }
 
