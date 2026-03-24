@@ -69,13 +69,14 @@ None.
 | # | Description | Date | Commit | Status | Directory |
 |---|-------------|------|--------|--------|-----------|
 | 16 | Add a service worker to cache all game assets | 2026-03-24 | 2f4e92d | Verified | [16-add-service-worker-asset-caching](./quick/16-add-service-worker-asset-caching/) |
+| 17 | Fix 4 bugs — chunk spam, sinking, wall collision, debug view | 2026-03-24 | cb7456a | Complete | [17-fix-4-bugs-chunk-spam-sinking-collision-debug](./quick/17-fix-4-bugs-chunk-spam-sinking-collision-debug/) |
 
 ## Session Continuity
 
 Last session: 2026-03-24
-Stopped at: Phase 155 execution complete — pending verification
+Stopped at: Completed quick task 17 — Fix 4 bugs (chunk spam, sinking, collision, debug view)
 Resume file: None
 Next action: Verify Phase 155 (Elevation & Height Rework)
 
 ---
-*Last updated: 2026-03-24 — Phase 155 executed*
+*Last updated: 2026-03-24 — Quick task 17 executed*
