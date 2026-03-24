@@ -50,6 +50,11 @@ export * from './hazard/hazard';
 // Crafting quality and XP decay (Phase 123)
 export * from './crafting';
 
+// Creature behavior strategies (Phase 150)
+export { registerBehaviorStrategy, getBehaviorStrategy, initBehaviorStrategies } from './ai/behaviors/index';
+export type { CreatureBehaviorStrategy } from './ai/behaviors/index';
+export { HerbivoreBehavior, OmnivoreBehavior, PredatorBehavior, ManiacBehavior } from './ai/behaviors/index';
+
 // Ability effect strategies (Phase 149)
 export { registerEffectStrategy, getEffectStrategy, initEffectStrategies } from './ability-effects/index';
 export type { EffectStrategy, EffectContext, EffectResult, EffectServices, PlayerRef } from './ability-effects/index';
