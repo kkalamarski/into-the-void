@@ -10,7 +10,7 @@ import { EntityRenderer } from '../rendering/EntityRenderer';
 import { ChunkManager } from '../rendering/ChunkManager';
 import { ViewportCuller } from '../rendering/ViewportCuller';
 import { ZoneHUD } from '../ui/ZoneHUD';
-import { MinimapCamera } from '../rendering/MinimapCamera';
+import { CameraController, InputController } from './controllers';
 import { PixelMovementController } from '../systems/PixelMovementController';
 import { RemotePlayerInterpolator } from '../systems/RemotePlayerInterpolator';
 import { IsometricTransform } from '../utils/IsometricTransform';
@@ -51,34 +51,6 @@ const TIER_LABELS: Record<BiomeTier, string> = {
 };
 const ZONE_CINEMATIC_COOLDOWN_MS = 30_000; // 30 seconds per zone
 
-type WASDKeys = { W: Phaser.Input.Keyboard.Key; A: Phaser.Input.Keyboard.Key; S: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key };
-
-/**
- * Resolve 8-directional movement from simultaneous WASD key states.
- * Uses screen-relative mapping: W=up, S=down, A=left, D=right on screen.
- * Dual-key combos produce grid cardinals (screen diagonals).
- */
-function resolveDirection(keys: WASDKeys): Direction | null {
-  const w = keys.W.isDown;
-  const a = keys.A.isDown;
-  const s = keys.S.isDown;
-  const d = keys.D.isDown;
-
-  // Dual-key combos = grid cardinals (appear as screen diagonals)
-  if (w && d) return 'n';  // screen top-right diagonal
-  if (w && a) return 'w';  // screen top-left diagonal
-  if (s && d) return 'e';  // screen bottom-right diagonal
-  if (s && a) return 's';  // screen bottom-left diagonal
-
-  // Single key = screen-relative (grid diagonals)
-  if (w) return 'nw';  // screen up
-  if (s) return 'se';  // screen down
-  if (a) return 'sw';  // screen left
-  if (d) return 'ne';  // screen right
-
-  return null;
-}
-
 export class WorldScene extends Phaser.Scene {
   private tileLayer: Phaser.GameObjects.Container | null = null;
   private tileRenderer: TileRenderer | null = null;
@@ -87,8 +59,9 @@ export class WorldScene extends Phaser.Scene {
   private entityZoneMap: Map<string, Set<string>> = new Map(); // zoneId -> Set<entityId>
   private playerSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
   private localPlayer: Phaser.GameObjects.Sprite | null = null;
-  private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
-  private wasd: WASDKeys | null = null;
+  // Subsystem controllers (Phase 152)
+  private cameraController: CameraController | null = null;
+  private inputController: InputController | null = null;
   private lastMoveTime = 0;
   private chordStartTime = 0; // When first movement key was pressed
   private static readonly CHORD_WINDOW_MS = 2; // Time to wait for additional keys
@@ -106,7 +79,6 @@ export class WorldScene extends Phaser.Scene {
   private currentBiome: BiomeType = 'void_plains';
   private lastCullBounds: { minTileX: number; maxTileX: number; minTileY: number; maxTileY: number } | null = null;
   private collisionMap: boolean[][] | null = null;
-  private minimapCamera: MinimapCamera | null = null;
   private isoTransform: IsometricTransform | null = null;
   private depthSorter: DepthSorter | null = null;
   private currentHeights: number[][] | null = null;
@@ -116,8 +88,6 @@ export class WorldScene extends Phaser.Scene {
   private transparentTiles: Set<Phaser.GameObjects.Container> = new Set();
   private currentTiles: number[][] | null = null;
   private tileInfoPopup: Phaser.GameObjects.Container | null = null;
-  private leftMouseDown = false;
-  private rightMouseDown = false;
   private lastClickedEntity: string | null = null;
   private targetHighlight: TargetHighlight | null = null;
   // Phase 133: nearest NPC within NPC_INTERACT_RANGE_PX — gates npc:interact emissions
@@ -203,14 +173,9 @@ export class WorldScene extends Phaser.Scene {
     // Initialize ZoneHUD
     this.zoneHUD = new ZoneHUD(this);
 
-    // Initialize MinimapCamera
-    this.minimapCamera = new MinimapCamera(this);
-    this.minimapCamera.create();
-
-    // Make minimap camera ignore ZoneHUD elements (they have scrollFactor 0)
-    if (this.zoneHUD) {
-      this.minimapCamera.ignore(this.zoneHUD.getGameObjects());
-    }
+    // Initialize CameraController (zoom + minimap)
+    this.cameraController = new CameraController(this);
+    this.cameraController.create(this.zoneHUD);
 
     // Initialize WeatherSystem for biome particle effects
     this.weatherSystem = new WeatherSystem(this);
@@ -251,58 +216,17 @@ export class WorldScene extends Phaser.Scene {
       }
     );
 
-    // Setup input
-    if (this.input.keyboard) {
-      this.cursors = this.input.keyboard.createCursorKeys();
-      this.wasd = {
-        W: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
-        A: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
-        S: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
-        D: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
-      };
+    // Setup input controller (WASD, hotkeys, mouse tracking)
+    this.inputController = new InputController(this);
+    this.inputController.create();
 
-      // Tool swap hotkey: Q swaps main and secondary tool slots
-      this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q).on('down', () => {
-        if (this.input.keyboard?.enabled) {
-          gameSocket.emit('equipment:tool_swap', {});
-        }
-      });
-
-      // UI toggle hotkeys: I=Inventory, E=Equipment, Tab=Storage, C=Chat
-      this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I).on('down', () => {
-        if (this.input.keyboard?.enabled) {
-          useGameStore.getState().toggleInventory();
-        }
-      });
-
-      this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E).on('down', () => {
-        if (this.input.keyboard?.enabled) {
-          useGameStore.getState().toggleEquipment();
-        }
-      });
-
-      // K=Abilities (skills) panel
-      this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K).on('down', () => {
-        if (this.input.keyboard?.enabled) {
-          useGameStore.getState().toggleAbilities();
-        }
-      });
-
-      // P is alias for E (both toggle equipment+stats panel)
-      this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P).on('down', () => {
-        if (this.input.keyboard?.enabled) {
-          useGameStore.getState().toggleEquipment();
-        }
-      });
-
-      // Recall hotkey: H teleports player to faction hub from open world
-      // Server validates and rejects if player is already in hub
-      this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.H).on('down', () => {
-        if (this.input.keyboard?.enabled) {
-          gameSocket.emit('hub:recall', {});
-        }
-      });
-    }
+    // Wire input events from InputController
+    this.events.on('input:both-buttons', (pointer: Phaser.Input.Pointer) => {
+      this.showTileInfo(pointer);
+    });
+    this.events.on('input:button-released', () => {
+      this.hideTileInfo();
+    });
 
     // Tiles and player will be loaded via loadZoneFromState() when zone:state event arrives
 
@@ -355,22 +279,6 @@ export class WorldScene extends Phaser.Scene {
       }
     });
 
-    // Set fixed zoom to show ~20x15 tiles viewport (for 256x256 sprites)
-    this.cameras.main.setZoom(0.5);
-
-    // Disable scroll zoom to maintain fixed viewport
-    // (uncomment below to allow limited zoom adjustment)
-    // this.input.on('wheel', (
-    //   _pointer: Phaser.Input.Pointer,
-    //   _gameObjects: Phaser.GameObjects.GameObject[],
-    //   _deltaX: number,
-    //   deltaY: number
-    // ) => {
-    //   const zoom = this.cameras.main.zoom;
-    //   const newZoom = Phaser.Math.Clamp(zoom - deltaY * 0.001, 1.0, 2.0);
-    //   this.cameras.main.setZoom(newZoom);
-    // });
-
     // Ground click handler: clear target highlight when clicking empty ground
     this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
       // Skip if we clicked an entity (handled by gameobjectdown)
@@ -387,28 +295,6 @@ export class WorldScene extends Phaser.Scene {
       useCombatStore.getState().stopAutoAttack();
       useCombatStore.getState().setInCombat(useCombatStore.getState().inCombat, null);
     });
-
-    // Track mouse buttons for tile inspection (both buttons = look at tile, like Tibia)
-    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.leftButtonDown()) this.leftMouseDown = true;
-      if (pointer.rightButtonDown()) this.rightMouseDown = true;
-
-      // Both buttons pressed - show tile info
-      if (this.leftMouseDown && this.rightMouseDown) {
-        this.showTileInfo(pointer);
-      }
-    });
-
-    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
-      if (!pointer.leftButtonDown()) this.leftMouseDown = false;
-      if (!pointer.rightButtonDown()) this.rightMouseDown = false;
-
-      // Hide tile info when any button released
-      this.hideTileInfo();
-    });
-
-    // Prevent context menu on right click
-    this.input.mouse?.disableContextMenu();
 
     // Entity click handler for click-to-attack (CATK-01, CATK-02, CATK-04)
     this.input.on('gameobjectdown', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject) => {
@@ -858,27 +744,14 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private handleInput(time: number, delta: number): void {
-    if (!this.localPlayer || !this.pixelMovement) return;
+    if (!this.localPlayer || !this.pixelMovement || !this.inputController) return;
 
     // Can't move while dead
     const player = useGameStore.getState().player;
     if (player?.isDead) return;
 
-    // Read WASD key state
-    const keys = {
-      W: this.wasd?.W.isDown ?? false,
-      A: this.wasd?.A.isDown ?? false,
-      S: this.wasd?.S.isDown ?? false,
-      D: this.wasd?.D.isDown ?? false,
-    };
-
-    // Also support arrow keys mapped to same axes
-    if (this.cursors) {
-      if (this.cursors.up.isDown) keys.W = true;
-      if (this.cursors.down.isDown) keys.S = true;
-      if (this.cursors.left.isDown) keys.A = true;
-      if (this.cursors.right.isDown) keys.D = true;
-    }
+    // Read movement key state from InputController
+    const keys = this.inputController.getMovementKeys();
 
     const anyKeyDown = keys.W || keys.A || keys.S || keys.D;
 
@@ -1126,7 +999,9 @@ export class WorldScene extends Phaser.Scene {
         this.weatherSystem?.setBiome(chunk.biome, false);
         // Crossfade atmosphere to new biome (ATMO-02, ATMO-03)
         this.atmosphereSystem?.setBiome(chunk.biome, false);
-        this.updateMinimapWeatherIgnore();
+        if (this.cameraController && this.weatherSystem) {
+          this.cameraController.updateMinimapWeatherIgnore(this.weatherSystem);
+        }
 
         // Update collision map for movement validation in new zone
         if (chunk.data.collisions) {
@@ -1278,7 +1153,9 @@ export class WorldScene extends Phaser.Scene {
     this.weatherSystem?.setBiome(biome, true);
     // Instant-swap atmosphere for teleport (ATMO-03)
     this.atmosphereSystem?.setBiome(biome, true);
-    this.updateMinimapWeatherIgnore();
+    if (this.cameraController && this.weatherSystem) {
+      this.cameraController.updateMinimapWeatherIgnore(this.weatherSystem);
+    }
 
     // Hub zones: disable day/night cycle (controlled indoor environment)
     if (isHubZone(newZoneId)) {
@@ -1331,18 +1208,6 @@ export class WorldScene extends Phaser.Scene {
       .join(' ');
   }
 
-  /**
-   * Update minimap camera to ignore current weather emitters.
-   * Called after each weather transition to ensure new emitters are excluded.
-   */
-  private updateMinimapWeatherIgnore(): void {
-    if (this.minimapCamera && this.weatherSystem) {
-      const emitters = this.weatherSystem.getActiveEmitters();
-      if (emitters.length > 0) {
-        this.minimapCamera.ignore(emitters);
-      }
-    }
-  }
 
   private parseZoneCoords(zoneId: string): { x: number; y: number } {
     // Hub zones are instanced at origin (0, 0)
@@ -1597,7 +1462,9 @@ export class WorldScene extends Phaser.Scene {
       if (this.weatherSystem && !this.weatherSystem.hasActiveWeather()) {
         this.weatherSystem.setBiome(biome, true);
         this.atmosphereSystem?.setBiome(biome, true);
-        this.updateMinimapWeatherIgnore();
+        if (this.cameraController && this.weatherSystem) {
+          this.cameraController.updateMinimapWeatherIgnore(this.weatherSystem);
+        }
       }
     }
   }
@@ -2145,13 +2012,8 @@ export class WorldScene extends Phaser.Scene {
     // Create player sprite if it doesn't exist
     if (!this.localPlayer) {
       this.createLocalPlayer(position);
-      // Set up camera to follow player
-      // Phase 134: center-locked camera — no lerp delay (per CONTEXT decision)
-      this.cameras.main.startFollow(this.localPlayer!, true, 1.0, 1.0);
-      // Also set minimap to follow player
-      if (this.minimapCamera) {
-        this.minimapCamera.startFollow(this.localPlayer!);
-      }
+      // Set up camera to follow player via CameraController
+      this.cameraController?.startFollowPlayer(this.localPlayer!);
     } else {
       this.updateLocalPlayerSprite(position);
     }
@@ -2486,9 +2348,7 @@ export class WorldScene extends Phaser.Scene {
    * Called by React UI panels to prevent movement while typing or browsing.
    */
   setKeyboardEnabled(enabled: boolean): void {
-    if (this.input?.keyboard) {
-      this.input.keyboard.enabled = enabled;
-    }
+    this.inputController?.setKeyboardEnabled(enabled);
   }
 
   /**
@@ -2496,20 +2356,7 @@ export class WorldScene extends Phaser.Scene {
    * Called when modal opens to clear any keys that were held during the click.
    */
   resetMovementInput(): void {
-    // Reset WASD keys
-    if (this.wasd) {
-      this.wasd.W.reset();
-      this.wasd.A.reset();
-      this.wasd.S.reset();
-      this.wasd.D.reset();
-    }
-    // Reset cursor keys
-    if (this.cursors) {
-      this.cursors.up.reset();
-      this.cursors.down.reset();
-      this.cursors.left.reset();
-      this.cursors.right.reset();
-    }
+    this.inputController?.resetMovementInput();
   }
 
   /**
@@ -2679,9 +2526,13 @@ export class WorldScene extends Phaser.Scene {
       this.zoneHUD.destroy();
       this.zoneHUD = null;
     }
-    if (this.minimapCamera) {
-      this.minimapCamera.destroy();
-      this.minimapCamera = null;
+    if (this.cameraController) {
+      this.cameraController.destroy();
+      this.cameraController = null;
+    }
+    if (this.inputController) {
+      this.inputController.destroy();
+      this.inputController = null;
     }
     if (this.chunkManager) {
       this.chunkManager.clear();
