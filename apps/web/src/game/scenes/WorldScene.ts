@@ -21,6 +21,8 @@ import type { PoiRenderer } from '../pois/PoiRenderer';
 import { WeatherSystem } from '../systems/WeatherSystem';
 import { DayNightCycle } from '../systems/DayNightCycle';
 import { AtmosphereSystem } from '../systems/AtmosphereSystem';
+import { DebugOverlay } from '../systems/DebugOverlay';
+import { DebugCollisionRenderer } from '../systems/DebugCollisionRenderer';
 import { gameSocket } from '../../network/socket';
 
 export const ISO_TILE_WIDTH = 256;
@@ -82,6 +84,8 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
   private dayNightCycle: DayNightCycle | null = null;
   private atmosphereSystem: AtmosphereSystem | null = null;
   private pixelMovement: PixelMovementController | null = null;
+  private debugOverlay: DebugOverlay | null = null;
+  private debugCollisionRenderer: DebugCollisionRenderer | null = null;
 
   constructor() {
     super({ key: 'WorldScene' });
@@ -154,6 +158,35 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
       }
     });
 
+    // Debug overlay (F3 toggle) — position, performance, game state
+    this.debugOverlay = new DebugOverlay(this, {
+      getElevation: (tx, ty) => this.currentHeights?.[ty]?.[tx] ?? 0,
+      getTileType: (tx, ty) => this.currentTiles?.[ty]?.[tx] ?? 0,
+      getDayNightPhase: () => this.dayNightCycle?.getCurrentPhase() ?? 'Day',
+      getDayNightProgress: () => this.dayNightCycle ? Math.round(this.dayNightCycle.getCycleProgress() * 100) : 0,
+      getChunkCounts: () => this.chunkManager?.getChunkStats() ?? { loaded: 0, pending: 0, failed: 0 },
+      getBiomeName: () => BIOME_DISPLAY_NAMES[this.currentBiome] ?? this.currentBiome,
+      getPlayerPixelPos: () => this.pixelMovement?.getPosition() ?? null,
+    });
+
+    // Debug collision renderer — blocking tiles, walls, feature hitboxes
+    this.debugCollisionRenderer = new DebugCollisionRenderer(this, {
+      getCollisionMap: () => this.collisionMap,
+      getStructures: () => this.currentStructures,
+      getEntityContainers: () => this.entityManager?.getEntitySprites() ?? new Map(),
+      getIsoTransform: () => this.isoTransform!,
+    });
+
+    // Wire F3 toggle to both debug systems
+    this.events.on('input:toggle-debug', () => {
+      this.debugOverlay?.toggle();
+      if (this.debugOverlay?.isVisible()) {
+        this.debugCollisionRenderer?.show();
+      } else {
+        this.debugCollisionRenderer?.hide();
+      }
+    });
+
     // Start background music
     audioManager.startMusic('/assets/music/freesound_community-ethereal-ambient-music-55115.mp3');
   }
@@ -186,6 +219,10 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
         store.setDayNightPhase(phase);
       }
     }
+
+    // Debug overlay + collision visualization (zero cost when hidden)
+    this.debugOverlay?.update(delta);
+    this.debugCollisionRenderer?.update();
   }
 
   // ── Input Handling ────────────────────────────────────────────────────
@@ -772,6 +809,8 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     this.weatherSystem?.destroy(); this.weatherSystem = null;
     this.dayNightCycle?.destroy(); this.dayNightCycle = null;
     this.atmosphereSystem?.destroy(); this.atmosphereSystem = null;
+    this.debugOverlay?.destroy(); this.debugOverlay = null;
+    this.debugCollisionRenderer?.destroy(); this.debugCollisionRenderer = null;
     this.zoneHUD?.destroy(); this.zoneHUD = null;
     this.chunkManager?.clear(); this.chunkManager = null;
     this.chunkTiles.forEach(tiles => tiles.forEach(tile => tile.destroy(true)));

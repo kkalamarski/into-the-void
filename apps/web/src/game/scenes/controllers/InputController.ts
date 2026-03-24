@@ -103,6 +103,11 @@ export class InputController {
           gameSocket.emit('hub:recall', {});
         }
       });
+
+      // Debug overlay toggle: F3 (always active regardless of keyboard enabled state)
+      this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F3).on('down', () => {
+        this.scene.events.emit('input:toggle-debug');
+      });
     }
 
     // Track mouse buttons for tile inspection (both buttons = look at tile, like Tibia)

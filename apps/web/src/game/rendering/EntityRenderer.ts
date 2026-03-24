@@ -345,14 +345,21 @@ export class EntityRenderer {
     }
 
     // Hover outline glow for clickable entities
+    // RENDER-01 fix: Graphics object is NOT pre-added to container — only added on
+    // first pointerover and removed on pointerout. This prevents Phaser from rendering
+    // a residual 1px white border artifact when the Graphics has no draw commands but
+    // still participates in the display list. Features (plants/minerals/artifacts) use
+    // a cyan outline instead of white to avoid the "white border" visual artifact.
     const hoverGlow = this.scene.add.graphics();
     hoverGlow.setVisible(false);
-    container.add(hoverGlow);
+    hoverGlow.setActive(false);
     container.setData('hoverGlow', hoverGlow);
 
     sprite.on('pointerover', () => {
       hoverGlow.clear();
-      hoverGlow.lineStyle(3, 0xffffff, 0.6);
+      // Features use cyan outline; creatures/other use white
+      const outlineColor = isFeature ? 0x00cccc : 0xffffff;
+      hoverGlow.lineStyle(3, outlineColor, 0.6);
 
       const bounds = container.getData('visibleBounds') as VisibleBounds | null;
       if (bounds) {
@@ -371,6 +378,11 @@ export class EntityRenderer {
         const yOff = spriteYOffset;
         hoverGlow.strokeRoundedRect(-halfW, yOff - h, halfW * 2, h, 4);
       }
+      // Add to container only when showing — prevents residual rendering
+      if (!container.exists(hoverGlow)) {
+        container.add(hoverGlow);
+      }
+      hoverGlow.setActive(true);
       hoverGlow.setVisible(true);
 
       // Features: also show nameplate and yield bar on hover
@@ -383,8 +395,11 @@ export class EntityRenderer {
     });
 
     sprite.on('pointerout', () => {
-      hoverGlow.setVisible(false);
       hoverGlow.clear();
+      hoverGlow.setVisible(false);
+      hoverGlow.setActive(false);
+      // Remove from container to prevent residual rendering
+      container.remove(hoverGlow, false);
 
       // Features: hide nameplate and yield bar
       if (isFeature) {

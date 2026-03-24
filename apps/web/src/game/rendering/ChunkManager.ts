@@ -333,6 +333,19 @@ export class ChunkManager {
   }
 
   /**
+   * Get chunk loading statistics for debug overlay.
+   */
+  getChunkStats(): { loaded: number; pending: number; failed: number } {
+    let pending = 0;
+    let failed = 0;
+    this.chunkStates.forEach(state => {
+      if (state === 'loading') pending++;
+      else if (state === 'failed') failed++;
+    });
+    return { loaded: this.loadedChunks.size, pending, failed };
+  }
+
+  /**
    * Notify callback of loading state change
    */
   private notifyLoadingStateChange(): void {
