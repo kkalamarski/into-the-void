@@ -179,24 +179,11 @@ export class MovementService implements OnModuleInit {
       // so we also block tiles whose south neighbor (y+1) is an elevated wall.
       isSolid = createIsometricCollisionCheck(isSolid, getHeight);
 
-      // Elevation offset: in isometric view, elevation shifts straight UP on screen.
-      // "Up on screen" in isometric = decrease BOTH gridX and gridY equally.
-      // Each elevation step = 64px screen-Y = 0.5 tile in both grid axes.
-      // Offset both px and py so collision boundaries align with the elevated surface.
-      const playerTileX = Math.floor(player.px / TILE_SIZE_PX);
-      const playerTileY = Math.floor(player.py / TILE_SIZE_PX);
-      const playerElevation = getHeight(playerTileX, playerTileY);
-      const elevOffset = playerElevation * (TILE_SIZE_PX / 2); // 64px per elevation level
+      const resolved = resolvePixelCollision(player.px, player.py, vx, vy, isSolid);
 
-      const resolved = resolvePixelCollision(
-        player.px - elevOffset,  // shift in both axes (isometric "up")
-        player.py - elevOffset,
-        vx, vy, isSolid,
-      );
-
-      // Restore original coordinate space
-      player.px = resolved.px + elevOffset;
-      player.py = resolved.py + elevOffset;
+      // Update authoritative position
+      player.px = resolved.px;
+      player.py = resolved.py;
 
       // Collision-divergence correction — if the server's collision-resolved position
       // differs from the client's predicted position by more than the threshold, snap the
