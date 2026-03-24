@@ -58,9 +58,6 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
   private lastCullBounds: { minTileX: number; maxTileX: number; minTileY: number; maxTileY: number } | null = null;
   private lastCullTime = 0;
   private cullInterval = 100;
-  private transparentTiles: Set<Phaser.GameObjects.Container> = new Set();
-  private lastOcclusionTime = 0;
-  private occlusionInterval = 100;
 
   // ── Zone state ────────────────────────────────────────────────────────
   private currentZoneId: string = 'z_0_0';
@@ -207,13 +204,6 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
     // Entity depth sorting + remote player interpolation
     this.entityManager?.update(time, delta);
-
-    // Throttled occlusion check
-    if (time - this.lastOcclusionTime >= this.occlusionInterval) {
-      this.lastOcclusionTime = time;
-      this.entityManager?.updateEntityOcclusion();
-      this.updateTileTransparency();
-    }
 
     // Day/night cycle
     if (this.dayNightCycle) {
@@ -695,34 +685,6 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
         }
       }
     });
-  }
-
-  private updateTileTransparency(): void {
-    const localPlayer = this.entityManager?.getLocalPlayer();
-    if (!localPlayer || !this.isoTransform) return;
-    const chunkTiles = this.chunkTiles.get(this.currentZoneId);
-    if (!chunkTiles) return;
-    const pX = localPlayer.getData('gridX') as number;
-    const pY = localPlayer.getData('gridY') as number;
-    if (pX == null || pY == null || isNaN(pX)) return;
-    const pElev = (localPlayer.getData('elevation') as number) ?? 0;
-    const pRow = pX + pY, pCol = pX - pY;
-    const newTransparent = new Set<Phaser.GameObjects.Container>();
-    for (const tile of chunkTiles) {
-      const elev = tile.getData('elevation') as number;
-      if (!elev || elev <= pElev) continue;
-      const tX = tile.getData('gridX') as number, tY = tile.getData('gridY') as number;
-      if (Math.abs(tX - pX) > 5 || Math.abs(tY - pY) > 5) continue;
-      const tRow = tX + tY;
-      if (tRow <= pRow || tRow - pRow > elev + 2) continue;
-      if (Math.abs((tX - tY) - pCol) > 2) continue;
-      newTransparent.add(tile);
-      if (tile.alpha !== 0.35) tile.setAlpha(0.35);
-    }
-    for (const tile of this.transparentTiles) {
-      if (!newTransparent.has(tile)) tile.setAlpha(1.0);
-    }
-    this.transparentTiles = newTransparent;
   }
 
   // ── Utility ───────────────────────────────────────────────────────────

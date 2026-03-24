@@ -185,22 +185,6 @@ export class EntityManager {
     this.updateRemotePlayerInterpolation();
   }
 
-  /**
-   * Update entity visibility based on occlusion by tall structures.
-   */
-  updateEntityOcclusion(): void {
-    if (!this.entityRenderer) return;
-
-    const chunkTiles = this.worldAccessor.getChunkTiles().get(this.worldAccessor.getCurrentZoneId()) ?? null;
-    this.entityRenderer.applyOcclusion(this.entitySprites, chunkTiles);
-
-    const playerContainers = new Map<string, Phaser.GameObjects.Container>();
-    this.playerSprites.forEach((sprite, id) => {
-      playerContainers.set(id, sprite as unknown as Phaser.GameObjects.Container);
-    });
-    this.entityRenderer.applyOcclusion(playerContainers, chunkTiles);
-  }
-
   // ── Entity Lifecycle ──────────────────────────────────────────────────
 
   spawnEntity(entity: Entity, zoneId?: string): void {
