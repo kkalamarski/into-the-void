@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.32
 milestone_name: Debug View & Visual Polish
-status: ready_to_plan
+status: executing
 last_updated: "2026-03-24T00:00:00.000Z"
 progress:
   total_phases: 2
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 154 — Debug Overlay & Feature Rendering Fix
+**Current focus:** Phase 155 — Elevation & Height Rework (complete)
 
 ## Current Position
 
-Phase: 154 of 155 (Debug Overlay & Feature Rendering Fix)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-24 — v1.32 roadmap created (2 phases, 9 requirements)
+Phase: 155 of 155 (Elevation & Height Rework)
+Plan: 2 of 2 in current phase
+Status: Phase 155 execution complete, pending verification
+Last activity: 2026-03-24 — Phase 155 executed (2 plans, 1 wave)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -48,6 +48,10 @@ Progress: [░░░░░░░░░░] 0%
 
 ### Decisions
 
+- [v1.32]: ELEVATION_HEIGHT_STEP changed from 128px to 64px — terrain renders as thin slabs
+- [v1.32]: Wall tiles get height boost in world-gen (min 4) instead of rendering multiplier — simpler pipeline
+- [v1.32]: MAX_ELEVATION raised from 5 to 6 to accommodate boosted wall heights
+- [v1.32]: Shared constants file created at apps/web/src/game/constants/elevation.ts
 - [v1.31]: Strategy Pattern and WorldScene/Gateway decomposition complete — all major refactors shipped
 - [v1.31]: Refactoring only — behavior must be identical before and after every phase; no new features
 - [v1.30 tech debt]: Phase 143 VERIFICATION.md stale; server ability debug logs reintroduced; GameContainer.tsx has 5 debug console.log calls — console.log calls may be superseded by Phase 154 debug overlay
@@ -63,9 +67,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-24
-Stopped at: v1.32 roadmap created — ready to plan Phase 154
+Stopped at: Phase 155 execution complete — pending verification
 Resume file: None
-Next action: Plan and execute Phase 154 (Debug Overlay & Feature Rendering Fix)
+Next action: Verify Phase 155 (Elevation & Height Rework)
 
 ---
-*Last updated: 2026-03-24 — v1.32 roadmap created*
+*Last updated: 2026-03-24 — Phase 155 executed*

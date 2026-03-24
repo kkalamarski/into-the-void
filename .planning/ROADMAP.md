@@ -52,7 +52,7 @@
 **Milestone Goal:** Add an F3 debug overlay for collision visualization and position diagnostics, fix white outline artifacts on feature entities, and adjust elevation/wall heights for better visual proportions.
 
 - [ ] **Phase 154: Debug Overlay & Feature Rendering Fix** - F3 HUD overlay with position/state/collision visualization, and remove white outline from feature entities
-- [ ] **Phase 155: Elevation & Height Rework** - Halve elevation step height and multiply wall height; validate all dependent systems
+- [x] **Phase 155: Elevation & Height Rework** - Halve elevation step height and multiply wall height; validate all dependent systems (completed 2026-03-24)
 
 ## Phase Details
 
@@ -84,7 +84,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 154. Debug Overlay & Feature Rendering Fix | 0/TBD | Not started | - |
-| 155. Elevation & Height Rework | 0/TBD | Not started | - |
+| 155. Elevation & Height Rework | 2/2 | Complete   | 2026-03-24 |
 
 ---
 *Last updated: 2026-03-24 — v1.32 roadmap created*
