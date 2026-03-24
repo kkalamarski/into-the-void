@@ -12,6 +12,7 @@ export interface CollisionDataSource {
   getStructures: () => Array<{ x: number; y: number; type: string; height?: number }>;
   getEntityContainers: () => Map<string, Phaser.GameObjects.Container>;
   getIsoTransform: () => IsometricTransform;
+  getZoneWorldOffset: () => { x: number; y: number };
 }
 
 // Color scheme — distinguishable per collision type
@@ -94,8 +95,9 @@ export class DebugCollisionRenderer {
     const camTop = camera.scrollY - iso.tileHeight * 2;
     const camBottom = camera.scrollY + camera.height + iso.tileHeight * 2;
 
-    this.drawBlockingTiles(iso, camLeft, camRight, camTop, camBottom);
-    this.drawIsoExtensionBlocking(iso, camLeft, camRight, camTop, camBottom);
+    const offset = this.dataSource.getZoneWorldOffset();
+    this.drawBlockingTiles(iso, camLeft, camRight, camTop, camBottom, offset);
+    this.drawIsoExtensionBlocking(iso, camLeft, camRight, camTop, camBottom, offset);
     this.drawWalls(iso, camLeft, camRight, camTop, camBottom);
     this.drawFeatureHitboxes();
   }
@@ -104,6 +106,7 @@ export class DebugCollisionRenderer {
     iso: IsometricTransform,
     camLeft: number, camRight: number,
     camTop: number, camBottom: number,
+    offset: { x: number; y: number },
   ): void {
     const collisionMap = this.dataSource.getCollisionMap();
     if (!collisionMap) return;
@@ -116,8 +119,7 @@ export class DebugCollisionRenderer {
       for (let x = 0; x < row.length; x++) {
         if (!row[x]) continue;
 
-        const screen = iso.gridToScreen(x, y);
-        // Cull tiles outside camera bounds
+        const screen = iso.gridToScreen(offset.x + x, offset.y + y);
         if (screen.x < camLeft || screen.x > camRight ||
             screen.y < camTop || screen.y > camBottom) continue;
 
@@ -136,6 +138,7 @@ export class DebugCollisionRenderer {
     iso: IsometricTransform,
     camLeft: number, camRight: number,
     camTop: number, camBottom: number,
+    offset: { x: number; y: number },
   ): void {
     const collisionMap = this.dataSource.getCollisionMap();
     const heights = this.dataSource.getHeights();
@@ -144,23 +147,26 @@ export class DebugCollisionRenderer {
     this.graphics!.fillStyle(COLOR_ISO_EXTENSION, ALPHA_ISO_EXTENSION);
     this.graphics!.lineStyle(1, COLOR_ISO_EXTENSION, ALPHA_ISO_EXTENSION + 0.1);
 
-    for (let y = 0; y < collisionMap.length - 1; y++) {
+    for (let y = 0; y < collisionMap.length; y++) {
       const row = collisionMap[y];
       if (!row) continue;
       for (let x = 0; x < row.length; x++) {
         // Current tile must be non-blocking
         if (row[x]) continue;
 
-        // South neighbor (y+1) must be blocking AND elevated >= 1
-        const southBlocking = collisionMap[y + 1]?.[x] ?? false;
-        const southHeight = heights[y + 1]?.[x] ?? 0;
-        if (!southBlocking || southHeight < 1) continue;
-
-        const screen = iso.gridToScreen(x, y);
-        if (screen.x < camLeft || screen.x > camRight ||
-            screen.y < camTop || screen.y > camBottom) continue;
-
-        this.fillIsoDiamond(screen.x, screen.y, iso.tileWidth, iso.tileHeight);
+        // Check south neighbors up to 3 tiles away (matching collision logic)
+        for (let dy = 1; dy <= 3; dy++) {
+          const southBlocking = collisionMap[y + dy]?.[x] ?? false;
+          const southHeight = heights[y + dy]?.[x] ?? 0;
+          if (southBlocking && southHeight >= dy) {
+            const screen = iso.gridToScreen(offset.x + x, offset.y + y);
+            if (screen.x >= camLeft && screen.x <= camRight &&
+                screen.y >= camTop && screen.y <= camBottom) {
+              this.fillIsoDiamond(screen.x, screen.y, iso.tileWidth, iso.tileHeight);
+            }
+            break; // Only draw once per tile
+          }
+        }
       }
     }
   }

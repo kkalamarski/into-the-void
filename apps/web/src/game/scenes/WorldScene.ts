@@ -176,6 +176,10 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
       ),
       getEntityContainers: () => this.entityManager?.getEntitySprites() ?? new Map(),
       getIsoTransform: () => this.isoTransform!,
+      getZoneWorldOffset: () => {
+        const coords = this.parseZoneCoords(this.currentZoneId);
+        return { x: coords.x * ZONE_SIZE, y: coords.y * ZONE_SIZE };
+      },
     });
 
     // Wire F3 toggle to both debug systems

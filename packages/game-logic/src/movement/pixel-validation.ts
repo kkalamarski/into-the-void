@@ -222,20 +222,24 @@ export function createIsometricCollisionCheck(
     // Standard collision check
     if (baseSolid(tileX, tileY)) return true;
 
-    // Check if the tile to the south (y+1) is an elevated blocking tile.
-    // Its isometric cube visual extends northward into this tile's screen space.
-    // With a 64px elevation step walls are visually taller; block the full tile
-    // above any elevated wall so the player cannot walk into the wall face.
-    const southY = tileY + 1;
-    if (baseSolid(tileX, southY) && getHeight(tileX, southY) >= 1) {
-      // Block the entire tile above when south neighbor is an elevated wall
-      // (threshold 0 = block from start of tile rather than just southern half).
-      if (pixelY !== undefined) {
-        const tileStartY = tileY * TILE_SIZE_PX;
-        return pixelY >= tileStartY;
+    // Check if any tile to the south is an elevated blocking tile whose
+    // isometric cube visual extends northward into this tile's screen space.
+    // A wall at height H visually covers H tiles northward in isometric projection,
+    // so we check up to 3 tiles south (max wall height = 3).
+    for (let dy = 1; dy <= 3; dy++) {
+      const checkY = tileY + dy;
+      if (baseSolid(tileX, checkY)) {
+        const wallHeight = getHeight(tileX, checkY);
+        // Wall at distance dy blocks this tile if its height >= dy
+        // (each elevation level covers ~1 tile of isometric northward projection)
+        if (wallHeight >= dy) {
+          if (pixelY !== undefined) {
+            const tileStartY = tileY * TILE_SIZE_PX;
+            return pixelY >= tileStartY;
+          }
+          return true;
+        }
       }
-      // Fallback: full-tile block when no pixelY provided (backward compatibility)
-      return true;
     }
 
     return false;
