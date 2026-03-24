@@ -140,7 +140,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 147. EntityRenderer Strategy | 2/2 | Complete    | 2026-03-24 |
-| 148. ProceduralTileGenerator Strategy | 0/2 | Planned | - |
+| 148. ProceduralTileGenerator Strategy | 1/2 | In Progress|  |
 | 149. Ability Effect Strategy | 0/TBD | Not started | - |
 | 150. Creature AI Strategy | 0/TBD | Not started | - |
 | 151. Atmosphere & Weather Strategy | 0/TBD | Not started | - |
