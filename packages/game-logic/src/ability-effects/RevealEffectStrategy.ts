@@ -1,7 +1,8 @@
 import type { Creature } from '@into-the-void/shared-types';
 import type { EffectContext, EffectResult } from './types';
 import { AbstractEffectStrategy } from './AbstractEffectStrategy';
-import { tileToPixelCenter, pixelDistanceTo, TILE_SIZE_PX } from '../movement/pixel-distance';
+import { tileToPixelCenter, pixelDistanceTo } from '../movement/pixel-distance';
+import { TILE_SIZE_PX } from '../movement/pixel-validation';
 
 export class RevealEffectStrategy extends AbstractEffectStrategy {
   async apply(context: EffectContext): Promise<EffectResult> {

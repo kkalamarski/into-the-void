@@ -36,9 +36,9 @@ export interface EffectServices {
   spawnGroundItemsForCombat(loot: any[], x: number, y: number, zoneId: string): Promise<ItemEntity[]>;
 
   /** Provoke creature (omnivore aggro) */
-  provokeCreature(zoneId: string, creatureId: string): Promise<void>;
+  provokeCreature(zoneId: string, creatureId: string): Promise<boolean | void>;
   /** Start creature combat AI against player */
-  startCreatureCombat(creatureId: string, playerId: string, zoneId: string): Promise<void>;
+  startCreatureCombat(creatureId: string, playerId: string, zoneId: string): Promise<boolean | void>;
   /** Stop creature combat AI */
   stopCreatureCombat(creatureId: string): void;
 
