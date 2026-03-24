@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: World Rendering & Interaction Fix
 status: unknown
-last_updated: "2026-03-19T12:28:49Z"
+last_updated: "2026-03-24T09:26:46.534Z"
 progress:
   total_phases: 139
   completed_phases: 138
   total_plans: 357
-  completed_plans: 354
+  completed_plans: 356
 ---
 
 # Project State
@@ -43,6 +43,8 @@ Progress: [█████░░░░░░░░░░░░░░░] 25%
 | 143 | 1 | 8min | 8min |
 
 *Updated after each plan completion*
+| Phase 142-hub-maps-spawn-updates P02 | 0 | 3 tasks | 6 files |
+| Phase 142-hub-maps-spawn-updates P01 | 30 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -57,6 +59,9 @@ Recent decisions affecting current work:
 - v1.30: Entity Y-fix via +64px offset to container placement (EntityRenderer.ts + WorldScene.ts)
 - v1.30: Chunk listener cleanup fix — pass handler reference to gameSocket.off() (GameContainer.tsx)
 - v1.30: Ability targeting fix — ActionBar reads selectedTarget not targetEntityId (ActionBar.tsx)
+- [Phase 142-hub-maps-spawn-updates]: HUB_CONFIGS use faction-specific tile IDs (CANOPY 30/31, IRONHOLD 38/39, MERIDIAN 46/47, SALVAGE 54/55) not generic world tile IDs
+- [Phase 142-hub-maps-spawn-updates]: Neutral faction respawns at hub_neutral (Salvage Station) not hub_nexus (Meridian)
+- [Phase 142-hub-maps-spawn-updates]: 128x128 hub maps with faction tile IDs 30-61, portal tile 16 in south docking bay, static JSON from programmatic generator script
 
 ### Pending Todos
 

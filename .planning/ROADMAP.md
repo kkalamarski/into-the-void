@@ -298,7 +298,7 @@
 | 139. Day/Night Brightness Fix | v1.28 | 1/1 | Complete | 2026-03-18 |
 | 140. Biome & Tile Foundation | v1.29 | 3/3 | Complete | 2026-03-18 |
 | 141. Rendering & System Upgrade | v1.29 | 3/3 | Complete | 2026-03-18 |
-| 142. Hub Maps & Spawn Updates | v1.29 | 3/3 | Complete | 2026-03-19 |
+| 142. Hub Maps & Spawn Updates | 2/3 | In Progress|  | 2026-03-19 |
 | 143. Entity Rendering Fix | v1.30 | Complete    | 2026-03-19 | 2026-03-19 |
 | 144. Chunk Loading Fix | v1.30 | Complete    | 2026-03-19 | - |
 | 145. Ability Targeting Fix | 1/1 | Complete    | 2026-03-19 | - |
