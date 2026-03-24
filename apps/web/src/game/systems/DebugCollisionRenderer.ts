@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import type { IsometricTransform } from '../utils/IsometricTransform';
 import type { VisibleBounds } from '../rendering/strategies';
-import { ELEVATION_HEIGHT_STEP } from '../constants/elevation';
 
 /**
  * Data source interface — WorldScene provides getters so DebugCollisionRenderer
@@ -110,7 +109,6 @@ export class DebugCollisionRenderer {
     offset: { x: number; y: number },
   ): void {
     const collisionMap = this.dataSource.getCollisionMap();
-    const heights = this.dataSource.getHeights();
     if (!collisionMap) return;
 
     this.graphics!.lineStyle(2, COLOR_BLOCKING_TILE, ALPHA_TILE);
@@ -121,15 +119,13 @@ export class DebugCollisionRenderer {
       for (let x = 0; x < row.length; x++) {
         if (!row[x]) continue;
 
+        // Draw at ground level — collisions happen on the ground plane,
+        // not at the elevated visual height of the wall
         const screen = iso.gridToScreen(offset.x + x, offset.y + y);
-        // Apply elevation offset so diamonds sit on top of elevated tiles
-        const elevation = heights?.[y]?.[x] ?? 0;
-        const elevatedY = screen.y - elevation * ELEVATION_HEIGHT_STEP;
-
         if (screen.x < camLeft || screen.x > camRight ||
-            elevatedY < camTop || elevatedY > camBottom) continue;
+            screen.y < camTop || screen.y > camBottom) continue;
 
-        this.drawIsoDiamond(screen.x, elevatedY, iso.tileWidth, iso.tileHeight);
+        this.drawIsoDiamond(screen.x, screen.y, iso.tileWidth, iso.tileHeight);
       }
     }
   }
@@ -165,13 +161,12 @@ export class DebugCollisionRenderer {
           const southBlocking = collisionMap[y + dy]?.[x] ?? false;
           const southHeight = heights[y + dy]?.[x] ?? 0;
           if (southBlocking && southHeight >= dy) {
+            // Draw at ground level — this tile is walkable but blocked by
+            // isometric projection of the elevated wall to the south
             const screen = iso.gridToScreen(offset.x + x, offset.y + y);
-            // This tile is ground-level — apply its own elevation offset
-            const tileElevation = heights[y]?.[x] ?? 0;
-            const elevatedY = screen.y - tileElevation * ELEVATION_HEIGHT_STEP;
             if (screen.x >= camLeft && screen.x <= camRight &&
-                elevatedY >= camTop && elevatedY <= camBottom) {
-              this.fillIsoDiamond(screen.x, elevatedY, iso.tileWidth, iso.tileHeight);
+                screen.y >= camTop && screen.y <= camBottom) {
+              this.fillIsoDiamond(screen.x, screen.y, iso.tileWidth, iso.tileHeight);
             }
             break;
           }
@@ -193,12 +188,10 @@ export class DebugCollisionRenderer {
       if (!structure.type.includes('wall')) continue;
 
       const screen = iso.gridToScreen(structure.x, structure.y);
-      const elevation = structure.height ?? 0;
-      const elevatedY = screen.y - elevation * ELEVATION_HEIGHT_STEP;
       if (screen.x < camLeft || screen.x > camRight ||
-          elevatedY < camTop || elevatedY > camBottom) continue;
+          screen.y < camTop || screen.y > camBottom) continue;
 
-      this.drawIsoDiamond(screen.x, elevatedY, iso.tileWidth, iso.tileHeight);
+      this.drawIsoDiamond(screen.x, screen.y, iso.tileWidth, iso.tileHeight);
     }
   }
 
