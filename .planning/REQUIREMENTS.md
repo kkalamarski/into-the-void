@@ -58,29 +58,29 @@ Requirements for tech debt / refactoring milestone. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ERENDER-01 | TBD | Pending |
-| ERENDER-02 | TBD | Pending |
-| TILE-01 | TBD | Pending |
-| TILE-02 | TBD | Pending |
-| TILE-03 | TBD | Pending |
-| EFFECT-01 | TBD | Pending |
-| EFFECT-02 | TBD | Pending |
-| AI-01 | TBD | Pending |
-| AI-02 | TBD | Pending |
-| ATMO-01 | TBD | Pending |
-| WEATHER-01 | TBD | Pending |
-| SCENE-01 | TBD | Pending |
-| SCENE-02 | TBD | Pending |
-| SCENE-03 | TBD | Pending |
-| SCENE-04 | TBD | Pending |
-| GW-01 | TBD | Pending |
-| GW-02 | TBD | Pending |
+| ERENDER-01 | Phase 147 | Pending |
+| ERENDER-02 | Phase 147 | Pending |
+| TILE-01 | Phase 148 | Pending |
+| TILE-02 | Phase 148 | Pending |
+| TILE-03 | Phase 148 | Pending |
+| EFFECT-01 | Phase 149 | Pending |
+| EFFECT-02 | Phase 149 | Pending |
+| AI-01 | Phase 150 | Pending |
+| AI-02 | Phase 150 | Pending |
+| ATMO-01 | Phase 151 | Pending |
+| WEATHER-01 | Phase 151 | Pending |
+| SCENE-01 | Phase 152 | Pending |
+| SCENE-02 | Phase 152 | Pending |
+| SCENE-03 | Phase 152 | Pending |
+| SCENE-04 | Phase 152 | Pending |
+| GW-01 | Phase 153 | Pending |
+| GW-02 | Phase 153 | Pending |
 
 **Coverage:**
 - v1.31 requirements: 17 total
-- Mapped to phases: 0
-- Unmapped: 17 ⚠️
+- Mapped to phases: 17
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after initial definition*
+*Last updated: 2026-03-24 — traceability updated after roadmap creation*
