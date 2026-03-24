@@ -281,7 +281,15 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 ### Active
 
-(No active milestone — run `/gsd:new-milestone` to plan next)
+## Current Milestone: v1.32 Debug View & Visual Polish
+
+**Goal:** Add F3 debug overlay for collision visualization and position info, fix feature rendering (white outline), and adjust elevation/wall height for better visual proportions.
+
+**Target features:**
+- F3 debug HUD overlay showing player position, elevation, tile info, and all collision boundaries (tiles, features, walls)
+- Remove white outline from feature entities (plants, minerals, artifacts)
+- Halve elevation step (128px → 64px) so tiles render as slabs instead of cubes
+- Wall tiles render at 4x height to visibly tower over ground
 
 ### Out of Scope
 
@@ -354,4 +362,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-03-24 after v1.31 milestone completed*
+*Last updated: 2026-03-24 after v1.32 milestone started*

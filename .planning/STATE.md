@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Planning next milestone
+**Current focus:** v1.32 — Debug View & Visual Polish
 
 ## Current Position
 
-Milestone v1.31 completed and archived on 2026-03-24.
-Last activity: 2026-03-24 — All 7 phases complete (Strategy Pattern refactoring + WorldScene/Gateway decomposition)
-
-Progress: Milestone complete — ready for next
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-24 — Milestone v1.32 started
 
 ## Performance Metrics
 
