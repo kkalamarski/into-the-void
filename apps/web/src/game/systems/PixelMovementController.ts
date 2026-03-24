@@ -14,7 +14,6 @@
 import {
   velocityFromKeys,
   resolvePixelCollision,
-  TILE_SIZE_PX,
   type KeyState,
 } from '@into-the-void/game-logic';
 import type { Direction } from '@into-the-void/shared-types';
@@ -100,9 +99,7 @@ export class PixelMovementController {
   private inputSequence = 0;
   private pendingInputs: PendingPixelInput[] = [];
   private lastEmitTime = 0;
-  private isSolid: ((tileX: number, tileY: number, pixelY?: number) => boolean) | null = null;
-  private getHeight: ((tileX: number, tileY: number) => number) | null = null;
-
+  private isSolid: ((tileX: number, tileY: number) => boolean) | null = null;
   // ── Lifecycle ───────────────────────────────────────────────────────────
 
   /** Initialise position (called on zone load from zone:state). */
@@ -116,13 +113,8 @@ export class PixelMovementController {
   }
 
   /** Set the collision lookup callback. Called by WorldScene when chunk data is available. */
-  setCollisionCallback(isSolid: (tx: number, ty: number, pixelY?: number) => boolean): void {
+  setCollisionCallback(isSolid: (tx: number, ty: number) => boolean): void {
     this.isSolid = isSolid;
-  }
-
-  /** Set height lookup for elevation-aware collision offset. */
-  setHeightCallback(getHeight: (tx: number, ty: number) => number): void {
-    this.getHeight = getHeight;
   }
 
   // ── Per-frame update ────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { ZONE_SIZE, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, BiomeTier, TileStructure, isHubZone, TimingChallenge, BIOME_DISPLAY_NAMES, BIOME_TIERS, getZoneSize } from '@into-the-void/shared-types';
-import { TILE_SIZE_PX, createIsometricCollisionCheck, tileToPixelCenter } from '@into-the-void/game-logic';
+import { TILE_SIZE_PX, tileToPixelCenter } from '@into-the-void/game-logic';
 import type { TileId } from '@into-the-void/world-gen';
 import { TileRenderer } from '../rendering/TileRenderer';
 import { ChunkManager } from '../rendering/ChunkManager';
@@ -563,23 +563,10 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
       const currentSize = getZoneSize(this.currentZoneId);
       const offsetX = zoneCoords.x * currentSize;
       const offsetY = zoneCoords.y * currentSize;
-      const terrainSolid = (tx: number, ty: number) =>
-        this.isTerrainBlocked(offsetX + tx, offsetY + ty);
-      const entitySolid = (tx: number, ty: number, pixelY?: number) => {
-        if (pixelY !== undefined) {
-          const tileMidY = ty * TILE_SIZE_PX + TILE_SIZE_PX * 0.5;
-          if (pixelY < tileMidY) return false;
-        }
-        return this.isEntityBlocked(offsetX + tx, offsetY + ty);
-      };
-      const getHeight = (tx: number, ty: number): number =>
-        this.getWorldTileHeight(offsetX + tx, offsetY + ty);
-      const isoCheck = createIsometricCollisionCheck(terrainSolid, getHeight);
-      this.pixelMovement.setCollisionCallback(
-        (tx: number, ty: number, pixelY?: number) =>
-          entitySolid(tx, ty, pixelY) || isoCheck(tx, ty, pixelY),
-      );
-      this.pixelMovement.setHeightCallback(getHeight);
+      const isSolid = (tx: number, ty: number) =>
+        this.isTerrainBlocked(offsetX + tx, offsetY + ty) ||
+        this.isEntityBlocked(offsetX + tx, offsetY + ty);
+      this.pixelMovement.setCollisionCallback(isSolid);
     }
   }
 

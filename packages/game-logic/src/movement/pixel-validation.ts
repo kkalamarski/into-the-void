@@ -192,47 +192,6 @@ export function resolvePixelCollision(
 }
 
 // ============================================================
-// createIsometricCollisionCheck
-// ============================================================
-
-/**
- * Wraps a base collision callback with isometric visual height checking.
- * In isometric projection, an elevated blocking tile at (x, y) visually
- * extends into the tile at (x, y-1) due to the cube's south face height.
- * This wrapper also blocks tile (x, y) if tile (x, y+1) is an elevated
- * blocking tile — preventing the player from visually entering wall cubes
- * from behind.
- *
- * The isometric extension is limited to the southern half of the north tile
- * (0.5 tiles = 64px) rather than the full tile (128px). This gives a total
- * collision zone of 1.5x (wall tile + 0.5 tile extension) instead of 2.0x.
- * When pixelY is provided, sub-tile precision is used. When omitted, full-tile
- * blocking applies for backward compatibility.
- *
- * @param baseSolid  The original collision check (returns true if blocked).
- * @param getHeight  Returns the height/elevation of a tile (0 = floor, 1+ = elevated).
- * @returns Enhanced collision check accounting for isometric visual overlap.
- *          The returned function accepts an optional pixelY for sub-tile checks.
- */
-export function createIsometricCollisionCheck(
-  baseSolid: (tileX: number, tileY: number) => boolean,
-  getHeight: (tileX: number, tileY: number) => number,
-): (tileX: number, tileY: number, pixelY?: number) => boolean {
-  return (tileX: number, tileY: number, pixelY?: number): boolean => {
-    // Standard collision check
-    if (baseSolid(tileX, tileY)) return true;
-
-    // Check if the tile to the south (y+1) is an elevated blocking tile.
-    // Its isometric cube visual extends northward into this tile's screen space.
-    // Block the entire tile — no sub-tile threshold.
-    const southY = tileY + 1;
-    if (baseSolid(tileX, southY) && getHeight(tileX, southY) >= 1) {
-      return true;
-    }
-
-    return false;
-  };
-}
 
 // ============================================================
 // bitmaskToKeyState
