@@ -178,7 +178,7 @@ export class DebugOverlay {
     const dayPhase = this.dataSource.getDayNightPhase();
     const dayProgress = this.dataSource.getDayNightProgress();
     const combatState = useCombatStore.getState();
-    const zoneId = useGameStore.getState().currentZoneId ?? '-';
+    const zoneId = useGameStore.getState().zoneId ?? '-';
 
     // Update text content (indices match getLineTemplates)
     const lines = [

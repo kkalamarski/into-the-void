@@ -172,7 +172,9 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     // Debug collision renderer — blocking tiles, walls, feature hitboxes
     this.debugCollisionRenderer = new DebugCollisionRenderer(this, {
       getCollisionMap: () => this.collisionMap,
-      getStructures: () => this.currentStructures,
+      getStructures: () => this.currentStructures.flatMap(s =>
+        s.tiles.map(t => ({ x: t.x, y: t.y, type: s.type, height: t.height }))
+      ),
       getEntityContainers: () => this.entityManager?.getEntitySprites() ?? new Map(),
       getIsoTransform: () => this.isoTransform!,
     });
@@ -606,7 +608,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
   private isTerrainBlocked(worldX: number, worldY: number): boolean {
     const r = this.resolveWorldToChunkLocal(worldX, worldY);
-    if (!r || !r.chunk.collisions) return true;
+    if (!r || !r.chunk || !r.chunk.collisions) return true;
     return r.chunk.collisions[r.localY]?.[r.localX] ?? true;
   }
 
@@ -619,7 +621,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
   private getWorldTileHeight(worldX: number, worldY: number): number {
     const r = this.resolveWorldToChunkLocal(worldX, worldY);
-    if (!r || !r.chunk.heights) return 0;
+    if (!r || !r.chunk || !r.chunk.heights) return 0;
     return r.chunk.heights[r.localY]?.[r.localX] ?? 0;
   }
 
@@ -659,7 +661,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
   getWorldTileElevation(worldX: number, worldY: number): number {
     const r = this.resolveWorldToChunkLocal(worldX, worldY);
-    if (!r || !r.chunk.heights) return 0;
+    if (!r || !r.chunk || !r.chunk.heights) return 0;
     return r.chunk.heights[r.localY]?.[r.localX] ?? 0;
   }
 
