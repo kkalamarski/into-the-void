@@ -43,9 +43,9 @@ Requirements for debug tooling and visual polish milestone. Each maps to roadmap
 | DEBUG-04 | Phase 154 | Pending |
 | DEBUG-05 | Phase 154 | Pending |
 | RENDER-01 | Phase 154 | Pending |
-| ELEV-01 | Phase 155 | Pending |
-| ELEV-02 | Phase 155 | Pending |
-| ELEV-03 | Phase 155 | Pending |
+| ELEV-01 | Phase 155 | Complete |
+| ELEV-02 | Phase 155 | Complete |
+| ELEV-03 | Phase 155 | Complete |
 
 **Coverage:**
 - v1.32 requirements: 9 total

@@ -84,7 +84,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 154. Debug Overlay & Feature Rendering Fix | 0/TBD | Not started | - |
-| 155. Elevation & Height Rework | 2/2 | Complete   | 2026-03-24 |
+| 155. Elevation & Height Rework | 2/2 | Complete    | 2026-03-24 |
 
 ---
 *Last updated: 2026-03-24 — v1.32 roadmap created*
