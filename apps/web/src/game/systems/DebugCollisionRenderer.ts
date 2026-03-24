@@ -8,6 +8,7 @@ import type { VisibleBounds } from '../rendering/strategies';
  */
 export interface CollisionDataSource {
   getCollisionMap: () => boolean[][] | null;
+  getHeights: () => number[][] | null;
   getStructures: () => Array<{ x: number; y: number; type: string; height?: number }>;
   getEntityContainers: () => Map<string, Phaser.GameObjects.Container>;
   getIsoTransform: () => IsometricTransform;
@@ -17,10 +18,12 @@ export interface CollisionDataSource {
 const COLOR_BLOCKING_TILE = 0xff4444; // red
 const COLOR_WALL = 0xffaa00;          // orange/yellow
 const COLOR_FEATURE_HITBOX = 0x4488ff; // blue
+const COLOR_ISO_EXTENSION = 0x44ff88; // green — invisible wall from isometric south-neighbor
 
 const ALPHA_TILE = 0.4;
 const ALPHA_WALL = 0.5;
 const ALPHA_FEATURE = 0.4;
+const ALPHA_ISO_EXTENSION = 0.35;
 
 /**
  * Draws collision boundaries as colored wireframe outlines on the game world.
@@ -84,13 +87,15 @@ export class DebugCollisionRenderer {
     const iso = this.dataSource.getIsoTransform();
     const camera = this.scene.cameras.main;
 
-    // Camera bounds for culling — only draw tiles visible on screen
-    const camLeft = camera.scrollX - iso.tileWidth;
-    const camRight = camera.scrollX + camera.width + iso.tileWidth;
-    const camTop = camera.scrollY - iso.tileHeight;
-    const camBottom = camera.scrollY + camera.height + iso.tileHeight;
+    // Camera bounds for culling — expanded 2x tile dimensions to accommodate
+    // isometric diamond overflow (elevated tiles extend beyond grid-cell bounds)
+    const camLeft = camera.scrollX - iso.tileWidth * 2;
+    const camRight = camera.scrollX + camera.width + iso.tileWidth * 2;
+    const camTop = camera.scrollY - iso.tileHeight * 2;
+    const camBottom = camera.scrollY + camera.height + iso.tileHeight * 2;
 
     this.drawBlockingTiles(iso, camLeft, camRight, camTop, camBottom);
+    this.drawIsoExtensionBlocking(iso, camLeft, camRight, camTop, camBottom);
     this.drawWalls(iso, camLeft, camRight, camTop, camBottom);
     this.drawFeatureHitboxes();
   }
@@ -117,6 +122,45 @@ export class DebugCollisionRenderer {
             screen.y < camTop || screen.y > camBottom) continue;
 
         this.drawIsoDiamond(screen.x, screen.y, iso.tileWidth, iso.tileHeight);
+      }
+    }
+  }
+
+  /**
+   * Draws semi-transparent green diamonds on non-blocking tiles whose south
+   * neighbor (y+1) IS blocking and elevated. These represent "invisible walls"
+   * caused by isometric projection — the elevated wall face visually occupies
+   * the tile to the north, so movement is blocked there too.
+   */
+  private drawIsoExtensionBlocking(
+    iso: IsometricTransform,
+    camLeft: number, camRight: number,
+    camTop: number, camBottom: number,
+  ): void {
+    const collisionMap = this.dataSource.getCollisionMap();
+    const heights = this.dataSource.getHeights();
+    if (!collisionMap || !heights) return;
+
+    this.graphics!.fillStyle(COLOR_ISO_EXTENSION, ALPHA_ISO_EXTENSION);
+    this.graphics!.lineStyle(1, COLOR_ISO_EXTENSION, ALPHA_ISO_EXTENSION + 0.1);
+
+    for (let y = 0; y < collisionMap.length - 1; y++) {
+      const row = collisionMap[y];
+      if (!row) continue;
+      for (let x = 0; x < row.length; x++) {
+        // Current tile must be non-blocking
+        if (row[x]) continue;
+
+        // South neighbor (y+1) must be blocking AND elevated >= 1
+        const southBlocking = collisionMap[y + 1]?.[x] ?? false;
+        const southHeight = heights[y + 1]?.[x] ?? 0;
+        if (!southBlocking || southHeight < 1) continue;
+
+        const screen = iso.gridToScreen(x, y);
+        if (screen.x < camLeft || screen.x > camRight ||
+            screen.y < camTop || screen.y > camBottom) continue;
+
+        this.fillIsoDiamond(screen.x, screen.y, iso.tileWidth, iso.tileHeight);
       }
     }
   }
@@ -166,7 +210,7 @@ export class DebugCollisionRenderer {
     });
   }
 
-  /** Draw an isometric diamond (4 points) at the tile center. */
+  /** Draw an isometric diamond outline (4 points) at the tile center. */
   private drawIsoDiamond(cx: number, cy: number, tileW: number, tileH: number): void {
     const hw = tileW / 2;
     const hh = tileH / 2;
@@ -177,6 +221,21 @@ export class DebugCollisionRenderer {
     this.graphics!.lineTo(cx, cy + hh);       // bottom
     this.graphics!.lineTo(cx - hw, cy);       // left
     this.graphics!.closePath();
+    this.graphics!.strokePath();
+  }
+
+  /** Fill an isometric diamond at the tile center. */
+  private fillIsoDiamond(cx: number, cy: number, tileW: number, tileH: number): void {
+    const hw = tileW / 2;
+    const hh = tileH / 2;
+
+    this.graphics!.beginPath();
+    this.graphics!.moveTo(cx, cy - hh);      // top
+    this.graphics!.lineTo(cx + hw, cy);       // right
+    this.graphics!.lineTo(cx, cy + hh);       // bottom
+    this.graphics!.lineTo(cx - hw, cy);       // left
+    this.graphics!.closePath();
+    this.graphics!.fillPath();
     this.graphics!.strokePath();
   }
 }

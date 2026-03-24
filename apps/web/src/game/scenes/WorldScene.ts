@@ -170,6 +170,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     // Debug collision renderer — blocking tiles, walls, feature hitboxes
     this.debugCollisionRenderer = new DebugCollisionRenderer(this, {
       getCollisionMap: () => this.collisionMap,
+      getHeights: () => this.currentHeights,
       getStructures: () => this.currentStructures.flatMap(s =>
         s.tiles.map(t => ({ x: t.x, y: t.y, type: s.type, height: t.height }))
       ),
