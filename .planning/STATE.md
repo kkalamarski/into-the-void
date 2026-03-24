@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: World Rendering & Interaction Fix
 status: unknown
-last_updated: "2026-03-24T09:39:46.416Z"
+last_updated: "2026-03-24T09:52:51.978Z"
 progress:
   total_phases: 139
   completed_phases: 139
@@ -15,19 +15,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-19)
+See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.30 — World Rendering & Interaction Fix (Phase 146)
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 146 of 146 (Secondary Fixes & Cleanup)
-Plan: 2 of 2 in current phase (complete)
-Status: Phase 146 executed — all plans complete
-Last activity: 2026-03-20 - Completed quick task 15: Fix 7 bugs — px/py desync after expedition teleport, no destinations for rare biomes, merchants too far from spawn, collision hitbox too large
+Milestone v1.30 completed and archived on 2026-03-24.
+Last activity: 2026-03-24 - Completed v1.30 milestone (entity rendering, chunk loading, ability targeting, secondary fixes)
 
-Progress: [█████░░░░░░░░░░░░░░░] 25%
+Progress: Milestone complete — ready for next
 
 ## Performance Metrics
 

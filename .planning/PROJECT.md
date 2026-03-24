@@ -4,7 +4,7 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, expedition travel, and a dual action bar system for ability management.
 
-## Current State (v1.26 shipped)
+## Current State (v1.30 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
@@ -40,7 +40,12 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Monorepo: NX with 3 apps + 5 shared packages
 - Deployment: Docker Swarm, Traefik reverse proxy, GitHub Actions CI/CD
 
-**Codebase:** ~74,741 LOC TypeScript/CSS
+- Hub Interiors: 4 faction-themed 128x128 station maps with rooms, corridors, ambient particles
+- Pixel Movement: Free sub-tile WASD, 20Hz server validation, pixel Euclidean distance everywhere
+- Rendering: Entities grounded on tiles, seamless chunk loading, correct depth sorting
+- Targeting: Abilities fire at selectedTarget, gathering works on resource click
+
+**Codebase:** ~78,349 LOC TypeScript/CSS
 
 ## Core Value
 
@@ -253,19 +258,22 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Client-side prediction with server reconciliation (pixel) — v1.27
 - ✓ Remote player interpolation — v1.27
 - ✓ Legacy tile-step movement code removed — v1.27
+- ✓ Combat and gathering restored with pixel distance checks — v1.28
+- ✓ Entity sprites grounded on tile surfaces with correct hitboxes — v1.28, refined v1.30
+- ✓ Chunk/zone boundary invisible collision walls removed — v1.28
+- ✓ Day/night brightness curve corrected (dawn/dusk brighter than night) — v1.28
+- ✓ 4 hub biome types with 32 faction-themed procedural tiles — v1.29
+- ✓ 4 hand-designed 128x128 hub station maps with NPC placements — v1.29
+- ✓ Indoor ambient particles per hub biome — v1.29
+- ✓ Entity Y-positioning and unified depth sorting — v1.30
+- ✓ Seamless chunk loading with failed chunk retry logic — v1.30
+- ✓ Ability targeting reads selectedTarget instead of targetEntityId — v1.30
+- ✓ Portal debounce includes zoneId for cross-zone correctness — v1.30
+- ✓ NPC proximity uses pixel coordinates from movement system — v1.30
 
 ### Active
 
-## Current Milestone: v1.30 World Rendering & Interaction Fix
-
-**Goal:** Fix critical regressions in entity rendering, chunk loading, and ability targeting that prevent normal gameplay — entities sink below ground, adjacent chunks don't load (black void), and abilities don't fire on selected targets.
-
-**Target features:**
-- Fix entity Y-positioning so sprites sit on tile surfaces (not 64px above ground)
-- Fix zone:chunk event listener cleanup so adjacent chunks load seamlessly
-- Fix ability targeting to use selectedTarget instead of auto-attack targetEntityId
-- Fix portal debounce key, depth sorting, NPC proximity, and other secondary rendering issues
-- Clean up debug console.log statements and correct misleading known-issues docs
+(No active milestone — run `/gsd:new-milestone` to plan next)
 
 ### Out of Scope
 
@@ -325,10 +333,14 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 | Camera postFX ColorMatrix for day/night | Full-screen effect without per-tile tint; minimap unaffected | ✓ Good |
 | Cooperative ColorMatrix sharing | Atmosphere additively writes to DayNightCycle's matrix; no stacking | ✓ Good |
 | Clean break from PNG tiles | No fallback/debug flag; forward-only to procedural rendering | ✓ Good |
+| ENTITY_GROUND_OFFSET then depth offset | Phase 143 used +64px, quick-10 refined to depth-based offset; visual goal met | ✓ Good |
+| selectedTarget over targetEntityId | Persists across combat state changes; abilities always have target available | ✓ Good |
+| Portal debounce key includes zoneId | Prevents false-positive suppression when entering new zone at same tile coords | ✓ Good |
+| Socket.off passes handler reference | Prevents cleanup from removing ALL listeners for an event type | ✓ Good |
 
 ## Known Issues
 
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-03-19 after v1.30 milestone started*
+*Last updated: 2026-03-24 after v1.30 milestone completed*

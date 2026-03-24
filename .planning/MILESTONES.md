@@ -237,3 +237,35 @@
 
 ---
 
+
+## v1.30 World Rendering & Interaction Fix (Shipped: 2026-03-24)
+
+**Phases completed:** 4 phases (143-146), 5 plans, ~12 tasks
+
+**Delivered:** Fixed three critical regressions that broke normal gameplay after the pixel movement rewrite and hub interior updates — entity sprites sinking below ground, adjacent chunks leaving black void gaps, and abilities not firing on selected targets. Secondary fixes addressed portal debounce, NPC proximity, debug log cleanup, and stale docs.
+
+**Key accomplishments:**
+- Entity rendering fix: +64px ground offset (later refined via depth offset mechanism) so sprites sit on tile surfaces
+- Chunk loading fix: zone:chunk listener cleanup passes handler reference, failed chunks retry automatically
+- Ability targeting fix: ActionBar reads selectedTarget (persists across combat state) instead of cleared targetEntityId
+- Portal debounce: key includes zoneId to prevent cross-zone re-triggering
+- NPC proximity: uses pixel coordinates from movement system with defensive fallback
+
+**Stats:**
+- Timeline: 1 day (2026-03-19), completed with quick fixes through 2026-03-20
+- Commits: 18 phase commits + 12 quick-fix commits
+- Codebase: ~78,349 LOC TypeScript/CSS
+- Git range: feat(143-01) → docs(146-02)
+
+**Tech debt accepted:**
+- Phase 143 VERIFICATION.md stale (ENTITY_GROUND_OFFSET mechanism changed by quick-10)
+- Server ability debug logs reintroduced post-phase (outside MISC-03 scope)
+- GameContainer.tsx has 5 debug console.log calls
+
+**Archives:**
+- `.planning/milestones/v1.30-ROADMAP.md`
+- `.planning/milestones/v1.30-REQUIREMENTS.md`
+- `.planning/milestones/v1.30-MILESTONE-AUDIT.md`
+
+---
+
