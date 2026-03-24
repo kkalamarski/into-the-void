@@ -2,8 +2,7 @@ import Phaser from 'phaser';
 import { TileId, tileIdToString } from '@into-the-void/world-gen';
 import { TileRegistry } from '@into-the-void/tiles';
 import { IsometricTransform } from '../utils/IsometricTransform';
-
-const ELEVATION_HEIGHT_STEP = 128; // Pixels per elevation level (1.0 × diamond height for 256x256 cubes)
+import { ELEVATION_HEIGHT_STEP } from '../constants/elevation';
 
 // Height-based tinting: lower elevations appear darker for visual depth
 // Brightness = 0.55 + (elevation * 0.15), capped at 1.0
