@@ -80,7 +80,9 @@
   2. The detail-rendering switch (30+ cases) is replaced by behavioral-category strategy dispatch — each strategy handles rendering for its tile category (floor, wall, hazard, water, portal, decorative)
   3. The shade-rendering switch is replaced by matching behavioral-category strategy dispatch
   4. A new tile type can be added by registering it with the appropriate behavioral strategy class — no changes to ProceduralTileGenerator core
-**Plans**: TBD
+**Plans**: 2 plans
+  - [ ] 148-01-PLAN.md — Define TileRenderStrategy interface, extract palettes, create base class + registry
+  - [ ] 148-02-PLAN.md — Implement 6 strategy classes + refactor ProceduralTileGenerator
 
 ### Phase 149: Ability Effect Strategy
 **Goal**: ability.service delegates effect application to per-type strategy classes, eliminating the large effect-type dispatch block
@@ -138,7 +140,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 147. EntityRenderer Strategy | 2/2 | Complete    | 2026-03-24 |
-| 148. ProceduralTileGenerator Strategy | 0/TBD | Not started | - |
+| 148. ProceduralTileGenerator Strategy | 0/2 | Planned | - |
 | 149. Ability Effect Strategy | 0/TBD | Not started | - |
 | 150. Creature AI Strategy | 0/TBD | Not started | - |
 | 151. Atmosphere & Weather Strategy | 0/TBD | Not started | - |
