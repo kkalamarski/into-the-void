@@ -1,4 +1,10 @@
 import type { TileRenderStrategy } from './types';
+import { FloorTileStrategy } from './FloorTileStrategy';
+import { WallTileStrategy } from './WallTileStrategy';
+import { HazardTileStrategy } from './HazardTileStrategy';
+import { WaterTileStrategy } from './WaterTileStrategy';
+import { PortalTileStrategy } from './PortalTileStrategy';
+import { DecorativeTileStrategy } from './DecorativeTileStrategy';
 
 export type { TileRenderStrategy } from './types';
 export type { TilePalette, TileCategory } from './types';
@@ -34,13 +40,13 @@ export function registerStrategy(strategy: TileRenderStrategy): void {
   }
 }
 
-/** Initialize all tile strategies. Call once before baking textures. */
+/** Initialize all tile strategies. Call once before baking textures. Idempotent. */
 export function initTileStrategies(): void {
-  // Will be populated in Plan 02 when strategy classes are created
-  // registerStrategy(new FloorTileStrategy());
-  // registerStrategy(new WallTileStrategy());
-  // registerStrategy(new HazardTileStrategy());
-  // registerStrategy(new WaterTileStrategy());
-  // registerStrategy(new PortalTileStrategy());
-  // registerStrategy(new DecorativeTileStrategy());
+  if (tileStrategyMap.size > 0) return; // Already initialized
+  registerStrategy(new FloorTileStrategy());
+  registerStrategy(new WallTileStrategy());
+  registerStrategy(new HazardTileStrategy());
+  registerStrategy(new WaterTileStrategy());
+  registerStrategy(new PortalTileStrategy());
+  registerStrategy(new DecorativeTileStrategy());
 }
