@@ -64,6 +64,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
   // ── Zone state ────────────────────────────────────────────────────────
   private currentZoneId: string = 'z_0_0';
+  private lastRequestedZoneId: string | null = null;
   private pendingZoneId: string | null = null;
   private pendingBiome: BiomeType | null = null;
   private lastPendingZoneCheck = 0;
@@ -335,6 +336,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
   private commitZoneTransition(newZoneId: string, biome: BiomeType): void {
     this.currentZoneId = newZoneId;
+    this.lastRequestedZoneId = null;
     this.interactionController?.clearLastPortalEmitKey();
 
     if (this.chunkManager) {
@@ -421,6 +423,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
   fullZoneReset(newZoneId: string, biome: BiomeType): void {
     this.pendingZoneId = null;
     this.pendingBiome = null;
+    this.lastRequestedZoneId = null;
     this.interactionController?.clearLastPortalEmitKey();
     this.chunkTiles.forEach(tiles => tiles.forEach(tile => {
       tile.getAll().forEach(child => child.destroy());
@@ -473,7 +476,10 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     if (newZoneOffsetX !== 0 || newZoneOffsetY !== 0) {
       const zoneCoords = this.parseZoneCoords(this.currentZoneId);
       const newZoneId = `z_${zoneCoords.x + newZoneOffsetX}_${zoneCoords.y + newZoneOffsetY}`;
-      gameSocket.emit('zone:request', { zoneId: newZoneId });
+      if (newZoneId !== this.lastRequestedZoneId) {
+        this.lastRequestedZoneId = newZoneId;
+        gameSocket.emit('zone:request', { zoneId: newZoneId });
+      }
     }
   }
 
