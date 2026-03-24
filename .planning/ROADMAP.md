@@ -52,7 +52,7 @@
 
 - [x] **Phase 147: EntityRenderer Strategy** - Replace per-type switch logic in EntityRenderer with dedicated strategy classes per entity type (completed 2026-03-24)
 - [x] **Phase 148: ProceduralTileGenerator Strategy** - Replace switch blocks with behavioral-category tile strategies (floor, wall, hazard, water, portal, decorative) (completed 2026-03-24)
-- [ ] **Phase 149: Ability Effect Strategy** - Replace ability effect dispatch in ability.service with per-effect-type strategy classes
+- [x] **Phase 149: Ability Effect Strategy** - Replace ability effect dispatch in ability.service with per-effect-type strategy classes (completed 2026-03-24)
 - [ ] **Phase 150: Creature AI Strategy** - Formalize existing creature behavior functions in creature-ai.ts into named strategy classes
 - [ ] **Phase 151: Atmosphere & Weather Strategy** - Replace per-type branching in AtmosphereSystem and WeatherSystem with effect/particle strategies
 - [ ] **Phase 152: WorldScene Decomposition** - Extract input, camera, and entity lifecycle subsystems from WorldScene into dedicated controller classes
@@ -84,7 +84,7 @@
   - [ ] 148-01-PLAN.md — Define TileRenderStrategy interface, extract palettes, create base class + registry
   - [ ] 148-02-PLAN.md — Implement 6 strategy classes + refactor ProceduralTileGenerator
 
-### Phase 149: Ability Effect Strategy
+### Phase 149: Ability Effect Strategy (DONE)
 **Goal**: ability.service delegates effect application to per-type strategy classes, eliminating the large effect-type dispatch block
 **Depends on**: Nothing (backend service, independent of frontend phases)
 **Requirements**: EFFECT-01, EFFECT-02
@@ -92,7 +92,9 @@
   1. All 11 ability effect types (damage, heal, buff, shield, stun, reflect, dot, gather, reveal, hazard_immunity, damage_reduction) behave identically in gameplay
   2. ability.service contains no switch or if-chains dispatching on effect type — each effect type has its own strategy class
   3. A new ability effect type can be added by creating one strategy class with no changes to ability.service core
-**Plans**: TBD
+**Plans**:
+  - [x] 149-01-PLAN.md — EffectStrategy interface, AbstractEffectStrategy base class, registry skeleton
+  - [x] 149-02-PLAN.md — 11 strategy classes + refactor ability.service.ts
 
 ### Phase 150: Creature AI Strategy
 **Goal**: creature-ai.ts behavior tick delegates to formal named strategy classes for each behavior archetype

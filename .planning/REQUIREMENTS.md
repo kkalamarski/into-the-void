@@ -20,8 +20,8 @@ Requirements for tech debt / refactoring milestone. Each maps to roadmap phases.
 
 ### Ability Effects
 
-- [ ] **EFFECT-01**: ability.service delegates effect application to per-type strategies (damage, heal, buff, shield, stun, reflect, dot, gather, reveal, hazard_immunity, damage_reduction)
-- [ ] **EFFECT-02**: Adding a new ability effect type requires only creating a new strategy class
+- [x] **EFFECT-01**: ability.service delegates effect application to per-type strategies (damage, heal, buff, shield, stun, reflect, dot, gather, reveal, hazard_immunity, damage_reduction)
+- [x] **EFFECT-02**: Adding a new ability effect type requires only creating a new strategy class
 
 ### Creature AI
 
@@ -63,8 +63,8 @@ Requirements for tech debt / refactoring milestone. Each maps to roadmap phases.
 | TILE-01 | Phase 148 | Pending |
 | TILE-02 | Phase 148 | Pending |
 | TILE-03 | Phase 148 | Pending |
-| EFFECT-01 | Phase 149 | Pending |
-| EFFECT-02 | Phase 149 | Pending |
+| EFFECT-01 | Phase 149 | Done |
+| EFFECT-02 | Phase 149 | Done |
 | AI-01 | Phase 150 | Pending |
 | AI-02 | Phase 150 | Pending |
 | ATMO-01 | Phase 151 | Pending |

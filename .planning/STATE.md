@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 147 — EntityRenderer Strategy
+**Current focus:** Phase 150 — Creature AI Strategy
 
 ## Current Position
 
-Phase: 147 of 153 (EntityRenderer Strategy)
+Phase: 150 of 153 (Creature AI Strategy)
 Plan: 0 of TBD in current phase
 Status: Ready to plan
-Last activity: 2026-03-24 — v1.31 roadmap created, phases 147-153 defined
+Last activity: 2026-03-24 — Phase 149 (Ability Effect Strategy) completed
 
-Progress: [░░░░░░░░░░] 0% (v1.31, 0/7 phases)
+Progress: [████░░░░░░] 43% (v1.31, 3/7 phases)
 
 ## Performance Metrics
 
@@ -65,9 +65,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-24
-Stopped at: Roadmap created for v1.31 — 7 phases (147-153), 17 requirements mapped, 100% coverage
+Stopped at: Phase 149 complete — ability.service.ts refactored to use strategy pattern for all 11 effect types
 Resume file: None
-Next action: Plan and execute Phase 147 (EntityRenderer Strategy)
+Next action: Plan and execute Phase 150 (Creature AI Strategy)
 
 ---
-*Last updated: 2026-03-24 — v1.31 roadmap created*
+*Last updated: 2026-03-24 — Phase 149 Ability Effect Strategy completed*
