@@ -16,6 +16,11 @@ export interface CollisionDataSource {
   getZoneWorldOffset: () => { x: number; y: number };
 }
 
+// Slab surface offset — tile sprites are anchored at the base of the slab,
+// but the walkable surface (top face) is 65px higher in screen space.
+// All collision diamonds shift up by this amount to sit on the surface.
+const SLAB_SURFACE_OFFSET = 64;
+
 // Color scheme — distinguishable per collision type
 const COLOR_BLOCKING_TILE = 0xff4444; // red
 const COLOR_WALL = 0xffaa00;          // orange/yellow
@@ -231,12 +236,14 @@ export class DebugCollisionRenderer {
   private drawIsoDiamond(cx: number, cy: number, tileW: number, tileH: number): void {
     const hw = tileW / 2;
     const hh = tileH / 2;
+    // Shift up to slab top face — sprites anchor at slab base
+    const sy = cy - SLAB_SURFACE_OFFSET;
 
     this.graphics!.beginPath();
-    this.graphics!.moveTo(cx, cy - hh);      // top
-    this.graphics!.lineTo(cx + hw, cy);       // right
-    this.graphics!.lineTo(cx, cy + hh);       // bottom
-    this.graphics!.lineTo(cx - hw, cy);       // left
+    this.graphics!.moveTo(cx, sy - hh);      // top
+    this.graphics!.lineTo(cx + hw, sy);       // right
+    this.graphics!.lineTo(cx, sy + hh);       // bottom
+    this.graphics!.lineTo(cx - hw, sy);       // left
     this.graphics!.closePath();
     this.graphics!.strokePath();
   }
@@ -245,12 +252,13 @@ export class DebugCollisionRenderer {
   private fillIsoDiamond(cx: number, cy: number, tileW: number, tileH: number): void {
     const hw = tileW / 2;
     const hh = tileH / 2;
+    const sy = cy - SLAB_SURFACE_OFFSET;
 
     this.graphics!.beginPath();
-    this.graphics!.moveTo(cx, cy - hh);      // top
-    this.graphics!.lineTo(cx + hw, cy);       // right
-    this.graphics!.lineTo(cx, cy + hh);       // bottom
-    this.graphics!.lineTo(cx - hw, cy);       // left
+    this.graphics!.moveTo(cx, sy - hh);      // top
+    this.graphics!.lineTo(cx + hw, sy);       // right
+    this.graphics!.lineTo(cx, sy + hh);       // bottom
+    this.graphics!.lineTo(cx - hw, sy);       // left
     this.graphics!.closePath();
     this.graphics!.fillPath();
     this.graphics!.strokePath();
