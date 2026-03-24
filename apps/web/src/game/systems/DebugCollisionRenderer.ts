@@ -103,7 +103,6 @@ export class DebugCollisionRenderer {
 
     const offset = this.dataSource.getZoneWorldOffset();
     this.drawBlockingTiles(iso, camLeft, camRight, camTop, camBottom, offset);
-    this.drawIsoExtensionBlocking(iso, camLeft, camRight, camTop, camBottom, offset);
     this.drawWalls(iso, camLeft, camRight, camTop, camBottom);
     this.drawFeatureHitboxes();
   }

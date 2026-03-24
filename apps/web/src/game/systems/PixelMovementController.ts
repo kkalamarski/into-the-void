@@ -168,8 +168,8 @@ export class PixelMovementController {
       const elev = this.getHeight ? this.getHeight(playerTileX, playerTileY) : 0;
       const elevOffset = elev * (TILE_SIZE_PX / 2);
 
-      const resolved = resolvePixelCollision(this.px, this.py - elevOffset, vx, vy, this.isSolid);
-      resolvedPx = resolved.px;
+      const resolved = resolvePixelCollision(this.px - elevOffset, this.py - elevOffset, vx, vy, this.isSolid);
+      resolvedPx = resolved.px + elevOffset;
       resolvedPy = resolved.py + elevOffset;
     } else {
       resolvedPx = this.px + vx;
@@ -251,8 +251,8 @@ export class PixelMovementController {
         const rty = Math.floor(replayPy / TILE_SIZE_PX);
         const rElev = this.getHeight ? this.getHeight(rtx, rty) : 0;
         const rOff = rElev * (TILE_SIZE_PX / 2);
-        const resolved = resolvePixelCollision(replayPx, replayPy - rOff, input.vx, input.vy, this.isSolid);
-        replayPx = resolved.px;
+        const resolved = resolvePixelCollision(replayPx - rOff, replayPy - rOff, input.vx, input.vy, this.isSolid);
+        replayPx = resolved.px + rOff;
         replayPy = resolved.py + rOff;
       } else {
         replayPx += input.vx;
