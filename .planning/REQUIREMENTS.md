@@ -37,21 +37,21 @@ Requirements for debug tooling and visual polish milestone. Each maps to roadmap
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEBUG-01 | TBD | Pending |
-| DEBUG-02 | TBD | Pending |
-| DEBUG-03 | TBD | Pending |
-| DEBUG-04 | TBD | Pending |
-| DEBUG-05 | TBD | Pending |
-| RENDER-01 | TBD | Pending |
-| ELEV-01 | TBD | Pending |
-| ELEV-02 | TBD | Pending |
-| ELEV-03 | TBD | Pending |
+| DEBUG-01 | Phase 154 | Pending |
+| DEBUG-02 | Phase 154 | Pending |
+| DEBUG-03 | Phase 154 | Pending |
+| DEBUG-04 | Phase 154 | Pending |
+| DEBUG-05 | Phase 154 | Pending |
+| RENDER-01 | Phase 154 | Pending |
+| ELEV-01 | Phase 155 | Pending |
+| ELEV-02 | Phase 155 | Pending |
+| ELEV-03 | Phase 155 | Pending |
 
 **Coverage:**
 - v1.32 requirements: 9 total
-- Mapped to phases: 0
-- Unmapped: 9 ⚠️
+- Mapped to phases: 9
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after initial definition*
+*Last updated: 2026-03-24 — traceability updated after roadmap creation*
