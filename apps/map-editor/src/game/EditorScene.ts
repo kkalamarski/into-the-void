@@ -7,7 +7,7 @@ import { useEditorStore } from '../store/editorStore';
 // Constants matching the game renderer
 const ISO_TILE_WIDTH = 256;
 const ISO_TILE_HEIGHT = 128;
-const ELEVATION_HEIGHT_STEP = 128;
+const ELEVATION_HEIGHT_STEP = 64;
 const SPRITE_SIZE = 256;
 const SPRITE_ORIGIN_X = 0.5;
 const SPRITE_ORIGIN_Y = 0.25;
