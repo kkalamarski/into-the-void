@@ -273,7 +273,19 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 ### Active
 
-(No active milestone — run `/gsd:new-milestone` to plan next)
+## Current Milestone: v1.31 Strategy Pattern Refactor & Code Decomposition
+
+**Goal:** Break apart the largest classes in the codebase using Strategy Pattern for type-branching logic and component extraction for god objects, improving maintainability and extensibility.
+
+**Target refactors:**
+- EntityRenderer.ts (1509 LOC) → Strategy per entity type (creature, plant, mineral, NPC, artifact)
+- ProceduralTileGenerator.ts (1842 LOC) → Strategy per tile type/biome group
+- ability.service.ts (1420 LOC) → Strategy per ability effect type
+- creature-ai.ts (304 LOC) → Formalize existing behavior functions into Strategy
+- AtmosphereSystem.ts (477 LOC) → Strategy per atmosphere effect
+- WeatherSystem.ts (540 LOC) → Strategy per particle type
+- WorldScene.ts (2926 LOC) → Component decomposition (input, camera, entity lifecycle, rendering)
+- game.gateway.ts (2092 LOC) → Command/Handler pattern for event dispatch
 
 ### Out of Scope
 
@@ -343,4 +355,4 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-03-24 after v1.30 milestone completed*
+*Last updated: 2026-03-24 after v1.31 milestone started*
