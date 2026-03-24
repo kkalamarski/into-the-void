@@ -226,7 +226,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     }
 
     // Debug overlay + collision visualization (zero cost when hidden)
-    this.debugOverlay?.update(delta);
+    this.debugOverlay?.update();
     this.debugCollisionRenderer?.update();
   }
 
@@ -301,6 +301,10 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
   loadZoneFromState(chunkData: ChunkData, biome: BiomeType): void {
     this.currentZoneId = chunkData.zoneId;
+    this.currentHeights = chunkData.heights;
+    this.currentTiles = chunkData.tiles;
+    this.currentStructures = chunkData.structures;
+    this.currentBiome = biome;
 
     if (this.chunkManager) {
       this.chunkManager.receiveChunk(chunkData, biome);

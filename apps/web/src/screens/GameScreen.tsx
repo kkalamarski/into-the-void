@@ -8,6 +8,7 @@ import { ErrorCodeInfo, getErrorInfo } from '@into-the-void/shared-types';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { ErrorModal } from '../components/ErrorModal';
 import GameContainer from '../components/GameContainer';
+import { DebugOverlay } from '../ui/hud/DebugOverlay';
 
 const GameScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -125,7 +126,10 @@ const GameScreen: React.FC = () => {
       )}
 
       {loadingStage === 'ready' && (
-        <GameContainer />
+        <>
+          <GameContainer />
+          <DebugOverlay />
+        </>
       )}
     </>
   );
