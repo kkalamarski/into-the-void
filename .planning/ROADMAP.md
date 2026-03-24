@@ -53,7 +53,7 @@
 - [x] **Phase 147: EntityRenderer Strategy** - Replace per-type switch logic in EntityRenderer with dedicated strategy classes per entity type (completed 2026-03-24)
 - [x] **Phase 148: ProceduralTileGenerator Strategy** - Replace switch blocks with behavioral-category tile strategies (floor, wall, hazard, water, portal, decorative) (completed 2026-03-24)
 - [x] **Phase 149: Ability Effect Strategy** - Replace ability effect dispatch in ability.service with per-effect-type strategy classes (completed 2026-03-24)
-- [ ] **Phase 150: Creature AI Strategy** - Formalize existing creature behavior functions in creature-ai.ts into named strategy classes
+- [x] **Phase 150: Creature AI Strategy** - Formalize existing creature behavior functions in creature-ai.ts into named strategy classes (completed 2026-03-24)
 - [ ] **Phase 151: Atmosphere & Weather Strategy** - Replace per-type branching in AtmosphereSystem and WeatherSystem with effect/particle strategies
 - [ ] **Phase 152: WorldScene Decomposition** - Extract input, camera, and entity lifecycle subsystems from WorldScene into dedicated controller classes
 - [ ] **Phase 153: Gateway Decomposition** - Extract domain event handlers from game.gateway into handler classes; gateway becomes pure router
@@ -145,7 +145,7 @@
 | 147. EntityRenderer Strategy | 2/2 | Complete    | 2026-03-24 |
 | 148. ProceduralTileGenerator Strategy | 2/2 | Complete    | 2026-03-24 |
 | 149. Ability Effect Strategy | 0/TBD | Not started | - |
-| 150. Creature AI Strategy | 0/1 | Planned | - |
+| 150. Creature AI Strategy | 1/1 | Complete   | 2026-03-24 |
 | 151. Atmosphere & Weather Strategy | 0/TBD | Not started | - |
 | 152. WorldScene Decomposition | 0/TBD | Not started | - |
 | 153. Gateway Decomposition | 0/TBD | Not started | - |
