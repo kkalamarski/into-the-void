@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 Phase: 155 of 155 (Elevation & Height Rework)
 Plan: 2 of 2 in current phase
 Status: Phase 155 execution complete, pending verification
-Last activity: 2026-03-24 - Completed quick task 16: Add a service worker to cache all game assets
+Last activity: 2026-03-24 - Completed quick task 18: Remove player occlusion transparency
 
 Progress: [█████░░░░░] 50%
 
@@ -70,13 +70,14 @@ None.
 |---|-------------|------|--------|--------|-----------|
 | 16 | Add a service worker to cache all game assets | 2026-03-24 | 2f4e92d | Verified | [16-add-service-worker-asset-caching](./quick/16-add-service-worker-asset-caching/) |
 | 17 | Fix 4 bugs — chunk spam, sinking, wall collision, debug view | 2026-03-24 | cb7456a | Complete | [17-fix-4-bugs-chunk-spam-sinking-collision-debug](./quick/17-fix-4-bugs-chunk-spam-sinking-collision-debug/) |
+| 18 | Remove player occlusion transparency | 2026-03-24 | 6112eaa | Complete | [18-remove-player-occlusion-transparency](./quick/18-remove-player-occlusion-transparency/) |
 
 ## Session Continuity
 
 Last session: 2026-03-24
-Stopped at: Completed quick task 17 — Fix 4 bugs (chunk spam, sinking, collision, debug view)
+Stopped at: Completed quick task 18 — Remove player occlusion transparency
 Resume file: None
 Next action: Verify Phase 155 (Elevation & Height Rework)
 
 ---
-*Last updated: 2026-03-24 — Quick task 17 executed*
+*Last updated: 2026-03-24 — Quick task 18 executed*
