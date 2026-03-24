@@ -579,6 +579,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
         (tx: number, ty: number, pixelY?: number) =>
           entitySolid(tx, ty, pixelY) || isoCheck(tx, ty, pixelY),
       );
+      this.pixelMovement.setHeightCallback(getHeight);
     }
   }
 

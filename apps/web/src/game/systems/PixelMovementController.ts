@@ -14,6 +14,7 @@
 import {
   velocityFromKeys,
   resolvePixelCollision,
+  TILE_SIZE_PX,
   type KeyState,
 } from '@into-the-void/game-logic';
 import type { Direction } from '@into-the-void/shared-types';
@@ -100,6 +101,7 @@ export class PixelMovementController {
   private pendingInputs: PendingPixelInput[] = [];
   private lastEmitTime = 0;
   private isSolid: ((tileX: number, tileY: number, pixelY?: number) => boolean) | null = null;
+  private getHeight: ((tileX: number, tileY: number) => number) | null = null;
 
   // ── Lifecycle ───────────────────────────────────────────────────────────
 
@@ -116,6 +118,11 @@ export class PixelMovementController {
   /** Set the collision lookup callback. Called by WorldScene when chunk data is available. */
   setCollisionCallback(isSolid: (tx: number, ty: number, pixelY?: number) => boolean): void {
     this.isSolid = isSolid;
+  }
+
+  /** Set height lookup for elevation-aware collision offset. */
+  setHeightCallback(getHeight: (tx: number, ty: number) => number): void {
+    this.getHeight = getHeight;
   }
 
   // ── Per-frame update ────────────────────────────────────────────────────
@@ -153,9 +160,17 @@ export class PixelMovementController {
     let resolvedPy: number;
 
     if (this.isSolid) {
-      const resolved = resolvePixelCollision(this.px, this.py, vx, vy, this.isSolid);
+      // Elevation offset: in isometric view, each elevation step shifts the visual
+      // surface north by half a tile. Offset py so collision boundaries align with
+      // the elevated walking surface, not the ground-level grid position.
+      const playerTileX = Math.floor(this.px / TILE_SIZE_PX);
+      const playerTileY = Math.floor(this.py / TILE_SIZE_PX);
+      const elev = this.getHeight ? this.getHeight(playerTileX, playerTileY) : 0;
+      const elevOffset = elev * (TILE_SIZE_PX / 2);
+
+      const resolved = resolvePixelCollision(this.px, this.py - elevOffset, vx, vy, this.isSolid);
       resolvedPx = resolved.px;
-      resolvedPy = resolved.py;
+      resolvedPy = resolved.py + elevOffset;
     } else {
       resolvedPx = this.px + vx;
       resolvedPy = this.py + vy;
@@ -232,9 +247,13 @@ export class PixelMovementController {
 
     for (const input of this.pendingInputs) {
       if (this.isSolid) {
-        const resolved = resolvePixelCollision(replayPx, replayPy, input.vx, input.vy, this.isSolid);
+        const rtx = Math.floor(replayPx / TILE_SIZE_PX);
+        const rty = Math.floor(replayPy / TILE_SIZE_PX);
+        const rElev = this.getHeight ? this.getHeight(rtx, rty) : 0;
+        const rOff = rElev * (TILE_SIZE_PX / 2);
+        const resolved = resolvePixelCollision(replayPx, replayPy - rOff, input.vx, input.vy, this.isSolid);
         replayPx = resolved.px;
-        replayPy = resolved.py;
+        replayPy = resolved.py + rOff;
       } else {
         replayPx += input.vx;
         replayPy += input.vy;

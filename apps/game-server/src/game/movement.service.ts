@@ -8,6 +8,7 @@ import {
   resolvePixelCollision,
   validatePixelSpeed,
   createIsometricCollisionCheck,
+  TILE_SIZE_PX,
 } from '@into-the-void/game-logic';
 import { ZONE_SIZE } from '@into-the-void/shared-types';
 
@@ -178,11 +179,24 @@ export class MovementService implements OnModuleInit {
       // so we also block tiles whose south neighbor (y+1) is an elevated wall.
       isSolid = createIsometricCollisionCheck(isSolid, getHeight);
 
-      const resolved = resolvePixelCollision(player.px, player.py, vx, vy, isSolid);
+      // Elevation offset: in isometric view, each elevation step shifts the visual
+      // surface 64px north (half a tile). The player walks on the elevated surface,
+      // so their effective collision py must be offset by their current tile elevation.
+      // Without this, collision boundaries appear 64px south of where they should be.
+      const playerTileX = Math.floor(player.px / TILE_SIZE_PX);
+      const playerTileY = Math.floor(player.py / TILE_SIZE_PX);
+      const playerElevation = getHeight(playerTileX, playerTileY);
+      const elevOffset = playerElevation * (TILE_SIZE_PX / 2); // 64px per elevation level
 
-      // Update authoritative position
+      const resolved = resolvePixelCollision(
+        player.px,
+        player.py - elevOffset,  // shift north by elevation
+        vx, vy, isSolid,
+      );
+
+      // Update authoritative position (restore original py space)
       player.px = resolved.px;
-      player.py = resolved.py;
+      player.py = resolved.py + elevOffset;
 
       // Collision-divergence correction — if the server's collision-resolved position
       // differs from the client's predicted position by more than the threshold, snap the
