@@ -1,9 +1,16 @@
 import type { RenderStrategy } from './types';
+import { CreatureRenderStrategy } from './CreatureRenderStrategy';
+import { PlantRenderStrategy } from './PlantRenderStrategy';
+import { MineralRenderStrategy } from './MineralRenderStrategy';
+import { NpcRenderStrategy } from './NpcRenderStrategy';
+import { ArtifactRenderStrategy } from './ArtifactRenderStrategy';
+import { ItemRenderStrategy } from './ItemRenderStrategy';
 
 export type { RenderStrategy, ScaleConfig, ShadowDimensions, HitAreaConfig, TextureInfo, VisibleBounds } from './types';
 export { AbstractRenderStrategy } from './AbstractRenderStrategy';
 
 const strategyInstances = new Map<string, RenderStrategy>();
+let initialized = false;
 
 /** Get the render strategy for an entity type. Lazily creates singletons. */
 export function getStrategyForType(entityType: string): RenderStrategy | undefined {
@@ -17,5 +24,12 @@ export function registerStrategy(entityType: string, strategy: RenderStrategy): 
 
 /** Initialize all strategies. Call once at scene startup. Idempotent. */
 export function initStrategies(): void {
-  // Will be populated in Plan 02 when strategy classes are created
+  if (initialized) return;
+  registerStrategy('creature', new CreatureRenderStrategy());
+  registerStrategy('plant', new PlantRenderStrategy());
+  registerStrategy('mineral', new MineralRenderStrategy());
+  registerStrategy('npc', new NpcRenderStrategy());
+  registerStrategy('artifact', new ArtifactRenderStrategy());
+  registerStrategy('item', new ItemRenderStrategy());
+  initialized = true;
 }

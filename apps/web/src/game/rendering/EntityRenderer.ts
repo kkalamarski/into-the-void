@@ -1,181 +1,17 @@
 import Phaser from 'phaser';
-import { Entity, Creature, Mineral, Plant, Npc, CreatureBehavior, Position, ZONE_SIZE } from '@into-the-void/shared-types';
-import type { NodeRarity, ItemEntity, DamageType } from '@into-the-void/shared-types';
-import { getItemSprite } from '../../config/itemSpriteMap';
+import { Entity, Creature, Position, ZONE_SIZE } from '@into-the-void/shared-types';
+import type { CreatureBehavior, DamageType } from '@into-the-void/shared-types';
 import { IsometricTransform } from '../utils/IsometricTransform';
 import { useStatsStore } from '../../store/statsStore';
-import { applyRareNodeFX } from './RareNodeFX';
+import { getStrategyForType, initStrategies } from './strategies';
+import type { VisibleBounds } from './strategies';
+import { ANIMATED_CREATURES } from './strategies/creature-render-data';
 
 const ELEVATION_HEIGHT_STEP = 128; // Pixels per elevation level (1.0 × diamond height for 256x256 cubes)
 const ENTITY_GROUND_OFFSET = 0; // No visual offset — depth sorting (entityOffset=65) handles south-tile wall occlusion
 const OCCLUSION_DEPTH_THRESHOLD = 10.0;  // Structures this far "in front" occlude entities
 const OCCLUSION_MIN_HEIGHT = 3;          // Only structures >= 3 elevation levels occlude
 const OCCLUDED_ALPHA = 0.3;              // Alpha for occluded entities (30% visible)
-
-// Entity size scales by type - base scale multiplier for 256x256 sprites
-const ENTITY_SCALE: Record<string, number> = {
-  creature: 2.5,   // Large - creatures should be prominent
-  mineral: 2.0,    // Medium-large - resource nodes
-  plant: 1.8,      // Medium - harvestable plants
-  artifact: 1.5,   // Medium-small - collectible items
-  item: 1.0,       // Small - dropped items on ground
-  npc: 2.2,        // NPCs slightly smaller than creatures
-};
-
-// Scale overrides for animated creatures with smaller sprite sheets (~48-120px)
-const ANIMATED_CREATURE_SCALE: Record<string, number> = {
-  creature_void_crawler: 1.5,      // 128px sprite - insectoid crawler
-  creature_coastal_scuttler: 1.5,  // 128px sprite - crustacean
-  creature_crystal_hunter: 4.0,    // Larger predator (96px sprite)
-  creature_frost_stalker: 3.5,     // Fast predator (56px sprite)
-  creature_canopy_grazer: 4.0,     // Large herbivore (48px sprite)
-  creature_tide_crab: 3.5,         // Medium crustacean (48px sprite)
-  creature_coastal_urchin: 3.0,    // Smaller spiny creature (64px sprite)
-  creature_reef_scavenger: 3.5,    // Medium aquatic scavenger (64px sprite)
-  creature_crystal_crawler: 2.5,   // Crystal bear (96px sprite)
-  creature_void_horror: 2.5,       // Creepy predator maniac (96px sprite)
-  creature_toxic_lurker: 2.0,      // Fern creature predator (120px sprite)
-  creature_spore_carrier: 1.5,     // 128px sprite - fungal creature
-  creature_miasma_drifter: 1.5,    // 128px sprite - toxic drifter
-  creature_marsh_lurker: 1.5,      // 128px sprite - marsh predator
-  // Reused sprites inherit scale from their source
-  creature_dart_runner: 3.5,       // reuses frost-stalker
-  creature_petrified_lurker: 2.5,  // reuses void-horror
-  creature_kelp_grazer: 3.0,       // reuses neon-creature
-  creature_tangle_stalker: 1.5,    // reuses marsh-lurker
-  creature_current_rider: 3.5,     // reuses frost-stalker
-  creature_echo_drifter: 1.5,      // reuses spore-carrier
-  creature_phase_grazer: 3.0,      // reuses neon-creature
-  creature_reality_scavenger: 1.5, // reuses void-crawler
-  creature_magma_beast: 4.0,       // reuses crystal-hunter
-  creature_ash_skimmer: 1.5,       // reuses coastal-scuttler
-  creature_ice_burrower: 2.5,      // reuses crystal-crawler
-  creature_null_feeder: 3.0,       // reuses neon-creature
-  creature_dimensional_hunter: 2.5,// reuses void-horror
-  creature_rift_hunter: 1.5,       // reuses marsh-lurker
-  creature_pressure_feeder: 2.0,   // reuses toxic-lurker
-  creature_trench_hunter: 2.5,     // reuses void-horror
-  creature_abyssal_scavenger: 1.5, // reuses void-crawler
-  creature_starfall_grazer: 3.0,   // reuses neon-creature
-  creature_crater_stalker: 1.5,    // reuses marsh-lurker
-  creature_guardian_construct: 2.5, // reuses crystal-crawler
-  creature_ruin_seeker: 3.5,       // reuses frost-stalker
-  creature_relic_beast: 4.0,       // reuses crystal-hunter
-  creature_void_grazer: 1.5,       // reuses marsh-lurker
-  creature_anomaly_scavenger: 1.5, // reuses void-crawler
-  creature_void_stalker: 2.5,      // reuses void-horror
-  creature_dimensional_aberration: 2.0, // reuses toxic-lurker
-  creature_abyssal_leviathan: 2.0, // reuses toxic-lurker
-};
-
-// Shadow size overrides for animated creatures { width, height }
-const ANIMATED_CREATURE_SHADOW: Record<string, { width: number; height: number }> = {
-  creature_void_crawler: { width: 80, height: 40 },
-  creature_coastal_scuttler: { width: 70, height: 35 },
-  creature_crystal_hunter: { width: 90, height: 45 },
-  creature_frost_stalker: { width: 80, height: 40 },
-  creature_canopy_grazer: { width: 90, height: 45 },
-  creature_tide_crab: { width: 80, height: 40 },
-  creature_coastal_urchin: { width: 70, height: 35 },
-  creature_reef_scavenger: { width: 80, height: 40 },
-  creature_crystal_crawler: { width: 100, height: 50 },
-  creature_void_horror: { width: 100, height: 50 },
-  creature_toxic_lurker: { width: 110, height: 55 },
-  creature_spore_carrier: { width: 80, height: 40 },
-  creature_miasma_drifter: { width: 80, height: 40 },
-  creature_marsh_lurker: { width: 90, height: 45 },
-  creature_dart_runner: { width: 80, height: 40 },
-  creature_petrified_lurker: { width: 100, height: 50 },
-  creature_kelp_grazer: { width: 90, height: 45 },
-  creature_tangle_stalker: { width: 90, height: 45 },
-  creature_current_rider: { width: 80, height: 40 },
-  creature_echo_drifter: { width: 80, height: 40 },
-  creature_phase_grazer: { width: 90, height: 45 },
-  creature_reality_scavenger: { width: 80, height: 40 },
-  creature_magma_beast: { width: 100, height: 50 },
-  creature_ash_skimmer: { width: 70, height: 35 },
-  creature_ice_burrower: { width: 100, height: 50 },
-  creature_null_feeder: { width: 90, height: 45 },
-  creature_dimensional_hunter: { width: 100, height: 50 },
-  creature_rift_hunter: { width: 90, height: 45 },
-  creature_pressure_feeder: { width: 110, height: 55 },
-  creature_trench_hunter: { width: 100, height: 50 },
-  creature_abyssal_scavenger: { width: 80, height: 40 },
-  creature_starfall_grazer: { width: 90, height: 45 },
-  creature_crater_stalker: { width: 90, height: 45 },
-  creature_guardian_construct: { width: 100, height: 50 },
-  creature_ruin_seeker: { width: 80, height: 40 },
-  creature_relic_beast: { width: 100, height: 50 },
-  creature_void_grazer: { width: 90, height: 45 },
-  creature_anomaly_scavenger: { width: 80, height: 40 },
-  creature_void_stalker: { width: 100, height: 50 },
-  creature_dimensional_aberration: { width: 110, height: 55 },
-  creature_abyssal_leviathan: { width: 110, height: 55 },
-};
-
-// Y offset overrides for animated creatures (0 = feet at shadow level)
-const ANIMATED_CREATURE_Y_OFFSET: Record<string, number> = {
-  creature_void_crawler: 0,
-  creature_coastal_scuttler: 0,
-  creature_crystal_hunter: 0,
-  creature_frost_stalker: 0,
-  creature_canopy_grazer: 0,
-  creature_tide_crab: 0,
-  creature_coastal_urchin: 0,
-  creature_reef_scavenger: 0,
-  creature_crystal_crawler: 0,
-  creature_void_horror: 0,
-  creature_toxic_lurker: 0,
-  creature_spore_carrier: 0,
-  creature_miasma_drifter: 0,
-  creature_marsh_lurker: 0,
-  creature_dart_runner: 0,
-  creature_petrified_lurker: 0,
-  creature_kelp_grazer: 0,
-  creature_tangle_stalker: 0,
-  creature_current_rider: 0,
-  creature_echo_drifter: 0,
-  creature_phase_grazer: 0,
-  creature_reality_scavenger: 0,
-  creature_magma_beast: 0,
-  creature_ash_skimmer: 0,
-  creature_ice_burrower: 0,
-  creature_null_feeder: 0,
-  creature_dimensional_hunter: 0,
-  creature_rift_hunter: 0,
-  creature_pressure_feeder: 0,
-  creature_trench_hunter: 0,
-  creature_abyssal_scavenger: 0,
-  creature_starfall_grazer: 0,
-  creature_crater_stalker: 0,
-  creature_guardian_construct: 0,
-  creature_ruin_seeker: 0,
-  creature_relic_beast: 0,
-  creature_void_grazer: 0,
-  creature_anomaly_scavenger: 0,
-  creature_void_stalker: 0,
-  creature_dimensional_aberration: 0,
-  creature_abyssal_leviathan: 0,
-};
-
-// Scale overrides for specific plants (speciesId -> scale multiplier)
-const PLANT_SCALE_OVERRIDE: Record<string, number> = {
-  plant_void_tree: 3.0,  // Large tree - towering over players (256px spritesheet frame)
-  plant_tendril_tree: 3.0,  // Large fungal tree (256px sprite)
-};
-
-// Scale multipliers for rare/epic resource nodes
-const RARITY_SCALE_MULTIPLIER: Record<string, number> = {
-  common: 1.0,
-  rare: 1.4,    // 40% larger
-  epic: 1.7,    // 70% larger
-};
-
-// NPC sprite scale (48px sprites scaled to match player character)
-// Player uses 6x width, 4.5x height for isometric squash
-const NPC_SPRITE_SCALE_X = 6;
-const NPC_SPRITE_SCALE_Y = 4.5;
-
 
 // Base sprite height for UI positioning (256px texture)
 const BASE_SPRITE_HEIGHT = 256;
@@ -218,6 +54,7 @@ export class EntityRenderer {
     this.scene = scene;
     this.tileSize = tileWidth; // Keep for backwards compat
     this.isoTransform = new IsometricTransform(tileWidth, tileHeight);
+    initStrategies();
   }
 
   /**
@@ -438,6 +275,7 @@ export class EntityRenderer {
 
   /**
    * Creates a container with entity sprite, nameplate, optional health bar, and optional behavior icon.
+   * Delegates per-type rendering logic to strategy classes via the strategy registry.
    */
   createEntityContainer(entity: Entity, elevation: number = 0): Phaser.GameObjects.Container {
     // Convert to world coordinates for depth sorting
@@ -452,82 +290,29 @@ export class EntityRenderer {
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
-    // Get scale for this entity type (with overrides for specific species)
-    let scale = ENTITY_SCALE[entity.type] ?? 1.0;
-    let scaleX = scale;
-    let scaleY = scale;
-    if (this.isCreature(entity) && entity.speciesId && ANIMATED_CREATURE_SCALE[entity.speciesId]) {
-      scale = ANIMATED_CREATURE_SCALE[entity.speciesId];
-      scaleX = scale;
-      scaleY = scale;
-    }
-    if (this.isPlant(entity) && entity.speciesId && PLANT_SCALE_OVERRIDE[entity.speciesId]) {
-      scale = PLANT_SCALE_OVERRIDE[entity.speciesId];
-      scaleX = scale;
-      scaleY = scale;
-    }
-    // NPCs use player character scaling (6x width, 4.5x height for isometric squash)
-    if (this.isNpc(entity)) {
-      scaleX = NPC_SPRITE_SCALE_X;
-      scaleY = NPC_SPRITE_SCALE_Y;
-      scale = scaleY; // Use Y scale for height calculations
-    }
-    // Apply rarity scale multiplier for minerals and plants
-    if (this.isMineral(entity) || this.isPlant(entity)) {
-      const rarity = (entity as { rarity?: NodeRarity }).rarity ?? 'common';
-      scale *= RARITY_SCALE_MULTIPLIER[rarity] ?? 1.0;
-      scaleX = scale;
-      scaleY = scale;
-    }
-    // Elliptical drop shadow at ground level for all entity types
-    {
-      let shadowWidth = 60 * scale;
-      let shadowHeight = 30 * scale;
-      // Creatures get larger shadow to touch feet
-      if (this.isCreature(entity)) {
-        shadowWidth = 80 * (scale / 2.5); // Scale relative to default creature scale
-        shadowHeight = 40 * (scale / 2.5);
-        // Override shadow for specific animated creatures
-        if (entity.speciesId && ANIMATED_CREATURE_SHADOW[entity.speciesId]) {
-          const shadowOverride = ANIMATED_CREATURE_SHADOW[entity.speciesId];
-          shadowWidth = shadowOverride.width;
-          shadowHeight = shadowOverride.height;
-        }
-      }
-      // Plants get proportional shadow
-      if (this.isPlant(entity)) {
-        shadowWidth = 50 * scale;
-        shadowHeight = 25 * scale;
-      }
-      // Minerals get proportional shadow
-      if (this.isMineral(entity)) {
-        shadowWidth = 45 * scale;
-        shadowHeight = 22 * scale;
-      }
-      // NPCs get same shadow as player character
-      if (this.isNpc(entity)) {
-        shadowWidth = 120;
-        shadowHeight = 60;
-      }
-      // Shadow at diamond center (tileHeightHalf below container origin = north vertex)
-      const shadow = this.scene.add.ellipse(0, this.isoTransform.tileHeight / 2, shadowWidth, shadowHeight, 0x000000, 0.3);
-      shadow.setOrigin(0.5, 0.5);
-      container.add(shadow);
+    // Look up render strategy for this entity type
+    const strategy = getStrategyForType(entity.type);
+    if (!strategy) {
+      // Fallback: minimal rendering for unknown entity types
+      return container;
     }
 
-    // Entity sprite - all entity types anchor at tile ground level (y=0 in container space)
-    // Container sits at gridToScreen(x, y) = north vertex of diamond.
-    // Offset sprites by tileHeightHalf (64px) so their base sits at diamond center.
+    // 1. Scale — strategy handles per-type overrides (species, rarity, NPC squash)
+    const { scaleX, scaleY, effectiveScale } = strategy.getScale(entity);
+
+    // 2. Shadow — strategy provides type-specific dimensions
+    const { width: shadowWidth, height: shadowHeight } = strategy.getShadowDimensions(entity, effectiveScale);
+    const shadow = this.scene.add.ellipse(0, this.isoTransform.tileHeight / 2, shadowWidth, shadowHeight, 0x000000, 0.3);
+    shadow.setOrigin(0.5, 0.5);
+    container.add(shadow);
+
+    // 3. Sprite Y offset — strategy provides additional offset (e.g., animated creature species)
     let spriteYOffset = this.isoTransform.tileHeight / 2;
-    // Override Y offset for specific animated creatures if needed (all currently 0, reserved for future use)
-    if (this.isCreature(entity) && entity.speciesId && entity.speciesId in ANIMATED_CREATURE_Y_OFFSET) {
-      spriteYOffset += ANIMATED_CREATURE_Y_OFFSET[entity.speciesId];
-    }
+    spriteYOffset += strategy.getSpriteYOffset(entity);
 
-    // Track feature entities for UI hover behavior
-    const isFeature = this.isPlant(entity) || this.isMineral(entity);
-
-    const { key: textureKey, frame: textureFrame } = this.getEntityTexture(entity);
+    // 4. Feature detection and texture — strategy determines hover-only behavior and texture
+    const isFeature = strategy.isHoverUI();
+    const { key: textureKey, frame: textureFrame } = strategy.getTexture(entity, this.scene);
     const sprite = this.scene.add.sprite(0, spriteYOffset, textureKey, textureFrame);
 
     // All entity types use bottom-center origin: sprite base sits at the tile surface
@@ -535,126 +320,82 @@ export class EntityRenderer {
     sprite.setScale(scaleX, scaleY);
 
     // For features (plants/minerals), auto-detect visible bounds for hit area and hover outline
-    let featureBounds: { topFrac: number; bottomFrac: number; leftFrac: number; rightFrac: number } | null = null;
+    let featureBounds: VisibleBounds | null = null;
     if (isFeature) {
       featureBounds = this.getVisibleBounds(textureKey, textureFrame);
     }
 
-    // Apply glow effect for rare/epic minerals and plants
-    if (this.isMineral(entity) || this.isPlant(entity)) {
-      const rarity = (entity as { rarity?: NodeRarity }).rarity;
-      applyRareNodeFX(sprite, rarity);
-
-      // Store rarity on container for marker creation
-      if (rarity && rarity !== 'common') {
-        container.setData('rarity', rarity);
-      }
-    }
-
-    // Make sprites interactive with tight hitArea matching visible art (RENDER-04)
-    const isClickable = entity.type === 'creature' || entity.type === 'plant' || entity.type === 'mineral' || entity.type === 'npc' || entity.type === 'item' || entity.type === 'artifact';
-    if (isClickable) {
-      const texW = sprite.width;
-      const texH = sprite.height;
-      const isAnimated = this.isCreature(entity) && entity.speciesId && EntityRenderer.ANIMATED_CREATURES.has(entity.speciesId);
-
-      let hitRect: Phaser.Geom.Rectangle;
-      if (featureBounds) {
-        // Features: hit area at the BASE of the sprite (bottom 40% of visible art)
-        // This matches where the trunk/roots touch the ground, not the canopy
-        const visibleTop = featureBounds.topFrac * texH;
-        const visibleBottom = (1 - featureBounds.bottomFrac) * texH;
-        const visibleHeight = visibleBottom - visibleTop;
-        const baseHeight = visibleHeight * 0.4; // bottom 40% of visible art
-        hitRect = new Phaser.Geom.Rectangle(
-          featureBounds.leftFrac * texW,
-          visibleBottom - baseHeight,
-          (1 - featureBounds.leftFrac - featureBounds.rightFrac) * texW,
-          baseHeight
-        );
-      } else {
-        // Animated creatures: use fixed percentage padding (tighter sprite sheets)
-        const hitPadX = texW * (isAnimated ? 0.10 : 0.15);
-        const hitPadTop = texH * (isAnimated ? 0.15 : 0.2);
-        hitRect = new Phaser.Geom.Rectangle(
-          hitPadX,
-          hitPadTop,
-          texW - hitPadX * 2,
-          texH - hitPadTop
-        );
-      }
-      sprite.setInteractive(hitRect, Phaser.Geom.Rectangle.Contains);
-      sprite.input!.cursor = 'pointer';
-
-      // NPCs get a chat-bubble cursor to indicate they are interactable
-      if (entity.type === 'npc') {
-        const chatSvg = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M6 4h20c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2H14l-6 6v-6H6c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z' fill='white' stroke='%23333' stroke-width='2'/></svg>`;
-        sprite.input!.cursor = `url("${chatSvg}") 16 16, pointer`;
-      }
-
-      // Store visible bounds on container for hover outline access
-      if (featureBounds) {
-        container.setData('visibleBounds', featureBounds);
-      }
-
-      // Hover outline glow for clickable entities (CONTEXT.md: outline glow on hover)
-      const hoverGlow = this.scene.add.graphics();
-      hoverGlow.setVisible(false);
-      container.add(hoverGlow);
-      container.setData('hoverGlow', hoverGlow);
-
-      sprite.on('pointerover', () => {
-        hoverGlow.clear();
-        hoverGlow.lineStyle(3, 0xffffff, 0.6);
-
-        const bounds = container.getData('visibleBounds') as typeof featureBounds;
-        if (bounds) {
-          // Features: outline around visible art only, not transparent padding
-          const fullW = sprite.width * sprite.scaleX;
-          const fullH = sprite.height * sprite.scaleY;
-          const visW = (1 - bounds.leftFrac - bounds.rightFrac) * fullW;
-          const visH = (1 - bounds.topFrac - bounds.bottomFrac) * fullH;
-          const visLeft = -(fullW / 2) + bounds.leftFrac * fullW;
-          const visTop = spriteYOffset - fullH + bounds.topFrac * fullH;
-          hoverGlow.strokeRoundedRect(visLeft, visTop, visW, visH, 4);
-        } else {
-          // Creatures/other: outline around full sprite bounds
-          const halfW = (sprite.width * sprite.scaleX) / 2;
-          const h = sprite.height * sprite.scaleY;
-          const yOff = spriteYOffset;
-          hoverGlow.strokeRoundedRect(-halfW, yOff - h, halfW * 2, h, 4);
-        }
-        hoverGlow.setVisible(true);
-
-        // Plants/minerals: also show nameplate and yield bar on hover
-        if (isFeature) {
-          const nameplate = container.getData('nameplate') as Phaser.GameObjects.Text | undefined;
-          const yieldBar = container.getData('yieldBar') as Phaser.GameObjects.Graphics | undefined;
-          if (nameplate) nameplate.setVisible(true);
-          if (yieldBar) yieldBar.setVisible(true);
-        }
-      });
-
-      sprite.on('pointerout', () => {
-        hoverGlow.setVisible(false);
-        hoverGlow.clear();
-
-        // Plants/minerals: hide nameplate and yield bar
-        if (isFeature) {
-          const nameplate = container.getData('nameplate') as Phaser.GameObjects.Text | undefined;
-          const yieldBar = container.getData('yieldBar') as Phaser.GameObjects.Graphics | undefined;
-          if (nameplate) nameplate.setVisible(false);
-          if (yieldBar) yieldBar.setVisible(false);
-        }
-      });
-    }
-
     container.add(sprite);
-    container.setData('entityScale', scale); // Store for UI positioning
-    container.setData('entitySprite', sprite); // Store sprite reference for animation
+    container.setData('entityScale', effectiveScale);
+    container.setData('entitySprite', sprite);
+
+    // 5. Spawn effects — strategy sets container data (rarity glow, stealth, frenzy flag)
+    strategy.applySpawnEffects(entity, container, this.scene);
+
+    // 6. Hit area and cursor — strategy provides type-specific hit rectangle and cursor
+    const texW = sprite.width;
+    const texH = sprite.height;
+    const { rect: hitRect } = strategy.getHitArea(entity, texW, texH, false, featureBounds);
+    sprite.setInteractive(hitRect, Phaser.Geom.Rectangle.Contains);
+    sprite.input!.cursor = strategy.getCursor(entity);
+
+    // Store visible bounds on container for hover outline access
+    if (featureBounds) {
+      container.setData('visibleBounds', featureBounds);
+    }
+
+    // Hover outline glow for clickable entities
+    const hoverGlow = this.scene.add.graphics();
+    hoverGlow.setVisible(false);
+    container.add(hoverGlow);
+    container.setData('hoverGlow', hoverGlow);
+
+    sprite.on('pointerover', () => {
+      hoverGlow.clear();
+      hoverGlow.lineStyle(3, 0xffffff, 0.6);
+
+      const bounds = container.getData('visibleBounds') as VisibleBounds | null;
+      if (bounds) {
+        // Features: outline around visible art only, not transparent padding
+        const fullW = sprite.width * sprite.scaleX;
+        const fullH = sprite.height * sprite.scaleY;
+        const visW = (1 - bounds.leftFrac - bounds.rightFrac) * fullW;
+        const visH = (1 - bounds.topFrac - bounds.bottomFrac) * fullH;
+        const visLeft = -(fullW / 2) + bounds.leftFrac * fullW;
+        const visTop = spriteYOffset - fullH + bounds.topFrac * fullH;
+        hoverGlow.strokeRoundedRect(visLeft, visTop, visW, visH, 4);
+      } else {
+        // Creatures/other: outline around full sprite bounds
+        const halfW = (sprite.width * sprite.scaleX) / 2;
+        const h = sprite.height * sprite.scaleY;
+        const yOff = spriteYOffset;
+        hoverGlow.strokeRoundedRect(-halfW, yOff - h, halfW * 2, h, 4);
+      }
+      hoverGlow.setVisible(true);
+
+      // Features: also show nameplate and yield bar on hover
+      if (isFeature) {
+        const nameplate = container.getData('nameplate') as Phaser.GameObjects.Text | undefined;
+        const yieldBar = container.getData('yieldBar') as Phaser.GameObjects.Graphics | undefined;
+        if (nameplate) nameplate.setVisible(true);
+        if (yieldBar) yieldBar.setVisible(true);
+      }
+    });
+
+    sprite.on('pointerout', () => {
+      hoverGlow.setVisible(false);
+      hoverGlow.clear();
+
+      // Features: hide nameplate and yield bar
+      if (isFeature) {
+        const nameplate = container.getData('nameplate') as Phaser.GameObjects.Text | undefined;
+        const yieldBar = container.getData('yieldBar') as Phaser.GameObjects.Graphics | undefined;
+        if (nameplate) nameplate.setVisible(false);
+        if (yieldBar) yieldBar.setVisible(false);
+      }
+    });
 
     // Compute actual visual sprite height for UI positioning
-    // For features, use visible height (excluding transparent padding) for accurate nameplate placement
     const actualSpriteHeight = featureBounds
       ? (1 - featureBounds.topFrac - featureBounds.bottomFrac) * sprite.height * scaleY
       : sprite.height * scaleY;
@@ -664,104 +405,21 @@ export class EntityRenderer {
     container.setData('entityId', entity.id);
     container.setData('entityType', entity.type);
 
-    // Store speciesId for animated creatures
-    if (this.isCreature(entity) && entity.speciesId && EntityRenderer.ANIMATED_CREATURES.has(entity.speciesId)) {
-      container.setData('speciesId', entity.speciesId);
-      container.setData('facing', 's'); // Default facing direction
-    }
-
-    // Store npcType for directional NPCs
-    if (this.isNpc(entity) && entity.npcType) {
-      container.setData('npcType', entity.npcType);
-      container.setData('facing', 's'); // Default facing direction
-    }
-
-    // UI positioning based on actual sprite height (not BASE_SPRITE_HEIGHT)
-    // All entities: origin(0.5, 1.0) → sprite top at y = spriteYOffset - actualSpriteHeight
-    const spriteTopY = spriteYOffset - actualSpriteHeight;
-    const uiBaseY = spriteTopY - 20; // 20px padding above sprite top
+    // 7. UI setup — strategy creates type-specific UI elements (health bars, nameplates, yield bars)
     const { name: displayName, gated } = this.applyPerceptionGate(entity);
-
-    // Creatures get WoW-style health bar with behavior icon and name inside
-    if (this.isCreature(entity)) {
-      const healthBar = this.createHealthBarWithName(displayName, entity.health, entity.maxHealth, entity.behavior, gated);
-      healthBar.y = uiBaseY;
-      container.add(healthBar);
-      // Store reference for easy cleanup on health updates
-      container.setData('healthBar', healthBar);
-    }
-
-    // Minerals get nameplate + yield bar (hidden by default for performance, shown on hover)
-    if (this.isMineral(entity)) {
-      const rarity = (entity as { rarity?: NodeRarity }).rarity;
-      const rarityPrefix = rarity === 'epic' ? '[Epic] ' : rarity === 'rare' ? '[Rare] ' : '';
-      const nameplate = this.createNameplate(rarityPrefix + displayName);
-      nameplate.y = uiBaseY - 20;
-      nameplate.setVisible(false);
-      container.add(nameplate);
-      container.setData('nameplate', nameplate);
-
-      const yieldBar = this.createHealthBar(entity.yield, entity.maxYield);
-      yieldBar.y = uiBaseY;
-      yieldBar.setVisible(false);
-      container.add(yieldBar);
-      container.setData('maxYield', entity.maxYield);
-      container.setData('yieldBar', yieldBar);
-    }
-
-    // Plants get nameplate + yield bar (hidden by default for performance, shown on hover)
-    if (this.isPlant(entity)) {
-      const rarity = (entity as { rarity?: NodeRarity }).rarity;
-      const rarityPrefix = rarity === 'epic' ? '[Epic] ' : rarity === 'rare' ? '[Rare] ' : '';
-      const nameplate = this.createNameplate(rarityPrefix + displayName);
-      nameplate.y = uiBaseY - 20;
-      nameplate.setVisible(false);
-      container.add(nameplate);
-      container.setData('nameplate', nameplate);
-
-      const yieldBar = this.createHealthBar(entity.yield, entity.maxYield);
-      yieldBar.y = uiBaseY;
-      yieldBar.setVisible(false);
-      container.add(yieldBar);
-      container.setData('maxYield', entity.maxYield);
-      container.setData('yieldBar', yieldBar);
-    }
-
-    // Artifacts and items just get nameplate
-    if (entity.type === 'artifact' || entity.type === 'item') {
-      const nameplate = this.createNameplate(displayName);
-      nameplate.y = uiBaseY;
-      container.add(nameplate);
-    }
-
-    // NPCs get nameplate with distinct styling based on NPC type
-    if (this.isNpc(entity)) {
-      const nameplate = this.createNpcNameplate(entity.name, entity.npcType);
-      nameplate.y = uiBaseY;
-      container.add(nameplate);
-    }
+    strategy.setupUI(entity, container, this.scene, displayName, gated, spriteYOffset, actualSpriteHeight);
 
     // Store data for update handlers (yield bar update, fade-in offset)
     container.setData('elevationOffset', this.elevationOffset);
 
-    // Initial depth: Y-position with X-tiebreaker and elevation (use world coordinates)
-    // Features (plants/minerals) are static — give them a depth boost so they render
-    // in front of tiles up to ~4 rows south. tileHeight * 2 = 256 covers the visual
-    // extent of tall features (trees). Players/NPCs/creatures keep entityOffset=65
-    // so walls can properly occlude them.
-    const featureDepthBoost = isFeature ? this.isoTransform.tileHeight * 2 : 0;
-    container.setData('depthBoost', featureDepthBoost);
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, featureDepthBoost, true);
+    // 8. Depth — strategy provides depth boost (features get extra depth for proper occlusion)
+    const depthBoost = strategy.getDepthBoost(entity, this.isoTransform.tileHeight);
+    container.setData('depthBoost', depthBoost);
+    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, depthBoost, true);
     container.setDepth(depth);
 
-    // CRAI-06: Stealthed predators are invisible on spawn
-    if (this.isCreature(entity) && (entity as Creature).stealthed) {
-      container.setAlpha(0);
-      container.setData('stealthed', true);
-    }
-
-    // CRAI-06: Frenzied maniacs get red tint + pulsing on spawn
-    if (this.isCreature(entity) && (entity as Creature).frenzied) {
+    // 9. Post-strategy spawn effects — frenzy tweens managed by EntityRenderer (called externally)
+    if (container.getData('spawnFrenzied')) {
       this.applyFrenzyEffect(container, entity.id, true);
     }
 
@@ -914,220 +572,10 @@ export class EntityRenderer {
   }
 
   /**
-   * Creates a behavior icon text with letter and background color per lore classifications.
-   */
-  createBehaviorIcon(behavior: CreatureBehavior): Phaser.GameObjects.Text {
-    // Map behavior to lore-correct letter and color
-    let letter: string;
-    let color: string;
-
-    switch (behavior) {
-      case 'herbivore':
-        letter = 'H';
-        color = '#44cc44'; // green
-        break;
-      case 'omnivore':
-        letter = 'O';
-        color = '#ffcc00'; // yellow
-        break;
-      case 'predator':
-        letter = 'P';
-        color = '#ff6b35'; // orange
-        break;
-      case 'maniac':
-        letter = 'M';
-        color = '#ff4444'; // red
-        break;
-    }
-
-    const text = this.scene.add.text(0, 0, letter, {
-      fontSize: '32px',
-      fontStyle: 'bold',
-      color: color,
-      backgroundColor: '#000000cc',
-      padding: { x: 12, y: 6 },
-    });
-    text.setOrigin(0.5, 0.5);
-    text.setShadow(2, 2, '#000000', 3);
-
-    return text;
-  }
-
-  // Creatures with sprite sheets (idle + walk animations)
-  private static readonly ANIMATED_CREATURES = new Set([
-    'creature_void_crawler',
-    'creature_coastal_scuttler',
-    'creature_crystal_hunter',
-    'creature_frost_stalker',
-    'creature_canopy_grazer',
-    'creature_tide_crab',
-    'creature_coastal_urchin',
-    'creature_reef_scavenger',
-    'creature_crystal_crawler',
-    'creature_void_horror',
-    'creature_toxic_lurker',
-    'creature_spore_carrier',
-    'creature_miasma_drifter',
-    'creature_marsh_lurker',
-    'creature_dart_runner',
-    'creature_petrified_lurker',
-    'creature_kelp_grazer',
-    'creature_tangle_stalker',
-    'creature_current_rider',
-    'creature_echo_drifter',
-    'creature_phase_grazer',
-    'creature_reality_scavenger',
-    'creature_magma_beast',
-    'creature_ash_skimmer',
-    'creature_ice_burrower',
-    'creature_null_feeder',
-    'creature_dimensional_hunter',
-    'creature_rift_hunter',
-    'creature_pressure_feeder',
-    'creature_trench_hunter',
-    'creature_abyssal_scavenger',
-    'creature_starfall_grazer',
-    'creature_crater_stalker',
-    'creature_guardian_construct',
-    'creature_ruin_seeker',
-    'creature_relic_beast',
-    'creature_void_grazer',
-    'creature_anomaly_scavenger',
-    'creature_void_stalker',
-    'creature_dimensional_aberration',
-    'creature_abyssal_leviathan',
-  ]);
-
-  // Features with sprite variants: entityId -> number of variants
-  // Used for plants, minerals, and artifacts
-  private static readonly FEATURE_SPRITE_VARIANTS: Record<string, number> = {
-    // Plants - void plains (from void-biome-features spritesheet)
-    plant_void_tree: 1,
-    plant_void_fern: 1,
-    plant_drought_cactus: 1,
-    // Plants - other biomes
-    plant_tendril_tree: 1,
-    plant_rare_fungi: 4,
-    plant_magma_bloom: 4,
-    // Minerals - void plains (from void-biome-features spritesheet)
-    mineral_void_crystal: 1,
-    mineral_void_slate: 1,
-    // Plants - crystal caves (from crystal-biome-features spritesheet)
-    plant_lattice_moss: 1,
-    plant_crystal_lichen: 1,
-    plant_prism_bloom: 1,
-    // Minerals - crystal caves (from crystal-biome-features spritesheet)
-    mineral_cave_geode: 1,
-    mineral_prismatic_crystal: 1,
-    // Plants - toxic wastes (from acid-biome-features spritesheet)
-    plant_acid_fern: 1,
-    plant_acid_bloom: 1,
-    plant_chemical_bloom: 1,
-    // Minerals - toxic wastes (from acid-biome-features spritesheet)
-    mineral_corrosive_deposit: 1,
-    mineral_acid_stone: 1,
-  };
-
-  /**
-   * Simple hash function for entity ID to get deterministic variant selection.
-   */
-  private static hashEntityId(id: string): number {
-    let hash = 0;
-    for (let i = 0; i < id.length; i++) {
-      hash = ((hash << 5) - hash) + id.charCodeAt(i);
-      hash |= 0; // Convert to 32bit integer
-    }
-    return Math.abs(hash);
-  }
-
-  /**
    * Check if a creature has animated sprites available.
    */
   hasAnimatedSprites(speciesId: string): boolean {
-    return EntityRenderer.ANIMATED_CREATURES.has(speciesId);
-  }
-
-  /**
-   * Maps entity to texture key.
-   * Uses species-specific or resource-specific texture for enriched entities,
-   * falling back to type-based texture if unavailable.
-   */
-  private getEntityTexture(entity: Entity): { key: string; frame?: number } {
-    // Use species-specific texture if available (enriched entities)
-    if (this.isCreature(entity) && entity.speciesId) {
-      // Check if this creature has animated sprites
-      if (EntityRenderer.ANIMATED_CREATURES.has(entity.speciesId)) {
-        // Return idle sprite facing south (default direction)
-        return { key: `${entity.speciesId}-idle-s` };
-      }
-      // Try species-specific texture, fall back to generic 'creature'
-      return { key: entity.speciesId };
-    }
-    if (this.isMineral(entity) && entity.resourceId) {
-      // Strip _rare/_epic suffix to use base texture (rare/epic rendered larger via rarity scaling)
-      const baseResourceId = entity.resourceId.replace(/_rare$|_epic$/, '');
-      // Check if this mineral has sprite variants
-      const variantCount = EntityRenderer.FEATURE_SPRITE_VARIANTS[baseResourceId];
-      if (variantCount) {
-        const variant = (EntityRenderer.hashEntityId(entity.id) % variantCount) + 1;
-        return { key: `${baseResourceId}-v${variant}` };
-      }
-      return { key: baseResourceId };
-    }
-    if (this.isPlant(entity) && entity.speciesId) {
-      // Strip _rare/_epic suffix to use base texture (rare/epic rendered larger via rarity scaling)
-      const baseSpeciesId = entity.speciesId.replace(/_rare$|_epic$/, '');
-      // Check if this plant species has sprite variants
-      const variantCount = EntityRenderer.FEATURE_SPRITE_VARIANTS[baseSpeciesId];
-      if (variantCount) {
-        // Deterministic variant selection based on entity ID
-        const variant = (EntityRenderer.hashEntityId(entity.id) % variantCount) + 1;
-        return { key: `${baseSpeciesId}-v${variant}` };
-      }
-      return { key: baseSpeciesId };
-    }
-
-    // NPC sprites based on npcType
-    if (this.isNpc(entity) && entity.npcType) {
-      // Convert npcType to folder name (faction_rep -> faction-rep)
-      const folderName = entity.npcType.replace('_', '-');
-      // Return idle sprite facing south (default direction)
-      const spriteKey = `npc-${folderName}-s`;
-      // Check if sprite exists, fall back to player if not
-      if (this.scene.textures.exists(spriteKey)) {
-        return { key: spriteKey };
-      }
-      return { key: 'player-fallback' };
-    }
-
-    // Ground items: use spritesheet frame if mapping exists
-    if (entity.type === 'item') {
-      const itemEntity = entity as ItemEntity;
-      const spriteInfo = getItemSprite(itemEntity.itemId);
-      if (spriteInfo) {
-        const sheetKey = `item-sheet-${spriteInfo.sheet.replace('.png', '')}`;
-        if (this.scene.textures.exists(sheetKey)) {
-          return { key: sheetKey, frame: spriteInfo.frame };
-        }
-      }
-      return { key: 'item' };
-    }
-
-    // Fall back to type-based texture
-    switch (entity.type) {
-      case 'creature':
-        return { key: 'creature' };
-      case 'mineral':
-        return { key: 'mineral' };
-      case 'plant':
-        return { key: 'plant' };
-      case 'artifact':
-        return { key: 'artifact' };
-      case 'npc':
-        return { key: 'player-fallback' };
-      default:
-        return { key: 'item' };
-    }
+    return ANIMATED_CREATURES.has(speciesId);
   }
 
   /**
@@ -1135,67 +583,6 @@ export class EntityRenderer {
    */
   private isCreature(entity: Entity): entity is Creature {
     return entity.type === 'creature';
-  }
-
-  /**
-   * Type guard to check if entity is a Mineral.
-   */
-  private isMineral(entity: Entity): entity is Mineral {
-    return entity.type === 'mineral';
-  }
-
-  /**
-   * Type guard to check if entity is a Plant.
-   */
-  private isPlant(entity: Entity): entity is Plant {
-    return entity.type === 'plant';
-  }
-
-  /**
-   * Type guard to check if entity is an Npc.
-   */
-  private isNpc(entity: Entity): entity is Npc {
-    return entity.type === 'npc';
-  }
-
-  /**
-   * Creates an NPC nameplate with type indicator and distinct color border.
-   */
-  createNpcNameplate(name: string, npcType: string): Phaser.GameObjects.Container {
-    const container = this.scene.add.container(0, 0);
-
-    // NPC type indicator colors
-    const typeColors: Record<string, number> = {
-      trader: 0xf0c040,      // Gold for traders
-      guard: 0x8080a0,       // Steel gray for guards
-      faction_rep: 0x60a0ff, // Blue for faction reps
-      ambient: 0xa0a0a0,     // Gray for ambient
-      service: 0x60c060,     // Green for service
-    };
-
-    const typeColor = typeColors[npcType] ?? 0xffffff;
-
-    // Background panel
-    const bg = this.scene.add.graphics();
-    const width = 300;
-    const height = 50;
-    bg.fillStyle(0x222222, 0.9);
-    bg.fillRoundedRect(-width / 2, -height / 2, width, height, 8);
-    bg.lineStyle(3, typeColor, 1);
-    bg.strokeRoundedRect(-width / 2, -height / 2, width, height, 8);
-    container.add(bg);
-
-    // Name text
-    const text = this.scene.add.text(0, 0, name, {
-      fontSize: '30px',
-      fontStyle: 'bold',
-      color: '#ffffff',
-    });
-    text.setOrigin(0.5, 0.5);
-    text.setShadow(2, 2, '#000000', 4);
-    container.add(text);
-
-    return container;
   }
 
   /**
