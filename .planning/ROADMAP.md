@@ -50,7 +50,7 @@
 
 **Milestone Goal:** Break apart the largest classes using Strategy Pattern for type-branching logic and component extraction for god objects. Behavior must be identical before and after every phase. No new features.
 
-- [ ] **Phase 147: EntityRenderer Strategy** - Replace per-type switch logic in EntityRenderer with dedicated strategy classes per entity type
+- [x] **Phase 147: EntityRenderer Strategy** - Replace per-type switch logic in EntityRenderer with dedicated strategy classes per entity type (completed 2026-03-24)
 - [ ] **Phase 148: ProceduralTileGenerator Strategy** - Replace switch blocks with behavioral-category tile strategies (floor, wall, hazard, water, portal, decorative)
 - [ ] **Phase 149: Ability Effect Strategy** - Replace ability effect dispatch in ability.service with per-effect-type strategy classes
 - [ ] **Phase 150: Creature AI Strategy** - Formalize existing creature behavior functions in creature-ai.ts into named strategy classes
@@ -137,7 +137,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 147. EntityRenderer Strategy | 0/TBD | Not started | - |
+| 147. EntityRenderer Strategy | 2/2 | Complete    | 2026-03-24 |
 | 148. ProceduralTileGenerator Strategy | 0/TBD | Not started | - |
 | 149. Ability Effect Strategy | 0/TBD | Not started | - |
 | 150. Creature AI Strategy | 0/TBD | Not started | - |
