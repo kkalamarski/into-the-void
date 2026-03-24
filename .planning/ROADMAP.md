@@ -136,7 +136,7 @@
   1. All WebSocket events (combat, movement, inventory, social, zone) are handled identically — no behavioral changes visible to any client
   2. game.gateway contains no inline business logic — all event handling delegated to domain handlers (CombatHandler, MovementHandler, InventoryHandler, SocialHandler, ZoneHandler)
   3. game.gateway.ts is under 500 lines and acts as a pure event router
-**Plans**: TBD
+**Plans**: 153-01 (Create 5 domain handlers), 153-02 (Rewrite gateway as router + update module)
 
 ## Progress
 
@@ -148,7 +148,7 @@
 | 150. Creature AI Strategy | 1/1 | Complete    | 2026-03-24 |
 | 151. Atmosphere & Weather Strategy | 2/2 | Complete    | 2026-03-24 |
 | 152. WorldScene Decomposition | 0/2 | Complete    | 2026-03-24 |
-| 153. Gateway Decomposition | 0/TBD | Not started | - |
+| 153. Gateway Decomposition | 2/2 | Complete    | 2026-03-24 |
 
 ---
 *Last updated: 2026-03-24 — v1.31 roadmap created*

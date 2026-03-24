@@ -42,8 +42,8 @@ Requirements for tech debt / refactoring milestone. Each maps to roadmap phases.
 
 ### Gateway Decomposition
 
-- [ ] **GW-01**: game.gateway event handlers extracted to domain-specific handler classes (combat, movement, inventory, social, zone)
-- [ ] **GW-02**: game.gateway stays under 500 lines as event router delegating to handlers
+- [x] **GW-01**: game.gateway event handlers extracted to domain-specific handler classes (combat, movement, inventory, social, zone)
+- [x] **GW-02**: game.gateway stays under 500 lines as event router delegating to handlers
 
 ## Out of Scope
 
@@ -73,8 +73,8 @@ Requirements for tech debt / refactoring milestone. Each maps to roadmap phases.
 | SCENE-02 | Phase 152 | Pending |
 | SCENE-03 | Phase 152 | Pending |
 | SCENE-04 | Phase 152 | Pending |
-| GW-01 | Phase 153 | Pending |
-| GW-02 | Phase 153 | Pending |
+| GW-01 | Phase 153 | Complete |
+| GW-02 | Phase 153 | Complete |
 
 **Coverage:**
 - v1.31 requirements: 17 total
