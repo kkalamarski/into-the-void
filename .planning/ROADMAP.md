@@ -145,7 +145,7 @@
 | 147. EntityRenderer Strategy | 2/2 | Complete    | 2026-03-24 |
 | 148. ProceduralTileGenerator Strategy | 2/2 | Complete    | 2026-03-24 |
 | 149. Ability Effect Strategy | 0/TBD | Not started | - |
-| 150. Creature AI Strategy | 1/1 | Complete   | 2026-03-24 |
+| 150. Creature AI Strategy | 1/1 | Complete    | 2026-03-24 |
 | 151. Atmosphere & Weather Strategy | 0/TBD | Not started | - |
 | 152. WorldScene Decomposition | 0/TBD | Not started | - |
 | 153. Gateway Decomposition | 0/TBD | Not started | - |
