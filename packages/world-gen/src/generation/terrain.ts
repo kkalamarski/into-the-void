@@ -319,15 +319,7 @@ export function generateTerrain(
       // Map noise (-1 to 1) to height (0 to 3) for gentle terrain
       const rawHeight = Math.round((heightValue + 1) * 1.5);
       // Clamp to biome-specific range using per-tile biome
-      let finalHeight = clampToBiomeRange(Math.max(0, Math.min(3, rawHeight)), biome);
-
-      // Wall tiles get a height boost so they tower over ground at the 64px elevation step
-      // Minimum height of 4 ensures walls render at 4 × 64 = 256px, visibly above terrain slabs
-      if (isWall) {
-        finalHeight = Math.max(4, finalHeight * 2);
-      }
-
-      heights[y][x] = finalHeight;
+      heights[y][x] = clampToBiomeRange(Math.max(0, Math.min(3, rawHeight)), biome);
     }
   }
 

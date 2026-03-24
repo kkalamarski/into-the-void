@@ -4,6 +4,10 @@ import { TileRegistry } from '@into-the-void/tiles';
 import { IsometricTransform } from '../utils/IsometricTransform';
 import { ELEVATION_HEIGHT_STEP } from '../constants/elevation';
 
+// Visual wall height multiplier — walls render taller without changing game data
+// Wall tiles (isBlocking + elevation >= 2) get their elevation visually multiplied
+const WALL_VISUAL_HEIGHT_MULTIPLIER = 2;
+
 // Height-based tinting: lower elevations appear darker for visual depth
 // Brightness = 0.55 + (elevation * 0.15), capped at 1.0
 const ELEVATION_TINT_BASE = 0.55;
@@ -204,7 +208,13 @@ export class TileRenderer {
   ): Phaser.GameObjects.Container {
     // Use world coordinates for screen position
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
-    const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
+
+    // Visual elevation: wall tiles render taller for towering effect (client-only, doesn't affect game data)
+    const textureKey = TILE_TEXTURE_MAP[tileId] ?? '';
+    const isWallTile = textureKey.includes('_wall') && elevation >= 2;
+    const visualElevation = isWallTile ? elevation * WALL_VISUAL_HEIGHT_MULTIPLIER : elevation;
+
+    const elevationOffset = visualElevation * ELEVATION_HEIGHT_STEP;
 
     // Create container at world screen position (top cube position)
     const container = this.scene.add.container(screenPos.x, screenPos.y - elevationOffset);
@@ -212,9 +222,9 @@ export class TileRenderer {
     container.setData('gridY', worldY);
     container.setData('elevation', elevation);
 
-    // Stack cubes from ground level up to elevation to fill the wall
+    // Stack cubes from ground level up to visual elevation to fill the wall
     // Each lower cube is offset downward by ELEVATION_HEIGHT_STEP relative to the top
-    for (let level = 0; level <= elevation; level++) {
+    for (let level = 0; level <= visualElevation; level++) {
       const cubeSprite = this.createCubeSprite(tileId, worldX, worldY);
       // Offset relative to container: level 0 is at the bottom, elevation is at top (y=0)
       const yOffset = (elevation - level) * ELEVATION_HEIGHT_STEP;
