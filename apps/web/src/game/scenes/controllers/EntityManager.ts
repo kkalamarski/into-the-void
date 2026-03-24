@@ -20,6 +20,7 @@ import { FogRenderer } from '../../fog/FogRenderer';
 import { PoiRenderer } from '../../pois/PoiRenderer';
 import { ChunkManager } from '../../rendering/ChunkManager';
 import type { DiscoveredResource } from '../../../store/gameStore';
+import { ELEVATION_HEIGHT_STEP } from '../../constants/elevation';
 
 const ENTITY_GROUND_OFFSET = 0;
 const VISIBILITY_RADIUS = 48;
@@ -347,7 +348,7 @@ export class EntityManager {
       container.setData('position', { ...changes.position });
 
       const elevation = this.worldAccessor.getTileElevation(changes.position.x, changes.position.y, changes.position.zoneId);
-      const elevationOffset = elevation * 128;
+      const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
       const { worldX, worldY } = this.positionToWorldCoords(changes.position);
       const screenPos = isoTransform.gridToScreen(worldX, worldY);
 
@@ -481,7 +482,7 @@ export class EntityManager {
     if (this.playerSprites.has(player.id) || !isoTransform) return;
 
     const elevation = this.worldAccessor.getTileElevation(player.position.x, player.position.y, player.position.zoneId);
-    const elevationOffset = elevation * 128;
+    const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
     const { worldX, worldY } = this.positionToWorldCoords(player.position);
     const screenPos = isoTransform.gridToScreen(worldX, worldY);
 
@@ -523,7 +524,7 @@ export class EntityManager {
     if (!container || !isoTransform) return;
 
     const elevation = this.worldAccessor.getTileElevation(position.x, position.y, position.zoneId);
-    const elevationOffset = elevation * 128;
+    const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
     const { worldX, worldY } = this.positionToWorldCoords(position);
     const screenPos = isoTransform.gridToScreen(worldX, worldY);
 
@@ -587,7 +588,7 @@ export class EntityManager {
     }
 
     const elevation = this.worldAccessor.getTileElevation(position.x, position.y, position.zoneId);
-    const elevationOffset = elevation * 128;
+    const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
     const { worldX, worldY } = this.positionToWorldCoords(position);
     const screenPos = isoTransform.gridToScreen(worldX, worldY);
 
@@ -622,7 +623,7 @@ export class EntityManager {
     if (!this.localPlayer || !isoTransform) return;
 
     const elevation = this.worldAccessor.getTileElevation(position.x, position.y, position.zoneId);
-    const elevationOffset = elevation * 128;
+    const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
     const { worldX, worldY } = this.positionToWorldCoords(position);
     const screenPos = isoTransform.gridToScreen(worldX, worldY);
     const targetY = screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET;
@@ -680,7 +681,7 @@ export class EntityManager {
     const tileY = Math.floor(gridY);
 
     const elevation = this.worldAccessor.getInterpolatedElevation(gridX, gridY);
-    const elevationOffset = elevation * 128;
+    const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
 
     const screenPos = isoTransform.gridToScreen(worldX, worldY);
 
@@ -850,7 +851,7 @@ export class EntityManager {
       const worldY = zoneCoords.y * ZONE_SIZE + gridY;
 
       const elevation = this.worldAccessor.getInterpolatedElevation(gridX, gridY);
-      const elevationOffset = elevation * 128;
+      const elevationOffset = elevation * ELEVATION_HEIGHT_STEP;
 
       const screenPos = isoTransform.gridToScreen(worldX, worldY);
       container.setPosition(screenPos.x, screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET);
