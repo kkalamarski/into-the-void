@@ -1,30 +1,14 @@
 import Phaser from 'phaser';
 import { BiomeType, BIOME_TIERS } from '@into-the-void/shared-types';
+import { getWeatherStrategy, initWeatherStrategies } from './weather-strategies/index';
+import type { WeatherType, WeatherConfig } from './weather-strategies/index';
+
+export type { WeatherType } from './weather-strategies/index';
 
 /** Hub biomes have constant indoor particles — no weather cycling */
 function isHubBiome(biome: BiomeType): boolean {
   return biome === 'canopy_station' || biome === 'ironhold_station' ||
          biome === 'meridian_station' || biome === 'salvage_station';
-}
-
-// ── Weather Types ──────────────────────────────────────────────────────────
-
-export type WeatherType = 'rain' | 'snow' | 'ash' | 'spores' | 'mist' | 'void_energy';
-
-interface WeatherConfig {
-  type: WeatherType;
-  tint: number;
-  /** Per-tier quantity [light, moderate, heavy] */
-  quantity: [number, number, number];
-  speedY: { min: number; max: number };
-  speedX: { min: number; max: number };
-  lifespan: number;
-  scaleX: number;
-  scaleY: number;
-  alpha: { start: number; end: number };
-  /** Milliseconds between emission batches */
-  frequency: number;
-  gravityY?: number;
 }
 
 // ── Weather Config Per Biome ───────────────────────────────────────────────
@@ -240,6 +224,7 @@ export class WeatherSystem {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+    initWeatherStrategies();
 
     // Update emitter emit zones on viewport resize
     this.resizeHandler = (gameSize: Phaser.Structs.Size) => {
@@ -498,28 +483,16 @@ export class WeatherSystem {
   /**
    * Returns the emit zone rectangle for a given weather config.
    *
-   * Falling types (rain, snow, ash) spawn from a thin strip above the viewport
-   * so particles travel through the full visible area.
-   *
-   * Floating, drifting, and chaotic types (spores, mist, void_energy) spawn
-   * across the full viewport because they have no dominant downward direction —
-   * they would immediately fly off-screen if only spawned from the top strip.
+   * Delegates to per-type strategy for zone placement. No per-type branching
+   * in this method — each WeatherParticleStrategy defines its own zone.
    */
   private getEmitZone(config: WeatherConfig, width: number, height: number): Phaser.Geom.Rectangle {
-    switch (config.type) {
-      case 'rain':
-      case 'snow':
-      case 'ash':
-        // Falling: spawn strip above viewport, particles fall through
-        return new Phaser.Geom.Rectangle(0, -(height * 0.15), width, height * 0.15);
-      case 'spores':
-      case 'mist':
-      case 'void_energy':
-        // Floating/drifting/chaotic: spawn across full viewport
-        return new Phaser.Geom.Rectangle(0, 0, width, height);
-      default:
-        return new Phaser.Geom.Rectangle(0, -(height * 0.15), width, height * 0.15);
+    const strategy = getWeatherStrategy(config.type);
+    if (strategy) {
+      return strategy.getEmitZone(width, height);
     }
+    // Fallback for unknown types: falling pattern (same as original default)
+    return new Phaser.Geom.Rectangle(0, -(height * 0.15), width, height * 0.15);
   }
 
   private destroyActive(): void {
