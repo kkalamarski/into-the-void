@@ -487,12 +487,17 @@ export class WeatherSystem {
    * in this method — each WeatherParticleStrategy defines its own zone.
    */
   private getEmitZone(config: WeatherConfig, width: number, height: number): Phaser.Geom.Rectangle {
+    // Account for camera zoom — scroll-factor-0 emitters need to cover the full zoomed viewport
+    const zoom = this.scene.cameras.main.zoom || 1;
+    const zoomedWidth = width / zoom;
+    const zoomedHeight = height / zoom;
+
     const strategy = getWeatherStrategy(config.type);
     if (strategy) {
-      return strategy.getEmitZone(width, height);
+      return strategy.getEmitZone(zoomedWidth, zoomedHeight);
     }
     // Fallback for unknown types: falling pattern (same as original default)
-    return new Phaser.Geom.Rectangle(0, -(height * 0.15), width, height * 0.15);
+    return new Phaser.Geom.Rectangle(0, -(zoomedHeight * 0.15), zoomedWidth, zoomedHeight * 0.15);
   }
 
   private destroyActive(): void {

@@ -1,8 +1,6 @@
 import Phaser from 'phaser';
 import { MinimapCamera } from '../../rendering/MinimapCamera';
 import { WeatherSystem } from '../../systems/WeatherSystem';
-import type { ZoneHUD } from '../../ui/ZoneHUD';
-
 /**
  * Manages camera follow, zoom, and minimap.
  * Extracted from WorldScene (Phase 152).
@@ -14,20 +12,15 @@ export class CameraController {
 
   /**
    * Initialize camera zoom and minimap.
-   * Called from WorldScene.create() after tileLayer and zoneHUD are ready.
+   * Called from WorldScene.create().
    */
-  create(zoneHUD: ZoneHUD | null): void {
+  create(): void {
     // Set fixed zoom to show ~20x15 tiles viewport (for 256x256 sprites)
     this.scene.cameras.main.setZoom(0.5);
 
     // Initialize MinimapCamera
     this.minimapCamera = new MinimapCamera(this.scene);
     this.minimapCamera.create();
-
-    // Make minimap camera ignore ZoneHUD elements (they have scrollFactor 0)
-    if (zoneHUD) {
-      this.minimapCamera.ignore(zoneHUD.getGameObjects());
-    }
   }
 
   /**

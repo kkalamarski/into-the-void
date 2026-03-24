@@ -5,7 +5,6 @@ import type { TileId } from '@into-the-void/world-gen';
 import { TileRenderer } from '../rendering/TileRenderer';
 import { ChunkManager } from '../rendering/ChunkManager';
 import { ViewportCuller } from '../rendering/ViewportCuller';
-import { ZoneHUD } from '../ui/ZoneHUD';
 import { CameraController, InputController, EntityManager, InteractionController } from './controllers';
 import type { WorldSceneAccessor } from './controllers';
 import { PixelMovementController } from '../systems/PixelMovementController';
@@ -79,7 +78,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
   // ── Scene-owned systems ───────────────────────────────────────────────
   private isoTransform: IsometricTransform | null = null;
-  private zoneHUD: ZoneHUD | null = null;
+  // ZoneHUD removed — biome info shown via notification overlay and F3 debug
   private weatherSystem: WeatherSystem | null = null;
   private dayNightCycle: DayNightCycle | null = null;
   private atmosphereSystem: AtmosphereSystem | null = null;
@@ -98,11 +97,9 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     this.isoTransform = new IsometricTransform(ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
     this.tileRenderer = new TileRenderer(this, ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
     this.viewportCuller = new ViewportCuller(ISO_TILE_WIDTH, ISO_TILE_HEIGHT, 4);
-    this.zoneHUD = new ZoneHUD(this);
-
     // Subsystem controllers
     this.cameraController = new CameraController(this);
-    this.cameraController.create(this.zoneHUD);
+    this.cameraController.create();
 
     this.entityManager = new EntityManager(this, this);
     this.entityManager.create(ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
@@ -358,10 +355,6 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
           this.setCollisionMap(chunk.data.collisions);
         }
 
-        if (this.zoneHUD) {
-          this.zoneHUD.updateZone(newZoneId, chunk.biome);
-        }
-
         this.showZoneCinematic(chunk.biome);
         this.entityManager?.refreshRareNodeMarkers();
       }
@@ -448,7 +441,6 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     this.atmosphereSystem?.setBiome(biome, true);
     if (this.cameraController && this.weatherSystem) this.cameraController.updateMinimapWeatherIgnore(this.weatherSystem);
     if (isHubZone(newZoneId)) this.dayNightCycle?.pause(); else this.dayNightCycle?.resume();
-    this.zoneHUD?.updateZone(newZoneId, biome);
     this.showZoneCinematic(biome);
   }
 
@@ -534,9 +526,6 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
       this.currentTiles = tiles;
       this.currentHeights = heights;
       this.currentStructures = structures;
-      if (this.zoneHUD) {
-        this.zoneHUD.updateZone(zoneId, biome);
-      }
       if (this.weatherSystem && !this.weatherSystem.hasActiveWeather()) {
         this.weatherSystem.setBiome(biome, true);
         this.atmosphereSystem?.setBiome(biome, true);
@@ -813,7 +802,6 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     this.atmosphereSystem?.destroy(); this.atmosphereSystem = null;
     this.debugOverlay?.destroy(); this.debugOverlay = null;
     this.debugCollisionRenderer?.destroy(); this.debugCollisionRenderer = null;
-    this.zoneHUD?.destroy(); this.zoneHUD = null;
     this.chunkManager?.clear(); this.chunkManager = null;
     this.chunkTiles.forEach(tiles => tiles.forEach(tile => tile.destroy(true)));
     this.chunkTiles.clear();
