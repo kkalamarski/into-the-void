@@ -104,7 +104,8 @@
   1. All four creature behaviors (Herbivore, Omnivore, Predator, Maniac) produce identical in-game results — AI patterns, aggro, group behaviors unchanged
   2. creature-ai.ts dispatches via strategy interface; HerbivoreBehavior, OmnivoreBehavior, PredatorBehavior, ManiacBehavior are distinct named classes
   3. A new creature behavior can be added by creating one strategy class with no changes to the creature-ai tick loop
-**Plans**: TBD
+**Plans**: 1 plan
+  - [ ] 150-01-PLAN.md — Define CreatureBehaviorStrategy interface, implement 4 behavior classes, registry, refactor creature-ai.ts
 
 ### Phase 151: Atmosphere & Weather Strategy
 **Goal**: AtmosphereSystem and WeatherSystem delegate per-effect and per-particle logic to strategy classes, eliminating per-type branching in both systems
@@ -144,7 +145,7 @@
 | 147. EntityRenderer Strategy | 2/2 | Complete    | 2026-03-24 |
 | 148. ProceduralTileGenerator Strategy | 2/2 | Complete    | 2026-03-24 |
 | 149. Ability Effect Strategy | 0/TBD | Not started | - |
-| 150. Creature AI Strategy | 0/TBD | Not started | - |
+| 150. Creature AI Strategy | 0/1 | Planned | - |
 | 151. Atmosphere & Weather Strategy | 0/TBD | Not started | - |
 | 152. WorldScene Decomposition | 0/TBD | Not started | - |
 | 153. Gateway Decomposition | 0/TBD | Not started | - |
