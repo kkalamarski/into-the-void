@@ -2,6 +2,51 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Milestone: v1.31 — Strategy Pattern Refactor & Code Decomposition
+
+**Shipped:** 2026-03-24
+**Phases:** 7 | **Plans:** 13
+
+### What Was Built
+- 6 entity type strategies replacing EntityRenderer switch logic (1509→896 LOC)
+- 6 behavioral-category tile strategies replacing ProceduralTileGenerator switches (1842→156 LOC)
+- 11 ability effect strategies in game-logic package (1420→910 LOC)
+- 4 creature AI behavior strategies formalizing existing functions
+- 12 atmosphere + weather strategies (6+6) replacing type switches
+- 4 WorldScene controllers (Camera, Input, Entity, Interaction) decomposing god object (2926→782 LOC)
+- 5 gateway domain handlers (Zone, Inventory, Combat, Social, Automation) decomposing event gateway (2092→489 LOC)
+
+### What Worked
+- Consistent pattern across all phases: registry Map + interface + base class + one file per strategy — made each phase predictable
+- Auto-advance pipeline (discuss → plan → execute) completed all 7 phases in a single session
+- "Claude handles it all" option for smaller phases (150, 151, 153) saved significant discussion time without sacrificing quality
+- Behavioral-category grouping for tiles (floor/wall/hazard/water/portal/decorative) was better than per-biome grouping — fewer strategies, clearer boundaries
+- Putting ability effect strategies in packages/game-logic/ (not apps/game-server/) enabled independent testing
+
+### What Was Inefficient
+- Phases 149, 152, 153 missing SUMMARY.md files — executor agents completed code but didn't always create summaries
+- ProceduralTileGenerator achieved 92% reduction (1842→156) — may have moved too much logic out, making the strategies hard to navigate without reading the generator first
+- Some phases had stale progress tracking in ROADMAP.md (Phase 153 still showed unchecked despite being complete)
+
+### Patterns Established
+- Strategy Pattern convention: `{system}-strategies/` subdirectory with types.ts, index.ts (registry), base class, one file per strategy
+- Data file separation: override tables and palette configs extracted to separate `*-data.ts` files, imported by strategies
+- Component decomposition: controllers in `scenes/controllers/` communicating via Phaser scene events
+- Gateway handler pattern: @Injectable() NestJS services in `handlers/` directory, gateway as pure router
+
+### Key Lessons
+1. Refactoring milestones complete faster than feature milestones — all 7 phases in one session because behavior is locked (no design decisions needed)
+2. "Claude handles it all" is appropriate for small, well-structured files (< 500 LOC) where the refactoring pattern is established — saves 10+ minutes of discussion per phase
+3. Data-driven accent configs (tile rendering) are more maintainable than per-tile methods but harder to debug — need good type definitions
+4. The 800-line and 500-line targets for WorldScene/Gateway were achievable and provide good maintainability bounds
+
+### Cost Observations
+- Model mix: ~95% sonnet (executor/planner), ~5% sonnet (integration checker)
+- Profile: balanced
+- Notable: All 7 phases completed in a single conversation session with auto-advance
+
+---
+
 ## Milestone: v1.30 — World Rendering & Interaction Fix
 
 **Shipped:** 2026-03-24
@@ -132,6 +177,7 @@
 
 | Milestone | Phases | Plans | Key Change |
 |-----------|--------|-------|------------|
+| v1.31 | 7 | 13 | Strategy Pattern convention, controller decomposition, auto-advance full pipeline |
 | v1.30 | 4 | 5 | Socket cleanup handler pattern, failed chunk retry, selectedTarget persistence |
 | v1.25 | 4 | 11 | Crafting discipline pattern, quality as runtime modifier |
 | v1.24 | 7 | 20 | Sync tick pattern for game services, design artifact gates |
@@ -144,3 +190,5 @@
 4. Small focused milestones (3-4 phases) complete in a single day and ship cleaner than large sprawling milestones
 5. Post-phase quick fixes can invalidate verification documents — re-verify after stabilization rounds
 6. Cleanup work (debug log removal) regresses without automated enforcement (lint rules, pre-commit hooks)
+7. Refactoring milestones with established patterns complete faster than feature milestones — "Claude handles it all" saves discussion time for small files
+8. Strategy Pattern convention (registry + interface + base class + data files) is the standard for type-switching code

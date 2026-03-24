@@ -4,7 +4,7 @@
 
 A multiplayer 2D sci-fi survival MMO with procedural world generation. Players join factions, explore zones with biome-specific hazards, interact with entities, and engage in combat. The game features real-time multiplayer sync, client-side prediction, expedition travel, and a dual action bar system for ability management.
 
-## Current State (v1.30 shipped)
+## Current State (v1.31 shipped)
 
 **Shipped features:**
 - Authentication: Register, login, JWT tokens, character management
@@ -45,7 +45,7 @@ A multiplayer 2D sci-fi survival MMO with procedural world generation. Players j
 - Rendering: Entities grounded on tiles, seamless chunk loading, correct depth sorting
 - Targeting: Abilities fire at selectedTarget, gathering works on resource click
 
-**Codebase:** ~78,349 LOC TypeScript/CSS
+**Codebase:** ~79,890 LOC TypeScript/CSS
 
 ## Core Value
 
@@ -271,21 +271,17 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 - ✓ Portal debounce includes zoneId for cross-zone correctness — v1.30
 - ✓ NPC proximity uses pixel coordinates from movement system — v1.30
 
+- ✓ EntityRenderer strategy pattern (6 type strategies, registry dispatch) — v1.31
+- ✓ ProceduralTileGenerator strategy pattern (6 behavioral-category tile strategies) — v1.31
+- ✓ Ability effect strategy pattern (11 effect type strategies in game-logic package) — v1.31
+- ✓ Creature AI strategy pattern (4 behavior strategies) — v1.31
+- ✓ Atmosphere + Weather strategy pattern (12 strategies total) — v1.31
+- ✓ WorldScene decomposition (4 controllers: Camera, Input, Entity, Interaction) — v1.31
+- ✓ Gateway decomposition (5 domain handlers: Zone, Inventory, Combat, Social, Automation) — v1.31
+
 ### Active
 
-## Current Milestone: v1.31 Strategy Pattern Refactor & Code Decomposition
-
-**Goal:** Break apart the largest classes in the codebase using Strategy Pattern for type-branching logic and component extraction for god objects, improving maintainability and extensibility.
-
-**Target refactors:**
-- EntityRenderer.ts (1509 LOC) → Strategy per entity type (creature, plant, mineral, NPC, artifact)
-- ProceduralTileGenerator.ts (1842 LOC) → Strategy per tile type/biome group
-- ability.service.ts (1420 LOC) → Strategy per ability effect type
-- creature-ai.ts (304 LOC) → Formalize existing behavior functions into Strategy
-- AtmosphereSystem.ts (477 LOC) → Strategy per atmosphere effect
-- WeatherSystem.ts (540 LOC) → Strategy per particle type
-- WorldScene.ts (2926 LOC) → Component decomposition (input, camera, entity lifecycle, rendering)
-- game.gateway.ts (2092 LOC) → Command/Handler pattern for event dispatch
+(No active milestone — run `/gsd:new-milestone` to plan next)
 
 ### Out of Scope
 
@@ -349,10 +345,13 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 | selectedTarget over targetEntityId | Persists across combat state changes; abilities always have target available | ✓ Good |
 | Portal debounce key includes zoneId | Prevents false-positive suppression when entering new zone at same tile coords | ✓ Good |
 | Socket.off passes handler reference | Prevents cleanup from removing ALL listeners for an event type | ✓ Good |
+| Strategy Pattern for type-switching | Registry + base class + separate data files pattern across 8 systems | ✓ Good |
+| WorldScene → 4 controllers | Camera, Input, Entity, Interaction via Phaser events — scene under 800 LOC | ✓ Good |
+| Gateway → 5 domain handlers | NestJS @Injectable handlers — gateway under 500 LOC as pure router | ✓ Good |
 
 ## Known Issues
 
 - WebSocket auth without handshake validation (guards on all handlers)
 
 ---
-*Last updated: 2026-03-24 after v1.31 milestone started*
+*Last updated: 2026-03-24 after v1.31 milestone completed*

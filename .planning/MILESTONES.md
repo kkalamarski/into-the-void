@@ -269,3 +269,32 @@
 
 ---
 
+
+## v1.31 Strategy Pattern Refactor & Code Decomposition (Shipped: 2026-03-24)
+
+**Phases completed:** 7 phases (147-153), 13 plans
+
+**Delivered:** Broke apart the 8 largest classes using Strategy Pattern for type-branching logic and component decomposition for god objects. Zero behavioral changes — pure structural refactoring for maintainability and extensibility.
+
+**Key accomplishments:**
+- EntityRenderer (1509→896 LOC): 6 entity type strategies with registry dispatch
+- ProceduralTileGenerator (1842→156 LOC): 6 behavioral-category tile strategies with data-driven accent configs
+- ability.service (1420→910 LOC): 11 effect type strategies in packages/game-logic/
+- creature-ai (304 LOC): 4 behavior strategies formalized from existing functions
+- AtmosphereSystem + WeatherSystem: 12 strategies replacing type-switch logic
+- WorldScene (2926→782 LOC): 4 controllers extracted (Camera, Input, Entity, Interaction) with Phaser event communication
+- game.gateway (2092→489 LOC): 5 domain handlers (Zone, Inventory, Combat, Social, Automation) as NestJS injectables
+
+**Stats:**
+- Timeline: 1 day (2026-03-24)
+- Commits: ~33
+- Codebase: ~79,890 LOC TypeScript/CSS
+- Total LOC reduction in refactored files: ~5,500 lines moved to focused strategy/controller classes
+
+**Archives:**
+- `.planning/milestones/v1.31-ROADMAP.md`
+- `.planning/milestones/v1.31-REQUIREMENTS.md`
+- `.planning/milestones/v1.31-MILESTONE-AUDIT.md`
+
+---
+
