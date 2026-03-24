@@ -19,7 +19,7 @@ export type { TilePalette } from './tile-strategies';
 
 const HW = 128; // half width
 const HH = 64;  // half height
-const SH = 128; // side height (matches ELEVATION_HEIGHT_STEP for seamless stacking)
+const SH = 64; // side height — thin slab (matches ELEVATION_HEIGHT_STEP for seamless stacking)
 
 // ─── ProceduralTileGenerator ─────────────────────────────────────
 

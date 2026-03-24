@@ -9,7 +9,7 @@ import { darkenColor, detailRandom, isFloorTile } from './tile-palettes';
 
 export const HW = 128; // half width
 export const HH = 64;  // half height
-export const SH = 128; // side height (matches ELEVATION_HEIGHT_STEP for seamless stacking)
+export const SH = 64; // side height — thin slab (matches ELEVATION_HEIGHT_STEP for seamless stacking)
 
 export abstract class AbstractTileRenderStrategy implements TileRenderStrategy {
   abstract readonly handledTileIds: readonly string[];
