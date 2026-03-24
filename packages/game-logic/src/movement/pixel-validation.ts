@@ -226,16 +226,19 @@ export function createIsometricCollisionCheck(
     // isometric cube visual extends northward into this tile's screen space.
     // A wall at height H visually covers H tiles northward in isometric projection,
     // so we check up to 3 tiles south (max wall height = 3).
+    //
+    // The player walks on the SURFACE of slab tiles (64px above grid root).
+    // Collision threshold starts at the tile's midpoint (0.5 * TILE_SIZE_PX)
+    // to match where the wall face visually meets the slab walking surface.
     for (let dy = 1; dy <= 3; dy++) {
       const checkY = tileY + dy;
       if (baseSolid(tileX, checkY)) {
         const wallHeight = getHeight(tileX, checkY);
         // Wall at distance dy blocks this tile if its height >= dy
-        // (each elevation level covers ~1 tile of isometric northward projection)
         if (wallHeight >= dy) {
           if (pixelY !== undefined) {
-            const tileStartY = tileY * TILE_SIZE_PX;
-            return pixelY >= tileStartY;
+            const tileMidY = tileY * TILE_SIZE_PX + TILE_SIZE_PX * 0.5;
+            return pixelY >= tileMidY;
           }
           return true;
         }
