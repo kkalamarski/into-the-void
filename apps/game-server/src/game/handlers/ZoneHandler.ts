@@ -51,19 +51,19 @@ export class ZoneHandler {
       if (!player) return;
 
       const zoneState = await this.gameService.getZoneState(data.zoneId);
-      client.emit('zone:state', { ...zoneState, serverTime: Date.now() });
 
-      // Send NPC quest markers for the requested zone
-      this.emitNpcQuestMarkers(
-        client,
-        player.id,
-        player.faction,
-        zoneState.entities as Array<{ type: string; npcId?: string }>,
-      );
+      // IMPORTANT: Emit zone:chunk (not zone:state) — client ChunkManager listens for zone:chunk
+      // zone:state is only for initial load and zone transitions via auth/portal/expedition
+      client.emit('zone:chunk', {
+        zoneId: data.zoneId,
+        chunk: zoneState.chunk,
+        biome: zoneState.biome,
+        entities: zoneState.entities,
+      });
     } catch (error) {
       client.emit('error', {
-        code: 'SERVER_ERROR',
-        message: 'Failed to load zone state',
+        code: 'ZONE_LOAD_ERROR',
+        message: `Failed to load zone ${data.zoneId}`,
       });
     }
   }
