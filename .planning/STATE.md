@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 Phase: 155 of 155 (Elevation & Height Rework)
 Plan: 2 of 2 in current phase
 Status: Phase 155 execution complete, pending verification
-Last activity: 2026-03-24 — Phase 155 executed (2 plans, 1 wave)
+Last activity: 2026-03-24 - Completed quick task 16: Add a service worker to cache all game assets
 
 Progress: [█████░░░░░] 50%
 
@@ -63,6 +63,12 @@ None.
 ### Blockers/Concerns
 
 None.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Status | Directory |
+|---|-------------|------|--------|--------|-----------|
+| 16 | Add a service worker to cache all game assets | 2026-03-24 | 2f4e92d | Verified | [16-add-service-worker-asset-caching](./quick/16-add-service-worker-asset-caching/) |
 
 ## Session Continuity
 
