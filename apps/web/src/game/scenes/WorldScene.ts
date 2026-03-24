@@ -1,200 +1,134 @@
 import Phaser from 'phaser';
-import { ZONE_SIZE, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, BiomeTier, Direction, Creature, TileStructure, isHubZone, Npc, TimingChallenge, BIOME_DISPLAY_NAMES, BIOME_TIERS, getZoneSize } from '@into-the-void/shared-types';
-import { TILE_SIZE_PX, MELEE_RANGE_PX, GATHER_RANGE_PX, NPC_INTERACT_RANGE_PX, pixelDistanceTo, tileToPixelCenter, createIsometricCollisionCheck } from '@into-the-void/game-logic';
-import { TileId, tileIdToString } from '@into-the-void/world-gen';
-import { TileRegistry } from '@into-the-void/tiles';
-import { ItemRegistry } from '@into-the-void/items';
-import { QuestRegistry } from '@into-the-void/quests';
+import { ZONE_SIZE, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, BiomeTier, TileStructure, isHubZone, TimingChallenge, BIOME_DISPLAY_NAMES, BIOME_TIERS, getZoneSize } from '@into-the-void/shared-types';
+import { TILE_SIZE_PX, createIsometricCollisionCheck, tileToPixelCenter } from '@into-the-void/game-logic';
+import type { TileId } from '@into-the-void/world-gen';
 import { TileRenderer } from '../rendering/TileRenderer';
-import { EntityRenderer } from '../rendering/EntityRenderer';
 import { ChunkManager } from '../rendering/ChunkManager';
 import { ViewportCuller } from '../rendering/ViewportCuller';
 import { ZoneHUD } from '../ui/ZoneHUD';
-import { CameraController, InputController } from './controllers';
+import { CameraController, InputController, EntityManager, InteractionController } from './controllers';
+import type { WorldSceneAccessor } from './controllers';
 import { PixelMovementController } from '../systems/PixelMovementController';
-import { RemotePlayerInterpolator } from '../systems/RemotePlayerInterpolator';
+import type { RemotePlayerInterpolator } from '../systems/RemotePlayerInterpolator';
 import { IsometricTransform } from '../utils/IsometricTransform';
-import { DepthSorter } from '../rendering/DepthSorter';
 import { audioManager } from '../../utils/audio';
 import { useGameStore } from '../../store/gameStore';
 import { useEntityStore } from '../../store/entityStore';
-import { useInventoryStore } from '../../store/inventoryStore';
 import { useAbilityStore } from '../../store/abilityStore';
-import { useCombatStore } from '../../store/combatStore';
-import { useQuestStore } from '../../store/questStore';
-import { gameSocket } from '../../network/socket';
-import { TargetHighlight } from '../rendering/TargetHighlight';
-import { FogManager } from '../fog/FogManager';
-import { FogRenderer } from '../fog/FogRenderer';
-import { PoiRenderer } from '../pois/PoiRenderer';
+import type { FogManager } from '../fog/FogManager';
+import type { FogRenderer } from '../fog/FogRenderer';
+import type { PoiRenderer } from '../pois/PoiRenderer';
 import { WeatherSystem } from '../systems/WeatherSystem';
 import { DayNightCycle } from '../systems/DayNightCycle';
 import { AtmosphereSystem } from '../systems/AtmosphereSystem';
-// GatheringMiniGame removed - gathering now auto-completes on server
-import { createRareNodeMarker } from '../rendering/RareNodeFX';
-import type { DiscoveredResource } from '../../store/gameStore';
+import { gameSocket } from '../../network/socket';
 
 export const ISO_TILE_WIDTH = 256;
 export const ISO_TILE_HEIGHT = 128;
-// Visibility radius in tiles (~1.5 chunks allows seeing into adjacent chunks)
-const VISIBILITY_RADIUS = 48;
-// Pixel-space hysteresis threshold: commit zone transition once player is this many px deep
-const HYSTERESIS_PX = HYSTERESIS_TILES * TILE_SIZE_PX; // 3 * 128 = 384 px
-const ENTITY_GROUND_OFFSET = 0; // No visual offset — depth sorting (entityOffset=65) handles south-tile wall occlusion
+const HYSTERESIS_PX = HYSTERESIS_TILES * TILE_SIZE_PX;
+const ENTITY_GROUND_OFFSET = 0;
 
-// Phase 138: Zone cinematic tier label mapping and cooldown
 const TIER_LABELS: Record<BiomeTier, string> = {
   1: 'Frontier',
   2: 'Hazardous',
   3: 'Hostile',
   4: 'Extreme',
 };
-const ZONE_CINEMATIC_COOLDOWN_MS = 30_000; // 30 seconds per zone
+const ZONE_CINEMATIC_COOLDOWN_MS = 30_000;
 
-export class WorldScene extends Phaser.Scene {
-  private tileLayer: Phaser.GameObjects.Container | null = null;
-  private tileRenderer: TileRenderer | null = null;
-  private entityRenderer: EntityRenderer | null = null;
-  private entitySprites: Map<string, Phaser.GameObjects.Container> = new Map();
-  private entityZoneMap: Map<string, Set<string>> = new Map(); // zoneId -> Set<entityId>
-  private playerSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
-  private localPlayer: Phaser.GameObjects.Sprite | null = null;
-  // Subsystem controllers (Phase 152)
+/**
+ * WorldScene orchestrator — coordinates subsystem controllers.
+ * Phase 152: decomposed from 2926-line god object into 4 controllers
+ * (CameraController, InputController, EntityManager, InteractionController).
+ */
+export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
+  // ── Subsystem controllers ─────────────────────────────────────────────
   private cameraController: CameraController | null = null;
   private inputController: InputController | null = null;
-  private lastMoveTime = 0;
-  private chordStartTime = 0; // When first movement key was pressed
-  private static readonly CHORD_WINDOW_MS = 2; // Time to wait for additional keys
+  private entityManager: EntityManager | null = null;
+  private interactionController: InteractionController | null = null;
+
+  // ── Tile rendering ────────────────────────────────────────────────────
+  private tileLayer: Phaser.GameObjects.Container | null = null;
+  private tileRenderer: TileRenderer | null = null;
   private chunkManager: ChunkManager | null = null;
-  // Store tile arrays for cleanup (not containers - tiles need global depth sorting)
   private chunkTiles: Map<string, Phaser.GameObjects.Container[]> = new Map();
+  private viewportCuller: ViewportCuller | null = null;
+  private lastCullBounds: { minTileX: number; maxTileX: number; minTileY: number; maxTileY: number } | null = null;
+  private lastCullTime = 0;
+  private cullInterval = 100;
+  private transparentTiles: Set<Phaser.GameObjects.Container> = new Set();
+  private lastOcclusionTime = 0;
+  private occlusionInterval = 100;
+
+  // ── Zone state ────────────────────────────────────────────────────────
   private currentZoneId: string = 'z_0_0';
   private pendingZoneId: string | null = null;
   private pendingBiome: BiomeType | null = null;
   private lastPendingZoneCheck = 0;
-  private static readonly PENDING_ZONE_CHECK_INTERVAL = 100; // ms between checks
+  private static readonly PENDING_ZONE_CHECK_INTERVAL = 100;
   private onChunkRequest: ((zoneId: string) => void) | null = null;
-  private viewportCuller: ViewportCuller | null = null;
-  private zoneHUD: ZoneHUD | null = null;
   private currentBiome: BiomeType = 'void_plains';
-  private lastCullBounds: { minTileX: number; maxTileX: number; minTileY: number; maxTileY: number } | null = null;
-  private collisionMap: boolean[][] | null = null;
-  private isoTransform: IsometricTransform | null = null;
-  private depthSorter: DepthSorter | null = null;
+  private currentTiles: number[][] | null = null;
   private currentHeights: number[][] | null = null;
   private currentStructures: TileStructure[] = [];
-  private lastOcclusionTime = 0;
-  private occlusionInterval = 100; // Only check occlusion every 100ms
-  private transparentTiles: Set<Phaser.GameObjects.Container> = new Set();
-  private currentTiles: number[][] | null = null;
-  private tileInfoPopup: Phaser.GameObjects.Container | null = null;
-  private lastClickedEntity: string | null = null;
-  private targetHighlight: TargetHighlight | null = null;
-  // Phase 133: nearest NPC within NPC_INTERACT_RANGE_PX — gates npc:interact emissions
-  private nearestNpcInRange: Entity | null = null;
-  // Portal tile detection: track last position where portal:use was emitted to prevent duplicates
-  private lastPortalEmitKey: string | null = null;
-  // Local player facing direction for sprite selection
-  private localPlayerFacing: Direction = 's';
-  // Movement animation state tracking
-  private lastMovementTime = 0;
-  private static readonly IDLE_THRESHOLD_MS = 50; // Time after tween completes before stopping animation
-  // Fog of war system
-  private fogManager: FogManager | null = null;
-  private fogRenderer: FogRenderer | null = null;
-  private fogInitialized: boolean = false;
-  // POI discovery system
-  private poiRenderer: PoiRenderer | null = null;
-  private discoveredPoiIds: Set<string> = new Set();
-  // Gathering - now auto-completes on server, no mini-game needed
-  // Rare node markers
-  private rareNodeMarkers: Map<string, Phaser.GameObjects.Container> = new Map();
+  private collisionMap: boolean[][] | null = null;
+  private zoneCinematicCooldowns: Map<string, number> = new Map();
+
+  // ── Scene-owned systems ───────────────────────────────────────────────
+  private isoTransform: IsometricTransform | null = null;
+  private zoneHUD: ZoneHUD | null = null;
   private weatherSystem: WeatherSystem | null = null;
   private dayNightCycle: DayNightCycle | null = null;
   private atmosphereSystem: AtmosphereSystem | null = null;
-  // Phase 134: pixel movement controllers
   private pixelMovement: PixelMovementController | null = null;
-  private remoteInterpolator: RemotePlayerInterpolator | null = null;
-  // Phase 138: cooldown tracking for zone cinematic (zoneId -> last shown timestamp)
-  private zoneCinematicCooldowns: Map<string, number> = new Map();
 
   constructor() {
     super({ key: 'WorldScene' });
   }
 
+  // ── Scene Lifecycle ───────────────────────────────────────────────────
+
   create(): void {
-    // Create tile container
     this.tileLayer = this.add.container(0, 0);
-
-    // Initialize IsometricTransform
     this.isoTransform = new IsometricTransform(ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
-
-    // Fog of war rendering disabled — RenderTexture approach doesn't track camera properly
-    // this.fogRenderer = new FogRenderer(this, this.isoTransform);
-    // this.fogRenderer.create();
-
-    // Initialize POI renderer
-    this.poiRenderer = new PoiRenderer(this, this.isoTransform);
-
-    // Initialize DepthSorter
-    this.depthSorter = new DepthSorter();
-
-    // Initialize TileRenderer with isometric dimensions
     this.tileRenderer = new TileRenderer(this, ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
-
-    // Initialize EntityRenderer with isometric dimensions
-    this.entityRenderer = new EntityRenderer(this, ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
-    this.entityRenderer.initStampedeListener(); // CRAI-06: camera shake on stampede
-
-    // Initialize TargetHighlight for entity targeting feedback
-    this.targetHighlight = new TargetHighlight(this);
-
-    // Subscribe to combatStore target changes for auto-targeting
-    useCombatStore.subscribe((state, prevState) => {
-      if (state.targetEntityId !== prevState.targetEntityId) {
-        if (state.targetEntityId) {
-          // Auto-target: show highlight on new target (e.g., first creature to aggro player)
-          const entity = useEntityStore.getState().entities.get(state.targetEntityId);
-          const container = this.entitySprites.get(state.targetEntityId);
-          if (entity && container) {
-            const creature = entity as { behavior?: string };
-            this.targetHighlight?.show(state.targetEntityId, container, creature.behavior ?? 'herbivore');
-          }
-        } else {
-          // Target cleared (combat ended)
-          this.targetHighlight?.hide();
-        }
-      }
-    });
-
-    // Initialize ViewportCuller with isometric dimensions and expanded padding
     this.viewportCuller = new ViewportCuller(ISO_TILE_WIDTH, ISO_TILE_HEIGHT, 4);
-
-    // Initialize ZoneHUD
     this.zoneHUD = new ZoneHUD(this);
 
-    // Initialize CameraController (zoom + minimap)
+    // Subsystem controllers
     this.cameraController = new CameraController(this);
     this.cameraController.create(this.zoneHUD);
 
-    // Initialize WeatherSystem for biome particle effects
-    this.weatherSystem = new WeatherSystem(this);
+    this.entityManager = new EntityManager(this, this);
+    this.entityManager.create(ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
 
-    // Initialize Day/Night Cycle on main camera only (DNTC-03, DNTC-05)
+    this.inputController = new InputController(this);
+    this.inputController.create();
+
+    this.interactionController = new InteractionController(this, this.entityManager, this);
+    this.interactionController.create();
+
+    // Wire input events from InputController
+    this.events.on('input:both-buttons', (pointer: Phaser.Input.Pointer) => {
+      this.interactionController?.showTileInfo(pointer);
+    });
+    this.events.on('input:button-released', () => {
+      this.interactionController?.hideTileInfo();
+    });
+
+    // Weather, day/night, atmosphere
+    this.weatherSystem = new WeatherSystem(this);
     this.dayNightCycle = new DayNightCycle();
     this.dayNightCycle.create(this.cameras.main);
-
-    // Initialize AtmosphereSystem and register with DayNightCycle (ATMO-04)
     this.atmosphereSystem = new AtmosphereSystem(this);
     this.dayNightCycle.setAtmosphereSystem(this.atmosphereSystem);
 
-    // Phase 134: pixel movement controllers
+    // Pixel movement
     this.pixelMovement = new PixelMovementController();
-    this.remoteInterpolator = new RemotePlayerInterpolator();
 
-    // Initialize ChunkManager
+    // Chunk manager
     this.chunkManager = new ChunkManager(
-      // onChunkNeeded
       (zoneId: string) => {
         if (this.onChunkRequest) {
           this.onChunkRequest(zoneId);
@@ -202,75 +136,16 @@ export class WorldScene extends Phaser.Scene {
           console.warn('[ChunkManager] No chunk request handler set!');
         }
       },
-      // onChunkLoaded
       (chunkData: ChunkData, biome: BiomeType) => {
         this.renderChunk(chunkData, biome);
       },
-      // onChunkUnloaded
       (zoneId: string) => {
         this.unloadChunkContainer(zoneId);
       },
-      // onLoadingStateChange
       (loadingCount: number) => {
         useGameStore.getState().setChunksLoading(loadingCount);
       }
     );
-
-    // Setup input controller (WASD, hotkeys, mouse tracking)
-    this.inputController = new InputController(this);
-    this.inputController.create();
-
-    // Wire input events from InputController
-    this.events.on('input:both-buttons', (pointer: Phaser.Input.Pointer) => {
-      this.showTileInfo(pointer);
-    });
-    this.events.on('input:button-released', () => {
-      this.hideTileInfo();
-    });
-
-    // Tiles and player will be loaded via loadZoneFromState() when zone:state event arrives
-
-    // Listen for npc:interact:response to update quest markers after interaction
-    gameSocket.on('npc:interact:response', (data) => {
-      this.updateNpcQuestMarker(data);
-    });
-
-    // Listen for npc:quest-markers to show quest markers on zone entry
-    gameSocket.on('npc:quest-markers', (data) => {
-      this.applyInitialQuestMarkers(data.markers);
-    });
-
-    // Hook quest state changes for real-time marker updates
-    gameSocket.on('quest:progress', this.handleQuestProgress);
-    gameSocket.on('quest:completed', this.handleQuestCompleted);
-    gameSocket.on('quest:abandoned', this.handleQuestAbandoned);
-
-    // POI discovery system listeners
-    gameSocket.on('poi:discovered_ids', (data: { poiIds: string[] }) => {
-      this.discoveredPoiIds = new Set(data.poiIds);
-    });
-
-    gameSocket.on('poi:discovered', (data: { poiId: string; poiType: string; reward: any }) => {
-      this.discoveredPoiIds.add(data.poiId);
-      this.poiRenderer?.markDiscovered(data.poiId);
-      // Reward is handled by existing XP/credits listeners
-    });
-
-    gameSocket.on('poi:already_discovered', (data: { poiId: string }) => {
-      this.discoveredPoiIds.add(data.poiId);
-      this.poiRenderer?.markDiscovered(data.poiId);
-    });
-
-    // Rare node discovery system listeners
-    gameSocket.on('rare-nodes:discovered', (data: any) => {
-      useGameStore.getState().setDiscoveredResources(data.discoveries);
-      this.refreshRareNodeMarkers();
-    });
-
-    gameSocket.on('rare-node:new-discovery', (data: any) => {
-      useGameStore.getState().addDiscoveredResource(data);
-      this.addRareNodeMarker(data);
-    });
 
     // Sync server time for day/night cycle (DNTC-01)
     gameSocket.on('zone:state', (data: any) => {
@@ -279,415 +154,9 @@ export class WorldScene extends Phaser.Scene {
       }
     });
 
-    // Ground click handler: clear target highlight when clicking empty ground
-    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
-      // Skip if we clicked an entity (handled by gameobjectdown)
-      if (this.lastClickedEntity) {
-        this.lastClickedEntity = null;
-        return;
-      }
-
-      // Only handle left click
-      if (pointer.rightButtonDown()) return;
-
-      // Clear target highlight when clicking ground (empty tile)
-      this.targetHighlight?.hide();
-      useCombatStore.getState().stopAutoAttack();
-      useCombatStore.getState().setInCombat(useCombatStore.getState().inCombat, null);
-    });
-
-    // Entity click handler for click-to-attack (CATK-01, CATK-02, CATK-04)
-    this.input.on('gameobjectdown', (pointer: Phaser.Input.Pointer, gameObject: Phaser.GameObjects.GameObject) => {
-      // Only process left-click
-      if (!pointer.leftButtonDown()) return;
-
-      // Check if clicked object's parent container has entity data
-      const container = gameObject.parentContainer;
-      if (!container) return;
-
-      const entityId = container.getData('entityId') as string | undefined;
-      const entityType = container.getData('entityType') as string | undefined;
-
-      if (!entityId) return;
-
-      // NPC interaction: emit npc:interact to server which responds with NPC definition data
-      if (entityType === 'npc') {
-        this.lastClickedEntity = entityId;
-        gameSocket.emit('npc:interact', { entityId });
-        return; // Do not proceed to combat
-      }
-
-      // Item pickup: emit inventory:pickup to server
-      if (entityType === 'item') {
-        this.lastClickedEntity = entityId;
-        gameSocket.emit('inventory:pickup', { entityId });
-        return;
-      }
-
-      // Resources: click selects target, user fires gather from action bar
-      if (entityType === 'mineral' || entityType === 'plant') {
-        this.lastClickedEntity = entityId;
-
-        // Show target highlight
-        const targetContainer = this.entitySprites.get(entityId);
-        if (targetContainer) {
-          this.targetHighlight?.show(entityId, targetContainer, 'herbivore');
-        }
-
-        // Set as target — user triggers gather/mine from action bar
-        useCombatStore.getState().selectTarget(entityId);
-        return;
-      }
-
-      // Artifacts: instant collection (no mini-game)
-      if (entityType === 'artifact') {
-        this.lastClickedEntity = entityId;
-        gameSocket.emit('entity:tool_use', { targetEntityId: entityId });
-        return;
-      }
-
-      // Creatures: combat flow (INTERACT-01)
-      if (entityType === 'creature') {
-        // Track that we clicked an entity to suppress ground-click handler
-        this.lastClickedEntity = entityId;
-
-        // Show target highlight and select target
-        this.handleEntityClick(entityId);
-        // Start auto-attack loop (INTERACT-01)
-        useCombatStore.getState().startAutoAttack(entityId);
-        return;
-      }
-    });
-
-    // Start background music — loops gaplessly via Web Audio API (AUD-01)
-    // By the time WorldScene loads, user has interacted (login flow), so AudioContext is ready
+    // Start background music
     audioManager.startMusic('/assets/music/freesound_community-ethereal-ambient-music-55115.mp3');
   }
-
-  /**
-   * Show tile information popup (triggered by both mouse buttons)
-   */
-  private showTileInfo(pointer: Phaser.Input.Pointer): void {
-    if (!this.isoTransform || !this.currentTiles) return;
-
-    // Convert screen position to world position
-    const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-
-    // Convert to tile coordinates
-    const gridPos = this.isoTransform.screenToTileWithElevation(
-      worldPoint.x,
-      worldPoint.y,
-      (x, y) => this.getTileElevation(x, y)
-    );
-
-    // Check bounds
-    const currentZoneSize = getZoneSize(this.currentZoneId);
-    if (gridPos.x < 0 || gridPos.x >= currentZoneSize || gridPos.y < 0 || gridPos.y >= currentZoneSize) {
-      return;
-    }
-
-    // Get tile info from registry
-    const tileNumericId = this.currentTiles[gridPos.y]?.[gridPos.x];
-    if (tileNumericId === undefined) return;
-
-    const tileId = tileIdToString(tileNumericId as TileId);
-    const tileDef = TileRegistry.get(tileId);
-    const elevation = this.currentHeights?.[gridPos.y]?.[gridPos.x] ?? 0;
-    const isBlocked = this.collisionMap?.[gridPos.y]?.[gridPos.x] ?? false;
-
-    // Hide any existing popup
-    this.hideTileInfo();
-
-    // Create info popup
-    const popup = this.add.container(pointer.x, pointer.y - 100);
-    popup.setScrollFactor(0);
-    popup.setDepth(2000);
-
-    // Background
-    const bg = this.add.graphics();
-    bg.fillStyle(0x000000, 0.85);
-    bg.fillRoundedRect(-120, -60, 240, 120, 8);
-    bg.lineStyle(2, isBlocked ? 0xff4444 : 0x44ff44, 1);
-    bg.strokeRoundedRect(-120, -60, 240, 120, 8);
-    popup.add(bg);
-
-    // Title
-    const title = this.add.text(0, -45, tileDef.displayName, {
-      fontSize: '16px',
-      fontFamily: 'monospace',
-      color: '#ffffff',
-      fontStyle: 'bold',
-    }).setOrigin(0.5, 0);
-    popup.add(title);
-
-    // Properties
-    const props = [
-      `Position: (${gridPos.x}, ${gridPos.y})`,
-      `Elevation: ${elevation}`,
-      `Blocking: ${isBlocked ? 'Yes' : 'No'}`,
-      `Speed: ${tileDef.movementSpeed}x`,
-    ];
-
-    const propsText = this.add.text(0, -20, props.join('\n'), {
-      fontSize: '12px',
-      fontFamily: 'monospace',
-      color: '#cccccc',
-      lineSpacing: 4,
-    }).setOrigin(0.5, 0);
-    popup.add(propsText);
-
-    // Description (if available)
-    if (tileDef.description) {
-      const desc = this.add.text(0, 35, tileDef.description, {
-        fontSize: '10px',
-        fontFamily: 'monospace',
-        color: '#aaaaaa',
-        wordWrap: { width: 220 },
-        align: 'center',
-      }).setOrigin(0.5, 0);
-      popup.add(desc);
-    }
-
-    this.tileInfoPopup = popup;
-  }
-
-  /**
-   * Hide tile information popup
-   */
-  private hideTileInfo(): void {
-    if (this.tileInfoPopup) {
-      this.tileInfoPopup.destroy();
-      this.tileInfoPopup = null;
-    }
-  }
-
-  /**
-   * Handle click on entity creature — select target without auto-attacking.
-   * Player will use abilities via hotkeys on the selected target.
-   */
-  private handleEntityClick(entityId: string): void {
-    // Get entity from entityStore
-    const entity = useEntityStore.getState().entities.get(entityId);
-    if (!entity || entity.type !== 'creature') {
-      return;
-    }
-
-    // Show highlight on target (get behavior from entity store)
-    const creatureEntity = entity as { behavior?: string };
-    const targetContainer = this.entitySprites.get(entityId);
-    if (targetContainer) {
-      this.targetHighlight?.show(entityId, targetContainer, creatureEntity.behavior ?? 'herbivore');
-    }
-
-    // Select target for ability use (does NOT auto-attack)
-    useCombatStore.getState().selectTarget(entityId);
-  }
-
-  /**
-   * Handle gathering:challenge event from server.
-   * No longer used - gathering auto-completes on server.
-   * Kept for backwards compatibility.
-   */
-  public handleGatheringChallenge(_challenge: TimingChallenge): void {
-    // Gathering now auto-completes on server, no mini-game needed
-  }
-
-  /**
-   * Complete gathering and report timing to server.
-   * No longer used - gathering auto-completes on server.
-   */
-  private completeGathering(_challengeId: string, _clientOffset: number): void {
-    // No longer used - gathering auto-completes on server
-  }
-
-  /**
-   * Check if the player is standing on a portal tile (TileId = 16) and emit portal:use.
-   * Called after each movement step completes (client prediction).
-   * Debounced by position key: once emitted for a given tile, won't re-emit until
-   * the player moves to a different tile (lastPortalEmitKey is cleared on non-portal tiles).
-   */
-  private checkPortalTile(position: Position): void {
-    const posKey = `${position.x},${position.y},${position.zoneId}`;
-
-    // Already emitted for this exact position — skip
-    if (this.lastPortalEmitKey === posKey) return;
-
-    // Look up tile ID at the player's position
-    let tileNumericId: number | undefined;
-
-    if (this.chunkManager) {
-      // Prefer currentTiles for the current zone (fast path)
-      if (position.zoneId === this.currentZoneId && this.currentTiles) {
-        tileNumericId = this.currentTiles[position.y]?.[position.x];
-      } else {
-        const chunk = this.chunkManager.getChunk(position.zoneId);
-        if (chunk?.data.tiles) {
-          tileNumericId = chunk.data.tiles[position.y]?.[position.x];
-        }
-      }
-    } else if (this.currentTiles) {
-      tileNumericId = this.currentTiles[position.y]?.[position.x];
-    }
-
-    // TileId.PORTAL = 16
-    if (tileNumericId === 16) {
-      this.lastPortalEmitKey = posKey;
-      gameSocket.emit('portal:use', {});
-    } else {
-      // Player moved off a portal tile — reset debounce so portal can be re-triggered
-      // if the player returns to the same portal position later
-      this.lastPortalEmitKey = null;
-    }
-  }
-
-  private generatePlaceholderWorld(): void {
-    if (!this.tileLayer || !this.entityRenderer || !this.isoTransform) return;
-
-    // Generate a simple placeholder grid (no longer used - kept for compatibility)
-    // Tiles are now rendered via TileRenderer in renderChunk()
-
-    // Add some test entities using EntityRenderer
-    for (let i = 0; i < 10; i++) {
-      const x = Phaser.Math.Between(5, ZONE_SIZE - 5);
-      const y = Phaser.Math.Between(5, ZONE_SIZE - 5);
-      const type = Math.random() > 0.5 ? 'creature' : 'mineral';
-      const testEntity: Entity = {
-        id: `test_${type}_${i}`,
-        type: type as 'creature' | 'mineral',
-        position: { x, y, zoneId: this.currentZoneId },
-        name: `Test ${type}`,
-        active: true
-      };
-      const container = this.entityRenderer.createEntityContainer(testEntity);
-      this.entitySprites.set(testEntity.id, container);
-
-      if (this.depthSorter) {
-        this.depthSorter.markDirty(testEntity.id);
-      }
-    }
-  }
-
-  private initializeFog(characterId: string): void {
-    // Fog of war disabled - FogPersistence allocates too much memory (40B tiles)
-    // TODO: Fix FogPersistence to use sparse data structure instead of dense bitset
-    return;
-
-    if (this.fogInitialized) return;
-
-    this.fogManager = new FogManager(characterId);
-    this.fogManager!.initialize();
-    this.fogInitialized = true;
-
-    // Redraw fog from saved state
-    if (this.fogRenderer && this.fogManager) {
-      this.fogRenderer!.redrawFromState(this.fogManager!);
-    }
-  }
-
-  /**
-   * Update local player's facing direction and sprite texture.
-   * If moving, switches to the new direction's running animation.
-   * If idle, switches to the new direction's idle texture.
-   */
-  private updateLocalPlayerDirection(direction: Direction): void {
-    if (this.localPlayerFacing === direction) return;
-    this.localPlayerFacing = direction;
-
-    const sprite = this.localPlayer?.getData('characterSprite') as Phaser.GameObjects.Sprite | undefined;
-    if (!sprite) return;
-
-    const isMoving = this.localPlayer?.getData('isMoving') as boolean;
-    if (isMoving) {
-      // Switch to new direction's running animation
-      sprite.play(`character-run-${direction}`);
-    } else {
-      // Switch to new direction's idle texture
-      sprite.setTexture(`character-idle-${direction}`);
-    }
-  }
-
-  /**
-   * Start running animation for the local player.
-   * Only starts if not already playing the same animation.
-   */
-  private startPlayerAnimation(direction: Direction): void {
-    const sprite = this.localPlayer?.getData('characterSprite') as Phaser.GameObjects.Sprite | undefined;
-    if (!sprite) return;
-
-    const animKey = `character-run-${direction}`;
-    // Only play if not already playing this animation (prevents jitter from restarting)
-    // Check both: animation must be playing AND must be the same key
-    if (!sprite.anims.isPlaying || sprite.anims.currentAnim?.key !== animKey) {
-      sprite.play(animKey);
-    }
-    this.localPlayer?.setData('isMoving', true);
-  }
-
-  /**
-   * Stop running animation and return to idle.
-   */
-  private stopPlayerAnimation(): void {
-    const sprite = this.localPlayer?.getData('characterSprite') as Phaser.GameObjects.Sprite | undefined;
-    if (!sprite) return;
-
-    sprite.stop();
-    sprite.setTexture(`character-idle-${this.localPlayerFacing}`);
-    this.localPlayer?.setData('isMoving', false);
-  }
-
-  private createLocalPlayer(position: Position): void {
-    if (!this.isoTransform) return;
-
-    // Initialize fog system once we have player data
-    const player = useGameStore.getState().player;
-    if (player?.id) {
-      this.initializeFog(player.id);
-    }
-
-    // Get elevation for the correct zone
-    const elevation = this.getTileElevation(position.x, position.y, position.zoneId);
-    const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 × diamond height)
-    // Use world coordinates for screen position so player aligns with chunk positions
-    const { worldX, worldY } = this.positionToWorldCoords(position);
-    const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
-
-    // Create container for player (same pattern as entities)
-    const container = this.add.container(screenPos.x, screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET);
-    container.setData('gridX', worldX);
-    container.setData('gridY', worldY);
-    container.setData('elevation', elevation);
-
-    // Elliptical drop shadow at diamond center (tileHeight/2 below north vertex)
-    // Matches entity shadow offset so player and features align visually
-    const tileHH = this.isoTransform.tileHeight / 2;
-    const shadow = this.add.ellipse(0, tileHH, 120, 60, 0x000000, 0.3);
-    container.add(shadow);
-
-    // Player sprite offset to diamond center (tileHeight/2) to match entity rendering.
-    // Without this offset the player sits at the north vertex (64px above entities),
-    // causing collision to appear 1+ tiles before the visual base of features.
-    const sprite = this.add.sprite(0, tileHH, `character-idle-${this.localPlayerFacing}`);
-    sprite.setOrigin(0.5, 1.0);
-    sprite.setScale(6, 4.5);
-    container.add(sprite);
-    container.setData('characterSprite', sprite); // Store reference for direction updates
-    container.setData('isMoving', false); // Track animation state
-
-    // Store reference (as container now, not sprite)
-    this.localPlayer = container as unknown as Phaser.GameObjects.Sprite; // Type hack for compatibility
-
-    // Set depth with small priority boost so local player sorts above peer entities at same position
-    // Boost must be << 64 (adjacent row diff) to avoid overriding wall tiles in front
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 0.1, true);
-    container.setDepth(depth);
-
-    if (this.depthSorter) {
-      this.depthSorter.setLocalPlayer('local');
-    }
-  }
-
-  private lastCullTime = 0;
-  private cullInterval = 100; // Only check viewport culling every 100ms
 
   update(time: number, delta: number): void {
     this.handleInput(time, delta);
@@ -698,43 +167,19 @@ export class WorldScene extends Phaser.Scene {
       this.updateVisibleTiles();
     }
 
-    // Update fog position with camera
-    if (this.fogRenderer) {
-      this.fogRenderer.updatePosition(this.cameras.main);
-    }
-
-    // Throttled depth sorting - include entities AND remote players
-    if (this.depthSorter && this.isoTransform) {
-      // Create combined map of all depth-sortable objects
-      const allContainers = new Map<string, Phaser.GameObjects.Container>();
-
-      // Add entities
-      this.entitySprites.forEach((container, id) => {
-        allContainers.set(id, container);
-      });
-
-      // Add remote players (use plain ID - matches markDirty call)
-      this.playerSprites.forEach((sprite, id) => {
-        allContainers.set(id, sprite as unknown as Phaser.GameObjects.Container);
-      });
-
-      this.depthSorter.update(time, allContainers, this.isoTransform);
-    }
-
-    // Phase 134: remote player interpolation
-    this.updateRemotePlayerInterpolation();
+    // Entity depth sorting + remote player interpolation
+    this.entityManager?.update(time, delta);
 
     // Throttled occlusion check
     if (time - this.lastOcclusionTime >= this.occlusionInterval) {
       this.lastOcclusionTime = time;
-      this.updateEntityOcclusion();
+      this.entityManager?.updateEntityOcclusion();
       this.updateTileTransparency();
     }
 
-    // Update day/night cycle visuals (DNTC-01, DNTC-02, DNTC-03)
+    // Day/night cycle
     if (this.dayNightCycle) {
       this.dayNightCycle.update();
-      // Sync current phase to HUD store (only on change to avoid re-renders)
       const phase = this.dayNightCycle.getCurrentPhase();
       const store = useGameStore.getState();
       if (store.dayNightPhase !== phase) {
@@ -743,16 +188,16 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  private handleInput(time: number, delta: number): void {
-    if (!this.localPlayer || !this.pixelMovement || !this.inputController) return;
+  // ── Input Handling ────────────────────────────────────────────────────
 
-    // Can't move while dead
+  private handleInput(time: number, delta: number): void {
+    const localPlayer = this.entityManager?.getLocalPlayer();
+    if (!localPlayer || !this.pixelMovement || !this.inputController) return;
+
     const player = useGameStore.getState().player;
     if (player?.isDead) return;
 
-    // Read movement key state from InputController
     const keys = this.inputController.getMovementKeys();
-
     const anyKeyDown = keys.W || keys.A || keys.S || keys.D;
 
     // Cancel cast on movement
@@ -761,169 +206,53 @@ export class WorldScene extends Phaser.Scene {
       useAbilityStore.getState().clearCast();
     }
 
-    // dt in seconds for velocity calculation
     const dt = delta / 1000;
-
-    // Run pixel movement update
     const result = this.pixelMovement.update(dt, keys, time);
 
     if (result.moved) {
-      this.lastMovementTime = time;
+      this.entityManager!.setLastMovementTime(time);
 
-      // Update facing direction for sprite
       if (result.direction) {
-        this.localPlayerFacing = result.direction;
+        this.entityManager!.setLocalPlayerFacing(result.direction);
       }
 
-      // Start/maintain walk animation
-      const isMoving = this.localPlayer.getData('isMoving') as boolean;
+      const isMoving = localPlayer.getData('isMoving') as boolean;
       if (!isMoving) {
-        this.startPlayerAnimation(this.localPlayerFacing);
+        this.entityManager!.startPlayerAnimation(this.entityManager!.getLocalPlayerFacing());
       } else if (result.direction) {
-        // Update animation direction if it changed
-        const sprite = this.localPlayer.getData('characterSprite') as Phaser.GameObjects.Sprite | undefined;
+        const sprite = localPlayer.getData('characterSprite') as Phaser.GameObjects.Sprite | undefined;
         if (sprite) {
-          const animKey = `character-run-${this.localPlayerFacing}`;
+          const animKey = `character-run-${this.entityManager!.getLocalPlayerFacing()}`;
           if (sprite.anims.currentAnim?.key !== animKey) {
             sprite.play(animKey);
           }
         }
       }
 
-      // Update sprite position from pixel coords
-      this.updateLocalPlayerFromPixels(result.px, result.py);
+      this.entityManager!.updateLocalPlayerFromPixels(result.px, result.py);
+
+      // Update interaction state (range indicator, NPC proximity)
+      this.interactionController?.update(result.px, result.py);
+
+      // Check zone transition at pixel granularity
+      this.checkPixelZoneTransition(result.px, result.py);
+
+      // Check portal tile
+      const tileX = Math.floor(result.px / TILE_SIZE_PX);
+      const tileY = Math.floor(result.py / TILE_SIZE_PX);
+      this.interactionController?.checkPortalTileAtPixels(tileX, tileY);
     }
 
-    // Handle idle detection: keys released
     if (!anyKeyDown) {
-      const isMoving = this.localPlayer.getData('isMoving') as boolean;
+      const isMoving = localPlayer.getData('isMoving') as boolean;
       if (isMoving) {
-        this.stopPlayerAnimation();
+        this.entityManager!.stopPlayerAnimation();
       }
     }
   }
 
-  private updateVisibleTiles(): void {
-    if (!this.viewportCuller) return;
+  // ── Zone Management ───────────────────────────────────────────────────
 
-    // Skip if no chunks loaded
-    if (this.chunkTiles.size === 0) return;
-
-    const bounds = this.viewportCuller.getCullBounds(this.cameras.main);
-
-    // Skip if bounds haven't changed (optimization)
-    if (this.lastCullBounds &&
-        this.lastCullBounds.minTileX === bounds.minTileX &&
-        this.lastCullBounds.maxTileX === bounds.maxTileX &&
-        this.lastCullBounds.minTileY === bounds.minTileY &&
-        this.lastCullBounds.maxTileY === bounds.maxTileY) {
-      return;
-    }
-
-    this.lastCullBounds = bounds;
-
-    // Update chunk tile visibility using world coordinates stored in container data
-    this.chunkTiles.forEach(tiles => {
-      for (const tile of tiles) {
-        const gridX = tile.getData('gridX') as number;
-        const gridY = tile.getData('gridY') as number;
-        const isVisible = this.viewportCuller!.isTileVisible(gridX, gridY, bounds);
-        if (tile.visible !== isVisible) {
-          tile.setVisible(isVisible);
-        }
-      }
-    });
-  }
-
-  /**
-   * Update entity visibility based on occlusion by tall structures.
-   */
-  private updateEntityOcclusion(): void {
-    if (!this.entityRenderer) return;
-
-    // Get current zone's chunk tiles
-    const chunkTiles = this.chunkTiles.get(this.currentZoneId) ?? null;
-
-    // Apply occlusion to entities
-    this.entityRenderer.applyOcclusion(this.entitySprites, chunkTiles);
-
-    // Also apply to remote players (convert Map<string, Sprite> to Map<string, Container>)
-    const playerContainers = new Map<string, Phaser.GameObjects.Container>();
-    this.playerSprites.forEach((sprite, id) => {
-      // playerSprites actually contain Containers cast as Sprites (from addPlayer)
-      playerContainers.set(id, sprite as unknown as Phaser.GameObjects.Container);
-    });
-    this.entityRenderer.applyOcclusion(playerContainers, chunkTiles);
-  }
-
-  /**
-   * Make elevated tiles semi-transparent when they occlude the local player.
-   * In isometric view, tiles with higher depth (closer to camera) can block
-   * the player visually. We fade them so the player stays visible.
-   */
-  private updateTileTransparency(): void {
-    if (!this.localPlayer || !this.isoTransform) return;
-
-    const chunkTiles = this.chunkTiles.get(this.currentZoneId);
-    if (!chunkTiles) return;
-
-    const playerGridX = this.localPlayer.getData('gridX') as number;
-    const playerGridY = this.localPlayer.getData('gridY') as number;
-    // Guard: data not yet set (player hasn't moved since spawn)
-    if (playerGridX == null || playerGridY == null || isNaN(playerGridX)) return;
-
-    const playerElevation = (this.localPlayer.getData('elevation') as number) ?? 0;
-
-    // Isometric axes: row = gridX+gridY (depth), col = gridX-gridY (lateral)
-    const playerRow = playerGridX + playerGridY;
-    const playerCol = playerGridX - playerGridY;
-
-    const newTransparent = new Set<Phaser.GameObjects.Container>();
-
-    for (const tile of chunkTiles) {
-      const elevation = tile.getData('elevation') as number;
-      if (!elevation || elevation === 0) continue;
-
-      // Skip tiles at same or lower elevation than player — they don't occlude
-      if (elevation <= playerElevation) continue;
-
-      const tileGridX = tile.getData('gridX') as number;
-      const tileGridY = tile.getData('gridY') as number;
-
-      // Quick bounding box check
-      if (Math.abs(tileGridX - playerGridX) > 5 || Math.abs(tileGridY - playerGridY) > 5) continue;
-
-      // Tile must be in front of player (higher iso row = closer to camera)
-      const tileRow = tileGridX + tileGridY;
-      if (tileRow <= playerRow) continue;
-
-      // Row distance: how far in front. Higher walls occlude further behind.
-      const rowDiff = tileRow - playerRow;
-      if (rowDiff > elevation + 2) continue;
-
-      // Column distance: only fade tiles that are directly in front (same iso column)
-      // This prevents the entire row from going transparent
-      const tileCol = tileGridX - tileGridY;
-      const colDiff = Math.abs(tileCol - playerCol);
-      if (colDiff > 2) continue;
-
-      newTransparent.add(tile);
-      if (tile.alpha !== 0.35) {
-        tile.setAlpha(0.35);
-      }
-    }
-
-    // Restore tiles that are no longer occluding
-    for (const tile of this.transparentTiles) {
-      if (!newTransparent.has(tile)) {
-        tile.setAlpha(1.0);
-      }
-    }
-
-    this.transparentTiles = newTransparent;
-  }
-
-  // Methods to be called from network layer
   setChunkRequestHandler(handler: (zoneId: string) => void): void {
     this.onChunkRequest = handler;
   }
@@ -931,14 +260,11 @@ export class WorldScene extends Phaser.Scene {
   loadZoneFromState(chunkData: ChunkData, biome: BiomeType): void {
     this.currentZoneId = chunkData.zoneId;
 
-    // Receive initial chunk
     if (this.chunkManager) {
       this.chunkManager.receiveChunk(chunkData, biome);
-      // Load adjacent chunks
       this.chunkManager.updateChunks(this.currentZoneId);
     }
 
-    // Phase 134: initialize pixel movement controller with player's pixel position
     if (this.pixelMovement) {
       const player = useGameStore.getState().player;
       if (player) {
@@ -946,25 +272,19 @@ export class WorldScene extends Phaser.Scene {
         const startPy = (player.position.y + 0.5) * TILE_SIZE_PX;
         this.pixelMovement.init(startPx, startPy, chunkData.zoneId);
       }
-      // Set collision callback if collision map is available
       if (chunkData.collisions) {
         this.setCollisionMap(chunkData.collisions);
       }
     }
 
-    // Phase 134: clear remote player interpolation buffers on zone transition
-    if (this.remoteInterpolator) {
-      this.remoteInterpolator.clear();
-    }
+    // Clear remote player interpolation on zone transition
+    this.entityManager?.getRemoteInterpolator()?.clear();
 
-    // Hub zones: disable day/night cycle on initial load
     if (isHubZone(chunkData.zoneId)) {
       this.dayNightCycle?.pause();
     }
 
-    // Phase 138: show zone name cinematic on initial spawn
     if (chunkData.zoneId) {
-      // Use delayedCall to let the scene fully initialize before showing
       this.time.delayedCall(500, () => {
         this.showZoneCinematic(biome);
       });
@@ -977,16 +297,10 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  /**
-   * Commit a zone transition immediately: update all zone state, collision map, HUD,
-   * and clean up orphaned entities. Called once the player is HYSTERESIS_TILES deep.
-   */
   private commitZoneTransition(newZoneId: string, biome: BiomeType): void {
-    const previousBiome = this.currentBiome;
     this.currentZoneId = newZoneId;
-    this.lastPortalEmitKey = null;
+    this.interactionController?.clearLastPortalEmitKey();
 
-    // Update current zone data from already-loaded chunk (fast, sync)
     if (this.chunkManager) {
       const chunk = this.chunkManager.getChunk(newZoneId);
       if (chunk) {
@@ -995,92 +309,67 @@ export class WorldScene extends Phaser.Scene {
         this.currentStructures = chunk.data.structures;
         this.currentBiome = chunk.biome;
 
-        // Crossfade weather to new biome
         this.weatherSystem?.setBiome(chunk.biome, false);
-        // Crossfade atmosphere to new biome (ATMO-02, ATMO-03)
         this.atmosphereSystem?.setBiome(chunk.biome, false);
         if (this.cameraController && this.weatherSystem) {
           this.cameraController.updateMinimapWeatherIgnore(this.weatherSystem);
         }
 
-        // Update collision map for movement validation in new zone
         if (chunk.data.collisions) {
           this.setCollisionMap(chunk.data.collisions);
         }
 
-        // Update HUD
         if (this.zoneHUD) {
           this.zoneHUD.updateZone(newZoneId, chunk.biome);
         }
 
-        // Show cinematic zone name notification (Dark Souls style) — Phase 138
         this.showZoneCinematic(chunk.biome);
-
-        // Refresh rare node markers for new zone
-        this.refreshRareNodeMarkers();
+        this.entityManager?.refreshRareNodeMarkers();
       }
     }
 
-    // Defer heavy operations to next idle frame to avoid blocking main thread
-    // This prevents ping spikes by allowing network I/O to proceed
     requestIdleCallback(() => {
-      // Update ChunkManager's center zone - recalculates 3x3 grid, may trigger network
       if (this.chunkManager) {
         this.chunkManager.updateChunks(newZoneId);
       }
-
-      // Clean up orphaned entities that are now out of range
-      this.cleanupOrphanedEntities();
+      this.entityManager?.cleanupOrphanedEntities();
     }, { timeout: 100 });
   }
 
-  /**
-   * Check if a pending zone transition should now be committed based on tile depth.
-   * Called each time the local player's position updates.
-   */
   private checkPendingZoneTransition(position: Position): void {
     if (!this.pendingZoneId) return;
 
-    // Throttle checks to avoid running every frame
     const now = performance.now();
-    if (now - this.lastPendingZoneCheck < WorldScene.PENDING_ZONE_CHECK_INTERVAL) {
-      return;
-    }
+    if (now - this.lastPendingZoneCheck < WorldScene.PENDING_ZONE_CHECK_INTERVAL) return;
     this.lastPendingZoneCheck = now;
 
-    // Player returned to committed zone - cancel pending transition
     if (position.zoneId === this.currentZoneId) {
       this.pendingZoneId = null;
       this.pendingBiome = null;
       return;
     }
 
-    // Player still in pending zone - check pixel depth
-    if (position.zoneId === this.pendingZoneId) {
-      const { px: posPx, py: posPy } = tileToPixelCenter(position.x, position.y);
-      const depth = this.getZoneBoundaryDepthPx(posPx, posPy);
-      if (depth >= HYSTERESIS_PX) {
-        this.commitZoneTransition(this.pendingZoneId, this.pendingBiome!);
-        this.pendingZoneId = null;
-        this.pendingBiome = null;
-      }
+    const { px: posPx, py: posPy } = tileToPixelCenter(position.x, position.y);
+    const depth = this.getZoneBoundaryDepthPx(posPx, posPy);
+
+    if (depth >= HYSTERESIS_PX) {
+      const zoneId = this.pendingZoneId;
+      const biome = this.pendingBiome!;
+      this.pendingZoneId = null;
+      this.pendingBiome = null;
+      this.commitZoneTransition(zoneId, biome);
     }
   }
 
   onPlayerZoneChanged(newZoneId: string, biome: BiomeType): void {
-    // Detect teleportation: hub transitions require full scene reset
     const wasHub = isHubZone(this.currentZoneId);
     const isHub = isHubZone(newZoneId);
     if (wasHub !== isHub || (wasHub && isHub && this.currentZoneId !== newZoneId)) {
-      // Hub <-> world or hub <-> different hub: full reset required
       this.fullZoneReset(newZoneId, biome);
       return;
     }
 
-    // Get current player position to determine tile depth inside new zone
     const position = useGameStore.getState().player?.position;
-
-    // If no position available, fall back to immediate commit (defensive)
     if (!position) {
       this.commitZoneTransition(newZoneId, biome);
       return;
@@ -1090,1024 +379,57 @@ export class WorldScene extends Phaser.Scene {
     const depth = this.getZoneBoundaryDepthPx(posPx, posPy);
 
     if (depth >= HYSTERESIS_PX) {
-      // Deep enough - commit immediately (e.g., teleport or fast movement)
       this.commitZoneTransition(newZoneId, biome);
     } else {
-      // Near boundary - store as pending and wait for player to go deeper
-      // NOTE: We do NOT call updateChunks here - the 3x3 grid from the current zone
-      // already includes this adjacent zone. Calling it would trigger load/unload thrashing.
       this.pendingZoneId = newZoneId;
       this.pendingBiome = biome;
     }
   }
 
-  /**
-   * Full zone reset for teleportation (hub recall, NPC portals).
-   * Clears all chunk state, entity containers, and tile sprites, then re-requests
-   * the new zone's chunks from scratch.
-   */
   fullZoneReset(newZoneId: string, biome: BiomeType): void {
-    // Cancel any pending zone transition
     this.pendingZoneId = null;
     this.pendingBiome = null;
-    this.lastPortalEmitKey = null;
-
-    // Clear all rendered tiles
-    this.chunkTiles.forEach(tiles => {
-      tiles.forEach(tile => {
-        const children = tile.getAll();
-        children.forEach(child => child.destroy());
-        tile.removeAll(true);
-        tile.destroy();
-      });
-    });
+    this.interactionController?.clearLastPortalEmitKey();
+    this.chunkTiles.forEach(tiles => tiles.forEach(tile => {
+      tile.getAll().forEach(child => child.destroy());
+      tile.removeAll(true);
+      tile.destroy();
+    }));
     this.chunkTiles.clear();
     this.transparentTiles.clear();
-
-    // Clear all entities
-    this.clearEntities();
-
-    // Clear all other players
-    this.clearOtherPlayers();
-
-    // Clear chunk manager state and re-request
-    if (this.chunkManager) {
-      this.chunkManager.clear();
-    }
-
-    // Rebuild fog from saved state for the new zone
-    if (this.fogRenderer && this.fogManager) {
-      this.fogRenderer.redrawFromState(this.fogManager);
-    }
-
-    // Clear rare node markers
-    if (this.entityRenderer) {
-      this.entityRenderer.clearAllQuestMarkers();
-    }
-
-    // Update zone state
+    this.entityManager?.clearEntities();
+    this.entityManager?.clearOtherPlayers();
+    this.chunkManager?.clear();
+    const fm = this.entityManager?.getFogManager(), fr = this.entityManager?.getFogRenderer();
+    if (fr && fm) fr.redrawFromState(fm);
+    this.entityManager?.getEntityRenderer()?.clearAllQuestMarkers();
     this.currentZoneId = newZoneId;
     this.currentBiome = biome;
-
-    // Instant-swap weather for teleport
     this.weatherSystem?.setBiome(biome, true);
-    // Instant-swap atmosphere for teleport (ATMO-03)
     this.atmosphereSystem?.setBiome(biome, true);
-    if (this.cameraController && this.weatherSystem) {
-      this.cameraController.updateMinimapWeatherIgnore(this.weatherSystem);
-    }
-
-    // Hub zones: disable day/night cycle (controlled indoor environment)
-    if (isHubZone(newZoneId)) {
-      this.dayNightCycle?.pause();
-    } else {
-      this.dayNightCycle?.resume();
-    }
-
-    // Update HUD
-    if (this.zoneHUD) {
-      this.zoneHUD.updateZone(newZoneId, biome);
-    }
-
-    // Show cinematic zone name notification for teleportation — Phase 138
+    if (this.cameraController && this.weatherSystem) this.cameraController.updateMinimapWeatherIgnore(this.weatherSystem);
+    if (isHubZone(newZoneId)) this.dayNightCycle?.pause(); else this.dayNightCycle?.resume();
+    this.zoneHUD?.updateZone(newZoneId, biome);
     this.showZoneCinematic(biome);
-
-    // The new zone data will arrive via zone:state -> loadZoneFromState
-    // which will call chunkManager.receiveChunk and updateChunks
   }
 
-  /**
-   * Phase 138: Show zone name cinematic with 30-second per-zone cooldown.
-   * Calls triggerZoneCinematic on gameStore to display the Dark Souls-style overlay.
-   */
   private showZoneCinematic(biome: BiomeType): void {
     const zoneId = this.currentZoneId;
     const now = Date.now();
     const lastShown = this.zoneCinematicCooldowns.get(zoneId) ?? 0;
-
-    if (now - lastShown < ZONE_CINEMATIC_COOLDOWN_MS) {
-      return; // Cooldown active — suppress
-    }
+    if (now - lastShown < ZONE_CINEMATIC_COOLDOWN_MS) return;
 
     this.zoneCinematicCooldowns.set(zoneId, now);
-
     const zoneName = BIOME_DISPLAY_NAMES[biome] ?? this.formatBiomeName(biome);
     const tier = BIOME_TIERS[biome] ?? 1;
     const tierLabel = TIER_LABELS[tier];
-
     useGameStore.getState().triggerZoneCinematic(zoneName, tierLabel, tier);
   }
 
-  /**
-   * Format biome type to a readable name (e.g., 'void_plains' -> 'Void Plains').
-   */
   private formatBiomeName(biome: BiomeType): string {
-    return biome
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+    return biome.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   }
 
-
-  private parseZoneCoords(zoneId: string): { x: number; y: number } {
-    // Hub zones are instanced at origin (0, 0)
-    if (isHubZone(zoneId)) {
-      return { x: 0, y: 0 };
-    }
-    // Open-world zones use z_X_Y format
-    const parts = zoneId.split('_');
-    return {
-      x: parseInt(parts[1], 10),
-      y: parseInt(parts[2], 10),
-    };
-  }
-
-  /**
-   * Calculate how many pixels deep into a zone the pixel position is.
-   * Returns 0 at zone edge, up to (ZONE_SIZE * TILE_SIZE_PX / 2) at center.
-   * Used for hysteresis: commit zone transition when depth >= HYSTERESIS_PX (384px).
-   */
-  private getZoneBoundaryDepthPx(px: number, py: number): number {
-    const zonePxSize = getZoneSize(this.currentZoneId) * TILE_SIZE_PX;
-    const fromLeft = px;
-    const fromRight = zonePxSize - px;
-    const fromTop = py;
-    const fromBottom = zonePxSize - py;
-    return Math.min(fromLeft, fromRight, fromTop, fromBottom);
-  }
-
-  /**
-   * Update target highlight based on pixel distance to targeted entity.
-   * Called from the position update path after each player position change.
-   * Phase 134 will switch from tile→pixel conversion to real-time pixel positions.
-   */
-  private updateRangeIndicator(playerPx: number, playerPy: number): void {
-    if (!this.targetHighlight) return;
-    const targetId = this.targetHighlight.getTargetEntityId();
-    if (!targetId) return;
-
-    // Find entity in entity store
-    const entity = useEntityStore.getState().entities.get(targetId);
-    if (!entity) return;
-
-    const { px: ex, py: ey } = tileToPixelCenter(entity.position.x, entity.position.y);
-    const dist = pixelDistanceTo(playerPx, playerPy, ex, ey);
-
-    // Determine appropriate range based on entity type
-    // Use basic_strike range (1 tile = TILE_SIZE_PX = 128px) for creatures, GATHER_RANGE_PX for resources
-    const isCreature = entity.type === 'creature';
-    const rangePx = isCreature ? 1 * TILE_SIZE_PX : GATHER_RANGE_PX;
-    const inRange = dist <= rangePx;
-
-    this.targetHighlight.setInRange(inRange);
-  }
-
-  /**
-   * Check NPC proximity and update nearestNpcInRange field.
-   * Called from the position update path.
-   * Per user decision: instant appear/disappear at range boundary (no fade).
-   * nearestNpcInRange gates npc:interact emissions to prevent interaction while too far.
-   */
-  private updateNpcProximity(playerPx: number, playerPy: number): void {
-    const entities = useEntityStore.getState().entities;
-    if (!entities) return;
-
-    let closestNpcInRange: Entity | null = null;
-    let closestDist = Infinity;
-
-    for (const entity of entities.values()) {
-      if (entity.type !== 'npc' || !entity.active) continue;
-      const { px: ex, py: ey } = tileToPixelCenter(entity.position.x, entity.position.y);
-      const dist = pixelDistanceTo(playerPx, playerPy, ex, ey);
-      if (dist <= NPC_INTERACT_RANGE_PX && dist < closestDist) {
-        closestDist = dist;
-        closestNpcInRange = entity;
-      }
-    }
-
-    this.nearestNpcInRange = closestNpcInRange;
-  }
-
-  /**
-   * Convert a Position (local coords + zoneId) to world coordinates.
-   * World coords = zoneCoords * ZONE_SIZE + localCoords
-   */
-  private positionToWorldCoords(position: Position): { worldX: number; worldY: number } {
-    const zoneCoords = this.parseZoneCoords(position.zoneId);
-    return {
-      worldX: zoneCoords.x * ZONE_SIZE + position.x,
-      worldY: zoneCoords.y * ZONE_SIZE + position.y,
-    };
-  }
-
-  /**
-   * Calculate Euclidean distance between two positions using world coordinates.
-   * Used for visibility checks that span chunk boundaries.
-   */
-  private calculateWorldDistance(a: Position, b: Position): number {
-    const worldA = this.positionToWorldCoords(a);
-    const worldB = this.positionToWorldCoords(b);
-
-    const dx = worldA.worldX - worldB.worldX;
-    const dy = worldA.worldY - worldB.worldY;
-
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  /**
-   * Check if an entity is visible to the local player based on world coordinate distance.
-   * Returns true if entity is within VISIBILITY_RADIUS tiles.
-   */
-  private isEntityVisible(entityPosition: Position): boolean {
-    const player = useGameStore.getState().player;
-    if (!player) return false;
-
-    const distance = this.calculateWorldDistance(player.position, entityPosition);
-    return distance <= VISIBILITY_RADIUS;
-  }
-
-  private getTileElevation(gridX: number, gridY: number, zoneId?: string): number {
-    // If a specific zone is requested and it differs from current zone,
-    // try to get heights from the chunk manager
-    if (zoneId && zoneId !== this.currentZoneId && this.chunkManager) {
-      const chunk = this.chunkManager.getChunk(zoneId);
-      if (chunk?.data.heights) {
-        return chunk.data.heights[gridY]?.[gridX] ?? 0;
-      }
-    }
-    // Clamp to valid range — pixel movement can place the player fractionally
-    // out of bounds (e.g. gridX = -0.01 → tileX = -1), which would miss the
-    // heights array and fall back to 0, causing the player to sink.
-    const zoneSize = getZoneSize(this.currentZoneId);
-    const clampedX = Math.max(0, Math.min(gridX, zoneSize - 1));
-    const clampedY = Math.max(0, Math.min(gridY, zoneSize - 1));
-    return this.currentHeights?.[clampedY]?.[clampedX] ?? 0;
-  }
-
-  /**
-   * Get bilinearly interpolated elevation at fractional tile coordinates.
-   * Samples the 4 surrounding integer tiles and blends based on the player's
-   * fractional position within the tile.  This eliminates the sudden 128 px
-   * vertical jump that occurs when the integer tile coordinate changes at a
-   * tile boundary (player-sinking / popping artefact).
-   *
-   * @param gridX  Fractional tile X (px / TILE_SIZE_PX)
-   * @param gridY  Fractional tile Y (px / TILE_SIZE_PX)
-   * @param zoneId Optional zone override forwarded to getTileElevation
-   */
-  private getInterpolatedElevation(gridX: number, gridY: number, zoneId?: string): number {
-    const tileX = Math.floor(gridX);
-    const tileY = Math.floor(gridY);
-    const fracX = gridX - tileX;
-    const fracY = gridY - tileY;
-
-    const e00 = this.getTileElevation(tileX,     tileY,     zoneId);
-    const e10 = this.getTileElevation(tileX + 1, tileY,     zoneId);
-    const e01 = this.getTileElevation(tileX,     tileY + 1, zoneId);
-    const e11 = this.getTileElevation(tileX + 1, tileY + 1, zoneId);
-
-    return e00 * (1 - fracX) * (1 - fracY)
-         + e10 * fracX       * (1 - fracY)
-         + e01 * (1 - fracX) * fracY
-         + e11 * fracX       * fracY;
-  }
-
-  /**
-   * Get tile elevation using world coordinates.
-   * Looks up the correct chunk from ChunkManager.
-   */
-  getWorldTileElevation(worldX: number, worldY: number): number {
-    if (!this.chunkManager) return 0;
-
-    // Calculate which chunk this tile belongs to
-    const chunkX = Math.floor(worldX / ZONE_SIZE);
-    const chunkY = Math.floor(worldY / ZONE_SIZE);
-    const zoneId = `z_${chunkX}_${chunkY}`;
-
-    // Get chunk data
-    const chunk = this.chunkManager.getChunk(zoneId);
-    if (!chunk?.data.heights) return 0;
-
-    // Convert to chunk-local coordinates
-    const localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
-    const localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
-
-    return chunk.data.heights[localY]?.[localX] ?? 0;
-  }
-
-  private renderChunk(chunkData: ChunkData, biome: BiomeType): void {
-    if (!this.tileRenderer || !this.isoTransform) return;
-
-    const { zoneId, tiles, heights, structures } = chunkData;
-
-    // Guard: Don't recreate tiles if already exists (prevents memory leak)
-    if (this.chunkTiles.has(zoneId)) {
-      // Still update currentTiles for the look feature
-      if (zoneId === this.currentZoneId) {
-        this.currentTiles = tiles;
-        this.currentHeights = heights;
-        this.currentStructures = structures;
-        this.currentBiome = biome;
-      }
-      return;
-    }
-
-    const { x: chunkX, y: chunkY } = this.parseZoneCoords(zoneId);
-
-    // Calculate world grid offset for this chunk
-    const chunkGridX = chunkX * ZONE_SIZE;
-    const chunkGridY = chunkY * ZONE_SIZE;
-
-    // Store tiles in array for cleanup (NOT in container - need global depth sorting)
-    const chunkTileArray: Phaser.GameObjects.Container[] = [];
-
-    // Use actual array dimensions — hub zones may be 128x128
-    const mapHeight = tiles.length;
-    const mapWidth = tiles[0]?.length ?? 0;
-
-    // Create tiles using WORLD coordinates for proper global depth sorting
-    // Tiles are added directly to scene so their depth participates in global sorting
-    for (let y = 0; y < mapHeight; y++) {
-      for (let x = 0; x < mapWidth; x++) {
-        const tileId = tiles[y][x] as TileId;
-        const elevation = heights[y][x];
-        // Use world coordinates (chunk offset + local position)
-        const worldX = chunkGridX + x;
-        const worldY = chunkGridY + y;
-        const tile = this.tileRenderer.createTileWithElevationWorld(worldX, worldY, tileId, elevation, heights, x, y);
-        // Tile is already added to scene by tileRenderer, just track for cleanup
-        chunkTileArray.push(tile);
-      }
-    }
-
-    // Structures are now rendered via tiles[][] with distinct colors
-    // No separate cube rendering needed
-
-    // Create POI sprites for this chunk
-    if (chunkData.pois && chunkData.pois.length > 0 && this.poiRenderer) {
-      this.poiRenderer.createPoisForChunk(chunkData.pois, chunkX, chunkY, this.discoveredPoiIds);
-    }
-
-    this.chunkTiles.set(zoneId, chunkTileArray);
-
-    if (zoneId === this.currentZoneId) {
-      this.currentBiome = biome;
-      this.currentTiles = tiles;
-      this.currentHeights = heights;
-      this.currentStructures = structures;
-      if (this.zoneHUD) {
-        this.zoneHUD.updateZone(zoneId, biome);
-      }
-      // Start weather on first chunk render for current zone
-      if (this.weatherSystem && !this.weatherSystem.hasActiveWeather()) {
-        this.weatherSystem.setBiome(biome, true);
-        this.atmosphereSystem?.setBiome(biome, true);
-        if (this.cameraController && this.weatherSystem) {
-          this.cameraController.updateMinimapWeatherIgnore(this.weatherSystem);
-        }
-      }
-    }
-  }
-
-  private unloadChunkContainer(zoneId: string): void {
-    const tiles = this.chunkTiles.get(zoneId);
-    if (tiles) {
-      tiles.forEach(tile => {
-        // Get all children as array first (avoid modifying while iterating)
-        const children = tile.getAll();
-        children.forEach(child => child.destroy());
-        tile.removeAll(true);
-        tile.destroy();
-      });
-      this.chunkTiles.delete(zoneId);
-    }
-
-    // Despawn entities belonging to this zone to prevent memory leaks
-    this.despawnEntitiesForZone(zoneId);
-  }
-
-  spawnEntity(entity: Entity, zoneId?: string): void {
-    if (this.entitySprites.has(entity.id) || !this.entityRenderer) return;
-
-    // Check visibility using world coordinate distance
-    if (!this.isEntityVisible(entity.position)) {
-      return; // Skip spawning - entity out of range
-    }
-
-    // Get elevation for the correct zone
-    const elevation = this.getTileElevation(entity.position.x, entity.position.y, entity.position.zoneId);
-    const container = this.entityRenderer.createEntityContainer(entity, elevation);
-
-    // Store position for visibility checks during despawn
-    container.setData('position', { ...entity.position });
-
-    // Store npcId for NPC entities (for quest marker tracking)
-    if (entity.type === 'npc' && 'npcId' in entity) {
-      container.setData('npcId', (entity as Npc).npcId);
-    }
-
-    this.entitySprites.set(entity.id, container);
-
-    // Fade-in animation for entity:spawn events only (not initial zone load)
-    // Convention: zoneId is passed for zone:state entities (initial load),
-    // undefined for entity:spawn events (respawns/new spawns).
-    // This convention distinguishes initial zone population from runtime spawns.
-    const isRespawnEvent = !zoneId;
-    if (isRespawnEvent) {
-      container.setAlpha(0);
-      this.tweens.add({
-        targets: container,
-        alpha: 1,
-        duration: 400,
-        ease: 'Linear',
-      });
-    }
-
-    // Track zone ownership for cleanup on chunk unload
-    if (zoneId) {
-      if (!this.entityZoneMap.has(zoneId)) {
-        this.entityZoneMap.set(zoneId, new Set());
-      }
-      this.entityZoneMap.get(zoneId)!.add(entity.id);
-    }
-
-    if (this.depthSorter) {
-      this.depthSorter.markDirty(entity.id);
-    }
-  }
-
-  despawnEntity(entityId: string): void {
-    // Clear highlight with fade if despawned entity was targeted (fade out for death animation)
-    if (this.targetHighlight?.isHighlighting(entityId)) {
-      this.targetHighlight.hide(true);
-    }
-
-    const container = this.entitySprites.get(entityId);
-    if (container) {
-      // CRAI-07: Clean up frenzy tween before destroying container
-      this.entityRenderer?.cleanupFrenzyEffect(entityId);
-
-      // Explicitly destroy all children first
-      container.each((child: Phaser.GameObjects.GameObject) => {
-        child.destroy();
-      });
-      container.removeAll(true);
-      container.destroy();
-      this.entitySprites.delete(entityId);
-
-      // Remove from orphaned tracking if present
-      const orphaned = this.entityZoneMap.get('_orphaned');
-      if (orphaned) {
-        orphaned.delete(entityId);
-      }
-    }
-  }
-
-  /**
-   * Clean up orphaned entities that are now out of visibility range.
-   * Called periodically (e.g., on player zone change).
-   */
-  cleanupOrphanedEntities(): void {
-    const orphaned = this.entityZoneMap.get('_orphaned');
-    if (!orphaned || orphaned.size === 0) return;
-
-    const toRemove: string[] = [];
-    orphaned.forEach(entityId => {
-      const container = this.entitySprites.get(entityId);
-      if (!container) {
-        toRemove.push(entityId);
-        return;
-      }
-
-      const position = container.getData('position') as { x: number; y: number; zoneId: string } | undefined;
-      if (!position || !this.isEntityVisible(position)) {
-        this.despawnEntity(entityId);
-        toRemove.push(entityId);
-      }
-    });
-
-    toRemove.forEach(id => orphaned.delete(id));
-  }
-
-  /**
-   * Despawn entities belonging to a zone (called on chunk unload).
-   * Entities still within visibility range are kept but moved to 'orphaned' tracking.
-   */
-  despawnEntitiesForZone(zoneId: string): void {
-    const entityIds = this.entityZoneMap.get(zoneId);
-    if (entityIds) {
-      entityIds.forEach(entityId => {
-        const container = this.entitySprites.get(entityId);
-        if (!container) {
-          return;
-        }
-
-        // Check if entity is still visible
-        const position = container.getData('position') as { x: number; y: number; zoneId: string } | undefined;
-        if (position && this.isEntityVisible(position)) {
-          // Entity still visible - keep it but track as orphaned (no zone updates)
-          // It will be despawned when player moves away or on next visibility check
-          if (!this.entityZoneMap.has('_orphaned')) {
-            this.entityZoneMap.set('_orphaned', new Set());
-          }
-          this.entityZoneMap.get('_orphaned')!.add(entityId);
-        } else {
-          // Entity out of range - despawn immediately
-          this.despawnEntity(entityId);
-        }
-      });
-      this.entityZoneMap.delete(zoneId);
-    }
-  }
-
-  /**
-   * Clear all entities (for zone transitions)
-   */
-  clearEntities(): void {
-    this.entitySprites.forEach((container) => {
-      container.each((child: Phaser.GameObjects.GameObject) => {
-        child.destroy();
-      });
-      container.removeAll(true);
-      container.destroy();
-    });
-    this.entitySprites.clear();
-    this.entityZoneMap.clear(); // Also clear zone tracking
-  }
-
-  /**
-   * Clear all other players (for zone transitions)
-   */
-  clearOtherPlayers(): void {
-    this.playerSprites.forEach((sprite) => sprite.destroy());
-    this.playerSprites.clear();
-  }
-
-  updateEntity(entityId: string, changes: Partial<Entity>): void {
-    const container = this.entitySprites.get(entityId);
-    if (!container || !this.isoTransform || !this.entityRenderer) return;
-
-    // Despawn entity if marked inactive (creature died, resource depleted, etc.)
-    if ('active' in changes && changes.active === false) {
-      this.despawnEntity(entityId);
-      return;
-    }
-
-    // Update position with smooth movement animation
-    if (changes.position) {
-      // Check if entity moved out of visibility range
-      if (!this.isEntityVisible(changes.position)) {
-        this.despawnEntity(entityId);
-        return;
-      }
-
-      // Update stored position for future visibility checks
-      container.setData('position', { ...changes.position });
-
-      // Get elevation for the correct zone
-      const elevation = this.getTileElevation(changes.position.x, changes.position.y, changes.position.zoneId);
-      // Convert to world coordinates
-      const { worldX, worldY } = this.positionToWorldCoords(changes.position);
-      // Calculate target screen position
-      const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
-      const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 × diamond height)
-      const targetY = screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET;
-
-      // Calculate movement direction for animated creatures
-      const oldX = container.getData('gridX') as number;
-      const oldY = container.getData('gridY') as number;
-      const dx = worldX - oldX;
-      const dy = worldY - oldY;
-      const newFacing = this.calculateFacingDirection(dx, dy);
-
-      // Handle animated creature sprites
-      const speciesId = container.getData('speciesId') as string | undefined;
-      const entitySprite = container.getData('entitySprite') as Phaser.GameObjects.Sprite | undefined;
-
-      if (speciesId && entitySprite && newFacing) {
-        const currentFacing = container.getData('facing') as Direction || 's';
-        container.setData('facing', newFacing);
-
-        // Play walk animation
-        const animKey = `${speciesId}-walk-${newFacing}`;
-        if (!entitySprite.anims.isPlaying || entitySprite.anims.currentAnim?.key !== animKey) {
-          entitySprite.play(animKey);
-        }
-      }
-
-      // Kill any existing movement tween on this container
-      this.tweens.killTweensOf(container);
-
-      // Smooth movement tween (500ms to complete before next AI tick at 1000ms)
-      this.tweens.add({
-        targets: container,
-        x: screenPos.x,
-        y: targetY,
-        duration: 500,
-        ease: 'Linear',
-        onUpdate: () => {
-          // Update depth during movement for correct sorting
-          if (this.depthSorter) {
-            this.depthSorter.markDirty(entityId);
-          }
-          // Update highlight position if this entity is highlighted
-          if (this.targetHighlight?.isHighlighting(entityId)) {
-            this.targetHighlight.updatePosition(container);
-          }
-        },
-        onComplete: () => {
-          // Update stored grid position and elevation after tween completes
-          container.setData('gridX', worldX);
-          container.setData('gridY', worldY);
-          container.setData('elevation', elevation);
-          const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevation, 0, true);
-          container.setDepth(depth);
-
-          // Stop walk animation and return to idle for animated creatures
-          if (speciesId && entitySprite) {
-            const facing = container.getData('facing') as Direction || 's';
-            entitySprite.stop();
-            entitySprite.setTexture(`${speciesId}-idle-${facing}`);
-          }
-        },
-      });
-    }
-
-    // Update health bar if health changed for creatures
-    if ('health' in changes && this.entityRenderer) {
-      // Find and destroy old health bar using stored reference (avoids fragile Y-position search)
-      const oldHealthBar = container.getData('healthBar') as Phaser.GameObjects.Container | undefined;
-      if (oldHealthBar) {
-        oldHealthBar.destroy();
-        container.setData('healthBar', null);
-      }
-
-      // Create new health bar if damaged (assuming we have access to entity data)
-      // For now, we need the full entity to determine maxHealth
-      // This is a limitation - we'll recreate health bar only if health is explicitly in changes
-      // and we have both health and maxHealth in the changes
-      const creatureChanges = changes as Partial<Creature>;
-      if (creatureChanges.health !== undefined && creatureChanges.maxHealth !== undefined) {
-        if (creatureChanges.health < creatureChanges.maxHealth) {
-          // Get actual sprite height for correct UI positioning
-          const actualSpriteHeight = (container.getData('actualSpriteHeight') as number) ?? 256 * ((container.getData('entityScale') as number) ?? 2.5);
-          const uiBaseY = -actualSpriteHeight - 20;
-
-          // Get entity data for creature info
-          const entityId = container.getData('entityId') as string;
-          const entity = entityId ? useEntityStore.getState().entities.get(entityId) : null;
-          const creature = entity as Creature | null;
-
-          const healthBar = this.entityRenderer.createHealthBarWithName(
-            creature?.name ?? '???',
-            creatureChanges.health,
-            creatureChanges.maxHealth,
-            creature?.behavior,
-            false
-          );
-          healthBar.y = uiBaseY;
-          container.add(healthBar);
-          container.setData('healthBar', healthBar);
-        }
-      }
-    }
-
-    // Update yield bar if yield changed for minerals/plants (UIHD-03)
-    if ('yield' in changes && this.entityRenderer) {
-      const yieldValue = (changes as { yield: number }).yield;
-      const maxYield = container.getData('maxYield') as number | undefined;
-      const actualSpriteHeight = (container.getData('actualSpriteHeight') as number) ?? 256 * ((container.getData('entityScale') as number) ?? 2.5);
-
-      if (maxYield !== undefined) {
-        // Find and destroy old yield bar using stored reference (avoids fragile Y-position search)
-        const oldYieldBar = container.getData('yieldBar') as Phaser.GameObjects.Graphics | undefined;
-        if (oldYieldBar) {
-          oldYieldBar.destroy();
-        }
-
-        // Create new yield bar with updated value
-        const newYieldBar = this.entityRenderer.createHealthBar(yieldValue, maxYield);
-        newYieldBar.y = -actualSpriteHeight - 20;
-        container.add(newYieldBar);
-
-        // Store new reference for next update
-        container.setData('yieldBar', newYieldBar);
-      }
-    }
-
-    // CRAI-06: Update frenzy visual state on creatures
-    if ('frenzied' in changes && this.entityRenderer) {
-      this.entityRenderer.applyFrenzyEffect(container, entityId, !!(changes as Partial<Creature>).frenzied);
-    }
-
-    // CRAI-06: Update stealth visibility on creatures
-    if ('stealthed' in changes && this.entityRenderer) {
-      const stealthed = (changes as Partial<Creature>).stealthed;
-      if (stealthed === false && container.getData('stealthed')) {
-        // Predator revealed -- fade in with brief flash
-        this.entityRenderer.applyStealthReveal(container);
-      } else if (stealthed) {
-        container.setAlpha(0);
-        container.setData('stealthed', true);
-      }
-    }
-  }
-
-  addPlayer(player: PlayerPublic): void {
-    if (this.playerSprites.has(player.id) || !this.isoTransform) return;
-
-    // Get elevation for the correct zone
-    const elevation = this.getTileElevation(player.position.x, player.position.y, player.position.zoneId);
-    const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 × diamond height)
-    // Use world coordinates for screen position
-    const { worldX, worldY } = this.positionToWorldCoords(player.position);
-    const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
-
-    const container = this.add.container(screenPos.x, screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET);
-    container.setData('gridX', worldX);
-    container.setData('gridY', worldY);
-    container.setData('elevation', elevation);
-
-    // Elliptical drop shadow at diamond center (tileHeight/2 below north vertex)
-    const tileHH = this.isoTransform!.tileHeight / 2;
-    const shadow = this.add.ellipse(0, tileHH, 120, 60, 0x000000, 0.3);
-    container.add(shadow);
-
-    // Player sprite offset to diamond center to match entity rendering
-    const sprite = this.add.sprite(0, tileHH, 'character-idle-s');
-    sprite.setOrigin(0.5, 1.0);
-    sprite.setScale(6, 4.5);
-    sprite.setTint(this.getFactionColor(player.faction));
-    container.add(sprite);
-    container.setData('characterSprite', sprite);
-    container.setData('isMoving', false);
-    container.setData('facing', 's');
-
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 0, true);
-    container.setDepth(depth);
-
-    this.playerSprites.set(player.id, container as unknown as Phaser.GameObjects.Sprite);
-  }
-
-  removePlayer(playerId: string): void {
-    const sprite = this.playerSprites.get(playerId);
-    if (sprite) {
-      sprite.destroy();
-      this.playerSprites.delete(playerId);
-    }
-  }
-
-  movePlayer(playerId: string, position: Position): void {
-    const container = this.playerSprites.get(playerId);
-    if (!container || !this.isoTransform) return;
-
-    // Get elevation for the correct zone
-    const elevation = this.getTileElevation(position.x, position.y, position.zoneId);
-    const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 × diamond height)
-    // Use world coordinates for screen position
-    const { worldX, worldY } = this.positionToWorldCoords(position);
-    const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
-
-    // Calculate movement direction from position delta
-    const oldX = container.getData('gridX') as number;
-    const oldY = container.getData('gridY') as number;
-    const dx = worldX - oldX;
-    const dy = worldY - oldY;
-    const newFacing = this.calculateFacingDirection(dx, dy);
-
-    // Get character sprite for animation control
-    const characterSprite = container.getData('characterSprite') as Phaser.GameObjects.Sprite | undefined;
-    const currentFacing = container.getData('facing') as Direction || 's';
-
-    // Update facing and start animation
-    if (characterSprite && newFacing) {
-      container.setData('facing', newFacing);
-      const isMoving = container.getData('isMoving') as boolean;
-
-      if (!isMoving || newFacing !== currentFacing) {
-        characterSprite.play(`character-run-${newFacing}`);
-        container.setData('isMoving', true);
-      }
-    }
-
-    // Mark player dirty for depth sorting
-    if (this.depthSorter) {
-      this.depthSorter.markDirty(playerId);
-    }
-
-    this.tweens.killTweensOf(container);
-    this.tweens.add({
-      targets: container,
-      x: screenPos.x,
-      y: screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET,
-      duration: 100,
-      ease: 'Linear',
-      onComplete: () => {
-        container.setData('gridX', worldX);
-        container.setData('gridY', worldY);
-        container.setData('elevation', elevation);
-        const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevation, 0, true);
-        container.setDepth(depth);
-
-        // Stop animation and return to idle
-        if (characterSprite) {
-          characterSprite.stop();
-          const facing = container.getData('facing') as Direction || 's';
-          characterSprite.setTexture(`character-idle-${facing}`);
-          container.setData('isMoving', false);
-        }
-      }
-    });
-  }
-
-  /**
-   * Calculate facing direction from movement delta.
-   */
-  private calculateFacingDirection(dx: number, dy: number): Direction | null {
-    if (dx === 0 && dy === 0) return null;
-
-    // 8-directional mapping based on dx/dy
-    if (dx > 0 && dy === 0) return 'e';
-    if (dx < 0 && dy === 0) return 'w';
-    if (dx === 0 && dy > 0) return 's';
-    if (dx === 0 && dy < 0) return 'n';
-    if (dx > 0 && dy > 0) return 'se';
-    if (dx > 0 && dy < 0) return 'ne';
-    if (dx < 0 && dy > 0) return 'sw';
-    if (dx < 0 && dy < 0) return 'nw';
-
-    return null;
-  }
-
-  /**
-   * Snap local player sprite to a tile position (used for initial spawn and respawn).
-   * Movement rendering is handled by updateLocalPlayerFromPixels via pixel movement.
-   */
-  updateLocalPlayerSprite(position: Position): void {
-    if (!this.localPlayer || !this.isoTransform) return;
-
-    // Get elevation for the correct zone
-    const elevation = this.getTileElevation(position.x, position.y, position.zoneId);
-    const elevationOffset = elevation * 128; // ELEVATION_HEIGHT_STEP (1.0 x diamond height)
-    // Use world coordinates for screen position so player aligns with chunk positions
-    const { worldX, worldY } = this.positionToWorldCoords(position);
-    const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
-    const targetY = screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET;
-
-    // Snap position (no tween — pixel movement handles smooth rendering)
-    this.localPlayer.setPosition(screenPos.x, targetY);
-
-    // Update grid data
-    this.localPlayer.setData('gridX', worldX);
-    this.localPlayer.setData('gridY', worldY);
-    this.localPlayer.setData('elevation', elevation);
-
-    // Update depth — boost 0.1 keeps player above same-position peers but below walls in front
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevation, 0.1, true);
-    this.localPlayer.setDepth(depth);
-
-    // Check if a pending zone transition should commit
-    this.checkPendingZoneTransition(position);
-
-    // Update range indicator and NPC proximity
-    const pixelPos = this.pixelMovement?.getPosition();
-    const playerPx = pixelPos?.px ?? tileToPixelCenter(position.x, position.y).px;
-    const playerPy = pixelPos?.py ?? tileToPixelCenter(position.x, position.y).py;
-    this.updateRangeIndicator(playerPx, playerPy);
-    this.updateNpcProximity(playerPx, playerPy);
-
-    // Check if player landed on a portal tile (TileId.PORTAL = 16) — emit portal:use if so.
-    // checkPortalTile is debounced by position key so duplicate calls are safe.
-    this.checkPortalTile(position);
-
-    // Reveal fog at new position
-    if (this.fogManager && this.fogRenderer) {
-      // Get tile ID at player position for visibility modifier
-      let tileId: string | undefined;
-      if (this.currentTiles && position.y < this.currentTiles.length && position.x < this.currentTiles[0]?.length) {
-        const tileNumericId = this.currentTiles[position.y]?.[position.x];
-        if (tileNumericId !== undefined) {
-          tileId = tileIdToString(tileNumericId as TileId);
-        }
-      }
-
-      // Reveal with biome and tile visibility modifiers
-      const newlyRevealed = this.fogManager.revealAtPosition(worldX, worldY, this.currentBiome, tileId);
-      if (newlyRevealed.size > 0) {
-        this.fogRenderer.revealTiles(newlyRevealed);
-      }
-    }
-
-    // Check for POI discovery
-    if (this.poiRenderer && this.fogManager?.isRevealed(worldX, worldY)) {
-      const poiId = this.poiRenderer.checkPlayerOnPoi(worldX, worldY);
-      if (poiId && !this.discoveredPoiIds.has(poiId)) {
-        // Request discovery from server
-        gameSocket.emit('poi:discover', { poiId, worldX, worldY });
-      }
-    }
-  }
-
-  updateLocalPlayer(position: Position): void {
-    // Create player sprite if it doesn't exist
-    if (!this.localPlayer) {
-      this.createLocalPlayer(position);
-      // Set up camera to follow player via CameraController
-      this.cameraController?.startFollowPlayer(this.localPlayer!);
-    } else {
-      this.updateLocalPlayerSprite(position);
-    }
-  }
-
-  // ── Phase 134: Pixel movement rendering ──────────────────────────────────
-
-  /**
-   * Update local player sprite from pixel-space position.
-   * Called every frame by handleInput when the pixel movement controller reports movement.
-   * Uses setPosition (no tweens) for instant, smooth rendering.
-   */
-  private updateLocalPlayerFromPixels(px: number, py: number): void {
-    if (!this.localPlayer || !this.isoTransform) return;
-
-    // Convert pixel position to fractional tile coordinates
-    const gridX = px / TILE_SIZE_PX;
-    const gridY = py / TILE_SIZE_PX;
-
-    // Get zone offset for world coordinates
-    const zoneCoords = this.parseZoneCoords(this.currentZoneId);
-    const worldX = zoneCoords.x * ZONE_SIZE + gridX;
-    const worldY = zoneCoords.y * ZONE_SIZE + gridY;
-
-    // Integer tile coords still needed for tile-local lookups (fog, portal, etc.)
-    const tileX = Math.floor(gridX);
-    const tileY = Math.floor(gridY);
-
-    // Use bilinear elevation interpolation to avoid sudden 128 px jump at tile
-    // boundaries (the classic "player sinking" artefact).
-    const elevation = this.getInterpolatedElevation(gridX, gridY);
-    const elevationOffset = elevation * 128;
-
-    // Convert to isometric screen position
-    const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
-
-    // Set sprite position directly (no tween — instant for pixel movement)
-    this.localPlayer.setPosition(screenPos.x, screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET);
-
-    // Update grid data for depth sorting — use rounded elevation so depth
-    // sorting still works on discrete tile levels.
-    const elevationRounded = Math.round(elevation);
-    this.localPlayer.setData('gridX', worldX);
-    this.localPlayer.setData('gridY', worldY);
-    this.localPlayer.setData('elevation', elevationRounded);
-
-    // Update depth — boost 0.1 keeps player above same-position peers but below walls in front
-    const depth = this.isoTransform.calculateDepth(worldX, worldY, elevationRounded, 0.1, true);
-    this.localPlayer.setDepth(depth);
-
-    // Mark dirty for depth sorter
-    if (this.depthSorter) {
-      this.depthSorter.markDirty('local');
-    }
-
-    // Update range indicator and NPC proximity using real pixel positions
-    this.updateRangeIndicator(px, py);
-    this.updateNpcProximity(px, py);
-
-    // Check zone transition at pixel granularity
-    this.checkPixelZoneTransition(px, py);
-
-    // Fog reveal at tile position
-    const intWorldX = Math.floor(worldX);
-    const intWorldY = Math.floor(worldY);
-    if (this.fogManager && this.fogRenderer) {
-      let tileId: string | undefined;
-      if (this.currentTiles && tileY < this.currentTiles.length && tileX < (this.currentTiles[0]?.length ?? 0)) {
-        const tileNumericId = this.currentTiles[tileY]?.[tileX];
-        if (tileNumericId !== undefined) {
-          tileId = tileIdToString(tileNumericId as TileId);
-        }
-      }
-      const newlyRevealed = this.fogManager.revealAtPosition(intWorldX, intWorldY, this.currentBiome, tileId);
-      if (newlyRevealed.size > 0) {
-        this.fogRenderer.revealTiles(newlyRevealed);
-      }
-    }
-
-    // POI discovery
-    if (this.poiRenderer && this.fogManager?.isRevealed(intWorldX, intWorldY)) {
-      const poiId = this.poiRenderer.checkPlayerOnPoi(intWorldX, intWorldY);
-      if (poiId && !this.discoveredPoiIds.has(poiId)) {
-        gameSocket.emit('poi:discover', { poiId, worldX: intWorldX, worldY: intWorldY });
-      }
-    }
-
-    // Portal tile check
-    this.checkPortalTileAtPixels(tileX, tileY);
-  }
-
-  /**
-   * Check zone transition at pixel granularity.
-   */
   private checkPixelZoneTransition(px: number, py: number): void {
     const zoneSizePx = getZoneSize(this.currentZoneId) * TILE_SIZE_PX;
     let newZoneOffsetX = 0;
@@ -2124,321 +446,93 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  /**
-   * Check for portal tile at given tile coordinates (pixel-movement version).
-   */
-  private checkPortalTileAtPixels(tileX: number, tileY: number): void {
-    if (!this.currentTiles) return;
-    const tileNumericId = this.currentTiles[tileY]?.[tileX];
-    if (tileNumericId === 16) { // TileId.PORTAL
-      const key = `${this.currentZoneId}:${tileX},${tileY}`;
-      if (this.lastPortalEmitKey !== key) {
-        this.lastPortalEmitKey = key;
-        gameSocket.emit('portal:use', {});
+  // ── Chunk Rendering ───────────────────────────────────────────────────
+
+  private renderChunk(chunkData: ChunkData, biome: BiomeType): void {
+    if (!this.tileRenderer || !this.isoTransform) return;
+
+    const { zoneId, tiles, heights, structures } = chunkData;
+
+    if (this.chunkTiles.has(zoneId)) {
+      if (zoneId === this.currentZoneId) {
+        this.currentTiles = tiles;
+        this.currentHeights = heights;
+        this.currentStructures = structures;
+        this.currentBiome = biome;
       }
-    } else {
-      this.lastPortalEmitKey = null;
+      return;
     }
-  }
 
-  /**
-   * Handle server-authoritative position correction.
-   * Called from gameStore when positionCorrection event arrives.
-   */
-  handlePositionCorrection(serverPx: number, serverPy: number, sequence: number): void {
-    if (!this.pixelMovement) return;
-    const result = this.pixelMovement.reconcile(serverPx, serverPy, sequence);
-    if (result.corrected) {
-      // Smooth snap-back: update sprite position to corrected position
-      this.updateLocalPlayerFromPixels(result.px, result.py);
-    }
-  }
+    const { x: chunkX, y: chunkY } = this.parseZoneCoords(zoneId);
+    const chunkGridX = chunkX * ZONE_SIZE;
+    const chunkGridY = chunkY * ZONE_SIZE;
+    const chunkTileArray: Phaser.GameObjects.Container[] = [];
 
-  /**
-   * Update remote players from interpolation buffer each frame.
-   */
-  private updateRemotePlayerInterpolation(): void {
-    if (!this.remoteInterpolator || !this.isoTransform) return;
+    const mapHeight = tiles.length;
+    const mapWidth = tiles[0]?.length ?? 0;
 
-    const now = Date.now();
-
-    this.playerSprites.forEach((container, playerId) => {
-      const interp = this.remoteInterpolator!.getInterpolatedPosition(playerId, now);
-      if (!interp) return;
-
-      // Convert pixel position to fractional tile coordinates
-      const gridX = interp.px / TILE_SIZE_PX;
-      const gridY = interp.py / TILE_SIZE_PX;
-
-      // Add zone offset for world coordinates
-      const zoneCoords = this.parseZoneCoords(this.currentZoneId);
-      const worldX = zoneCoords.x * ZONE_SIZE + gridX;
-      const worldY = zoneCoords.y * ZONE_SIZE + gridY;
-
-      // Use bilinear elevation interpolation to smooth the visual Y offset
-      // when the remote player crosses tile boundaries with differing elevation.
-      const elevation = this.getInterpolatedElevation(gridX, gridY);
-      const elevationOffset = elevation * 128;
-
-      const screenPos = this.isoTransform!.gridToScreen(worldX, worldY);
-
-      // Set position directly (no tween — interpolation IS the smoothing)
-      (container as unknown as Phaser.GameObjects.Container).setPosition(screenPos.x, screenPos.y - elevationOffset + ENTITY_GROUND_OFFSET);
-
-      // Update grid data for depth sorting — use rounded elevation so depth
-      // sorting still works on discrete tile levels.
-      const elevationRounded = Math.round(elevation);
-      container.setData('gridX', worldX);
-      container.setData('gridY', worldY);
-      container.setData('elevation', elevationRounded);
-
-      const depth = this.isoTransform!.calculateDepth(worldX, worldY, elevationRounded, 0, true);
-      (container as unknown as Phaser.GameObjects.Container).setDepth(depth);
-
-      // Update animation based on interpolation state
-      const characterSprite = container.getData('characterSprite') as Phaser.GameObjects.Sprite | undefined;
-      if (characterSprite) {
-        if (interp.moving && interp.direction) {
-          const currentFacing = container.getData('facing') as Direction || 's';
-          const isMoving = container.getData('isMoving') as boolean;
-          if (!isMoving || interp.direction !== currentFacing) {
-            container.setData('facing', interp.direction);
-            characterSprite.play(`character-run-${interp.direction}`);
-            container.setData('isMoving', true);
-          }
-        } else {
-          const wasMoving = container.getData('isMoving') as boolean;
-          if (wasMoving) {
-            const facing = container.getData('facing') as Direction || 's';
-            characterSprite.stop();
-            characterSprite.setTexture(`character-idle-${facing}`);
-            container.setData('isMoving', false);
-          }
-        }
+    for (let y = 0; y < mapHeight; y++) {
+      for (let x = 0; x < mapWidth; x++) {
+        const tileId = tiles[y][x] as TileId;
+        const elevation = heights[y][x];
+        const worldX = chunkGridX + x;
+        const worldY = chunkGridY + y;
+        const tile = this.tileRenderer.createTileWithElevationWorld(worldX, worldY, tileId, elevation, heights, x, y);
+        chunkTileArray.push(tile);
       }
+    }
 
-      // Mark dirty for depth sorter
-      if (this.depthSorter) {
-        this.depthSorter.markDirty(playerId);
+    // Create POI sprites for this chunk
+    const poiRenderer = this.entityManager?.getPoiRenderer();
+    if (chunkData.pois && chunkData.pois.length > 0 && poiRenderer) {
+      poiRenderer.createPoisForChunk(chunkData.pois, chunkX, chunkY, this.entityManager?.getDiscoveredPoiIds() ?? new Set());
+    }
+
+    this.chunkTiles.set(zoneId, chunkTileArray);
+
+    if (zoneId === this.currentZoneId) {
+      this.currentBiome = biome;
+      this.currentTiles = tiles;
+      this.currentHeights = heights;
+      this.currentStructures = structures;
+      if (this.zoneHUD) {
+        this.zoneHUD.updateZone(zoneId, biome);
       }
-    });
-  }
-
-  /** Get the pixel movement controller (for gameStore integration). */
-  getPixelMovementController(): PixelMovementController | null {
-    return this.pixelMovement;
-  }
-
-  /** Get the remote player interpolator (for gameStore integration). */
-  getRemoteInterpolator(): RemotePlayerInterpolator | null {
-    return this.remoteInterpolator;
-  }
-
-  // ── End Phase 134 additions ─────────────────────────────────────────────
-
-  private getEntityTexture(type: string): string {
-    switch (type) {
-      case 'creature':
-        return 'creature';
-      case 'mineral':
-        return 'mineral';
-      case 'item':
-        return 'item';
-      default:
-        return 'item';
-    }
-  }
-
-  private getFactionColor(faction: string): number {
-    switch (faction) {
-      case 'verdant':
-        return 0x44cc44; // Verdant Dynamics - green
-      case 'helix':
-        return 0xff6b35; // Helix Extraction - orange
-      case 'nexus':
-        return 0x00bfff; // Nexus Frontiers - blue
-      case 'neutral':
-        return 0xa0a0a0; // Unaffiliated - gray
-      default:
-        return 0x7b68ee;
-    }
-  }
-
-  /**
-   * Show a floating damage number above the target entity.
-   * Called by gameStore's combat:damage socket handler.
-   *
-   * @param defenderId - Entity or player ID that took damage
-   * @param damage - Amount of damage dealt
-   * @param isLocalPlayer - True if the local player took the damage (shows red)
-   * @param fallbackPosition - Server-provided position for when entity has despawned
-   */
-  showDamageNumber(
-    defenderId: string,
-    damage: number,
-    isLocalPlayer: boolean,
-    fallbackPosition?: { x: number; y: number },
-    damageType?: import('@into-the-void/shared-types').DamageType,
-  ): void {
-    let targetX: number;
-    let targetY: number;
-
-    if (isLocalPlayer && this.localPlayer) {
-      // Local player took damage - use local player sprite position
-      targetX = this.localPlayer.x;
-      targetY = this.localPlayer.y;
-    } else {
-      // Check entity sprites map
-      const container = this.entitySprites.get(defenderId);
-      if (container) {
-        targetX = container.x;
-        targetY = container.y;
-      } else {
-        // Check player sprites map (other players taking damage)
-        const playerSprite = this.playerSprites.get(defenderId);
-        if (playerSprite) {
-          targetX = playerSprite.x;
-          targetY = playerSprite.y;
-        } else if (fallbackPosition && this.isoTransform) {
-          // Entity despawned but we have position from server - convert to screen coords
-          const player = useGameStore.getState().player;
-          if (player) {
-            const worldX = fallbackPosition.x - player.position.x;
-            const worldY = fallbackPosition.y - player.position.y;
-            const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
-            targetX = screenPos.x;
-            targetY = screenPos.y; // Skip elevation for fallback - damage numbers just need approximate position
-          } else {
-            return;
-          }
-        } else {
-          // Entity not found and no fallback position - skip
-          return;
+      if (this.weatherSystem && !this.weatherSystem.hasActiveWeather()) {
+        this.weatherSystem.setBiome(biome, true);
+        this.atmosphereSystem?.setBiome(biome, true);
+        if (this.cameraController && this.weatherSystem) {
+          this.cameraController.updateMinimapWeatherIgnore(this.weatherSystem);
         }
       }
     }
-
-    EntityRenderer.createFloatingDamage(this, targetX, targetY, damage, isLocalPlayer, damageType);
   }
 
-  /**
-   * Handle local player death - disable movement controls.
-   */
-  handlePlayerDeath(): void {
-    // Pixel movement stops naturally when keys are released
-    // Could add visual feedback here (grayscale, overlay, etc.) in future
-  }
-
-  /**
-   * Handle local player respawn - re-enable movement and update position.
-   */
-  handlePlayerRespawn(position: Position): void {
-    // Update local player position
-    this.updateLocalPlayer(position);
-    // Trigger zone load if zone changed (zone:state will follow from server)
-    // The zone:state handler will load the new zone data
-  }
-
-  getChunkManager(): ChunkManager | null {
-    return this.chunkManager;
-  }
-
-  /**
-   * Enable or disable keyboard input.
-   * Called by React UI panels to prevent movement while typing or browsing.
-   */
-  setKeyboardEnabled(enabled: boolean): void {
-    this.inputController?.setKeyboardEnabled(enabled);
-  }
-
-  /**
-   * Reset movement input state to prevent stuck keys.
-   * Called when modal opens to clear any keys that were held during the click.
-   */
-  resetMovementInput(): void {
-    this.inputController?.resetMovementInput();
-  }
-
-  /**
-   * Check if a world coordinate tile is blocked.
-   * Looks up the correct chunk from ChunkManager.
-   * Returns true if blocked or if chunk not loaded (conservative).
-   */
-  isWorldTileBlocked(worldX: number, worldY: number): boolean {
-    return this.isTerrainBlocked(worldX, worldY) || this.isEntityBlocked(worldX, worldY);
-  }
-
-  /**
-   * Check if terrain (not entities) blocks a world tile.
-   * Used by isometric extension to only extend walls, not feature sprites.
-   */
-  private isTerrainBlocked(worldX: number, worldY: number): boolean {
-    if (!this.chunkManager) return true;
-
-    if (isHubZone(this.currentZoneId)) {
-      const chunk = this.chunkManager.getChunk(this.currentZoneId);
-      if (!chunk?.data.collisions) return true;
-      return chunk.data.collisions[worldY]?.[worldX] ?? true;
+  private unloadChunkContainer(zoneId: string): void {
+    const tiles = this.chunkTiles.get(zoneId);
+    if (tiles) {
+      tiles.forEach(tile => {
+        const children = tile.getAll();
+        children.forEach(child => child.destroy());
+        tile.removeAll(true);
+        tile.destroy();
+      });
+      this.chunkTiles.delete(zoneId);
     }
-
-    const chunkX = Math.floor(worldX / ZONE_SIZE);
-    const chunkY = Math.floor(worldY / ZONE_SIZE);
-    const zoneId = `z_${chunkX}_${chunkY}`;
-    const chunk = this.chunkManager.getChunk(zoneId);
-    if (!chunk?.data.collisions) return true;
-
-    const localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
-    const localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
-    return chunk.data.collisions[localY]?.[localX] ?? true;
+    this.entityManager?.despawnEntitiesForZone(zoneId);
   }
 
-  /**
-   * Check if a static entity (plant/mineral) blocks a world tile.
-   * Separate from terrain so isometric wall extension doesn't apply to features.
-   */
-  private isEntityBlocked(worldX: number, worldY: number): boolean {
-    if (!this.chunkManager) return false;
-
-    let zoneId: string;
-    let localX: number;
-    let localY: number;
-
-    if (isHubZone(this.currentZoneId)) {
-      zoneId = this.currentZoneId;
-      localX = worldX;
-      localY = worldY;
-    } else {
-      const chunkX = Math.floor(worldX / ZONE_SIZE);
-      const chunkY = Math.floor(worldY / ZONE_SIZE);
-      zoneId = `z_${chunkX}_${chunkY}`;
-      localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
-      localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
-    }
-
-    const entityAtTile = useEntityStore.getState().getEntityAtPosition(localX, localY, zoneId);
-    if (entityAtTile) {
-      const blocksMovement = entityAtTile.type === 'mineral' || entityAtTile.type === 'plant';
-      if (blocksMovement) return true;
-    }
-    return false;
-  }
+  // ── Tile State / Collision ────────────────────────────────────────────
 
   setCollisionMap(collisionMap: boolean[][]): void {
     this.collisionMap = collisionMap;
-    // Set collision callback for pixel movement — uses cross-chunk lookup
     if (this.pixelMovement) {
-      // Capture current zone offset for converting zone-local → world coordinates
       const zoneCoords = this.parseZoneCoords(this.currentZoneId);
       const currentSize = getZoneSize(this.currentZoneId);
       const offsetX = zoneCoords.x * currentSize;
       const offsetY = zoneCoords.y * currentSize;
-      // Terrain-only solid check (for isometric wall extension — walls only, not features)
       const terrainSolid = (tx: number, ty: number) =>
         this.isTerrainBlocked(offsetX + tx, offsetY + ty);
-      // Entity-only solid check (features block their own tile only, no north extension).
-      // Only trigger when pixelY is at feet level (bottom half of tile) to prevent the
-      // top of the player's hitbox (head) from colliding with a feature before the feet
-      // reach its visual base. When pixelY is undefined (legacy), fall back to full blocking.
       const entitySolid = (tx: number, ty: number, pixelY?: number) => {
         if (pixelY !== undefined) {
           const tileMidY = ty * TILE_SIZE_PX + TILE_SIZE_PX * 0.5;
@@ -2448,8 +542,6 @@ export class WorldScene extends Phaser.Scene {
       };
       const getHeight = (tx: number, ty: number): number =>
         this.getWorldTileHeight(offsetX + tx, offsetY + ty);
-      // Isometric extension applies only to terrain walls (elevated cube tiles visually
-      // extend northward). Feature sprites use bottom-center anchor and don't extend.
       const isoCheck = createIsometricCollisionCheck(terrainSolid, getHeight);
       this.pixelMovement.setCollisionCallback(
         (tx: number, ty: number, pixelY?: number) =>
@@ -2458,320 +550,233 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  /**
-   * Return the height/elevation of a world tile coordinate.
-   * Mirrors isWorldTileBlocked but reads heights[][] instead of collisions[][].
-   * Returns 0 (floor level) if the chunk is not loaded or height data is missing.
-   */
-  private getWorldTileHeight(worldX: number, worldY: number): number {
-    if (!this.chunkManager) return 0;
-
-    // Hub zones: use local height data directly
-    if (isHubZone(this.currentZoneId)) {
-      const chunk = this.chunkManager.getChunk(this.currentZoneId);
-      return chunk?.data.heights?.[worldY]?.[worldX] ?? 0;
-    }
-
-    // Open-world zones: calculate which chunk this tile belongs to
-    const chunkX = Math.floor(worldX / ZONE_SIZE);
-    const chunkY = Math.floor(worldY / ZONE_SIZE);
-    const zoneId = `z_${chunkX}_${chunkY}`;
-    const chunk = this.chunkManager.getChunk(zoneId);
-    if (!chunk?.data.heights) return 0;
-
-    const localX = ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
-    const localY = ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE;
-    return chunk.data.heights[localY]?.[localX] ?? 0;
+  isWorldTileBlocked(worldX: number, worldY: number): boolean {
+    return this.isTerrainBlocked(worldX, worldY) || this.isEntityBlocked(worldX, worldY);
   }
 
-  shutdown(): void {
-    // Phase 138: clear zone cinematic cooldown map
-    this.zoneCinematicCooldowns.clear();
+  /** Resolve world coords to (chunk, localX, localY) for cross-chunk lookups. */
+  private resolveWorldToChunkLocal(worldX: number, worldY: number): { chunk: ChunkData | null; localX: number; localY: number; zoneId: string } | null {
+    if (!this.chunkManager) return null;
+    if (isHubZone(this.currentZoneId)) {
+      const c = this.chunkManager.getChunk(this.currentZoneId);
+      return c ? { chunk: c.data, localX: worldX, localY: worldY, zoneId: this.currentZoneId } : null;
+    }
+    const zoneId = `z_${Math.floor(worldX / ZONE_SIZE)}_${Math.floor(worldY / ZONE_SIZE)}`;
+    const c = this.chunkManager.getChunk(zoneId);
+    if (!c) return null;
+    return { chunk: c.data, localX: ((worldX % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE, localY: ((worldY % ZONE_SIZE) + ZONE_SIZE) % ZONE_SIZE, zoneId };
+  }
 
-    // Unregister quest event listeners to prevent memory leaks
-    gameSocket.off('quest:progress', this.handleQuestProgress);
-    gameSocket.off('quest:completed', this.handleQuestCompleted);
-    gameSocket.off('quest:abandoned', this.handleQuestAbandoned);
+  private isTerrainBlocked(worldX: number, worldY: number): boolean {
+    const r = this.resolveWorldToChunkLocal(worldX, worldY);
+    if (!r || !r.chunk.collisions) return true;
+    return r.chunk.collisions[r.localY]?.[r.localX] ?? true;
+  }
 
-    // Clean up rare node markers
-    this.rareNodeMarkers.forEach((marker) => marker.destroy());
-    this.rareNodeMarkers.clear();
+  private isEntityBlocked(worldX: number, worldY: number): boolean {
+    const r = this.resolveWorldToChunkLocal(worldX, worldY);
+    if (!r) return false;
+    const entityAtTile = useEntityStore.getState().getEntityAtPosition(r.localX, r.localY, r.zoneId);
+    return entityAtTile ? (entityAtTile.type === 'mineral' || entityAtTile.type === 'plant') : false;
+  }
 
-    if (this.targetHighlight) {
-      this.targetHighlight.destroy();
-      this.targetHighlight = null;
-    }
-    if (this.depthSorter) {
-      this.depthSorter.clear();
-      this.depthSorter = null;
-    }
-    this.isoTransform = null;
-    if (this.entityRenderer) {
-      this.entityRenderer.destroyStampedeListener(); // CRAI-06: cleanup stampede listener
-      this.entityRenderer = null;
-    }
-    if (this.weatherSystem) {
-      this.weatherSystem.destroy();
-      this.weatherSystem = null;
-    }
-    if (this.dayNightCycle) {
-      this.dayNightCycle.destroy();
-      this.dayNightCycle = null;
-    }
-    if (this.atmosphereSystem) {
-      this.atmosphereSystem.destroy();
-      this.atmosphereSystem = null;
-    }
-    if (this.zoneHUD) {
-      this.zoneHUD.destroy();
-      this.zoneHUD = null;
-    }
-    if (this.cameraController) {
-      this.cameraController.destroy();
-      this.cameraController = null;
-    }
-    if (this.inputController) {
-      this.inputController.destroy();
-      this.inputController = null;
+  private getWorldTileHeight(worldX: number, worldY: number): number {
+    const r = this.resolveWorldToChunkLocal(worldX, worldY);
+    if (!r || !r.chunk.heights) return 0;
+    return r.chunk.heights[r.localY]?.[r.localX] ?? 0;
+  }
+
+  getTileElevation(gridX: number, gridY: number, zoneId?: string): number {
+    const targetZone = zoneId ?? this.currentZoneId;
+    if (targetZone === this.currentZoneId && this.currentHeights) {
+      return this.currentHeights[gridY]?.[gridX] ?? 0;
     }
     if (this.chunkManager) {
-      this.chunkManager.clear();
-      this.chunkManager = null;
+      const chunk = this.chunkManager.getChunk(targetZone);
+      if (chunk?.data.heights) {
+        return chunk.data.heights[gridY]?.[gridX] ?? 0;
+      }
     }
+    return 0;
+  }
+
+  getInterpolatedElevation(gridX: number, gridY: number, _zoneId?: string): number {
+    const heights = this.currentHeights;
+    if (!heights) return 0;
+
+    const floorX = Math.floor(gridX);
+    const floorY = Math.floor(gridY);
+    const fracX = gridX - floorX;
+    const fracY = gridY - floorY;
+
+    const e00 = heights[floorY]?.[floorX] ?? 0;
+    const e10 = heights[floorY]?.[floorX + 1] ?? e00;
+    const e01 = heights[floorY + 1]?.[floorX] ?? e00;
+    const e11 = heights[floorY + 1]?.[floorX + 1] ?? e00;
+
+    return e00 * (1 - fracX) * (1 - fracY)
+         + e10 * fracX       * (1 - fracY)
+         + e01 * (1 - fracX) * fracY
+         + e11 * fracX       * fracY;
+  }
+
+  getWorldTileElevation(worldX: number, worldY: number): number {
+    const r = this.resolveWorldToChunkLocal(worldX, worldY);
+    if (!r || !r.chunk.heights) return 0;
+    return r.chunk.heights[r.localY]?.[r.localX] ?? 0;
+  }
+
+  // ── Viewport / Tile Transparency ──────────────────────────────────────
+
+  private updateVisibleTiles(): void {
+    if (!this.viewportCuller) return;
+    if (this.chunkTiles.size === 0) return;
+
+    const bounds = this.viewportCuller.getCullBounds(this.cameras.main);
+    if (this.lastCullBounds &&
+        this.lastCullBounds.minTileX === bounds.minTileX &&
+        this.lastCullBounds.maxTileX === bounds.maxTileX &&
+        this.lastCullBounds.minTileY === bounds.minTileY &&
+        this.lastCullBounds.maxTileY === bounds.maxTileY) {
+      return;
+    }
+    this.lastCullBounds = bounds;
+
+    this.chunkTiles.forEach(tiles => {
+      for (const tile of tiles) {
+        const gridX = tile.getData('gridX') as number;
+        const gridY = tile.getData('gridY') as number;
+        const isVisible = this.viewportCuller!.isTileVisible(gridX, gridY, bounds);
+        if (tile.visible !== isVisible) {
+          tile.setVisible(isVisible);
+        }
+      }
+    });
+  }
+
+  private updateTileTransparency(): void {
+    const localPlayer = this.entityManager?.getLocalPlayer();
+    if (!localPlayer || !this.isoTransform) return;
+    const chunkTiles = this.chunkTiles.get(this.currentZoneId);
+    if (!chunkTiles) return;
+    const pX = localPlayer.getData('gridX') as number;
+    const pY = localPlayer.getData('gridY') as number;
+    if (pX == null || pY == null || isNaN(pX)) return;
+    const pElev = (localPlayer.getData('elevation') as number) ?? 0;
+    const pRow = pX + pY, pCol = pX - pY;
+    const newTransparent = new Set<Phaser.GameObjects.Container>();
+    for (const tile of chunkTiles) {
+      const elev = tile.getData('elevation') as number;
+      if (!elev || elev <= pElev) continue;
+      const tX = tile.getData('gridX') as number, tY = tile.getData('gridY') as number;
+      if (Math.abs(tX - pX) > 5 || Math.abs(tY - pY) > 5) continue;
+      const tRow = tX + tY;
+      if (tRow <= pRow || tRow - pRow > elev + 2) continue;
+      if (Math.abs((tX - tY) - pCol) > 2) continue;
+      newTransparent.add(tile);
+      if (tile.alpha !== 0.35) tile.setAlpha(0.35);
+    }
+    for (const tile of this.transparentTiles) {
+      if (!newTransparent.has(tile)) tile.setAlpha(1.0);
+    }
+    this.transparentTiles = newTransparent;
+  }
+
+  // ── Utility ───────────────────────────────────────────────────────────
+
+  parseZoneCoords(zoneId: string): { x: number; y: number } {
+    if (isHubZone(zoneId)) return { x: 0, y: 0 };
+    const parts = zoneId.split('_');
+    return { x: parseInt(parts[1], 10), y: parseInt(parts[2], 10) };
+  }
+
+  private getZoneBoundaryDepthPx(px: number, py: number): number {
+    const zonePxSize = getZoneSize(this.currentZoneId) * TILE_SIZE_PX;
+    const fromLeft = px;
+    const fromRight = zonePxSize - px;
+    const fromTop = py;
+    const fromBottom = zonePxSize - py;
+    return Math.min(fromLeft, fromRight, fromTop, fromBottom);
+  }
+
+  // ── WorldSceneAccessor + Public API ────────────────────────────────────
+
+  getCurrentZoneId(): string { return this.currentZoneId; }
+  getCurrentTiles(): number[][] | null { return this.currentTiles; }
+  getCurrentHeights(): number[][] | null { return this.currentHeights; }
+  getCurrentBiome(): BiomeType { return this.currentBiome; }
+  getChunkManager(): ChunkManager | null { return this.chunkManager; }
+  getIsoTransform(): IsometricTransform | null { return this.isoTransform; }
+  getFogManager(): FogManager | null { return this.entityManager?.getFogManager() ?? null; }
+  getFogRenderer(): FogRenderer | null { return this.entityManager?.getFogRenderer() ?? null; }
+  getPoiRenderer(): PoiRenderer | null { return this.entityManager?.getPoiRenderer() ?? null; }
+  getDiscoveredPoiIds(): Set<string> { return this.entityManager?.getDiscoveredPoiIds() ?? new Set(); }
+  getPixelMovement(): PixelMovementController | null { return this.pixelMovement; }
+  getChunkTiles(): Map<string, Phaser.GameObjects.Container[]> { return this.chunkTiles; }
+
+  spawnEntity(entity: Entity, zoneId?: string): void { this.entityManager?.spawnEntity(entity, zoneId); }
+  despawnEntity(entityId: string): void { this.entityManager?.despawnEntity(entityId); }
+  clearEntities(): void { this.entityManager?.clearEntities(); }
+  clearOtherPlayers(): void { this.entityManager?.clearOtherPlayers(); }
+  updateEntity(entityId: string, changes: Partial<Entity>): void { this.entityManager?.updateEntity(entityId, changes); }
+  addPlayer(player: PlayerPublic): void { this.entityManager?.addPlayer(player); }
+  removePlayer(playerId: string): void { this.entityManager?.removePlayer(playerId); }
+  movePlayer(playerId: string, position: Position): void { this.entityManager?.movePlayer(playerId, position); }
+
+  updateLocalPlayer(position: Position): void {
+    if (!this.entityManager?.getLocalPlayer()) {
+      this.entityManager?.updateLocalPlayer(position);
+      // Set up camera to follow the newly created local player
+      const localPlayer = this.entityManager?.getLocalPlayer();
+      if (localPlayer) {
+        this.cameraController?.startFollowPlayer(localPlayer);
+      }
+    } else {
+      this.entityManager?.updateLocalPlayer(position);
+    }
+  }
+
+  updateLocalPlayerSprite(position: Position): void {
+    this.entityManager?.updateLocalPlayerSprite(position);
+    // Also update interaction state
+    const pixelPos = this.pixelMovement?.getPosition();
+    const playerPx = pixelPos?.px ?? tileToPixelCenter(position.x, position.y).px;
+    const playerPy = pixelPos?.py ?? tileToPixelCenter(position.x, position.y).py;
+    this.interactionController?.update(playerPx, playerPy);
+    this.interactionController?.checkPortalTile(position);
+    this.checkPendingZoneTransition(position);
+  }
+
+  showDamageNumber(defenderId: string, damage: number, isLocalPlayer: boolean, fallbackPosition?: { x: number; y: number }, damageType?: import('@into-the-void/shared-types').DamageType): void {
+    this.entityManager?.showDamageNumber(defenderId, damage, isLocalPlayer, fallbackPosition, damageType);
+  }
+
+  handlePlayerDeath(): void { this.entityManager?.handlePlayerDeath(); }
+  handlePlayerRespawn(position: Position): void { this.entityManager?.handlePlayerRespawn(position); }
+  handlePositionCorrection(serverPx: number, serverPy: number, sequence: number): void { this.entityManager?.handlePositionCorrection(serverPx, serverPy, sequence); }
+  handleGatheringChallenge(_challenge: TimingChallenge): void { /* No-op: gathering auto-completes on server */ }
+
+  getPixelMovementController(): PixelMovementController | null { return this.pixelMovement; }
+  getRemoteInterpolator(): RemotePlayerInterpolator | null { return this.entityManager?.getRemoteInterpolator() ?? null; }
+
+  setKeyboardEnabled(enabled: boolean): void { this.inputController?.setKeyboardEnabled(enabled); }
+  resetMovementInput(): void { this.inputController?.resetMovementInput(); }
+
+  shutdown(): void {
+    this.zoneCinematicCooldowns.clear();
+    this.interactionController?.destroy(); this.interactionController = null;
+    this.entityManager?.destroy(); this.entityManager = null;
+    this.cameraController?.destroy(); this.cameraController = null;
+    this.inputController?.destroy(); this.inputController = null;
+    this.isoTransform = null;
+    this.weatherSystem?.destroy(); this.weatherSystem = null;
+    this.dayNightCycle?.destroy(); this.dayNightCycle = null;
+    this.atmosphereSystem?.destroy(); this.atmosphereSystem = null;
+    this.zoneHUD?.destroy(); this.zoneHUD = null;
+    this.chunkManager?.clear(); this.chunkManager = null;
     this.chunkTiles.forEach(tiles => tiles.forEach(tile => tile.destroy(true)));
     this.chunkTiles.clear();
     this.transparentTiles.clear();
     this.lastCullBounds = null;
-
-    // Cleanup fog system
-    if (this.fogManager) {
-      this.fogManager.flush(); // Final save on shutdown
-      this.fogManager = null;
-    }
-    if (this.fogRenderer) {
-      this.fogRenderer.destroy();
-      this.fogRenderer = null;
-    }
-    this.fogInitialized = false;
-
-    // Cleanup POI system
-    if (this.poiRenderer) {
-      this.poiRenderer.destroy();
-      this.poiRenderer = null;
-    }
-    this.discoveredPoiIds.clear();
-  }
-
-  /**
-   * Apply initial quest markers to NPCs when entering a zone.
-   * Called when npc:quest-markers event is received from server.
-   */
-  private applyInitialQuestMarkers(
-    markers: Array<{ npcId: string; markerType: 'available' | 'ready' | 'none' }>
-  ): void {
-    if (!this.entityRenderer) return;
-
-    for (const marker of markers) {
-      const npcContainer = this.findNpcContainerById(marker.npcId);
-      if (npcContainer) {
-        this.entityRenderer.updateQuestMarker(
-          npcContainer.getData('entityId') as string,
-          marker.markerType,
-          npcContainer
-        );
-      }
-    }
-  }
-
-  /**
-   * Update NPC quest marker after interaction response.
-   * Called when npc:interact:response is received from server.
-   */
-  private updateNpcQuestMarker(data: {
-    npcId: string;
-    availableQuests?: Array<{ questId: string }>;
-    activeQuests?: Array<{ questId: string }>;
-    readyQuests?: Array<{ questId: string }>;
-  }): void {
-    if (!this.entityRenderer) return;
-
-    const npcContainer = this.findNpcContainerById(data.npcId);
-    if (!npcContainer) return;
-
-    // Determine marker type based on quest state
-    // Priority: ready > available > none
-    let markerType: 'available' | 'ready' | 'none' = 'none';
-    if (data.readyQuests && data.readyQuests.length > 0) {
-      markerType = 'ready';
-    } else if (data.availableQuests && data.availableQuests.length > 0) {
-      markerType = 'available';
-    }
-
-    this.entityRenderer.updateQuestMarker(
-      npcContainer.getData('entityId') as string,
-      markerType,
-      npcContainer
-    );
-  }
-
-  /**
-   * Find NPC container by npcId.
-   * Returns the entity container if found, undefined otherwise.
-   */
-  private findNpcContainerById(npcId: string): Phaser.GameObjects.Container | undefined {
-    for (const [_entityId, container] of this.entitySprites) {
-      if (container.getData('entityType') === 'npc') {
-        const storedNpcId = container.getData('npcId');
-        if (storedNpcId === npcId) {
-          return container;
-        }
-      }
-    }
-    return undefined;
-  }
-
-  // Quest event handlers for real-time marker updates
-  private handleQuestProgress = (data: { questId: string }): void => {
-    this.updateMarkerForQuestId(data.questId);
-  };
-
-  private handleQuestCompleted = (data: { questId: string }): void => {
-    this.updateMarkerForQuestId(data.questId);
-  };
-
-  private handleQuestAbandoned = (data: { questId: string }): void => {
-    this.updateMarkerForQuestId(data.questId);
-  };
-
-  /**
-   * Update quest marker for NPC associated with questId.
-   * Called when quest state changes (accept, progress, complete, abandon).
-   */
-  private updateMarkerForQuestId(questId: string): void {
-    const questDef = QuestRegistry.get(questId);
-    if (!questDef.questGiverId) return; // Auto-discover quest or unknown, no NPC marker
-
-    const npcContainer = this.findNpcContainerById(questDef.questGiverId);
-    if (!npcContainer) return; // NPC not in current zone
-
-    const markerType = this.computeMarkerTypeForNpc(questDef.questGiverId);
-
-    this.entityRenderer?.updateQuestMarker(
-      npcContainer.getData('entityId') as string,
-      markerType,
-      npcContainer
-    );
-  }
-
-  /**
-   * Compute marker type for NPC from current quest state.
-   * Priority: ready (?) > available (!) > none
-   */
-  private computeMarkerTypeForNpc(npcId: string): 'available' | 'ready' | 'none' {
-    const questStore = useQuestStore.getState();
-    const player = useGameStore.getState().player;
-    if (!player) return 'none';
-
-    // 1. Check for ready quests (highest priority) - active quests with all objectives complete
-    for (const activeQuest of questStore.activeQuests) {
-      const questDef = QuestRegistry.get(activeQuest.questId);
-      if (questDef.questGiverId === npcId) {
-        const allComplete = activeQuest.objectives.every(obj => obj.complete);
-        if (allComplete) {
-          return 'ready'; // Can turn in
-        }
-      }
-    }
-
-    // 2. Check for available quests - not active, not completed (unless repeatable), meets prerequisites
-    // Neutral faction has no quests (only verdant, helix, nexus)
-    if (player.faction === 'neutral') return 'none';
-
-    const allQuests = QuestRegistry.getByFaction(player.faction);
-    const hasAvailable = allQuests.some(q => {
-      if (q.questGiverId !== npcId) return false;
-
-      // Not already active
-      const isActive = questStore.activeQuests.some(aq => aq.questId === q.id);
-      if (isActive) return false;
-
-      // Not completed (unless repeatable)
-      const completed = questStore.completedQuests.some(cq => cq.questId === q.id);
-      if (completed && !q.isRepeatable) return false;
-
-      // Check prerequisites
-      if (q.prerequisiteQuestIds && q.prerequisiteQuestIds.length > 0) {
-        const metPrereqs = q.prerequisiteQuestIds.every(prereqId =>
-          questStore.completedQuests.some(cq => cq.questId === prereqId)
-        );
-        if (!metPrereqs) return false;
-      }
-
-      return true;
-    });
-
-    if (hasAvailable) {
-      return 'available'; // Can accept
-    }
-
-    return 'none'; // No quests
-  }
-
-  /**
-   * Refresh all rare node markers from store state.
-   * Called on initial load and zone changes.
-   */
-  private refreshRareNodeMarkers(): void {
-    // Clear existing markers
-    this.rareNodeMarkers.forEach((marker) => marker.destroy());
-    this.rareNodeMarkers.clear();
-
-    // Get current zone's discovered resources
-    const discoveries = useGameStore.getState().discoveredResources;
-    const currentZone = useGameStore.getState().zoneState;
-
-    if (!currentZone) return;
-
-    for (const resource of discoveries) {
-      // Only show markers for current zone
-      if (resource.zoneId !== currentZone.zoneId) continue;
-
-      this.addRareNodeMarker(resource);
-    }
-  }
-
-  /**
-   * Add a single rare node marker to the scene.
-   */
-  private addRareNodeMarker(resource: DiscoveredResource): void {
-    if (this.rareNodeMarkers.has(resource.entityId)) return;
-    if (!this.isoTransform) return;
-
-    // Convert world coords to screen position
-    const screenPos = this.isoTransform.gridToScreen(
-      resource.worldX,
-      resource.worldY
-    );
-
-    // Position marker above entity (offset upward)
-    const marker = createRareNodeMarker(
-      this,
-      screenPos.x,
-      screenPos.y - 300, // Above entity nameplate
-      resource.rarity
-    );
-
-    this.rareNodeMarkers.set(resource.entityId, marker);
-  }
-
-  /**
-   * Remove marker when resource is harvested.
-   */
-  private removeRareNodeMarker(entityId: string): void {
-    const marker = this.rareNodeMarkers.get(entityId);
-    if (marker) {
-      marker.destroy();
-      this.rareNodeMarkers.delete(entityId);
-    }
   }
 }
