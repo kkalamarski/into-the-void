@@ -281,14 +281,17 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 ### Active
 
-## Current Milestone: v1.32 Debug View & Visual Polish
+## Current Milestone: v1.33 Biome Liquids
 
-**Goal:** Add F3 debug overlay for collision visualization and position info, fix feature rendering (white outline), and adjust elevation/wall height for better visual proportions.
+**Goal:** Add per-biome liquid bodies that fill terrain at elevation <= 0, rendered as half-height translucent/opaque blocks. Players and creatures can walk through liquids but receive effects (slow movement, damage, healing) based on the liquid type.
 
 **Target features:**
-- F3 debug HUD overlay showing player position, elevation, tile info, and all collision boundaries (tiles, features, walls)
-- Remove white outline from feature entities (plants, minerals, artifacts)
-- Halve elevation step (128px → 64px) so tiles render as slabs instead of cubes
+- Liquid tile type per biome derived from lore (void ether, magma, toxic sludge, spore fluid, etc.)
+- Fixed sea level at elevation 0 — any tile at elevation <= 0 gets liquid overlay
+- Half-height translucent or opaque blocks (lore-dependent per liquid type)
+- Movement slow effect when walking through liquid
+- Per-liquid-type effects: damage (lava, toxic), healing (bioluminescent), debuffs (void, fungal)
+- Creatures also affected by liquid effects
 - Wall tiles render at 4x height to visibly tower over ground
 
 ### Out of Scope

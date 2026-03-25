@@ -18,16 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** Phase 155 — Elevation & Height Rework (complete)
+**Current focus:** v1.33 — Biome Liquids
 
 ## Current Position
 
-Phase: 155 of 155 (Elevation & Height Rework)
-Plan: 2 of 2 in current phase
-Status: Phase 155 execution complete, pending verification
-Last activity: 2026-03-24 - Completed quick task 18: Remove player occlusion transparency
-
-Progress: [█████░░░░░] 50%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-25 — Milestone v1.33 started
 
 ## Performance Metrics
 
