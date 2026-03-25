@@ -34,17 +34,17 @@ Requirements for gameplay bugfix milestone.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DBG-01 | TBD | Pending |
-| AI-01 | TBD | Pending |
-| AI-02 | TBD | Pending |
-| ABIL-01 | TBD | Pending |
-| ABIL-02 | TBD | Pending |
-| ABIL-03 | TBD | Pending |
+| DBG-01 | Phase 159 | Pending |
+| AI-01 | Phase 159 | Pending |
+| AI-02 | Phase 159 | Pending |
+| ABIL-01 | Phase 160 | Pending |
+| ABIL-02 | Phase 160 | Pending |
+| ABIL-03 | Phase 160 | Pending |
 
 **Coverage:**
 - v1.34 requirements: 6 total
-- Mapped to phases: 0
-- Unmapped: 6 ⚠️
+- Mapped to phases: 6
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-25*

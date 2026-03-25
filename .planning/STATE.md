@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: Biome Liquids
-status: unknown
-last_updated: "2026-03-25T11:01:11.899Z"
+milestone: v1.34
+milestone_name: Gameplay Fixes
+status: ready_to_plan
+last_updated: "2026-03-25T00:00:00.000Z"
 progress:
-  total_phases: 140
-  completed_phases: 139
-  total_plans: 361
-  completed_plans: 359
+  total_phases: 2
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.34 — Gameplay Fixes
+**Current focus:** v1.34 — Gameplay Fixes (Phase 159)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-25 — Milestone v1.34 started
+Phase: 159 of 160 (Creature AI & Debug Overlay)
+Plan: — of —
+Status: Ready to plan
+Last activity: 2026-03-25 — Roadmap created for v1.34 Gameplay Fixes
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -48,11 +48,11 @@ Progress: [░░░░░░░░░░] 0%
 
 ### Decisions
 
-- [v1.32]: ELEVATION_HEIGHT_STEP changed from 128px to 64px — terrain renders as thin slabs; liquid half-height will be 32px
+- [v1.33]: Liquid half-height is 32px (ELEVATION_HEIGHT_STEP/2 = 64/2)
+- [v1.32]: ELEVATION_HEIGHT_STEP changed from 128px to 64px — terrain renders as thin slabs
 - [v1.32]: Wall tiles get height boost in world-gen (min 4) instead of rendering multiplier
-- [v1.32]: MAX_ELEVATION raised from 5 to 6 to accommodate boosted wall heights
 - [v1.31]: Strategy Pattern and WorldScene/Gateway decomposition complete — all major refactors shipped
-- [v1.30 tech debt]: Phase 143 VERIFICATION.md stale; server ability debug logs reintroduced; GameContainer.tsx has 5 debug console.log calls
+- [v1.30 tech debt]: Server ability debug logs reintroduced; GameContainer.tsx has 5 debug console.log calls
 
 ### Pending Todos
 
@@ -73,9 +73,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Roadmap created for v1.33 Biome Liquids (phases 156-158)
+Stopped at: Roadmap created for v1.34 Gameplay Fixes (phases 159-160)
 Resume file: None
-Next action: Plan Phase 156 — Liquid Tile Definitions
-
----
-*Last updated: 2026-03-25 — v1.33 roadmap created*
+Next action: Plan Phase 159 — Creature AI & Debug Overlay

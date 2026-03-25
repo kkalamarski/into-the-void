@@ -35,12 +35,13 @@
 - ✅ **v1.30 World Rendering & Interaction Fix** - Phases 143-146 (shipped 2026-03-24)
 - ✅ **v1.31 Strategy Pattern Refactor & Code Decomposition** - Phases 147-153 (shipped 2026-03-24)
 - ✅ **v1.32 Debug View & Visual Polish** - Phases 154-155 (shipped 2026-03-24)
-- 🚧 **v1.33 Biome Liquids** - Phases 156-158 (in progress)
+- ✅ **v1.33 Biome Liquids** - Phases 156-158 (shipped 2026-03-25)
+- 🚧 **v1.34 Gameplay Fixes** - Phases 159-160 (in progress)
 
 ## Phases
 
 <details>
-<summary>✅ v1.0-v1.32 (Phases 1-155) - SHIPPED</summary>
+<summary>✅ v1.0-v1.33 (Phases 1-158) - SHIPPED</summary>
 
 [All milestone phases completed - see milestone archives in .planning/milestones/]
 
@@ -48,61 +49,42 @@
 
 ---
 
-### 🚧 v1.33 Biome Liquids (In Progress)
+### 🚧 v1.34 Gameplay Fixes (In Progress)
 
-**Milestone Goal:** Add per-biome liquid bodies that fill terrain at elevation <= 0, rendered as half-height translucent/opaque blocks. Players and creatures walk through liquids and receive lore-appropriate effects (slow, damage, healing, debuffs).
+**Milestone Goal:** Fix three critical gameplay regressions — debug overlay shows wrong tile data, creatures don't move, and abilities (attack/gather) don't fire.
 
-- [x] **Phase 156: Liquid Tile Definitions** - Define liquid tile types per biome with lore-appropriate color, opacity, and rendering properties (completed 2026-03-25)
-- [x] **Phase 157: Liquid Generation & Rendering** - Fill elevation <= 0 tiles with liquid in world-gen; render as half-height blocks at sea level on the client (completed 2026-03-25)
-- [x] **Phase 158: Liquid Effects** - Apply movement slow, periodic damage, healing, and debuff effects to players and creatures walking through liquid (completed 2026-03-25)
+- [ ] **Phase 159: Creature AI & Debug Overlay** - Fix creature movement so creatures visibly wander/chase on screen and correct the debug overlay tile type/elevation lookup
+- [ ] **Phase 160: Ability Execution** - Fix ability firing so attack and gather abilities work on selected targets, with visible error feedback on failure
 
 ## Phase Details
 
-### Phase 156: Liquid Tile Definitions
-**Goal**: Every biome has a liquid tile type with correct lore color and opacity registered in the tile system
-**Depends on**: Phase 155
-**Requirements**: LIQ-01, LIQ-02, LIQ-03
+### Phase 159: Creature AI & Debug Overlay
+**Goal**: Creatures are alive and moving on screen, and the debug overlay reports the tile type and elevation the player is actually standing on
+**Depends on**: Phase 158
+**Requirements**: AI-01, AI-02, DBG-01
 **Success Criteria** (what must be TRUE):
-  1. Each of the 16 biomes has a named liquid tile type (e.g. `void_ether`, `magma`, `toxic_sludge`) with a lore-correct color defined in the tile definitions
-  2. Each liquid tile definition carries an opacity flag — translucent liquids are flagged differently from opaque ones
-  3. The tile definition includes a half-height rendering property (32px slab height at ELEVATION_HEIGHT_STEP/2) distinguishing liquids from normal terrain tiles
-**Plans**: 1 plan
-Plans:
-- [ ] 156-01-PLAN.md — Define liquid tile types, extend TileDefinition with liquid fields, register all 16 biome liquids
-
-### Phase 157: Liquid Generation & Rendering
-**Goal**: Tiles at elevation <= 0 are filled with the biome's liquid in world-gen and the client renders them as half-height blocks at fixed sea level
-**Depends on**: Phase 156
-**Requirements**: GEN-01, GEN-02, GEN-03
-**Success Criteria** (what must be TRUE):
-  1. Walking to any low-lying area (elevation <= 0) shows the biome's liquid tile visually filling that terrain
-  2. Liquid tiles render as half-height isometric slabs sitting at elevation 0, regardless of how deep the terrain dips below
-  3. Translucent liquids show the terrain tile beneath them; opaque liquids fully cover the tile below
-  4. Players and creatures can walk through liquid tiles without being blocked — liquid tiles have no collision
+  1. Within a few seconds of zone load, creatures visibly change position on screen — wandering, fleeing, or chasing according to their behavior type
+  2. Creature position updates are received by the client and creatures animate to new positions in real time
+  3. The debug overlay tile type field matches the rendered tile color at the player's feet (e.g. shows "void_rift" not "grassland" when standing in a void_rift biome)
+  4. The debug overlay elevation field matches the visible stack height of the tile the player occupies
 **Plans**: TBD
 
-### Phase 158: Liquid Effects
-**Goal**: Walking through liquid applies movement slow, periodic damage or healing, and debuffs to both players and creatures based on liquid type
-**Depends on**: Phase 157
-**Requirements**: FX-01, FX-02, FX-03, FX-04, FX-05
+### Phase 160: Ability Execution
+**Goal**: Players can attack creatures and gather from resource nodes using hotkey abilities, and see a clear error message when an ability cannot fire
+**Depends on**: Phase 159
+**Requirements**: ABIL-01, ABIL-02, ABIL-03
 **Success Criteria** (what must be TRUE):
-  1. A player walking into any liquid tile visibly moves slower — their movement speed is reduced for as long as they remain in the liquid
-  2. A player standing in a damaging liquid (magma, toxic sludge, rift plasma, impact brine) loses HP on a regular tick interval with damage numbers appearing above them
-  3. A player standing in luminous nectar liquid gains HP on a regular tick interval with healing numbers appearing above them
-  4. Creatures standing in liquid receive the same movement slow and damage/heal effects that players receive in the same liquid type
-  5. Liquid effects start immediately on entering liquid and stop within one tick of leaving — no lingering damage outside liquid areas
-**Plans**: 2 plans
-Plans:
-- [ ] 158-01-PLAN.md — Server-side LiquidEffectService: shared types, tick-based damage/heal, movement speed integration
-- [ ] 158-02-PLAN.md — Client-side liquid feedback: liquidStore, floating damage/heal numbers, HUD indicator
+  1. Selecting a creature and pressing an attack ability hotkey deals damage — floating numbers appear above the creature and the combat log records the hit
+  2. Selecting a resource node and pressing the gather hotkey starts the gathering mini-game (progress bar appears)
+  3. Pressing an ability hotkey with no valid target or missing precondition shows a visible error message in the HUD — not a silent no-op
+**Plans**: TBD
 
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 156. Liquid Tile Definitions | 1/1 | Complete    | 2026-03-25 |
-| 157. Liquid Generation & Rendering | 2/2 | Complete   | 2026-03-25 |
-| 158. Liquid Effects | 2/2 | Complete    | 2026-03-25 |
+| 159. Creature AI & Debug Overlay | 0/TBD | Not started | - |
+| 160. Ability Execution | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-03-25 — Phase 158 planned*
+*Last updated: 2026-03-25 — v1.34 roadmap created*
