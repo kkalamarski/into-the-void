@@ -125,6 +125,9 @@ export type ServerEventType =
   | 'hazard:update'
   | 'hazard:damage'
   | 'hazard:clear'
+  | 'liquid:update'
+  | 'liquid:damage'
+  | 'liquid:heal'
   | 'automation:deployed'
   | 'automation:loot_window'
   | 'automation:collected'
@@ -470,6 +473,12 @@ export interface ServerEvents {
     playerId: string;
     reason: 'left_zone' | 'entered_hub' | 'fully_protected';
   };
+  /** FX-01/02: Liquid effect state update (entering/leaving liquid) */
+  'liquid:update': import('../game/liquid').LiquidUpdatePayload;
+  /** FX-02: Liquid damage tick notification */
+  'liquid:damage': import('../game/liquid').LiquidDamagePayload;
+  /** FX-03: Liquid heal tick notification */
+  'liquid:heal': import('../game/liquid').LiquidHealPayload;
   /** AUTO-08: Automation structure deployed */
   'automation:deployed': {
     deployableId: string;

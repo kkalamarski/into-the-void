@@ -703,6 +703,46 @@ export class EntityRenderer {
   }
 
   /**
+   * Creates an animated floating heal number above a position.
+   * Text floats upward and fades out over ~1 second. Green color with "+" prefix.
+   *
+   * @param scene - Phaser scene to create the text in
+   * @param x - Screen X position (world coords)
+   * @param y - Screen Y position (world coords)
+   * @param heal - Heal amount to display
+   */
+  static createFloatingHeal(scene: Phaser.Scene, x: number, y: number, heal: number): void {
+    const startY = y - 128;
+    const text = scene.add.text(x, startY, `+${heal}`, {
+      fontSize: '64px',
+      fontStyle: 'bold',
+      color: '#00ff88',
+      stroke: '#000000',
+      strokeThickness: 4,
+      shadow: {
+        offsetX: 3,
+        offsetY: 3,
+        color: '#000000',
+        blur: 6,
+        fill: true,
+      },
+    });
+    text.setOrigin(0.5, 0.5);
+    text.setDepth(99999);
+
+    scene.tweens.add({
+      targets: text,
+      y: startY - 100,
+      alpha: 0,
+      duration: 1000,
+      ease: 'Cubic.easeOut',
+      onComplete: () => {
+        text.destroy();
+      },
+    });
+  }
+
+  /**
    * Creates a quest marker sprite positioned above an NPC.
    * @param npcEntityId - The NPC entity ID for tracking
    * @param markerType - 'available' (!) or 'ready' (?)

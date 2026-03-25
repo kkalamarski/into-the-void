@@ -789,6 +789,26 @@ export class EntityManager {
     EntityRenderer.createFloatingDamage(this.scene, targetX, targetY, damage, isLocalPlayer, damageType);
   }
 
+  showHealNumber(entityId: string, amount: number): void {
+    let targetX: number;
+    let targetY: number;
+
+    if (this.localPlayer && entityId === useGameStore.getState().player?.id) {
+      targetX = this.localPlayer.x;
+      targetY = this.localPlayer.y;
+    } else {
+      const container = this.entitySprites.get(entityId);
+      if (container) {
+        targetX = container.x;
+        targetY = container.y;
+      } else {
+        return;
+      }
+    }
+
+    EntityRenderer.createFloatingHeal(this.scene, targetX, targetY, amount);
+  }
+
   handlePlayerDeath(): void {
     // Pixel movement stops naturally when keys are released
   }

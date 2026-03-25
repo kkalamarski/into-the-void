@@ -1,0 +1,68 @@
+/* Liquid indicator - positioned below hazard indicator (top-right) */
+.liquid-indicator {
+  position: absolute;
+  top: 240px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  z-index: 100;
+  min-width: 160px;
+  animation: liquid-slide-in 0.4s ease forwards;
+}
+
+.liquid-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.liquid-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.liquid-label {
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.liquid-effects {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.liquid-speed {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 10px;
+}
+
+.liquid-damage {
+  color: #ff6b6b;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.liquid-heal {
+  color: #00ff88;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+@keyframes liquid-slide-in {
+  from {
+    transform: translateX(200px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

@@ -14,6 +14,7 @@ import { TargetFrame } from './TargetFrame';
 import { CombatLog } from './CombatLog';
 import { BuffBar } from './BuffBar';
 import { HazardIndicator } from './HazardIndicator';
+import { LiquidIndicator } from './LiquidIndicator';
 import { CraftingIndicator } from './CraftingIndicator';
 import { TimeIndicator } from './TimeIndicator';
 import './HUD.css';
@@ -225,6 +226,7 @@ export const HUD: React.FC<{ onMenuOpen?: () => void }> = ({ onMenuOpen }) => {
         </div>
       )}
       <HazardIndicator />
+      <LiquidIndicator />
       <CraftingIndicator />
       <TargetFrame />
       <TimeIndicator />

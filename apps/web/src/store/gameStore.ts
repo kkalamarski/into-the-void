@@ -548,6 +548,54 @@ gameSocket.on('combat:damage', (data: {
   }
 });
 
+// Handle liquid damage - show floating damage numbers and update health
+gameSocket.on('liquid:damage', (data: {
+  playerId: string;
+  damage: number;
+  health: number;
+  maxHealth: number;
+  liquidTileId: string;
+}) => {
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+  const currentPlayer = useGameStore.getState().player;
+
+  if (!worldScene || !currentPlayer) return;
+
+  // Show floating damage number (liquid damage uses player as defender)
+  if (currentPlayer.id === data.playerId) {
+    worldScene.showDamageNumber(data.playerId, data.damage, true);
+    useGameStore.getState().setPlayer({
+      ...currentPlayer,
+      health: data.health,
+    });
+  }
+});
+
+// Handle liquid healing - show floating heal numbers and update health
+gameSocket.on('liquid:heal', (data: {
+  playerId: string;
+  heal: number;
+  health: number;
+  maxHealth: number;
+  liquidTileId: string;
+}) => {
+  const game = useGameStore.getState().game;
+  const worldScene = game?.getWorldScene();
+  const currentPlayer = useGameStore.getState().player;
+
+  if (!worldScene || !currentPlayer) return;
+
+  // Show floating heal number (green, positive)
+  if (currentPlayer.id === data.playerId) {
+    worldScene.showHealNumber(data.playerId, data.heal);
+    useGameStore.getState().setPlayer({
+      ...currentPlayer,
+      health: data.health,
+    });
+  }
+});
+
 // Handle server errors (e.g., level-gated interaction rejection)
 gameSocket.on('error', ({ code, message }: { code: string; message: string }) => {
   console.log('[DEBUG] Server error:', { code, message });
