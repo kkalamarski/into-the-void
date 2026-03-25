@@ -1,5 +1,5 @@
 import { BiomeType, ZONE_SIZE } from '@into-the-void/shared-types';
-import { TileRegistry, TILE_IDS } from '@into-the-void/tiles';
+import { TileRegistry, TILE_IDS, BIOME_LIQUID_MAP } from '@into-the-void/tiles';
 import { SimplexNoise } from '../noise/simplex';
 import { SeededRandom } from '../random/seeded-random';
 import { BiomeGenerator } from './biome';
@@ -263,7 +263,7 @@ export function generateTerrain(
   chunkX: number,
   chunkY: number,
   biomeGenerator: BiomeGenerator
-): { tiles: number[][]; heights: number[][]; collisions: boolean[][] } {
+): { tiles: number[][]; heights: number[][]; collisions: boolean[][]; liquidTiles: (string | null)[][] } {
   const noise = new SimplexNoise(`${worldSeed}_terrain_${chunkX}_${chunkY}`);
   // IMPORTANT: Height noise uses GLOBAL seed (not chunk-specific) for seamless elevation across chunks
   const heightNoise = new SimplexNoise(`${worldSeed}_height_global`);
@@ -272,11 +272,13 @@ export function generateTerrain(
   const tiles: number[][] = [];
   const heights: number[][] = [];
   const collisions: boolean[][] = [];
+  const liquidTiles: (string | null)[][] = [];
 
   for (let y = 0; y < ZONE_SIZE; y++) {
     tiles[y] = [];
     heights[y] = [];
     collisions[y] = [];
+    liquidTiles[y] = [];
 
     for (let x = 0; x < ZONE_SIZE; x++) {
       const worldX = chunkX * ZONE_SIZE + x;
@@ -320,6 +322,14 @@ export function generateTerrain(
       const rawHeight = Math.round((heightValue + 1) * 1.5);
       // Clamp to biome-specific range using per-tile biome
       heights[y][x] = clampToBiomeRange(Math.max(0, Math.min(3, rawHeight)), biome);
+
+      // Liquid overlay: tiles at elevation <= 0 in non-hub biomes get the biome's liquid
+      const liquidId = BIOME_LIQUID_MAP[biome];
+      if (heights[y][x] <= 0 && liquidId && !biome.endsWith('_station')) {
+        liquidTiles[y][x] = liquidId;
+      } else {
+        liquidTiles[y][x] = null;
+      }
     }
   }
 
@@ -332,7 +342,7 @@ export function generateTerrain(
   const pathTileIds = BIOME_TILE_IDS[dominantBiome];
   ensureZoneConnectivity(tiles, heights, collisions, pathTiles.floor, pathTileIds.floor, dominantBiome);
 
-  return { tiles, heights, collisions };
+  return { tiles, heights, collisions, liquidTiles };
 }
 
 /**
