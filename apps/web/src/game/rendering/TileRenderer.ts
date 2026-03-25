@@ -223,9 +223,7 @@ export class TileRenderer {
     const rawVisualElevation = isBlockingTile
       ? Math.max(2, elevation * WALL_BASE_MULTIPLIER + variation)
       : elevation;
-    // Clamp to 0 minimum — negative elevation tiles render at ground level
-    // (liquid overlay covers them, they're just the terrain floor below sea level)
-    const visualElevation = Math.max(0, rawVisualElevation);
+    const visualElevation = rawVisualElevation;
 
     const elevationOffset = visualElevation * ELEVATION_HEIGHT_STEP;
 
@@ -236,11 +234,11 @@ export class TileRenderer {
     container.setData('elevation', elevation);
 
     // Stack cubes from ground level up to visual elevation to fill the wall
-    // Each lower cube is offset downward by ELEVATION_HEIGHT_STEP relative to the top
-    for (let level = 0; level <= visualElevation; level++) {
+    // For negative elevation, still render at least one cube (depression tile)
+    const stackHeight = Math.max(0, visualElevation);
+    for (let level = 0; level <= stackHeight; level++) {
       const cubeSprite = this.createCubeSprite(tileId, worldX, worldY);
-      // Offset relative to container: level 0 is at the bottom, elevation is at top (y=0)
-      const yOffset = (visualElevation - level) * ELEVATION_HEIGHT_STEP;
+      const yOffset = (stackHeight - level) * ELEVATION_HEIGHT_STEP;
       if (cubeSprite instanceof Phaser.GameObjects.Image) {
         cubeSprite.setY(yOffset);
       }

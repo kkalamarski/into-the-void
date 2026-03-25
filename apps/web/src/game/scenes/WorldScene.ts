@@ -567,38 +567,28 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
           const worldX = chunkGridX + x;
           const worldY = chunkGridY + y;
 
-          // Liquid renders slightly above the terrain surface
-          // Terrain at elevation 0 has its top face at Y - 0. The slab is 64px tall,
-          // so the surface is ~32px above the grid position (half a slab).
-          // Place liquid 16px above the terrain surface to sit visibly on top.
+          // Liquid renders at sea level (elevation 0) — depressions are below this
           const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
-          const liquidYOffset = ELEVATION_HEIGHT_STEP * 0.75; // 48px above grid = on slab surface
+          const container = this.add.container(screenPos.x, screenPos.y);
 
-          const container = this.add.container(screenPos.x, screenPos.y - liquidYOffset);
+          // Render liquid as colored isometric diamond
+          const liquidDef = TileRegistry.get(liquidTileId);
+          const alpha = liquidDef.liquidOpacity === 'opaque' ? 0.9
+            : liquidDef.liquidOpacity === 'semi-opaque' ? 0.7 : 0.5;
 
-          // Use baked procedural texture
-          const textureKey = `proc_tile_${liquidTileId}`;
-          if (this.textures.exists(textureKey)) {
-            const sprite = this.add.image(0, 0, textureKey);
-            sprite.setOrigin(0.5, 0.25);
-
-            // Set alpha based on liquid opacity type
-            const liquidDef = TileRegistry.get(liquidTileId);
-            const opacity = liquidDef.liquidOpacity;
-            if (opacity === 'translucent') {
-              sprite.setAlpha(0.5);
-            } else if (opacity === 'semi-opaque') {
-              sprite.setAlpha(0.75);
-            }
-            // opaque = alpha 1.0 (default)
-
-            container.add(sprite);
-          } else {
-            // Fallback: colored diamond
-            const liquidDef = TileRegistry.get(liquidTileId);
-            const fallback = this.add.rectangle(0, 0, 128, 64, liquidDef.color, 0.6);
-            container.add(fallback);
-          }
+          // Draw isometric diamond using graphics
+          const hw = this.isoTransform!.tileWidth / 2;
+          const hh = this.isoTransform!.tileHeight / 2;
+          const gfx = this.add.graphics();
+          gfx.fillStyle(liquidDef.color, alpha);
+          gfx.beginPath();
+          gfx.moveTo(0, -hh);    // top
+          gfx.lineTo(hw, 0);     // right
+          gfx.lineTo(0, hh);     // bottom
+          gfx.lineTo(-hw, 0);    // left
+          gfx.closePath();
+          gfx.fillPath();
+          container.add(gfx);
 
           // Depth: slightly above terrain for correct layering
           const depth = this.isoTransform.calculateDepth(worldX, worldY, 0) + 0.05;
