@@ -9,12 +9,12 @@ Requirements for gameplay bugfix milestone.
 
 ### Debug Overlay
 
-- [ ] **DBG-01**: Debug overlay shows correct tile type and elevation for the player's current position, using zone-local coordinates for array lookup
+- [x] **DBG-01**: Debug overlay shows correct tile type and elevation for the player's current position, using zone-local coordinates for array lookup
 
 ### Creature AI
 
-- [ ] **AI-01**: Creatures move according to their behavior (wander, flee, chase) — visible movement on screen within a few seconds of zone load
-- [ ] **AI-02**: Creature position updates broadcast to client and rendered correctly
+- [x] **AI-01**: Creatures move according to their behavior (wander, flee, chase) — visible movement on screen within a few seconds of zone load
+- [x] **AI-02**: Creature position updates broadcast to client and rendered correctly
 
 ### Abilities
 
@@ -34,9 +34,9 @@ Requirements for gameplay bugfix milestone.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DBG-01 | Phase 159 | Pending |
-| AI-01 | Phase 159 | Pending |
-| AI-02 | Phase 159 | Pending |
+| DBG-01 | Phase 159 | Complete |
+| AI-01 | Phase 159 | Complete |
+| AI-02 | Phase 159 | Complete |
 | ABIL-01 | Phase 160 | Pending |
 | ABIL-02 | Phase 160 | Pending |
 | ABIL-03 | Phase 160 | Pending |

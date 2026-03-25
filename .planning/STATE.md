@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.34
 milestone_name: Gameplay Fixes
-status: ready_to_plan
+status: in_progress
 last_updated: "2026-03-25T00:00:00.000Z"
 progress:
   total_phases: 2
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Position
 
-Phase: 159 of 160 (Creature AI & Debug Overlay)
+Phase: 160 of 160 (Ability Execution)
 Plan: — of —
 Status: Ready to plan
-Last activity: 2026-03-25 — Roadmap created for v1.34 Gameplay Fixes
+Last activity: 2026-03-25 — Phase 159 executed (debug overlay + creature AI fixes)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -73,6 +73,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Roadmap created for v1.34 Gameplay Fixes (phases 159-160)
+Stopped at: Phase 159 completed — debug overlay and creature AI fixes
 Resume file: None
-Next action: Plan Phase 159 — Creature AI & Debug Overlay
+Next action: Plan Phase 160 — Ability Execution

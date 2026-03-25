@@ -53,7 +53,7 @@
 
 **Milestone Goal:** Fix three critical gameplay regressions — debug overlay shows wrong tile data, creatures don't move, and abilities (attack/gather) don't fire.
 
-- [ ] **Phase 159: Creature AI & Debug Overlay** - Fix creature movement so creatures visibly wander/chase on screen and correct the debug overlay tile type/elevation lookup
+- [x] **Phase 159: Creature AI & Debug Overlay** - Fix creature movement so creatures visibly wander/chase on screen and correct the debug overlay tile type/elevation lookup (completed 2026-03-25)
 - [ ] **Phase 160: Ability Execution** - Fix ability firing so attack and gather abilities work on selected targets, with visible error feedback on failure
 
 ## Phase Details
@@ -67,7 +67,7 @@
   2. Creature position updates are received by the client and creatures animate to new positions in real time
   3. The debug overlay tile type field matches the rendered tile color at the player's feet (e.g. shows "void_rift" not "grassland" when standing in a void_rift biome)
   4. The debug overlay elevation field matches the visible stack height of the tile the player occupies
-**Plans**: TBD
+**Plans**: 2/2 complete
 
 ### Phase 160: Ability Execution
 **Goal**: Players can attack creatures and gather from resource nodes using hotkey abilities, and see a clear error message when an ability cannot fire
@@ -83,7 +83,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 159. Creature AI & Debug Overlay | 0/TBD | Not started | - |
+| 159. Creature AI & Debug Overlay | 2/2 | Complete | 2026-03-25 |
 | 160. Ability Execution | 0/TBD | Not started | - |
 
 ---
