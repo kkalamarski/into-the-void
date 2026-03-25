@@ -66,7 +66,9 @@
   1. Each of the 16 biomes has a named liquid tile type (e.g. `void_ether`, `magma`, `toxic_sludge`) with a lore-correct color defined in the tile definitions
   2. Each liquid tile definition carries an opacity flag — translucent liquids are flagged differently from opaque ones
   3. The tile definition includes a half-height rendering property (32px slab height at ELEVATION_HEIGHT_STEP/2) distinguishing liquids from normal terrain tiles
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 156-01-PLAN.md — Define liquid tile types, extend TileDefinition with liquid fields, register all 16 biome liquids
 
 ### Phase 157: Liquid Generation & Rendering
 **Goal**: Tiles at elevation <= 0 are filled with the biome's liquid in world-gen and the client renders them as half-height blocks at fixed sea level
@@ -95,7 +97,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 156. Liquid Tile Definitions | 0/TBD | Not started | - |
+| 156. Liquid Tile Definitions | 0/1 | Planned | - |
 | 157. Liquid Generation & Rendering | 0/TBD | Not started | - |
 | 158. Liquid Effects | 0/TBD | Not started | - |
 
