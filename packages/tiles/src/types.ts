@@ -6,6 +6,23 @@ import { Entity } from '@into-the-void/shared-types';
  */
 export type TileState = 'solid' | 'traversable' | 'shallow_water' | 'deep_water';
 
+/** Liquid transparency level — affects whether terrain below is visible */
+export type LiquidOpacity = 'translucent' | 'semi-opaque' | 'opaque';
+
+/**
+ * Liquid gameplay effect metadata — consumed by Phase 158 liquid effects system
+ */
+export interface LiquidEffect {
+  /** Movement speed multiplier when in liquid (stacks with movementSpeed) */
+  readonly speedMultiplier: number;
+  /** Damage dealt per tick while in liquid (0 = no damage) */
+  readonly damagePerTick: number;
+  /** Healing per tick while in liquid (0 = no healing) */
+  readonly healPerTick: number;
+  /** Human-readable effect description for tooltip */
+  readonly effectDescription: string;
+}
+
 /**
  * Tile definition - static properties for a tile type
  * This is the single source of truth for all tile data including rendering
@@ -31,6 +48,14 @@ export interface TileDefinition {
   readonly tileState?: TileState;
   /** Visibility radius modifier (1.0 = normal, 0.7 = reduced). Affects fog of war reveal. */
   readonly visibilityModifier?: number;
+  /** Whether this tile is a liquid (used by generation and rendering) */
+  readonly isLiquid?: boolean;
+  /** Liquid opacity — translucent shows terrain below, opaque covers it */
+  readonly liquidOpacity?: LiquidOpacity;
+  /** Render height multiplier — 0.5 for liquid half-height slabs (32px at ELEVATION_HEIGHT_STEP=64) */
+  readonly renderHeightMultiplier?: number;
+  /** Liquid effect metadata for gameplay (Phase 158 will consume this) */
+  readonly liquidEffect?: LiquidEffect;
   /** Optional hooks for tile interactions */
   readonly hooks?: TileHooks;
 }
