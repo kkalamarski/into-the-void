@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.33
+milestone: v1.0
 milestone_name: Biome Liquids
-status: ready_to_plan
-last_updated: "2026-03-25T00:00:00.000Z"
+status: unknown
+last_updated: "2026-03-25T10:11:53.636Z"
 progress:
-  total_phases: 3
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 138
+  completed_phases: 137
+  total_plans: 357
+  completed_plans: 355
 ---
 
 # Project State

@@ -97,7 +97,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 156. Liquid Tile Definitions | 1/1 | Complete   | 2026-03-25 |
+| 156. Liquid Tile Definitions | 1/1 | Complete    | 2026-03-25 |
 | 157. Liquid Generation & Rendering | 0/TBD | Not started | - |
 | 158. Liquid Effects | 0/TBD | Not started | - |
 
