@@ -162,13 +162,40 @@ export function resolvePixelCollision(
   /** Convert a pixel coordinate to a tile index. */
   const toTile = (p: number) => Math.floor(p / TILE_SIZE_PX);
 
-  /** Half-tile in pixels — elevation offset per level. */
+  /**
+   * Elevation offset per level in pixels (half a tile = 64px).
+   *
+   * ┌─────────────────────────────────────────────────────────────────────┐
+   * │ ISOMETRIC ELEVATION COLLISION OFFSET                               │
+   * │                                                                     │
+   * │ Tiles render as slabs (64px tall). Elevated tiles shift visually    │
+   * │ on screen but their collision remains in grid pixel space.          │
+   * │                                                                     │
+   * │ To align collision with the visual position of elevated walls,      │
+   * │ we offset each hitbox corner by +elevation * 64 on BOTH axes        │
+   * │ before looking up the tile in the collision map.                    │
+   * │                                                                     │
+   * │   offsetX = corner.x + elevation * 64                              │
+   * │   offsetY = corner.y + elevation * 64                              │
+   * │                                                                     │
+   * │ This shifts the lookup south-east in grid space, which in           │
+   * │ isometric projection corresponds to checking the tile that          │
+   * │ visually occupies the player's screen position.                     │
+   * │                                                                     │
+   * │ DO NOT:                                                             │
+   * │ - Remove the elevation offset (collisions will be wrong)            │
+   * │ - Offset only one axis (needs both X and Y, same sign, same amount) │
+   * │ - Subtract instead of add (collision goes wrong direction)          │
+   * │ - Add isometric extension checks (south-neighbor blocking etc.)     │
+   * │   — elevation offset handles this naturally                         │
+   * └─────────────────────────────────────────────────────────────────────┘
+   */
   const ELEV_PX = TILE_SIZE_PX / 2; // 64
 
   /**
-   * Check whether any of the four hitbox corners at position (cpx, cpy) overlap
-   * a solid tile. Offsets each corner's Y by the tile's elevation * 64 so
-   * elevated walls block at their visual screen position.
+   * Check whether any of the four hitbox corners overlap a solid tile.
+   * Each corner is offset by the tile's elevation * 64px on both axes
+   * to match the isometric visual position.
    */
   function hitsWall(cpx: number, cpy: number): boolean {
     const corners = [
