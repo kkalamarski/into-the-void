@@ -30,7 +30,7 @@ export class WorldGenerator {
     const biome = this.biomeGenerator.getChunkBiome(chunkX, chunkY, ZONE_SIZE);
 
     // Generate terrain (uses BiomeGenerator for per-tile biome sampling)
-    const { tiles, heights, collisions } = generateTerrain(
+    const { tiles, heights, collisions, liquidTiles } = generateTerrain(
       this.worldSeed,
       chunkX,
       chunkY,
@@ -80,6 +80,7 @@ export class WorldGenerator {
       heights,
       structures, // Now populated instead of empty []
       collisions,
+      liquidTiles,
       spawnPoints,
       pois,
     };
