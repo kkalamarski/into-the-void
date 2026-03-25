@@ -681,6 +681,13 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
   getTileElevation(gridX: number, gridY: number, zoneId?: string): number {
     const targetZone = zoneId ?? this.currentZoneId;
+    // For open-world zones, use world-aware lookup for correct coordinate mapping
+    if (!isHubZone(targetZone)) {
+      const zoneCoords = this.parseZoneCoords(targetZone);
+      const currentSize = getZoneSize(targetZone);
+      return this.getWorldTileHeight(zoneCoords.x * currentSize + gridX, zoneCoords.y * currentSize + gridY);
+    }
+    // Hub zones: direct array access (zone-local coordinates, no cross-chunk)
     if (targetZone === this.currentZoneId && this.currentHeights) {
       return this.currentHeights[gridY]?.[gridX] ?? 0;
     }
@@ -694,18 +701,31 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
   }
 
   getInterpolatedElevation(gridX: number, gridY: number, _zoneId?: string): number {
-    const heights = this.currentHeights;
-    if (!heights) return 0;
-
     const floorX = Math.floor(gridX);
     const floorY = Math.floor(gridY);
     const fracX = gridX - floorX;
     const fracY = gridY - floorY;
 
-    const e00 = heights[floorY]?.[floorX] ?? 0;
-    const e10 = heights[floorY]?.[floorX + 1] ?? e00;
-    const e01 = heights[floorY + 1]?.[floorX] ?? e00;
-    const e11 = heights[floorY + 1]?.[floorX + 1] ?? e00;
+    // Use world-aware height lookup for open-world zones to handle cross-chunk and
+    // stale-data scenarios correctly. Hub zones use direct array access.
+    let e00: number, e10: number, e01: number, e11: number;
+    if (isHubZone(this.currentZoneId)) {
+      const heights = this.currentHeights;
+      if (!heights) return 0;
+      e00 = heights[floorY]?.[floorX] ?? 0;
+      e10 = heights[floorY]?.[floorX + 1] ?? e00;
+      e01 = heights[floorY + 1]?.[floorX] ?? e00;
+      e11 = heights[floorY + 1]?.[floorX + 1] ?? e00;
+    } else {
+      const zoneCoords = this.parseZoneCoords(this.currentZoneId);
+      const currentSize = getZoneSize(this.currentZoneId);
+      const baseX = zoneCoords.x * currentSize;
+      const baseY = zoneCoords.y * currentSize;
+      e00 = this.getWorldTileHeight(baseX + floorX, baseY + floorY);
+      e10 = this.getWorldTileHeight(baseX + floorX + 1, baseY + floorY);
+      e01 = this.getWorldTileHeight(baseX + floorX, baseY + floorY + 1);
+      e11 = this.getWorldTileHeight(baseX + floorX + 1, baseY + floorY + 1);
+    }
 
     return e00 * (1 - fracX) * (1 - fracY)
          + e10 * fracX       * (1 - fracY)
