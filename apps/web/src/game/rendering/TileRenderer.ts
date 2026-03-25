@@ -218,9 +218,12 @@ export class TileRenderer {
     // Seed-based height variation: hash worldX+worldY for deterministic per-tile variation
     const heightSeed = ((worldX * 73856093) ^ (worldY * 19349663)) >>> 0;
     const variation = isBlockingTile ? (heightSeed % (WALL_HEIGHT_VARIATION * 2 + 1)) - WALL_HEIGHT_VARIATION : 0;
-    const visualElevation = isBlockingTile
+    const rawVisualElevation = isBlockingTile
       ? Math.max(elevation + 1, elevation * WALL_BASE_MULTIPLIER + variation)
       : elevation;
+    // Clamp to 0 minimum — negative elevation tiles render at ground level
+    // (liquid overlay covers them, they're just the terrain floor below sea level)
+    const visualElevation = Math.max(0, rawVisualElevation);
 
     const elevationOffset = visualElevation * ELEVATION_HEIGHT_STEP;
 
