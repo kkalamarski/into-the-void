@@ -569,14 +569,8 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
       const getHeight = (tx: number, ty: number) =>
         this.getWorldTileHeight(offsetX + tx, offsetY + ty);
 
-      const isSolid = (tx: number, ty: number): boolean => {
-        if (baseSolid(tx, ty)) return true;
-        for (let dy = 1; dy <= 3; dy++) {
-          if (baseSolid(tx, ty + dy) && getHeight(tx, ty + dy) >= dy) return true;
-        }
-        return false;
-      };
-      this.pixelMovement.setCollisionCallback(isSolid);
+      this.pixelMovement.setCollisionCallback(baseSolid);
+      this.pixelMovement.setHeightCallback(getHeight);
     }
   }
 

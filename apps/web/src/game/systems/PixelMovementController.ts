@@ -100,6 +100,8 @@ export class PixelMovementController {
   private pendingInputs: PendingPixelInput[] = [];
   private lastEmitTime = 0;
   private isSolid: ((tileX: number, tileY: number) => boolean) | null = null;
+  private getHeight: ((tileX: number, tileY: number) => number) | null = null;
+
   // ── Lifecycle ───────────────────────────────────────────────────────────
 
   /** Initialise position (called on zone load from zone:state). */
@@ -112,9 +114,14 @@ export class PixelMovementController {
     this.lastEmitTime = 0;
   }
 
-  /** Set the collision lookup callback. Called by WorldScene when chunk data is available. */
+  /** Set the collision lookup callback. */
   setCollisionCallback(isSolid: (tx: number, ty: number) => boolean): void {
     this.isSolid = isSolid;
+  }
+
+  /** Set height lookup for elevation-aware collision. */
+  setHeightCallback(getHeight: (tx: number, ty: number) => number): void {
+    this.getHeight = getHeight;
   }
 
   // ── Per-frame update ────────────────────────────────────────────────────
@@ -152,7 +159,7 @@ export class PixelMovementController {
     let resolvedPy: number;
 
     if (this.isSolid) {
-      const resolved = resolvePixelCollision(this.px, this.py, vx, vy, this.isSolid);
+      const resolved = resolvePixelCollision(this.px, this.py, vx, vy, this.isSolid, this.getHeight ?? undefined);
       resolvedPx = resolved.px;
       resolvedPy = resolved.py;
     } else {
@@ -231,7 +238,7 @@ export class PixelMovementController {
 
     for (const input of this.pendingInputs) {
       if (this.isSolid) {
-        const resolved = resolvePixelCollision(replayPx, replayPy, input.vx, input.vy, this.isSolid);
+        const resolved = resolvePixelCollision(replayPx, replayPy, input.vx, input.vy, this.isSolid, this.getHeight ?? undefined);
         replayPx = resolved.px;
         replayPy = resolved.py;
       } else {

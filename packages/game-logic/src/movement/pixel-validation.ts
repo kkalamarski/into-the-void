@@ -153,7 +153,8 @@ export function resolvePixelCollision(
   py: number,
   vx: number,
   vy: number,
-  isSolid: (tileX: number, tileY: number, pixelY?: number) => boolean,
+  isSolid: (tileX: number, tileY: number) => boolean,
+  getHeight?: (tileX: number, tileY: number) => number,
 ): PixelPos {
   const hw = PLAYER_HITBOX.width  / 2; // 32
   const hh = PLAYER_HITBOX.height;     // 16 (thin foot-level hitbox)
@@ -161,10 +162,13 @@ export function resolvePixelCollision(
   /** Convert a pixel coordinate to a tile index. */
   const toTile = (p: number) => Math.floor(p / TILE_SIZE_PX);
 
+  /** Half-tile in pixels — elevation offset per level. */
+  const ELEV_PX = TILE_SIZE_PX / 2; // 64
+
   /**
    * Check whether any of the four hitbox corners at position (cpx, cpy) overlap
-   * a solid tile. The hitbox is anchored at bottom-center (feet).
-   * Passes the corner's pixel Y to isSolid for sub-tile isometric extension checks.
+   * a solid tile. Offsets each corner's Y by the tile's elevation * 64 so
+   * elevated walls block at their visual screen position.
    */
   function hitsWall(cpx: number, cpy: number): boolean {
     const corners = [
@@ -173,7 +177,13 @@ export function resolvePixelCollision(
       { x: cpx - hw,     y: cpy - 1   },    // bottom-left
       { x: cpx + hw - 1, y: cpy - 1   },    // bottom-right
     ];
-    return corners.some(c => isSolid(toTile(c.x), toTile(c.y), c.y));
+    return corners.some(c => {
+      const tx = toTile(c.x);
+      const ty = toTile(c.y);
+      const elev = getHeight ? getHeight(tx, ty) : 0;
+      const offsetY = c.y + elev * ELEV_PX;
+      return isSolid(toTile(c.x), toTile(offsetY));
+    });
   }
 
   // ── Pass 1: try X movement ──────────────────────────────────

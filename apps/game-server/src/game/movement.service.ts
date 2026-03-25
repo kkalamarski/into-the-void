@@ -167,15 +167,7 @@ export class MovementService implements OnModuleInit {
         getHeight = (tx, ty) => heights?.[ty]?.[tx] ?? 0;
       }
 
-      const isSolid = (tx: number, ty: number): boolean => {
-        if (baseSolid(tx, ty)) return true;
-        for (let dy = 1; dy <= 3; dy++) {
-          if (baseSolid(tx, ty + dy) && getHeight(tx, ty + dy) >= dy) return true;
-        }
-        return false;
-      };
-
-      const resolved = resolvePixelCollision(player.px, player.py, vx, vy, isSolid);
+      const resolved = resolvePixelCollision(player.px, player.py, vx, vy, baseSolid, getHeight);
 
       // Update authoritative position
       player.px = resolved.px;
