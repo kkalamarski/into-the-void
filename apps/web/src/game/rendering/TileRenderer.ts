@@ -214,12 +214,14 @@ export class TileRenderer {
     // Uses isBlocking from tile registry — covers walls, formations, debris, decorations etc.
     const tileStr = tileIdToString(tileId);
     const tileDef = tileStr ? TileRegistry.get(tileStr) : null;
-    const isBlockingTile = tileDef?.isBlocking && elevation >= 1;
+    const isBlockingTile = !!tileDef?.isBlocking;
     // Seed-based height variation: hash worldX+worldY for deterministic per-tile variation
     const heightSeed = ((worldX * 73856093) ^ (worldY * 19349663)) >>> 0;
     const variation = isBlockingTile ? (heightSeed % (WALL_HEIGHT_VARIATION * 2 + 1)) - WALL_HEIGHT_VARIATION : 0;
+    // Blocking tiles always get visual height — minimum 2 elevation levels so they tower
+    // even at ground level (elevation 0) or below sea level (elevation -1)
     const rawVisualElevation = isBlockingTile
-      ? Math.max(elevation + 1, elevation * WALL_BASE_MULTIPLIER + variation)
+      ? Math.max(2, elevation * WALL_BASE_MULTIPLIER + variation)
       : elevation;
     // Clamp to 0 minimum — negative elevation tiles render at ground level
     // (liquid overlay covers them, they're just the terrain floor below sea level)
