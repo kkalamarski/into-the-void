@@ -53,7 +53,7 @@
 **Milestone Goal:** Add per-biome liquid bodies that fill terrain at elevation <= 0, rendered as half-height translucent/opaque blocks. Players and creatures walk through liquids and receive lore-appropriate effects (slow, damage, healing, debuffs).
 
 - [x] **Phase 156: Liquid Tile Definitions** - Define liquid tile types per biome with lore-appropriate color, opacity, and rendering properties (completed 2026-03-25)
-- [ ] **Phase 157: Liquid Generation & Rendering** - Fill elevation <= 0 tiles with liquid in world-gen; render as half-height blocks at sea level on the client
+- [x] **Phase 157: Liquid Generation & Rendering** - Fill elevation <= 0 tiles with liquid in world-gen; render as half-height blocks at sea level on the client (completed 2026-03-25)
 - [ ] **Phase 158: Liquid Effects** - Apply movement slow, periodic damage, healing, and debuff effects to players and creatures walking through liquid
 
 ## Phase Details
@@ -98,7 +98,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 156. Liquid Tile Definitions | 1/1 | Complete    | 2026-03-25 |
-| 157. Liquid Generation & Rendering | 0/TBD | Not started | - |
+| 157. Liquid Generation & Rendering | 2/2 | Complete   | 2026-03-25 |
 | 158. Liquid Effects | 0/TBD | Not started | - |
 
 ---
