@@ -4,9 +4,10 @@ import { TileRegistry } from '@into-the-void/tiles';
 import { IsometricTransform } from '../utils/IsometricTransform';
 import { ELEVATION_HEIGHT_STEP } from '../constants/elevation';
 
-// Visual wall height multiplier — walls render taller without changing game data
-// Wall tiles (isBlocking + elevation >= 2) get their elevation visually multiplied
-const WALL_VISUAL_HEIGHT_MULTIPLIER = 2;
+// Visual wall height — blocking tiles render taller without changing game data.
+// Base multiplier + seed-based variation for natural look.
+const WALL_BASE_MULTIPLIER = 2;
+const WALL_HEIGHT_VARIATION = 1; // ±1 extra elevation levels based on seed
 
 // Height-based tinting: lower elevations appear darker for visual depth
 // Brightness = 0.55 + (elevation * 0.15), capped at 1.0
@@ -209,10 +210,17 @@ export class TileRenderer {
     // Use world coordinates for screen position
     const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
 
-    // Visual elevation: wall tiles render taller for towering effect (client-only, doesn't affect game data)
-    const textureKey = TILE_TEXTURE_MAP[tileId] ?? '';
-    const isWallTile = textureKey.includes('_wall') && elevation >= 2;
-    const visualElevation = isWallTile ? elevation * WALL_VISUAL_HEIGHT_MULTIPLIER : elevation;
+    // Visual elevation: blocking tiles render taller for towering effect (client-only, doesn't affect game data)
+    // Uses isBlocking from tile registry — covers walls, formations, debris, decorations etc.
+    const tileStr = tileIdToString(tileId);
+    const tileDef = tileStr ? TileRegistry.get(tileStr) : null;
+    const isBlockingTile = tileDef?.isBlocking && elevation >= 1;
+    // Seed-based height variation: hash worldX+worldY for deterministic per-tile variation
+    const heightSeed = ((worldX * 73856093) ^ (worldY * 19349663)) >>> 0;
+    const variation = isBlockingTile ? (heightSeed % (WALL_HEIGHT_VARIATION * 2 + 1)) - WALL_HEIGHT_VARIATION : 0;
+    const visualElevation = isBlockingTile
+      ? Math.max(elevation + 1, elevation * WALL_BASE_MULTIPLIER + variation)
+      : elevation;
 
     const elevationOffset = visualElevation * ELEVATION_HEIGHT_STEP;
 
@@ -227,7 +235,7 @@ export class TileRenderer {
     for (let level = 0; level <= visualElevation; level++) {
       const cubeSprite = this.createCubeSprite(tileId, worldX, worldY);
       // Offset relative to container: level 0 is at the bottom, elevation is at top (y=0)
-      const yOffset = (elevation - level) * ELEVATION_HEIGHT_STEP;
+      const yOffset = (visualElevation - level) * ELEVATION_HEIGHT_STEP;
       if (cubeSprite instanceof Phaser.GameObjects.Image) {
         cubeSprite.setY(yOffset);
       }
