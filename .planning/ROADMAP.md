@@ -34,12 +34,13 @@
 - ✅ **v1.29 Hub Station Interiors** - Phases 140-142 (shipped 2026-03-19)
 - ✅ **v1.30 World Rendering & Interaction Fix** - Phases 143-146 (shipped 2026-03-24)
 - ✅ **v1.31 Strategy Pattern Refactor & Code Decomposition** - Phases 147-153 (shipped 2026-03-24)
-- 🚧 **v1.32 Debug View & Visual Polish** - Phases 154-155 (in progress)
+- ✅ **v1.32 Debug View & Visual Polish** - Phases 154-155 (shipped 2026-03-24)
+- 🚧 **v1.33 Biome Liquids** - Phases 156-158 (in progress)
 
 ## Phases
 
 <details>
-<summary>✅ v1.0-v1.31 (Phases 1-153) - SHIPPED</summary>
+<summary>✅ v1.0-v1.32 (Phases 1-155) - SHIPPED</summary>
 
 [All milestone phases completed - see milestone archives in .planning/milestones/]
 
@@ -47,44 +48,56 @@
 
 ---
 
-### 🚧 v1.32 Debug View & Visual Polish (In Progress)
+### 🚧 v1.33 Biome Liquids (In Progress)
 
-**Milestone Goal:** Add an F3 debug overlay for collision visualization and position diagnostics, fix white outline artifacts on feature entities, and adjust elevation/wall heights for better visual proportions.
+**Milestone Goal:** Add per-biome liquid bodies that fill terrain at elevation <= 0, rendered as half-height translucent/opaque blocks. Players and creatures walk through liquids and receive lore-appropriate effects (slow, damage, healing, debuffs).
 
-- [ ] **Phase 154: Debug Overlay & Feature Rendering Fix** - F3 HUD overlay with position/state/collision visualization, and remove white outline from feature entities
-- [x] **Phase 155: Elevation & Height Rework** - Halve elevation step height and multiply wall height; validate all dependent systems (completed 2026-03-24)
+- [ ] **Phase 156: Liquid Tile Definitions** - Define liquid tile types per biome with lore-appropriate color, opacity, and rendering properties
+- [ ] **Phase 157: Liquid Generation & Rendering** - Fill elevation <= 0 tiles with liquid in world-gen; render as half-height blocks at sea level on the client
+- [ ] **Phase 158: Liquid Effects** - Apply movement slow, periodic damage, healing, and debuff effects to players and creatures walking through liquid
 
 ## Phase Details
 
-### Phase 154: Debug Overlay & Feature Rendering Fix
-**Goal**: Developer can toggle a debug overlay showing full world state, and feature entities render cleanly without outline artifacts
-**Depends on**: Phase 153
-**Requirements**: DEBUG-01, DEBUG-02, DEBUG-03, DEBUG-04, DEBUG-05, RENDER-01
+### Phase 156: Liquid Tile Definitions
+**Goal**: Every biome has a liquid tile type with correct lore color and opacity registered in the tile system
+**Depends on**: Phase 155
+**Requirements**: LIQ-01, LIQ-02, LIQ-03
 **Success Criteria** (what must be TRUE):
-  1. Pressing F3 toggles a semi-transparent overlay showing player pixel position, zone ID, tile coordinates, elevation, tile type, and biome name
-  2. The overlay additionally shows FPS, entity count, server ping, and chunk load counts while the game runs
-  3. The overlay shows current day/night phase, time value, combat state, and active target ID
-  4. With the overlay active, blocking tile boundaries, feature entity collision boxes, and wall collision areas are all drawn in-world
-  5. With F3 off, no overlay rendering executes and frame rate is unaffected; plants, minerals, and artifacts render without white outline borders
+  1. Each of the 16 biomes has a named liquid tile type (e.g. `void_ether`, `magma`, `toxic_sludge`) with a lore-correct color defined in the tile definitions
+  2. Each liquid tile definition carries an opacity flag — translucent liquids are flagged differently from opaque ones
+  3. The tile definition includes a half-height rendering property (32px slab height at ELEVATION_HEIGHT_STEP/2) distinguishing liquids from normal terrain tiles
 **Plans**: TBD
 
-### Phase 155: Elevation & Height Rework
-**Goal**: Terrain tiles render as low slabs at 64px elevation step, wall tiles visibly tower at 4x that height, and all systems that depend on elevation values continue working correctly
-**Depends on**: Phase 154
-**Requirements**: ELEV-01, ELEV-02, ELEV-03
+### Phase 157: Liquid Generation & Rendering
+**Goal**: Tiles at elevation <= 0 are filled with the biome's liquid in world-gen and the client renders them as half-height blocks at fixed sea level
+**Depends on**: Phase 156
+**Requirements**: GEN-01, GEN-02, GEN-03
 **Success Criteria** (what must be TRUE):
-  1. Elevation step is 64px — stacked terrain tiles appear as thin slabs rather than cubes
-  2. Wall tiles render at 256px height (4x the 64px step) and visibly stand above ground-level tiles
-  3. Player movement and collision work correctly at all elevation levels with the new step value
-  4. Depth sorting and entity placement remain visually correct at all elevation levels after the change
+  1. Walking to any low-lying area (elevation <= 0) shows the biome's liquid tile visually filling that terrain
+  2. Liquid tiles render as half-height isometric slabs sitting at elevation 0, regardless of how deep the terrain dips below
+  3. Translucent liquids show the terrain tile beneath them; opaque liquids fully cover the tile below
+  4. Players and creatures can walk through liquid tiles without being blocked — liquid tiles have no collision
+**Plans**: TBD
+
+### Phase 158: Liquid Effects
+**Goal**: Walking through liquid applies movement slow, periodic damage or healing, and debuffs to both players and creatures based on liquid type
+**Depends on**: Phase 157
+**Requirements**: FX-01, FX-02, FX-03, FX-04, FX-05
+**Success Criteria** (what must be TRUE):
+  1. A player walking into any liquid tile visibly moves slower — their movement speed is reduced for as long as they remain in the liquid
+  2. A player standing in a damaging liquid (magma, toxic sludge, rift plasma, impact brine) loses HP on a regular tick interval with damage numbers appearing above them
+  3. A player standing in luminous nectar liquid gains HP on a regular tick interval with healing numbers appearing above them
+  4. Creatures standing in liquid receive the same movement slow and damage/heal effects that players receive in the same liquid type
+  5. Liquid effects start immediately on entering liquid and stop within one tick of leaving — no lingering damage outside liquid areas
 **Plans**: TBD
 
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 154. Debug Overlay & Feature Rendering Fix | 0/TBD | Not started | - |
-| 155. Elevation & Height Rework | 2/2 | Complete    | 2026-03-24 |
+| 156. Liquid Tile Definitions | 0/TBD | Not started | - |
+| 157. Liquid Generation & Rendering | 0/TBD | Not started | - |
+| 158. Liquid Effects | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-03-24 — v1.32 roadmap created*
+*Last updated: 2026-03-25 — v1.33 roadmap created*

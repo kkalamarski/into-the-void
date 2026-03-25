@@ -1,31 +1,33 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: Debug View & Visual Polish
-status: unknown
-last_updated: "2026-03-24T14:20:07.213Z"
+milestone: v1.33
+milestone_name: Biome Liquids
+status: ready_to_plan
+last_updated: "2026-03-25T00:00:00.000Z"
 progress:
-  total_phases: 137
-  completed_phases: 136
-  total_plans: 356
-  completed_plans: 354
+  total_phases: 3
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-24)
+See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.33 — Biome Liquids
+**Current focus:** v1.33 Biome Liquids — Phase 156: Liquid Tile Definitions
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-25 — Milestone v1.33 started
+Phase: 156 of 158 (Liquid Tile Definitions)
+Plan: — of —
+Status: Ready to plan
+Last activity: 2026-03-25 — v1.33 roadmap created, phases 156-158 defined
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -46,13 +48,11 @@ Last activity: 2026-03-25 — Milestone v1.33 started
 
 ### Decisions
 
-- [v1.32]: ELEVATION_HEIGHT_STEP changed from 128px to 64px — terrain renders as thin slabs
-- [v1.32]: Wall tiles get height boost in world-gen (min 4) instead of rendering multiplier — simpler pipeline
+- [v1.32]: ELEVATION_HEIGHT_STEP changed from 128px to 64px — terrain renders as thin slabs; liquid half-height will be 32px
+- [v1.32]: Wall tiles get height boost in world-gen (min 4) instead of rendering multiplier
 - [v1.32]: MAX_ELEVATION raised from 5 to 6 to accommodate boosted wall heights
-- [v1.32]: Shared constants file created at apps/web/src/game/constants/elevation.ts
 - [v1.31]: Strategy Pattern and WorldScene/Gateway decomposition complete — all major refactors shipped
-- [v1.31]: Refactoring only — behavior must be identical before and after every phase; no new features
-- [v1.30 tech debt]: Phase 143 VERIFICATION.md stale; server ability debug logs reintroduced; GameContainer.tsx has 5 debug console.log calls — console.log calls may be superseded by Phase 154 debug overlay
+- [v1.30 tech debt]: Phase 143 VERIFICATION.md stale; server ability debug logs reintroduced; GameContainer.tsx has 5 debug console.log calls
 
 ### Pending Todos
 
@@ -72,10 +72,10 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-24
-Stopped at: Completed quick task 18 — Remove player occlusion transparency
+Last session: 2026-03-25
+Stopped at: Roadmap created for v1.33 Biome Liquids (phases 156-158)
 Resume file: None
-Next action: Verify Phase 155 (Elevation & Height Rework)
+Next action: Plan Phase 156 — Liquid Tile Definitions
 
 ---
-*Last updated: 2026-03-24 — Quick task 18 executed*
+*Last updated: 2026-03-25 — v1.33 roadmap created*

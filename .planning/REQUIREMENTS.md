@@ -41,23 +41,23 @@ Requirements for biome liquid system. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LIQ-01 | TBD | Pending |
-| LIQ-02 | TBD | Pending |
-| LIQ-03 | TBD | Pending |
-| GEN-01 | TBD | Pending |
-| GEN-02 | TBD | Pending |
-| GEN-03 | TBD | Pending |
-| FX-01 | TBD | Pending |
-| FX-02 | TBD | Pending |
-| FX-03 | TBD | Pending |
-| FX-04 | TBD | Pending |
-| FX-05 | TBD | Pending |
+| LIQ-01 | Phase 156 | Pending |
+| LIQ-02 | Phase 156 | Pending |
+| LIQ-03 | Phase 156 | Pending |
+| GEN-01 | Phase 157 | Pending |
+| GEN-02 | Phase 157 | Pending |
+| GEN-03 | Phase 157 | Pending |
+| FX-01 | Phase 158 | Pending |
+| FX-02 | Phase 158 | Pending |
+| FX-03 | Phase 158 | Pending |
+| FX-04 | Phase 158 | Pending |
+| FX-05 | Phase 158 | Pending |
 
 **Coverage:**
 - v1.33 requirements: 11 total
-- Mapped to phases: 0
-- Unmapped: 11 ⚠️
+- Mapped to phases: 11
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-25*
-*Last updated: 2026-03-25 after initial definition*
+*Last updated: 2026-03-25 — traceability mapped after roadmap creation*
