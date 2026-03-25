@@ -520,7 +520,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
   private renderChunk(chunkData: ChunkData, biome: BiomeType): void {
     if (!this.tileRenderer || !this.isoTransform) return;
 
-    const { zoneId, tiles, heights, structures } = chunkData;
+    const { zoneId, tiles, heights, structures, collisions } = chunkData;
 
     if (this.chunkTiles.has(zoneId)) {
       if (zoneId === this.currentZoneId) {
@@ -552,42 +552,45 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     }
 
     // Render liquid overlay tiles above terrain (elevation 1)
-    // Render liquid overlay — use tile sprites (same as terrain) for reliable rendering
-    if (chunkData.liquidTiles && this.tileRenderer) {
+    // Render liquid overlay — top-face diamond only, skip blocking tiles
+    if (chunkData.liquidTiles && this.isoTransform) {
+      const hw = this.isoTransform.tileWidth / 2;
+      const hh = this.isoTransform.tileHeight / 2;
       let drawnCount = 0;
       for (let y = 0; y < mapHeight; y++) {
         for (let x = 0; x < mapWidth; x++) {
           const liquidTileId = chunkData.liquidTiles[y]?.[x];
           if (!liquidTileId) continue;
 
+          // Skip blocking tiles (walls) — liquid doesn't cover them
+          if (collisions[y]?.[x]) continue;
+
           const worldX = chunkGridX + x;
           const worldY = chunkGridY + y;
+          const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
 
-          // Render liquid tile at elevation 0 (sea level) using the same tile renderer
-          const liquidTile = this.tileRenderer.createTileWithElevationWorld(
-            worldX, worldY, tiles[y][x] as TileId, 0, heights, x, y
-          );
-
-          // Shift up half an elevation step to sit on the surface
-          liquidTile.y -= ELEVATION_HEIGHT_STEP / 2;
-
-          // Tint the tile with liquid color and set alpha
+          // Draw top-face diamond only (no cube sides)
           const liquidDef = TileRegistry.get(liquidTileId);
           const alpha = liquidDef.liquidOpacity === 'opaque' ? 0.85
             : liquidDef.liquidOpacity === 'semi-opaque' ? 0.65 : 0.45;
 
-          liquidTile.setAlpha(alpha);
-          liquidTile.iterate((child: Phaser.GameObjects.GameObject) => {
-            if (child instanceof Phaser.GameObjects.Image) {
-              child.setTint(liquidDef.color);
-            }
-          });
+          const gfx = this.add.graphics();
+          gfx.fillStyle(liquidDef.color, alpha);
+          gfx.beginPath();
+          gfx.moveTo(0, -hh);
+          gfx.lineTo(hw, 0);
+          gfx.lineTo(0, hh);
+          gfx.lineTo(-hw, 0);
+          gfx.closePath();
+          gfx.fillPath();
 
-          // Depth above terrain
+          // Position at sea level + half step up to sit on surface
+          gfx.setPosition(screenPos.x, screenPos.y - ELEVATION_HEIGHT_STEP / 2);
+
           const depth = this.isoTransform.calculateDepth(worldX, worldY, 0) + 0.05;
-          liquidTile.setDepth(depth);
+          gfx.setDepth(depth);
 
-          chunkTileArray.push(liquidTile);
+          chunkTileArray.push(gfx as unknown as Phaser.GameObjects.Container);
           drawnCount++;
         }
       }
