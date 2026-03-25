@@ -43,6 +43,13 @@ import {
   SALVAGE_FLOOR, SALVAGE_WALL, SALVAGE_DOOR, SALVAGE_CORRIDOR,
   SALVAGE_DECORATION, SALVAGE_ACCENT, SALVAGE_WINDOW, SALVAGE_HAZARD,
 } from './hub-salvage-tiles';
+import {
+  VOID_ETHER, LUMINOUS_SAP, SEAWATER, ANCIENT_RUNOFF,
+  SPORE_SLUDGE, MIASMA_BILE, MINERAL_SLURRY, DEEP_SEAWATER, LUMINOUS_NECTAR,
+  MAGMA, RESONANT_FLUID, GLACIAL_MELT, IMPACT_BRINE, ABYSSAL_WATER, SILICON_SOLUTION,
+  RIFT_PLASMA,
+  ALL_LIQUID_TILES, BIOME_LIQUID_MAP,
+} from './liquid-tiles';
 
 /**
  * All tile definitions - register these with TileRegistry
@@ -101,6 +108,8 @@ export const ALL_TILES: readonly TileDefinition[] = [
   // Hub Stations — Salvage (Unaffiliated)
   SALVAGE_FLOOR, SALVAGE_WALL, SALVAGE_DOOR, SALVAGE_CORRIDOR,
   SALVAGE_DECORATION, SALVAGE_ACCENT, SALVAGE_WINDOW, SALVAGE_HAZARD,
+  // Liquid Tiles (all biomes)
+  ...ALL_LIQUID_TILES,
 ];
 
 /**
@@ -173,6 +182,23 @@ export const TILE_IDS = {
   SALVAGE_ACCENT: 'salvage_accent',
   SALVAGE_WINDOW: 'salvage_window',
   SALVAGE_HAZARD: 'salvage_hazard',
+  // Liquid Tiles
+  VOID_ETHER: 'void_ether',
+  LUMINOUS_SAP: 'luminous_sap',
+  SEAWATER: 'seawater',
+  ANCIENT_RUNOFF: 'ancient_runoff',
+  SPORE_SLUDGE: 'spore_sludge',
+  MIASMA_BILE: 'miasma_bile',
+  MINERAL_SLURRY: 'mineral_slurry',
+  DEEP_SEAWATER: 'deep_seawater',
+  LUMINOUS_NECTAR: 'luminous_nectar',
+  MAGMA: 'magma',
+  RESONANT_FLUID: 'resonant_fluid',
+  GLACIAL_MELT: 'glacial_melt',
+  IMPACT_BRINE: 'impact_brine',
+  ABYSSAL_WATER: 'abyssal_water',
+  SILICON_SOLUTION: 'silicon_solution',
+  RIFT_PLASMA: 'rift_plasma',
 } as const;
 
 // Re-export individual tiles for direct imports
@@ -216,4 +242,10 @@ export {
   MERIDIAN_DECORATION, MERIDIAN_ACCENT, MERIDIAN_WINDOW, MERIDIAN_HAZARD,
   SALVAGE_FLOOR, SALVAGE_WALL, SALVAGE_DOOR, SALVAGE_CORRIDOR,
   SALVAGE_DECORATION, SALVAGE_ACCENT, SALVAGE_WINDOW, SALVAGE_HAZARD,
+  // Liquid Tiles
+  VOID_ETHER, LUMINOUS_SAP, SEAWATER, ANCIENT_RUNOFF,
+  SPORE_SLUDGE, MIASMA_BILE, MINERAL_SLURRY, DEEP_SEAWATER, LUMINOUS_NECTAR,
+  MAGMA, RESONANT_FLUID, GLACIAL_MELT, IMPACT_BRINE, ABYSSAL_WATER, SILICON_SOLUTION,
+  RIFT_PLASMA,
+  ALL_LIQUID_TILES, BIOME_LIQUID_MAP,
 };

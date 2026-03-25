@@ -6,6 +6,8 @@ export type {
   TileHookContext,
   TileHookFn,
   TileEffect,
+  LiquidOpacity,
+  LiquidEffect,
 } from './types';
 
 // Registry
