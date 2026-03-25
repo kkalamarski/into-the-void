@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Server } from 'socket.io';
 import { PlayerService } from './player.service';
+import { LiquidEffectService } from './liquid-effect.service';
 import { ZonesService } from '../zones/zones.service';
 import {
   bitmaskToKeyState,
@@ -61,6 +62,7 @@ export class MovementService implements OnModuleInit {
 
   constructor(
     private readonly playerService: PlayerService,
+    private readonly liquidEffectService: LiquidEffectService,
     private readonly zonesService: ZonesService,
   ) {}
 
@@ -116,21 +118,25 @@ export class MovementService implements OnModuleInit {
       // Convert bitmask to KeyState
       const keyState = bitmaskToKeyState(input.keys);
 
-      // Compute velocity from keys
-      const { vx, vy } = velocityFromKeys(keyState, dt);
+      // Get liquid speed multiplier (1.0 if not in liquid)
+      const liquidSpeed = this.liquidEffectService.getSpeedMultiplier(playerId);
+
+      // Compute velocity from keys (with liquid slow applied)
+      const { vx, vy } = velocityFromKeys(keyState, dt, liquidSpeed);
 
       // No keys held — update timestamp but player did not move; skip dirty list
       if (vx === 0 && vy === 0) {
         continue;
       }
 
-      // Speed validation — reject teleport attempts
+      // Speed validation — reject teleport attempts (with liquid slow applied)
       const speedValid = validatePixelSpeed(
         player.px,
         player.py,
         input.predictedPx,
         input.predictedPy,
         dt,
+        liquidSpeed,
       );
 
       if (!speedValid) {

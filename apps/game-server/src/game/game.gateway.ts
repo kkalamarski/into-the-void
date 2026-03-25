@@ -20,6 +20,7 @@ import { GatheringService } from './gathering.service';
 import { DiscoveryService } from './discovery.service';
 import { CraftingService } from './crafting.service';
 import { HazardService } from './hazard.service';
+import { LiquidEffectService } from './liquid-effect.service';
 import { AutomationService } from './automation.service';
 import { MovementService } from './movement.service';
 import {
@@ -61,6 +62,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     private readonly discoveryService: DiscoveryService,
     private readonly craftingService: CraftingService,
     private readonly hazardService: HazardService,
+    private readonly liquidEffectService: LiquidEffectService,
     private readonly automationService: AutomationService,
     private readonly movementService: MovementService,
     // Domain handlers
@@ -85,6 +87,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.combatService.setServer(server);
     this.playerService.setServer(server);
     this.hazardService.setServer(server);
+    this.liquidEffectService.setServer(server);
     this.movementService.setServer(server);
 
     this.playerService.setZoneStateProvider((zoneId) => this.gameService.getZoneState(zoneId));
@@ -123,6 +126,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       this.gatheringService.unloadProficiency(player.id);
       this.craftingService.unloadPlayer(player.id);
       this.hazardService.onPlayerDisconnect(player.id);
+      this.liquidEffectService.onPlayerDisconnect(player.id);
       this.automationService.onPlayerDisconnect(player.id);
     }
 

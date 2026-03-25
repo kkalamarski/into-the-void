@@ -26,6 +26,7 @@ export * from './game/hazard';
 export * from './game/automation';
 export * from './game/crafting';
 export * from './game/day-night';
+export * from './game/liquid';
 
 // Network types
 export * from './network/events';

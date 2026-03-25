@@ -15,6 +15,7 @@ import { PlayerService } from './player.service';
 import { CombatService } from './combat.service';
 import { InventoryService } from './inventory.service';
 import { HazardService } from './hazard.service';
+import { LiquidEffectService } from './liquid-effect.service';
 
 /**
  * CRAI-09: Type-enforced whitelist for creature broadcasts.
@@ -60,6 +61,7 @@ export class AiService implements OnModuleInit {
     private readonly combatService: CombatService,
     private readonly inventoryService: InventoryService,
     private readonly hazardService: HazardService,
+    private readonly liquidEffectService: LiquidEffectService,
   ) {}
 
   onModuleInit(): void {
@@ -641,6 +643,9 @@ export class AiService implements OnModuleInit {
 
     // Process hazard ticks for players in hazardous zones (HAZD-01/02/03/04)
     this.hazardService.processHazardTick(zoneId);
+
+    // Process liquid tile effects for players and creatures (FX-01/02/03/04/05)
+    this.liquidEffectService.processLiquidTick(zoneId, creatures);
   }
 
   /**

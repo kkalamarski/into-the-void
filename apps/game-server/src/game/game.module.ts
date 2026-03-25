@@ -20,6 +20,7 @@ import { ZoneMasteryService } from './zone-mastery.service';
 import { ExpeditionService } from './expedition.service';
 import { ChatService } from './chat.service';
 import { HazardService } from './hazard.service';
+import { LiquidEffectService } from './liquid-effect.service';
 import { AutomationService } from './automation.service';
 import { CraftingService } from './crafting.service';
 import { MovementService } from './movement.service';
@@ -39,7 +40,7 @@ import { ZonesModule } from '../zones/zones.module';
     }),
     ZonesModule,
   ],
-  providers: [GameGateway, GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService, QuestService, DiscoveryService, GatheringService, LoreService, ZoneMasteryService, ExpeditionService, ChatService, HazardService, AutomationService, CraftingService, MovementService, ZoneHandler, InventoryHandler, CombatHandler, SocialHandler, AutomationHandler],
-  exports: [GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService, QuestService, DiscoveryService, GatheringService, LoreService, ZoneMasteryService, ExpeditionService, ChatService, HazardService, AutomationService, CraftingService, MovementService],
+  providers: [GameGateway, GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService, QuestService, DiscoveryService, GatheringService, LoreService, ZoneMasteryService, ExpeditionService, ChatService, HazardService, LiquidEffectService, AutomationService, CraftingService, MovementService, ZoneHandler, InventoryHandler, CombatHandler, SocialHandler, AutomationHandler],
+  exports: [GameService, PlayerService, InventoryService, StorageService, EntityService, AiService, CombatService, TradeService, AbilityService, QuestService, DiscoveryService, GatheringService, LoreService, ZoneMasteryService, ExpeditionService, ChatService, HazardService, LiquidEffectService, AutomationService, CraftingService, MovementService],
 })
 export class GameModule {}
