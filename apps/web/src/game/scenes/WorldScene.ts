@@ -563,9 +563,19 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
       const currentSize = getZoneSize(this.currentZoneId);
       const offsetX = zoneCoords.x * currentSize;
       const offsetY = zoneCoords.y * currentSize;
-      const isSolid = (tx: number, ty: number) =>
+      const baseSolid = (tx: number, ty: number) =>
         this.isTerrainBlocked(offsetX + tx, offsetY + ty) ||
         this.isEntityBlocked(offsetX + tx, offsetY + ty);
+      const getHeight = (tx: number, ty: number) =>
+        this.getWorldTileHeight(offsetX + tx, offsetY + ty);
+
+      const isSolid = (tx: number, ty: number): boolean => {
+        if (baseSolid(tx, ty)) return true;
+        for (let dy = 1; dy <= 3; dy++) {
+          if (baseSolid(tx, ty + dy) && getHeight(tx, ty + dy) >= dy) return true;
+        }
+        return false;
+      };
       this.pixelMovement.setCollisionCallback(isSolid);
     }
   }

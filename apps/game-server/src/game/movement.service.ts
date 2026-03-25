@@ -152,18 +152,28 @@ export class MovementService implements OnModuleInit {
 
       // Build collision callback — hub zones use local chunk data directly,
       // open-world zones use cross-zone world-tile lookup for boundary handling
-      let isSolid: (tx: number, ty: number) => boolean;
+      let baseSolid: (tx: number, ty: number) => boolean;
+      let getHeight: (tx: number, ty: number) => number;
       if (player.position.zoneId.startsWith('z_')) {
         const zoneCoords = this.parseZoneCoords(player.position.zoneId);
         const offsetX = zoneCoords.x * ZONE_SIZE;
         const offsetY = zoneCoords.y * ZONE_SIZE;
-        isSolid = (tx: number, ty: number): boolean =>
-          this.zonesService.isWorldTileBlocked(offsetX + tx, offsetY + ty);
+        baseSolid = (tx, ty) => this.zonesService.isWorldTileBlocked(offsetX + tx, offsetY + ty);
+        getHeight = (tx, ty) => this.zonesService.getWorldTileHeight(offsetX + tx, offsetY + ty);
       } else {
         const collisions = chunk.collisions;
-        isSolid = (tx: number, ty: number): boolean =>
-          collisions?.[ty]?.[tx] ?? true;
+        const heights = chunk.heights;
+        baseSolid = (tx, ty) => collisions?.[ty]?.[tx] ?? true;
+        getHeight = (tx, ty) => heights?.[ty]?.[tx] ?? 0;
       }
+
+      const isSolid = (tx: number, ty: number): boolean => {
+        if (baseSolid(tx, ty)) return true;
+        for (let dy = 1; dy <= 3; dy++) {
+          if (baseSolid(tx, ty + dy) && getHeight(tx, ty + dy) >= dy) return true;
+        }
+        return false;
+      };
 
       const resolved = resolvePixelCollision(player.px, player.py, vx, vy, isSolid);
 
