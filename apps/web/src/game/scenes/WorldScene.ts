@@ -552,14 +552,9 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     }
 
     // Render liquid overlay tiles above terrain (elevation 1)
-    // Render liquid overlay as a single graphics object per chunk
-    if (chunkData.liquidTiles) {
-      const hw = this.isoTransform.tileWidth / 2;
-      const hh = this.isoTransform.tileHeight / 2;
-      const liquidGfx = this.add.graphics();
-      liquidGfx.setDepth(999); // Force on top of everything for debugging
+    // Render liquid overlay — use tile sprites (same as terrain) for reliable rendering
+    if (chunkData.liquidTiles && this.tileRenderer) {
       let drawnCount = 0;
-
       for (let y = 0; y < mapHeight; y++) {
         for (let x = 0; x < mapWidth; x++) {
           const liquidTileId = chunkData.liquidTiles[y]?.[x];
@@ -567,27 +562,34 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
           const worldX = chunkGridX + x;
           const worldY = chunkGridY + y;
-          const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
 
+          // Render liquid tile at elevation 0 (sea level) using the same tile renderer
+          const liquidTile = this.tileRenderer.createTileWithElevationWorld(
+            worldX, worldY, tiles[y][x] as TileId, 0, heights, x, y
+          );
+
+          // Tint the tile with liquid color and set alpha
           const liquidDef = TileRegistry.get(liquidTileId);
-          const alpha = liquidDef.liquidOpacity === 'opaque' ? 0.9
-            : liquidDef.liquidOpacity === 'semi-opaque' ? 0.7 : 0.5;
+          const alpha = liquidDef.liquidOpacity === 'opaque' ? 0.85
+            : liquidDef.liquidOpacity === 'semi-opaque' ? 0.65 : 0.45;
 
-          liquidGfx.fillStyle(liquidDef.color, alpha);
-          liquidGfx.beginPath();
-          liquidGfx.moveTo(screenPos.x, screenPos.y - hh);
-          liquidGfx.lineTo(screenPos.x + hw, screenPos.y);
-          liquidGfx.lineTo(screenPos.x, screenPos.y + hh);
-          liquidGfx.lineTo(screenPos.x - hw, screenPos.y);
-          liquidGfx.closePath();
-          liquidGfx.fillPath();
+          liquidTile.setAlpha(alpha);
+          liquidTile.iterate((child: Phaser.GameObjects.GameObject) => {
+            if (child instanceof Phaser.GameObjects.Image) {
+              child.setTint(liquidDef.color);
+            }
+          });
+
+          // Depth above terrain
+          const depth = this.isoTransform.calculateDepth(worldX, worldY, 0) + 0.05;
+          liquidTile.setDepth(depth);
+
+          chunkTileArray.push(liquidTile);
           drawnCount++;
         }
       }
-
       if (drawnCount > 0) {
-        console.log(`[WorldScene] Drew ${drawnCount} liquid diamonds for ${zoneId}`);
-        chunkTileArray.push(liquidGfx as unknown as Phaser.GameObjects.Container);
+        console.log(`[WorldScene] Rendered ${drawnCount} liquid tiles for ${zoneId}`);
       }
     }
 
