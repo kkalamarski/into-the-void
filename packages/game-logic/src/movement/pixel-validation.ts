@@ -181,7 +181,7 @@ export function resolvePixelCollision(
       const tx = toTile(c.x);
       const ty = toTile(c.y);
       const elev = getHeight ? getHeight(tx, ty) : 0;
-      const offsetX = c.x - elev * ELEV_PX;
+      const offsetX = c.x + elev * ELEV_PX;
       const offsetY = c.y + elev * ELEV_PX;
       return isSolid(toTile(offsetX), toTile(offsetY));
     });
