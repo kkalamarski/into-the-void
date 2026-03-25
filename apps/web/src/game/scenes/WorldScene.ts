@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { ZONE_SIZE, HYSTERESIS_TILES, Position, Entity, PlayerPublic, ChunkData, BiomeType, BiomeTier, TileStructure, isHubZone, TimingChallenge, BIOME_DISPLAY_NAMES, BIOME_TIERS, getZoneSize } from '@into-the-void/shared-types';
 import { TILE_SIZE_PX, tileToPixelCenter } from '@into-the-void/game-logic';
 import type { TileId } from '@into-the-void/world-gen';
+import { TileRegistry } from '@into-the-void/tiles';
+import { ELEVATION_HEIGHT_STEP } from '../constants/elevation';
 import { TileRenderer } from '../rendering/TileRenderer';
 import { ChunkManager } from '../rendering/ChunkManager';
 import { ViewportCuller } from '../rendering/ViewportCuller';
@@ -514,6 +516,56 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
         const worldY = chunkGridY + y;
         const tile = this.tileRenderer.createTileWithElevationWorld(worldX, worldY, tileId, elevation, heights, x, y);
         chunkTileArray.push(tile);
+      }
+    }
+
+    // Render liquid overlay tiles at fixed elevation 0 (sea level)
+    if (chunkData.liquidTiles) {
+      for (let y = 0; y < mapHeight; y++) {
+        for (let x = 0; x < mapWidth; x++) {
+          const liquidTileId = chunkData.liquidTiles[y]?.[x];
+          if (!liquidTileId) continue;
+
+          const worldX = chunkGridX + x;
+          const worldY = chunkGridY + y;
+
+          // Liquid always renders at elevation 0 regardless of terrain depth
+          const liquidElevation = 0;
+          const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
+          const elevationOffset = liquidElevation * ELEVATION_HEIGHT_STEP;
+
+          const container = this.add.container(screenPos.x, screenPos.y - elevationOffset);
+
+          // Use baked procedural texture
+          const textureKey = `proc_tile_${liquidTileId}`;
+          if (this.textures.exists(textureKey)) {
+            const sprite = this.add.image(0, 0, textureKey);
+            sprite.setOrigin(0.5, 0.25);
+
+            // Set alpha based on liquid opacity type
+            const liquidDef = TileRegistry.get(liquidTileId);
+            const opacity = liquidDef.liquidOpacity;
+            if (opacity === 'translucent') {
+              sprite.setAlpha(0.5);
+            } else if (opacity === 'semi-opaque') {
+              sprite.setAlpha(0.75);
+            }
+            // opaque = alpha 1.0 (default)
+
+            container.add(sprite);
+          } else {
+            // Fallback: colored diamond
+            const liquidDef = TileRegistry.get(liquidTileId);
+            const fallback = this.add.rectangle(0, 0, 128, 64, liquidDef.color, 0.6);
+            container.add(fallback);
+          }
+
+          // Depth: slightly above terrain at same elevation for correct layering
+          const depth = this.isoTransform.calculateDepth(worldX, worldY, liquidElevation) + 0.1;
+          container.setDepth(depth);
+
+          chunkTileArray.push(container);
+        }
       }
     }
 
