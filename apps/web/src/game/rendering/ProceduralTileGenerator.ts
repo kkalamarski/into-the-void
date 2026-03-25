@@ -8,6 +8,7 @@ import {
   hashString,
 } from './tile-strategies';
 import type { TilePalette } from './tile-strategies';
+import { TileRegistry } from '@into-the-void/tiles';
 
 // Re-export TilePalette for external consumers
 export type { TilePalette } from './tile-strategies';
@@ -40,9 +41,12 @@ export class ProceduralTileGenerator {
 
     for (const [tileId, palette] of Object.entries(BIOME_PALETTES)) {
       const variantCount = FLOOR_TILE_IDS.has(tileId) ? 6 : 1;
+      // Liquid tiles render as half-height slabs (32px sides instead of 64px)
+      const isLiquid = TileRegistry.has(tileId) && TileRegistry.get(tileId).isLiquid;
+      const sideHeight = isLiquid ? SH / 2 : SH;
 
       for (let v = 0; v < variantCount; v++) {
-        this.bakeTile(graphics, tileId, palette, v);
+        this.bakeTile(graphics, tileId, palette, v, sideHeight);
       }
     }
 
@@ -65,27 +69,28 @@ export class ProceduralTileGenerator {
     graphics: Phaser.GameObjects.Graphics,
     tileId: string,
     palette: TilePalette,
-    variant: number
+    variant: number,
+    sideHeight: number = SH
   ): void {
     graphics.clear();
 
     // ── Draw south face (left side, lit) ──
     graphics.fillStyle(palette.south, 1);
     graphics.beginPath();
-    graphics.moveTo(HW, HH * 2);      // bottom center (128, 128)
-    graphics.lineTo(0, HH);            // top-left (0, 64)
-    graphics.lineTo(0, HH + SH);      // bottom-left (0, 128)
-    graphics.lineTo(HW, HH * 2 + SH); // bottom center low (128, 192)
+    graphics.moveTo(HW, HH * 2);              // bottom center (128, 128)
+    graphics.lineTo(0, HH);                    // top-left (0, 64)
+    graphics.lineTo(0, HH + sideHeight);       // bottom-left
+    graphics.lineTo(HW, HH * 2 + sideHeight); // bottom center low
     graphics.closePath();
     graphics.fillPath();
 
     // ── Draw east face (right side, shadow) ──
     graphics.fillStyle(palette.east, 1);
     graphics.beginPath();
-    graphics.moveTo(HW, HH * 2);           // bottom center (128, 128)
-    graphics.lineTo(HW * 2, HH);           // top-right (256, 64)
-    graphics.lineTo(HW * 2, HH + SH);      // bottom-right (256, 128)
-    graphics.lineTo(HW, HH * 2 + SH);      // bottom center low (128, 192)
+    graphics.moveTo(HW, HH * 2);                   // bottom center (128, 128)
+    graphics.lineTo(HW * 2, HH);                   // top-right (256, 64)
+    graphics.lineTo(HW * 2, HH + sideHeight);       // bottom-right
+    graphics.lineTo(HW, HH * 2 + sideHeight);       // bottom center low
     graphics.closePath();
     graphics.fillPath();
 
@@ -127,26 +132,26 @@ export class ProceduralTileGenerator {
     graphics.strokePath();
     // South face bottom edge
     graphics.beginPath();
-    graphics.moveTo(0, HH + SH);
-    graphics.lineTo(HW, HH * 2 + SH);
+    graphics.moveTo(0, HH + sideHeight);
+    graphics.lineTo(HW, HH * 2 + sideHeight);
     graphics.strokePath();
     // East face bottom edge
     graphics.beginPath();
-    graphics.moveTo(HW, HH * 2 + SH);
-    graphics.lineTo(HW * 2, HH + SH);
+    graphics.moveTo(HW, HH * 2 + sideHeight);
+    graphics.lineTo(HW * 2, HH + sideHeight);
     graphics.strokePath();
     // Vertical edges
     graphics.beginPath();
     graphics.moveTo(0, HH);
-    graphics.lineTo(0, HH + SH);
+    graphics.lineTo(0, HH + sideHeight);
     graphics.strokePath();
     graphics.beginPath();
     graphics.moveTo(HW * 2, HH);
-    graphics.lineTo(HW * 2, HH + SH);
+    graphics.lineTo(HW * 2, HH + sideHeight);
     graphics.strokePath();
     graphics.beginPath();
     graphics.moveTo(HW, HH * 2);
-    graphics.lineTo(HW, HH * 2 + SH);
+    graphics.lineTo(HW, HH * 2 + sideHeight);
     graphics.strokePath();
 
     // ── Bake to GPU texture ──
