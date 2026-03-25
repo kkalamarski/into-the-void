@@ -157,8 +157,25 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
     // Debug overlay (F3 toggle) — position, performance, game state
     this.debugOverlay = new DebugOverlay(this, {
-      getElevation: (tx, ty) => this.currentHeights?.[ty]?.[tx] ?? 0,
-      getTileType: (tx, ty) => this.currentTiles?.[ty]?.[tx] ?? 0,
+      getElevation: (tx, ty) => {
+        // Use world-aware lookup for cross-chunk safety and correct coordinate mapping
+        if (isHubZone(this.currentZoneId)) {
+          return this.currentHeights?.[ty]?.[tx] ?? 0;
+        }
+        const zoneCoords = this.parseZoneCoords(this.currentZoneId);
+        const currentSize = getZoneSize(this.currentZoneId);
+        return this.getWorldTileHeight(zoneCoords.x * currentSize + tx, zoneCoords.y * currentSize + ty);
+      },
+      getTileType: (tx, ty) => {
+        // Use world-aware lookup for cross-chunk safety and correct coordinate mapping
+        if (isHubZone(this.currentZoneId)) {
+          return this.currentTiles?.[ty]?.[tx] ?? 0;
+        }
+        const zoneCoords = this.parseZoneCoords(this.currentZoneId);
+        const currentSize = getZoneSize(this.currentZoneId);
+        const r = this.resolveWorldToChunkLocal(zoneCoords.x * currentSize + tx, zoneCoords.y * currentSize + ty);
+        return r?.chunk?.tiles?.[r.localY]?.[r.localX] ?? 0;
+      },
       getDayNightPhase: () => this.dayNightCycle?.getCurrentPhase() ?? 'Day',
       getDayNightProgress: () => this.dayNightCycle ? Math.round(this.dayNightCycle.getCycleProgress() * 100) : 0,
       getChunkCounts: () => this.chunkManager?.getChunkStats() ?? { loaded: 0, pending: 0, failed: 0 },
