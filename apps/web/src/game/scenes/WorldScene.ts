@@ -561,8 +561,9 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
           const worldX = chunkGridX + x;
           const worldY = chunkGridY + y;
 
-          // Liquid always renders at elevation 0 regardless of terrain depth
-          const liquidElevation = 0;
+          // Liquid renders one step above ground (elevation 1) so it sits on top
+          // of depression tiles, not inside them
+          const liquidElevation = 1;
           const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
           const elevationOffset = liquidElevation * ELEVATION_HEIGHT_STEP;
 
