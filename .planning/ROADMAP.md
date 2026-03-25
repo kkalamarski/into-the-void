@@ -54,7 +54,7 @@
 
 - [x] **Phase 156: Liquid Tile Definitions** - Define liquid tile types per biome with lore-appropriate color, opacity, and rendering properties (completed 2026-03-25)
 - [x] **Phase 157: Liquid Generation & Rendering** - Fill elevation <= 0 tiles with liquid in world-gen; render as half-height blocks at sea level on the client (completed 2026-03-25)
-- [ ] **Phase 158: Liquid Effects** - Apply movement slow, periodic damage, healing, and debuff effects to players and creatures walking through liquid
+- [x] **Phase 158: Liquid Effects** - Apply movement slow, periodic damage, healing, and debuff effects to players and creatures walking through liquid (completed 2026-03-25)
 
 ## Phase Details
 
@@ -102,7 +102,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 156. Liquid Tile Definitions | 1/1 | Complete    | 2026-03-25 |
 | 157. Liquid Generation & Rendering | 2/2 | Complete   | 2026-03-25 |
-| 158. Liquid Effects | 0/2 | Not started | - |
+| 158. Liquid Effects | 2/2 | Complete    | 2026-03-25 |
 
 ---
 *Last updated: 2026-03-25 — Phase 158 planned*
