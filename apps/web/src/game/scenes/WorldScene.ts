@@ -551,7 +551,9 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
       }
     }
 
-    // Render liquid overlay tiles at fixed elevation 0 (sea level)
+    // Render liquid overlay tiles above terrain (elevation 1)
+    const liquidCount = chunkData.liquidTiles?.flat().filter(Boolean).length ?? 0;
+    if (liquidCount > 0) console.log(`[WorldScene] Rendering ${liquidCount} liquid tiles for ${zoneId}`);
     if (chunkData.liquidTiles) {
       for (let y = 0; y < mapHeight; y++) {
         for (let x = 0; x < mapWidth; x++) {
