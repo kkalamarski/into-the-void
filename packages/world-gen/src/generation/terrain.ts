@@ -324,6 +324,13 @@ export function generateTerrain(
       // Clamp to biome-specific range
       heights[y][x] = clampToBiomeRange(Math.max(-1, Math.min(3, rawHeight)), biome);
 
+      // No walls at elevation 0 or below — they cause rendering/collision issues underwater
+      if (isWall && heights[y][x] <= 0) {
+        tiles[y][x] = biomeTiles.floor;
+        tileId = biomeTileIds.floor;
+        collisions[y][x] = false;
+      }
+
       // Liquid overlay: tiles at elevation <= 0 in non-hub biomes get the biome's liquid
       const liquidId = BIOME_LIQUID_MAP[biome];
       if (heights[y][x] <= 0 && liquidId && !biome.endsWith('_station')) {
