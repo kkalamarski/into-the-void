@@ -568,6 +568,9 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
             worldX, worldY, tiles[y][x] as TileId, 0, heights, x, y
           );
 
+          // Shift up half an elevation step to sit on the surface
+          liquidTile.y -= ELEVATION_HEIGHT_STEP / 2;
+
           // Tint the tile with liquid color and set alpha
           const liquidDef = TileRegistry.get(liquidTileId);
           const alpha = liquidDef.liquidOpacity === 'opaque' ? 0.85
