@@ -353,6 +353,17 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
   }
 
   private commitZoneTransition(newZoneId: string, biome: BiomeType): void {
+    // Remap player px/py from old zone's local coords to new zone's local coords
+    if (this.pixelMovement && this.currentZoneId !== newZoneId) {
+      const oldCoords = this.parseZoneCoords(this.currentZoneId);
+      const newCoords = this.parseZoneCoords(newZoneId);
+      const zoneSizePx = ZONE_SIZE * TILE_SIZE_PX;
+      const pos = this.pixelMovement.getPosition();
+      const remappedPx = pos.px + (oldCoords.x - newCoords.x) * zoneSizePx;
+      const remappedPy = pos.py + (oldCoords.y - newCoords.y) * zoneSizePx;
+      this.pixelMovement.init(remappedPx, remappedPy, newZoneId);
+    }
+
     this.currentZoneId = newZoneId;
     this.lastRequestedZoneId = null;
     this.interactionController?.clearLastPortalEmitKey();
