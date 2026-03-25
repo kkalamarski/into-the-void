@@ -590,12 +590,13 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
           const depth = this.isoTransform.calculateDepth(worldX, worldY, 0) + 0.05;
           gfx.setDepth(depth);
 
+          // Set grid data for viewport culling (without this, culling hides liquid tiles)
+          gfx.setData('gridX', worldX);
+          gfx.setData('gridY', worldY);
+
           chunkTileArray.push(gfx as unknown as Phaser.GameObjects.Container);
           drawnCount++;
         }
-      }
-      if (drawnCount > 0) {
-        console.log(`[WorldScene] Rendered ${drawnCount} liquid tiles for ${zoneId}`);
       }
     }
 
