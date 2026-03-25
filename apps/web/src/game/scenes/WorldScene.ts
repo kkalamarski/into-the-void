@@ -567,13 +567,14 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
           const worldX = chunkGridX + x;
           const worldY = chunkGridY + y;
 
-          // Liquid renders one step above ground (elevation 1) so it sits on top
-          // of depression tiles, not inside them
-          const liquidElevation = 1;
+          // Liquid renders slightly above the terrain surface
+          // Terrain at elevation 0 has its top face at Y - 0. The slab is 64px tall,
+          // so the surface is ~32px above the grid position (half a slab).
+          // Place liquid 16px above the terrain surface to sit visibly on top.
           const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
-          const elevationOffset = liquidElevation * ELEVATION_HEIGHT_STEP;
+          const liquidYOffset = ELEVATION_HEIGHT_STEP * 0.75; // 48px above grid = on slab surface
 
-          const container = this.add.container(screenPos.x, screenPos.y - elevationOffset);
+          const container = this.add.container(screenPos.x, screenPos.y - liquidYOffset);
 
           // Use baked procedural texture
           const textureKey = `proc_tile_${liquidTileId}`;
@@ -599,8 +600,8 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
             container.add(fallback);
           }
 
-          // Depth: slightly above terrain at same elevation for correct layering
-          const depth = this.isoTransform.calculateDepth(worldX, worldY, liquidElevation) + 0.1;
+          // Depth: slightly above terrain for correct layering
+          const depth = this.isoTransform.calculateDepth(worldX, worldY, 0) + 0.05;
           container.setDepth(depth);
 
           chunkTileArray.push(container);
