@@ -51,6 +51,8 @@ export class AiService implements OnModuleInit {
   private activeZones: Set<string> = new Set();
   private tickTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
   private server: Server | null = null;
+  /** Diagnostic tick counter per zone — logs summary every N ticks */
+  private tickCounters: Map<string, number> = new Map();
 
   /** Pending aggro delay: creatureId -> { targetPlayerId, detectedAt, zoneId } */
   private pendingAggro: Map<string, { targetPlayerId: string; detectedAt: number; zoneId: string }> = new Map();
@@ -483,6 +485,22 @@ export class AiService implements OnModuleInit {
     const chunk = await this.zonesService.getChunk(zoneId);
     const collisions = chunk.collisions;
 
+    // Diagnostic logging every 10 ticks (~10 seconds)
+    const tickCount = (this.tickCounters.get(zoneId) ?? 0) + 1;
+    this.tickCounters.set(zoneId, tickCount);
+    const shouldLog = tickCount % 10 === 1;
+
+    if (shouldLog && creatures.length > 0 && players.length > 0) {
+      const p = players[0];
+      const c = creatures[0];
+      const { px: cpx, py: cpy } = tileToPixelCenter(c.position.x, c.position.y);
+      const dist = pixelDistanceTo(cpx, cpy, p.px, p.py);
+      console.log(`[AiService] Zone ${zoneId} tick #${tickCount}: ${creatures.length} creatures, ${players.length} players | ` +
+        `creature[0] tile=(${c.position.x},${c.position.y}) px=(${cpx},${cpy}) | ` +
+        `player[0] px=(${p.px.toFixed(0)},${p.py.toFixed(0)}) | dist=${dist.toFixed(0)}px | ` +
+        `aggro=${AGGRO_RADIUS_PX}px`);
+    }
+
     // Collect all movements in a batch
     const movedCreatures: PublicCreatureUpdate[] = [];
 
@@ -597,6 +615,10 @@ export class AiService implements OnModuleInit {
     // Emit single batched event if any creatures moved
     if (movedCreatures.length > 0) {
       this.server?.to(zoneId).emit('entity:batch', { updates: movedCreatures });
+    }
+
+    if (shouldLog) {
+      console.log(`[AiService] Zone ${zoneId}: ${movedCreatures.length}/${creatures.length} creatures moved this tick`);
     }
 
     // Process creature combat ticks (creature -> player)
