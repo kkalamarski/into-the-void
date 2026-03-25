@@ -224,22 +224,22 @@ const BIOME_TILE_IDS: Record<BiomeType, { floor: string; wall: string; feature: 
  * Heights are clamped to these ranges to maintain biome characteristics
  */
 const BIOME_ELEVATION_RANGES: Record<BiomeType, { min: number; max: number }> = {
-  starfall_crater: { min: 0, max: 2 }, // Flat impact zone
-  ancient_ruins: { min: 0, max: 5 }, // Full range for multi-story structures
-  volcanic_ridge: { min: 1, max: 4 }, // Elevated terrain, no deep valleys
-  frozen_expanse: { min: 2, max: 5 }, // High-altitude ice sheets
-  crystal_caves: { min: 0, max: 4 }, // Underground caverns with height variation
-  toxic_wastes: { min: 0, max: 2 }, // Low-lying pools and waste
-  fungal_forest: { min: 0, max: 3 }, // Organic growth canopy
-  void_plains: { min: 0, max: 3 }, // Standard terrain variation
-  miasma_marshes: { min: 0, max: 2 },      // Low-lying marsh
-  petrified_expanse: { min: 1, max: 4 },   // Moderate elevation stone forest
-  tidal_pools: { min: 0, max: 1 },         // Very flat coastal
-  kelp_forests: { min: 0, max: 1 },        // Flat underwater
-  deep_trenches: { min: 0, max: 0 },       // Completely flat abyss
-  void_rift: { min: 1, max: 3 },          // Moderate variation, eerie flatness
-  crystalline_wastes: { min: 2, max: 5 }, // High elevation, tall formations
-  bioluminescent_depths: { min: 0, max: 2 }, // Low, cave-like
+  starfall_crater: { min: -1, max: 2 }, // Impact zone with liquid-filled craters
+  ancient_ruins: { min: -1, max: 5 }, // Flooded lower ruins
+  volcanic_ridge: { min: 0, max: 4 }, // Lava pools at base level
+  frozen_expanse: { min: 0, max: 5 }, // Glacial melt pools
+  crystal_caves: { min: -1, max: 4 }, // Resonant fluid pools in caverns
+  toxic_wastes: { min: -1, max: 2 }, // Toxic sludge pools
+  fungal_forest: { min: -1, max: 3 }, // Spore sludge in hollows
+  void_plains: { min: -1, max: 3 }, // Void ether pools
+  miasma_marshes: { min: -1, max: 2 },      // Marsh is mostly liquid
+  petrified_expanse: { min: 0, max: 4 },   // Some pools at base
+  tidal_pools: { min: -1, max: 1 },         // Lots of seawater
+  kelp_forests: { min: -1, max: 1 },        // Submerged areas
+  deep_trenches: { min: -1, max: 0 },       // Mostly underwater
+  void_rift: { min: -1, max: 3 },          // Rift plasma pools
+  crystalline_wastes: { min: 0, max: 5 }, // Silicon pools at ground level
+  bioluminescent_depths: { min: -1, max: 2 }, // Luminous nectar pools
   // Hub Station Biomes (flat interiors)
   canopy_station: { min: 0, max: 1 },
   ironhold_station: { min: 0, max: 1 },
@@ -318,10 +318,11 @@ export function generateTerrain(
       // Add noise-based height variation using WORLD coordinates for seamless cross-chunk elevation
       // Use smoother noise with lower frequency for gradual elevation changes
       const heightValue = heightNoise.fbm(worldX * 0.03, worldY * 0.03, 2);
-      // Map noise (-1 to 1) to height (0 to 3) for gentle terrain
-      const rawHeight = Math.round((heightValue + 1) * 1.5);
-      // Clamp to biome-specific range using per-tile biome
-      heights[y][x] = clampToBiomeRange(Math.max(0, Math.min(3, rawHeight)), biome);
+      // Map noise (-1 to 1) to height (-1 to 3) for terrain with valleys
+      // Negative heights = below sea level = liquid fills these areas
+      const rawHeight = Math.round((heightValue + 1) * 2 - 1);
+      // Clamp to biome-specific range
+      heights[y][x] = clampToBiomeRange(Math.max(-1, Math.min(3, rawHeight)), biome);
 
       // Liquid overlay: tiles at elevation <= 0 in non-hub biomes get the biome's liquid
       const liquidId = BIOME_LIQUID_MAP[biome];
