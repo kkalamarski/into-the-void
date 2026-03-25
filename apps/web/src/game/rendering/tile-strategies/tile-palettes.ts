@@ -155,6 +155,28 @@ export const BIOME_PALETTES: Record<string, TilePalette> = {
   salvage_accent:      buildPalette(0x545248, 0x998844, 0x5e5c52),
   salvage_window:      buildPalette(0x44423e, 0xccaa55),
   salvage_hazard:      buildPalette(0x504e4a, 0xff6622, 0xffaa44),
+
+  // ── Liquid Tiles ──
+  // Tier I
+  void_ether:        buildPalette(0x2a1a4a, 0x5a3a8a),
+  luminous_sap:      buildPalette(0x44cc88, 0x66eebb),
+  seawater:          buildPalette(0x4a90b0, 0x7ac0e0),
+  ancient_runoff:    buildPalette(0x6a6a7a, 0x8a8a9a),
+  // Tier II
+  spore_sludge:      buildPalette(0x88aa22, 0xaacc44),
+  miasma_bile:       buildPalette(0x6a8a33, 0x8aaa55),
+  mineral_slurry:    buildPalette(0x9a9a8a, 0xbabaa8),
+  deep_seawater:     buildPalette(0x1a6a5a, 0x3a8a7a),
+  luminous_nectar:   buildPalette(0x00ee77, 0x44ffaa),
+  // Tier III
+  magma:             buildPalette(0xff4422, 0xffcc22),
+  resonant_fluid:    buildPalette(0x6688ee, 0x88aaff),
+  glacial_melt:      buildPalette(0x88ddee, 0xaaeeff),
+  impact_brine:      buildPalette(0x8a7a5a, 0xaa9a7a),
+  abyssal_water:     buildPalette(0x0a0a3a, 0x2a2a6a),
+  silicon_solution:  buildPalette(0xccddee, 0xeef0ff),
+  // Tier IV
+  rift_plasma:       buildPalette(0x6a00aa, 0x9933dd),
 };
 
 // Floor tiles get 6 variants (3 base + 3 decoration); wall/feature tiles get 1
