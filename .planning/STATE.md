@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.33 Biome Liquids — Phase 156: Liquid Tile Definitions
+**Current focus:** v1.34 — Gameplay Fixes
 
 ## Current Position
 
-Phase: 156 of 158 (Liquid Tile Definitions)
-Plan: — of —
-Status: Ready to plan
-Last activity: 2026-03-25 — v1.33 roadmap created, phases 156-158 defined
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-25 — Milestone v1.34 started
 
 Progress: [░░░░░░░░░░] 0%
 

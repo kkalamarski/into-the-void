@@ -281,16 +281,14 @@ Real-time multiplayer gameplay with responsive movement and visual feedback.
 
 ### Active
 
-## Current Milestone: v1.33 Biome Liquids
+## Current Milestone: v1.34 Gameplay Fixes
 
-**Goal:** Add per-biome liquid bodies that fill terrain at elevation <= 0, rendered as half-height translucent/opaque blocks. Players and creatures can walk through liquids but receive effects (slow movement, damage, healing) based on the liquid type.
+**Goal:** Fix three critical gameplay regressions — debug overlay shows wrong tile data, creatures don't move, and abilities (attack/gather) don't fire.
 
-**Target features:**
-- Liquid tile type per biome derived from lore (void ether, magma, toxic sludge, spore fluid, etc.)
-- Fixed sea level at elevation 0 — any tile at elevation <= 0 gets liquid overlay
-- Half-height translucent or opaque blocks (lore-dependent per liquid type)
-- Movement slow effect when walking through liquid
-- Per-liquid-type effects: damage (lava, toxic), healing (bioluminescent), debuffs (void, fungal)
+**Target fixes:**
+- Debug overlay tile type/elevation mismatch with rendered visuals
+- Creature movement broken (needs pixel movement like players)
+- Ability targeting not working (no feedback when clicking hotkeys)
 - Creatures also affected by liquid effects
 - Wall tiles render at 4x height to visibly tower over ground
 
