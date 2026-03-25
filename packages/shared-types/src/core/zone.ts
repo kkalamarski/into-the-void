@@ -105,6 +105,8 @@ export interface ChunkData {
   structures: TileStructure[];
   /** Collision map (true = blocked) */
   collisions: boolean[][];
+  /** Liquid overlay tiles (2D array of liquid tile ID strings, null = no liquid). Parallel to tiles[][]. */
+  liquidTiles?: (string | null)[][];
   /** Spawn points for entities */
   spawnPoints: SpawnPoint[];
   /** Points of interest in this zone */
