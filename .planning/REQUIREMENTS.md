@@ -1,57 +1,63 @@
 # Requirements: Into the Void
 
-**Defined:** 2026-03-24
+**Defined:** 2026-03-25
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.32 Requirements
+## v1.33 Requirements
 
-Requirements for debug tooling and visual polish milestone. Each maps to roadmap phases.
+Requirements for biome liquid system. Each maps to roadmap phases.
 
-### Debug View
+### Liquid Tiles
 
-- [ ] **DEBUG-01**: F3 toggles semi-transparent HUD overlay showing: player position (px, py), zone ID, tile coordinates, player elevation, current tile elevation & type, biome name
-- [ ] **DEBUG-02**: Debug overlay shows performance & network info: FPS, entity count in zone, server ping/latency, loaded/pending/failed chunk counts
-- [ ] **DEBUG-03**: Debug overlay shows game state: day/night cycle phase & time, combat state & target ID
-- [ ] **DEBUG-04**: When debug view is active, all collision boundaries are visualized — blocking tile outlines, feature entity collision boxes, wall collision areas
-- [ ] **DEBUG-05**: F3 overlay has no performance impact when hidden — collision visualization only renders when toggled on
+- [ ] **LIQ-01**: Each biome has a unique liquid tile type with lore-appropriate color and opacity (translucent or opaque per lore)
+- [ ] **LIQ-02**: Liquid tiles render as half-height blocks (32px slab at ELEVATION_HEIGHT_STEP/2)
+- [ ] **LIQ-03**: Translucent liquids show terrain below them; opaque liquids fully cover terrain
 
-### Feature Rendering
+### Liquid Generation
 
-- [ ] **RENDER-01**: Feature entities (plants, minerals, artifacts) render without white outline/border artifacts
+- [ ] **GEN-01**: Terrain generation fills all tiles at elevation <= 0 with the biome's liquid tile
+- [ ] **GEN-02**: Liquid tiles are NOT blocking — player and creatures can walk through them
+- [ ] **GEN-03**: Liquid renders at fixed "sea level" (elevation 0) regardless of how deep the terrain goes
 
-### Elevation & Height
+### Liquid Effects
 
-- [ ] **ELEV-01**: Elevation step height is 64px (half current 128px) — terrain tiles render as slabs, not cubes
-- [ ] **ELEV-02**: Wall tiles render at 4x elevation height, visibly towering over ground-level tiles
-- [ ] **ELEV-03**: All elevation-dependent systems (collision, depth sorting, entity placement, camera) work correctly with the new 64px step
+- [ ] **FX-01**: Walking through any liquid applies movement slow (configurable per liquid type)
+- [ ] **FX-02**: Some liquids deal periodic damage (magma, toxic sludge, rift plasma, impact brine)
+- [ ] **FX-03**: Some liquids provide periodic healing (luminous nectar)
+- [ ] **FX-04**: Creatures in liquid also receive movement slow and damage/heal effects
+- [ ] **FX-05**: Liquid effects use the existing HazardService or a similar per-player tick system
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| New debug commands or console | F3 overlay only — no interactive debug console |
-| Tile/entity inspector (click to inspect) | Future milestone — this is read-only overlay |
-| New terrain features or biome changes | Visual adjustments only to existing terrain |
+| Liquid physics (flow, spreading) | Liquids are static tiles, not fluid simulation |
+| Swimming animation | Player walks through liquid, no swim state |
+| Underwater breathing/oxygen | Not needed — liquids are shallow (half-height) |
+| Liquid crafting recipes | Future milestone |
+| Boat/vehicle for liquid traversal | Future milestone |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEBUG-01 | Phase 154 | Pending |
-| DEBUG-02 | Phase 154 | Pending |
-| DEBUG-03 | Phase 154 | Pending |
-| DEBUG-04 | Phase 154 | Pending |
-| DEBUG-05 | Phase 154 | Pending |
-| RENDER-01 | Phase 154 | Pending |
-| ELEV-01 | Phase 155 | Complete |
-| ELEV-02 | Phase 155 | Complete |
-| ELEV-03 | Phase 155 | Complete |
+| LIQ-01 | TBD | Pending |
+| LIQ-02 | TBD | Pending |
+| LIQ-03 | TBD | Pending |
+| GEN-01 | TBD | Pending |
+| GEN-02 | TBD | Pending |
+| GEN-03 | TBD | Pending |
+| FX-01 | TBD | Pending |
+| FX-02 | TBD | Pending |
+| FX-03 | TBD | Pending |
+| FX-04 | TBD | Pending |
+| FX-05 | TBD | Pending |
 
 **Coverage:**
-- v1.32 requirements: 9 total
-- Mapped to phases: 9
-- Unmapped: 0 ✓
+- v1.33 requirements: 11 total
+- Mapped to phases: 0
+- Unmapped: 11 ⚠️
 
 ---
-*Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 — traceability updated after roadmap creation*
+*Requirements defined: 2026-03-25*
+*Last updated: 2026-03-25 after initial definition*
