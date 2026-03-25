@@ -5,6 +5,7 @@ import { HazardTileStrategy } from './HazardTileStrategy';
 import { WaterTileStrategy } from './WaterTileStrategy';
 import { PortalTileStrategy } from './PortalTileStrategy';
 import { DecorativeTileStrategy } from './DecorativeTileStrategy';
+import { LiquidTileStrategy } from './LiquidTileStrategy';
 
 export type { TileRenderStrategy } from './types';
 export type { TilePalette, TileCategory } from './types';
@@ -49,4 +50,5 @@ export function initTileStrategies(): void {
   registerStrategy(new WaterTileStrategy());
   registerStrategy(new PortalTileStrategy());
   registerStrategy(new DecorativeTileStrategy());
+  registerStrategy(new LiquidTileStrategy());
 }
