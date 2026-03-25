@@ -323,8 +323,12 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     if (this.pixelMovement) {
       const player = useGameStore.getState().player;
       if (player) {
-        const startPx = (player.position.x + 0.5) * TILE_SIZE_PX;
-        const startPy = (player.position.y + 0.5) * TILE_SIZE_PX;
+        const zoneSize = getZoneSize(chunkData.zoneId);
+        // Clamp tile coords to zone bounds — prevents negative/out-of-bounds from bad saves
+        const clampedX = Math.max(0, Math.min(zoneSize - 1, player.position.x));
+        const clampedY = Math.max(0, Math.min(zoneSize - 1, player.position.y));
+        const startPx = (clampedX + 0.5) * TILE_SIZE_PX;
+        const startPy = (clampedY + 0.5) * TILE_SIZE_PX;
         this.pixelMovement.init(startPx, startPy, chunkData.zoneId);
       }
       if (chunkData.collisions) {
