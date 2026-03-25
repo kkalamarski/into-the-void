@@ -552,13 +552,14 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     }
 
     // Render liquid overlay tiles above terrain (elevation 1)
-    const liquidCount = chunkData.liquidTiles?.flat().filter(Boolean).length ?? 0;
-    if (liquidCount > 0) {
-      const firstId = chunkData.liquidTiles!.flat().find(Boolean);
-      const texKey = `proc_tile_${firstId}`;
-      console.log(`[WorldScene] Rendering ${liquidCount} liquid tiles for ${zoneId} | first=${firstId} texture=${texKey} exists=${this.textures.exists(texKey)}`);
-    }
+    // Render liquid overlay as a single graphics object per chunk
     if (chunkData.liquidTiles) {
+      const hw = this.isoTransform.tileWidth / 2;
+      const hh = this.isoTransform.tileHeight / 2;
+      const liquidGfx = this.add.graphics();
+      liquidGfx.setDepth(999); // Force on top of everything for debugging
+      let drawnCount = 0;
+
       for (let y = 0; y < mapHeight; y++) {
         for (let x = 0; x < mapWidth; x++) {
           const liquidTileId = chunkData.liquidTiles[y]?.[x];
@@ -566,36 +567,27 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
           const worldX = chunkGridX + x;
           const worldY = chunkGridY + y;
-
-          // Liquid renders at sea level (elevation 0) — depressions are below this
           const screenPos = this.isoTransform.gridToScreen(worldX, worldY);
-          const container = this.add.container(screenPos.x, screenPos.y);
 
-          // Render liquid as colored isometric diamond
           const liquidDef = TileRegistry.get(liquidTileId);
           const alpha = liquidDef.liquidOpacity === 'opaque' ? 0.9
             : liquidDef.liquidOpacity === 'semi-opaque' ? 0.7 : 0.5;
 
-          // Draw isometric diamond using graphics
-          const hw = this.isoTransform!.tileWidth / 2;
-          const hh = this.isoTransform!.tileHeight / 2;
-          const gfx = this.add.graphics();
-          gfx.fillStyle(liquidDef.color, alpha);
-          gfx.beginPath();
-          gfx.moveTo(0, -hh);    // top
-          gfx.lineTo(hw, 0);     // right
-          gfx.lineTo(0, hh);     // bottom
-          gfx.lineTo(-hw, 0);    // left
-          gfx.closePath();
-          gfx.fillPath();
-          container.add(gfx);
-
-          // Depth: slightly above terrain for correct layering
-          const depth = this.isoTransform.calculateDepth(worldX, worldY, 0) + 0.05;
-          container.setDepth(depth);
-
-          chunkTileArray.push(container);
+          liquidGfx.fillStyle(liquidDef.color, alpha);
+          liquidGfx.beginPath();
+          liquidGfx.moveTo(screenPos.x, screenPos.y - hh);
+          liquidGfx.lineTo(screenPos.x + hw, screenPos.y);
+          liquidGfx.lineTo(screenPos.x, screenPos.y + hh);
+          liquidGfx.lineTo(screenPos.x - hw, screenPos.y);
+          liquidGfx.closePath();
+          liquidGfx.fillPath();
+          drawnCount++;
         }
+      }
+
+      if (drawnCount > 0) {
+        console.log(`[WorldScene] Drew ${drawnCount} liquid diamonds for ${zoneId}`);
+        chunkTileArray.push(liquidGfx as unknown as Phaser.GameObjects.Container);
       }
     }
 
