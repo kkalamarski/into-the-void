@@ -3,61 +3,48 @@
 **Defined:** 2026-03-25
 **Core Value:** Real-time multiplayer gameplay with responsive movement and visual feedback
 
-## v1.33 Requirements
+## v1.34 Requirements
 
-Requirements for biome liquid system. Each maps to roadmap phases.
+Requirements for gameplay bugfix milestone.
 
-### Liquid Tiles
+### Debug Overlay
 
-- [ ] **LIQ-01**: Each biome has a unique liquid tile type with lore-appropriate color and opacity (translucent or opaque per lore)
-- [ ] **LIQ-02**: Liquid tiles render as half-height blocks (32px slab at ELEVATION_HEIGHT_STEP/2)
-- [ ] **LIQ-03**: Translucent liquids show terrain below them; opaque liquids fully cover terrain
+- [ ] **DBG-01**: Debug overlay shows correct tile type and elevation for the player's current position, using zone-local coordinates for array lookup
 
-### Liquid Generation
+### Creature AI
 
-- [ ] **GEN-01**: Terrain generation fills all tiles at elevation <= 0 with the biome's liquid tile
-- [ ] **GEN-02**: Liquid tiles are NOT blocking — player and creatures can walk through them
-- [ ] **GEN-03**: Liquid renders at fixed "sea level" (elevation 0) regardless of how deep the terrain goes
+- [ ] **AI-01**: Creatures move according to their behavior (wander, flee, chase) — visible movement on screen within a few seconds of zone load
+- [ ] **AI-02**: Creature position updates broadcast to client and rendered correctly
 
-### Liquid Effects
+### Abilities
 
-- [ ] **FX-01**: Walking through any liquid applies movement slow (configurable per liquid type)
-- [ ] **FX-02**: Some liquids deal periodic damage (magma, toxic sludge, rift plasma, impact brine)
-- [ ] **FX-03**: Some liquids provide periodic healing (luminous nectar)
-- [ ] **FX-04**: Creatures in liquid also receive movement slow and damage/heal effects
-- [ ] **FX-05**: Liquid effects use the existing HazardService or a similar per-player tick system
+- [ ] **ABIL-01**: Player can attack a creature by selecting it and pressing an ability hotkey — damage dealt, floating numbers visible
+- [ ] **ABIL-02**: Player can gather from a resource node by selecting it and pressing gather — mini-game starts
+- [ ] **ABIL-03**: When an ability fails, the player sees a visible error message (not silent failure)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Liquid physics (flow, spreading) | Liquids are static tiles, not fluid simulation |
-| Swimming animation | Player walks through liquid, no swim state |
-| Underwater breathing/oxygen | Not needed — liquids are shallow (half-height) |
-| Liquid crafting recipes | Future milestone |
-| Boat/vehicle for liquid traversal | Future milestone |
+| New abilities or combat features | Fix existing, don't add new |
+| Creature pixel movement rewrite | Fix current tile-based AI first, pixel movement for creatures is a separate milestone |
+| New gathering mechanics | Fix existing gather flow |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LIQ-01 | Phase 156 | Pending |
-| LIQ-02 | Phase 156 | Pending |
-| LIQ-03 | Phase 156 | Pending |
-| GEN-01 | Phase 157 | Pending |
-| GEN-02 | Phase 157 | Pending |
-| GEN-03 | Phase 157 | Pending |
-| FX-01 | Phase 158 | Pending |
-| FX-02 | Phase 158 | Pending |
-| FX-03 | Phase 158 | Pending |
-| FX-04 | Phase 158 | Pending |
-| FX-05 | Phase 158 | Pending |
+| DBG-01 | TBD | Pending |
+| AI-01 | TBD | Pending |
+| AI-02 | TBD | Pending |
+| ABIL-01 | TBD | Pending |
+| ABIL-02 | TBD | Pending |
+| ABIL-03 | TBD | Pending |
 
 **Coverage:**
-- v1.33 requirements: 11 total
-- Mapped to phases: 11
-- Unmapped: 0 ✓
+- v1.34 requirements: 6 total
+- Mapped to phases: 0
+- Unmapped: 6 ⚠️
 
 ---
 *Requirements defined: 2026-03-25*
-*Last updated: 2026-03-25 — traceability mapped after roadmap creation*
