@@ -91,7 +91,10 @@ Plans:
   3. A player standing in luminous nectar liquid gains HP on a regular tick interval with healing numbers appearing above them
   4. Creatures standing in liquid receive the same movement slow and damage/heal effects that players receive in the same liquid type
   5. Liquid effects start immediately on entering liquid and stop within one tick of leaving — no lingering damage outside liquid areas
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 158-01-PLAN.md — Server-side LiquidEffectService: shared types, tick-based damage/heal, movement speed integration
+- [ ] 158-02-PLAN.md — Client-side liquid feedback: liquidStore, floating damage/heal numbers, HUD indicator
 
 ## Progress
 
@@ -99,7 +102,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 156. Liquid Tile Definitions | 1/1 | Complete    | 2026-03-25 |
 | 157. Liquid Generation & Rendering | 2/2 | Complete   | 2026-03-25 |
-| 158. Liquid Effects | 0/TBD | Not started | - |
+| 158. Liquid Effects | 0/2 | Not started | - |
 
 ---
-*Last updated: 2026-03-25 — v1.33 roadmap created*
+*Last updated: 2026-03-25 — Phase 158 planned*
