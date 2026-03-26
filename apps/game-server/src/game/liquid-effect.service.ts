@@ -324,6 +324,14 @@ export class LiquidEffectService {
   }
 
   /**
+   * Clear liquid state for a player (zone transition or disconnect).
+   * Emits liquid:update with active: false so the client clears the UI.
+   */
+  clearPlayerState(playerId: string): void {
+    this.clearEntityState(playerId, true);
+  }
+
+  /**
    * Clean up liquid state on player disconnect.
    */
   onPlayerDisconnect(playerId: string): void {

@@ -9,6 +9,7 @@ import { AiService } from '../ai.service';
 import { QuestService } from '../quest.service';
 import { HazardService } from '../hazard.service';
 import { ExpeditionService } from '../expedition.service';
+import { LiquidEffectService } from '../liquid-effect.service';
 import {
   isHubZone,
   BiomeTier,
@@ -29,6 +30,7 @@ export class ZoneHandler {
     private readonly questService: QuestService,
     private readonly hazardService: HazardService,
     private readonly expeditionService: ExpeditionService,
+    private readonly liquidEffectService: LiquidEffectService,
   ) {}
 
   setServer(server: Server): void {
@@ -109,6 +111,9 @@ export class ZoneHandler {
         // Activate AI for the hub zone
         this.aiService.activateZone(result.newZoneId);
 
+        // Clear liquid effects from previous zone
+        this.clearLiquidOnZoneChange(player.id);
+
         // Send new zone state to player
         const newZoneState = await this.gameService.getZoneState(result.newZoneId);
         client.emit('zone:state', { ...newZoneState, serverTime: Date.now() });
@@ -184,6 +189,9 @@ export class ZoneHandler {
         // Activate AI for the hub zone
         this.aiService.activateZone(result.newZoneId);
 
+        // Clear liquid effects from previous zone
+        this.clearLiquidOnZoneChange(player.id);
+
         // Send new zone state to player
         const newZoneState = await this.gameService.getZoneState(result.newZoneId);
         client.emit('zone:state', { ...newZoneState, serverTime: Date.now() });
@@ -237,6 +245,9 @@ export class ZoneHandler {
     }
     this.aiService.activateZone(data.newZoneId);
 
+    // Clear liquid effects from previous zone
+    this.clearLiquidOnZoneChange(player.id);
+
     const newZoneState = await this.gameService.getZoneState(data.newZoneId);
     client.emit('zone:state', { ...newZoneState, serverTime: Date.now() });
 
@@ -280,6 +291,9 @@ export class ZoneHandler {
         if (newZoneAlreadyActive) {
           this.aiService.checkImmediateAggroForPlayer(result.newZoneId, player.id);
         }
+
+        // Clear liquid effects from previous zone
+        this.clearLiquidOnZoneChange(player.id);
 
         // Send new zone state to player
         const newZoneState = await this.gameService.getZoneState(result.newZoneId);
@@ -379,6 +393,9 @@ export class ZoneHandler {
         if (newZoneAlreadyActive) {
           this.aiService.checkImmediateAggroForPlayer(result.newZoneId, player.id);
         }
+
+        // Clear liquid effects from previous zone
+        this.clearLiquidOnZoneChange(player.id);
 
         // Send new zone state to player
         const newZoneState = await this.gameService.getZoneState(result.newZoneId);
@@ -486,6 +503,14 @@ export class ZoneHandler {
     const centerX = zx * 64 + 32;
     const centerY = zy * 64 + 32;
     return biomeGenerator.getBiome(centerX, centerY);
+  }
+
+  /**
+   * Clear liquid effects when player transitions zones.
+   * Prevents speed debuff from persisting after leaving liquid.
+   */
+  private clearLiquidOnZoneChange(playerId: string): void {
+    this.liquidEffectService.clearPlayerState(playerId);
   }
 
   /**
