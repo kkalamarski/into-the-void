@@ -64,6 +64,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
   // ── Zone state ────────────────────────────────────────────────────────
   private currentZoneId: string = 'z_0_0';
   private lastRequestedZoneId: string | null = null;
+  private pendingZoneTransitionId: string | null = null;
   private pendingZoneId: string | null = null;
   private pendingBiome: BiomeType | null = null;
   private lastPendingZoneCheck = 0;
@@ -361,7 +362,8 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     }
 
     // If this is the chunk we're waiting to transition to, commit now
-    if (chunkData.zoneId === this.lastRequestedZoneId && chunkData.zoneId !== this.currentZoneId) {
+    if (chunkData.zoneId === this.pendingZoneTransitionId) {
+      this.pendingZoneTransitionId = null;
       this.commitZoneTransition(chunkData.zoneId, biome);
     }
   }
@@ -526,9 +528,10 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
         return;
       }
 
-      // Otherwise request the chunk, transition will happen when it arrives
+      // Otherwise request the chunk and mark pending transition
       if (newZoneId !== this.lastRequestedZoneId) {
         this.lastRequestedZoneId = newZoneId;
+        this.pendingZoneTransitionId = newZoneId;
         gameSocket.emit('zone:request', { zoneId: newZoneId });
       }
     }
@@ -649,9 +652,12 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     const tiles = this.chunkTiles.get(zoneId);
     if (tiles) {
       tiles.forEach(tile => {
-        const children = tile.getAll();
-        children.forEach(child => child.destroy());
-        tile.removeAll(true);
+        // Graphics objects (liquid) don't have getAll/removeAll — just destroy
+        if (typeof tile.getAll === 'function') {
+          const children = tile.getAll();
+          children.forEach(child => child.destroy());
+          tile.removeAll(true);
+        }
         tile.destroy();
       });
       this.chunkTiles.delete(zoneId);
