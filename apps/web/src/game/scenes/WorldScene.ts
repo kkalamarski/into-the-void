@@ -216,12 +216,10 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
   update(time: number, delta: number): void {
     this.handleInput(time, delta);
 
-    // Throttled viewport culling + chunk loading
+    // Throttled viewport culling
     if (time - this.lastCullTime >= this.cullInterval) {
       this.lastCullTime = time;
       this.updateVisibleTiles();
-      // Keep chunk grid centered on player as they move
-      this.chunkManager?.updateChunks(this.currentZoneId);
     }
 
     // Entity depth sorting + remote player interpolation
@@ -380,9 +378,13 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
       this.pixelMovement.init(remappedPx, remappedPy, newZoneId);
     }
 
+    const oldZoneId = this.currentZoneId;
     this.currentZoneId = newZoneId;
     this.lastRequestedZoneId = null;
     this.interactionController?.clearLastPortalEmitKey();
+
+    // Notify server so it updates player zone, rooms, entities, AI
+    gameSocket.emit('zone:walk-transition', { oldZoneId, newZoneId });
 
     if (this.chunkManager) {
       const chunk = this.chunkManager.getChunk(newZoneId);

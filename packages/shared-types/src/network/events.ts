@@ -43,6 +43,7 @@ export type ClientEventType =
   | 'inventory:pickup'
   | 'inventory:reorder'
   | 'zone:request'
+  | 'zone:walk-transition'
   | 'equipment:change'
   | 'inventory:unequip'
   | 'equipment:tool_swap'
@@ -158,6 +159,7 @@ export interface ClientEvents {
   'inventory:pickup': { entityId: string };
   'inventory:reorder': { fromSlot: number; toSlot: number };
   'zone:request': { zoneId: string };
+  'zone:walk-transition': { oldZoneId: string; newZoneId: string };
   'equipment:change': { instanceId: string };
   'inventory:unequip': { instanceId: string };
   'equipment:tool_swap': Record<string, never>;

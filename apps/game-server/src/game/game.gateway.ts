@@ -303,6 +303,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     return this.zoneHandler.handleHubLeave(client);
   }
 
+  @SubscribeMessage('zone:walk-transition')
+  handleWalkTransition(@ConnectedSocket() client: Socket, @MessageBody() data: { oldZoneId: string; newZoneId: string }) {
+    return this.zoneHandler.handleWalkTransition(client, data);
+  }
+
   @SubscribeMessage('expedition:start')
   handleExpeditionStart(@ConnectedSocket() client: Socket, @MessageBody() data: { tier: number }) {
     return this.zoneHandler.handleExpeditionStart(client, data);

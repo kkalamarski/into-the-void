@@ -266,6 +266,64 @@ export class ZoneHandler {
     });
   }
 
+  /**
+   * Handle zone transition from walking across zone boundaries.
+   * Updates server-side player zone, rooms, AI activation, and sends entities.
+   */
+  async handleWalkTransition(client: Socket, data: { oldZoneId: string; newZoneId: string }): Promise<void> {
+    const player = this.playerService.getPlayerBySocket(client.id);
+    if (!player) return;
+
+    // Update player's zone on server
+    player.position = { ...player.position, zoneId: data.newZoneId };
+
+    // Remap px/py to new zone local coords
+    const oldParts = data.oldZoneId.split('_');
+    const newParts = data.newZoneId.split('_');
+    const oldX = parseInt(oldParts[1], 10);
+    const oldY = parseInt(oldParts[2], 10);
+    const newX = parseInt(newParts[1], 10);
+    const newY = parseInt(newParts[2], 10);
+    const ZONE_SIZE_PX = 64 * 128; // ZONE_SIZE * TILE_SIZE_PX
+    player.px += (oldX - newX) * ZONE_SIZE_PX;
+    player.py += (oldY - newY) * ZONE_SIZE_PX;
+
+    // Update socket rooms
+    this.updatePlayerRooms(client, data.newZoneId);
+
+    // Notify old zone
+    this.server.to(data.oldZoneId).emit('player:left', { playerId: player.id });
+
+    // Deactivate old zone if empty
+    if (this.playerService.getPlayersInZone(data.oldZoneId).length === 0) {
+      this.aiService.deactivateZone(data.oldZoneId);
+    }
+
+    // Activate new zone AI
+    this.aiService.activateZone(data.newZoneId);
+
+    // Clear liquid effects
+    this.clearLiquidOnZoneChange(player.id);
+
+    // Send entities for new zone
+    const entities = await this.zonesService.getZoneEntities(data.newZoneId);
+    if (entities.length > 0) {
+      client.emit('entity:batch', {
+        updates: entities.map(e => ({ entity: e, type: 'spawn' as const })),
+      });
+    }
+
+    // Notify new zone
+    client.to(data.newZoneId).emit('player:joined', {
+      id: player.id, name: player.name, faction: player.faction,
+      position: player.position, level: player.level,
+      inCombat: player.inCombat, credits: player.credits,
+    });
+
+    // Check immediate aggro
+    this.aiService.checkImmediateAggroForPlayer(data.newZoneId, player.id);
+  }
+
   async handleHubLeave(client: Socket): Promise<void> {
     try {
       const player = this.playerService.getPlayerBySocket(client.id);
