@@ -761,35 +761,16 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
   // ── Liquid Wave Animation ────────────────────────────────────────────
 
-  /**
-   * Wind direction rotates slowly over time. Biome adds a fixed offset
-   * so different biomes have distinct prevailing winds.
-   */
-  private getWindDirection(time: number): { x: number; y: number } {
-    // Rotate full circle every 5 minutes, biome adds offset
-    const biomeOffset: Record<string, number> = {
-      void_plains: 0, crystal_wastes: 0.5, fungal_marsh: 1.2,
-      obsidian_fields: 2.0, neon_jungle: 2.8, ash_dunes: 3.5,
-      glacial_rift: 4.2, plasma_seas: 5.0,
-    };
-    const offset = biomeOffset[this.currentBiome ?? ''] ?? 0;
-    const angle = (time / 300000) * Math.PI * 2 + offset;
-    return { x: Math.cos(angle), y: Math.sin(angle) };
-  }
-
   private liquidWaveTime = 0;
-  private liquidWaveLogOnce = false;
 
-  private updateLiquidWaves(time: number, delta: number): void {
+  private updateLiquidWaves(_time: number, delta: number): void {
     if (this.chunkTiles.size === 0) return;
     this.liquidWaveTime += delta * 0.00001;
-    const wind = this.getWindDirection(time);
     const t = this.liquidWaveTime;
-    // Debug: log once to confirm v1.34.28 code is running
-    if (!this.liquidWaveLogOnce) {
-      this.liquidWaveLogOnce = true;
-      console.log(`[Liquid v1.34.28] delta=${delta}, t=${t}, accumRate=0.00001`);
-    }
+
+    // Fixed wind direction (NE) — use zone-local coords to avoid huge phase values
+    const windX = 0.7;
+    const windY = 0.7;
 
     this.chunkTiles.forEach(tiles => {
       for (const tile of tiles) {
@@ -800,10 +781,12 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
         const gy = tile.getData('gridY') as number;
         const baseY = tile.getData('baseY') as number;
 
-        // Phase = dot product with wind direction → consistent wavefronts
-        const phase = (gx * wind.x + gy * wind.y) * 0.4;
+        // Use modulo to keep phase small — only local position matters for wave pattern
+        const localX = ((gx % 64) + 64) % 64;
+        const localY = ((gy % 64) + 64) % 64;
+        const phase = (localX * windX + localY * windY) * 0.1;
         const offset = Math.sin(t + phase) * 2;
-        tile.y = baseY + offset; // ±2px range
+        tile.y = baseY + offset;
       }
     });
   }
