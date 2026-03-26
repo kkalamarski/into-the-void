@@ -778,12 +778,18 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
   }
 
   private liquidWaveTime = 0;
+  private liquidWaveLogOnce = false;
 
   private updateLiquidWaves(time: number, delta: number): void {
     if (this.chunkTiles.size === 0) return;
-    this.liquidWaveTime += delta * 0.00001; // very slow accumulation
+    this.liquidWaveTime += delta * 0.00001;
     const wind = this.getWindDirection(time);
     const t = this.liquidWaveTime;
+    // Debug: log once to confirm v1.34.28 code is running
+    if (!this.liquidWaveLogOnce) {
+      this.liquidWaveLogOnce = true;
+      console.log(`[Liquid v1.34.28] delta=${delta}, t=${t}, accumRate=0.00001`);
+    }
 
     this.chunkTiles.forEach(tiles => {
       for (const tile of tiles) {
