@@ -792,8 +792,8 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
         // Phase = dot product with wind direction → consistent wavefronts
         const phase = (gx * wind.x + gy * wind.y) * 0.4;
-        const offset = Math.sin(t * 1.2 + phase);
-        tile.y = baseY + offset; // ±1px range
+        const offset = Math.sin(t * 0.3 + phase) * 2;
+        tile.y = baseY + offset; // ±2px range
       }
     });
   }
