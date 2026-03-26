@@ -599,7 +599,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
           const phase = (worldX * 0.7 + worldY * 1.3) % (Math.PI * 2);
           this.tweens.add({
             targets: gfx,
-            y: { from: baseY - 3, to: baseY + 3 },
+            y: { from: baseY - 1, to: baseY + 1 },
             duration: 2500 + ((worldX * 73 + worldY * 37) % 500),
             delay: phase * 300,
             yoyo: true,
