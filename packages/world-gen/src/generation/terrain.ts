@@ -341,6 +341,27 @@ export function generateTerrain(
     }
   }
 
+  // Unify liquid type across zone — at biome borders, the majority liquid wins
+  const liquidCounts = new Map<string, number>();
+  for (let y = 0; y < ZONE_SIZE; y++) {
+    for (let x = 0; x < ZONE_SIZE; x++) {
+      const lid = liquidTiles[y][x];
+      if (lid) liquidCounts.set(lid, (liquidCounts.get(lid) ?? 0) + 1);
+    }
+  }
+  if (liquidCounts.size > 1) {
+    let dominantLiquid = '';
+    let maxCount = 0;
+    for (const [lid, count] of liquidCounts) {
+      if (count > maxCount) { dominantLiquid = lid; maxCount = count; }
+    }
+    for (let y = 0; y < ZONE_SIZE; y++) {
+      for (let x = 0; x < ZONE_SIZE; x++) {
+        if (liquidTiles[y][x]) liquidTiles[y][x] = dominantLiquid;
+      }
+    }
+  }
+
   // Ensure edges have some openings for zone transitions
   // Use dominant biome at chunk center for path tile selection
   const centerX = chunkX * ZONE_SIZE + ZONE_SIZE / 2;
