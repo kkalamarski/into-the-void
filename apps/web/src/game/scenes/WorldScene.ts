@@ -215,10 +215,12 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
   update(time: number, delta: number): void {
     this.handleInput(time, delta);
 
-    // Throttled viewport culling
+    // Throttled viewport culling + chunk loading
     if (time - this.lastCullTime >= this.cullInterval) {
       this.lastCullTime = time;
       this.updateVisibleTiles();
+      // Keep chunk grid centered on player as they move
+      this.chunkManager?.updateChunks(this.currentZoneId);
     }
 
     // Entity depth sorting + remote player interpolation
