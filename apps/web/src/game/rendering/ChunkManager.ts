@@ -29,7 +29,7 @@ export class ChunkManager {
   private requestQueue: Heap<ChunkRequest>;
   private pendingRequests: Set<string> = new Set();
   private currentPlayerZone: string = 'z_0_0';
-  private maxConcurrentRequests: number = 3;
+  private maxConcurrentRequests: number = 5;
 
   constructor(
     onChunkNeeded: (zoneId: string) => void,
@@ -107,10 +107,11 @@ export class ChunkManager {
 
     const { x: playerX, y: playerY } = this.parseZoneId(playerZoneId);
 
-    // Calculate required chunks (3x3 grid) for open-world zones
+    // Calculate required chunks (5x5 grid) for open-world zones
+    // Camera zoom 0.5x means viewport shows 4x the area — 3x3 is not enough
     const requiredChunks = new Set<string>();
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
         const zoneId = this.createZoneId(playerX + dx, playerY + dy);
         requiredChunks.add(zoneId);
       }
@@ -258,7 +259,7 @@ export class ChunkManager {
       const { x, y } = this.parseZoneId(zoneId);
       const distance = Math.max(Math.abs(x - px), Math.abs(y - py)); // Chebyshev distance
 
-      if (distance > 1) {
+      if (distance > 2) {
         // Chunk no longer needed (player moved away), discard without rendering
         this.chunkStates.delete(zoneId);
         this.notifyLoadingStateChange();
