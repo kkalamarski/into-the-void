@@ -234,6 +234,9 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
       }
     }
 
+    // Animate liquid tiles — wind-driven directional waves
+    this.updateLiquidWaves(time);
+
     // Debug overlay + collision visualization (zero cost when hidden)
     this.debugOverlay?.update();
     this.debugCollisionRenderer?.update();
@@ -593,19 +596,8 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
           // Set grid data for viewport culling (without this, culling hides liquid tiles)
           gfx.setData('gridX', worldX);
           gfx.setData('gridY', worldY);
-
-          // Gentle water level animation — staggered by position for wave effect
-          const baseY = screenPos.y - ELEVATION_HEIGHT_STEP / 2;
-          const phase = (worldX * 0.7 + worldY * 1.3) % (Math.PI * 2);
-          this.tweens.add({
-            targets: gfx,
-            y: { from: baseY - 1, to: baseY + 1 },
-            duration: 2500 + ((worldX * 73 + worldY * 37) % 500),
-            delay: phase * 300,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut',
-          });
+          gfx.setData('baseY', screenPos.y - ELEVATION_HEIGHT_STEP / 2);
+          gfx.setData('liquid', true);
 
           chunkTileArray.push(gfx as unknown as Phaser.GameObjects.Container);
           drawnCount++;
@@ -764,6 +756,46 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     const r = this.resolveWorldToChunkLocal(worldX, worldY);
     if (!r || !r.chunk || !r.chunk.heights) return 0;
     return r.chunk.heights[r.localY]?.[r.localX] ?? 0;
+  }
+
+  // ── Liquid Wave Animation ────────────────────────────────────────────
+
+  /**
+   * Wind direction rotates slowly over time. Biome adds a fixed offset
+   * so different biomes have distinct prevailing winds.
+   */
+  private getWindDirection(time: number): { x: number; y: number } {
+    // Rotate full circle every 5 minutes, biome adds offset
+    const biomeOffset: Record<string, number> = {
+      void_plains: 0, crystal_wastes: 0.5, fungal_marsh: 1.2,
+      obsidian_fields: 2.0, neon_jungle: 2.8, ash_dunes: 3.5,
+      glacial_rift: 4.2, plasma_seas: 5.0,
+    };
+    const offset = biomeOffset[this.currentBiome ?? ''] ?? 0;
+    const angle = (time / 300000) * Math.PI * 2 + offset;
+    return { x: Math.cos(angle), y: Math.sin(angle) };
+  }
+
+  private updateLiquidWaves(time: number): void {
+    if (this.chunkTiles.size === 0) return;
+    const wind = this.getWindDirection(time);
+    const t = time / 1000; // seconds
+
+    this.chunkTiles.forEach(tiles => {
+      for (const tile of tiles) {
+        if (!tile.getData('liquid')) continue;
+        if (!tile.visible) continue;
+
+        const gx = tile.getData('gridX') as number;
+        const gy = tile.getData('gridY') as number;
+        const baseY = tile.getData('baseY') as number;
+
+        // Phase = dot product with wind direction → consistent wavefronts
+        const phase = (gx * wind.x + gy * wind.y) * 0.4;
+        const offset = Math.sin(t * 1.2 + phase);
+        tile.y = baseY + offset; // ±1px range
+      }
+    });
   }
 
   // ── Viewport / Tile Transparency ──────────────────────────────────────
