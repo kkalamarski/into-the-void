@@ -590,7 +590,8 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
           // Position at sea level + half step up to sit on surface
           gfx.setPosition(screenPos.x, screenPos.y - ELEVATION_HEIGHT_STEP / 2);
 
-          const depth = this.isoTransform.calculateDepth(worldX, worldY, 0) + 0.05;
+          // Depth above entities so liquid overlaps player's lower body (wading effect)
+          const depth = this.isoTransform.calculateDepth(worldX, worldY, 0, 0, true) + 1;
           gfx.setDepth(depth);
 
           // Set grid data for viewport culling (without this, culling hides liquid tiles)
