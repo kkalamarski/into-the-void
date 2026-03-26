@@ -765,7 +765,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
   private updateLiquidWaves(_time: number, delta: number): void {
     if (this.chunkTiles.size === 0) return;
-    this.liquidWaveTime += delta * 0.00001;
+    this.liquidWaveTime += delta * 0.0002; // ~30 second full wave cycle
     const t = this.liquidWaveTime;
 
     // Fixed wind direction (NE) — use zone-local coords to avoid huge phase values

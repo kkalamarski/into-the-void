@@ -8,6 +8,7 @@ import {
   velocityFromKeys,
   resolvePixelCollision,
   validatePixelSpeed,
+  TILE_SIZE_PX,
 } from '@into-the-void/game-logic';
 import { ZONE_SIZE } from '@into-the-void/shared-types';
 
@@ -178,6 +179,16 @@ export class MovementService implements OnModuleInit {
       // Update authoritative position
       player.px = resolved.px;
       player.py = resolved.py;
+
+      // Inline liquid check — clear debuff immediately when player leaves liquid
+      if (chunk.liquidTiles) {
+        const tileX = Math.floor(player.px / TILE_SIZE_PX);
+        const tileY = Math.floor(player.py / TILE_SIZE_PX);
+        const onLiquid = !!chunk.liquidTiles[tileY]?.[tileX];
+        if (!onLiquid) {
+          this.liquidEffectService.clearPlayerState(playerId);
+        }
+      }
 
       // Collision-divergence correction — if the server's collision-resolved position
       // differs from the client's predicted position by more than the threshold, snap the
