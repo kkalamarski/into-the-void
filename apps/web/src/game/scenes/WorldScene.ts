@@ -359,6 +359,11 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     if (this.chunkManager) {
       this.chunkManager.receiveChunk(chunkData, biome);
     }
+
+    // If this is the chunk we're waiting to transition to, commit now
+    if (chunkData.zoneId === this.lastRequestedZoneId && chunkData.zoneId !== this.currentZoneId) {
+      this.commitZoneTransition(chunkData.zoneId, biome);
+    }
   }
 
   private commitZoneTransition(newZoneId: string, biome: BiomeType): void {
@@ -513,6 +518,15 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     if (newZoneOffsetX !== 0 || newZoneOffsetY !== 0) {
       const zoneCoords = this.parseZoneCoords(this.currentZoneId);
       const newZoneId = `z_${zoneCoords.x + newZoneOffsetX}_${zoneCoords.y + newZoneOffsetY}`;
+
+      // If chunk is already loaded, commit the zone transition immediately
+      const chunk = this.chunkManager?.getChunk(newZoneId);
+      if (chunk) {
+        this.commitZoneTransition(newZoneId, chunk.biome);
+        return;
+      }
+
+      // Otherwise request the chunk, transition will happen when it arrives
       if (newZoneId !== this.lastRequestedZoneId) {
         this.lastRequestedZoneId = newZoneId;
         gameSocket.emit('zone:request', { zoneId: newZoneId });
