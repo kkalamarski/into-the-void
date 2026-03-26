@@ -916,6 +916,10 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     this.entityManager?.showHealNumber(entityId, amount);
   }
 
+  showErrorText(message: string): void {
+    this.entityManager?.showErrorText(message);
+  }
+
   handlePlayerDeath(): void { this.entityManager?.handlePlayerDeath(); }
   handlePlayerRespawn(position: Position): void { this.entityManager?.handlePlayerRespawn(position); }
   handlePositionCorrection(serverPx: number, serverPy: number, sequence: number): void { this.entityManager?.handlePositionCorrection(serverPx, serverPy, sequence); }

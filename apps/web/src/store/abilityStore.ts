@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { gameSocket } from '../network/socket';
 import { useInventoryStore } from './inventoryStore';
+import { useGameStore } from './gameStore';
+import { useCombatLogStore } from './combatLogStore';
+import { useEntityStore } from './entityStore';
 import { ItemRegistry } from '@into-the-void/items';
 import { AbilityRegistry } from '@into-the-void/game-logic';
 import type { AbilityDefinition } from '@into-the-void/shared-types';
@@ -139,9 +142,38 @@ gameSocket.on('ability:result', (data) => {
   if (data.success) {
     useAbilityStore.getState().clearCast();
   }
-  // Log errors so ability failures are visible in console
+
+  // Show floating error text for failed abilities (ABIL-03)
   if (!data.success && data.error) {
     console.warn(`[ABILITY] ${data.abilityId} failed: ${data.error}`);
+    const worldScene = useGameStore.getState().game?.getWorldScene();
+    if (worldScene?.showErrorText) {
+      worldScene.showErrorText(data.error);
+    }
+  }
+
+  // Record successful damage in combat log (ABIL-01)
+  if (data.success && data.damage && data.damage > 0) {
+    // Lazy import to avoid circular dependency (combatStore imports abilityStore)
+    const { useCombatStore } = require('./combatStore');
+    const targetId = useCombatStore.getState().selectedTarget;
+    let targetName = 'Unknown';
+    if (targetId) {
+      const entity = useEntityStore.getState().entities.get(targetId);
+      if (entity) {
+        // Creatures and NPCs have a 'name' field
+        const anyEntity = entity as unknown as Record<string, unknown>;
+        targetName = (typeof anyEntity.name === 'string' ? anyEntity.name : entity.type);
+      }
+    }
+    useCombatLogStore.getState().addEntry({
+      timestamp: Date.now(),
+      type: 'dealt',
+      damage: data.damage,
+      targetName,
+      critical: false,
+      killed: data.targetHealth !== undefined && data.targetHealth <= 0,
+    });
   }
 });
 

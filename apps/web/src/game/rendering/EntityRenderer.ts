@@ -743,6 +743,47 @@ export class EntityRenderer {
   }
 
   /**
+   * Creates an animated floating error message above a position.
+   * Text floats upward and fades out over ~1.2 seconds. Red color for error visibility.
+   * Used for ability failure feedback (ABIL-03).
+   *
+   * @param scene - Phaser scene to create the text in
+   * @param x - Screen X position (world coords)
+   * @param y - Screen Y position (world coords)
+   * @param message - Error message to display
+   */
+  static createFloatingError(scene: Phaser.Scene, x: number, y: number, message: string): void {
+    const startY = y - 128;
+    const text = scene.add.text(x, startY, message, {
+      fontSize: '48px',
+      fontStyle: 'bold',
+      color: '#ff4444',
+      stroke: '#000000',
+      strokeThickness: 4,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',
+        blur: 4,
+        fill: true,
+      },
+    });
+    text.setOrigin(0.5, 0.5);
+    text.setDepth(99999);
+
+    scene.tweens.add({
+      targets: text,
+      y: startY - 80,
+      alpha: 0,
+      duration: 1200,
+      ease: 'Cubic.easeOut',
+      onComplete: () => {
+        text.destroy();
+      },
+    });
+  }
+
+  /**
    * Creates a quest marker sprite positioned above an NPC.
    * @param npcEntityId - The NPC entity ID for tracking
    * @param markerType - 'available' (!) or 'ready' (?)

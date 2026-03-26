@@ -502,6 +502,66 @@ export class ZonesService implements OnModuleInit {
     return zoneState.entities.get(entityId);
   }
 
+  /**
+   * Find an entity by ID across the player's zone and 8 adjacent zones (3x3 grid).
+   * Returns the entity and the zone it was found in, or undefined if not found.
+   */
+  async findEntityAcrossZones(playerZoneId: string, entityId: string): Promise<{ entity: Entity; zoneId: string } | undefined> {
+    // Check player's own zone first (most common case)
+    const ownZone = this.zones.get(playerZoneId);
+    if (ownZone) {
+      const entity = ownZone.entities.get(entityId);
+      if (entity) return { entity, zoneId: playerZoneId };
+    }
+
+    // Parse zone coordinates (format: z_X_Y)
+    const parts = playerZoneId.split('_');
+    const centerX = parseInt(parts[1], 10);
+    const centerY = parseInt(parts[2], 10);
+
+    // Search 8 adjacent zones
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue; // Already checked own zone
+        const adjacentZoneId = `z_${centerX + dx}_${centerY + dy}`;
+        const zoneState = this.zones.get(adjacentZoneId);
+        if (!zoneState) continue; // Zone not loaded — skip
+        const entity = zoneState.entities.get(entityId);
+        if (entity) return { entity, zoneId: adjacentZoneId };
+      }
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Get all active entities across the player's zone and 8 adjacent zones (3x3 grid).
+   * Used for auto-targeting to find nearest valid target.
+   */
+  getEntitiesAcrossZones(playerZoneId: string): Entity[] {
+    const parts = playerZoneId.split('_');
+    const centerX = parseInt(parts[1], 10);
+    const centerY = parseInt(parts[2], 10);
+
+    const now = Date.now();
+    const entities: Entity[] = [];
+
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const zoneId = `z_${centerX + dx}_${centerY + dy}`;
+        const zoneState = this.zones.get(zoneId);
+        if (!zoneState) continue;
+        for (const entity of zoneState.entities.values()) {
+          if (entity.active && (!('despawnAt' in entity) || (entity as ItemEntity).despawnAt > now)) {
+            entities.push(entity);
+          }
+        }
+      }
+    }
+
+    return entities;
+  }
+
   async updateEntity(
     zoneId: string,
     entityId: string,

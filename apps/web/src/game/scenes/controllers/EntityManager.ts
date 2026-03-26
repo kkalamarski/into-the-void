@@ -809,6 +809,11 @@ export class EntityManager {
     EntityRenderer.createFloatingHeal(this.scene, targetX, targetY, amount);
   }
 
+  showErrorText(message: string): void {
+    if (!this.localPlayer) return;
+    EntityRenderer.createFloatingError(this.scene, this.localPlayer.x, this.localPlayer.y, message);
+  }
+
   handlePlayerDeath(): void {
     // Pixel movement stops naturally when keys are released
   }

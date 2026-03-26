@@ -116,8 +116,16 @@ function SortableAbilitySlot({ index, ability, slotId, barIndex }: SortableAbili
     if (isDragging) return; // CRITICAL: prevents click during drag release
     if (!ability) return;
     if (isCasting()) return; // Block while casting
-    if (isOnCooldown(ability.id)) return;
-    if (!player || player.energy < ability.energyCost) return;
+    if (isOnCooldown(ability.id)) {
+      const ws = useGameStore.getState().game?.getWorldScene();
+      ws?.showErrorText?.('On cooldown');
+      return;
+    }
+    if (!player || player.energy < ability.energyCost) {
+      const ws = useGameStore.getState().game?.getWorldScene();
+      ws?.showErrorText?.('No energy');
+      return;
+    }
 
     gameSocket.emit('ability:use', {
       abilityId: ability.id,
@@ -252,8 +260,16 @@ export const ActionBar: React.FC<ActionBarProps> = ({ barIndex }) => {
       const ability = slots[slotIndex];
       if (!ability) return;
       if (useAbilityStore.getState().isCasting()) return; // Block while casting
-      if (isOnCooldown(ability.id)) return;
-      if (!player || player.energy < ability.energyCost) return;
+      if (isOnCooldown(ability.id)) {
+        const ws = useGameStore.getState().game?.getWorldScene();
+        ws?.showErrorText?.('On cooldown');
+        return;
+      }
+      if (!player || player.energy < ability.energyCost) {
+        const ws = useGameStore.getState().game?.getWorldScene();
+        ws?.showErrorText?.('No energy');
+        return;
+      }
 
       gameSocket.emit('ability:use', {
         abilityId: ability.id,

@@ -7,7 +7,7 @@ import { InventoryService } from './inventory.service';
 import { EntityService } from './entity.service';
 import { CombatService } from './combat.service';
 import { DatabaseService } from '../database/database.service';
-import { Creature, isHubZone } from '@into-the-void/shared-types';
+import { Creature, Entity, isHubZone } from '@into-the-void/shared-types';
 import { AbilityRegistry, canInteractPixel, MELEE_RANGE_PX, GATHER_RANGE_PX, TILE_SIZE_PX, computeCharStats, getEffectStrategy, initEffectStrategies } from '@into-the-void/game-logic';
 import type { EffectServices, EffectContext, PlayerRef } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
@@ -279,7 +279,7 @@ export class AbilityService {
 
     // Check GCD
     if (this.isOnGcd(player.id)) {
-      return { success: false, error: 'Global cooldown active' };
+      return { success: false, error: 'On cooldown' };
     }
 
     // Check player has ability (from equipped items)
@@ -298,26 +298,33 @@ export class AbilityService {
 
     // Check ability cooldown
     if (this.isOnCooldown(player.id, abilityId)) {
-      return { success: false, error: 'Ability on cooldown' };
+      return { success: false, error: 'On cooldown' };
     }
 
     // Check energy
     if (player.energy < ability.energyCost) {
-      return { success: false, error: 'Not enough energy' };
+      return { success: false, error: 'No energy' };
     }
 
     // Handle target requirement
     const hasGatherEffect = ability.effects.some(e => e.type === 'gather');
 
     if (ability.requiresTarget) {
+      // Auto-target nearest valid entity when no target provided
       if (!targetEntityId) {
-        return { success: false, error: 'Ability requires a target' };
+        const autoTarget = this.findNearestTarget(player, ability);
+        if (!autoTarget) {
+          return { success: false, error: 'No target' };
+        }
+        targetEntityId = autoTarget.id;
       }
 
-      const entity = await this.zonesService.getEntity(player.position.zoneId, targetEntityId);
-      if (!entity) {
+      // Cross-zone entity lookup (search player's zone + 8 adjacent zones)
+      const found = await this.zonesService.findEntityAcrossZones(player.position.zoneId, targetEntityId);
+      if (!found) {
         return { success: false, error: 'Target not found' };
       }
+      const entity = found.entity;
 
       // Gather abilities can target plants/minerals/artifacts, combat abilities target creatures
       if (hasGatherEffect) {
@@ -331,7 +338,7 @@ export class AbilityService {
         }
       } else {
         if (entity.type !== 'creature') {
-          return { success: false, error: 'Invalid target type' };
+          return { success: false, error: "Can't attack that" };
         }
 
         const target = entity as Creature;
@@ -426,15 +433,15 @@ export class AbilityService {
       this.server?.to(cast.socketId).emit('ability:result', {
         success: false,
         abilityId: cast.abilityId,
-        error: 'Not enough energy',
+        error: 'No energy',
       });
       return;
     }
 
-    // Re-validate target if required
+    // Re-validate target if required (cross-zone lookup)
     if (ability.requiresTarget && cast.targetEntityId) {
-      const entity = await this.zonesService.getEntity(player.position.zoneId, cast.targetEntityId);
-      if (!entity) {
+      const found = await this.zonesService.findEntityAcrossZones(player.position.zoneId, cast.targetEntityId);
+      if (!found) {
         this.server?.to(cast.socketId).emit('ability:result', {
           success: false,
           abilityId: cast.abilityId,
@@ -442,6 +449,7 @@ export class AbilityService {
         });
         return;
       }
+      const entity = found.entity;
       // For combat targets, check still alive
       if (entity.type === 'creature') {
         const creature = entity as Creature;
@@ -847,6 +855,54 @@ export class AbilityService {
   }
 
   /**
+   * Find the nearest valid target for an ability when no target was specified.
+   * For gather abilities: finds nearest plant/mineral/artifact in range.
+   * For combat abilities: finds nearest active creature in range.
+   */
+  private findNearestTarget(player: any, ability: AbilityDefinition): Entity | undefined {
+    const allEntities = this.zonesService.getEntitiesAcrossZones(player.position.zoneId);
+    const isGather = ability.effects.some(e => e.type === 'gather');
+
+    // Filter by valid target type
+    const candidates = allEntities.filter(entity => {
+      if (isGather) {
+        return entity.type === 'plant' || entity.type === 'mineral' || entity.type === 'artifact';
+      } else {
+        if (entity.type !== 'creature') return false;
+        const creature = entity as Creature;
+        return creature.active && creature.health > 0;
+      }
+    });
+
+    if (candidates.length === 0) return undefined;
+
+    // Compute range limit in pixels
+    const rangePx = isGather
+      ? GATHER_RANGE_PX
+      : (ability.range + 0.5) * TILE_SIZE_PX;
+
+    // Find nearest by pixel distance
+    let nearest: Entity | undefined;
+    let nearestDist = Infinity;
+
+    for (const entity of candidates) {
+      // Entity pixel position: center of tile
+      const entityPx = entity.position.x * TILE_SIZE_PX + TILE_SIZE_PX / 2;
+      const entityPy = entity.position.y * TILE_SIZE_PX + TILE_SIZE_PX / 2;
+      const dx = player.px - entityPx;
+      const dy = player.py - entityPy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist <= rangePx && dist < nearestDist) {
+        nearestDist = dist;
+        nearest = entity;
+      }
+    }
+
+    return nearest;
+  }
+
+  /**
    * Build EffectServices adapter that bridges NestJS services to the plain TS interface.
    * Used by effect strategies to interact with game state.
    */
@@ -859,7 +915,10 @@ export class AbilityService {
       grantXp: (pid, xp) => this.playerService.grantXp(pid, xp),
       getSocketByPlayerId: (pid) => this.playerService.getSocketByPlayerId(pid),
 
-      getEntity: (zid, eid) => this.zonesService.getEntity(zid, eid),
+      getEntity: async (zid, eid) => {
+        const found = await this.zonesService.findEntityAcrossZones(zid, eid);
+        return found?.entity;
+      },
       getZoneEntities: (zid) => this.zonesService.getZoneEntities(zid),
       updateEntity: (zid, eid, c) => this.zonesService.updateEntity(zid, eid, c as any),
       recordEntityKill: (eid, zid, rs) => this.zonesService.recordEntityKill(eid, zid, rs),
