@@ -25,6 +25,7 @@ import { AtmosphereSystem } from '../systems/AtmosphereSystem';
 import { DebugOverlay } from '../systems/DebugOverlay';
 import { DebugCollisionRenderer } from '../systems/DebugCollisionRenderer';
 import { gameSocket } from '../../network/socket';
+import { registerLiquidPipeline, applyLiquidFX } from '../rendering/LiquidShader';
 
 export const ISO_TILE_WIDTH = 256;
 export const ISO_TILE_HEIGHT = 128;
@@ -97,6 +98,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     this.isoTransform = new IsometricTransform(ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
     this.tileRenderer = new TileRenderer(this, ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
     this.viewportCuller = new ViewportCuller(ISO_TILE_WIDTH, ISO_TILE_HEIGHT, 4);
+    registerLiquidPipeline(this.game);
     // Subsystem controllers
     this.cameraController = new CameraController(this);
     this.cameraController.create();
@@ -593,6 +595,9 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
           // Set grid data for viewport culling (without this, culling hides liquid tiles)
           gfx.setData('gridX', worldX);
           gfx.setData('gridY', worldY);
+
+          // Animated water shader
+          applyLiquidFX(gfx);
 
           chunkTileArray.push(gfx as unknown as Phaser.GameObjects.Container);
           drawnCount++;
