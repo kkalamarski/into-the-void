@@ -25,7 +25,6 @@ import { AtmosphereSystem } from '../systems/AtmosphereSystem';
 import { DebugOverlay } from '../systems/DebugOverlay';
 import { DebugCollisionRenderer } from '../systems/DebugCollisionRenderer';
 import { gameSocket } from '../../network/socket';
-import { registerLiquidPipeline, applyLiquidFX } from '../rendering/LiquidShader';
 
 export const ISO_TILE_WIDTH = 256;
 export const ISO_TILE_HEIGHT = 128;
@@ -98,7 +97,6 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     this.isoTransform = new IsometricTransform(ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
     this.tileRenderer = new TileRenderer(this, ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
     this.viewportCuller = new ViewportCuller(ISO_TILE_WIDTH, ISO_TILE_HEIGHT, 4);
-    registerLiquidPipeline(this.game);
     // Subsystem controllers
     this.cameraController = new CameraController(this);
     this.cameraController.create();
@@ -596,8 +594,18 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
           gfx.setData('gridX', worldX);
           gfx.setData('gridY', worldY);
 
-          // Animated water shader
-          applyLiquidFX(gfx);
+          // Gentle water level animation — staggered by position for wave effect
+          const baseY = screenPos.y - ELEVATION_HEIGHT_STEP / 2;
+          const phase = (worldX * 0.7 + worldY * 1.3) % (Math.PI * 2);
+          this.tweens.add({
+            targets: gfx,
+            y: { from: baseY - 3, to: baseY + 3 },
+            duration: 2500 + ((worldX * 73 + worldY * 37) % 500),
+            delay: phase * 300,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+          });
 
           chunkTileArray.push(gfx as unknown as Phaser.GameObjects.Container);
           drawnCount++;
