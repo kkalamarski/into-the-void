@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.34
 milestone_name: Gameplay Fixes
-status: in_progress
-last_updated: "2026-03-25T00:00:00.000Z"
+status: complete
+last_updated: "2026-03-26T00:00:00.000Z"
 progress:
   total_phases: 2
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 2
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
@@ -18,21 +18,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Real-time multiplayer gameplay with responsive movement and visual feedback
-**Current focus:** v1.34 — Gameplay Fixes (Phase 159)
+**Current focus:** v1.34 — Gameplay Fixes (Complete)
 
 ## Current Position
 
 Phase: 160 of 160 (Ability Execution)
-Plan: — of —
-Status: Ready to plan
-Last activity: 2026-03-25 — Phase 159 executed (debug overlay + creature AI fixes)
+Plan: 2 of 2
+Status: Milestone complete
+Last activity: 2026-03-26 — Phase 160 executed (ability execution fixes)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0 (this milestone)
+- Total plans completed: 4 (this milestone)
 - Average duration: -
 - Total execution time: -
 
@@ -40,7 +40,8 @@ Progress: [█████░░░░░] 50%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 159 | 2 | - | - |
+| 160 | 2 | - | - |
 
 *Updated after each plan completion*
 
@@ -48,6 +49,9 @@ Progress: [█████░░░░░] 50%
 
 ### Decisions
 
+- [v1.34]: Cross-zone entity lookup searches 3x3 zone grid (player zone + 8 adjacent)
+- [v1.34]: Auto-targeting finds nearest valid entity by pixel distance within ability range
+- [v1.34]: Ability error messages shown as floating red text above player (48px, 1200ms fade)
 - [v1.33]: Liquid half-height is 32px (ELEVATION_HEIGHT_STEP/2 = 64/2)
 - [v1.32]: ELEVATION_HEIGHT_STEP changed from 128px to 64px — terrain renders as thin slabs
 - [v1.32]: Wall tiles get height boost in world-gen (min 4) instead of rendering multiplier
@@ -72,7 +76,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-25
-Stopped at: Phase 159 completed — debug overlay and creature AI fixes
+Last session: 2026-03-26
+Stopped at: Phase 160 completed — v1.34 milestone shipped
 Resume file: None
-Next action: Plan Phase 160 — Ability Execution
+Next action: Define next milestone

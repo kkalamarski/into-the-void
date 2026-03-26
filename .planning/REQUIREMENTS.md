@@ -18,9 +18,9 @@ Requirements for gameplay bugfix milestone.
 
 ### Abilities
 
-- [ ] **ABIL-01**: Player can attack a creature by selecting it and pressing an ability hotkey — damage dealt, floating numbers visible
-- [ ] **ABIL-02**: Player can gather from a resource node by selecting it and pressing gather — mini-game starts
-- [ ] **ABIL-03**: When an ability fails, the player sees a visible error message (not silent failure)
+- [x] **ABIL-01**: Player can attack a creature by selecting it and pressing an ability hotkey — damage dealt, floating numbers visible
+- [x] **ABIL-02**: Player can gather from a resource node by selecting it and pressing gather — mini-game starts
+- [x] **ABIL-03**: When an ability fails, the player sees a visible error message (not silent failure)
 
 ## Out of Scope
 
@@ -37,9 +37,9 @@ Requirements for gameplay bugfix milestone.
 | DBG-01 | Phase 159 | Complete |
 | AI-01 | Phase 159 | Complete |
 | AI-02 | Phase 159 | Complete |
-| ABIL-01 | Phase 160 | Pending |
-| ABIL-02 | Phase 160 | Pending |
-| ABIL-03 | Phase 160 | Pending |
+| ABIL-01 | Phase 160 | Complete |
+| ABIL-02 | Phase 160 | Complete |
+| ABIL-03 | Phase 160 | Complete |
 
 **Coverage:**
 - v1.34 requirements: 6 total

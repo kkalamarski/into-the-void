@@ -36,7 +36,7 @@
 - ✅ **v1.31 Strategy Pattern Refactor & Code Decomposition** - Phases 147-153 (shipped 2026-03-24)
 - ✅ **v1.32 Debug View & Visual Polish** - Phases 154-155 (shipped 2026-03-24)
 - ✅ **v1.33 Biome Liquids** - Phases 156-158 (shipped 2026-03-25)
-- 🚧 **v1.34 Gameplay Fixes** - Phases 159-160 (in progress)
+- ✅ **v1.34 Gameplay Fixes** - Phases 159-160 (shipped 2026-03-26)
 
 ## Phases
 
@@ -49,12 +49,12 @@
 
 ---
 
-### 🚧 v1.34 Gameplay Fixes (In Progress)
+### ✅ v1.34 Gameplay Fixes (Shipped 2026-03-26)
 
 **Milestone Goal:** Fix three critical gameplay regressions — debug overlay shows wrong tile data, creatures don't move, and abilities (attack/gather) don't fire.
 
 - [x] **Phase 159: Creature AI & Debug Overlay** - Fix creature movement so creatures visibly wander/chase on screen and correct the debug overlay tile type/elevation lookup (completed 2026-03-25)
-- [ ] **Phase 160: Ability Execution** - Fix ability firing so attack and gather abilities work on selected targets, with visible error feedback on failure
+- [x] **Phase 160: Ability Execution** - Fix ability firing so attack and gather abilities work on selected targets, with visible error feedback on failure (completed 2026-03-26)
 
 ## Phase Details
 
@@ -77,14 +77,14 @@
   1. Selecting a creature and pressing an attack ability hotkey deals damage — floating numbers appear above the creature and the combat log records the hit
   2. Selecting a resource node and pressing the gather hotkey starts the gathering mini-game (progress bar appears)
   3. Pressing an ability hotkey with no valid target or missing precondition shows a visible error message in the HUD — not a silent no-op
-**Plans**: TBD
+**Plans**: 2/2 complete
 
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 159. Creature AI & Debug Overlay | 2/2 | Complete | 2026-03-25 |
-| 160. Ability Execution | 0/TBD | Not started | - |
+| 160. Ability Execution | 2/2 | Complete | 2026-03-26 |
 
 ---
-*Last updated: 2026-03-25 — v1.34 roadmap created*
+*Last updated: 2026-03-26 — Phase 160 complete, v1.34 milestone shipped*
