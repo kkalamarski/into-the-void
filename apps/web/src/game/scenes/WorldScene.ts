@@ -235,7 +235,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     }
 
     // Animate liquid tiles — wind-driven directional waves
-    this.updateLiquidWaves(time);
+    this.updateLiquidWaves(time, delta);
 
     // Debug overlay + collision visualization (zero cost when hidden)
     this.debugOverlay?.update();
@@ -777,10 +777,13 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
     return { x: Math.cos(angle), y: Math.sin(angle) };
   }
 
-  private updateLiquidWaves(time: number): void {
+  private liquidWaveTime = 0;
+
+  private updateLiquidWaves(time: number, delta: number): void {
     if (this.chunkTiles.size === 0) return;
+    this.liquidWaveTime += delta * 0.00001; // very slow accumulation
     const wind = this.getWindDirection(time);
-    const t = time / 1000; // seconds
+    const t = this.liquidWaveTime;
 
     this.chunkTiles.forEach(tiles => {
       for (const tile of tiles) {
@@ -793,7 +796,7 @@ export class WorldScene extends Phaser.Scene implements WorldSceneAccessor {
 
         // Phase = dot product with wind direction → consistent wavefronts
         const phase = (gx * wind.x + gy * wind.y) * 0.4;
-        const offset = Math.sin(t * 0.008 + phase) * 2;
+        const offset = Math.sin(t + phase) * 2;
         tile.y = baseY + offset; // ±2px range
       }
     });
