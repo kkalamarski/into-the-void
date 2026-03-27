@@ -562,6 +562,34 @@ export class ZonesService implements OnModuleInit {
     return entities;
   }
 
+  /**
+   * Get all active entities across 3x3 grid, tagged with their zone ID.
+   * Used for cross-zone distance calculations in auto-targeting.
+   */
+  getEntitiesAcrossZonesWithZoneId(playerZoneId: string): { entity: Entity; zoneId: string }[] {
+    const parts = playerZoneId.split('_');
+    const centerX = parseInt(parts[1], 10);
+    const centerY = parseInt(parts[2], 10);
+
+    const now = Date.now();
+    const results: { entity: Entity; zoneId: string }[] = [];
+
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const zoneId = `z_${centerX + dx}_${centerY + dy}`;
+        const zoneState = this.zones.get(zoneId);
+        if (!zoneState) continue;
+        for (const entity of zoneState.entities.values()) {
+          if (entity.active && (!('despawnAt' in entity) || (entity as ItemEntity).despawnAt > now)) {
+            results.push({ entity, zoneId });
+          }
+        }
+      }
+    }
+
+    return results;
+  }
+
   async updateEntity(
     zoneId: string,
     entityId: string,

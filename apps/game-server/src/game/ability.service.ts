@@ -7,8 +7,8 @@ import { InventoryService } from './inventory.service';
 import { EntityService } from './entity.service';
 import { CombatService } from './combat.service';
 import { DatabaseService } from '../database/database.service';
-import { Creature, Entity, isHubZone } from '@into-the-void/shared-types';
-import { AbilityRegistry, canInteractPixel, MELEE_RANGE_PX, GATHER_RANGE_PX, TILE_SIZE_PX, computeCharStats, getEffectStrategy, initEffectStrategies } from '@into-the-void/game-logic';
+import { Creature, Entity, isHubZone, ZONE_SIZE } from '@into-the-void/shared-types';
+import { AbilityRegistry, canInteractPixel, MELEE_RANGE_PX, GATHER_RANGE_PX, TILE_SIZE_PX, tileToPixelCenter, pixelDistanceTo, computeCharStats, getEffectStrategy, initEffectStrategies } from '@into-the-void/game-logic';
 import type { EffectServices, EffectContext, PlayerRef } from '@into-the-void/game-logic';
 import { ItemRegistry } from '@into-the-void/items';
 import { saveCooldown, loadCooldowns } from '@into-the-void/database';
@@ -326,15 +326,27 @@ export class AbilityService {
       }
       const entity = found.entity;
 
+      // Compute entity pixel position relative to player's zone
+      // Entity tile coords are zone-local; if entity is in a different zone, offset by zone difference
+      const { px: rawEpx, py: rawEpy } = tileToPixelCenter(entity.position.x, entity.position.y);
+      let entityPx = rawEpx;
+      let entityPy = rawEpy;
+      if (found.zoneId !== player.position.zoneId) {
+        const playerParts = player.position.zoneId.split('_');
+        const entityParts = found.zoneId.split('_');
+        const zoneSizePx = ZONE_SIZE * TILE_SIZE_PX;
+        entityPx += (parseInt(entityParts[1], 10) - parseInt(playerParts[1], 10)) * zoneSizePx;
+        entityPy += (parseInt(entityParts[2], 10) - parseInt(playerParts[2], 10)) * zoneSizePx;
+      }
+      const dist = pixelDistanceTo(player.px, player.py, entityPx, entityPy);
+
       // Gather abilities can target plants/minerals/artifacts, combat abilities target creatures
       if (hasGatherEffect) {
         if (entity.type !== 'plant' && entity.type !== 'mineral' && entity.type !== 'artifact') {
           return { success: false, error: 'Invalid target for gathering' };
         }
-        // Range check for gathering (pixel distance, Phase 133)
-        const rangeCheck = canInteractPixel(player.px, player.py, entity, GATHER_RANGE_PX);
-        if (!rangeCheck.canInteract) {
-          return { success: false, error: rangeCheck.reason };
+        if (dist > GATHER_RANGE_PX) {
+          return { success: false, error: 'Out of range' };
         }
       } else {
         if (entity.type !== 'creature') {
@@ -346,11 +358,8 @@ export class AbilityService {
           return { success: false, error: 'Target is dead' };
         }
 
-        // Range check (pixel distance, Phase 133): convert tile range to pixels
-        // +0.5 tile buffer accounts for player standing at adjacent tile edge
         const rangePx = (ability.range + 0.5) * TILE_SIZE_PX;
-        const rangeCheck = canInteractPixel(player.px, player.py, target, rangePx);
-        if (!rangeCheck.canInteract) {
+        if (dist > rangePx) {
           return { success: false, error: 'Out of range' };
         }
       }
@@ -860,11 +869,11 @@ export class AbilityService {
    * For combat abilities: finds nearest active creature in range.
    */
   private findNearestTarget(player: any, ability: AbilityDefinition): Entity | undefined {
-    const allEntities = this.zonesService.getEntitiesAcrossZones(player.position.zoneId);
+    const allEntities = this.zonesService.getEntitiesAcrossZonesWithZoneId(player.position.zoneId);
     const isGather = ability.effects.some(e => e.type === 'gather');
 
     // Filter by valid target type
-    const candidates = allEntities.filter(entity => {
+    const candidates = allEntities.filter(({ entity }) => {
       if (isGather) {
         return entity.type === 'plant' || entity.type === 'mineral' || entity.type === 'artifact';
       } else {
@@ -885,13 +894,18 @@ export class AbilityService {
     let nearest: Entity | undefined;
     let nearestDist = Infinity;
 
-    for (const entity of candidates) {
-      // Entity pixel position: center of tile
-      const entityPx = entity.position.x * TILE_SIZE_PX + TILE_SIZE_PX / 2;
-      const entityPy = entity.position.y * TILE_SIZE_PX + TILE_SIZE_PX / 2;
-      const dx = player.px - entityPx;
-      const dy = player.py - entityPy;
-      const dist = Math.sqrt(dx * dx + dy * dy);
+    const playerParts = player.position.zoneId.split('_');
+    const playerZoneX = parseInt(playerParts[1], 10);
+    const playerZoneY = parseInt(playerParts[2], 10);
+    const zoneSizePx = ZONE_SIZE * TILE_SIZE_PX;
+
+    for (const { entity, zoneId } of candidates) {
+      // Entity pixel position relative to player's zone
+      const { px: rawEpx, py: rawEpy } = tileToPixelCenter(entity.position.x, entity.position.y);
+      const entParts = zoneId.split('_');
+      const epx = rawEpx + (parseInt(entParts[1], 10) - playerZoneX) * zoneSizePx;
+      const epy = rawEpy + (parseInt(entParts[2], 10) - playerZoneY) * zoneSizePx;
+      const dist = pixelDistanceTo(player.px, player.py, epx, epy);
 
       if (dist <= rangePx && dist < nearestDist) {
         nearestDist = dist;
